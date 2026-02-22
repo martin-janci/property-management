@@ -4,7 +4,7 @@
 # =============================================================================
 # Stage 1: Chef - Prepare recipe for dependency caching
 # =============================================================================
-FROM --platform=$BUILDPLATFORM rust:1.75-slim-bookworm AS chef
+FROM --platform=$BUILDPLATFORM rust:1.85-slim-bookworm AS chef
 
 RUN cargo install cargo-chef --locked
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # =============================================================================
 # Stage 3: Builder - Build dependencies then application
 # =============================================================================
-FROM rust:1.75-slim-bookworm AS builder
+FROM rust:1.85-slim-bookworm AS builder
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
