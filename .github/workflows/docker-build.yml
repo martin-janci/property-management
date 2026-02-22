@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/hanibalsk
+  IMAGE_PREFIX: ghcr.io/martin-janci
 
 permissions:
   contents: read
