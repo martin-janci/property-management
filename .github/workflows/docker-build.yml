@@ -2,23 +2,19 @@ name: Docker Build & Push (Multiplatform)
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'backend/**'
       - 'docker/backend/**'
       - '.github/workflows/docker-build.yml'
     tags:
       - 'v*'
-  pull_request:
-    paths:
-      - 'backend/**'
-      - 'docker/backend/**'
   workflow_dispatch:
     inputs:
       push:
         description: 'Push images to registry'
         type: boolean
-        default: false
+        default: true
 
 env:
   REGISTRY: ghcr.io
