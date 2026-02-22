@@ -1088,9 +1088,9 @@ async fn review_developer_registration(
 
 /// List developer API keys.
 async fn list_developer_api_keys(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     _auth: AuthUser,
-    Path(path): Path<DeveloperIdPath>,
+    Path(_path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
     // TODO: Map DeveloperApiKey to DeveloperApiKeyDisplay (hiding key_hash)
     Ok(Json(vec![]))
@@ -1111,7 +1111,7 @@ async fn create_developer_api_key(
             .await
             .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
             .ok_or_else(|| not_found("Developer", path.id))?;
-        if dev_account.user_id != auth.user_id {
+        if dev_account.user_id != Some(auth.user_id) {
             return Err((
                 StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new(
