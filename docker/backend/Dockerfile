@@ -23,12 +23,12 @@ RUN cargo chef prepare --recipe-path recipe.json
 # =============================================================================
 # Stage 3: Builder - Build dependencies then application
 # =============================================================================
-FROM --platform=$BUILDPLATFORM rust:1.75-slim-bookworm AS builder
+FROM rust:1.75-slim-bookworm AS builder
 
 ARG TARGETPLATFORM
-ARG BUILDPLATFORM
+ARG TARGETARCH
 
-# Install build dependencies and cross-compilation tools
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
@@ -37,11 +37,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install cargo-chef
 RUN cargo install cargo-chef --locked
 
+# Set up cross-compilation for arm64 if needed
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+    apt-get update && apt-get install -y --no-install-recommends \
+    gcc-aarch64-linux-gnu \
+    libc6-dev-arm64-cross \
+    libssl-dev:arm64 \
+    && rm -rf /var/lib/apt/lists/* \
+    && rustup target add aarch64-unknown-linux-gnu; \
+    fi
+
+# Set target triple based on platform
+ENV CARGO_TARGET_DIR=/app/target
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+    echo "aarch64-unknown-linux-gnu" > /tmp/rust-target; \
+    else \
+    echo "x86_64-unknown-linux-gnu" > /tmp/rust-target; \
+    fi
+
 WORKDIR /app
 
 # Copy and build dependencies (cached layer)
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+
+RUN RUST_TARGET=$(cat /tmp/rust-target) && \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+    export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
+    export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
+    cargo chef cook --release --target $RUST_TARGET --recipe-path recipe.json; \
+    else \
+    cargo chef cook --release --recipe-path recipe.json; \
+    fi
 
 # Copy source code
 COPY backend/Cargo.toml backend/Cargo.lock ./
@@ -49,7 +75,17 @@ COPY backend/crates ./crates
 COPY backend/servers ./servers
 
 # Build the applications
-RUN cargo build --release -p api-server -p reality-server
+ENV SQLX_OFFLINE=true
+RUN RUST_TARGET=$(cat /tmp/rust-target) && \
+    if [ "$TARGETARCH" = "arm64" ]; then \
+    export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
+    export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
+    cargo build --release --target $RUST_TARGET -p api-server -p reality-server && \
+    cp target/$RUST_TARGET/release/api-server target/release/ 2>/dev/null || true && \
+    cp target/$RUST_TARGET/release/reality-server target/release/ 2>/dev/null || true; \
+    else \
+    cargo build --release -p api-server -p reality-server; \
+    fi
 
 # Strip debug symbols for smaller binaries
 RUN strip target/release/api-server target/release/reality-server || true
@@ -76,19 +112,12 @@ WORKDIR /app
 # =============================================================================
 FROM runtime-base AS api-server
 
-# Copy binary from builder
 COPY --from=builder /app/target/release/api-server /app/api-server
-
-# Set ownership
 RUN chown -R ppt:ppt /app
-
-# Switch to non-root user
 USER ppt
 
-# Expose service port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
@@ -99,19 +128,12 @@ CMD ["/app/api-server"]
 # =============================================================================
 FROM runtime-base AS reality-server
 
-# Copy binary from builder
 COPY --from=builder /app/target/release/reality-server /app/reality-server
-
-# Set ownership
 RUN chown -R ppt:ppt /app
-
-# Switch to non-root user
 USER ppt
 
-# Expose service port
 EXPOSE 8081
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8081/health || exit 1
 
