@@ -463,7 +463,7 @@ async fn list_integration_ratings(
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<IntegrationRatingWithUser>>, (StatusCode, Json<ErrorResponse>)> {
-    let limit = query.limit.max(1).min(100);
+    let limit = query.limit.clamp(1, 100);
     let offset = query.offset.max(0);
     let ratings = state
         .api_ecosystem_repo
@@ -820,7 +820,7 @@ async fn list_webhook_delivery_logs(
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<EnhancedWebhookDeliveryLog>>, (StatusCode, Json<ErrorResponse>)> {
-    let limit = query.limit.max(1).min(100);
+    let limit = query.limit.clamp(1, 100);
     let offset = query.offset.max(0);
     let logs = state
         .api_ecosystem_repo
