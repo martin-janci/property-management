@@ -70,7 +70,8 @@ CREATE TABLE integration_ratings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT valid_rating_value CHECK (rating >= 1 AND rating <= 5),
-    UNIQUE(integration_id, organization_id, user_id)
+    -- A user can rate an integration once (per user, not per organization)
+    UNIQUE(integration_id, user_id)
 );
 
 -- ============================================
@@ -225,8 +226,9 @@ CREATE TABLE developer_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
+    email VARCHAR(255) NOT NULL,
     company_name VARCHAR(255),
-    company_website TEXT,
+    website TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
     use_case TEXT,
     approved_at TIMESTAMPTZ,
@@ -244,10 +246,12 @@ CREATE TABLE developer_api_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     developer_id UUID NOT NULL REFERENCES developer_accounts(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
-    key_prefix VARCHAR(10) NOT NULL,
+    key_prefix VARCHAR(8) NOT NULL,
     key_hash TEXT NOT NULL,
     scopes TEXT[] NOT NULL DEFAULT '{}',
     rate_limit_tier VARCHAR(20) NOT NULL DEFAULT 'standard',
+    is_sandbox BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     last_used_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ,
@@ -255,7 +259,8 @@ CREATE TABLE developer_api_keys (
     revoked_at TIMESTAMPTZ,
     revoked_by UUID REFERENCES users(id),
 
-    CONSTRAINT valid_rate_limit_tier CHECK (rate_limit_tier IN ('free', 'standard', 'premium', 'enterprise'))
+    CONSTRAINT valid_rate_limit_tier CHECK (rate_limit_tier IN ('free', 'standard', 'premium', 'enterprise')),
+    CONSTRAINT valid_api_key_status CHECK (status IN ('active', 'inactive', 'revoked', 'expired'))
 );
 
 -- API key usage logs
@@ -452,13 +457,13 @@ CREATE POLICY marketplace_integrations_read ON marketplace_integrations
 
 CREATE POLICY marketplace_integrations_write ON marketplace_integrations
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Organization integrations: Organization members only
 CREATE POLICY org_integrations_policy ON organization_integrations
     FOR ALL USING (
-        organization_id = current_setting('app.organization_id', TRUE)::UUID
+        organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
     );
 
 -- Integration ratings: Public read, authenticated write for own org
@@ -467,7 +472,7 @@ CREATE POLICY integration_ratings_read ON integration_ratings
 
 CREATE POLICY integration_ratings_write ON integration_ratings
     FOR ALL USING (
-        organization_id = current_setting('app.organization_id', TRUE)::UUID
+        organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
     );
 
 -- Connectors: Public read (part of integration catalog)
@@ -476,7 +481,7 @@ CREATE POLICY connectors_read ON connectors
 
 CREATE POLICY connectors_write ON connectors
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Connector actions: Public read
@@ -485,13 +490,13 @@ CREATE POLICY connector_actions_read ON connector_actions
 
 CREATE POLICY connector_actions_write ON connector_actions
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Organization connectors: Organization members only
 CREATE POLICY org_connectors_policy ON organization_connectors
     FOR ALL USING (
-        organization_id = current_setting('app.organization_id', TRUE)::UUID
+        organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
     );
 
 -- Connector execution logs: Organization members only (via org_connector)
@@ -499,14 +504,14 @@ CREATE POLICY connector_logs_policy ON connector_execution_logs
     FOR ALL USING (
         org_connector_id IN (
             SELECT id FROM organization_connectors
-            WHERE organization_id = current_setting('app.organization_id', TRUE)::UUID
+            WHERE organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
         )
     );
 
 -- Webhook subscriptions: Organization members only
 CREATE POLICY webhook_subscriptions_policy ON webhook_subscriptions
     FOR ALL USING (
-        organization_id = current_setting('app.organization_id', TRUE)::UUID
+        organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
     );
 
 -- Webhook deliveries: Organization members only (via subscription)
@@ -514,7 +519,7 @@ CREATE POLICY webhook_deliveries_policy ON webhook_deliveries
     FOR ALL USING (
         subscription_id IN (
             SELECT id FROM webhook_subscriptions
-            WHERE organization_id = current_setting('app.organization_id', TRUE)::UUID
+            WHERE organization_id = NULLIF(current_setting('app.current_organization_id', TRUE), '')::UUID
         )
     );
 
@@ -524,14 +529,14 @@ CREATE POLICY webhook_event_types_read ON webhook_event_types
 
 CREATE POLICY webhook_event_types_write ON webhook_event_types
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Developer accounts: Owner or admin
 CREATE POLICY developer_accounts_policy ON developer_accounts
     FOR ALL USING (
-        user_id = current_setting('app.user_id', TRUE)::UUID
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- API keys: Developer owner or admin
@@ -539,9 +544,9 @@ CREATE POLICY api_keys_policy ON developer_api_keys
     FOR ALL USING (
         developer_id IN (
             SELECT id FROM developer_accounts
-            WHERE user_id = current_setting('app.user_id', TRUE)::UUID
+            WHERE user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
         )
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- API key usage: Developer owner or admin
@@ -550,9 +555,9 @@ CREATE POLICY api_key_usage_policy ON api_key_usage_logs
         api_key_id IN (
             SELECT dk.id FROM developer_api_keys dk
             JOIN developer_accounts da ON dk.developer_id = da.id
-            WHERE da.user_id = current_setting('app.user_id', TRUE)::UUID
+            WHERE da.user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
         )
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- OAuth apps: Developer owner or admin
@@ -560,16 +565,16 @@ CREATE POLICY oauth_apps_policy ON developer_oauth_apps
     FOR ALL USING (
         developer_id IN (
             SELECT id FROM developer_accounts
-            WHERE user_id = current_setting('app.user_id', TRUE)::UUID
+            WHERE user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
         )
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- OAuth grants: User or admin
 CREATE POLICY oauth_grants_policy ON developer_oauth_grants
     FOR ALL USING (
-        user_id = current_setting('app.user_id', TRUE)::UUID
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Sandboxes: Developer owner or admin
@@ -577,18 +582,18 @@ CREATE POLICY sandboxes_policy ON developer_sandboxes
     FOR ALL USING (
         developer_id IN (
             SELECT id FROM developer_accounts
-            WHERE user_id = current_setting('app.user_id', TRUE)::UUID
+            WHERE user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
         )
-        OR current_setting('app.user_role', TRUE) = 'platform_admin'
+        OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- API documentation: Public read, admin write
 CREATE POLICY api_documentation_read ON api_documentation
-    FOR SELECT USING (is_published = TRUE OR current_setting('app.user_role', TRUE) = 'platform_admin');
+    FOR SELECT USING (is_published = TRUE OR COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE);
 
 CREATE POLICY api_documentation_write ON api_documentation
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- Code samples: Public read, admin write
@@ -597,7 +602,7 @@ CREATE POLICY code_samples_read ON api_code_samples
 
 CREATE POLICY code_samples_write ON api_code_samples
     FOR ALL USING (
-        current_setting('app.user_role', TRUE) = 'platform_admin'
+        COALESCE(current_setting('app.is_super_admin', TRUE)::BOOLEAN, FALSE) = TRUE
     );
 
 -- ============================================
@@ -625,6 +630,7 @@ INSERT INTO webhook_event_types (name, display_name, description, category, payl
 -- Triggers for updated_at
 -- ============================================
 
+-- Use CREATE OR REPLACE so this is idempotent across migrations
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -694,7 +700,8 @@ BEGIN
         ),
         updated_at = NOW()
     WHERE id = COALESCE(NEW.integration_id, OLD.integration_id);
-    RETURN NEW;
+    -- Return NEW for INSERT/UPDATE, OLD for DELETE
+    RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 

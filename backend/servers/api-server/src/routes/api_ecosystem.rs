@@ -291,9 +291,20 @@ async fn list_marketplace_integrations(
 )]
 async fn create_marketplace_integration(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Json(request): Json<CreateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
+    // Admin only - require platform admin privileges
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
     let integration = state
         .api_ecosystem_repo
         .create_marketplace_integration(&request)
@@ -342,10 +353,19 @@ async fn get_marketplace_integration(
 )]
 async fn update_marketplace_integration(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<UpdateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
     let integration = state
         .api_ecosystem_repo
         .update_marketplace_integration(path.id, &request)
@@ -369,9 +389,18 @@ async fn update_marketplace_integration(
 )]
 async fn delete_marketplace_integration(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
     let deleted = state
         .api_ecosystem_repo
         .delete_marketplace_integration(path.id)
@@ -434,9 +463,11 @@ async fn list_integration_ratings(
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<IntegrationRatingWithUser>>, (StatusCode, Json<ErrorResponse>)> {
+    let limit = query.limit.max(1).min(100);
+    let offset = query.offset.max(0);
     let ratings = state
         .api_ecosystem_repo
-        .list_integration_ratings(path.id, query.limit, query.offset)
+        .list_integration_ratings(path.id, limit, offset)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -789,9 +820,11 @@ async fn list_webhook_delivery_logs(
     Path(path): Path<IntegrationIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<EnhancedWebhookDeliveryLog>>, (StatusCode, Json<ErrorResponse>)> {
+    let limit = query.limit.max(1).min(100);
+    let offset = query.offset.max(0);
     let logs = state
         .api_ecosystem_repo
-        .list_webhook_delivery_logs(path.id, query.limit, query.offset)
+        .list_webhook_delivery_logs(path.id, limit, offset)
         .await
         .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
@@ -1013,11 +1046,18 @@ async fn register_developer(
 
 /// Get developer registration.
 async fn get_developer_registration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Developer", path.id))
+    let registration = state
+        .api_ecosystem_repo
+        .get_developer_registration(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Developer", path.id))?;
+
+    Ok(Json(registration))
 }
 
 /// Review developer registration (admin only).
@@ -1027,6 +1067,15 @@ async fn review_developer_registration(
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<ReviewDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
     let registration = state
         .api_ecosystem_repo
         .review_developer_registration(path.id, auth.user_id, &request)
@@ -1039,19 +1088,40 @@ async fn review_developer_registration(
 
 /// List developer API keys.
 async fn list_developer_api_keys(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperIdPath>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
+    // TODO: Map DeveloperApiKey to DeveloperApiKeyDisplay (hiding key_hash)
     Ok(Json(vec![]))
 }
 
 /// Create developer API key.
 async fn create_developer_api_key(
     State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<CreateDeveloperApiKey>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the caller owns this developer account or is platform admin
+    if !auth.is_platform_admin() {
+        let dev_account = state
+            .api_ecosystem_repo
+            .get_developer_registration(path.id)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Developer", path.id))?;
+        if dev_account.user_id != auth.user_id {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "You can only create API keys for your own developer account",
+                )),
+            ));
+        }
+    }
+
     // Generate a new API key
     let is_sandbox = request.is_sandbox.unwrap_or(false);
     let key = format!(
@@ -1060,8 +1130,8 @@ async fn create_developer_api_key(
         Uuid::new_v4().to_string().replace("-", "")
     );
 
-    // Create key prefix (first 8 chars for display)
-    let key_prefix = key.chars().take(12).collect::<String>();
+    // Create key prefix (first 8 chars for display, matches VARCHAR(8) in DB)
+    let key_prefix = key.chars().take(8).collect::<String>();
 
     // Hash the key for storage (in production, use proper hashing like argon2)
     let key_hash = format!("sha256:{}", sha256_simple(&key));
@@ -1086,22 +1156,32 @@ async fn create_developer_api_key(
     Ok(Json(response))
 }
 
-/// Simple SHA256 hash for demo (use argon2 in production).
+/// SHA-256 hash for API key storage.
+/// Note: For production, consider using Argon2id/bcrypt/scrypt with salt.
 fn sha256_simple(input: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut hasher = DefaultHasher::new();
-    input.hash(&mut hasher);
-    format!("{:x}", hasher.finish())
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
 
 /// Revoke developer API key.
 async fn revoke_developer_api_key(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperKeyPath>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(path): Path<DeveloperKeyPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement key revocation
-    Ok(StatusCode::NO_CONTENT)
+    let revoked = state
+        .api_ecosystem_repo
+        .revoke_api_key(path.key_id, auth.user_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if revoked {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("API key", path.key_id))
+    }
 }
 
 /// Rotate developer API key.
@@ -1110,10 +1190,24 @@ async fn rotate_developer_api_key(
     auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Generate new key (we need to know if it was sandbox from the old key)
-    // For simplicity, we'll generate a live key; in production, fetch old key first
-    let key = format!("ppt_live_{}", Uuid::new_v4().to_string().replace("-", ""));
-    let key_prefix = key.chars().take(12).collect::<String>();
+    // Fetch existing key to determine sandbox status for the new key prefix
+    let existing_keys = state
+        .api_ecosystem_repo
+        .list_developer_api_keys(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+    let old_key = existing_keys
+        .iter()
+        .find(|k| k.id == path.key_id)
+        .ok_or_else(|| not_found("API key", path.key_id))?;
+    let is_sandbox = old_key.is_sandbox;
+
+    let key = format!(
+        "ppt_{}_{}",
+        if is_sandbox { "test" } else { "live" },
+        Uuid::new_v4().to_string().replace("-", "")
+    );
+    let key_prefix = key.chars().take(8).collect::<String>();
     let key_hash = format!("sha256:{}", sha256_simple(&key));
 
     let api_key = state

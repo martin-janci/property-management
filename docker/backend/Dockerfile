@@ -4,7 +4,7 @@
 # =============================================================================
 # Stage 1: Chef - Prepare recipe for dependency caching
 # =============================================================================
-FROM --platform=$BUILDPLATFORM rust:slim-bookworm AS chef
+FROM --platform=$BUILDPLATFORM rust:1.85-slim-bookworm AS chef
 
 RUN cargo install cargo-chef --locked
 WORKDIR /app
@@ -25,7 +25,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 # =============================================================================
 # Stage 3: Builder - Build dependencies then application
 # =============================================================================
-FROM rust:slim-bookworm AS builder
+FROM rust:1.85-slim-bookworm AS builder
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
@@ -85,8 +85,9 @@ RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
     export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
     cargo build --release --target $RUST_TARGET -p api-server -p reality-server && \
-    cp target/$RUST_TARGET/release/api-server target/release/ 2>/dev/null || true && \
-    cp target/$RUST_TARGET/release/reality-server target/release/ 2>/dev/null || true; \
+    mkdir -p target/release && \
+    cp target/$RUST_TARGET/release/api-server target/release/api-server && \
+    cp target/$RUST_TARGET/release/reality-server target/release/reality-server; \
     else \
     cargo build --release -p api-server -p reality-server; \
     fi

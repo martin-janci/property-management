@@ -231,6 +231,8 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Install an integration for an organization.
+    /// Uses a transaction to ensure atomicity between installation and install count increment.
+    /// Only increments install_count for new installations, not reinstalls.
     pub async fn install_integration(
         &self,
         organization_id: Uuid,
@@ -242,6 +244,26 @@ impl ApiEcosystemRepository {
             .credentials
             .as_ref()
             .map(|c| serde_json::to_string(c).unwrap_or_default());
+
+        // Use a transaction to ensure atomicity
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
+        // Check if this is a new installation or a reinstall
+        let existing = sqlx::query_scalar::<_, i64>(
+            r#"SELECT COUNT(*) FROM organization_integrations
+               WHERE organization_id = $1 AND integration_id = $2"#,
+        )
+        .bind(organization_id)
+        .bind(req.integration_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let is_new_install = existing == 0;
 
         let installation = sqlx::query_as::<_, OrganizationIntegration>(
             r#"
@@ -263,22 +285,28 @@ impl ApiEcosystemRepository {
         .bind(&req.configuration)
         .bind(credentials_encrypted)
         .bind(user_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // Update install count
-        sqlx::query(
-            r#"
-            UPDATE marketplace_integrations
-            SET install_count = install_count + 1
-            WHERE id = $1
-            "#,
-        )
-        .bind(req.integration_id)
-        .execute(&self.pool)
-        .await
-        .ok();
+        // Only increment install count for new installations
+        if is_new_install {
+            sqlx::query(
+                r#"
+                UPDATE marketplace_integrations
+                SET install_count = install_count + 1
+                WHERE id = $1
+                "#,
+            )
+            .bind(req.integration_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+        }
+
+        tx.commit()
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(installation)
     }
@@ -304,20 +332,22 @@ impl ApiEcosystemRepository {
     }
 
     /// Uninstall an integration.
+    /// Note: `org_integration_id` is the primary key (id) of the organization_integrations record,
+    /// not the marketplace integration_id.
     pub async fn uninstall_integration(
         &self,
         organization_id: Uuid,
-        integration_id: Uuid,
+        org_integration_id: Uuid,
     ) -> Result<bool, AppError> {
         let result = sqlx::query(
             r#"
             UPDATE organization_integrations
             SET status = 'uninstalled', enabled = FALSE, updated_at = NOW()
-            WHERE organization_id = $1 AND integration_id = $2
+            WHERE organization_id = $1 AND id = $2
             "#,
         )
         .bind(organization_id)
-        .bind(integration_id)
+        .bind(org_integration_id)
         .execute(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -458,13 +488,20 @@ impl ApiEcosystemRepository {
     }
 
     /// List connector actions.
+    /// Maps DB columns to model fields for schema compatibility.
     pub async fn list_connector_actions(
         &self,
         connector_id: Uuid,
     ) -> Result<Vec<ConnectorAction>, AppError> {
         let actions = sqlx::query_as::<_, ConnectorAction>(
             r#"
-            SELECT * FROM connector_actions
+            SELECT
+                id, connector_id, name, description,
+                method as http_method, path as endpoint_path,
+                input_schema as request_schema, output_schema as response_schema,
+                NULL::jsonb as request_transformations, NULL::jsonb as response_transformations,
+                pagination_config, created_at, created_at as updated_at
+            FROM connector_actions
             WHERE connector_id = $1
             ORDER BY name
             "#,
@@ -710,6 +747,11 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Create a connector action.
+    /// Note: Maps model fields to DB columns:
+    /// - http_method -> method
+    /// - endpoint_path -> path
+    /// - request_schema -> input_schema
+    /// - response_schema -> output_schema
     pub async fn create_connector_action(
         &self,
         req: &CreateConnectorAction,
@@ -717,22 +759,25 @@ impl ApiEcosystemRepository {
         let action = sqlx::query_as::<_, ConnectorAction>(
             r#"
             INSERT INTO connector_actions (
-                connector_id, name, description, http_method, endpoint_path,
-                request_schema, response_schema, request_transformations,
-                response_transformations, pagination_config
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
+                connector_id, name, display_name, description, method, path,
+                input_schema, output_schema, pagination_config
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING
+                id, connector_id, name, description,
+                method as http_method, path as endpoint_path,
+                input_schema as request_schema, output_schema as response_schema,
+                NULL::jsonb as request_transformations, NULL::jsonb as response_transformations,
+                pagination_config, created_at, created_at as updated_at
             "#,
         )
         .bind(req.connector_id)
         .bind(&req.name)
+        .bind(&req.name) // display_name defaults to name
         .bind(&req.description)
         .bind(&req.http_method)
         .bind(&req.endpoint_path)
         .bind(&req.request_schema)
         .bind(&req.response_schema)
-        .bind(&req.request_transformations)
-        .bind(&req.response_transformations)
         .bind(&req.pagination_config)
         .fetch_one(&self.pool)
         .await
@@ -742,21 +787,47 @@ impl ApiEcosystemRepository {
     }
 
     /// List connector execution logs.
+    /// Note: DB schema uses org_connector_id (FK to organization_connectors), not organization_id.
+    /// We join through organization_connectors to filter by organization.
     pub async fn list_connector_execution_logs(
         &self,
         organization_id: Uuid,
         query: &ConnectorExecutionQuery,
     ) -> Result<Vec<ConnectorExecutionLog>, AppError> {
         let limit = query.limit.unwrap_or(50).min(100) as i64;
-        let offset = query.offset.unwrap_or(0) as i64;
+        let offset = query.offset.unwrap_or(0).max(0) as i64;
 
         let logs = sqlx::query_as::<_, ConnectorExecutionLog>(
             r#"
-            SELECT * FROM connector_execution_logs
-            WHERE organization_id = $1
-              AND ($2::uuid IS NULL OR connector_id = $2)
-              AND ($3::text IS NULL OR status = $3)
-            ORDER BY executed_at DESC
+            SELECT
+                cel.id,
+                oc.organization_id,
+                oc.connector_id,
+                cel.action_name,
+                CASE
+                    WHEN cel.status_code >= 200 AND cel.status_code < 300 THEN 'success'
+                    WHEN cel.status_code >= 400 THEN 'error'
+                    ELSE 'unknown'
+                END as status,
+                cel.request_payload,
+                cel.response_payload,
+                cel.error_message,
+                NULL::text as error_code,
+                COALESCE(cel.duration_ms, 0) as duration_ms,
+                0 as retry_count,
+                FALSE as rate_limited,
+                cel.executed_at as created_at
+            FROM connector_execution_logs cel
+            JOIN organization_connectors oc ON oc.id = cel.org_connector_id
+            WHERE oc.organization_id = $1
+              AND ($2::uuid IS NULL OR oc.connector_id = $2)
+              AND ($3::text IS NULL OR
+                   CASE
+                       WHEN cel.status_code >= 200 AND cel.status_code < 300 THEN 'success'
+                       WHEN cel.status_code >= 400 THEN 'error'
+                       ELSE 'unknown'
+                   END = $3)
+            ORDER BY cel.executed_at DESC
             LIMIT $4 OFFSET $5
             "#,
         )
@@ -777,43 +848,49 @@ impl ApiEcosystemRepository {
     // ============================================
 
     /// Create an enhanced webhook subscription.
+    /// Note: DB schema has simpler columns than the enhanced model. We map enhanced
+    /// fields to what the DB supports and return a compatible struct.
     pub async fn create_enhanced_webhook(
         &self,
         organization_id: Uuid,
         user_id: Uuid,
         req: &CreateEnhancedWebhookSubscription,
     ) -> Result<EnhancedWebhookSubscription, AppError> {
-        // Serialize retry_policy as JSON
-        let retry_policy_json = req
+        // Serialize retry_policy as JSON for retry_config column
+        let retry_config_json = req
             .retry_policy
             .as_ref()
             .and_then(|rp| serde_json::to_value(rp).ok());
 
+        // Generate a webhook secret for HMAC signing
+        let secret = format!("whsec_{}", Uuid::new_v4().to_string().replace("-", ""));
+
+        // Insert using DB schema columns, return with aliased columns for model compatibility
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
             INSERT INTO webhook_subscriptions (
-                organization_id, name, description, url, auth_type, auth_config,
-                events, filters, payload_template, headers, retry_policy,
-                rate_limit_requests, rate_limit_window_seconds, timeout_ms, verify_ssl, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            RETURNING *
+                organization_id, name, description, url, secret, events, headers,
+                retry_config, created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
             "#,
         )
         .bind(organization_id)
         .bind(&req.name)
         .bind(&req.description)
         .bind(&req.url)
-        .bind(&req.auth_type)
-        .bind(&req.auth_config)
+        .bind(&secret)
         .bind(&req.events)
-        .bind(&req.filters)
-        .bind(&req.payload_template)
         .bind(&req.headers)
-        .bind(&retry_policy_json)
-        .bind(req.rate_limit_requests)
-        .bind(req.rate_limit_window_seconds)
-        .bind(req.timeout_ms.unwrap_or(30000))
-        .bind(req.verify_ssl.unwrap_or(true))
+        .bind(&retry_config_json)
         .bind(user_id)
         .fetch_one(&self.pool)
         .await
@@ -834,6 +911,9 @@ impl ApiEcosystemRepository {
             .as_ref()
             .and_then(|rp| serde_json::to_value(rp).ok());
 
+        // Map the status field to is_active boolean for DB compatibility
+        let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
+
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
             UPDATE webhook_subscriptions SET
@@ -841,14 +921,20 @@ impl ApiEcosystemRepository {
                 description = COALESCE($3, description),
                 url = COALESCE($4, url),
                 events = COALESCE($5, events),
-                filters = COALESCE($6, filters),
-                payload_template = COALESCE($7, payload_template),
-                headers = COALESCE($8, headers),
-                retry_policy = COALESCE($9, retry_policy),
-                status = COALESCE($10, status),
+                headers = COALESCE($6, headers),
+                retry_config = COALESCE($7, retry_config),
+                is_active = COALESCE($8, is_active),
                 updated_at = NOW()
             WHERE id = $1
-            RETURNING *
+            RETURNING
+                id, organization_id, name, description, url,
+                'hmac_sha256' as auth_type, NULL::jsonb as auth_config,
+                events, NULL::jsonb as filters, NULL::jsonb as payload_template,
+                CASE WHEN is_active THEN 'active' ELSE 'inactive' END as status,
+                headers, retry_config as retry_policy,
+                NULL::int4 as rate_limit_requests, NULL::int4 as rate_limit_window_seconds,
+                30000 as timeout_ms, TRUE as verify_ssl,
+                created_by, created_at, updated_at
             "#,
         )
         .bind(id)
@@ -856,11 +942,9 @@ impl ApiEcosystemRepository {
         .bind(&req.description)
         .bind(&req.url)
         .bind(&req.events)
-        .bind(&req.filters)
-        .bind(&req.payload_template)
         .bind(&req.headers)
         .bind(&retry_policy_json)
-        .bind(&req.status)
+        .bind(is_active)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -903,11 +987,11 @@ impl ApiEcosystemRepository {
             r#"
             SELECT
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'success') as success,
+                COUNT(*) FILTER (WHERE status = 'delivered') as success,
                 COUNT(*) FILTER (WHERE status = 'failed') as failed,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'retrying') as retrying,
-                COALESCE(AVG(response_time_ms), 0)::float8 as avg_time,
+                COALESCE(AVG(duration_ms), 0)::float8 as avg_time,
                 COUNT(*) FILTER (WHERE delivered_at > NOW() - INTERVAL '24 hours') as last_24h,
                 COUNT(*) FILTER (WHERE delivered_at > NOW() - INTERVAL '24 hours' AND status = 'failed') as last_24h_failed
             FROM webhook_deliveries
@@ -1062,6 +1146,7 @@ impl ApiEcosystemRepository {
     }
 
     /// Rotate (replace) a developer API key.
+    /// Preserves all settings from the old key including is_sandbox.
     pub async fn rotate_developer_api_key(
         &self,
         key_id: Uuid,
@@ -1087,6 +1172,7 @@ impl ApiEcosystemRepository {
             r#"
             UPDATE developer_api_keys SET
                 is_active = FALSE,
+                status = 'revoked',
                 revoked_at = NOW(),
                 revoked_by = $2
             WHERE id = $1
@@ -1098,13 +1184,13 @@ impl ApiEcosystemRepository {
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // Create a new key with the same settings
+        // Create a new key with the same settings, preserving is_sandbox
         let new_key = sqlx::query_as::<_, DeveloperApiKey>(
             r#"
             INSERT INTO developer_api_keys (
                 developer_id, name, key_prefix, key_hash, scopes,
-                rate_limit_tier, expires_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                rate_limit_tier, is_sandbox, expires_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
             "#,
         )
@@ -1114,6 +1200,7 @@ impl ApiEcosystemRepository {
         .bind(new_key_hash)
         .bind(&old_key.scopes)
         .bind(&old_key.rate_limit_tier)
+        .bind(old_key.is_sandbox) // Preserve sandbox setting
         .bind(old_key.expires_at)
         .fetch_one(&self.pool)
         .await
