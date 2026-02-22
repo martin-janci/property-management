@@ -12,8 +12,7 @@ use axum::{
 use chrono::{Duration, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
-    api_doc_category, code_sample_language, developer_status, ecosystem_webhook_event,
-    installation_status, integration_category, marketplace_integration_status, ApiCodeSample,
+    api_doc_category, code_sample_language, ecosystem_webhook_event, ApiCodeSample,
     ApiDocumentation, ApiEcosystemDashboard, ApiEcosystemStatistics, Connector, ConnectorAction,
     ConnectorExecutionLog, ConnectorExecutionQuery, CreateApiCodeSample, CreateApiDocumentation,
     CreateConnector, CreateConnectorAction, CreateDeveloperApiKey, CreateDeveloperApiKeyResponse,
@@ -267,43 +266,14 @@ fn not_found(entity: &str, id: impl std::fmt::Display) -> (StatusCode, Json<Erro
     tag = "API Ecosystem"
 )]
 async fn list_marketplace_integrations(
-    State(_state): State<AppState>,
-    Query(_query): Query<MarketplaceIntegrationQuery>,
+    State(state): State<AppState>,
+    Query(query): Query<MarketplaceIntegrationQuery>,
 ) -> Result<Json<Vec<MarketplaceIntegrationSummary>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    // For now, return sample data
-    let integrations = vec![
-        MarketplaceIntegrationSummary {
-            id: Uuid::new_v4(),
-            slug: "quickbooks".to_string(),
-            name: "QuickBooks".to_string(),
-            description: "Sync invoices and payments with QuickBooks".to_string(),
-            category: integration_category::ACCOUNTING.to_string(),
-            icon_url: Some("https://cdn.example.com/icons/quickbooks.svg".to_string()),
-            vendor_name: "Intuit".to_string(),
-            status: marketplace_integration_status::AVAILABLE.to_string(),
-            rating_average: Some(4.5),
-            rating_count: 128,
-            install_count: 1542,
-            is_featured: true,
-            is_premium: false,
-        },
-        MarketplaceIntegrationSummary {
-            id: Uuid::new_v4(),
-            slug: "slack".to_string(),
-            name: "Slack".to_string(),
-            description: "Send notifications to Slack channels".to_string(),
-            category: integration_category::COMMUNICATION.to_string(),
-            icon_url: Some("https://cdn.example.com/icons/slack.svg".to_string()),
-            vendor_name: "Slack Technologies".to_string(),
-            status: marketplace_integration_status::AVAILABLE.to_string(),
-            rating_average: Some(4.7),
-            rating_count: 256,
-            install_count: 2341,
-            is_featured: true,
-            is_premium: false,
-        },
-    ];
+    let integrations = state
+        .api_ecosystem_repo
+        .list_marketplace_integrations(&query)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(integrations))
 }
@@ -320,38 +290,26 @@ async fn list_marketplace_integrations(
     tag = "API Ecosystem"
 )]
 async fn create_marketplace_integration(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Json(request): Json<CreateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Check admin permissions and implement database insert
-    let integration = MarketplaceIntegration {
-        id: Uuid::new_v4(),
-        slug: request.slug,
-        name: request.name,
-        description: request.description,
-        long_description: request.long_description,
-        category: request.category,
-        icon_url: request.icon_url,
-        banner_url: request.banner_url,
-        vendor_name: request.vendor_name,
-        vendor_url: request.vendor_url,
-        documentation_url: request.documentation_url,
-        support_url: request.support_url,
-        version: request.version,
-        status: marketplace_integration_status::AVAILABLE.to_string(),
-        features: request.features,
-        requirements: request.requirements,
-        pricing_info: request.pricing_info,
-        rating_average: None,
-        rating_count: 0,
-        install_count: 0,
-        is_featured: false,
-        is_premium: request.is_premium.unwrap_or(false),
-        required_scopes: request.required_scopes,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    // Admin only - require platform admin privileges
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let integration = state
+        .api_ecosystem_repo
+        .create_marketplace_integration(&request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(integration))
 }
@@ -368,11 +326,17 @@ async fn create_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn get_marketplace_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Integration", path.id))
+    let integration = state
+        .api_ecosystem_repo
+        .get_marketplace_integration(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Integration", path.id))?;
+
+    Ok(Json(integration))
 }
 
 /// Update marketplace integration (admin only).
@@ -388,13 +352,28 @@ async fn get_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn update_marketplace_integration(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
-    Json(_request): Json<UpdateMarketplaceIntegration>,
+    Json(request): Json<UpdateMarketplaceIntegration>,
 ) -> Result<Json<MarketplaceIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Integration", path.id))
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+    let integration = state
+        .api_ecosystem_repo
+        .update_marketplace_integration(path.id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Integration", path.id))?;
+
+    Ok(Json(integration))
 }
 
 /// Delete marketplace integration (admin only).
@@ -409,12 +388,30 @@ async fn update_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn delete_marketplace_integration(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+    let deleted = state
+        .api_ecosystem_repo
+        .delete_marketplace_integration(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Integration", path.id))
+    }
 }
 
 /// List integration categories with counts.
@@ -427,46 +424,54 @@ async fn delete_marketplace_integration(
     tag = "API Ecosystem"
 )]
 async fn list_integration_categories(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<IntegrationCategoryCount>>, (StatusCode, Json<ErrorResponse>)> {
-    let categories = vec![
-        IntegrationCategoryCount {
-            category: integration_category::ACCOUNTING.to_string(),
-            count: 5,
-        },
-        IntegrationCategoryCount {
-            category: integration_category::CRM.to_string(),
-            count: 4,
-        },
-        IntegrationCategoryCount {
-            category: integration_category::CALENDAR.to_string(),
-            count: 3,
-        },
-        IntegrationCategoryCount {
-            category: integration_category::COMMUNICATION.to_string(),
-            count: 6,
-        },
-    ];
+    let categories = state
+        .api_ecosystem_repo
+        .get_integration_category_counts()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(categories))
+}
+
+/// Pagination query parameters.
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct PaginationQuery {
+    #[serde(default = "default_limit")]
+    pub limit: i32,
+    #[serde(default)]
+    pub offset: i32,
+}
+
+fn default_limit() -> i32 {
+    20
 }
 
 /// List integration ratings.
 #[utoipa::path(
     get,
     path = "/api/v1/ecosystem/marketplace/{id}/ratings",
-    params(IntegrationIdPath),
+    params(IntegrationIdPath, PaginationQuery),
     responses(
         (status = 200, description = "List of ratings", body = Vec<IntegrationRatingWithUser>),
     ),
     tag = "API Ecosystem"
 )]
 async fn list_integration_ratings(
-    State(_state): State<AppState>,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<IntegrationIdPath>,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<IntegrationRatingWithUser>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let limit = query.limit.clamp(1, 100);
+    let offset = query.offset.max(0);
+    let ratings = state
+        .api_ecosystem_repo
+        .list_integration_ratings(path.id, limit, offset)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(ratings))
 }
 
 /// Create integration rating.
@@ -481,23 +486,20 @@ async fn list_integration_ratings(
     tag = "API Ecosystem"
 )]
 async fn create_integration_rating(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
     Json(request): Json<CreateIntegrationRating>,
 ) -> Result<Json<IntegrationRating>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let rating = IntegrationRating {
-        id: Uuid::new_v4(),
-        integration_id: path.id,
-        organization_id: auth.tenant_id.unwrap_or(Uuid::nil()),
-        user_id: auth.user_id,
-        rating: request.rating,
-        review: request.review,
-        helpful_count: 0,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let org_id = auth
+        .tenant_id
+        .ok_or_else(|| error_response("MISSING_ORG", "Organization context required"))?;
+
+    let rating = state
+        .api_ecosystem_repo
+        .create_integration_rating(path.id, org_id, auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(rating))
 }
@@ -513,12 +515,17 @@ async fn create_integration_rating(
     tag = "API Ecosystem"
 )]
 async fn list_organization_integrations(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
+    Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<OrganizationIntegration>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let integrations = state
+        .api_ecosystem_repo
+        .list_organization_integrations(path.org_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(integrations))
 }
 
 /// Install integration.
@@ -533,60 +540,71 @@ async fn list_organization_integrations(
     tag = "API Ecosystem"
 )]
 async fn install_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     auth: AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<InstallIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let installation = OrganizationIntegration {
-        id: Uuid::new_v4(),
-        organization_id: path.org_id,
-        integration_id: request.integration_id,
-        status: installation_status::INSTALLED.to_string(),
-        configuration: request.configuration,
-        credentials_encrypted: None,
-        enabled: true,
-        last_sync_at: None,
-        last_error: None,
-        installed_by: auth.user_id,
-        installed_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let installation = state
+        .api_ecosystem_repo
+        .install_integration(path.org_id, auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(installation))
 }
 
 /// Get organization integration.
 async fn get_organization_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<OrgIntegrationPath>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Integration", path.id))
+    let integration = state
+        .api_ecosystem_repo
+        .get_organization_integration(path.org_id, path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Integration", path.id))?;
+
+    Ok(Json(integration))
 }
 
 /// Update organization integration.
 async fn update_organization_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<OrgIntegrationPath>,
-    Json(_request): Json<UpdateOrganizationIntegration>,
+    Json(request): Json<UpdateOrganizationIntegration>,
 ) -> Result<Json<OrganizationIntegration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Integration", path.id))
+    let integration = state
+        .api_ecosystem_repo
+        .update_organization_integration(path.org_id, path.id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Integration", path.id))?;
+
+    Ok(Json(integration))
 }
 
 /// Uninstall integration.
 async fn uninstall_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIntegrationPath>,
+    Path(path): Path<OrgIntegrationPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    let uninstalled = state
+        .api_ecosystem_repo
+        .uninstall_integration(path.org_id, path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if uninstalled {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Integration", path.id))
+    }
 }
 
 /// Sync integration.
@@ -676,49 +694,48 @@ async fn delete_connector(
 
 /// List connector actions.
 async fn list_connector_actions(
-    State(_state): State<AppState>,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<Vec<ConnectorAction>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let actions = state
+        .api_ecosystem_repo
+        .list_connector_actions(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(actions))
 }
 
 /// Create connector action.
 async fn create_connector_action(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _auth: AuthUser,
     Path(_path): Path<IntegrationIdPath>,
     Json(request): Json<CreateConnectorAction>,
 ) -> Result<Json<ConnectorAction>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let action = ConnectorAction {
-        id: Uuid::new_v4(),
-        connector_id: request.connector_id,
-        name: request.name,
-        description: request.description,
-        http_method: request.http_method,
-        endpoint_path: request.endpoint_path,
-        request_schema: request.request_schema,
-        response_schema: request.response_schema,
-        request_transformations: request.request_transformations,
-        response_transformations: request.response_transformations,
-        pagination_config: request.pagination_config,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let action = state
+        .api_ecosystem_repo
+        .create_connector_action(&request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(action))
 }
 
 /// List connector execution logs.
 async fn list_connector_logs(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
-    Query(_query): Query<ConnectorExecutionQuery>,
+    Path(path): Path<OrgIdPath>,
+    Query(query): Query<ConnectorExecutionQuery>,
 ) -> Result<Json<Vec<ConnectorExecutionLog>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let logs = state
+        .api_ecosystem_repo
+        .list_connector_execution_logs(path.org_id, &query)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(logs))
 }
 
 // ==================== Story 150.3: Webhook Management ====================
@@ -735,37 +752,17 @@ async fn list_enhanced_webhooks(
 
 /// Create enhanced webhook.
 async fn create_enhanced_webhook(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     auth: AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<CreateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert with URL validation
-    let webhook = EnhancedWebhookSubscription {
-        id: Uuid::new_v4(),
-        organization_id: path.org_id,
-        name: request.name,
-        description: request.description,
-        url: request.url,
-        auth_type: request.auth_type,
-        auth_config: request.auth_config,
-        events: request.events,
-        filters: request.filters,
-        payload_template: request.payload_template,
-        status: "active".to_string(),
-        headers: request.headers,
-        retry_policy: request
-            .retry_policy
-            .map(|p| serde_json::to_value(p).unwrap()),
-        rate_limit_requests: request.rate_limit_requests,
-        rate_limit_window_seconds: request.rate_limit_window_seconds,
-        timeout_ms: request.timeout_ms.unwrap_or(30000),
-        verify_ssl: request.verify_ssl.unwrap_or(true),
-        created_by: auth.user_id,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let webhook = state
+        .api_ecosystem_repo
+        .create_enhanced_webhook(path.org_id, auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(webhook))
 }
@@ -781,12 +778,18 @@ async fn get_enhanced_webhook(
 
 /// Update enhanced webhook.
 async fn update_enhanced_webhook(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
-    Json(_request): Json<UpdateEnhancedWebhookSubscription>,
+    Json(request): Json<UpdateEnhancedWebhookSubscription>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Webhook", path.id))
+    let webhook = state
+        .api_ecosystem_repo
+        .update_enhanced_webhook(path.id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Webhook", path.id))?;
+
+    Ok(Json(webhook))
 }
 
 /// Delete enhanced webhook.
@@ -813,32 +816,31 @@ async fn test_enhanced_webhook(
 
 /// List webhook delivery logs.
 async fn list_webhook_delivery_logs(
-    State(_state): State<AppState>,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<IntegrationIdPath>,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<EnhancedWebhookDeliveryLog>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let limit = query.limit.clamp(1, 100);
+    let offset = query.offset.max(0);
+    let logs = state
+        .api_ecosystem_repo
+        .list_webhook_delivery_logs(path.id, limit, offset)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(logs))
 }
 
 /// Get enhanced webhook statistics.
 async fn get_enhanced_webhook_stats(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<EnhancedWebhookStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement statistics calculation
-    let stats = EnhancedWebhookStatistics {
-        subscription_id: path.id,
-        total_deliveries: 0,
-        successful_deliveries: 0,
-        failed_deliveries: 0,
-        pending_deliveries: 0,
-        retrying_deliveries: 0,
-        average_response_time_ms: None,
-        success_rate: 100.0,
-        last_24h_deliveries: 0,
-        last_24h_failures: 0,
-        events_by_type: serde_json::json!({}),
-    };
+    let stats = state
+        .api_ecosystem_repo
+        .get_webhook_statistics(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(stats))
 }
@@ -1029,104 +1031,203 @@ async fn handle_prebuilt_oauth_callback(
 
 /// Register as a developer.
 async fn register_developer(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Json(request): Json<CreateDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let registration = DeveloperRegistration {
-        id: Uuid::new_v4(),
-        user_id: None,
-        email: request.email,
-        company_name: request.company_name,
-        website: request.website,
-        use_case: request.use_case,
-        status: developer_status::PENDING.to_string(),
-        approved_at: None,
-        approved_by: None,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let registration = state
+        .api_ecosystem_repo
+        .register_developer(auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(registration))
 }
 
 /// Get developer registration.
 async fn get_developer_registration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    _auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Developer", path.id))
+    let registration = state
+        .api_ecosystem_repo
+        .get_developer_registration(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Developer", path.id))?;
+
+    Ok(Json(registration))
 }
 
 /// Review developer registration (admin only).
 async fn review_developer_registration(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<DeveloperIdPath>,
-    Json(_request): Json<ReviewDeveloperRegistration>,
+    Json(request): Json<ReviewDeveloperRegistration>,
 ) -> Result<Json<DeveloperRegistration>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement review logic
-    Err(not_found("Developer", path.id))
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+    let registration = state
+        .api_ecosystem_repo
+        .review_developer_registration(path.id, auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Developer", path.id))?;
+
+    Ok(Json(registration))
 }
 
 /// List developer API keys.
 async fn list_developer_api_keys(
     State(_state): State<AppState>,
+    _auth: AuthUser,
     Path(_path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
+    // TODO: Map DeveloperApiKey to DeveloperApiKeyDisplay (hiding key_hash)
     Ok(Json(vec![]))
 }
 
 /// Create developer API key.
 async fn create_developer_api_key(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperIdPath>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(path): Path<DeveloperIdPath>,
     Json(request): Json<CreateDeveloperApiKey>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the caller owns this developer account or is platform admin
+    if !auth.is_platform_admin() {
+        let dev_account = state
+            .api_ecosystem_repo
+            .get_developer_registration(path.id)
+            .await
+            .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+            .ok_or_else(|| not_found("Developer", path.id))?;
+        if dev_account.user_id != Some(auth.user_id) {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "You can only create API keys for your own developer account",
+                )),
+            ));
+        }
+    }
+
     // Generate a new API key
+    let is_sandbox = request.is_sandbox.unwrap_or(false);
     let key = format!(
         "ppt_{}_{}",
-        if request.is_sandbox.unwrap_or(false) {
-            "test"
-        } else {
-            "live"
-        },
+        if is_sandbox { "test" } else { "live" },
         Uuid::new_v4().to_string().replace("-", "")
     );
 
+    // Create key prefix (first 8 chars for display, matches VARCHAR(8) in DB)
+    let key_prefix = key.chars().take(8).collect::<String>();
+
+    // Hash the key for storage (in production, use proper hashing like argon2)
+    let key_hash = format!("sha256:{}", sha256_simple(&key));
+
+    let api_key = state
+        .api_ecosystem_repo
+        .create_developer_api_key(path.id, &request, &key_prefix, &key_hash)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    // Return the full key only on creation
     let response = CreateDeveloperApiKeyResponse {
-        id: Uuid::new_v4(),
-        name: request.name,
-        key: key.clone(),
-        scopes: request.scopes,
-        rate_limit_tier: "standard".to_string(),
-        is_sandbox: request.is_sandbox.unwrap_or(false),
-        expires_at: request
-            .expires_in_days
-            .map(|days| Utc::now() + Duration::days(days as i64)),
+        id: api_key.id,
+        name: api_key.name,
+        key: key.clone(), // Return full key only on creation
+        scopes: api_key.scopes,
+        rate_limit_tier: api_key.rate_limit_tier,
+        is_sandbox: api_key.is_sandbox,
+        expires_at: api_key.expires_at,
     };
 
     Ok(Json(response))
 }
 
+/// SHA-256 hash for API key storage.
+/// Note: For production, consider using Argon2id/bcrypt/scrypt with salt.
+fn sha256_simple(input: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
 /// Revoke developer API key.
 async fn revoke_developer_api_key(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperKeyPath>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(path): Path<DeveloperKeyPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement key revocation
-    Ok(StatusCode::NO_CONTENT)
+    let revoked = state
+        .api_ecosystem_repo
+        .revoke_api_key(path.key_id, auth.user_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if revoked {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("API key", path.key_id))
+    }
 }
 
 /// Rotate developer API key.
 async fn rotate_developer_api_key(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<DeveloperKeyPath>,
 ) -> Result<Json<CreateDeveloperApiKeyResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement key rotation
-    Err(not_found("API key", path.key_id))
+    // Fetch existing key to determine sandbox status for the new key prefix
+    let existing_keys = state
+        .api_ecosystem_repo
+        .list_developer_api_keys(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+    let old_key = existing_keys
+        .iter()
+        .find(|k| k.id == path.key_id)
+        .ok_or_else(|| not_found("API key", path.key_id))?;
+    let is_sandbox = old_key.is_sandbox;
+
+    let key = format!(
+        "ppt_{}_{}",
+        if is_sandbox { "test" } else { "live" },
+        Uuid::new_v4().to_string().replace("-", "")
+    );
+    let key_prefix = key.chars().take(8).collect::<String>();
+    let key_hash = format!("sha256:{}", sha256_simple(&key));
+
+    let api_key = state
+        .api_ecosystem_repo
+        .rotate_developer_api_key(path.key_id, auth.user_id, &key_prefix, &key_hash)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("API key", path.key_id))?;
+
+    let response = CreateDeveloperApiKeyResponse {
+        id: api_key.id,
+        name: api_key.name,
+        key,
+        scopes: api_key.scopes,
+        rate_limit_tier: api_key.rate_limit_tier,
+        is_sandbox: api_key.is_sandbox,
+        expires_at: api_key.expires_at,
+    };
+
+    Ok(Json(response))
 }
 
 /// Get developer usage statistics.

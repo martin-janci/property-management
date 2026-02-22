@@ -338,3 +338,8 @@ pub use portfolio_performance::PortfolioPerformanceRepository;
 pub mod multi_currency;
 
 pub use multi_currency::MultiCurrencyRepository;
+
+// Epic 150: API Ecosystem Expansion
+pub mod api_ecosystem;
+
+pub use api_ecosystem::ApiEcosystemRepository;

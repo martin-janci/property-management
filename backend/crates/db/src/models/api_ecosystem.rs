@@ -73,7 +73,7 @@ pub struct MarketplaceIntegration {
 }
 
 /// Integration summary for list views.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct MarketplaceIntegrationSummary {
     pub id: Uuid,
     pub slug: String,
@@ -203,7 +203,7 @@ pub struct CreateIntegrationRating {
 }
 
 /// Integration rating with user info.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct IntegrationRatingWithUser {
     pub id: Uuid,
     pub integration_id: Uuid,
@@ -215,7 +215,7 @@ pub struct IntegrationRatingWithUser {
 }
 
 /// Category count for filtering.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct IntegrationCategoryCount {
     pub category: String,
     pub count: i64,

@@ -38,7 +38,7 @@ orchestrate
 !backend/**
 backend/target/
 backend/**/*.rs.bk
-backend/Cargo.lock
+# backend/Cargo.lock — tracked for reproducible Docker builds
 
 # === Frontend (TypeScript) ===
 !frontend/

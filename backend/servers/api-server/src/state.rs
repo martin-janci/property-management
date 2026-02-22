@@ -6,9 +6,9 @@ use crate::services::{AuthService, EmailService, JwtService, OAuthService, TotpS
 use api_core::TenantMembershipProvider;
 use db::{
     repositories::{
-        AgencyRepository, AiChatRepository, AnnouncementRepository, AuditLogRepository,
-        AutomationRepository, BackgroundJobRepository, BoardMeetingRepository, BudgetRepository,
-        BuildingCertificationRepository, BuildingRepository, CommunityRepository,
+        AgencyRepository, AiChatRepository, AnnouncementRepository, ApiEcosystemRepository,
+        AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
+        BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         CriticalNotificationRepository, DataExportRepository, DelegationRepository,
         DisputeRepository, DocumentRepository, DocumentTemplateRepository, EmergencyRepository,
         EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
@@ -164,6 +164,8 @@ pub struct AppState {
     pub portfolio_performance_repo: PortfolioPerformanceRepository,
     // Epic 145: Multi-Currency & Cross-Border Support
     pub multi_currency_repo: MultiCurrencyRepository,
+    // Epic 150: API Ecosystem Expansion
+    pub api_ecosystem_repo: ApiEcosystemRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -306,6 +308,8 @@ impl AppState {
         let portfolio_performance_repo = PortfolioPerformanceRepository::new(db.clone());
         // Epic 145: Multi-Currency & Cross-Border Support
         let multi_currency_repo = MultiCurrencyRepository::new(db.clone());
+        // Epic 150: API Ecosystem Expansion
+        let api_ecosystem_repo = ApiEcosystemRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -395,6 +399,7 @@ impl AppState {
             board_meeting_repo,
             portfolio_performance_repo,
             multi_currency_repo,
+            api_ecosystem_repo,
             llm_client,
             auth_service,
             email_service,
