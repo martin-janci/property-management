@@ -17,6 +17,8 @@ FROM chef AS planner
 COPY backend/Cargo.toml backend/Cargo.lock ./
 COPY backend/crates ./crates
 COPY backend/servers ./servers
+# Sitemap JSON referenced by common crate via include_str!
+COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 RUN cargo chef prepare --recipe-path recipe.json
 
@@ -73,6 +75,8 @@ RUN RUST_TARGET=$(cat /tmp/rust-target) && \
 COPY backend/Cargo.toml backend/Cargo.lock ./
 COPY backend/crates ./crates
 COPY backend/servers ./servers
+# Sitemap JSON referenced by common crate via include_str!
+COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 # Build the applications
 ENV SQLX_OFFLINE=true

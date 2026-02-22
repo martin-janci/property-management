@@ -787,8 +787,7 @@ impl ApiEcosystemRepository {
         let retry_policy_json = req
             .retry_policy
             .as_ref()
-            .map(|rp| serde_json::to_value(rp).ok())
-            .flatten();
+            .and_then(|rp| serde_json::to_value(rp).ok());
 
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
@@ -833,8 +832,7 @@ impl ApiEcosystemRepository {
         let retry_policy_json = req
             .retry_policy
             .as_ref()
-            .map(|rp| serde_json::to_value(rp).ok())
-            .flatten();
+            .and_then(|rp| serde_json::to_value(rp).ok());
 
         let subscription = sqlx::query_as::<_, EnhancedWebhookSubscription>(
             r#"
