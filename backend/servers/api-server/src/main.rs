@@ -12,7 +12,7 @@
 use axum::{http, routing::get, Router};
 use http::HeaderValue;
 use std::net::SocketAddr;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -603,7 +603,13 @@ async fn main() -> anyhow::Result<()> {
                     http::Method::OPTIONS,
                 ])
                 // Allow common headers
-                .allow_headers(Any)
+                .allow_headers([
+                    http::header::AUTHORIZATION,
+                    http::header::CONTENT_TYPE,
+                    http::header::ACCEPT,
+                    http::header::ORIGIN,
+                    http::header::X_REQUESTED_WITH,
+                ])
                 // Allow credentials (cookies, authorization headers)
                 .allow_credentials(true)
                 // Cache preflight response for 1 hour
