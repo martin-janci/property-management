@@ -18,7 +18,7 @@ COPY frontend/packages/reality-api-client/package.json ./packages/reality-api-cl
 COPY frontend/apps/reality-web/package.json ./apps/reality-web/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install 
 
 # =============================================================================
 # Stage 2: Builder

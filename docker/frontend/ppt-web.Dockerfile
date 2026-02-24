@@ -19,7 +19,7 @@ COPY frontend/packages/api-client/package.json ./packages/api-client/
 COPY frontend/apps/ppt-web/package.json ./apps/ppt-web/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install 
 
 # =============================================================================
 # Stage 2: Builder
