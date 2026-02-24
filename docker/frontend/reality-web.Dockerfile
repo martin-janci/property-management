@@ -30,8 +30,12 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Copy all deps at once
-COPY --from=deps /app/ ./
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
+COPY --from=deps /app/packages/reality-api-client/node_modules ./packages/reality-api-client/node_modules
+COPY --from=deps /app/apps/reality-web/node_modules ./apps/reality-web/node_modules
 
 # Copy source
 COPY frontend/ ./
@@ -57,7 +61,7 @@ RUN addgroup -g 1001 -S nextjs && \
 
 COPY --from=builder --chown=nextjs:nextjs /app/apps/reality-web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/apps/reality-web/.next/static ./apps/reality-web/.next/static
-COPY --from=builder --chown=nextjs:nextjs /app/apps/reality-web/public ./apps/reality-web/public
+COPY --from=builder --chown=nextjs:nextjs /app/apps/reality-web/public* ./apps/reality-web/public/
 
 ENV NODE_ENV=production
 ENV PORT=3000
