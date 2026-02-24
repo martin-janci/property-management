@@ -54,7 +54,7 @@ COPY --from=builder /app/apps/ppt-web/dist /usr/share/nginx/html
 
 RUN addgroup -g 1001 -S ppt && \
     adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G ppt -g ppt ppt && \
-    chown -R ppt:ppt /var/cache/nginx /var/run /var/log/nginx /usr/share/nginx/html
+    chown -R ppt:ppt /var/cache/nginx /var/run /run /var/log/nginx /usr/share/nginx/html
 
 USER ppt
 EXPOSE 8080
