@@ -14,6 +14,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 # Copy package files
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 COPY frontend/packages/shared/package.json ./packages/shared/
+COPY frontend/packages/ui-kit/package.json ./packages/ui-kit/
 COPY frontend/packages/reality-api-client/package.json ./packages/reality-api-client/
 COPY frontend/apps/reality-web/package.json ./apps/reality-web/
 
@@ -33,6 +34,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
 COPY --from=deps /app/packages/reality-api-client/node_modules ./packages/reality-api-client/node_modules
 COPY --from=deps /app/apps/reality-web/node_modules ./apps/reality-web/node_modules
 
