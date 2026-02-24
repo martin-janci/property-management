@@ -16,6 +16,7 @@ COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml 
 COPY frontend/packages/shared/package.json ./packages/shared/
 COPY frontend/packages/ui-kit/package.json ./packages/ui-kit/
 COPY frontend/packages/api-client/package.json ./packages/api-client/
+COPY frontend/packages/sitemap/package.json ./packages/sitemap/
 COPY frontend/apps/ppt-web/package.json ./apps/ppt-web/
 
 # Install dependencies
@@ -36,6 +37,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
 COPY --from=deps /app/packages/api-client/node_modules ./packages/api-client/node_modules
+COPY --from=deps /app/packages/sitemap/node_modules ./packages/sitemap/node_modules
 COPY --from=deps /app/apps/ppt-web/node_modules ./apps/ppt-web/node_modules
 
 # Copy source
