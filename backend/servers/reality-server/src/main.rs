@@ -351,7 +351,7 @@ async fn main() -> anyhow::Result<()> {
                     http::header::CONTENT_TYPE,
                     http::header::ACCEPT,
                     http::header::ORIGIN,
-                    http::header::X_REQUESTED_WITH,
+                    http::HeaderName::from_static("x-requested-with"),
                 ])
                 // Allow credentials (cookies, authorization headers)
                 .allow_credentials(true)
