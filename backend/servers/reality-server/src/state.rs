@@ -41,15 +41,17 @@ pub struct AppConfig {
 impl AppConfig {
     /// Load configuration from environment variables.
     pub fn from_env() -> Self {
+        let pm_api_base =
+            std::env::var("PM_API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
         Self {
             pm_oauth_authorize_url: std::env::var("PM_OAUTH_AUTHORIZE_URL")
-                .unwrap_or_else(|_| "http://localhost:8080/api/v1/oauth/authorize".to_string()),
+                .unwrap_or_else(|_| format!("{}/api/v1/oauth/authorize", pm_api_base)),
             pm_oauth_token_url: std::env::var("PM_OAUTH_TOKEN_URL")
-                .unwrap_or_else(|_| "http://localhost:8080/api/v1/oauth/token".to_string()),
+                .unwrap_or_else(|_| format!("{}/api/v1/oauth/token", pm_api_base)),
             pm_userinfo_url: std::env::var("PM_USERINFO_URL")
-                .unwrap_or_else(|_| "http://localhost:8080/api/v1/oauth/userinfo".to_string()),
+                .unwrap_or_else(|_| format!("{}/api/v1/oauth/userinfo", pm_api_base)),
             pm_introspect_url: std::env::var("PM_INTROSPECT_URL")
-                .unwrap_or_else(|_| "http://localhost:8080/api/v1/oauth/introspect".to_string()),
+                .unwrap_or_else(|_| format!("{}/api/v1/oauth/introspect", pm_api_base)),
             pm_client_id: std::env::var("PM_CLIENT_ID")
                 .unwrap_or_else(|_| "reality-portal".to_string()),
             pm_client_secret: std::env::var("PM_CLIENT_SECRET")
@@ -83,7 +85,7 @@ impl AppConfig {
                 secret
             },
             pm_api_health_url: std::env::var("PM_API_HEALTH_URL")
-                .unwrap_or_else(|_| "http://localhost:8080/health".to_string()),
+                .unwrap_or_else(|_| format!("{}/health", pm_api_base)),
         }
     }
 }
