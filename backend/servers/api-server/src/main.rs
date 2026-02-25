@@ -308,7 +308,22 @@ async fn main() -> anyhow::Result<()> {
     let jwt_service = JwtService::new(&jwt_secret).expect("Failed to create JWT service");
 
     // Create application state
-    let state = AppState::new(db_pool.clone(), email_service, jwt_service);
+    let mut state = AppState::new(db_pool.clone(), email_service, jwt_service);
+
+    // Initialize Redis if configured (Epic 103)
+    if std::env::var("REDIS_URL").is_ok() {
+        match integrations::RedisClient::from_env().await {
+            Ok(redis_client) => {
+                state = state.with_redis(redis_client);
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to connect to Redis: {}. Continuing without Redis.",
+                    e
+                );
+            }
+        }
+    }
 
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
