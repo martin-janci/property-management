@@ -9,13 +9,14 @@ use db::{
         AgencyRepository, AiChatRepository, AnnouncementRepository, ApiEcosystemRepository,
         AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
         BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
-        CriticalNotificationRepository, DataExportRepository, DelegationRepository,
-        DisputeRepository, DocumentRepository, DocumentTemplateRepository, EmergencyRepository,
-        EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
-        EsgReportingRepository, FacilityRepository, FaultRepository, FeatureAnalyticsRepository,
-        FeatureFlagRepository, FeaturePackageRepository, FinancialRepository, FormRepository,
-        GovernmentPortalRepository, GranularNotificationRepository, HealthMonitoringRepository,
-        HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
+        ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
+        DelegationRepository, DisputeRepository, DocumentRepository, DocumentTemplateRepository,
+        EddRepository, EmergencyRepository, EnergyRepository, EnhancedTenantScreeningRepository,
+        EquipmentRepository, EsgReportingRepository, FacilityRepository, FaultRepository,
+        FeatureAnalyticsRepository, FeatureFlagRepository, FeaturePackageRepository,
+        FinancialRepository, FormRepository, GovernmentPortalRepository,
+        GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
+        InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
         ListingRepository, LlmDocumentRepository, MarketPricingRepository, MeterRepository,
         MultiCurrencyRepository, NotificationPreferenceRepository, OAuthRepository,
@@ -166,6 +167,9 @@ pub struct AppState {
     pub multi_currency_repo: MultiCurrencyRepository,
     // Epic 150: API Ecosystem Expansion
     pub api_ecosystem_repo: ApiEcosystemRepository,
+    // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
+    pub edd_repo: EddRepository,
+    pub compliance_repo: ComplianceRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -310,6 +314,9 @@ impl AppState {
         let multi_currency_repo = MultiCurrencyRepository::new(db.clone());
         // Epic 150: API Ecosystem Expansion
         let api_ecosystem_repo = ApiEcosystemRepository::new(db.clone());
+        // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
+        let edd_repo = EddRepository::new(db.clone());
+        let compliance_repo = ComplianceRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -400,6 +407,8 @@ impl AppState {
             portfolio_performance_repo,
             multi_currency_repo,
             api_ecosystem_repo,
+            edd_repo,
+            compliance_repo,
             llm_client,
             auth_service,
             email_service,
