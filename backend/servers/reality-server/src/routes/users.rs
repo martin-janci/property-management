@@ -224,16 +224,36 @@ pub async fn login(
     )
 )]
 pub async fn logout(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     auth: AuthenticatedUser,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    // The session token is already validated by the AuthenticatedUser extractor
-    // We would need to get the actual token to invalidate it
-    // For now, we just log the logout
-    tracing::info!(user_id = %auth.user_id, "User logged out");
+    // Extract the token from Authorization header
+    let token = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|auth| auth.strip_prefix("Bearer "))
+        .or_else(|| {
+            // Fall back to cookie
+            headers
+                .get(axum::http::header::COOKIE)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|cookies| {
+                    cookies
+                        .split(';')
+                        .find(|c| c.trim().starts_with("portal_session="))
+                        .map(|c| c.trim().strip_prefix("portal_session=").unwrap())
+                })
+        });
 
-    // In a full implementation, we would invalidate the session token here
-    // state.session_service.invalidate_session(&token).await?;
+    if let Some(token) = token {
+        // Invalidate the session
+        if let Err(e) = state.session_service.invalidate_session(token).await {
+            tracing::warn!(user_id = %auth.user_id, error = %e, "Failed to invalidate session");
+        }
+    }
+
+    tracing::info!(user_id = %auth.user_id, "User logged out");
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
