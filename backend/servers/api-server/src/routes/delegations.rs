@@ -3,7 +3,7 @@
 //! Implements ownership delegation management - allowing unit owners to delegate
 //! voting, document access, and other rights to other users.
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -151,12 +151,14 @@ pub struct CheckDelegationResponse {
 pub async fn create_delegation(
     State(state): State<AppState>,
     auth: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<CreateDelegationRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Validate scopes
     let valid_scopes = ["all", "voting", "documents", "faults", "financial"];
     for scope in &req.scopes {
         if !valid_scopes.contains(&scope.as_str()) {
+            rls.release().await;
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse::new(
@@ -168,6 +170,7 @@ pub async fn create_delegation(
     }
 
     if req.scopes.is_empty() {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -178,20 +181,24 @@ pub async fn create_delegation(
     }
 
     // Verify delegate user exists
-    let delegate_exists = state
+    let delegate_exists = match state
         .user_repo
         .find_by_id(req.delegate_user_id)
         .await
-        .map_err(|e| {
+    {
+        Ok(user) => user.is_some(),
+        Err(e) => {
             tracing::error!(error = %e, "Failed to check delegate user");
-            (
+            rls.release().await;
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?
-        .is_some();
+            ));
+        }
+    };
 
     if !delegate_exists {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -203,18 +210,21 @@ pub async fn create_delegation(
 
     // If unit_id is provided, verify user owns it
     if let Some(unit_id) = req.unit_id {
-        // TODO: Migrate to get_owners_rls when this handler has RLS connection
-        #[allow(deprecated)]
-        let owners = state.unit_repo.get_owners(unit_id).await.map_err(|e| {
-            tracing::error!(error = %e, "Failed to get unit owners");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Database error")),
-            )
-        })?;
+        let owners = match state.unit_repo.get_owners_rls(&mut **rls.conn(), unit_id).await {
+            Ok(o) => o,
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to get unit owners");
+                rls.release().await;
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Database error")),
+                ));
+            }
+        };
 
         let is_owner = owners.iter().any(|o| o.user_id == auth.user_id);
         if !is_owner {
+            rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new(
@@ -234,20 +244,26 @@ pub async fn create_delegation(
         end_date: req.end_date,
     };
 
-    let delegation = state
+    let delegation = match state
         .delegation_repo
         .create(auth.user_id, create_data)
         .await
-        .map_err(|e| {
+    {
+        Ok(d) => d,
+        Err(e) => {
             tracing::error!(error = %e, "Failed to create delegation");
-            (
+            rls.release().await;
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "DB_ERROR",
                     "Failed to create delegation",
                 )),
-            )
-        })?;
+            ));
+        }
+    };
+
+    rls.release().await;
 
     tracing::info!(
         delegation_id = %delegation.id,

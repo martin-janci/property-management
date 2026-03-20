@@ -59,6 +59,41 @@ impl OrganizationMemberRepository {
         Ok(member)
     }
 
+    /// Get all organizations a user belongs to with RLS context.
+    pub async fn get_user_memberships_rls<'e, E>(
+        &self,
+        executor: E,
+        user_id: Uuid,
+    ) -> Result<Vec<UserOrganizationMembership>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let memberships = sqlx::query_as::<_, UserOrganizationMembership>(
+            r#"
+            SELECT
+                om.id as membership_id,
+                o.id as organization_id,
+                o.name as organization_name,
+                o.slug as organization_slug,
+                o.logo_url as organization_logo_url,
+                om.role_type,
+                r.name as role_name,
+                om.status,
+                om.joined_at
+            FROM organization_members om
+            INNER JOIN organizations o ON o.id = om.organization_id
+            LEFT JOIN roles r ON r.id = om.role_id
+            WHERE om.user_id = $1 AND om.status != 'removed' AND o.status != 'deleted'
+            ORDER BY om.joined_at DESC
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(executor)
+        .await?;
+
+        Ok(memberships)
+    }
+
     /// List members of an organization with RLS context.
     pub async fn list_org_members_rls<'e, E>(
         &self,

@@ -429,6 +429,52 @@ impl BuildingRepository {
         Ok(count > 0)
     }
 
+    /// Find building by ID including archived with RLS context.
+    pub async fn find_by_id_any_status_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<Building>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let building = sqlx::query_as::<_, Building>(
+            r#"
+            SELECT * FROM buildings WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(building)
+    }
+
+    /// Restore archived building with RLS context.
+    pub async fn restore_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<Building>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let building = sqlx::query_as::<_, Building>(
+            r#"
+            UPDATE buildings
+            SET status = 'active', updated_at = NOW()
+            WHERE id = $1 AND status = 'archived'
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .fetch_one(executor)
+        .await
+        .ok();
+
+        Ok(building)
+    }
+
     // ========================================================================
     // Legacy methods (use pool directly - migrate to RLS versions)
     // ========================================================================
