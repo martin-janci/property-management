@@ -17,8 +17,8 @@ use db::{
         GovernmentPortalRepository, GranularNotificationRepository, HealthMonitoringRepository,
         HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
-        ListingRepository, LlmDocumentRepository, MarketPricingRepository, MeterRepository,
-        MultiCurrencyRepository, NotificationPreferenceRepository, OAuthRepository,
+        ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
+        MeterRepository, MultiCurrencyRepository, NotificationPreferenceRepository, OAuthRepository,
         OnboardingRepository, OperationsRepository, OrganizationMemberRepository,
         OrganizationRepository, OutageRepository, OwnerAnalyticsRepository,
         PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
@@ -166,6 +166,8 @@ pub struct AppState {
     pub multi_currency_repo: MultiCurrencyRepository,
     // Epic 150: API Ecosystem Expansion
     pub api_ecosystem_repo: ApiEcosystemRepository,
+    // Epic 68: Service Provider Marketplace
+    pub marketplace_repo: MarketplaceRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -310,6 +312,8 @@ impl AppState {
         let multi_currency_repo = MultiCurrencyRepository::new(db.clone());
         // Epic 150: API Ecosystem Expansion
         let api_ecosystem_repo = ApiEcosystemRepository::new(db.clone());
+        // Epic 68: Service Provider Marketplace
+        let marketplace_repo = MarketplaceRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -400,6 +404,7 @@ impl AppState {
             portfolio_performance_repo,
             multi_currency_repo,
             api_ecosystem_repo,
+            marketplace_repo,
             llm_client,
             auth_service,
             email_service,

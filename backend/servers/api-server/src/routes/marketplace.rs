@@ -296,447 +296,764 @@ pub struct PaginationQuery {
 
 /// Create a new service provider profile.
 async fn create_profile(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(payload): Json<CreateProfileRequest>,
 ) -> Result<(StatusCode, Json<ServiceProviderProfile>), (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.create_profile(user.user_id, payload.data)
-    let profile = ServiceProviderProfile {
-        id: Uuid::new_v4(),
-        user_id: user.user_id,
-        company_name: payload.data.company_name,
-        business_registration_number: payload.data.business_registration_number,
-        tax_id: payload.data.tax_id,
-        description: payload.data.description,
-        logo_url: payload.data.logo_url,
-        website: payload.data.website,
-        contact_name: payload.data.contact_name,
-        contact_email: payload.data.contact_email,
-        contact_phone: payload.data.contact_phone,
-        address: payload.data.address,
-        city: payload.data.city,
-        postal_code: payload.data.postal_code,
-        country: payload.data.country,
-        service_categories: payload.data.service_categories,
-        service_description: payload.data.service_description,
-        specializations: payload.data.specializations,
-        coverage_postal_codes: payload.data.coverage_postal_codes,
-        coverage_radius_km: payload.data.coverage_radius_km,
-        coverage_regions: payload.data.coverage_regions,
-        pricing_type: payload
-            .data
-            .pricing_type
-            .unwrap_or_else(|| "hourly".to_string()),
-        hourly_rate_min: payload.data.hourly_rate_min,
-        hourly_rate_max: payload.data.hourly_rate_max,
-        currency: payload.data.currency,
-        certifications: payload.data.certifications,
-        licenses: payload.data.licenses,
-        availability_calendar: payload.data.availability_calendar,
-        response_time_hours: payload.data.response_time_hours,
-        emergency_available: payload.data.emergency_available,
-        portfolio_images: payload.data.portfolio_images,
-        portfolio_description: payload.data.portfolio_description,
-        status: "draft".to_string(),
-        is_featured: Some(false),
-        average_rating: None,
-        total_reviews: Some(0),
-        total_jobs_completed: Some(0),
-        is_verified: Some(false),
-        verified_at: None,
-        badges: Some(vec![]),
-        metadata: payload.data.metadata,
-        created_at: Some(chrono::Utc::now()),
-        updated_at: Some(chrono::Utc::now()),
-        last_active_at: Some(chrono::Utc::now()),
-    };
+    let profile = state
+        .marketplace_repo
+        .create_profile(user.user_id, payload.data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to create provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to create profile")),
+            )
+        })?;
+
+    tracing::info!(
+        profile_id = %profile.id,
+        user_id = %user.user_id,
+        "Provider profile created"
+    );
 
     Ok((StatusCode::CREATED, Json(profile)))
 }
 
 /// Search for service providers in the marketplace.
 async fn search_providers(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Query(query): Query<SearchProvidersQuery>,
 ) -> Result<Json<Vec<ProviderSearchResult>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.search_providers(query.into())
-    let _search_query: MarketplaceSearchQuery = (&query).into();
+    let search_query: MarketplaceSearchQuery = (&query).into();
 
-    // Return empty results for now - actual implementation would query database
-    Ok(Json(vec![]))
+    let results = state
+        .marketplace_repo
+        .search_providers(&search_query)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to search providers");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to search providers")),
+            )
+        })?;
+
+    Ok(Json(results))
 }
 
 /// Get the current user's provider profile.
 async fn get_my_profile(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<ServiceProviderProfile>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_by_user_id(user.user_id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Provider profile not found for user {}", user.user_id),
-        )),
-    ))
+    let profile = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    Ok(Json(profile))
 }
 
 /// Update the current user's provider profile.
 async fn update_my_profile(
-    State(_state): State<AppState>,
-    _user: AuthUser,
-    Json(_data): Json<UpdateServiceProviderProfile>,
+    State(state): State<AppState>,
+    user: AuthUser,
+    Json(data): Json<UpdateServiceProviderProfile>,
 ) -> Result<Json<ServiceProviderProfile>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.update_profile(user.user_id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            "Provider profile not found",
-        )),
-    ))
+    // First find the profile by user_id
+    let existing = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    let profile = state
+        .marketplace_repo
+        .update_profile(existing.id, data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to update provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update profile")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        profile_id = %profile.id,
+        user_id = %user.user_id,
+        "Provider profile updated"
+    );
+
+    Ok(Json(profile))
 }
 
 /// Get provider dashboard with summary statistics.
 async fn get_provider_dashboard(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
 ) -> Result<Json<ProviderDashboard>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_provider_dashboard(user.user_id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            "Provider profile not found",
-        )),
-    ))
+    let dashboard = state
+        .marketplace_repo
+        .get_provider_dashboard(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get provider dashboard");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    Ok(Json(dashboard))
 }
 
 /// Get marketplace statistics.
 async fn get_marketplace_statistics(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
 ) -> Result<Json<MarketplaceStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_statistics()
-    Ok(Json(MarketplaceStatistics {
-        total_providers: 0,
-        verified_providers: 0,
-        providers_by_category: vec![],
-        average_rating: Decimal::ZERO,
-        total_reviews: 0,
-        total_jobs_completed: 0,
-    }))
+    let stats = state.marketplace_repo.get_statistics().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to get marketplace statistics");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Database error")),
+        )
+    })?;
+
+    Ok(Json(stats))
 }
 
 /// Get a specific provider's profile.
 async fn get_provider(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ServiceProviderProfile>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_by_id(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Provider {} not found", id),
-        )),
-    ))
+    let profile = state
+        .marketplace_repo
+        .find_profile_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get provider");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Provider {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(profile))
 }
 
 /// Get complete provider profile with verifications, badges, and reviews.
 async fn get_provider_complete(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderProfileComplete>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_complete_profile(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Provider {} not found", id),
-        )),
-    ))
+    let complete = state
+        .marketplace_repo
+        .get_complete_profile(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get complete provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Provider {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(complete))
 }
 
 // ==================== Story 68.3: RFQ Endpoints ====================
 
 /// Create a new request for quote.
 async fn create_rfq(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(payload): Json<CreateRfqRequest>,
 ) -> Result<(StatusCode, Json<RequestForQuote>), (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.create_rfq(payload.organization_id, user.user_id, payload.data)
-    let rfq = RequestForQuote {
-        id: Uuid::new_v4(),
-        organization_id: payload.organization_id,
-        building_id: payload.data.building_id,
-        created_by: user.user_id,
-        title: payload.data.title,
-        description: payload.data.description,
-        service_category: payload.data.service_category,
-        scope_of_work: payload.data.scope_of_work,
-        preferred_start_date: payload.data.preferred_start_date,
-        preferred_end_date: payload.data.preferred_end_date,
-        is_urgent: payload.data.is_urgent,
-        budget_min: payload.data.budget_min,
-        budget_max: payload.data.budget_max,
-        currency: payload.data.currency,
-        attachments: payload.data.attachments,
-        images: payload.data.images,
-        status: "draft".to_string(),
-        quote_deadline: payload.data.quote_deadline,
-        awarded_to: None,
-        awarded_quote_id: None,
-        awarded_at: None,
-        contact_preference: payload.data.contact_preference,
-        site_visit_required: payload.data.site_visit_required,
-        metadata: payload.data.metadata,
-        created_at: Some(chrono::Utc::now()),
-        updated_at: Some(chrono::Utc::now()),
-        expires_at: None,
-    };
+    let rfq = state
+        .marketplace_repo
+        .create_rfq(payload.organization_id, user.user_id, payload.data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to create RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to create RFQ")),
+            )
+        })?;
+
+    tracing::info!(
+        rfq_id = %rfq.id,
+        org_id = %rfq.organization_id,
+        user_id = %user.user_id,
+        "RFQ created"
+    );
 
     Ok((StatusCode::CREATED, Json(rfq)))
 }
 
 /// List RFQs for an organization.
 async fn list_rfqs(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Query(_query): Query<ListRfqsQuery>,
+    Query(query): Query<ListRfqsQuery>,
 ) -> Result<Json<Vec<RequestForQuote>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_rfqs(query.organization_id, query.into())
-    Ok(Json(vec![]))
+    let rfq_query: RfqQuery = (&query).into();
+
+    let rfqs = state
+        .marketplace_repo
+        .list_rfqs(query.organization_id, &rfq_query)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list RFQs");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list RFQs")),
+            )
+        })?;
+
+    Ok(Json(rfqs))
 }
 
 /// Get a specific RFQ.
 async fn get_rfq(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_rfq_by_id(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let rfq = state
+        .marketplace_repo
+        .find_rfq_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(rfq))
 }
 
 /// Update an RFQ.
 async fn update_rfq(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<UpdateRequestForQuote>,
+    Json(data): Json<UpdateRequestForQuote>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.update_rfq(id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let rfq = state
+        .marketplace_repo
+        .update_rfq(id, data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to update RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update RFQ")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(rfq))
 }
 
 /// Delete an RFQ.
 async fn delete_rfq(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.delete_rfq(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let deleted = state.marketplace_repo.delete_rfq(id).await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to delete RFQ");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Failed to delete RFQ")),
+        )
+    })?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("RFQ {} not found or cannot be deleted", id),
+            )),
+        ))
+    }
 }
 
 /// List quotes for an RFQ.
 async fn list_rfq_quotes(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Path(_id): Path<Uuid>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ProviderQuote>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_rfq_quotes(id)
-    Ok(Json(vec![]))
+    let quotes = state
+        .marketplace_repo
+        .list_rfq_quotes(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list RFQ quotes");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list quotes")),
+            )
+        })?;
+
+    Ok(Json(quotes))
 }
 
 /// Compare quotes for an RFQ side-by-side.
 async fn compare_quotes(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<QuoteComparisonView>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_quote_comparison(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let comparison = state
+        .marketplace_repo
+        .get_quote_comparison(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get quote comparison");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(comparison))
 }
 
 /// Award an RFQ to a provider.
 async fn award_quote(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<AwardQuoteRequest>,
+    Json(data): Json<AwardQuoteRequest>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.award_rfq(id, data.quote_id, user.user_id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let rfq = state
+        .marketplace_repo
+        .award_rfq(id, data.quote_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to award RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to award RFQ")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found", id),
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        rfq_id = %id,
+        quote_id = %data.quote_id,
+        user_id = %user.user_id,
+        "RFQ awarded"
+    );
+
+    Ok(Json(rfq))
 }
 
 /// Cancel an RFQ.
 async fn cancel_rfq(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RequestForQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.cancel_rfq(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("RFQ {} not found", id),
-        )),
-    ))
+    let rfq = state
+        .marketplace_repo
+        .cancel_rfq(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to cancel RFQ");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to cancel RFQ")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("RFQ {} not found or cannot be cancelled", id),
+                )),
+            )
+        })?;
+
+    tracing::info!(rfq_id = %id, user_id = %user.user_id, "RFQ cancelled");
+
+    Ok(Json(rfq))
 }
 
 /// Submit a quote for an RFQ.
 async fn submit_quote(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(payload): Json<SubmitQuoteRequest>,
 ) -> Result<(StatusCode, Json<ProviderQuote>), (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.submit_quote(provider_id, payload.data)
-    let quote = ProviderQuote {
-        id: Uuid::new_v4(),
-        rfq_id: payload.data.rfq_id,
-        provider_id: user.user_id, // In reality, would get provider_id from user's profile
-        price: payload.data.price,
-        currency: payload.data.currency.unwrap_or_else(|| "EUR".to_string()),
-        price_breakdown: payload.data.price_breakdown,
-        estimated_start_date: payload.data.estimated_start_date,
-        estimated_end_date: payload.data.estimated_end_date,
-        estimated_duration_days: payload.data.estimated_duration_days,
-        terms_and_conditions: payload.data.terms_and_conditions,
-        warranty_period_days: payload.data.warranty_period_days,
-        payment_terms: payload.data.payment_terms,
-        notes: payload.data.notes,
-        attachments: payload.data.attachments,
-        status: "submitted".to_string(),
-        valid_until: payload.data.valid_until,
-        metadata: payload.data.metadata,
-        created_at: Some(chrono::Utc::now()),
-        updated_at: Some(chrono::Utc::now()),
-        submitted_at: Some(chrono::Utc::now()),
-    };
+    // Get the provider profile for this user
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_PROVIDER",
+                    "You must have a provider profile to submit quotes",
+                )),
+            )
+        })?;
+
+    let quote = state
+        .marketplace_repo
+        .submit_quote(provider.id, payload.data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to submit quote");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to submit quote")),
+            )
+        })?;
+
+    tracing::info!(
+        quote_id = %quote.id,
+        rfq_id = %quote.rfq_id,
+        provider_id = %provider.id,
+        "Quote submitted"
+    );
 
     Ok((StatusCode::CREATED, Json(quote)))
 }
 
 /// List quotes submitted by the current provider.
 async fn list_my_quotes(
-    State(_state): State<AppState>,
-    _user: AuthUser,
-    Query(_query): Query<PaginationQuery>,
+    State(state): State<AppState>,
+    user: AuthUser,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ProviderQuote>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_provider_quotes(provider_id, query)
-    Ok(Json(vec![]))
+    // Get the provider profile for this user
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    let quotes = state
+        .marketplace_repo
+        .list_provider_quotes(provider.id, query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list quotes");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list quotes")),
+            )
+        })?;
+
+    Ok(Json(quotes))
 }
 
 /// Get a specific quote.
 async fn get_quote(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_quote_by_id(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Quote {} not found", id),
-        )),
-    ))
+    let quote = state
+        .marketplace_repo
+        .find_quote_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get quote");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Quote {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(quote))
 }
 
 /// Update a quote (before submission or while still editable).
 async fn update_quote(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<UpdateProviderQuote>,
+    Json(data): Json<UpdateProviderQuote>,
 ) -> Result<Json<ProviderQuote>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.update_quote(id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Quote {} not found", id),
-        )),
-    ))
+    let quote = state
+        .marketplace_repo
+        .update_quote(id, data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to update quote");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update quote")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Quote {} not found or cannot be updated", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(quote))
 }
 
 /// Withdraw a submitted quote.
 async fn withdraw_quote(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.withdraw_quote(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Quote {} not found", id),
-        )),
-    ))
+    let withdrawn = state
+        .marketplace_repo
+        .withdraw_quote(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to withdraw quote");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to withdraw quote")),
+            )
+        })?;
+
+    if withdrawn {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("Quote {} not found or cannot be withdrawn", id),
+            )),
+        ))
+    }
 }
 
 /// List RFQ invitations for the current provider.
 async fn list_my_invitations(
-    State(_state): State<AppState>,
-    _user: AuthUser,
-    Query(_query): Query<PaginationQuery>,
+    State(state): State<AppState>,
+    user: AuthUser,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<RfqInvitation>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_provider_invitations(provider_id, query)
-    Ok(Json(vec![]))
+    // Get the provider profile for this user
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "Provider profile not found",
+                )),
+            )
+        })?;
+
+    let invitations = state
+        .marketplace_repo
+        .list_provider_invitations(provider.id, query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list invitations");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list invitations")),
+            )
+        })?;
+
+    Ok(Json(invitations))
 }
 
 /// Mark an invitation as viewed.
 async fn mark_invitation_viewed(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RfqInvitation>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.mark_invitation_viewed(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Invitation {} not found", id),
-        )),
-    ))
+    let invitation = state
+        .marketplace_repo
+        .mark_invitation_viewed(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to mark invitation viewed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Invitation {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(invitation))
 }
 
 /// Decline an RFQ invitation.
@@ -746,370 +1063,671 @@ pub struct DeclineInvitationRequest {
 }
 
 async fn decline_invitation(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<DeclineInvitationRequest>,
+    Json(data): Json<DeclineInvitationRequest>,
 ) -> Result<Json<RfqInvitation>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.decline_invitation(id, data.reason)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Invitation {} not found", id),
-        )),
-    ))
+    let invitation = state
+        .marketplace_repo
+        .decline_invitation(id, data.reason)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to decline invitation");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Invitation {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(invitation))
 }
 
 // ==================== Story 68.4: Verification Endpoints ====================
 
 /// Submit a verification document.
 async fn submit_verification(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(payload): Json<CreateProviderVerification>,
 ) -> Result<(StatusCode, Json<ProviderVerification>), (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.submit_verification(provider_id, payload)
-    let verification = ProviderVerification {
-        id: Uuid::new_v4(),
-        provider_id: user.user_id, // In reality, would get provider_id from user's profile
-        verification_type: payload.verification_type,
-        document_name: payload.document_name,
-        document_number: payload.document_number,
-        issuing_authority: payload.issuing_authority,
-        issue_date: payload.issue_date,
-        expiry_date: payload.expiry_date,
-        document_url: payload.document_url,
-        document_hash: None,
-        status: "pending".to_string(),
-        reviewed_by: None,
-        reviewed_at: None,
-        rejection_reason: None,
-        notes: None,
-        metadata: payload.metadata,
-        created_at: Some(chrono::Utc::now()),
-        updated_at: Some(chrono::Utc::now()),
-    };
+    // Get the provider profile for this user
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_PROVIDER",
+                    "You must have a provider profile to submit verifications",
+                )),
+            )
+        })?;
+
+    let verification = state
+        .marketplace_repo
+        .submit_verification(provider.id, payload)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to submit verification");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to submit verification",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        verification_id = %verification.id,
+        provider_id = %provider.id,
+        "Verification submitted"
+    );
 
     Ok((StatusCode::CREATED, Json(verification)))
 }
 
 /// List verifications.
 async fn list_verifications(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Query(_query): Query<ListVerificationsQuery>,
+    Query(query): Query<ListVerificationsQuery>,
 ) -> Result<Json<Vec<ProviderVerification>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_verifications(query.into())
-    Ok(Json(vec![]))
+    let verification_query: VerificationQuery = (&query).into();
+
+    let verifications = state
+        .marketplace_repo
+        .list_verifications(&verification_query)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list verifications");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list verifications")),
+            )
+        })?;
+
+    Ok(Json(verifications))
 }
 
 /// Get verification queue for admin review.
 async fn get_verification_queue(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Query(_query): Query<PaginationQuery>,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<VerificationQueueItem>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_verification_queue(query)
-    Ok(Json(vec![]))
+    let queue = state
+        .marketplace_repo
+        .get_verification_queue(query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get verification queue");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    Ok(Json(queue))
 }
 
 /// Get expiring verifications.
 async fn get_expiring_verifications(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Query(query): Query<ExpiringQuery>,
 ) -> Result<Json<Vec<ExpiringVerification>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_expiring_verifications(query.days.unwrap_or(30))
-    let _days = query.days.unwrap_or(30);
-    Ok(Json(vec![]))
+    let days = query.days.unwrap_or(30);
+
+    let expiring = state
+        .marketplace_repo
+        .get_expiring_verifications(days)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get expiring verifications");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    Ok(Json(expiring))
 }
 
 /// Get a specific verification.
 async fn get_verification(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderVerification>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_verification_by_id(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Verification {} not found", id),
-        )),
-    ))
+    let verification = state
+        .marketplace_repo
+        .find_verification_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get verification");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Verification {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(verification))
 }
 
 /// Review a verification (admin only).
 async fn review_verification(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<ReviewVerificationRequest>,
+    Json(data): Json<ReviewVerificationRequest>,
 ) -> Result<Json<ProviderVerification>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.review_verification(id, user.user_id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Verification {} not found", id),
-        )),
-    ))
+    let verification = state
+        .marketplace_repo
+        .review_verification(
+            id,
+            user.user_id,
+            &data.status,
+            data.rejection_reason,
+            data.notes,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to review verification");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to review verification",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Verification {} not found", id),
+                )),
+            )
+        })?;
+
+    // Award badges if specified
+    if let Some(badges) = data.award_badges {
+        for badge_type in badges {
+            let _ = state
+                .marketplace_repo
+                .award_badge(
+                    verification.provider_id,
+                    user.user_id,
+                    &badge_type,
+                    Some(id),
+                    None,
+                    None,
+                )
+                .await;
+        }
+    }
+
+    tracing::info!(
+        verification_id = %id,
+        status = %data.status,
+        reviewed_by = %user.user_id,
+        "Verification reviewed"
+    );
+
+    Ok(Json(verification))
 }
 
 /// List badges for a provider.
 async fn list_provider_badges(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Path(_id): Path<Uuid>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<ProviderBadge>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_provider_badges(id)
-    Ok(Json(vec![]))
+    let badges = state
+        .marketplace_repo
+        .list_provider_badges(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list badges");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list badges")),
+            )
+        })?;
+
+    Ok(Json(badges))
 }
 
 /// Award a badge to a provider (admin only).
 async fn award_badge(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<AwardBadgeRequest>,
 ) -> Result<(StatusCode, Json<ProviderBadge>), (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.award_badge(id, user.user_id, data)
-    let badge = ProviderBadge {
-        id: Uuid::new_v4(),
-        provider_id: id,
-        badge_type: data.badge_type,
-        awarded_at: chrono::Utc::now(),
-        awarded_by: Some(user.user_id),
-        expires_at: data.expires_at,
-        verification_id: data.verification_id,
-        notes: data.notes,
-    };
+    let badge = state
+        .marketplace_repo
+        .award_badge(
+            id,
+            user.user_id,
+            &data.badge_type,
+            data.verification_id,
+            data.expires_at,
+            data.notes,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to award badge");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to award badge")),
+            )
+        })?;
+
+    tracing::info!(
+        badge_id = %badge.id,
+        provider_id = %id,
+        badge_type = %data.badge_type,
+        awarded_by = %user.user_id,
+        "Badge awarded"
+    );
 
     Ok((StatusCode::CREATED, Json(badge)))
 }
 
 /// Revoke a badge.
 async fn revoke_badge(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.revoke_badge(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Badge {} not found", id),
-        )),
-    ))
+    let revoked = state
+        .marketplace_repo
+        .revoke_badge(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to revoke badge");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to revoke badge")),
+            )
+        })?;
+
+    if revoked {
+        tracing::info!(badge_id = %id, revoked_by = %user.user_id, "Badge revoked");
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("Badge {} not found", id),
+            )),
+        ))
+    }
 }
 
 // ==================== Story 68.5: Review Endpoints ====================
 
 /// Create a review for a provider.
 async fn create_review(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(provider_id): Path<Uuid>,
     Json(payload): Json<CreateReviewRequest>,
 ) -> Result<(StatusCode, Json<ProviderReview>), (StatusCode, Json<ErrorResponse>)> {
-    // Calculate overall rating as average of dimension ratings
-    let overall = (payload.data.quality_rating
-        + payload.data.timeliness_rating
-        + payload.data.communication_rating
-        + payload.data.value_rating) as f64
-        / RATING_DIMENSIONS_COUNT;
+    let review = state
+        .marketplace_repo
+        .create_review(provider_id, user.user_id, payload.organization_id, payload.data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to create review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to create review")),
+            )
+        })?;
 
-    // In production, this would call state.marketplace_repo.create_review(provider_id, user.user_id, payload)
-    let review = ProviderReview {
-        id: Uuid::new_v4(),
-        provider_id,
-        reviewer_id: user.user_id,
-        organization_id: payload.organization_id,
-        job_id: payload.data.job_id,
-        rfq_id: payload.data.rfq_id,
-        quality_rating: payload.data.quality_rating,
-        timeliness_rating: payload.data.timeliness_rating,
-        communication_rating: payload.data.communication_rating,
-        value_rating: payload.data.value_rating,
-        overall_rating: overall.round() as i32,
-        review_title: payload.data.review_title,
-        review_text: payload.data.review_text,
-        status: "pending".to_string(),
-        moderated_by: None,
-        moderated_at: None,
-        moderation_notes: None,
-        provider_response: None,
-        provider_responded_at: None,
-        helpful_count: Some(0),
-        metadata: payload.data.metadata,
-        created_at: Some(chrono::Utc::now()),
-        updated_at: Some(chrono::Utc::now()),
-    };
+    tracing::info!(
+        review_id = %review.id,
+        provider_id = %provider_id,
+        reviewer_id = %user.user_id,
+        "Review created"
+    );
 
     Ok((StatusCode::CREATED, Json(review)))
 }
 
 /// List reviews for a provider.
 async fn list_provider_reviews(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Path(_id): Path<Uuid>,
-    Query(_query): Query<PaginationQuery>,
+    Path(id): Path<Uuid>,
+    Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<ProviderReviewWithResponse>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_provider_reviews(id, query)
-    Ok(Json(vec![]))
+    let reviews = state
+        .marketplace_repo
+        .list_provider_reviews(id, query.limit.unwrap_or(20))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list reviews");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list reviews")),
+            )
+        })?;
+
+    Ok(Json(reviews))
 }
 
 /// Get rating breakdown for a provider.
 async fn get_rating_breakdown(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Path(_id): Path<Uuid>,
+    Path(id): Path<Uuid>,
 ) -> Result<Json<RatingBreakdown>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_rating_breakdown(id)
-    Ok(Json(RatingBreakdown {
-        average_overall: Decimal::ZERO,
-        average_quality: Decimal::ZERO,
-        average_timeliness: Decimal::ZERO,
-        average_communication: Decimal::ZERO,
-        average_value: Decimal::ZERO,
-        total_reviews: 0,
-        rating_distribution: RatingDistribution {
-            five_star: 0,
-            four_star: 0,
-            three_star: 0,
-            two_star: 0,
-            one_star: 0,
-        },
-    }))
+    let breakdown = state
+        .marketplace_repo
+        .get_rating_breakdown(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get rating breakdown");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    Ok(Json(breakdown))
 }
 
 /// List all reviews (with filters).
 async fn list_reviews(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Query(_query): Query<ListReviewsQuery>,
+    Query(query): Query<ListReviewsQuery>,
 ) -> Result<Json<Vec<ProviderReview>>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.list_reviews(query.into())
-    Ok(Json(vec![]))
+    let review_query: ReviewQuery = (&query).into();
+
+    let reviews = state
+        .marketplace_repo
+        .list_reviews(&review_query)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to list reviews");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list reviews")),
+            )
+        })?;
+
+    Ok(Json(reviews))
 }
 
 /// Get a specific review.
 async fn get_review(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.find_review_by_id(id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    let review = state
+        .marketplace_repo
+        .find_review_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(review))
 }
 
 /// Update a review (by the reviewer).
 async fn update_review(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<UpdateProviderReview>,
+    Json(data): Json<UpdateProviderReview>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.update_review(id, user.user_id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    let review = state
+        .marketplace_repo
+        .update_review(id, user.user_id, data)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to update review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update review")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found or you don't have permission to update it", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(review))
 }
 
 /// Delete a review.
 async fn delete_review(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.delete_review(id, user.user_id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    let deleted = state
+        .marketplace_repo
+        .delete_review(id, user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to delete review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to delete review")),
+            )
+        })?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                format!("Review {} not found or you don't have permission to delete it", id),
+            )),
+        ))
+    }
 }
 
 /// Respond to a review (by the provider).
 async fn respond_to_review(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<ProviderReviewResponse>,
+    Json(data): Json<ProviderReviewResponse>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.respond_to_review(id, provider_id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    // Get the provider profile for this user
+    let provider = state
+        .marketplace_repo
+        .find_profile_by_user_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find provider profile");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "NOT_PROVIDER",
+                    "You must have a provider profile to respond to reviews",
+                )),
+            )
+        })?;
+
+    let review = state
+        .marketplace_repo
+        .respond_to_review(id, provider.id, &data.response_text)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to respond to review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to respond to review")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found or not for your provider profile", id),
+                )),
+            )
+        })?;
+
+    tracing::info!(review_id = %id, provider_id = %provider.id, "Provider responded to review");
+
+    Ok(Json(review))
 }
 
 /// Moderate a review (admin only).
 async fn moderate_review(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
-    Json(_data): Json<ModerateReviewRequest>,
+    Json(data): Json<ModerateReviewRequest>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.moderate_review(id, user.user_id, data)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    let review = state
+        .marketplace_repo
+        .moderate_review(id, user.user_id, &data.status, data.moderation_notes)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to moderate review");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to moderate review")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found", id),
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        review_id = %id,
+        status = %data.status,
+        moderated_by = %user.user_id,
+        "Review moderated"
+    );
+
+    Ok(Json(review))
 }
 
 /// Mark a review as helpful.
 async fn mark_review_helpful(
-    State(_state): State<AppState>,
-    _user: AuthUser,
+    State(state): State<AppState>,
+    user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ProviderReview>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.mark_review_helpful(id, user.user_id)
-    Err((
-        StatusCode::NOT_FOUND,
-        Json(ErrorResponse::new(
-            "NOT_FOUND",
-            format!("Review {} not found", id),
-        )),
-    ))
+    let review = state
+        .marketplace_repo
+        .mark_review_helpful(id, user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to mark review helpful");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    format!("Review {} not found", id),
+                )),
+            )
+        })?;
+
+    Ok(Json(review))
 }
 
 // ==================== Story 68.2: Manager Dashboard ====================
 
 /// Get manager marketplace dashboard.
 async fn get_manager_dashboard(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _user: AuthUser,
-    Query(_query): Query<OrgQuery>,
+    Query(query): Query<OrgQuery>,
 ) -> Result<Json<ManagerMarketplaceDashboard>, (StatusCode, Json<ErrorResponse>)> {
-    // In production, this would call state.marketplace_repo.get_manager_dashboard(query.organization_id)
-    Ok(Json(ManagerMarketplaceDashboard {
-        active_rfqs: vec![],
-        pending_quotes: 0,
-        recent_completed_jobs: 0,
-        favorite_providers: vec![],
-        recommended_providers: vec![],
-    }))
+    let dashboard = state
+        .marketplace_repo
+        .get_manager_dashboard(query.organization_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get manager dashboard");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Database error")),
+            )
+        })?;
+
+    Ok(Json(dashboard))
 }
