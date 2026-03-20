@@ -1,6 +1,6 @@
 
 
-export const $Auth.LoginRequest = {
+export const $Auth_LoginRequest = {
     type: 'object',
     required: ['email', 'password'],
     properties: {
@@ -25,7 +25,7 @@ export const $Auth.LoginRequest = {
     description: 'Login request'
 } as const;
 
-export const $Auth.LoginResponse = {
+export const $Auth_LoginResponse = {
     type: 'object',
     required: ['accessToken', 'refreshToken', 'expiresIn', 'user', 'tenants'],
     properties: {
@@ -61,7 +61,7 @@ export const $Auth.LoginResponse = {
     description: 'Login response'
 } as const;
 
-export const $Auth.PasswordChangeRequest = {
+export const $Auth_PasswordChangeRequest = {
     type: 'object',
     required: ['currentPassword', 'newPassword'],
     properties: {
@@ -80,7 +80,7 @@ export const $Auth.PasswordChangeRequest = {
     description: 'Password change request'
 } as const;
 
-export const $Auth.PasswordResetRequest = {
+export const $Auth_PasswordResetRequest = {
     type: 'object',
     required: ['email'],
     properties: {
@@ -96,7 +96,7 @@ export const $Auth.PasswordResetRequest = {
     description: 'Password reset request'
 } as const;
 
-export const $Auth.RegisterRequest = {
+export const $Auth_RegisterRequest = {
     type: 'object',
     required: ['email', 'password', 'displayName'],
     properties: {
@@ -134,7 +134,7 @@ export const $Auth.RegisterRequest = {
     description: 'Registration request'
 } as const;
 
-export const $Auth.TenantMembership = {
+export const $Auth_TenantMembership = {
     type: 'object',
     required: ['tenantId', 'tenantName', 'role'],
     properties: {
@@ -162,7 +162,7 @@ export const $Auth.TenantMembership = {
     description: "User's membership in a tenant"
 } as const;
 
-export const $Auth.TwoFactorSetupResponse = {
+export const $Auth_TwoFactorSetupResponse = {
     type: 'object',
     required: ['secret', 'qrCodeUrl', 'backupCodes'],
     properties: {
@@ -185,7 +185,7 @@ export const $Auth.TwoFactorSetupResponse = {
     description: '2FA setup response'
 } as const;
 
-export const $Auth.User = {
+export const $Auth_User = {
     type: 'object',
     required: ['id', 'email', 'displayName', 'emailVerified', 'twoFactorEnabled', 'status', 'createdAt', 'updatedAt'],
     properties: {
@@ -282,13 +282,13 @@ export const $Auth.User = {
     description: 'User account'
 } as const;
 
-export const $Auth.UserStatus = {
+export const $Auth_UserStatus = {
     type: 'string',
     enum: ['active', 'inactive', 'suspended', 'pending_verification'],
     description: 'User account status'
 } as const;
 
-export const $Buildings.Building = {
+export const $Buildings_Building = {
     type: 'object',
     required: ['id', 'organizationId', 'name', 'address', 'type', 'floorCount', 'unitCount', 'status', 'createdAt', 'updatedAt'],
     properties: {
@@ -425,7 +425,7 @@ export const $Buildings.Building = {
     description: 'Building'
 } as const;
 
-export const $Buildings.BuildingDocument = {
+export const $Buildings_BuildingDocument = {
     type: 'object',
     required: ['id', 'buildingId', 'title', 'category', 'file', 'visibility', 'createdAt', 'updatedAt'],
     properties: {
@@ -513,19 +513,19 @@ export const $Buildings.BuildingDocument = {
     description: 'Building document'
 } as const;
 
-export const $Buildings.BuildingStatus = {
+export const $Buildings_BuildingStatus = {
     type: 'string',
     enum: ['active', 'under_construction', 'renovation', 'inactive'],
     description: 'Building status'
 } as const;
 
-export const $Buildings.BuildingType = {
+export const $Buildings_BuildingType = {
     type: 'string',
     enum: ['residential', 'commercial', 'mixed', 'industrial'],
     description: 'Building type'
 } as const;
 
-export const $Buildings.CommonArea = {
+export const $Buildings_CommonArea = {
     type: 'object',
     required: ['id', 'buildingId', 'name', 'type'],
     properties: {
@@ -583,13 +583,13 @@ export const $Buildings.CommonArea = {
     description: 'Common area (staircase, elevator, parking, garden, etc.)'
 } as const;
 
-export const $Buildings.CommonAreaType = {
+export const $Buildings_CommonAreaType = {
     type: 'string',
     enum: ['staircase', 'elevator', 'lobby', 'hallway', 'basement', 'attic', 'parking', 'garage', 'garden', 'playground', 'pool', 'gym', 'laundry_room', 'storage_room', 'other'],
     description: 'Common area type'
 } as const;
 
-export const $Buildings.CreateBuildingRequest = {
+export const $Buildings_CreateBuildingRequest = {
     type: 'object',
     required: ['name', 'address', 'type', 'floorCount'],
     properties: {
@@ -630,19 +630,19 @@ export const $Buildings.CreateBuildingRequest = {
     description: 'Create building request'
 } as const;
 
-export const $Buildings.DocumentCategory = {
+export const $Buildings_DocumentCategory = {
     type: 'string',
     enum: ['legal_document', 'insurance', 'maintenance', 'financial_report', 'meeting_minutes', 'contract', 'technical_document', 'other'],
     description: 'Document category'
 } as const;
 
-export const $Buildings.DocumentVisibility = {
+export const $Buildings_DocumentVisibility = {
     type: 'string',
     enum: ['public', 'owners_only', 'managers_only'],
     description: 'Document visibility'
 } as const;
 
-export const $Buildings.Floor = {
+export const $Buildings_Floor = {
     type: 'object',
     required: ['id', 'buildingId', 'number', 'unitCount'],
     properties: {
@@ -685,7 +685,7 @@ export const $Buildings.Floor = {
     description: 'Floor in a building'
 } as const;
 
-export const $Compliance.AuditLog = {
+export const $Compliance_AuditLog = {
     type: 'object',
     required: ['id', 'organizationId', 'action', 'resourceType', 'timestamp'],
     properties: {
@@ -726,7 +726,7 @@ export const $Compliance.AuditLog = {
     description: 'Audit log entry'
 } as const;
 
-export const $Compliance.Consent = {
+export const $Compliance_Consent = {
     type: 'object',
     required: ['id', 'userId', 'consentType', 'granted', 'version'],
     properties: {
@@ -761,17 +761,17 @@ export const $Compliance.Consent = {
     description: 'User consent record'
 } as const;
 
-export const $Compliance.ConsentType = {
+export const $Compliance_ConsentType = {
     type: 'string',
     enum: ['terms_of_service', 'privacy_policy', 'marketing', 'analytics', 'third_party_sharing', 'cookies']
 } as const;
 
-export const $Compliance.DataCategory = {
+export const $Compliance_DataCategory = {
     type: 'string',
     enum: ['profile', 'units', 'documents', 'messages', 'votes', 'faults', 'payments', 'audit_logs']
 } as const;
 
-export const $Compliance.DataDeletionRequest = {
+export const $Compliance_DataDeletionRequest = {
     type: 'object',
     required: ['id', 'userId', 'status', 'requestedAt', 'scheduledFor', 'createdAt', 'updatedAt'],
     properties: {
@@ -838,7 +838,7 @@ export const $Compliance.DataDeletionRequest = {
     description: 'GDPR data deletion request'
 } as const;
 
-export const $Compliance.DataExportRequest = {
+export const $Compliance_DataExportRequest = {
     type: 'object',
     required: ['id', 'userId', 'status', 'format', 'requestedAt', 'includeCategories', 'createdAt', 'updatedAt'],
     properties: {
@@ -908,22 +908,22 @@ export const $Compliance.DataExportRequest = {
     description: 'GDPR data export request'
 } as const;
 
-export const $Compliance.DeletionStatus = {
+export const $Compliance_DeletionStatus = {
     type: 'string',
     enum: ['pending', 'scheduled', 'processing', 'completed', 'cancelled']
 } as const;
 
-export const $Compliance.ExportFormat = {
+export const $Compliance_ExportFormat = {
     type: 'string',
     enum: ['json', 'csv', 'pdf']
 } as const;
 
-export const $Compliance.ExportStatus = {
+export const $Compliance_ExportStatus = {
     type: 'string',
     enum: ['pending', 'processing', 'completed', 'expired', 'failed']
 } as const;
 
-export const $Documents.Document = {
+export const $Documents_Document = {
     type: 'object',
     required: ['id', 'organizationId', 'title', 'category', 'file', 'visibility', 'version', 'createdAt', 'updatedAt'],
     properties: {
@@ -1006,17 +1006,17 @@ export const $Documents.Document = {
     description: 'Document (UC-08)'
 } as const;
 
-export const $Documents.DocumentCategory = {
+export const $Documents_DocumentCategory = {
     type: 'string',
     enum: ['contract', 'invoice', 'receipt', 'report', 'minutes', 'policy', 'manual', 'certificate', 'permit', 'insurance', 'other']
 } as const;
 
-export const $Documents.DocumentVisibility = {
+export const $Documents_DocumentVisibility = {
     type: 'string',
     enum: ['public', 'building_only', 'owners_only', 'managers_only', 'private']
 } as const;
 
-export const $Documents.Folder = {
+export const $Documents_Folder = {
     type: 'object',
     required: ['id', 'organizationId', 'name', 'visibility', 'documentCount', 'createdAt', 'updatedAt'],
     properties: {
@@ -1078,7 +1078,7 @@ export const $Documents.Folder = {
     description: 'Document folder'
 } as const;
 
-export const $Faults.Fault = {
+export const $Faults_Fault = {
     type: 'object',
     required: ['id', 'buildingId', 'reporterId', 'title', 'description', 'category', 'priority', 'status', 'createdAt', 'updatedAt'],
     properties: {
@@ -1172,12 +1172,12 @@ export const $Faults.Fault = {
     description: 'Fault report (UC-03)'
 } as const;
 
-export const $Faults.FaultCategory = {
+export const $Faults_FaultCategory = {
     type: 'string',
     enum: ['plumbing', 'electrical', 'hvac', 'structural', 'elevator', 'security', 'cleaning', 'landscaping', 'other']
 } as const;
 
-export const $Faults.FaultComment = {
+export const $Faults_FaultComment = {
     type: 'object',
     required: ['id', 'faultId', 'authorId', 'authorName', 'content', 'isInternal', 'createdAt'],
     properties: {
@@ -1212,17 +1212,17 @@ export const $Faults.FaultComment = {
     description: 'Fault comment'
 } as const;
 
-export const $Faults.FaultPriority = {
+export const $Faults_FaultPriority = {
     type: 'string',
     enum: ['low', 'medium', 'high', 'critical']
 } as const;
 
-export const $Faults.FaultStatus = {
+export const $Faults_FaultStatus = {
     type: 'string',
     enum: ['reported', 'acknowledged', 'in_progress', 'on_hold', 'resolved', 'closed', 'rejected']
 } as const;
 
-export const $Listings.Inquiry = {
+export const $Listings_Inquiry = {
     type: 'object',
     required: ['id', 'listingId', 'name', 'email', 'message', 'source', 'status', 'createdAt', 'updatedAt'],
     properties: {
@@ -1292,17 +1292,17 @@ export const $Listings.Inquiry = {
     description: 'Inquiry from potential buyer/renter'
 } as const;
 
-export const $Listings.InquirySource = {
+export const $Listings_InquirySource = {
     type: 'string',
     enum: ['website', 'portal', 'phone', 'email', 'walk_in']
 } as const;
 
-export const $Listings.InquiryStatus = {
+export const $Listings_InquiryStatus = {
     type: 'string',
     enum: ['new', 'contacted', 'viewing_scheduled', 'viewing_completed', 'interested', 'not_interested', 'closed']
 } as const;
 
-export const $Listings.Listing = {
+export const $Listings_Listing = {
     type: 'object',
     required: ['id', 'unitId', 'type', 'status', 'title', 'description', 'price', 'priceType', 'features', 'photos', 'viewCount', 'inquiryCount', 'createdAt', 'updatedAt'],
     properties: {
@@ -1406,7 +1406,7 @@ export const $Listings.Listing = {
     description: 'Property listing for sale/rent (UC-31-32)'
 } as const;
 
-export const $Listings.ListingFeatures = {
+export const $Listings_ListingFeatures = {
     type: 'object',
     required: ['areaM2'],
     properties: {
@@ -1464,17 +1464,17 @@ export const $Listings.ListingFeatures = {
     }
 } as const;
 
-export const $Listings.ListingStatus = {
+export const $Listings_ListingStatus = {
     type: 'string',
     enum: ['draft', 'active', 'pending', 'sold', 'rented', 'expired', 'archived']
 } as const;
 
-export const $Listings.ListingType = {
+export const $Listings_ListingType = {
     type: 'string',
     enum: ['sale', 'long_term_rent', 'short_term_rent']
 } as const;
 
-export const $Listings.PortalConfig = {
+export const $Listings_PortalConfig = {
     type: 'object',
     required: ['id', 'organizationId', 'portalName', 'apiEndpoint', 'apiKey', 'isActive', 'autoPublish', 'createdAt', 'updatedAt'],
     properties: {
@@ -1536,7 +1536,7 @@ export const $Listings.PortalConfig = {
     description: 'Real estate portal configuration'
 } as const;
 
-export const $Listings.PortalListing = {
+export const $Listings_PortalListing = {
     type: 'object',
     required: ['portalId', 'portalName', 'externalId', 'status'],
     properties: {
@@ -1563,17 +1563,17 @@ export const $Listings.PortalListing = {
     description: 'Listing on external portal'
 } as const;
 
-export const $Listings.PortalListingStatus = {
+export const $Listings_PortalListingStatus = {
     type: 'string',
     enum: ['published', 'pending', 'error', 'removed']
 } as const;
 
-export const $Listings.PriceType = {
+export const $Listings_PriceType = {
     type: 'string',
     enum: ['fixed', 'negotiable', 'per_month', 'per_night']
 } as const;
 
-export const $Organizations.CreateOrganizationRequest = {
+export const $Organizations_CreateOrganizationRequest = {
     type: 'object',
     required: ['name', 'address', 'email', 'type'],
     properties: {
@@ -1609,7 +1609,7 @@ export const $Organizations.CreateOrganizationRequest = {
     description: 'Create organization request'
 } as const;
 
-export const $Organizations.InviteMemberRequest = {
+export const $Organizations_InviteMemberRequest = {
     type: 'object',
     required: ['email', 'role'],
     properties: {
@@ -1632,13 +1632,13 @@ export const $Organizations.InviteMemberRequest = {
     description: 'Invite member request'
 } as const;
 
-export const $Organizations.MemberStatus = {
+export const $Organizations_MemberStatus = {
     type: 'string',
     enum: ['active', 'invited', 'suspended'],
     description: 'Member status'
 } as const;
 
-export const $Organizations.Organization = {
+export const $Organizations_Organization = {
     type: 'object',
     required: ['id', 'name', 'address', 'email', 'type', 'subscriptionTier', 'status', 'buildingCount', 'unitCount', 'createdAt', 'updatedAt'],
     properties: {
@@ -1778,7 +1778,7 @@ export const $Organizations.Organization = {
     description: 'Organization (housing cooperative, property management company)'
 } as const;
 
-export const $Organizations.OrganizationBranding = {
+export const $Organizations_OrganizationBranding = {
     type: 'object',
     properties: {
         primaryColor: {
@@ -1807,7 +1807,7 @@ export const $Organizations.OrganizationBranding = {
     description: 'Organization branding settings'
 } as const;
 
-export const $Organizations.OrganizationMember = {
+export const $Organizations_OrganizationMember = {
     type: 'object',
     required: ['userId', 'email', 'displayName', 'role', 'assignedBuildingIds', 'joinedAt', 'status'],
     properties: {
@@ -1866,30 +1866,30 @@ export const $Organizations.OrganizationMember = {
     description: 'Organization member'
 } as const;
 
-export const $Organizations.OrganizationStatus = {
+export const $Organizations_OrganizationStatus = {
     type: 'string',
     enum: ['active', 'trial', 'suspended', 'cancelled'],
     description: 'Organization status'
 } as const;
 
-export const $Organizations.OrganizationType = {
+export const $Organizations_OrganizationType = {
     type: 'string',
     enum: ['housing_cooperative', 'property_management', 'real_estate_agency', 'individual'],
     description: 'Organization type'
 } as const;
 
-export const $Organizations.SubscriptionTier = {
+export const $Organizations_SubscriptionTier = {
     type: 'string',
     enum: ['free', 'starter', 'professional', 'enterprise'],
     description: 'Subscription tier'
 } as const;
 
-export const $Rentals.DocumentType = {
+export const $Rentals_DocumentType = {
     type: 'string',
     enum: ['passport', 'id_card', 'drivers_license', 'other']
 } as const;
 
-export const $Rentals.GuestRegistration = {
+export const $Rentals_GuestRegistration = {
     type: 'object',
     required: ['id', 'unitId', 'firstName', 'lastName', 'dateOfBirth', 'nationality', 'documentType', 'documentNumber', 'arrivalDate', 'departureDate', 'submittedToAuthorities', 'createdAt', 'updatedAt'],
     properties: {
@@ -1978,7 +1978,7 @@ export const $Rentals.GuestRegistration = {
     description: 'Guest registration for police/authorities'
 } as const;
 
-export const $Rentals.PlatformConnection = {
+export const $Rentals_PlatformConnection = {
     type: 'object',
     required: ['id', 'unitId', 'platform', 'isActive', 'syncStatus', 'createdAt', 'updatedAt'],
     properties: {
@@ -2042,12 +2042,12 @@ export const $Rentals.PlatformConnection = {
     description: 'Platform connection settings'
 } as const;
 
-export const $Rentals.RentalPlatform = {
+export const $Rentals_RentalPlatform = {
     type: 'string',
     enum: ['airbnb', 'booking', 'vrbo', 'direct', 'other']
 } as const;
 
-export const $Rentals.Reservation = {
+export const $Rentals_Reservation = {
     type: 'object',
     required: ['id', 'unitId', 'platform', 'externalId', 'guestName', 'guestCount', 'checkIn', 'checkOut', 'status', 'totalPrice', 'createdAt', 'updatedAt'],
     properties: {
@@ -2139,17 +2139,17 @@ export const $Rentals.Reservation = {
     description: 'Short-term rental reservation (UC-29-30)'
 } as const;
 
-export const $Rentals.ReservationStatus = {
+export const $Rentals_ReservationStatus = {
     type: 'string',
     enum: ['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'no_show']
 } as const;
 
-export const $Rentals.SyncStatus = {
+export const $Rentals_SyncStatus = {
     type: 'string',
     enum: ['synced', 'pending', 'error', 'disabled']
 } as const;
 
-export const $Shared.Address = {
+export const $Shared_Address = {
     type: 'object',
     required: ['street1', 'city', 'postalCode', 'country'],
     properties: {
@@ -2183,7 +2183,7 @@ export const $Shared.Address = {
     description: 'Physical address'
 } as const;
 
-export const $Shared.Attachment = {
+export const $Shared_Attachment = {
     type: 'object',
     required: ['id', 'filename', 'mimeType', 'sizeBytes', 'downloadUrl', 'uploadedAt'],
     properties: {
@@ -2228,7 +2228,7 @@ export const $Shared.Attachment = {
     description: 'File attachment metadata'
 } as const;
 
-export const $Shared.AuditableEntity = {
+export const $Shared_AuditableEntity = {
     type: 'object',
     required: ['createdAt', 'updatedAt'],
     properties: {
@@ -2268,7 +2268,7 @@ export const $Shared.AuditableEntity = {
     description: 'Base model for all entities with audit fields'
 } as const;
 
-export const $Shared.AuthenticatedUser = {
+export const $Shared_AuthenticatedUser = {
     type: 'object',
     required: ['userId', 'tenantId', 'role', 'email', 'displayName'],
     properties: {
@@ -2319,7 +2319,7 @@ export const $Shared.AuthenticatedUser = {
     description: 'Authenticated user info (from JWT)'
 } as const;
 
-export const $Shared.CursorPaginationMeta = {
+export const $Shared_CursorPaginationMeta = {
     type: 'object',
     required: ['hasMore'],
     properties: {
@@ -2335,7 +2335,7 @@ export const $Shared.CursorPaginationMeta = {
     description: 'Cursor-based pagination metadata'
 } as const;
 
-export const $Shared.CursorPaginationQuery = {
+export const $Shared_CursorPaginationQuery = {
     type: 'object',
     properties: {
         cursor: {
@@ -2354,7 +2354,7 @@ export const $Shared.CursorPaginationQuery = {
     description: 'Cursor-based pagination query'
 } as const;
 
-export const $Shared.Delegation = {
+export const $Shared_Delegation = {
     type: 'object',
     required: ['id', 'fromUserId', 'toUserId', 'accesses', 'startsAt', 'isActive'],
     properties: {
@@ -2417,7 +2417,7 @@ export const $Shared.Delegation = {
     description: 'Delegation of rights'
 } as const;
 
-export const $Shared.ErrorResponse = {
+export const $Shared_ErrorResponse = {
     type: 'object',
     required: ['code', 'message', 'timestamp'],
     properties: {
@@ -2452,7 +2452,7 @@ export const $Shared.ErrorResponse = {
     description: 'Standard error response'
 } as const;
 
-export const $Shared.GeoLocation = {
+export const $Shared_GeoLocation = {
     type: 'object',
     required: ['latitude', 'longitude'],
     properties: {
@@ -2474,7 +2474,7 @@ export const $Shared.GeoLocation = {
     description: 'GPS coordinates'
 } as const;
 
-export const $Shared.InternalServerError = {
+export const $Shared_InternalServerError = {
     type: 'object',
     required: ['body'],
     properties: {
@@ -2485,7 +2485,7 @@ export const $Shared.InternalServerError = {
     description: 'Internal Server Error'
 } as const;
 
-export const $Shared.LocalizedString = {
+export const $Shared_LocalizedString = {
     type: 'object',
     required: ['default'],
     properties: {
@@ -2504,7 +2504,7 @@ export const $Shared.LocalizedString = {
     description: 'Localized content'
 } as const;
 
-export const $Shared.Money = {
+export const $Shared_Money = {
     type: 'object',
     required: ['amount', 'currency'],
     properties: {
@@ -2523,7 +2523,7 @@ export const $Shared.Money = {
     description: 'Monetary amount with currency'
 } as const;
 
-export const $Shared.PaginationMeta = {
+export const $Shared_PaginationMeta = {
     type: 'object',
     required: ['page', 'limit', 'totalItems', 'totalPages', 'hasNext', 'hasPrevious'],
     properties: {
@@ -2559,13 +2559,13 @@ export const $Shared.PaginationMeta = {
     description: 'Pagination metadata'
 } as const;
 
-export const $Shared.PermissionScope = {
+export const $Shared_PermissionScope = {
     type: 'string',
     enum: ['read', 'create', 'update', 'delete', 'admin'],
     description: 'Permission scope'
 } as const;
 
-export const $Shared.RateLimitError = {
+export const $Shared_RateLimitError = {
     type: 'object',
     required: ['body'],
     properties: {
@@ -2576,7 +2576,7 @@ export const $Shared.RateLimitError = {
     description: 'Too Many Requests - Rate limit exceeded'
 } as const;
 
-export const $Shared.ResourceAccess = {
+export const $Shared_ResourceAccess = {
     type: 'object',
     required: ['resourceType', 'permissions'],
     properties: {
@@ -2611,18 +2611,18 @@ export const $Shared.ResourceAccess = {
     description: 'Resource access level'
 } as const;
 
-export const $Shared.TenantContext = {
+export const $Shared_TenantContext = {
     type: 'object',
     description: 'Tenant context - required for all multi-tenant operations'
 } as const;
 
-export const $Shared.TenantRole = {
+export const $Shared_TenantRole = {
     type: 'string',
     enum: ['super_admin', 'org_admin', 'manager', 'technical_manager', 'owner', 'owner_delegate', 'tenant', 'resident', 'property_manager', 'real_estate_agent', 'guest'],
     description: 'User role within tenant'
 } as const;
 
-export const $Shared.UnprocessableEntityError = {
+export const $Shared_UnprocessableEntityError = {
     type: 'object',
     required: ['body'],
     properties: {
@@ -2633,7 +2633,7 @@ export const $Shared.UnprocessableEntityError = {
     description: 'Unprocessable Entity - Business rule violation'
 } as const;
 
-export const $Shared.ValidationError = {
+export const $Shared_ValidationError = {
     type: 'object',
     required: ['field', 'message', 'code'],
     properties: {
@@ -2653,44 +2653,44 @@ export const $Shared.ValidationError = {
     description: 'Validation error detail'
 } as const;
 
-export const $Shared.date = {
+export const $Shared_date = {
     type: 'string',
     description: 'ISO 8601 date string (YYYY-MM-DD)'
 } as const;
 
-export const $Shared.dateTime = {
+export const $Shared_dateTime = {
     type: 'string',
     description: 'ISO 8601 date-time string'
 } as const;
 
-export const $Shared.email = {
+export const $Shared_email = {
     type: 'string',
     format: 'email',
     description: 'Email address'
 } as const;
 
-export const $Shared.phoneNumber = {
+export const $Shared_phoneNumber = {
     type: 'string',
     description: 'Phone number in E.164 format'
 } as const;
 
-export const $Shared.urlString = {
+export const $Shared_urlString = {
     type: 'string',
     format: 'uri',
     description: 'URL string'
 } as const;
 
-export const $Shared.uuid = {
+export const $Shared_uuid = {
     type: 'string',
     description: 'Unique identifier (UUID v4)'
 } as const;
 
-export const $Units.ResidentType = {
+export const $Units_ResidentType = {
     type: 'string',
     enum: ['owner', 'tenant', 'family_member', 'subtenant']
 } as const;
 
-export const $Units.Unit = {
+export const $Units_Unit = {
     type: 'object',
     required: ['id', 'buildingId', 'unitNumber', 'type', 'areaM2', 'hasParking', 'hasStorage', 'status', 'createdAt', 'updatedAt'],
     properties: {
@@ -2784,7 +2784,7 @@ export const $Units.Unit = {
     description: 'Property unit (apartment, office, etc.)'
 } as const;
 
-export const $Units.UnitOwner = {
+export const $Units_UnitOwner = {
     type: 'object',
     required: ['id', 'unitId', 'name', 'ownershipPercentage', 'isPrimaryOwner', 'createdAt', 'updatedAt'],
     properties: {
@@ -2852,7 +2852,7 @@ export const $Units.UnitOwner = {
     description: 'Unit owner'
 } as const;
 
-export const $Units.UnitResident = {
+export const $Units_UnitResident = {
     type: 'object',
     required: ['id', 'unitId', 'name', 'type', 'isActive', 'createdAt', 'updatedAt'],
     properties: {
@@ -2922,17 +2922,17 @@ export const $Units.UnitResident = {
     description: 'Unit resident'
 } as const;
 
-export const $Units.UnitStatus = {
+export const $Units_UnitStatus = {
     type: 'string',
     enum: ['occupied', 'vacant', 'for_sale', 'for_rent', 'renovation']
 } as const;
 
-export const $Units.UnitType = {
+export const $Units_UnitType = {
     type: 'string',
     enum: ['apartment', 'studio', 'penthouse', 'office', 'retail', 'storage', 'parking']
 } as const;
 
-export const $Voting.Ballot = {
+export const $Voting_Ballot = {
     type: 'object',
     required: ['id', 'voteId', 'voterId', 'selectedOptionIds', 'weight', 'submittedAt'],
     properties: {
@@ -2964,7 +2964,7 @@ export const $Voting.Ballot = {
     }
 } as const;
 
-export const $Voting.Vote = {
+export const $Voting_Vote = {
     type: 'object',
     required: ['id', 'buildingId', 'title', 'description', 'type', 'status', 'startDate', 'endDate', 'quorumPercentage', 'options', 'allowDelegation', 'isAnonymous', 'createdAt', 'updatedAt'],
     properties: {
@@ -3044,7 +3044,7 @@ export const $Voting.Vote = {
     description: 'Vote/Poll (UC-04)'
 } as const;
 
-export const $Voting.VoteOption = {
+export const $Voting_VoteOption = {
     type: 'object',
     required: ['id', 'text', 'order'],
     properties: {
@@ -3064,7 +3064,7 @@ export const $Voting.VoteOption = {
     }
 } as const;
 
-export const $Voting.VoteOptionResult = {
+export const $Voting_VoteOptionResult = {
     type: 'object',
     required: ['optionId', 'text', 'voteCount', 'weightedVotes', 'percentage'],
     properties: {
@@ -3089,7 +3089,7 @@ export const $Voting.VoteOptionResult = {
     }
 } as const;
 
-export const $Voting.VoteResult = {
+export const $Voting_VoteResult = {
     type: 'object',
     required: ['voteId', 'totalEligibleVoters', 'totalVotes', 'participationRate', 'quorumReached', 'optionResults'],
     properties: {
@@ -3123,17 +3123,17 @@ export const $Voting.VoteResult = {
     }
 } as const;
 
-export const $Voting.VoteStatus = {
+export const $Voting_VoteStatus = {
     type: 'string',
     enum: ['draft', 'scheduled', 'active', 'closed', 'cancelled']
 } as const;
 
-export const $Voting.VoteType = {
+export const $Voting_VoteType = {
     type: 'string',
     enum: ['simple', 'weighted', 'ranked_choice']
 } as const;
 
-export const $Shared.PaginationQuery.limit = {
+export const $Shared_PaginationQuery_limit = {
     name: 'limit',
     in: 'query',
     required: false,
@@ -3148,7 +3148,7 @@ export const $Shared.PaginationQuery.limit = {
     explode: false
 } as const;
 
-export const $Shared.PaginationQuery.page = {
+export const $Shared_PaginationQuery_page = {
     name: 'page',
     in: 'query',
     required: false,
@@ -3162,7 +3162,7 @@ export const $Shared.PaginationQuery.page = {
     explode: false
 } as const;
 
-export const $Shared.PaginationQuery.sortBy = {
+export const $Shared_PaginationQuery_sortBy = {
     name: 'sortBy',
     in: 'query',
     required: false,
@@ -3173,7 +3173,7 @@ export const $Shared.PaginationQuery.sortBy = {
     explode: false
 } as const;
 
-export const $Shared.PaginationQuery.sortOrder = {
+export const $Shared_PaginationQuery_sortOrder = {
     name: 'sortOrder',
     in: 'query',
     required: false,
@@ -3186,7 +3186,7 @@ export const $Shared.PaginationQuery.sortOrder = {
     explode: false
 } as const;
 
-export const $Shared.SearchQuery.from = {
+export const $Shared_SearchQuery_from = {
     name: 'from',
     in: 'query',
     required: false,
@@ -3197,7 +3197,7 @@ export const $Shared.SearchQuery.from = {
     explode: false
 } as const;
 
-export const $Shared.SearchQuery.q = {
+export const $Shared_SearchQuery_q = {
     name: 'q',
     in: 'query',
     required: false,
@@ -3208,7 +3208,7 @@ export const $Shared.SearchQuery.q = {
     explode: false
 } as const;
 
-export const $Shared.SearchQuery.status = {
+export const $Shared_SearchQuery_status = {
     name: 'status',
     in: 'query',
     required: false,
@@ -3219,7 +3219,7 @@ export const $Shared.SearchQuery.status = {
     explode: false
 } as const;
 
-export const $Shared.SearchQuery.to = {
+export const $Shared_SearchQuery_to = {
     name: 'to',
     in: 'query',
     required: false,
