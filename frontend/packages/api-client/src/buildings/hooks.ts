@@ -26,7 +26,7 @@ import type {
 export function useBuildings(params?: ListBuildingsParams) {
   return useQuery({
     queryKey: buildingKeys.list(params),
-    queryFn: () => listBuildings(params),
+    queryFn: ({ signal }) => listBuildings(params, signal),
     staleTime: 30_000,
   });
 }
@@ -37,7 +37,7 @@ export function useBuildings(params?: ListBuildingsParams) {
 export function useBuilding(id: string) {
   return useQuery({
     queryKey: buildingKeys.detail(id),
-    queryFn: () => getBuilding(id),
+    queryFn: ({ signal }) => getBuilding(id, signal),
     enabled: !!id,
     staleTime: 60_000,
   });

@@ -325,7 +325,12 @@ pub async fn get_listing(
             .bind(id)
             .fetch_all(&state.db)
             .await
-            .unwrap_or_default();
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to fetch listing photos: {}", e),
+                )
+            })?;
 
             // Build full address
             let address = format!("{}, {} {}", l.street, l.postal_code, l.city);

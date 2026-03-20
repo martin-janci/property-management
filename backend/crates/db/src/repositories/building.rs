@@ -468,9 +468,8 @@ impl BuildingRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(executor)
-        .await
-        .ok();
+        .fetch_optional(executor)
+        .await?;
 
         Ok(building)
     }

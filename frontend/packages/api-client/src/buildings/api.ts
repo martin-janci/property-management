@@ -25,7 +25,8 @@ import type {
 // Direct API Functions (using token provider)
 // ============================================
 
-const API_BASE = '/api/v1/buildings';
+// Use configurable base URL from environment, falling back to relative path
+const API_BASE = `${typeof window !== 'undefined' && window.__API_BASE_URL__ ? window.__API_BASE_URL__ : ''}/api/v1/buildings`;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
@@ -69,17 +70,18 @@ function buildQueryString(params: object): string {
  * List buildings with optional filters.
  */
 export async function listBuildings(
-  params?: ListBuildingsParams
+  params?: ListBuildingsParams,
+  signal?: AbortSignal
 ): Promise<BuildingsPaginatedResponse<Building>> {
   const qs = buildQueryString(params || {});
-  return apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`);
+  return apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, { signal });
 }
 
 /**
  * Get building by ID.
  */
-export async function getBuilding(id: string): Promise<Building> {
-  return apiRequest<Building>(`${API_BASE}/${id}`);
+export async function getBuilding(id: string, signal?: AbortSignal): Promise<Building> {
+  return apiRequest<Building>(`${API_BASE}/${id}`, { signal });
 }
 
 // ============================================

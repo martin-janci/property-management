@@ -237,10 +237,12 @@ pub struct OAuthUrlResponse {
 
 // Helper to create error response
 fn error_response(code: &str, message: &str) -> (StatusCode, Json<ErrorResponse>) {
-    (
-        StatusCode::BAD_REQUEST,
-        Json(ErrorResponse::new(code, message)),
-    )
+    let status = if code == "DATABASE_ERROR" {
+        StatusCode::INTERNAL_SERVER_ERROR
+    } else {
+        StatusCode::BAD_REQUEST
+    };
+    (status, Json(ErrorResponse::new(code, message)))
 }
 
 fn not_found(entity: &str, id: impl std::fmt::Display) -> (StatusCode, Json<ErrorResponse>) {

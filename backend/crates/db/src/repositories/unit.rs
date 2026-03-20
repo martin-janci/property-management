@@ -562,7 +562,7 @@ impl UnitRepository {
             q = q.bind(primary);
         }
 
-        let owner = q.fetch_one(executor).await.ok();
+        let owner = q.fetch_optional(executor).await?;
         Ok(owner)
     }
 
@@ -605,9 +605,8 @@ impl UnitRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(executor)
-        .await
-        .ok();
+        .fetch_optional(executor)
+        .await?;
 
         Ok(unit)
     }
