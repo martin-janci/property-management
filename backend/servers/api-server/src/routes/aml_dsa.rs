@@ -113,7 +113,7 @@ pub struct CreateAmlAssessmentRequest {
 }
 
 /// Risk factor in assessment.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RiskFactor {
     pub factor_type: String,
     pub description: String,
@@ -576,7 +576,7 @@ async fn initiate_edd(
         initiated_at: edd.initiated_at,
         initiated_by: edd.initiated_by,
         completed_at: edd.completed_at,
-        next_review_date: edd.next_review_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+        next_review_date: edd.next_review_date,
     }))
 }
 
@@ -618,7 +618,7 @@ async fn get_edd_record(
             original_filename: d.original_filename,
             verification_status: format!("{:?}", d.verification_status).to_lowercase(),
             verified_at: d.verified_at,
-            expiry_date: d.expiry_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+            expiry_date: d.expiry_date.map(|d| d),
             uploaded_at: d.uploaded_at,
         })
         .collect();
@@ -665,7 +665,7 @@ async fn get_edd_record(
         initiated_at: edd.initiated_at,
         initiated_by: edd.initiated_by,
         completed_at: edd.completed_at,
-        next_review_date: edd.next_review_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+        next_review_date: edd.next_review_date.map(|d| d),
     }))
 }
 
@@ -735,7 +735,7 @@ async fn upload_edd_document(
         original_filename: doc.original_filename,
         verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
         verified_at: doc.verified_at,
-        expiry_date: doc.expiry_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+        expiry_date: doc.expiry_date.map(|d| d),
         uploaded_at: doc.uploaded_at,
     }))
 }
@@ -802,7 +802,7 @@ async fn verify_edd_document(
         original_filename: doc.original_filename,
         verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
         verified_at: doc.verified_at,
-        expiry_date: doc.expiry_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+        expiry_date: doc.expiry_date.map(|d| d),
         uploaded_at: doc.uploaded_at,
     }))
 }
@@ -832,7 +832,7 @@ async fn add_edd_note(
     })?;
 
     let user_name = user_info
-        .map(|u| format!("{} {}", u.first_name, u.last_name))
+        .map(|u| u.name.clone())
         .unwrap_or_else(|| "Unknown User".to_string());
 
     let note_req = db::models::compliance::AddComplianceNote {
@@ -898,7 +898,7 @@ async fn complete_edd(
         initiated_at: edd.initiated_at,
         initiated_by: edd.initiated_by,
         completed_at: edd.completed_at,
-        next_review_date: edd.next_review_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+        next_review_date: edd.next_review_date.map(|d| d),
     }))
 }
 
@@ -948,7 +948,7 @@ async fn list_pending_edd(
                 initiated_at: edd.initiated_at,
                 initiated_by: edd.initiated_by,
                 completed_at: edd.completed_at,
-                next_review_date: edd.next_review_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+                next_review_date: edd.next_review_date.map(|d| d),
             }
         })
         .collect();

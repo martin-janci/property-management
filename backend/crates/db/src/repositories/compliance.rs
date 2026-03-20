@@ -6,7 +6,7 @@
 use crate::models::compliance::{
     CreateModerationCase, DsaReportStatus, DsaReportSummary, DsaTransparencyReport,
     ModerationActionTemplate, ModerationActionType, ModerationCase, ModerationStatus,
-    ModeratedContentType, ReportSource, TakeModerationAction, ViolationType,
+    ModeratedContentType, TakeModerationAction, ViolationType,
 };
 use crate::DbPool;
 use chrono::{DateTime, Utc};
