@@ -95,7 +95,7 @@ impl MarketplaceRepository {
         .bind(&data.portfolio_images)
         .bind(&data.portfolio_description)
         .bind(&data.metadata)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(profile)
@@ -110,7 +110,7 @@ impl MarketplaceRepository {
             r#"SELECT * FROM service_provider_profiles WHERE id = $1"#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -123,7 +123,7 @@ impl MarketplaceRepository {
             r#"SELECT * FROM service_provider_profiles WHERE user_id = $1"#,
         )
         .bind(user_id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -208,7 +208,7 @@ impl MarketplaceRepository {
         .bind(&data.portfolio_description)
         .bind(&data.status)
         .bind(&data.metadata)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(profile)
@@ -293,7 +293,7 @@ impl MarketplaceRepository {
             .bind(query.min_rating)
             .bind(query.max_hourly_rate)
             .bind(&query.location)
-            .fetch_all(&*self.pool)
+            .fetch_all(&self.pool)
             .await?;
 
         Ok(results)
@@ -313,7 +313,7 @@ impl MarketplaceRepository {
             WHERE status = 'active'
             "#,
         )
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         let providers_by_category = sqlx::query_as::<_, CategoryCount>(
@@ -325,7 +325,7 @@ impl MarketplaceRepository {
             ORDER BY count DESC
             "#,
         )
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(MarketplaceStatistics {
@@ -364,7 +364,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(Some(ProviderProfileComplete {
@@ -404,7 +404,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         let pending_invitations = rfq_stats.get::<i64, _>("pending_invitations");
@@ -439,7 +439,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         let total_reviews = review_stats_row.get::<i64, _>("total_reviews");
@@ -499,7 +499,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         for inv in invitations {
@@ -524,7 +524,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         for rev in reviews {
@@ -586,7 +586,7 @@ impl MarketplaceRepository {
         .bind(&data.contact_preference)
         .bind(data.site_visit_required)
         .bind(&data.metadata)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         // Create invitations for specified providers
@@ -600,7 +600,7 @@ impl MarketplaceRepository {
             )
             .bind(rfq.id)
             .bind(provider_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
         }
 
@@ -611,7 +611,7 @@ impl MarketplaceRepository {
     pub async fn find_rfq_by_id(&self, id: Uuid) -> Result<Option<RequestForQuote>, SqlxError> {
         sqlx::query_as::<_, RequestForQuote>(r#"SELECT * FROM rfqs WHERE id = $1"#)
             .bind(id)
-            .fetch_optional(&*self.pool)
+            .fetch_optional(&self.pool)
             .await
     }
 
@@ -658,7 +658,7 @@ impl MarketplaceRepository {
         .bind(query.is_urgent)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -744,7 +744,7 @@ impl MarketplaceRepository {
         .bind(data.site_visit_required)
         .bind(&data.status)
         .bind(&data.metadata)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -757,7 +757,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .execute(&*self.pool)
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -773,7 +773,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -803,7 +803,7 @@ impl MarketplaceRepository {
         .bind(id)
         .bind(provider_id)
         .bind(quote_id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await?;
 
         // Update the winning quote status
@@ -815,7 +815,7 @@ impl MarketplaceRepository {
                 "#,
             )
             .bind(quote_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
 
             // Reject other quotes
@@ -827,7 +827,7 @@ impl MarketplaceRepository {
             )
             .bind(id)
             .bind(quote_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
         }
 
@@ -844,7 +844,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -854,7 +854,7 @@ impl MarketplaceRepository {
             r#"SELECT * FROM provider_quotes WHERE rfq_id = $1 ORDER BY price ASC"#,
         )
         .bind(rfq_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -899,7 +899,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -940,7 +940,7 @@ impl MarketplaceRepository {
         .bind(&data.attachments)
         .bind(data.valid_until)
         .bind(&data.metadata)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -948,7 +948,7 @@ impl MarketplaceRepository {
     pub async fn find_quote_by_id(&self, id: Uuid) -> Result<Option<ProviderQuote>, SqlxError> {
         sqlx::query_as::<_, ProviderQuote>(r#"SELECT * FROM provider_quotes WHERE id = $1"#)
             .bind(id)
-            .fetch_optional(&*self.pool)
+            .fetch_optional(&self.pool)
             .await
     }
 
@@ -970,7 +970,7 @@ impl MarketplaceRepository {
         .bind(provider_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1014,7 +1014,7 @@ impl MarketplaceRepository {
         .bind(&data.attachments)
         .bind(data.valid_until)
         .bind(&data.metadata)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1027,7 +1027,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .execute(&*self.pool)
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -1053,7 +1053,7 @@ impl MarketplaceRepository {
         .bind(provider_id)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1070,7 +1070,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1090,7 +1090,7 @@ impl MarketplaceRepository {
         )
         .bind(id)
         .bind(reason)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1121,7 +1121,7 @@ impl MarketplaceRepository {
         .bind(data.expiry_date)
         .bind(&data.document_url)
         .bind(&data.metadata)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -1134,7 +1134,7 @@ impl MarketplaceRepository {
             r#"SELECT * FROM provider_verifications WHERE id = $1"#,
         )
         .bind(id)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1151,7 +1151,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1178,7 +1178,7 @@ impl MarketplaceRepository {
         .bind(&query.status)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1208,7 +1208,7 @@ impl MarketplaceRepository {
         )
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1236,7 +1236,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(days)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1266,7 +1266,7 @@ impl MarketplaceRepository {
         )
         .bind(provider_id)
         .bind(days)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1298,7 +1298,7 @@ impl MarketplaceRepository {
         .bind(reviewed_by)
         .bind(rejection_reason)
         .bind(notes)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await?;
 
         // If verified, update provider's verified status
@@ -1312,7 +1312,7 @@ impl MarketplaceRepository {
                     "#,
                 )
                 .bind(v.provider_id)
-                .execute(&*self.pool)
+                .execute(&self.pool)
                 .await?;
             }
         }
@@ -1336,7 +1336,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1371,7 +1371,7 @@ impl MarketplaceRepository {
         .bind(verification_id)
         .bind(expires_at)
         .bind(notes)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -1379,7 +1379,7 @@ impl MarketplaceRepository {
     pub async fn revoke_badge(&self, id: Uuid) -> Result<bool, SqlxError> {
         let result = sqlx::query(r#"DELETE FROM provider_badges WHERE id = $1"#)
             .bind(id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
 
         Ok(result.rows_affected() > 0)
@@ -1426,7 +1426,7 @@ impl MarketplaceRepository {
         .bind(&data.review_title)
         .bind(&data.review_text)
         .bind(&data.metadata)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -1434,7 +1434,7 @@ impl MarketplaceRepository {
     pub async fn find_review_by_id(&self, id: Uuid) -> Result<Option<ProviderReview>, SqlxError> {
         sqlx::query_as::<_, ProviderReview>(r#"SELECT * FROM provider_reviews WHERE id = $1"#)
             .bind(id)
-            .fetch_optional(&*self.pool)
+            .fetch_optional(&self.pool)
             .await
     }
 
@@ -1460,7 +1460,7 @@ impl MarketplaceRepository {
         )
         .bind(provider_id)
         .bind(limit)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         let mut result = vec![];
@@ -1528,7 +1528,7 @@ impl MarketplaceRepository {
         .bind(query.has_response)
         .bind(limit)
         .bind(offset)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -1562,7 +1562,7 @@ impl MarketplaceRepository {
         .bind(data.value_rating)
         .bind(&data.review_title)
         .bind(&data.review_text)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1576,7 +1576,7 @@ impl MarketplaceRepository {
         )
         .bind(id)
         .bind(reviewer_id)
-        .execute(&*self.pool)
+        .execute(&self.pool)
         .await?;
 
         Ok(result.rows_affected() > 0)
@@ -1600,7 +1600,7 @@ impl MarketplaceRepository {
         .bind(id)
         .bind(provider_id)
         .bind(response_text)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1629,7 +1629,7 @@ impl MarketplaceRepository {
         .bind(status)
         .bind(moderated_by)
         .bind(moderation_notes)
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -1649,7 +1649,7 @@ impl MarketplaceRepository {
         )
         .bind(review_id)
         .bind(user_id)
-        .execute(&*self.pool)
+        .execute(&self.pool)
         .await?;
 
         // Return updated review
@@ -1680,7 +1680,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(provider_id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         Ok(RatingBreakdown {
@@ -1718,7 +1718,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         // Pending quotes count
@@ -1731,7 +1731,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         // Recent completed jobs
@@ -1745,7 +1745,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
         // Favorite providers
@@ -1764,7 +1764,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         // Recommended providers (top-rated in categories the org has used)
@@ -1786,7 +1786,7 @@ impl MarketplaceRepository {
             "#,
         )
         .bind(organization_id)
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await?;
 
         Ok(ManagerMarketplaceDashboard {
