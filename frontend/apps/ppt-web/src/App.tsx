@@ -49,19 +49,40 @@ import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
   AccessibilitySettingsPage,
+  AnnouncementsPage,
   ArticleDetailPage,
+  BudgetManagementPage,
+  CreateAnnouncementPage,
+  CreateFaultPage,
+  CreateGroupPage,
   CreateOutagePage,
   DisputesPage,
   DocumentDetailPage,
   DocumentUploadPage,
   DocumentsPage,
+  EditAnnouncementPage,
+  EditFaultPage,
   EditOutagePage,
   EmergencyContactDirectoryPage,
+  EventsPage,
+  FaultDetailPage,
+  FaultsPage,
+  FeedPage,
   FileDisputePage,
+  FinancialDashboardPage,
+  GroupDetailPage,
+  GroupsPage,
+  InvoiceManagementPage,
   LoginPage,
+  MarketplacePage,
+  MessagesPage,
+  NewMessagePage,
   NewsListPage,
   OutagesPage,
+  PaymentManagementPage,
   PrivacySettingsPage,
+  ThreadDetailPage,
+  ViewAnnouncementPage,
   ViewOutagePage,
 } from './routes';
 
@@ -256,6 +277,32 @@ function App() {
                         <Route path="/outages/new" element={<CreateOutagePageRoute />} />
                         <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
                         <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
+                        {/* Announcements routes (UC-06) */}
+                        <Route path="/announcements" element={<AnnouncementsPageRoute />} />
+                        <Route path="/announcements/new" element={<CreateAnnouncementPageRoute />} />
+                        <Route path="/announcements/:announcementId" element={<ViewAnnouncementPageRoute />} />
+                        <Route path="/announcements/:announcementId/edit" element={<EditAnnouncementPageRoute />} />
+                        {/* Messaging routes (UC-07) */}
+                        <Route path="/messages" element={<MessagesPageRoute />} />
+                        <Route path="/messages/new" element={<NewMessagePageRoute />} />
+                        <Route path="/messages/:threadId" element={<ThreadDetailPageRoute />} />
+                        {/* Faults routes (UC-03) */}
+                        <Route path="/faults" element={<FaultsPageRoute />} />
+                        <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+                        <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
+                        <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
+                        {/* Community routes (Epic 42) */}
+                        <Route path="/community" element={<FeedPageRoute />} />
+                        <Route path="/community/groups" element={<GroupsPageRoute />} />
+                        <Route path="/community/groups/new" element={<CreateGroupPageRoute />} />
+                        <Route path="/community/groups/:groupId" element={<GroupDetailPageRoute />} />
+                        <Route path="/community/events" element={<EventsPageRoute />} />
+                        <Route path="/community/marketplace" element={<MarketplacePageRoute />} />
+                        {/* Financial routes (Epic 52) */}
+                        <Route path="/financial" element={<FinancialDashboardPageRoute />} />
+                        <Route path="/financial/invoices" element={<InvoiceManagementPageRoute />} />
+                        <Route path="/financial/payments" element={<PaymentManagementPageRoute />} />
+                        <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
                       </Routes>
                     </main>
                   </div>
@@ -953,6 +1000,520 @@ function EditOutagePageRoute() {
       isLoading={updateOutage.isPending}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
+    />
+  );
+}
+
+// ============================================
+// Announcements Route Wrappers (UC-06)
+// ============================================
+
+function AnnouncementsPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  // Mock data for now - would use useAnnouncements hook with real API
+  const announcements: import('@ppt/api-client').AnnouncementSummary[] = [];
+  const isLoading = false;
+
+  return (
+    <AnnouncementsPage
+      announcements={announcements}
+      total={0}
+      isLoading={isLoading}
+      onNavigateToCreate={() => navigate('/announcements/new')}
+      onNavigateToView={(id) => navigate(`/announcements/${id}`)}
+      onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
+      onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
+      onPublish={(id) => showToast({ type: 'success', title: 'Published', message: `Published ${id}` })}
+      onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
+      onPin={(id, pinned) => showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateAnnouncementPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateAnnouncementPage
+      buildings={[]}
+      units={[]}
+      roles={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Announcement created' });
+        navigate('/announcements');
+      }}
+      onCancel={() => navigate('/announcements')}
+    />
+  );
+}
+
+function ViewAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+
+  // Mock data - would use useAnnouncement hook
+  const mockAnnouncement: import('@ppt/api-client').AnnouncementWithDetails = {
+    id: announcementId,
+    organizationId: 'org-1',
+    authorId: 'user-1',
+    authorName: 'Admin User',
+    title: 'Sample Announcement',
+    content: 'This is a sample announcement content.',
+    status: 'published',
+    targetType: 'all',
+    pinned: false,
+    acknowledgmentRequired: false,
+    commentsEnabled: true,
+    readCount: 10,
+    acknowledgedCount: 5,
+    commentCount: 2,
+    attachmentCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <ViewAnnouncementPage
+      announcement={mockAnnouncement}
+      attachments={[]}
+      onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
+      onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
+      onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
+      onPin={(pinned) => showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })}
+      onDelete={() => navigate('/announcements')}
+      onBack={() => navigate('/announcements')}
+    />
+  );
+}
+
+function EditAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+
+  // Mock announcement data - would use useAnnouncement hook
+  const mockAnnouncement: import('@ppt/api-client').Announcement = {
+    id: announcementId,
+    organizationId: 'org-1',
+    authorId: 'user-1',
+    title: 'Sample Announcement',
+    content: 'This is a sample announcement content.',
+    status: 'draft',
+    targetType: 'all',
+    pinned: false,
+    acknowledgmentRequired: false,
+    commentsEnabled: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <EditAnnouncementPage
+      announcement={mockAnnouncement}
+      buildings={[]}
+      units={[]}
+      roles={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Updated', message: 'Announcement updated' });
+        navigate(`/announcements/${announcementId}`);
+      }}
+      onCancel={() => navigate(`/announcements/${announcementId}`)}
+    />
+  );
+}
+
+// ============================================
+// Messaging Route Wrappers (UC-07)
+// ============================================
+
+function MessagesPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <MessagesPage
+      threads={[]}
+      total={0}
+      unreadCount={0}
+      onNavigateToThread={(threadId) => navigate(`/messages/${threadId}`)}
+      onNavigateToCreate={() => navigate('/messages/new')}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function NewMessagePageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <NewMessagePage
+      recipients={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Sent', message: 'Message sent' });
+        navigate('/messages');
+      }}
+      onCancel={() => navigate('/messages')}
+    />
+  );
+}
+
+function ThreadDetailPageRoute() {
+  const { threadId } = useParams<{ threadId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  if (!threadId) {
+    return <div>Thread not found</div>;
+  }
+
+  // Mock thread data
+  const mockThread: import('./features/messaging').ThreadWithMessages = {
+    id: threadId,
+    organizationId: 'org-1',
+    subject: 'Sample Thread',
+    participants: [],
+    participantCount: 2,
+    messages: [],
+    unreadCount: 0,
+    lastMessageAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <ThreadDetailPage
+      thread={mockThread}
+      currentUserId={user?.id ?? ''}
+      onSendMessage={() => {}}
+      onMarkAsRead={() => {}}
+      onBack={() => navigate('/messages')}
+    />
+  );
+}
+
+// ============================================
+// Faults Route Wrappers (UC-03)
+// ============================================
+
+function FaultsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <FaultsPage
+      faults={[]}
+      total={0}
+      onNavigateToCreate={() => navigate('/faults/new')}
+      onNavigateToView={(id) => navigate(`/faults/${id}`)}
+      onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
+      onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateFaultPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateFaultPage
+      buildings={[]}
+      units={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Fault reported' });
+        navigate('/faults');
+      }}
+      onCancel={() => navigate('/faults')}
+    />
+  );
+}
+
+function FaultDetailPageRoute() {
+  const { faultId } = useParams<{ faultId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!faultId) {
+    return <div>Fault not found</div>;
+  }
+
+  // Mock fault data
+  const mockFault: import('./features/faults').FaultDetail = {
+    id: faultId,
+    organizationId: 'org-1',
+    buildingId: 'bld-1',
+    reporterId: 'user-1',
+    title: 'Sample Fault',
+    description: 'This is a sample fault description.',
+    category: 'plumbing',
+    priority: 'medium',
+    status: 'new',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    reporterName: 'John Doe',
+    reporterEmail: 'john@example.com',
+    buildingName: 'Building A',
+    buildingAddress: '123 Main St',
+    attachmentCount: 0,
+    commentCount: 0,
+  };
+
+  return (
+    <FaultDetailPage
+      fault={mockFault}
+      timeline={[]}
+      attachments={[]}
+      onBack={() => navigate('/faults')}
+      onEdit={() => navigate(`/faults/${faultId}/edit`)}
+      onTriage={() => showToast({ type: 'success', title: 'Triaged', message: '' })}
+      onResolve={() => showToast({ type: 'success', title: 'Resolved', message: '' })}
+      onConfirm={() => showToast({ type: 'success', title: 'Confirmed', message: '' })}
+      onReopen={() => showToast({ type: 'info', title: 'Reopened', message: '' })}
+      onAddComment={() => {}}
+      onAddAttachment={() => {}}
+      onDeleteAttachment={() => {}}
+    />
+  );
+}
+
+function EditFaultPageRoute() {
+  const { faultId } = useParams<{ faultId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!faultId) {
+    return <div>Fault not found</div>;
+  }
+
+  return (
+    <EditFaultPage
+      faultId={faultId}
+      initialData={{}}
+      buildings={[]}
+      units={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Updated', message: 'Fault updated' });
+        navigate(`/faults/${faultId}`);
+      }}
+      onCancel={() => navigate(`/faults/${faultId}`)}
+    />
+  );
+}
+
+// ============================================
+// Community Route Wrappers (Epic 42)
+// ============================================
+
+function FeedPageRoute() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  return (
+    <FeedPage
+      posts={[]}
+      total={0}
+      userName={user?.name ?? 'User'}
+      onCreatePost={() => {}}
+      onLikePost={() => {}}
+      onViewPost={(id) => navigate(`/community/posts/${id}`)}
+      onCommentPost={() => {}}
+      onSharePost={() => {}}
+      onEditPost={() => {}}
+      onDeletePost={() => {}}
+      onFilterChange={() => {}}
+      onLoadMore={() => {}}
+    />
+  );
+}
+
+function GroupsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <GroupsPage
+      groups={[]}
+      total={0}
+      onNavigateToGroup={(id) => navigate(`/community/groups/${id}`)}
+      onNavigateToCreate={() => navigate('/community/groups/new')}
+      onJoinGroup={() => {}}
+      onLeaveGroup={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateGroupPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateGroupPage
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Group created' });
+        navigate('/community/groups');
+      }}
+      onCancel={() => navigate('/community/groups')}
+    />
+  );
+}
+
+function GroupDetailPageRoute() {
+  const { groupId } = useParams<{ groupId: string }>();
+  const navigate = useNavigate();
+
+  if (!groupId) {
+    return <div>Group not found</div>;
+  }
+
+  // Mock group data
+  const mockGroup: import('@ppt/api-client').CommunityGroup = {
+    id: groupId,
+    organizationId: 'org-1',
+    name: 'Sample Group',
+    description: 'A sample community group',
+    category: 'general',
+    visibility: 'public',
+    memberCount: 10,
+    postCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <GroupDetailPage
+      group={mockGroup}
+      members={[]}
+      onNavigateBack={() => navigate('/community/groups')}
+      onJoin={() => {}}
+      onLeave={() => {}}
+      onEdit={() => {}}
+      onDelete={() => navigate('/community/groups')}
+      onNavigateToSettings={() => {}}
+      onPromoteMember={() => {}}
+      onRemoveMember={() => {}}
+      onBanMember={() => {}}
+    />
+  );
+}
+
+function EventsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <EventsPage
+      events={[]}
+      total={0}
+      onNavigateToEvent={(id) => navigate(`/community/events/${id}`)}
+      onNavigateToCreate={() => navigate('/community/events/new')}
+      onRsvp={() => {}}
+      onEditEvent={() => {}}
+      onDeleteEvent={() => {}}
+      onExportCalendar={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function MarketplacePageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <MarketplacePage
+      items={[]}
+      total={0}
+      onNavigateToItem={(id) => navigate(`/community/marketplace/${id}`)}
+      onNavigateToCreate={() => navigate('/community/marketplace/new')}
+      onContactSeller={() => {}}
+      onEditItem={() => {}}
+      onDeleteItem={() => {}}
+      onMarkSold={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+// ============================================
+// Financial Route Wrappers (Epic 52)
+// ============================================
+
+function FinancialDashboardPageRoute() {
+  const { user } = useAuth();
+
+  return (
+    <FinancialDashboardPage
+      organizationId={user?.organizationId ?? ''}
+      buildings={[]}
+      metrics={{ totalBalance: 0, totalOutstanding: 0, totalOverdue: 0, currency: 'EUR' }}
+      invoiceCounts={{ draft: 0, sent: 0, overdue: 0, paid: 0 }}
+      recentPayments={[]}
+      overdueInvoices={[]}
+      arReport={{ entries: [], totals: { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 } }}
+    />
+  );
+}
+
+function InvoiceManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <InvoiceManagementPage
+      invoices={[]}
+      total={0}
+      buildings={[]}
+      onNavigateToCreate={() => navigate('/financial/invoices/new')}
+      onNavigateToDetail={(id) => navigate(`/financial/invoices/${id}`)}
+      onSendInvoice={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function PaymentManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <PaymentManagementPage
+      payments={[]}
+      total={0}
+      buildings={[]}
+      unallocatedPayments={[]}
+      unpaidInvoices={[]}
+      metrics={{ totalReceived: 0, pendingReconciliation: 0, currency: 'EUR' }}
+      onNavigateToRecord={() => navigate('/financial/payments/new')}
+      onNavigateToDetail={(id) => navigate(`/financial/payments/${id}`)}
+      onMatch={() => {}}
+      onAutoMatch={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function BudgetManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <BudgetManagementPage
+      budgets={[]}
+      currentYear={new Date().getFullYear()}
+      summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
+      buildings={[]}
+      onNavigateToCreate={() => navigate('/financial/budgets/new')}
+      onNavigateToDetail={(id) => navigate(`/financial/budgets/${id}`)}
+      onYearChange={() => {}}
+      onBuildingChange={() => {}}
     />
   );
 }
