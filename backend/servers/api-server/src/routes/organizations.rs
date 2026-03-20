@@ -426,8 +426,7 @@ pub async fn list_my_organizations(
         )
     })?;
 
-    // TODO: Migrate to get_user_memberships_rls when RLS variant is available
-    let memberships = match state.org_member_repo.get_user_memberships(user_id).await {
+    let memberships = match state.org_member_repo.get_user_memberships_rls(&mut **rls.conn(), user_id).await {
         Ok(m) => m,
         Err(e) => {
             tracing::error!(error = %e, "Failed to fetch user organizations");
@@ -498,10 +497,9 @@ pub async fn get_organization(
     })?;
 
     // Check if user is member of this organization
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available
     match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(_)) => {}
@@ -608,10 +606,9 @@ pub async fn update_organization(
     })?;
 
     // Check if user is admin of this organization
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available
     let membership = match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(m)) => m,
@@ -639,9 +636,8 @@ pub async fn update_organization(
     };
 
     // Get role and check permissions
-    // TODO: Migrate to find_by_id_rls when RLS variant is available in role repository
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id(role_id).await {
+        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
             Ok(Some(r)) => r,
             Ok(None) => {
                 rls.release().await;
@@ -752,6 +748,7 @@ pub struct DeleteOrganizationResponse {
 pub async fn delete_organization(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DeleteOrganizationResponse>, (StatusCode, Json<ErrorResponse>)> {
     let token = extract_bearer_token(&headers)?;
@@ -767,11 +764,12 @@ pub async fn delete_organization(
     // Check if user is admin of this organization
     let membership = match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(m)) => m,
         Ok(None) => {
+            rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new(
@@ -782,6 +780,7 @@ pub async fn delete_organization(
         }
         Err(e) => {
             tracing::error!(error = %e, "Failed to check membership");
+            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -794,9 +793,10 @@ pub async fn delete_organization(
 
     // Get role and check permissions
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id(role_id).await {
+        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
             Ok(Some(r)) => r,
             Ok(None) => {
+                rls.release().await;
                 return Err((
                     StatusCode::FORBIDDEN,
                     Json(ErrorResponse::new("ROLE_NOT_FOUND", "User role not found")),
@@ -804,6 +804,7 @@ pub async fn delete_organization(
             }
             Err(e) => {
                 tracing::error!(error = %e, "Failed to fetch role");
+                rls.release().await;
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse::new("DATABASE_ERROR", "Failed to fetch role")),
@@ -811,6 +812,7 @@ pub async fn delete_organization(
             }
         },
         None => {
+            rls.release().await;
             return Err((
                 StatusCode::FORBIDDEN,
                 Json(ErrorResponse::new("NO_ROLE", "User has no role assigned")),
@@ -820,6 +822,7 @@ pub async fn delete_organization(
 
     // Check for organization:delete permission
     if !role.has_permission("organization:delete") {
+        rls.release().await;
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -830,11 +833,10 @@ pub async fn delete_organization(
     }
 
     // Soft delete using dedicated method
-    // TODO: Migrate to archive_rls when this handler has RLS connection
-    #[allow(deprecated)]
-    match state.org_repo.soft_delete(id).await {
+    match state.org_repo.archive_rls(&mut **rls.conn(), id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
+            rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
@@ -845,6 +847,7 @@ pub async fn delete_organization(
         }
         Err(e) => {
             tracing::error!(error = %e, "Failed to delete organization");
+            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -857,6 +860,7 @@ pub async fn delete_organization(
 
     tracing::info!(org_id = %id, user_id = %user_id, "Organization deleted");
 
+    rls.release().await;
     Ok(Json(DeleteOrganizationResponse {
         message: "Organization deleted successfully".to_string(),
     }))
@@ -2625,10 +2629,9 @@ pub async fn get_organization_settings(
     })?;
 
     // Check if user is member of this organization
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available in OrganizationMemberRepository
     match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(_)) => {}
@@ -2722,10 +2725,9 @@ pub async fn update_organization_settings(
     })?;
 
     // Check membership and permissions
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available in OrganizationMemberRepository
     let membership = match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(m)) => m,
@@ -2753,7 +2755,7 @@ pub async fn update_organization_settings(
     };
 
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id(role_id).await {
+        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
             Ok(Some(r)) => r,
             _ => {
                 rls.release().await;
@@ -2887,10 +2889,9 @@ pub async fn get_organization_branding(
     })?;
 
     // Check if user is member of this organization
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available in OrganizationMemberRepository
     match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(_)) => {}
@@ -3001,10 +3002,9 @@ pub async fn update_organization_branding(
     }
 
     // Check membership and permissions
-    // TODO: Migrate to find_by_org_and_user_rls when RLS variant is available in OrganizationMemberRepository
     let membership = match state
         .org_member_repo
-        .find_by_org_and_user(id, user_id)
+        .find_by_org_and_user_rls(&mut **rls.conn(), id, user_id)
         .await
     {
         Ok(Some(m)) => m,
@@ -3032,7 +3032,7 @@ pub async fn update_organization_branding(
     };
 
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id(role_id).await {
+        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
             Ok(Some(r)) => r,
             _ => {
                 rls.release().await;

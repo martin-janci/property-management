@@ -3,7 +3,7 @@
 
 use crate::services::SyndicationService;
 use crate::state::AppState;
-use api_core::extractors::TenantExtractor;
+use api_core::extractors::{RlsConnection, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
@@ -126,47 +126,54 @@ pub async fn create_listing(
 pub async fn create_from_unit(
     State(state): State<AppState>,
     TenantExtractor(tenant): TenantExtractor,
+    mut rls: RlsConnection,
     Json(data): Json<CreateListingFromUnit>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
     // Fetch unit data
-    // TODO: Migrate to find_by_id_rls when this handler has RLS connection
-    #[allow(deprecated)]
-    let unit = state
+    let unit = match state
         .unit_repo
-        .find_by_id(data.unit_id)
+        .find_by_id_rls(&mut **rls.conn(), data.unit_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch unit: {}", e),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(u)) => u,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 axum::http::StatusCode::NOT_FOUND,
                 "Unit not found".to_string(),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch unit: {}", e),
+            ));
+        }
+    };
 
     // Fetch building data for address
-    // TODO: Migrate to find_by_id_rls when this handler has RLS connection
-    #[allow(deprecated)]
-    let building = state
+    let building = match state
         .building_repo
-        .find_by_id(unit.building_id)
+        .find_by_id_rls(&mut **rls.conn(), unit.building_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to fetch building: {}", e),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(b)) => b,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 axum::http::StatusCode::NOT_FOUND,
                 "Building not found".to_string(),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch building: {}", e),
+            ));
+        }
+    };
 
     // Map unit_type to property_type
     let property_type = match unit.unit_type.as_str() {
@@ -217,17 +224,22 @@ pub async fn create_from_unit(
         features: data.features,
     };
 
-    let listing = state
+    let listing = match state
         .listing_repo
         .create(create_data, tenant.tenant_id, tenant.user_id)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(l) => l,
+        Err(e) => {
+            rls.release().await;
+            return Err((
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to create listing: {}", e),
-            )
-        })?;
+            ));
+        }
+    };
 
+    rls.release().await;
     Ok(Json(listing))
 }
 
