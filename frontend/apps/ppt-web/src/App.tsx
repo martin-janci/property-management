@@ -1,4 +1,5 @@
 import {
+  useBuildings,
   useCancelOutage,
   useCreateDispute,
   useCreateOutage,
@@ -11,6 +12,7 @@ import {
   useUpdateOutage,
 } from '@ppt/api-client';
 import type {
+  Building as ApiBuilding,
   Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
@@ -124,6 +126,21 @@ function mapUiStatusToApiStatus(status: UiDisputeStatus): ApiDisputeStatus | und
     closed: 'closed',
   };
   return mapping[status];
+}
+
+/** Format API Building address to string for UI components */
+function formatBuildingAddress(building: ApiBuilding): string {
+  const { street, city, postalCode } = building.address;
+  return `${street}, ${postalCode} ${city}`;
+}
+
+/** Transform API Building to UI building format */
+function transformBuildingForUI(building: ApiBuilding): { id: string; name: string; address: string } {
+  return {
+    id: building.id,
+    name: building.name,
+    address: formatBuildingAddress(building),
+  };
 }
 
 /** Transform API Dispute to UI DisputeSummary */
@@ -658,6 +675,9 @@ function CreateOutagePageRoute() {
   const { showToast } = useToast();
   const createOutage = useCreateOutage();
 
+  // Fetch buildings from API
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
   if (!user?.organizationId) {
     return (
       <div className="error-page">
@@ -668,8 +688,8 @@ function CreateOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  // Transform API buildings to UI format
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
 
   const handleSubmit = async (data: {
     title: string;
@@ -710,7 +730,7 @@ function CreateOutagePageRoute() {
   return (
     <CreateOutagePage
       buildings={buildings}
-      isLoading={createOutage.isPending}
+      isLoading={createOutage.isPending || isLoadingBuildings}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
     />
@@ -840,6 +860,9 @@ function EditOutagePageRoute() {
   const { data: outageData, isLoading: isLoadingOutage } = useOutage(outageId ?? '');
   const updateOutage = useUpdateOutage();
 
+  // Fetch buildings from API
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
   if (!outageId) {
     return (
       <div className="error-page">
@@ -850,8 +873,8 @@ function EditOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  // Transform API buildings to UI format
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
 
   const handleSubmit = async (data: {
     title: string;
@@ -892,7 +915,7 @@ function EditOutagePageRoute() {
 
   const handleCancel = () => navigate(`/outages/${outageId}`);
 
-  if (isLoadingOutage || !outageData) {
+  if (isLoadingOutage || isLoadingBuildings || !outageData) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />

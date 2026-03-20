@@ -1,17 +1,13 @@
 /**
- * Generated Reality Portal API Client
+ * Generated API Client
  *
  * Run `pnpm generate` to regenerate from OpenAPI spec.
  */
 
-// Placeholder exports until API is generated
-export type ApiResponse<T> = {
-  data: T;
-  status: number;
-};
-
-export type ApiError = {
-  code: string;
-  message: string;
-  requestId?: string;
-};
+export { ApiError } from './core/ApiError';
+export { CancelablePromise, CancelError } from './core/CancelablePromise';
+export { OpenAPI, type OpenAPIConfig } from './core/OpenAPI';
+export * from './models';
+// Note: schemas.ts excluded due to OpenAPI namespaced schema names generating invalid JS syntax
+// export * from './schemas';
+export * from './services';

@@ -1,11 +1,7 @@
 {
   "name": "property-management",
   "private": true,
-<<<<<<< Updated upstream
-  "version": "0.2.353",
-=======
   "version": "0.2.355",
->>>>>>> Stashed changes
   "description": "Property Management System - Monorepo Root",
   "repository": "https://github.com/hanibalsk/property-management",
   "license": "MIT",
