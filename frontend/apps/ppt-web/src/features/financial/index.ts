@@ -10,3 +10,6 @@
 
 export * from './components';
 export { FinancialDashboardPage } from './pages/FinancialDashboardPage';
+export { InvoiceManagementPage } from './pages/InvoiceManagementPage';
+export { PaymentManagementPage } from './pages/PaymentManagementPage';
+export { BudgetManagementPage } from './pages/BudgetManagementPage';

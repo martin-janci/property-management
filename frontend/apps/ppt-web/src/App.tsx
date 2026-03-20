@@ -1096,6 +1096,7 @@ function ViewAnnouncementPageRoute() {
     content: 'This is a sample announcement content.',
     status: 'published',
     targetType: 'all',
+    targetIds: [],
     pinned: false,
     acknowledgmentRequired: false,
     commentsEnabled: true,
@@ -1141,6 +1142,7 @@ function EditAnnouncementPageRoute() {
     content: 'This is a sample announcement content.',
     status: 'draft',
     targetType: 'all',
+    targetIds: [],
     pinned: false,
     acknowledgmentRequired: false,
     commentsEnabled: true,
@@ -1210,10 +1212,10 @@ function ThreadDetailPageRoute() {
   // Mock thread data
   const mockThread: import('./features/messaging').ThreadWithMessages = {
     id: threadId,
-    organizationId: 'org-1',
     subject: 'Sample Thread',
     participants: [],
     participantCount: 2,
+    messageCount: 0,
     messages: [],
     unreadCount: 0,
     lastMessageAt: new Date().toISOString(),
@@ -1353,7 +1355,7 @@ function FeedPageRoute() {
     <FeedPage
       posts={[]}
       total={0}
-      userName={user?.name ?? 'User'}
+      userName={user?.firstName ?? 'User'}
       onCreatePost={() => {}}
       onLikePost={() => {}}
       onViewPost={(id) => navigate(`/community/posts/${id}`)}
@@ -1409,13 +1411,15 @@ function GroupDetailPageRoute() {
   // Mock group data
   const mockGroup: import('@ppt/api-client').CommunityGroup = {
     id: groupId,
-    organizationId: 'org-1',
+    buildingId: 'bld-1',
     name: 'Sample Group',
     description: 'A sample community group',
     category: 'general',
     visibility: 'public',
     memberCount: 10,
     postCount: 0,
+    isOfficial: false,
+    createdBy: 'user-1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -1490,7 +1494,7 @@ function FinancialDashboardPageRoute() {
       overdueInvoices={[]}
       arReport={{
         entries: [],
-        totals: { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 },
+        totals: { current: 0, days_30: 0, days_60: 0, days_90_plus: 0, total: 0 },
       }}
     />
   );
@@ -1505,7 +1509,7 @@ function InvoiceManagementPageRoute() {
       total={0}
       buildings={[]}
       onNavigateToCreate={() => navigate('/financial/invoices/new')}
-      onNavigateToDetail={(id) => navigate(`/financial/invoices/${id}`)}
+      onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
       onSendInvoice={() => {}}
       onFilterChange={() => {}}
     />
@@ -1524,7 +1528,7 @@ function PaymentManagementPageRoute() {
       unpaidInvoices={[]}
       metrics={{ totalReceived: 0, pendingReconciliation: 0, currency: 'EUR' }}
       onNavigateToRecord={() => navigate('/financial/payments/new')}
-      onNavigateToDetail={(id) => navigate(`/financial/payments/${id}`)}
+      onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
       onMatch={() => {}}
       onAutoMatch={() => {}}
       onFilterChange={() => {}}
@@ -1542,7 +1546,7 @@ function BudgetManagementPageRoute() {
       summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
       buildings={[]}
       onNavigateToCreate={() => navigate('/financial/budgets/new')}
-      onNavigateToDetail={(id) => navigate(`/financial/budgets/${id}`)}
+      onNavigateToDetail={(id: string) => navigate(`/financial/budgets/${id}`)}
       onYearChange={() => {}}
       onBuildingChange={() => {}}
     />

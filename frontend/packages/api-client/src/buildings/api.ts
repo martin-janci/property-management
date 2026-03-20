@@ -26,8 +26,8 @@ import type {
 // ============================================
 
 // Use configurable base URL from environment, falling back to relative path
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const API_BASE = `${typeof window !== 'undefined' && (window as any).__API_BASE_URL__ ? String((window as any).__API_BASE_URL__) : ''}/api/v1/buildings`;
+const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
+const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/buildings`;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
