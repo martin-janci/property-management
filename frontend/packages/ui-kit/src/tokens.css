@@ -1,0 +1,188 @@
+/**
+ * Design Tokens for @ppt/ui-kit
+ *
+ * CSS custom properties for consistent styling across all components.
+ * These tokens are used by all UI Kit components and can be overridden
+ * at the application level.
+ */
+
+:root {
+  /* Colors - Primary */
+  --ppt-color-primary: #3b82f6;
+  --ppt-color-primary-hover: #2563eb;
+  --ppt-color-primary-active: #1d4ed8;
+  --ppt-color-primary-light: #dbeafe;
+  --ppt-color-primary-dark: #1e40af;
+
+  /* Colors - Secondary */
+  --ppt-color-secondary: #6b7280;
+  --ppt-color-secondary-hover: #4b5563;
+  --ppt-color-secondary-active: #374151;
+  --ppt-color-secondary-light: #f3f4f6;
+
+  /* Colors - Semantic */
+  --ppt-color-success: #10b981;
+  --ppt-color-success-hover: #059669;
+  --ppt-color-success-light: #d1fae5;
+  --ppt-color-success-dark: #047857;
+
+  --ppt-color-warning: #f59e0b;
+  --ppt-color-warning-hover: #d97706;
+  --ppt-color-warning-light: #fef3c7;
+  --ppt-color-warning-dark: #b45309;
+
+  --ppt-color-danger: #ef4444;
+  --ppt-color-danger-hover: #dc2626;
+  --ppt-color-danger-light: #fee2e2;
+  --ppt-color-danger-dark: #b91c1c;
+
+  --ppt-color-info: #3b82f6;
+  --ppt-color-info-light: #dbeafe;
+
+  /* Colors - Neutral */
+  --ppt-color-background: #ffffff;
+  --ppt-color-surface: #ffffff;
+  --ppt-color-surface-hover: #f9fafb;
+  --ppt-color-border: #e5e7eb;
+  --ppt-color-border-hover: #d1d5db;
+
+  /* Colors - Text */
+  --ppt-color-text: #1f2937;
+  --ppt-color-text-secondary: #6b7280;
+  --ppt-color-text-muted: #9ca3af;
+  --ppt-color-text-inverse: #ffffff;
+
+  /* Spacing */
+  --ppt-space-0: 0;
+  --ppt-space-1: 0.25rem; /* 4px */
+  --ppt-space-2: 0.5rem; /* 8px */
+  --ppt-space-3: 0.75rem; /* 12px */
+  --ppt-space-4: 1rem; /* 16px */
+  --ppt-space-5: 1.25rem; /* 20px */
+  --ppt-space-6: 1.5rem; /* 24px */
+  --ppt-space-8: 2rem; /* 32px */
+  --ppt-space-10: 2.5rem; /* 40px */
+  --ppt-space-12: 3rem; /* 48px */
+
+  /* Typography */
+  --ppt-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --ppt-font-family-mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+
+  --ppt-font-size-xs: 0.75rem; /* 12px */
+  --ppt-font-size-sm: 0.875rem; /* 14px */
+  --ppt-font-size-base: 1rem; /* 16px */
+  --ppt-font-size-lg: 1.125rem; /* 18px */
+  --ppt-font-size-xl: 1.25rem; /* 20px */
+  --ppt-font-size-2xl: 1.5rem; /* 24px */
+
+  --ppt-font-weight-normal: 400;
+  --ppt-font-weight-medium: 500;
+  --ppt-font-weight-semibold: 600;
+  --ppt-font-weight-bold: 700;
+
+  --ppt-line-height-tight: 1.25;
+  --ppt-line-height-normal: 1.5;
+  --ppt-line-height-relaxed: 1.75;
+
+  /* Border Radius */
+  --ppt-radius-none: 0;
+  --ppt-radius-sm: 0.125rem; /* 2px */
+  --ppt-radius-md: 0.375rem; /* 6px */
+  --ppt-radius-lg: 0.5rem; /* 8px */
+  --ppt-radius-xl: 0.75rem; /* 12px */
+  --ppt-radius-2xl: 1rem; /* 16px */
+  --ppt-radius-full: 9999px;
+
+  /* Shadows */
+  --ppt-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ppt-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ppt-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --ppt-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --ppt-transition-fast: 150ms ease;
+  --ppt-transition-normal: 200ms ease;
+  --ppt-transition-slow: 300ms ease;
+
+  /* Z-Index */
+  --ppt-z-dropdown: 1000;
+  --ppt-z-sticky: 1100;
+  --ppt-z-fixed: 1200;
+  --ppt-z-modal-backdrop: 1300;
+  --ppt-z-modal: 1400;
+  --ppt-z-tooltip: 1500;
+  --ppt-z-toast: 1600;
+
+  /* Focus Ring */
+  --ppt-focus-ring-width: 2px;
+  --ppt-focus-ring-color: var(--ppt-color-primary);
+  --ppt-focus-ring-offset: 2px;
+}
+
+/* Dark mode overrides */
+[data-color-scheme="dark"] {
+  --ppt-color-background: #1f2937;
+  --ppt-color-surface: #374151;
+  --ppt-color-surface-hover: #4b5563;
+  --ppt-color-border: #4b5563;
+  --ppt-color-border-hover: #6b7280;
+  --ppt-color-text: #f9fafb;
+  --ppt-color-text-secondary: #d1d5db;
+  --ppt-color-text-muted: #9ca3af;
+}
+
+/* High contrast mode overrides */
+[data-color-scheme="high-contrast"] {
+  --ppt-color-primary: #0000ff;
+  --ppt-color-background: #ffffff;
+  --ppt-color-surface: #ffffff;
+  --ppt-color-border: #000000;
+  --ppt-color-text: #000000;
+  --ppt-color-text-secondary: #000000;
+  --ppt-focus-ring-width: 3px;
+  --ppt-focus-ring-color: #000000;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ppt-transition-fast: 0ms;
+    --ppt-transition-normal: 0ms;
+    --ppt-transition-slow: 0ms;
+  }
+}
+
+[data-reduce-motion="true"] {
+  --ppt-transition-fast: 0ms;
+  --ppt-transition-normal: 0ms;
+  --ppt-transition-slow: 0ms;
+}
+
+/* Text size overrides */
+[data-text-size="small"] {
+  --ppt-font-size-xs: 0.6875rem;
+  --ppt-font-size-sm: 0.75rem;
+  --ppt-font-size-base: 0.875rem;
+  --ppt-font-size-lg: 1rem;
+  --ppt-font-size-xl: 1.125rem;
+  --ppt-font-size-2xl: 1.25rem;
+}
+
+[data-text-size="large"] {
+  --ppt-font-size-xs: 0.875rem;
+  --ppt-font-size-sm: 1rem;
+  --ppt-font-size-base: 1.125rem;
+  --ppt-font-size-lg: 1.25rem;
+  --ppt-font-size-xl: 1.5rem;
+  --ppt-font-size-2xl: 1.75rem;
+}
+
+[data-text-size="extra-large"] {
+  --ppt-font-size-xs: 1rem;
+  --ppt-font-size-sm: 1.125rem;
+  --ppt-font-size-base: 1.25rem;
+  --ppt-font-size-lg: 1.5rem;
+  --ppt-font-size-xl: 1.75rem;
+  --ppt-font-size-2xl: 2rem;
+}

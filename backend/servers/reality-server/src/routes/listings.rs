@@ -6,8 +6,10 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use db::models::{PublicListingQuery, PublicListingSummary};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -17,6 +19,31 @@ pub fn router() -> Router<AppState> {
         .route("/", get(search))
         .route("/:id", get(get_listing))
         .route("/suggestions", get(get_suggestions))
+}
+
+/// Full listing row from database for detail view.
+#[derive(Debug, FromRow)]
+struct FullListingRow {
+    pub id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub price: i64,
+    pub currency: String,
+    pub size_sqm: Option<i32>,
+    pub rooms: Option<i32>,
+    pub bathrooms: Option<i32>,
+    pub floor: Option<i32>,
+    pub total_floors: Option<i32>,
+    pub street: String,
+    pub city: String,
+    pub postal_code: String,
+    pub country: String,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub property_type: String,
+    pub transaction_type: String,
+    pub features: serde_json::Value,
+    pub published_at: Option<DateTime<Utc>>,
 }
 
 /// Listing search request (maps to PublicListingQuery).
@@ -262,8 +289,24 @@ pub async fn get_listing(
 ) -> Result<Json<ListingDetail>, (axum::http::StatusCode, String)> {
     tracing::info!(%id, "Get listing detail");
 
-    // Query the database directly for the specific listing by ID
-    let listing = state.portal_repo.get_listing_by_id(id).await.map_err(|e| {
+    // Query the full listing with address and coordinates
+    let listing = sqlx::query_as::<_, FullListingRow>(
+        r#"
+        SELECT
+            l.id, l.title, l.description, l.price, l.currency,
+            l.size_sqm, l.rooms, l.bathrooms, l.floor, l.total_floors,
+            l.street, l.city, l.postal_code, l.country,
+            l.latitude, l.longitude,
+            l.property_type, l.transaction_type, l.features,
+            l.published_at
+        FROM listings l
+        WHERE l.id = $1 AND l.status = 'active'
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to fetch listing: {}", e),
@@ -275,6 +318,34 @@ pub async fn get_listing(
             // Track the view
             let _ = state.reality_portal_repo.track_view(id, "website").await;
 
+            // Get photos for the listing
+            let photos: Vec<String> = sqlx::query_scalar(
+                "SELECT url FROM listing_photos WHERE listing_id = $1 ORDER BY display_order",
+            )
+            .bind(id)
+            .fetch_all(&state.db)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to fetch listing photos: {}", e),
+                )
+            })?;
+
+            // Build full address
+            let address = format!("{}, {} {}", l.street, l.postal_code, l.city);
+
+            // Parse features from JSON
+            let features: Vec<String> = l
+                .features
+                .as_array()
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
+                .unwrap_or_default();
+
             Ok(Json(ListingDetail {
                 id: l.id,
                 title: l.title,
@@ -283,19 +354,19 @@ pub async fn get_listing(
                 currency: l.currency,
                 area: l.size_sqm,
                 rooms: l.rooms,
-                bathrooms: None,        // Would need additional query
-                floor: None,            // Would need additional query
-                total_floors: None,     // Would need additional query
-                address: String::new(), // Would need additional query
+                bathrooms: l.bathrooms,
+                floor: l.floor,
+                total_floors: l.total_floors,
+                address,
                 city: l.city,
-                country: String::new(), // Would need additional query
-                latitude: None,
-                longitude: None,
+                country: l.country,
+                latitude: l.latitude,
+                longitude: l.longitude,
                 property_type: l.property_type,
                 transaction_type: l.transaction_type,
-                photos: l.photo_url.map(|url| vec![url]).unwrap_or_default(),
-                features: vec![],
-                published_at: l.published_at.to_rfc3339(),
+                photos,
+                features,
+                published_at: l.published_at.map(|dt| dt.to_rfc3339()).unwrap_or_default(),
                 view_count: 0, // Would need analytics query
             }))
         }

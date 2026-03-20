@@ -254,6 +254,13 @@ pub mod edd;
 
 pub use edd::{EddRepository, EddStatistics};
 
+// Epic 67: DSA Compliance & Content Moderation
+pub mod compliance;
+
+pub use compliance::{
+    ComplianceRepository, ModerationQueueStats, PriorityCount, ViolationTypeCount,
+};
+
 // Epic 108: Feature Packages & Bundles
 pub mod feature_package;
 
@@ -343,3 +350,8 @@ pub use multi_currency::MultiCurrencyRepository;
 pub mod api_ecosystem;
 
 pub use api_ecosystem::ApiEcosystemRepository;
+
+// Epic 68: Service Provider Marketplace
+pub mod marketplace;
+
+pub use marketplace::MarketplaceRepository;

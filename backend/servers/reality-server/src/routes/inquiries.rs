@@ -156,10 +156,29 @@ pub async fn send_contact_message(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    // For now, we need to find the realtor for this listing
-    // In a full implementation, this would query the listing to get the realtor
-    // For simplicity, we'll use a placeholder realtor ID
-    let realtor_id = Uuid::nil(); // This would be fetched from the listing
+    // Query the listing to get the realtor (created_by field)
+    let listing = sqlx::query_as::<_, (Uuid,)>(
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
+    )
+    .bind(listing_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to query listing: {}", e),
+        )
+    })?;
+
+    let realtor_id = match listing {
+        Some((created_by,)) => created_by,
+        None => {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
+            ));
+        }
+    };
 
     let inquiry_data = CreateListingInquiry {
         name: req.name,
@@ -254,7 +273,29 @@ pub async fn request_viewing(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    let realtor_id = Uuid::nil(); // This would be fetched from the listing
+    // Query the listing to get the realtor (created_by field)
+    let listing = sqlx::query_as::<_, (Uuid,)>(
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
+    )
+    .bind(listing_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to query listing: {}", e),
+        )
+    })?;
+
+    let realtor_id = match listing {
+        Some((created_by,)) => created_by,
+        None => {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
+            ));
+        }
+    };
 
     let inquiry_data = CreateListingInquiry {
         name: req.name,
