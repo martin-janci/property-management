@@ -24,7 +24,7 @@ use db::{
         OrganizationRepository, OutageRepository, OwnerAnalyticsRepository,
         PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
         PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
-        PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
+        MarketplaceRepository, PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
         RentalRepository, ReserveFundRepository, RoleRepository, SensorRepository,
         SentimentRepository, SessionRepository, SignatureRequestRepository, SubscriptionRepository,
         SystemAnnouncementRepository, TwoFactorAuthRepository, UnitRepository,
@@ -139,6 +139,7 @@ pub struct AppState {
     pub outage_repo: OutageRepository,
     // Epic 132: Dynamic Rent Pricing & Market Analytics
     pub market_pricing_repo: MarketPricingRepository,
+    pub marketplace_repo: MarketplaceRepository,
     // Epic 133: AI Lease Abstraction & Document Intelligence
     pub lease_abstraction_repo: LeaseAbstractionRepository,
     // Epic 134: Predictive Maintenance & Equipment Intelligence
@@ -286,6 +287,7 @@ impl AppState {
         let outage_repo = OutageRepository::new(db.clone());
         // Epic 132: Dynamic Rent Pricing & Market Analytics
         let market_pricing_repo = MarketPricingRepository::new(db.clone());
+        let marketplace_repo = MarketplaceRepository::new(db.clone());
         // Epic 133: AI Lease Abstraction & Document Intelligence
         let lease_abstraction_repo = LeaseAbstractionRepository::new(db.clone());
         // Epic 134: Predictive Maintenance & Equipment Intelligence
@@ -393,6 +395,7 @@ impl AppState {
             feature_analytics_repo,
             outage_repo,
             market_pricing_repo,
+            marketplace_repo,
             lease_abstraction_repo,
             predictive_maintenance_repo,
             enhanced_tenant_screening_repo,
