@@ -21,10 +21,9 @@ use db::models::{
     MarketplaceSearchQuery, MarketplaceStatistics, ModerateReviewRequest, ProviderBadge,
     ProviderDashboard, ProviderProfileComplete, ProviderQuote, ProviderReview,
     ProviderReviewResponse, ProviderReviewWithResponse, ProviderSearchResult, ProviderVerification,
-    QuoteComparisonView, RatingBreakdown, RatingDistribution, RequestForQuote, ReviewQuery,
-    ReviewVerificationRequest, RfqInvitation, RfqQuery, ServiceProviderProfile,
-    UpdateProviderQuote, UpdateProviderReview, UpdateRequestForQuote, UpdateServiceProviderProfile,
-    VerificationQuery, VerificationQueueItem,
+    QuoteComparisonView, RatingBreakdown, RequestForQuote, ReviewQuery, ReviewVerificationRequest,
+    RfqInvitation, RfqQuery, ServiceProviderProfile, UpdateProviderQuote, UpdateProviderReview,
+    UpdateRequestForQuote, UpdateServiceProviderProfile, VerificationQuery, VerificationQueueItem,
 };
 use rust_decimal::Decimal;
 use serde::Deserialize;
