@@ -641,7 +641,10 @@ async fn generate_document(
         created_by: user_id,
     };
 
-    let create_result = state.document_repo.create_rls(&mut **rls.conn(), create_doc).await;
+    let create_result = state
+        .document_repo
+        .create_rls(&mut **rls.conn(), create_doc)
+        .await;
     match create_result {
         Ok(document) => {
             rls.release().await;

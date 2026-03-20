@@ -228,10 +228,7 @@ export interface StringLengthOptions {
 /**
  * Validates string length and format.
  */
-export function validateString(
-  value: string,
-  options: StringLengthOptions = {}
-): ValidationResult {
+export function validateString(value: string, options: StringLengthOptions = {}): ValidationResult {
   const { minLength, maxLength, pattern, patternMessage } = options;
 
   if (minLength !== undefined && value.length < minLength) {
@@ -341,9 +338,7 @@ export function validateDateRange(
  * );
  * validator(''); // { valid: false, error: 'This field is required' }
  */
-export function combineValidators<T>(
-  ...validators: Validator<T>[]
-): Validator<T> {
+export function combineValidators<T>(...validators: Validator<T>[]): Validator<T> {
   return (value: T): ValidationResult => {
     for (const validator of validators) {
       const result = validator(value);

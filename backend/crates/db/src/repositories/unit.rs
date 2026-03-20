@@ -592,11 +592,7 @@ impl UnitRepository {
     }
 
     /// Restore archived unit with RLS context.
-    pub async fn restore_rls<'e, E>(
-        &self,
-        executor: E,
-        id: Uuid,
-    ) -> Result<Option<Unit>, SqlxError>
+    pub async fn restore_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<Option<Unit>, SqlxError>
     where
         E: Executor<'e, Database = Postgres>,
     {

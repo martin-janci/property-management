@@ -142,11 +142,7 @@ export function Modal({
   }
 
   return (
-    <div
-      className="ppt-modal__backdrop"
-      onClick={handleBackdropClick}
-      aria-hidden="true"
-    >
+    <div className="ppt-modal__backdrop" onClick={handleBackdropClick} aria-hidden="true">
       <div
         ref={dialogRef}
         className={`ppt-modal ppt-modal--${size}`}

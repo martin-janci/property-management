@@ -28,24 +28,12 @@ export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
  * ```
  */
 export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(
-  (
-    {
-      size = 'md',
-      color,
-      label = 'Loading',
-      className = '',
-      style,
-      ...props
-    },
-    ref
-  ) => {
-    const classes = ['ppt-spinner', `ppt-spinner--${size}`, className]
-      .filter(Boolean)
-      .join(' ');
+  ({ size = 'md', color, label = 'Loading', className = '', style, ...props }, ref) => {
+    const classes = ['ppt-spinner', `ppt-spinner--${size}`, className].filter(Boolean).join(' ');
 
     const spinnerStyle: React.CSSProperties = {
       ...style,
-      ...(color && { '--ppt-spinner-color': color } as React.CSSProperties),
+      ...(color && ({ '--ppt-spinner-color': color } as React.CSSProperties)),
     };
 
     return (

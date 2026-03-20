@@ -320,7 +320,7 @@ pub async fn get_listing(
 
             // Get photos for the listing
             let photos: Vec<String> = sqlx::query_scalar(
-                "SELECT url FROM listing_photos WHERE listing_id = $1 ORDER BY display_order"
+                "SELECT url FROM listing_photos WHERE listing_id = $1 ORDER BY display_order",
             )
             .bind(id)
             .fetch_all(&state.db)
@@ -331,9 +331,14 @@ pub async fn get_listing(
             let address = format!("{}, {} {}", l.street, l.postal_code, l.city);
 
             // Parse features from JSON
-            let features: Vec<String> = l.features
+            let features: Vec<String> = l
+                .features
                 .as_array()
-                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
                 .unwrap_or_default();
 
             Ok(Json(ListingDetail {

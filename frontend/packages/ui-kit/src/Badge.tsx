@@ -6,7 +6,14 @@ import type React from 'react';
 import { forwardRef } from 'react';
 import './Badge.css';
 
-export type BadgeVariant = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info';
+export type BadgeVariant =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'info';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

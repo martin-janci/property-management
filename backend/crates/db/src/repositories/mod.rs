@@ -257,7 +257,9 @@ pub use edd::{EddRepository, EddStatistics};
 // Epic 67: DSA Compliance & Content Moderation
 pub mod compliance;
 
-pub use compliance::{ComplianceRepository, ModerationQueueStats, PriorityCount, ViolationTypeCount};
+pub use compliance::{
+    ComplianceRepository, ModerationQueueStats, PriorityCount, ViolationTypeCount,
+};
 
 // Epic 108: Feature Packages & Bundles
 pub mod feature_package;

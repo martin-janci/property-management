@@ -5,8 +5,8 @@
 
 use crate::models::compliance::{
     CreateModerationCase, DsaReportStatus, DsaReportSummary, DsaTransparencyReport,
-    ModerationActionTemplate, ModerationActionType, ModerationCase, ModerationStatus,
-    ModeratedContentType, TakeModerationAction, ViolationType,
+    ModeratedContentType, ModerationActionTemplate, ModerationActionType, ModerationCase,
+    ModerationStatus, TakeModerationAction, ViolationType,
 };
 use crate::DbPool;
 use chrono::{DateTime, Utc};
@@ -37,7 +37,9 @@ impl ComplianceRepository {
         generated_by: Uuid,
     ) -> Result<DsaTransparencyReport, SqlxError> {
         // Calculate statistics from moderation_cases for the period
-        let stats = self.calculate_report_stats(period_start, period_end).await?;
+        let stats = self
+            .calculate_report_stats(period_start, period_end)
+            .await?;
 
         let report = sqlx::query_as::<_, DsaTransparencyReport>(
             r#"
@@ -363,12 +365,11 @@ impl ComplianceRepository {
 
     /// Get moderation case by ID.
     pub async fn get_moderation_case(&self, id: Uuid) -> Result<Option<ModerationCase>, SqlxError> {
-        let case = sqlx::query_as::<_, ModerationCase>(
-            r#"SELECT * FROM moderation_cases WHERE id = $1"#,
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let case =
+            sqlx::query_as::<_, ModerationCase>(r#"SELECT * FROM moderation_cases WHERE id = $1"#)
+                .bind(id)
+                .fetch_optional(&self.pool)
+                .await?;
 
         Ok(case)
     }
@@ -450,11 +451,10 @@ impl ComplianceRepository {
 
     /// Get moderation queue statistics.
     pub async fn get_moderation_queue_stats(&self) -> Result<ModerationQueueStats, SqlxError> {
-        let (pending_count,): (i64,) = sqlx::query_as(
-            r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let (pending_count,): (i64,) =
+            sqlx::query_as(r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'pending'"#)
+                .fetch_one(&self.pool)
+                .await?;
 
         let (under_review_count,): (i64,) = sqlx::query_as(
             r#"SELECT COUNT(*) FROM moderation_cases WHERE status = 'under_review'"#,
@@ -585,11 +585,7 @@ impl ComplianceRepository {
     }
 
     /// File an appeal.
-    pub async fn file_appeal(
-        &self,
-        id: Uuid,
-        reason: &str,
-    ) -> Result<ModerationCase, SqlxError> {
+    pub async fn file_appeal(&self, id: Uuid, reason: &str) -> Result<ModerationCase, SqlxError> {
         let case = sqlx::query_as::<_, ModerationCase>(
             r#"
             UPDATE moderation_cases SET

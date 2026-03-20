@@ -60,7 +60,18 @@ export interface TableHeaderCellProps extends React.ThHTMLAttributes<HTMLTableCe
  * ```
  */
 export const Table = forwardRef<HTMLTableElement, TableProps>(
-  ({ variant = 'default', hoverable = false, compact = false, responsive = true, className = '', children, ...props }, ref) => {
+  (
+    {
+      variant = 'default',
+      hoverable = false,
+      compact = false,
+      responsive = true,
+      className = '',
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const tableClasses = [
       'ppt-table',
       `ppt-table--${variant}`,
@@ -150,7 +161,10 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(
 TableCell.displayName = 'Table.Cell';
 
 const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
-  ({ align = 'left', sortable = false, sortDirection, onSort, className = '', children, ...props }, ref) => {
+  (
+    { align = 'left', sortable = false, sortDirection, onSort, className = '', children, ...props },
+    ref
+  ) => {
     const classes = [
       'ppt-table__header-cell',
       `ppt-table__header-cell--${align}`,
@@ -165,7 +179,13 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
         type="button"
         className="ppt-table__sort-button"
         onClick={onSort}
-        aria-sort={sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : undefined}
+        aria-sort={
+          sortDirection === 'asc'
+            ? 'ascending'
+            : sortDirection === 'desc'
+              ? 'descending'
+              : undefined
+        }
       >
         <span>{children}</span>
         <span className="ppt-table__sort-icon" aria-hidden="true">
@@ -180,7 +200,13 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
             </svg>
           )}
           {!sortDirection && (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ppt-table__sort-icon--inactive">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="ppt-table__sort-icon--inactive"
+            >
               <polyline points="18 15 12 9 6 15" />
             </svg>
           )}

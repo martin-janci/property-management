@@ -51,10 +51,7 @@ export interface CurrencyFormatOptions {
  * formatCurrency(1234.56, { currency: 'USD' }) // "$1,234.56"
  * formatCurrency(123456, { fromCents: true }) // "€1,234.56"
  */
-export function formatCurrency(
-  amount: number,
-  options: CurrencyFormatOptions = {}
-): string {
+export function formatCurrency(amount: number, options: CurrencyFormatOptions = {}): string {
   const { currency = 'EUR', locale = getUserLocale(), fromCents = false } = options;
   const value = fromCents ? amount / 100 : amount;
 
@@ -67,10 +64,7 @@ export function formatCurrency(
 /**
  * Formats a number as compact currency (e.g., "$1.2K", "€500K").
  */
-export function formatCompactCurrency(
-  amount: number,
-  options: CurrencyFormatOptions = {}
-): string {
+export function formatCompactCurrency(amount: number, options: CurrencyFormatOptions = {}): string {
   const { currency = 'EUR', locale = getUserLocale(), fromCents = false } = options;
   const value = fromCents ? amount / 100 : amount;
 
@@ -106,10 +100,7 @@ function toDate(input: DateInput): Date {
 /**
  * Formats a date using short format (e.g., "Mar 20, 2026").
  */
-export function formatDate(
-  date: DateInput,
-  options: DateFormatOptions = {}
-): string {
+export function formatDate(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
 
   return new Intl.DateTimeFormat(locale, {
@@ -122,10 +113,7 @@ export function formatDate(
 /**
  * Formats a date using detailed format (e.g., "March 20, 2026").
  */
-export function formatDetailedDate(
-  date: DateInput,
-  options: DateFormatOptions = {}
-): string {
+export function formatDetailedDate(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
 
   return new Intl.DateTimeFormat(locale, {
@@ -138,10 +126,7 @@ export function formatDetailedDate(
 /**
  * Formats a date with time (e.g., "Mar 20, 2026, 3:45 PM").
  */
-export function formatDateTime(
-  date: DateInput,
-  options: DateFormatOptions = {}
-): string {
+export function formatDateTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
 
   return new Intl.DateTimeFormat(locale, {
@@ -156,10 +141,7 @@ export function formatDateTime(
 /**
  * Formats time only (e.g., "3:45 PM").
  */
-export function formatTime(
-  date: DateInput,
-  options: DateFormatOptions = {}
-): string {
+export function formatTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
 
   return new Intl.DateTimeFormat(locale, {
@@ -178,10 +160,7 @@ export function formatISODate(date: DateInput): string {
 /**
  * Formats a relative time (e.g., "2 hours ago", "in 3 days").
  */
-export function formatRelativeTime(
-  date: DateInput,
-  options: DateFormatOptions = {}
-): string {
+export function formatRelativeTime(date: DateInput, options: DateFormatOptions = {}): string {
   const { locale = getUserLocale() } = options;
   const now = Date.now();
   const then = toDate(date).getTime();
@@ -236,10 +215,7 @@ export interface NumberFormatOptions {
  * @example
  * formatNumber(1234567.89) // "1,234,567.89"
  */
-export function formatNumber(
-  value: number,
-  options: NumberFormatOptions = {}
-): string {
+export function formatNumber(value: number, options: NumberFormatOptions = {}): string {
   const {
     locale = getUserLocale(),
     minimumFractionDigits = 0,
@@ -255,10 +231,7 @@ export function formatNumber(
 /**
  * Formats a number as compact notation (e.g., "1.2K", "5M").
  */
-export function formatCompactNumber(
-  value: number,
-  options: NumberFormatOptions = {}
-): string {
+export function formatCompactNumber(value: number, options: NumberFormatOptions = {}): string {
   const { locale = getUserLocale(), maximumFractionDigits = 1 } = options;
 
   return new Intl.NumberFormat(locale, {
@@ -274,10 +247,7 @@ export function formatCompactNumber(
  * formatPercent(0.1234) // "12.34%"
  * formatPercent(0.5) // "50%"
  */
-export function formatPercent(
-  value: number,
-  options: NumberFormatOptions = {}
-): string {
+export function formatPercent(value: number, options: NumberFormatOptions = {}): string {
   const {
     locale = getUserLocale(),
     minimumFractionDigits = 0,
@@ -303,10 +273,7 @@ export function formatPercent(
  * formatPhone('+421123456789') // "+421 123 456 789"
  * formatPhone('0123456789', { countryCode: '+421' }) // "+421 123 456 789"
  */
-export function formatPhone(
-  phone: string,
-  options: { countryCode?: string } = {}
-): string {
+export function formatPhone(phone: string, options: { countryCode?: string } = {}): string {
   // Remove all non-digit characters except +
   let normalized = phone.replace(/[^\d+]/g, '');
 

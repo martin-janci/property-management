@@ -45,7 +45,17 @@ export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
  * ```
  */
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'elevated', interactive = false, padding = 'md', className = '', children, ...props }, ref) => {
+  (
+    {
+      variant = 'elevated',
+      interactive = false,
+      padding = 'md',
+      className = '',
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const classes = [
       'ppt-card',
       `ppt-card--${variant}`,

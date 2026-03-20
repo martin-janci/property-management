@@ -426,7 +426,11 @@ pub async fn list_my_organizations(
         )
     })?;
 
-    let memberships = match state.org_member_repo.get_user_memberships_rls(&mut **rls.conn(), user_id).await {
+    let memberships = match state
+        .org_member_repo
+        .get_user_memberships_rls(&mut **rls.conn(), user_id)
+        .await
+    {
         Ok(m) => m,
         Err(e) => {
             tracing::error!(error = %e, "Failed to fetch user organizations");
@@ -637,7 +641,11 @@ pub async fn update_organization(
 
     // Get role and check permissions
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
+        Some(role_id) => match state
+            .role_repo
+            .find_by_id_rls(&mut **rls.conn(), role_id)
+            .await
+        {
             Ok(Some(r)) => r,
             Ok(None) => {
                 rls.release().await;
@@ -793,7 +801,11 @@ pub async fn delete_organization(
 
     // Get role and check permissions
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
+        Some(role_id) => match state
+            .role_repo
+            .find_by_id_rls(&mut **rls.conn(), role_id)
+            .await
+        {
             Ok(Some(r)) => r,
             Ok(None) => {
                 rls.release().await;
@@ -2755,7 +2767,11 @@ pub async fn update_organization_settings(
     };
 
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
+        Some(role_id) => match state
+            .role_repo
+            .find_by_id_rls(&mut **rls.conn(), role_id)
+            .await
+        {
             Ok(Some(r)) => r,
             _ => {
                 rls.release().await;
@@ -3032,7 +3048,11 @@ pub async fn update_organization_branding(
     };
 
     let role = match membership.role_id {
-        Some(role_id) => match state.role_repo.find_by_id_rls(&mut **rls.conn(), role_id).await {
+        Some(role_id) => match state
+            .role_repo
+            .find_by_id_rls(&mut **rls.conn(), role_id)
+            .await
+        {
             Ok(Some(r)) => r,
             _ => {
                 rls.release().await;

@@ -158,7 +158,7 @@ pub async fn send_contact_message(
 
     // Query the listing to get the realtor (created_by field)
     let listing = sqlx::query_as::<_, (Uuid,)>(
-        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'"
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
     )
     .bind(listing_id)
     .fetch_optional(&state.db)
@@ -275,7 +275,7 @@ pub async fn request_viewing(
 
     // Query the listing to get the realtor (created_by field)
     let listing = sqlx::query_as::<_, (Uuid,)>(
-        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'"
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
     )
     .bind(listing_id)
     .fetch_optional(&state.db)

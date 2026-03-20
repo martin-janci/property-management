@@ -17,8 +17,8 @@ use chrono::{DateTime, Duration, Utc};
 use common::TenantRole;
 use db::models::compliance::{
     AmlAssessmentStatus, AmlRiskLevel, CreateAmlRiskAssessment, CreateEnhancedDueDiligence,
-    CreateModerationCase, DsaReportStatus, EddStatus, ModerationActionType, ModerationStatus,
-    ModeratedContentType, TakeModerationAction, ViolationType,
+    CreateModerationCase, DsaReportStatus, EddStatus, ModeratedContentType, ModerationActionType,
+    ModerationStatus, TakeModerationAction, ViolationType,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -202,7 +202,9 @@ async fn create_aml_assessment(
         recommendations.push("Conduct PEP screening".to_string());
     }
 
-    let country_risk_str = assessment.country_risk.map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
@@ -260,7 +262,14 @@ async fn list_aml_assessments(
 
     let (assessments, total) = state
         .edd_repo
-        .list_aml_assessments(org_id, params.status, params.risk_level, flagged_only, limit, offset)
+        .list_aml_assessments(
+            org_id,
+            params.status,
+            params.risk_level,
+            flagged_only,
+            limit,
+            offset,
+        )
         .await
         .map_err(|e| {
             tracing::error!("Failed to list AML assessments: {}", e);
@@ -297,7 +306,10 @@ async fn get_aml_assessment(
                 "Failed to get assessment".to_string(),
             )
         })?
-        .ok_or((StatusCode::NOT_FOUND, format!("Assessment {} not found", id)))?;
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("Assessment {} not found", id),
+        ))?;
 
     let risk_factors: Vec<RiskFactor> = assessment
         .risk_factors
@@ -305,7 +317,9 @@ async fn get_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment.country_risk.map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
 
     let mut recommendations = Vec::new();
     if assessment.flagged_for_review {
@@ -384,7 +398,9 @@ async fn review_aml_assessment(
         .and_then(|v| serde_json::from_value(v).ok())
         .unwrap_or_default();
 
-    let country_risk_str = assessment.country_risk.map(|r| format!("{:?}", r).to_lowercase());
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
 
     Ok(Json(AmlAssessmentResponse {
         id: assessment.id,
@@ -599,7 +615,10 @@ async fn get_edd_record(
                 "Failed to get EDD record".to_string(),
             )
         })?
-        .ok_or((StatusCode::NOT_FOUND, format!("EDD record {} not found", id)))?;
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", id),
+        ))?;
 
     // Get documents
     let docs = state.edd_repo.list_edd_documents(id).await.map_err(|e| {
@@ -624,17 +643,13 @@ async fn get_edd_record(
         .collect();
 
     // Get compliance notes
-    let notes = state
-        .edd_repo
-        .get_compliance_notes(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get compliance notes: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to get compliance notes".to_string(),
-            )
-        })?;
+    let notes = state.edd_repo.get_compliance_notes(id).await.map_err(|e| {
+        tracing::error!("Failed to get compliance notes: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get compliance notes".to_string(),
+        )
+    })?;
 
     let compliance_notes: Vec<ComplianceNoteResponse> = notes
         .into_iter()
@@ -786,7 +801,12 @@ async fn verify_edd_document(
 
     let doc = state
         .edd_repo
-        .verify_edd_document(doc_id, user.user_id, status, req.rejection_reason.as_deref())
+        .verify_edd_document(
+            doc_id,
+            user.user_id,
+            status,
+            req.rejection_reason.as_deref(),
+        )
         .await
         .map_err(|e| {
             tracing::error!("Failed to verify EDD document: {}", e);
@@ -823,13 +843,17 @@ async fn add_edd_note(
     require_compliance_role(&user)?;
 
     // Get user name for the note
-    let user_info = state.user_repo.find_by_id(user.user_id).await.map_err(|e| {
-        tracing::error!("Failed to get user: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to get user info".to_string(),
-        )
-    })?;
+    let user_info = state
+        .user_repo
+        .find_by_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get user: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get user info".to_string(),
+            )
+        })?;
 
     let user_name = user_info
         .map(|u| u.name.clone())
@@ -914,17 +938,13 @@ async fn list_pending_edd(
         "Organization context required".to_string(),
     ))?;
 
-    let edds = state
-        .edd_repo
-        .list_pending_edd(org_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to list pending EDD: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to list pending EDD".to_string(),
-            )
-        })?;
+    let edds = state.edd_repo.list_pending_edd(org_id).await.map_err(|e| {
+        tracing::error!("Failed to list pending EDD: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to list pending EDD".to_string(),
+        )
+    })?;
 
     let responses: Vec<EddRecordResponse> = edds
         .into_iter()

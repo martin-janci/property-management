@@ -903,13 +903,17 @@ pub async fn restore_building(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // RLS policies handle organization access.
-    let building = state.building_repo.restore_rls(&mut **rls.conn(), id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to restore building");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Failed to restore building")),
-        )
-    })?;
+    let building = state
+        .building_repo
+        .restore_rls(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to restore building");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to restore building")),
+            )
+        })?;
 
     let user_id = rls.user_id();
     rls.release().await;
@@ -1621,13 +1625,17 @@ pub async fn restore_unit(
         ));
     }
 
-    let unit = state.unit_repo.restore_rls(&mut **rls.conn(), unit_id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to restore unit");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Failed to restore unit")),
-        )
-    })?;
+    let unit = state
+        .unit_repo
+        .restore_rls(&mut **rls.conn(), unit_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to restore unit");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to restore unit")),
+            )
+        })?;
 
     let user_id = rls.user_id();
     rls.release().await;

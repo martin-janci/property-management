@@ -181,11 +181,7 @@ pub async fn create_delegation(
     }
 
     // Verify delegate user exists
-    let delegate_exists = match state
-        .user_repo
-        .find_by_id(req.delegate_user_id)
-        .await
-    {
+    let delegate_exists = match state.user_repo.find_by_id(req.delegate_user_id).await {
         Ok(user) => user.is_some(),
         Err(e) => {
             tracing::error!(error = %e, "Failed to check delegate user");
@@ -210,7 +206,11 @@ pub async fn create_delegation(
 
     // If unit_id is provided, verify user owns it
     if let Some(unit_id) = req.unit_id {
-        let owners = match state.unit_repo.get_owners_rls(&mut **rls.conn(), unit_id).await {
+        let owners = match state
+            .unit_repo
+            .get_owners_rls(&mut **rls.conn(), unit_id)
+            .await
+        {
             Ok(o) => o,
             Err(e) => {
                 tracing::error!(error = %e, "Failed to get unit owners");

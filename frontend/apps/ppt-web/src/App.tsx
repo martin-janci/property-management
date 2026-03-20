@@ -156,7 +156,11 @@ function formatBuildingAddress(building: ApiBuilding): string {
 }
 
 /** Transform API Building to UI building format */
-function transformBuildingForUI(building: ApiBuilding): { id: string; name: string; address: string } {
+function transformBuildingForUI(building: ApiBuilding): {
+  id: string;
+  name: string;
+  address: string;
+} {
   return {
     id: building.id,
     name: building.name,
@@ -279,9 +283,18 @@ function App() {
                         <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
                         {/* Announcements routes (UC-06) */}
                         <Route path="/announcements" element={<AnnouncementsPageRoute />} />
-                        <Route path="/announcements/new" element={<CreateAnnouncementPageRoute />} />
-                        <Route path="/announcements/:announcementId" element={<ViewAnnouncementPageRoute />} />
-                        <Route path="/announcements/:announcementId/edit" element={<EditAnnouncementPageRoute />} />
+                        <Route
+                          path="/announcements/new"
+                          element={<CreateAnnouncementPageRoute />}
+                        />
+                        <Route
+                          path="/announcements/:announcementId"
+                          element={<ViewAnnouncementPageRoute />}
+                        />
+                        <Route
+                          path="/announcements/:announcementId/edit"
+                          element={<EditAnnouncementPageRoute />}
+                        />
                         {/* Messaging routes (UC-07) */}
                         <Route path="/messages" element={<MessagesPageRoute />} />
                         <Route path="/messages/new" element={<NewMessagePageRoute />} />
@@ -295,13 +308,22 @@ function App() {
                         <Route path="/community" element={<FeedPageRoute />} />
                         <Route path="/community/groups" element={<GroupsPageRoute />} />
                         <Route path="/community/groups/new" element={<CreateGroupPageRoute />} />
-                        <Route path="/community/groups/:groupId" element={<GroupDetailPageRoute />} />
+                        <Route
+                          path="/community/groups/:groupId"
+                          element={<GroupDetailPageRoute />}
+                        />
                         <Route path="/community/events" element={<EventsPageRoute />} />
                         <Route path="/community/marketplace" element={<MarketplacePageRoute />} />
                         {/* Financial routes (Epic 52) */}
                         <Route path="/financial" element={<FinancialDashboardPageRoute />} />
-                        <Route path="/financial/invoices" element={<InvoiceManagementPageRoute />} />
-                        <Route path="/financial/payments" element={<PaymentManagementPageRoute />} />
+                        <Route
+                          path="/financial/invoices"
+                          element={<InvoiceManagementPageRoute />}
+                        />
+                        <Route
+                          path="/financial/payments"
+                          element={<PaymentManagementPageRoute />}
+                        />
                         <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
                       </Routes>
                     </main>
@@ -1025,9 +1047,13 @@ function AnnouncementsPageRoute() {
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
       onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
       onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
-      onPublish={(id) => showToast({ type: 'success', title: 'Published', message: `Published ${id}` })}
+      onPublish={(id) =>
+        showToast({ type: 'success', title: 'Published', message: `Published ${id}` })
+      }
       onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
-      onPin={(id, pinned) => showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })}
+      onPin={(id, pinned) =>
+        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })
+      }
       onFilterChange={() => {}}
     />
   );
@@ -1088,7 +1114,9 @@ function ViewAnnouncementPageRoute() {
       onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
       onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
       onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
-      onPin={(pinned) => showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })}
+      onPin={(pinned) =>
+        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })
+      }
       onDelete={() => navigate('/announcements')}
       onBack={() => navigate('/announcements')}
     />
@@ -1460,7 +1488,10 @@ function FinancialDashboardPageRoute() {
       invoiceCounts={{ draft: 0, sent: 0, overdue: 0, paid: 0 }}
       recentPayments={[]}
       overdueInvoices={[]}
-      arReport={{ entries: [], totals: { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 } }}
+      arReport={{
+        entries: [],
+        totals: { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 },
+      }}
     />
   );
 }

@@ -878,7 +878,11 @@ async fn list_my_quotes(
 
     let quotes = state
         .marketplace_repo
-        .list_provider_quotes(provider.id, query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .list_provider_quotes(
+            provider.id,
+            query.limit.unwrap_or(20),
+            query.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list quotes");
@@ -1013,7 +1017,11 @@ async fn list_my_invitations(
 
     let invitations = state
         .marketplace_repo
-        .list_provider_invitations(provider.id, query.limit.unwrap_or(20), query.offset.unwrap_or(0))
+        .list_provider_invitations(
+            provider.id,
+            query.limit.unwrap_or(20),
+            query.offset.unwrap_or(0),
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list invitations");
@@ -1162,7 +1170,10 @@ async fn list_verifications(
             tracing::error!(error = %e, "Failed to list verifications");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to list verifications")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to list verifications",
+                )),
             )
         })?;
 
@@ -1371,17 +1382,13 @@ async fn revoke_badge(
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let revoked = state
-        .marketplace_repo
-        .revoke_badge(id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to revoke badge");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to revoke badge")),
-            )
-        })?;
+    let revoked = state.marketplace_repo.revoke_badge(id).await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to revoke badge");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("DB_ERROR", "Failed to revoke badge")),
+        )
+    })?;
 
     if revoked {
         tracing::info!(badge_id = %id, revoked_by = %user.user_id, "Badge revoked");
@@ -1408,7 +1415,12 @@ async fn create_review(
 ) -> Result<(StatusCode, Json<ProviderReview>), (StatusCode, Json<ErrorResponse>)> {
     let review = state
         .marketplace_repo
-        .create_review(provider_id, user.user_id, payload.organization_id, payload.data)
+        .create_review(
+            provider_id,
+            user.user_id,
+            payload.organization_id,
+            payload.data,
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create review");
@@ -1547,7 +1559,10 @@ async fn update_review(
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new(
                     "NOT_FOUND",
-                    format!("Review {} not found or you don't have permission to update it", id),
+                    format!(
+                        "Review {} not found or you don't have permission to update it",
+                        id
+                    ),
                 )),
             )
         })?;
@@ -1580,7 +1595,10 @@ async fn delete_review(
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new(
                 "NOT_FOUND",
-                format!("Review {} not found or you don't have permission to delete it", id),
+                format!(
+                    "Review {} not found or you don't have permission to delete it",
+                    id
+                ),
             )),
         ))
     }
@@ -1623,7 +1641,10 @@ async fn respond_to_review(
             tracing::error!(error = %e, "Failed to respond to review");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DB_ERROR", "Failed to respond to review")),
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to respond to review",
+                )),
             )
         })?
         .ok_or_else(|| {

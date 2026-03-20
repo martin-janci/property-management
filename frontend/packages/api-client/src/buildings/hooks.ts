@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getBuilding, listBuildings, type BuildingsApi } from './api';
+import { type BuildingsApi, getBuilding, listBuildings } from './api';
 import type {
   CreateBuildingRequest,
   CreateCommonAreaRequest,

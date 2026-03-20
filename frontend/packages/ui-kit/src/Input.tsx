@@ -91,7 +91,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label htmlFor={id} className="ppt-input__label">
             {label}
-            {required && <span className="ppt-input__required" aria-hidden="true">*</span>}
+            {required && (
+              <span className="ppt-input__required" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
         <div className="ppt-input__container">

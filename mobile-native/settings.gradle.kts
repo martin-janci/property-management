@@ -1,6 +1,7 @@
 // JDK version check - AGP 8.x requires JDK 17-21 (JDK 25+ is not supported)
 val javaVersion = System.getProperty("java.version")
 val javaMajor = javaVersion.split(".").first().toIntOrNull() ?: 0
+
 if (javaMajor < 17 || javaMajor > 21) {
     throw GradleException(
         """
@@ -16,7 +17,8 @@ if (javaMajor < 17 || javaMajor > 21) {
         | macOS example:
         |   export JAVA_HOME=${'$'}(/usr/libexec/java_home -v 17)
         |
-        """.trimMargin()
+        """
+            .trimMargin()
     )
 }
 

@@ -259,7 +259,9 @@ impl MarketplaceRepository {
         }
 
         if query.location.is_some() {
-            conditions.push("($4 = ANY(coverage_postal_codes) OR city ILIKE '%' || $4 || '%')".to_string());
+            conditions.push(
+                "($4 = ANY(coverage_postal_codes) OR city ILIKE '%' || $4 || '%')".to_string(),
+            );
         }
 
         if !conditions.is_empty() {
@@ -462,7 +464,9 @@ impl MarketplaceRepository {
         };
 
         // Expiring verifications
-        let expiring_verifications = self.get_expiring_verifications_for_provider(provider_id, 30).await?;
+        let expiring_verifications = self
+            .get_expiring_verifications_for_provider(provider_id, 30)
+            .await?;
 
         // Pending actions
         let pending_actions = self.get_pending_actions(provider_id).await?;
@@ -476,7 +480,10 @@ impl MarketplaceRepository {
         }))
     }
 
-    async fn get_pending_actions(&self, provider_id: Uuid) -> Result<Vec<PendingAction>, SqlxError> {
+    async fn get_pending_actions(
+        &self,
+        provider_id: Uuid,
+    ) -> Result<Vec<PendingAction>, SqlxError> {
         let mut actions = vec![];
 
         // Check for unanswered RFQ invitations
@@ -524,7 +531,9 @@ impl MarketplaceRepository {
             actions.push(PendingAction {
                 action_type: "review_response".to_string(),
                 title: "Review Needs Response".to_string(),
-                description: rev.get::<Option<String>, _>("review_title").unwrap_or_default(),
+                description: rev
+                    .get::<Option<String>, _>("review_title")
+                    .unwrap_or_default(),
                 due_date: None,
                 reference_id: rev.get::<Uuid, _>("id"),
                 priority: "low".to_string(),
@@ -1648,7 +1657,10 @@ impl MarketplaceRepository {
     }
 
     /// Get rating breakdown for a provider.
-    pub async fn get_rating_breakdown(&self, provider_id: Uuid) -> Result<RatingBreakdown, SqlxError> {
+    pub async fn get_rating_breakdown(
+        &self,
+        provider_id: Uuid,
+    ) -> Result<RatingBreakdown, SqlxError> {
         let stats = sqlx::query(
             r#"
             SELECT

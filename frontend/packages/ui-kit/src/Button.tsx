@@ -90,7 +90,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             </svg>
           </span>
         )}
-        {leftIcon && !loading && <span className="ppt-button__icon ppt-button__icon--left">{leftIcon}</span>}
+        {leftIcon && !loading && (
+          <span className="ppt-button__icon ppt-button__icon--left">{leftIcon}</span>
+        )}
         <span className="ppt-button__content">{children}</span>
         {rightIcon && <span className="ppt-button__icon ppt-button__icon--right">{rightIcon}</span>}
       </button>
