@@ -1,0 +1,117 @@
+/**
+ * Alert component styles.
+ */
+
+.ppt-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ppt-space-3);
+  padding: var(--ppt-space-4);
+  border-radius: var(--ppt-radius-lg);
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-sm);
+}
+
+/* Variants */
+.ppt-alert--info {
+  background-color: var(--ppt-color-info-light);
+  color: var(--ppt-color-primary-dark);
+  border: 1px solid var(--ppt-color-primary);
+}
+
+.ppt-alert--info .ppt-alert__icon {
+  color: var(--ppt-color-primary);
+}
+
+.ppt-alert--success {
+  background-color: var(--ppt-color-success-light);
+  color: var(--ppt-color-success-dark);
+  border: 1px solid var(--ppt-color-success);
+}
+
+.ppt-alert--success .ppt-alert__icon {
+  color: var(--ppt-color-success);
+}
+
+.ppt-alert--warning {
+  background-color: var(--ppt-color-warning-light);
+  color: var(--ppt-color-warning-dark);
+  border: 1px solid var(--ppt-color-warning);
+}
+
+.ppt-alert--warning .ppt-alert__icon {
+  color: var(--ppt-color-warning);
+}
+
+.ppt-alert--danger {
+  background-color: var(--ppt-color-danger-light);
+  color: var(--ppt-color-danger-dark);
+  border: 1px solid var(--ppt-color-danger);
+}
+
+.ppt-alert--danger .ppt-alert__icon {
+  color: var(--ppt-color-danger);
+}
+
+/* Icon */
+.ppt-alert__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.ppt-alert__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Content */
+.ppt-alert__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ppt-alert__title {
+  font-weight: var(--ppt-font-weight-semibold);
+  margin-bottom: var(--ppt-space-1);
+}
+
+.ppt-alert__message {
+  line-height: var(--ppt-line-height-normal);
+}
+
+/* Dismiss button */
+.ppt-alert__dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--ppt-radius-sm);
+  color: currentColor;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity var(--ppt-transition-fast), background-color var(--ppt-transition-fast);
+  flex-shrink: 0;
+}
+
+.ppt-alert__dismiss:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.ppt-alert__dismiss:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+  opacity: 1;
+}
+
+.ppt-alert__dismiss svg {
+  width: 1rem;
+  height: 1rem;
+}
