@@ -1,6 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { getApiBaseUrl } from '../../config/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Dashboard card types
@@ -26,60 +35,61 @@ interface PendingAction {
   dueDate?: string;
 }
 
-// Mock data - would come from API
-const mockStats: DashboardStats = {
-  pendingFaults: 2,
-  unreadAnnouncements: 3,
-  activeVotes: 1,
-  unreadMessages: 5,
-  upcomingPayments: 1,
-};
-
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Water shutdown scheduled for maintenance',
-    createdAt: '2025-12-24T10:00:00Z',
-    category: 'maintenance',
-  },
-  {
-    id: '2',
-    title: 'Annual building meeting on January 15th',
-    createdAt: '2025-12-23T14:00:00Z',
-    category: 'event',
-  },
-  {
-    id: '3',
-    title: 'New recycling guidelines',
-    createdAt: '2025-12-22T09:00:00Z',
-    category: 'general',
-  },
-];
-
-const mockPendingActions: PendingAction[] = [
-  { id: '1', type: 'vote', title: 'Vote on elevator renovation', dueDate: '2025-12-30' },
-  { id: '2', type: 'payment', title: 'Monthly fees due', dueDate: '2025-01-05' },
-  { id: '3', type: 'reading', title: 'Submit water meter reading', dueDate: '2025-01-01' },
-];
-
 interface DashboardScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, accessToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [stats] = useState<DashboardStats>(mockStats);
-  const [announcements] = useState<Announcement[]>(mockAnnouncements);
-  const [pendingActions] = useState<PendingAction[]>(mockPendingActions);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const baseUrl = getApiBaseUrl();
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
+      const [statsRes, announcementsRes, actionsRes] = await Promise.all([
+        fetch(`${baseUrl}/api/v1/dashboard/stats`, { headers }),
+        fetch(`${baseUrl}/api/v1/announcements?limit=3`, { headers }),
+        fetch(`${baseUrl}/api/v1/dashboard/actions`, { headers }),
+      ]);
+
+      if (!statsRes.ok) throw new Error(`HTTP ${statsRes.status}`);
+      if (!announcementsRes.ok) throw new Error(`HTTP ${announcementsRes.status}`);
+      if (!actionsRes.ok) throw new Error(`HTTP ${actionsRes.status}`);
+
+      const statsData = await statsRes.json();
+      const announcementsData = await announcementsRes.json();
+      const actionsData = await actionsRes.json();
+
+      setStats(statsData);
+      setAnnouncements(announcementsData.items ?? []);
+      setPendingActions(actionsData.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate API refresh
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await fetchData();
     setRefreshing(false);
-  }, []);
+  }, [fetchData]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -114,6 +124,25 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     }
   };
 
+  if (loading && !stats) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (error && !stats) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchData}>
+          <Text style={styles.retryText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -138,19 +167,19 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <Pressable style={styles.statCard} onPress={() => onNavigate?.('Faults')}>
-            <Text style={styles.statNumber}>{stats.pendingFaults}</Text>
+            <Text style={styles.statNumber}>{stats?.pendingFaults ?? 0}</Text>
             <Text style={styles.statLabel}>{t('dashboard.openFaults')}</Text>
           </Pressable>
           <Pressable style={styles.statCard} onPress={() => onNavigate?.('Announcements')}>
-            <Text style={styles.statNumber}>{stats.unreadAnnouncements}</Text>
+            <Text style={styles.statNumber}>{stats?.unreadAnnouncements ?? 0}</Text>
             <Text style={styles.statLabel}>{t('dashboard.newAnnouncements')}</Text>
           </Pressable>
           <Pressable style={styles.statCard} onPress={() => onNavigate?.('Voting')}>
-            <Text style={styles.statNumber}>{stats.activeVotes}</Text>
+            <Text style={styles.statNumber}>{stats?.activeVotes ?? 0}</Text>
             <Text style={styles.statLabel}>{t('dashboard.activeVotes')}</Text>
           </Pressable>
           <Pressable style={styles.statCard} onPress={() => onNavigate?.('Messages')}>
-            <Text style={styles.statNumber}>{stats.unreadMessages}</Text>
+            <Text style={styles.statNumber}>{stats?.unreadMessages ?? 0}</Text>
             <Text style={styles.statLabel}>{t('dashboard.unreadMessages')}</Text>
           </Pressable>
         </View>
@@ -421,5 +450,27 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 100,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 15,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+  },
+  retryButton: {
+    backgroundColor: '#2563eb',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

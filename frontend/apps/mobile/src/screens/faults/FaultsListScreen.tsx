@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export type FaultStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type FaultPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -27,65 +29,45 @@ export interface Fault {
   assignedTo?: string;
 }
 
-// Mock data
-const mockFaults: Fault[] = [
-  {
-    id: '1',
-    title: 'Leaking pipe in basement',
-    description: 'Water is dripping from the ceiling pipe near the storage units',
-    status: 'in_progress',
-    priority: 'high',
-    category: 'plumbing',
-    location: 'Basement, Section B',
-    createdAt: '2025-12-20T10:00:00Z',
-    updatedAt: '2025-12-23T14:30:00Z',
-    photos: [],
-    reportedBy: 'John Doe',
-    assignedTo: 'Maintenance Team',
-  },
-  {
-    id: '2',
-    title: 'Elevator stuck on 3rd floor',
-    description: 'The main elevator is not responding and appears stuck',
-    status: 'open',
-    priority: 'urgent',
-    category: 'elevator',
-    location: 'Main lobby',
-    createdAt: '2025-12-24T08:00:00Z',
-    updatedAt: '2025-12-24T08:00:00Z',
-    photos: [],
-    reportedBy: 'Jane Smith',
-  },
-  {
-    id: '3',
-    title: 'Broken light in stairwell',
-    description: 'Light bulb burnt out on 5th floor stairwell',
-    status: 'resolved',
-    priority: 'low',
-    category: 'electrical',
-    location: '5th floor stairwell',
-    createdAt: '2025-12-18T16:00:00Z',
-    updatedAt: '2025-12-22T11:00:00Z',
-    photos: [],
-    reportedBy: 'Mike Johnson',
-    assignedTo: 'Electrician',
-  },
-];
-
 interface FaultsListScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
+  const { accessToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [faults] = useState<Fault[]>(mockFaults);
+  const [faults, setFaults] = useState<Fault[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
+
+  const fetchFaults = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/faults`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      setFaults(result.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load faults');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchFaults();
+  }, [fetchFaults]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await fetchFaults();
     setRefreshing(false);
-  }, []);
+  }, [fetchFaults]);
 
   const getStatusColor = (status: FaultStatus): string => {
     switch (status) {

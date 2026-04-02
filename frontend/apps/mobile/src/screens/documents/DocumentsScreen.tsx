@@ -1,5 +1,5 @@
 import * as Sharing from 'expo-sharing';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -11,6 +11,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
 
@@ -26,147 +28,48 @@ export interface Document {
   children?: Document[];
 }
 
-// Mock data - hierarchical document structure
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'Building Rules',
-    type: 'folder',
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-12-20T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '1-1',
-        name: 'House Rules 2025.pdf',
-        type: 'pdf',
-        size: 245000,
-        createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-01T00:00:00Z',
-        parentId: '1',
-        downloadUrl: '#',
-      },
-      {
-        id: '1-2',
-        name: 'Parking Regulations.pdf',
-        type: 'pdf',
-        size: 128000,
-        createdAt: '2025-03-15T00:00:00Z',
-        updatedAt: '2025-03-15T00:00:00Z',
-        parentId: '1',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Financial Reports',
-    type: 'folder',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2025-12-15T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '2-1',
-        name: 'Annual Report 2024.pdf',
-        type: 'pdf',
-        size: 1250000,
-        createdAt: '2025-01-15T00:00:00Z',
-        updatedAt: '2025-01-15T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-      {
-        id: '2-2',
-        name: 'Budget 2025.xlsx',
-        type: 'spreadsheet',
-        size: 85000,
-        createdAt: '2024-12-01T00:00:00Z',
-        updatedAt: '2024-12-01T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-      {
-        id: '2-3',
-        name: 'Q4 2024 Statement.pdf',
-        type: 'pdf',
-        size: 320000,
-        createdAt: '2025-01-05T00:00:00Z',
-        updatedAt: '2025-01-05T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Meeting Minutes',
-    type: 'folder',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2025-11-20T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '3-1',
-        name: 'November 2025 Meeting.pdf',
-        type: 'pdf',
-        size: 180000,
-        createdAt: '2025-11-20T00:00:00Z',
-        updatedAt: '2025-11-20T00:00:00Z',
-        parentId: '3',
-        downloadUrl: '#',
-      },
-      {
-        id: '3-2',
-        name: 'October 2025 Meeting.pdf',
-        type: 'pdf',
-        size: 165000,
-        createdAt: '2025-10-18T00:00:00Z',
-        updatedAt: '2025-10-18T00:00:00Z',
-        parentId: '3',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Maintenance Manual.pdf',
-    type: 'pdf',
-    size: 3500000,
-    createdAt: '2024-06-01T00:00:00Z',
-    updatedAt: '2024-06-01T00:00:00Z',
-    parentId: null,
-    downloadUrl: '#',
-  },
-  {
-    id: '5',
-    name: 'Contact List.pdf',
-    type: 'pdf',
-    size: 45000,
-    createdAt: '2025-12-01T00:00:00Z',
-    updatedAt: '2025-12-01T00:00:00Z',
-    parentId: null,
-    downloadUrl: '#',
-  },
-];
-
 interface DocumentsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProps) {
   const { t } = useTranslation();
+  const { accessToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [documents] = useState<Document[]>(mockDocuments);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  const fetchDocuments = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/documents`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      setDocuments(result.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load documents');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await fetchDocuments();
     setRefreshing(false);
-  }, []);
+  }, [fetchDocuments]);
 
   const getCurrentDocuments = (): Document[] => {
     if (currentPath.length === 0) {

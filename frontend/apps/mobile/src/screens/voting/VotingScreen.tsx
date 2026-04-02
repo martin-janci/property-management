@@ -1,6 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
 export type VoteType = 'simple' | 'multiple' | 'weighted' | 'ranked';
@@ -29,83 +31,46 @@ export interface Vote {
   createdBy: string;
 }
 
-// Mock data
-const mockVotes: Vote[] = [
-  {
-    id: '1',
-    title: 'Elevator Renovation Proposal',
-    description:
-      'Vote on the proposed elevator modernization project. The renovation includes new control systems, improved safety features, and energy-efficient motors.',
-    status: 'active',
-    type: 'simple',
-    options: [
-      { id: 'yes', label: 'Yes - Approve renovation', votes: 45, percentage: 60 },
-      { id: 'no', label: 'No - Decline proposal', votes: 30, percentage: 40 },
-    ],
-    startsAt: '2025-12-20T00:00:00Z',
-    endsAt: '2025-12-30T23:59:59Z',
-    totalVotes: 75,
-    requiredQuorum: 100,
-    currentQuorum: 75,
-    hasVoted: false,
-    createdBy: 'Building Management',
-  },
-  {
-    id: '2',
-    title: 'New Board Member Election',
-    description: 'Vote for the new board member position. Each owner can vote for one candidate.',
-    status: 'active',
-    type: 'simple',
-    options: [
-      { id: 'a', label: 'John Smith', votes: 35, percentage: 44 },
-      { id: 'b', label: 'Maria Garcia', votes: 28, percentage: 35 },
-      { id: 'c', label: 'Peter Johnson', votes: 17, percentage: 21 },
-    ],
-    startsAt: '2025-12-15T00:00:00Z',
-    endsAt: '2025-12-28T23:59:59Z',
-    totalVotes: 80,
-    requiredQuorum: 100,
-    currentQuorum: 80,
-    hasVoted: true,
-    userVote: 'a',
-    createdBy: 'Building Management',
-  },
-  {
-    id: '3',
-    title: 'Parking Space Allocation',
-    description: 'Closed vote on new parking space allocation policy.',
-    status: 'closed',
-    type: 'simple',
-    options: [
-      { id: 'rotate', label: 'Rotating system', votes: 65, percentage: 65 },
-      { id: 'fixed', label: 'Fixed assignment', votes: 35, percentage: 35 },
-    ],
-    startsAt: '2025-12-01T00:00:00Z',
-    endsAt: '2025-12-15T23:59:59Z',
-    totalVotes: 100,
-    requiredQuorum: 80,
-    currentQuorum: 100,
-    hasVoted: true,
-    userVote: 'rotate',
-    createdBy: 'Building Management',
-  },
-];
-
 interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
   const { t } = useTranslation();
+  const { accessToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [votes, setVotes] = useState<Vote[]>(mockVotes);
+  const [votes, setVotes] = useState<Vote[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
+
+  const fetchVotes = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/votes`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      setVotes(result.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load votes');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchVotes();
+  }, [fetchVotes]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await fetchVotes();
     setRefreshing(false);
-  }, []);
+  }, [fetchVotes]);
 
   const getStatusColor = (status: VoteStatus): string => {
     switch (status) {
@@ -142,36 +107,59 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
     return t('voting.timeLeftMinutes', { minutes });
   };
 
-  const handleVote = (voteId: string, optionId: string) => {
-    Alert.alert(t('voting.confirmVoteTitle'), t('voting.confirmVoteMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('voting.vote'),
-        onPress: () => {
-          setVotes((prev) =>
-            prev.map((v) => {
-              if (v.id !== voteId) return v;
-              return {
-                ...v,
-                hasVoted: true,
-                userVote: optionId,
-                options: v.options.map((o) => ({
-                  ...o,
-                  votes: o.id === optionId ? o.votes + 1 : o.votes,
-                  percentage: Math.round(
-                    ((o.id === optionId ? o.votes + 1 : o.votes) / (v.totalVotes + 1)) * 100
-                  ),
-                })),
-                totalVotes: v.totalVotes + 1,
-                currentQuorum: v.currentQuorum + 1,
-              };
-            })
-          );
-          Alert.alert(t('voting.successTitle'), t('voting.successMessage'));
+  const handleVote = useCallback(
+    (voteId: string, optionId: string) => {
+      Alert.alert(t('voting.confirmVoteTitle'), t('voting.confirmVoteMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('voting.vote'),
+          onPress: async () => {
+            // Optimistic update
+            setVotes((prev) =>
+              prev.map((v) => {
+                if (v.id !== voteId) return v;
+                return {
+                  ...v,
+                  hasVoted: true,
+                  userVote: optionId,
+                  options: v.options.map((o) => ({
+                    ...o,
+                    votes: o.id === optionId ? o.votes + 1 : o.votes,
+                    percentage: Math.round(
+                      ((o.id === optionId ? o.votes + 1 : o.votes) / (v.totalVotes + 1)) * 100
+                    ),
+                  })),
+                  totalVotes: v.totalVotes + 1,
+                  currentQuorum: v.currentQuorum + 1,
+                };
+              })
+            );
+            // API call
+            if (accessToken) {
+              try {
+                const response = await fetch(`${getApiBaseUrl()}/api/v1/votes/${voteId}/cast`, {
+                  method: 'POST',
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ optionId }),
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              } catch {
+                // Revert optimistic update on failure
+                await fetchVotes();
+                Alert.alert(t('common.error'), t('voting.voteFailed'));
+                return;
+              }
+            }
+            Alert.alert(t('voting.successTitle'), t('voting.successMessage'));
+          },
         },
-      },
-    ]);
-  };
+      ]);
+    },
+    [accessToken, fetchVotes, t]
+  );
 
   const filteredVotes = votes.filter((v) => {
     if (filter === 'all') return true;

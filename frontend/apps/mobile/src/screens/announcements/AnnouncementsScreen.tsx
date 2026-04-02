@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -8,6 +8,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 export type AnnouncementCategory = 'general' | 'urgent' | 'maintenance' | 'event' | 'financial';
 
@@ -31,93 +33,46 @@ export interface Announcement {
   commentsCount: number;
 }
 
-// Mock data
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Annual Building Meeting - January 15th',
-    content:
-      'Dear residents,\n\nWe would like to invite you to our annual building meeting scheduled for January 15th, 2025 at 6:00 PM in the community room.\n\nAgenda:\n1. 2024 Financial Report\n2. Planned renovations for 2025\n3. Election of new board members\n4. Open discussion\n\nPlease confirm your attendance by January 10th.',
-    category: 'event',
-    createdAt: '2025-12-23T14:00:00Z',
-    author: 'Building Management',
-    isRead: false,
-    isPinned: true,
-    attachments: [{ id: 'a1', name: 'Agenda.pdf', url: '#', type: 'pdf' }],
-    commentsCount: 5,
-  },
-  {
-    id: '2',
-    title: 'URGENT: Water Shutdown Tomorrow',
-    content:
-      'Due to emergency pipe repairs, water will be shut off tomorrow (December 25th) from 9:00 AM to 3:00 PM.\n\nPlease store water for essential needs. We apologize for the inconvenience.',
-    category: 'urgent',
-    createdAt: '2025-12-24T10:00:00Z',
-    author: 'Maintenance Team',
-    isRead: false,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 12,
-  },
-  {
-    id: '3',
-    title: 'New Recycling Guidelines',
-    content:
-      'Starting January 1st, 2025, we will be implementing new recycling guidelines in accordance with city regulations.\n\nKey changes:\n- Plastic types 1-7 now accepted\n- Glass must be separated by color\n- New textile recycling bin available\n\nPlease see the attached guide for details.',
-    category: 'general',
-    createdAt: '2025-12-22T09:00:00Z',
-    author: 'Building Management',
-    isRead: true,
-    isPinned: false,
-    attachments: [
-      { id: 'a2', name: 'Recycling Guide.pdf', url: '#', type: 'pdf' },
-      { id: 'a3', name: 'Bin Locations.jpg', url: '#', type: 'image' },
-    ],
-    commentsCount: 3,
-  },
-  {
-    id: '4',
-    title: 'Monthly Fees Payment Reminder',
-    content:
-      'This is a friendly reminder that monthly building fees for January 2025 are due by January 5th.\n\nPayment can be made via:\n- Bank transfer\n- Direct debit (if enrolled)\n- Online portal\n\nContact us if you have any questions.',
-    category: 'financial',
-    createdAt: '2025-12-20T08:00:00Z',
-    author: 'Financial Department',
-    isRead: true,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 0,
-  },
-  {
-    id: '5',
-    title: 'Elevator Maintenance Schedule',
-    content:
-      'The main elevator will undergo scheduled maintenance on the following dates:\n\n- January 8th: 10:00 AM - 2:00 PM\n- January 22nd: 10:00 AM - 2:00 PM\n\nThe service elevator will remain operational during these times.',
-    category: 'maintenance',
-    createdAt: '2025-12-18T11:00:00Z',
-    author: 'Maintenance Team',
-    isRead: true,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 2,
-  },
-];
-
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
+  const { accessToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | AnnouncementCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchAnnouncements = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${getApiBaseUrl()}/api/v1/announcements`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      setAnnouncements(result.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load announcements');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await fetchAnnouncements();
     setRefreshing(false);
-  }, []);
+  }, [fetchAnnouncements]);
 
   const getCategoryColor = (category: AnnouncementCategory): string => {
     switch (category) {
@@ -166,9 +121,21 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const markAsRead = (id: string) => {
-    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
-  };
+  const markAsRead = useCallback(
+    async (id: string) => {
+      setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+      if (!accessToken) return;
+      try {
+        await fetch(`${getApiBaseUrl()}/api/v1/announcements/${id}/read`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      } catch {
+        // Silently ignore - optimistic update already applied
+      }
+    },
+    [accessToken]
+  );
 
   const filteredAnnouncements = announcements
     .filter((a) => (filter === 'all' ? true : a.category === filter))
