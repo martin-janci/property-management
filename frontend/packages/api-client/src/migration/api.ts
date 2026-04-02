@@ -5,6 +5,7 @@
  * API functions for bulk data import functionality.
  */
 
+import { getToken } from '../auth';
 import type {
   ImportJobListResponse,
   ImportJobProgress,
@@ -19,14 +20,17 @@ import type {
 
 const API_BASE = '/api/v1/import';
 
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
-  // TODO(Phase-1): Add authentication headers to fetchApi
-  // Currently auth is only added in uploadFile via XHR
-  // Will be implemented when auth context is available
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
   });
@@ -134,17 +138,9 @@ export async function uploadFile(
 
     xhr.open('POST', `${API_BASE}/upload`);
 
-    // Get auth token if available
-    try {
-      const token =
-        typeof window !== 'undefined' && window.localStorage
-          ? window.localStorage.getItem('ppt_access_token')
-          : null;
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-    } catch {
-      // Continue without auth header
+    const token = getToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     }
 
     xhr.send(formData);

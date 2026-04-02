@@ -14,6 +14,7 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useToast } from '../../../components';
 import { AmlRiskAssessmentCard } from '../components/AmlRiskAssessmentCard';
 import type { AmlRiskAssessment } from '../components/AmlRiskAssessmentCard';
 
@@ -33,10 +34,25 @@ interface CountryRiskDisplay {
 }
 
 export const AmlDashboardPage: React.FC = () => {
+  const { showToast } = useToast();
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [riskLevelFilter, setRiskLevelFilter] = useState<string>('');
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+
+  // Modal state for EDD initiation
+  const [eddModal, setEddModal] = useState<{
+    assessmentId: string;
+    reason: string;
+  } | null>(null);
+
+  // Modal state for assessment review
+  const [reviewModal, setReviewModal] = useState<{
+    assessmentId: string;
+    decision: 'approve' | 'reject' | 'escalate';
+    notes: string;
+  } | null>(null);
 
   // Fetch assessments from API
   const {
@@ -74,8 +90,7 @@ export const AmlDashboardPage: React.FC = () => {
       mitigated: !f.triggered,
     })),
     flagged_for_review: a.flagged_for_review,
-    // TODO(Phase-2): Extend API to include these fields
-    // Phase 1: Default values for missing fields
+    // Default values for API fields not yet available
     id_verified: false,
     source_of_funds_documented: false,
     pep_check_completed: false,
@@ -102,64 +117,55 @@ export const AmlDashboardPage: React.FC = () => {
     fatf_status: c.fatf_status,
   }));
 
-  const handleInitiateEdd = useCallback(
-    (assessmentId: string) => {
-      // TODO(Phase-2): Replace window.prompt with proper modal form with document selection
-      // Phase 1: Basic prompt for collecting reason
-      const reason = window.prompt('Enter reason for initiating Enhanced Due Diligence:');
-      if (!reason) return;
+  const handleInitiateEdd = useCallback((assessmentId: string) => {
+    setEddModal({ assessmentId, reason: '' });
+  }, []);
 
-      initiateEdd.mutate(
-        {
-          assessment_id: assessmentId,
-          reason,
-          documents_requested: [],
+  const submitEdd = useCallback(() => {
+    if (!eddModal || !eddModal.reason.trim()) return;
+    initiateEdd.mutate(
+      {
+        assessment_id: eddModal.assessmentId,
+        reason: eddModal.reason,
+        documents_requested: [],
+      },
+      {
+        onSuccess: () => {
+          showToast({ type: 'success', title: 'Enhanced Due Diligence initiated' });
+          setEddModal(null);
         },
-        {
-          onSuccess: () => {
-            alert('Enhanced Due Diligence initiated successfully.');
-          },
-          onError: (err) => {
-            console.error('Failed to initiate EDD:', err);
-            alert('Failed to initiate EDD. Please try again.');
-          },
-        }
-      );
-    },
-    [initiateEdd]
-  );
-
-  const handleReview = useCallback(
-    (assessmentId: string) => {
-      // TODO(Phase-2): Replace window.prompt with proper modal form with validation
-      // Phase 1: Basic prompts for collecting decision and notes
-      const decision = window.prompt('Enter decision (approve, reject, escalate):', 'approve');
-      if (!decision) return;
-
-      const notes = window.prompt('Enter review notes:');
-      if (!notes) return;
-
-      reviewAssessment.mutate(
-        {
-          assessmentId,
-          request: {
-            decision: decision as 'approve' | 'reject' | 'escalate',
-            notes,
-          },
+        onError: (err) => {
+          showToast({ type: 'error', title: 'Failed to initiate EDD', message: err.message });
         },
-        {
-          onSuccess: () => {
-            alert('Assessment reviewed successfully.');
-          },
-          onError: (err) => {
-            console.error('Failed to review assessment:', err);
-            alert('Failed to review assessment. Please try again.');
-          },
-        }
-      );
-    },
-    [reviewAssessment]
-  );
+      }
+    );
+  }, [eddModal, initiateEdd, showToast]);
+
+  const handleReview = useCallback((assessmentId: string) => {
+    setReviewModal({ assessmentId, decision: 'approve', notes: '' });
+  }, []);
+
+  const submitReview = useCallback(() => {
+    if (!reviewModal || !reviewModal.notes.trim()) return;
+    reviewAssessment.mutate(
+      {
+        assessmentId: reviewModal.assessmentId,
+        request: {
+          decision: reviewModal.decision,
+          notes: reviewModal.notes,
+        },
+      },
+      {
+        onSuccess: () => {
+          showToast({ type: 'success', title: 'Assessment reviewed successfully' });
+          setReviewModal(null);
+        },
+        onError: (err) => {
+          showToast({ type: 'error', title: 'Failed to review assessment', message: err.message });
+        },
+      }
+    );
+  }, [reviewModal, reviewAssessment, showToast]);
 
   // Loading state
   if (assessmentsLoading) {
@@ -324,6 +330,170 @@ export const AmlDashboardPage: React.FC = () => {
         <div className="aml-empty-state">
           <p>No AML risk assessments found matching the criteria.</p>
           <p>Assessments are automatically created when transactions exceed the threshold.</p>
+        </div>
+      )}
+
+      {/* EDD Initiation Modal */}
+      {eddModal && (
+        <div
+          className="aml-modal-overlay"
+          role="dialog"
+          aria-label="Initiate Enhanced Due Diligence"
+        >
+          <div className="aml-modal">
+            <h3>Initiate Enhanced Due Diligence</h3>
+            <div className="aml-modal-field">
+              <label htmlFor="eddReason">Reason</label>
+              <textarea
+                id="eddReason"
+                value={eddModal.reason}
+                onChange={(e) => setEddModal({ ...eddModal, reason: e.target.value })}
+                placeholder="Enter reason for initiating EDD..."
+                rows={3}
+                required
+              />
+            </div>
+            <div className="aml-modal-actions">
+              <button type="button" onClick={() => setEddModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitEdd}
+                disabled={!eddModal.reason.trim() || initiateEdd.isPending}
+              >
+                {initiateEdd.isPending ? 'Initiating...' : 'Initiate EDD'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Review Modal */}
+      {reviewModal && (
+        <div className="aml-modal-overlay" role="dialog" aria-label="Review assessment">
+          <div className="aml-modal">
+            <h3>Review Assessment</h3>
+            <div className="aml-modal-field">
+              <label htmlFor="reviewDecision">Decision</label>
+              <select
+                id="reviewDecision"
+                value={reviewModal.decision}
+                onChange={(e) =>
+                  setReviewModal({
+                    ...reviewModal,
+                    decision: e.target.value as 'approve' | 'reject' | 'escalate',
+                  })
+                }
+              >
+                <option value="approve">Approve</option>
+                <option value="reject">Reject</option>
+                <option value="escalate">Escalate</option>
+              </select>
+            </div>
+            <div className="aml-modal-field">
+              <label htmlFor="reviewNotes">Notes</label>
+              <textarea
+                id="reviewNotes"
+                value={reviewModal.notes}
+                onChange={(e) => setReviewModal({ ...reviewModal, notes: e.target.value })}
+                placeholder="Enter review notes..."
+                rows={3}
+                required
+              />
+            </div>
+            <div className="aml-modal-actions">
+              <button type="button" onClick={() => setReviewModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitReview}
+                disabled={!reviewModal.notes.trim() || reviewAssessment.isPending}
+              >
+                {reviewAssessment.isPending ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDD Initiation Modal */}
+      {eddModal && (
+        <div className="aml-modal-overlay">
+          <div className="aml-modal">
+            <h3>Initiate Enhanced Due Diligence</h3>
+            <label htmlFor="edd-reason">
+              Reason
+              <textarea
+                id="edd-reason"
+                value={eddModal.reason}
+                onChange={(e) => setEddModal({ ...eddModal, reason: e.target.value })}
+                placeholder="Enter reason for initiating EDD..."
+                rows={3}
+              />
+            </label>
+            <div className="aml-modal-actions">
+              <button type="button" onClick={() => setEddModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitEdd}
+                disabled={!eddModal.reason.trim() || initiateEdd.isPending}
+              >
+                {initiateEdd.isPending ? 'Submitting...' : 'Initiate EDD'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Review Modal */}
+      {reviewModal && (
+        <div className="aml-modal-overlay">
+          <div className="aml-modal">
+            <h3>Review Assessment</h3>
+            <label htmlFor="review-decision">
+              Decision
+              <select
+                id="review-decision"
+                value={reviewModal.decision}
+                onChange={(e) =>
+                  setReviewModal({
+                    ...reviewModal,
+                    decision: e.target.value as 'approve' | 'reject' | 'escalate',
+                  })
+                }
+              >
+                <option value="approve">Approve</option>
+                <option value="reject">Reject</option>
+                <option value="escalate">Escalate</option>
+              </select>
+            </label>
+            <label htmlFor="review-notes">
+              Notes
+              <textarea
+                id="review-notes"
+                value={reviewModal.notes}
+                onChange={(e) => setReviewModal({ ...reviewModal, notes: e.target.value })}
+                placeholder="Enter review notes..."
+                rows={3}
+              />
+            </label>
+            <div className="aml-modal-actions">
+              <button type="button" onClick={() => setReviewModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitReview}
+                disabled={!reviewModal.notes.trim() || reviewAssessment.isPending}
+              >
+                {reviewAssessment.isPending ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

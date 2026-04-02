@@ -369,7 +369,7 @@ export function CompetitiveAnalysisPage({ listingId }: CompetitiveAnalysisPagePr
                 <h3 className="text-lg font-medium mb-4">Add Virtual Tour</h3>
                 <VirtualTourForm
                   onSubmit={async (_data) => {
-                    // TODO: API call to create tour
+                    // Virtual tour API not yet available - will be implemented in competitive features epic
                     setShowTourForm(false);
                   }}
                   onCancel={() => setShowTourForm(false)}
@@ -380,7 +380,7 @@ export function CompetitiveAnalysisPage({ listingId }: CompetitiveAnalysisPagePr
             <VirtualTourViewer
               tour={mockTour}
               onHotspotClick={(_hotspot) => {
-                // TODO: Handle hotspot click - show info panel
+                // Hotspot info panel not yet implemented - competitive features epic
               }}
               className="h-[500px]"
             />
@@ -403,7 +403,7 @@ export function CompetitiveAnalysisPage({ listingId }: CompetitiveAnalysisPagePr
                   <PricingAnalysisPanel
                     analysis={mockPricingAnalysis}
                     onRefresh={() => {
-                      // TODO: API call to refresh pricing analysis
+                      // Pricing analysis refresh API not yet available
                     }}
                   />
                 ) : (
@@ -435,7 +435,7 @@ export function CompetitiveAnalysisPage({ listingId }: CompetitiveAnalysisPagePr
                 <NeighborhoodInsightsCard
                   insights={mockNeighborhoodInsights}
                   onRefresh={() => {
-                    // TODO: API call to refresh neighborhood insights
+                    // Neighborhood insights refresh API not yet available
                   }}
                   onViewAmenities={() => setShowAmenities(true)}
                 />
@@ -502,7 +502,7 @@ export function CompetitiveAnalysisPage({ listingId }: CompetitiveAnalysisPagePr
                     currency: 'EUR',
                   }}
                   onViewDetails={(_comp) => {
-                    // TODO: Navigate to comparable property detail
+                    // Comparable property detail view not yet implemented
                   }}
                 />
               </div>

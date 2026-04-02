@@ -1,4 +1,6 @@
 import {
+  createBuildingsApi,
+  getToken,
   useCancelOutage,
   useCreateDispute,
   useCreateOutage,
@@ -21,7 +23,8 @@ import type {
   OutageListQuery,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -668,8 +671,29 @@ function CreateOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  const buildingsApi = useMemo(
+    () =>
+      createBuildingsApi({
+        baseUrl: '',
+        accessToken: getToken() ?? undefined,
+      }),
+    []
+  );
+
+  const { data: buildingsData } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => buildingsApi.list(),
+  });
+
+  const buildings = useMemo(
+    () =>
+      (buildingsData?.items ?? []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        address: `${b.address.street}, ${b.address.city}`,
+      })),
+    [buildingsData]
+  );
 
   const handleSubmit = async (data: {
     title: string;
@@ -811,7 +835,7 @@ function ViewOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.createdBy,
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
@@ -850,8 +874,29 @@ function EditOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  const buildingsApi = useMemo(
+    () =>
+      createBuildingsApi({
+        baseUrl: '',
+        accessToken: getToken() ?? undefined,
+      }),
+    []
+  );
+
+  const { data: buildingsData } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => buildingsApi.list(),
+  });
+
+  const buildings = useMemo(
+    () =>
+      (buildingsData?.items ?? []).map((b) => ({
+        id: b.id,
+        name: b.name,
+        address: `${b.address.street}, ${b.address.city}`,
+      })),
+    [buildingsData]
+  );
 
   const handleSubmit = async (data: {
     title: string;
@@ -919,7 +964,7 @@ function EditOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.createdBy,
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 

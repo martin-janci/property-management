@@ -15,6 +15,8 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { ModerationCaseCard } from '../components/ModerationCaseCard';
 import type { ModerationCase } from '../components/ModerationCaseCard';
 import { ModerationQueueStats } from '../components/ModerationQueueStats';
@@ -30,12 +32,29 @@ interface ActionTemplate {
 }
 
 export const ContentModerationPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [contentTypeFilter, setContentTypeFilter] = useState<string>('');
   const [violationTypeFilter, setViolationTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
+
+  // Modal state for Take Action form
+  const [actionModal, setActionModal] = useState<{
+    caseId: string;
+    actionType: 'remove' | 'restrict' | 'warn' | 'approve';
+    rationale: string;
+  } | null>(null);
+
+  // Modal state for Appeal Decision form
+  const [appealModal, setAppealModal] = useState<{
+    caseId: string;
+    decision: 'uphold' | 'overturn';
+    rationale: string;
+  } | null>(null);
 
   // Fetch moderation cases from API
   const {
@@ -70,13 +89,9 @@ export const ContentModerationPage: React.FC = () => {
     content_owner: {
       user_id: c.owner_id,
       name: c.owner_name,
-      // TODO(Phase-2): Extend API to include previous_violations count
-      // Phase 1: Default value
-      previous_violations: 0,
+      previous_violations: 0, // API field not yet available
     },
-    // TODO(Phase-2): Extend API to include report_source
-    // Phase 1: Default value
-    report_source: 'user',
+    report_source: 'user', // API field not yet available
     violation_type: c.violation_type as ModerationCase['violation_type'],
     status: c.status as ModerationCase['status'],
     priority: c.priority,
@@ -123,73 +138,65 @@ export const ContentModerationPage: React.FC = () => {
     [assignCase]
   );
 
-  const handleTakeAction = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with action templates integration
-      // Phase 1: Basic prompts for action type and rationale
-      const actionType = window.prompt(
-        'Enter action type (remove, restrict, warn, approve):',
-        'approve'
-      );
-      if (!actionType) return;
-
-      const rationale = window.prompt('Enter rationale for this action:');
-      if (!rationale) return;
-
-      takeAction.mutate(
-        {
-          caseId,
-          request: {
-            action_type: actionType as 'remove' | 'restrict' | 'warn' | 'approve',
-            rationale,
-            notify_owner: true,
-          },
-        },
-        {
-          onError: (err) => {
-            console.error('Failed to take action:', err);
-            alert('Failed to take action. Please try again.');
-          },
-        }
-      );
-    },
-    [takeAction]
-  );
-
-  const handleViewContent = useCallback((caseId: string) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/compliance/moderation/cases/${caseId}`;
+  const handleTakeAction = useCallback((caseId: string) => {
+    setActionModal({ caseId, actionType: 'approve', rationale: '' });
   }, []);
 
-  const handleDecideAppeal = useCallback(
-    (caseId: string) => {
-      // TODO(Phase-2): Replace window.prompt with modal form with validation
-      // Phase 1: Basic prompts for decision and rationale
-      const decision = window.prompt('Enter decision (uphold, overturn):', 'uphold');
-      if (!decision) return;
-
-      const rationale = window.prompt('Enter rationale for this decision:');
-      if (!rationale) return;
-
-      decideAppeal.mutate(
-        {
-          caseId,
-          request: {
-            decision: decision as 'uphold' | 'overturn',
-            rationale,
-          },
+  const submitAction = useCallback(() => {
+    if (!actionModal || !actionModal.rationale.trim()) return;
+    takeAction.mutate(
+      {
+        caseId: actionModal.caseId,
+        request: {
+          action_type: actionModal.actionType,
+          rationale: actionModal.rationale,
+          notify_owner: true,
         },
-        {
-          onError: (err) => {
-            console.error('Failed to decide appeal:', err);
-            alert('Failed to decide appeal. Please try again.');
-          },
-        }
-      );
+      },
+      {
+        onSuccess: () => {
+          showToast({ type: 'success', title: 'Action taken successfully' });
+          setActionModal(null);
+        },
+        onError: (err) => {
+          showToast({ type: 'error', title: 'Failed to take action', message: err.message });
+        },
+      }
+    );
+  }, [actionModal, takeAction, showToast]);
+
+  const handleViewContent = useCallback(
+    (caseId: string) => {
+      navigate(`/compliance/moderation/cases/${caseId}`);
     },
-    [decideAppeal]
+    [navigate]
   );
+
+  const handleDecideAppeal = useCallback((caseId: string) => {
+    setAppealModal({ caseId, decision: 'uphold', rationale: '' });
+  }, []);
+
+  const submitAppealDecision = useCallback(() => {
+    if (!appealModal || !appealModal.rationale.trim()) return;
+    decideAppeal.mutate(
+      {
+        caseId: appealModal.caseId,
+        request: {
+          decision: appealModal.decision,
+          rationale: appealModal.rationale,
+        },
+      },
+      {
+        onSuccess: () => {
+          showToast({ type: 'success', title: 'Appeal decision submitted' });
+          setAppealModal(null);
+        },
+        onError: (err) => {
+          showToast({ type: 'error', title: 'Failed to decide appeal', message: err.message });
+        },
+      }
+    );
+  }, [appealModal, decideAppeal, showToast]);
 
   const handleFilterByPriority = useCallback((priority: number) => {
     setPriorityFilter(priority.toString());
@@ -200,9 +207,8 @@ export const ContentModerationPage: React.FC = () => {
   }, []);
 
   const handleShowOverdue = useCallback(() => {
-    // Filter to show overdue cases
+    // Shows pending cases; overdue-specific filter will be added when API supports it
     setStatusFilter('pending');
-    // TODO: Add overdue filter parameter when API supports it
   }, []);
 
   // Loading state
@@ -379,6 +385,104 @@ export const ContentModerationPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Take Action Modal */}
+      {actionModal && (
+        <div className="moderation-modal-overlay" role="dialog" aria-label="Take moderation action">
+          <div className="moderation-modal">
+            <h3>Take Moderation Action</h3>
+            <div className="moderation-modal-field">
+              <label htmlFor="actionType">Action Type</label>
+              <select
+                id="actionType"
+                value={actionModal.actionType}
+                onChange={(e) =>
+                  setActionModal({
+                    ...actionModal,
+                    actionType: e.target.value as 'remove' | 'restrict' | 'warn' | 'approve',
+                  })
+                }
+              >
+                <option value="approve">Approve</option>
+                <option value="warn">Warn</option>
+                <option value="restrict">Restrict</option>
+                <option value="remove">Remove</option>
+              </select>
+            </div>
+            <div className="moderation-modal-field">
+              <label htmlFor="actionRationale">Rationale</label>
+              <textarea
+                id="actionRationale"
+                value={actionModal.rationale}
+                onChange={(e) => setActionModal({ ...actionModal, rationale: e.target.value })}
+                placeholder="Enter rationale for this action..."
+                rows={3}
+                required
+              />
+            </div>
+            <div className="moderation-modal-actions">
+              <button type="button" onClick={() => setActionModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitAction}
+                disabled={!actionModal.rationale.trim() || takeAction.isPending}
+              >
+                {takeAction.isPending ? 'Submitting...' : 'Submit Action'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appeal Decision Modal */}
+      {appealModal && (
+        <div className="moderation-modal-overlay" role="dialog" aria-label="Decide appeal">
+          <div className="moderation-modal">
+            <h3>Decide Appeal</h3>
+            <div className="moderation-modal-field">
+              <label htmlFor="appealDecision">Decision</label>
+              <select
+                id="appealDecision"
+                value={appealModal.decision}
+                onChange={(e) =>
+                  setAppealModal({
+                    ...appealModal,
+                    decision: e.target.value as 'uphold' | 'overturn',
+                  })
+                }
+              >
+                <option value="uphold">Uphold Original Decision</option>
+                <option value="overturn">Overturn Decision</option>
+              </select>
+            </div>
+            <div className="moderation-modal-field">
+              <label htmlFor="appealRationale">Rationale</label>
+              <textarea
+                id="appealRationale"
+                value={appealModal.rationale}
+                onChange={(e) => setAppealModal({ ...appealModal, rationale: e.target.value })}
+                placeholder="Enter rationale for this decision..."
+                rows={3}
+                required
+              />
+            </div>
+            <div className="moderation-modal-actions">
+              <button type="button" onClick={() => setAppealModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitAppealDecision}
+                disabled={!appealModal.rationale.trim() || decideAppeal.isPending}
+              >
+                {decideAppeal.isPending ? 'Submitting...' : 'Submit Decision'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

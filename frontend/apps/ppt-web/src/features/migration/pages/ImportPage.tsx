@@ -13,6 +13,8 @@ import {
   useStartImport,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { FileUploader } from '../components/FileUploader';
 import { type ImportJobHistoryItem, ImportJobList } from '../components/ImportJobList';
 import { ImportJobProgress, type ImportJobStatusData } from '../components/ImportJobProgress';
@@ -22,6 +24,8 @@ import { ImportTemplateList, type ImportTemplateSummary } from '../components/Im
 type ImportStep = 'select_template' | 'upload' | 'preview' | 'importing' | 'complete';
 
 export function ImportPage() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [step, setStep] = useState<ImportStep>('select_template');
   const [selectedTemplate, setSelectedTemplate] = useState<ImportTemplateSummary | null>(null);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
@@ -119,37 +123,38 @@ export function ImportPage() {
   );
 
   // Handle view job details
-  const handleViewJob = useCallback((job: ImportJobHistoryItem) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/import/jobs/${job.id}`;
-  }, []);
+  const handleViewJob = useCallback(
+    (job: ImportJobHistoryItem) => {
+      navigate(`/import/jobs/${job.id}`);
+    },
+    [navigate]
+  );
 
   // Handle retry job
   const handleRetryJob = useCallback(
     (job: ImportJobHistoryItem) => {
-      // TODO(Phase-2): Replace alert with toast notification system
-      // Phase 1: Basic alert for success feedback
       retryImport.mutate(
         { jobId: job.id },
         {
           onSuccess: () => {
             refetchJobs();
-            alert('Import retry started');
+            showToast({ type: 'success', title: 'Import retry started' });
           },
-          onError: (err) => alert(`Failed to retry import: ${err.message}`),
+          onError: (err) =>
+            showToast({ type: 'error', title: 'Failed to retry import', message: err.message }),
         }
       );
     },
-    [retryImport, refetchJobs]
+    [retryImport, refetchJobs, showToast]
   );
 
   // Handle view job errors
-  const handleViewErrors = useCallback((job: ImportJobHistoryItem) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/import/jobs/${job.id}/errors`;
-  }, []);
+  const handleViewErrors = useCallback(
+    (job: ImportJobHistoryItem) => {
+      navigate(`/import/jobs/${job.id}/errors`);
+    },
+    [navigate]
+  );
 
   // Loading state for templates
   if (templatesLoading && step === 'select_template') {

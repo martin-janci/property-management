@@ -8,7 +8,6 @@
 import {
   type ApiConfig,
   type VisitorStatus,
-  getToken,
   useCancelVisitor,
   useCheckInVisitor,
   useCheckOutVisitor,
@@ -16,6 +15,8 @@ import {
   useVisitors,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { VisitorCard } from '../components/VisitorCard';
 
 // API base URL from environment
@@ -24,6 +25,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 type FilterStatus = 'all' | 'today' | VisitorStatus;
 
 export function VisitorsPage() {
+  const navigate = useNavigate();
+  const { getAccessToken } = useAuth();
+  const { buildingId: urlBuildingId } = useParams<{ buildingId?: string }>();
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [accessCode, setAccessCode] = useState('');
   const [verificationResult, setVerificationResult] = useState<{
@@ -31,16 +35,13 @@ export function VisitorsPage() {
     message: string;
   } | null>(null);
 
-  // API configuration
-  // TODO(Phase-2): Make token reactive - add getToken to deps or use auth context
-  // Phase 1: Token retrieved once at component mount
+  // API configuration - token is reactive via auth context
   const apiConfig: ApiConfig = useMemo(
     () => ({
       baseUrl: API_BASE_URL,
-      accessToken: getToken() ?? undefined,
+      accessToken: getAccessToken() ?? undefined,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [getAccessToken]
   );
 
   // Fetch visitors from API
@@ -64,11 +65,12 @@ export function VisitorsPage() {
     return visitor.status === filter;
   });
 
-  const handleView = useCallback((_id: string) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/visitors/${_id}`;
-  }, []);
+  const handleView = useCallback(
+    (id: string) => {
+      navigate(`/visitors/${id}`);
+    },
+    [navigate]
+  );
 
   const handleCheckIn = useCallback(
     (id: string) => {
@@ -120,10 +122,8 @@ export function VisitorsPage() {
       setVerificationResult({ type: 'error', message: 'Please enter an access code' });
       return;
     }
-    // TODO(Phase-2): Get buildingId from context/URL/user session
-    // Phase 1: Empty buildingId - API should handle default building or return error
     verifyAccessCodeMutation.mutate(
-      { accessCode: accessCode.trim().toUpperCase(), buildingId: '' },
+      { accessCode: accessCode.trim().toUpperCase(), buildingId: urlBuildingId ?? '' },
       {
         onSuccess: (result) => {
           if (result.valid) {

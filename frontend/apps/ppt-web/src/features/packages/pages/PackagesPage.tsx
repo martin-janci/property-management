@@ -8,12 +8,13 @@
 import {
   type ApiConfig,
   type PackageStatus,
-  getToken,
   usePackages,
   usePickupPackage,
   useReceivePackage,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 import { PackageCard } from '../components/PackageCard';
 
 // API base URL from environment
@@ -22,18 +23,17 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 type FilterStatus = 'all' | PackageStatus;
 
 export function PackagesPage() {
+  const navigate = useNavigate();
+  const { getAccessToken } = useAuth();
   const [filter, setFilter] = useState<FilterStatus>('all');
 
-  // API configuration
-  // TODO(Phase-2): Make token reactive - add getToken to deps or use auth context
-  // Phase 1: Token retrieved once at component mount
+  // API configuration - token is reactive via auth context
   const apiConfig: ApiConfig = useMemo(
     () => ({
       baseUrl: API_BASE_URL,
-      accessToken: getToken() ?? undefined,
+      accessToken: getAccessToken() ?? undefined,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [getAccessToken]
   );
 
   // Fetch packages from API
@@ -47,16 +47,15 @@ export function PackagesPage() {
   const packages = packagesData?.packages ?? [];
   const filteredPackages = packages.filter((pkg) => filter === 'all' || pkg.status === filter);
 
-  const handleView = useCallback((_id: string) => {
-    // TODO(Phase-2): Use React Router's useNavigate for SPA navigation
-    // Phase 1: Full page reload for simplicity
-    window.location.href = `/packages/${_id}`;
-  }, []);
+  const handleView = useCallback(
+    (id: string) => {
+      navigate(`/packages/${id}`);
+    },
+    [navigate]
+  );
 
   const handleReceive = useCallback(
     (id: string) => {
-      // TODO(Phase-2): Add modal to collect receiver signature, timestamp, photos
-      // Phase 1: Empty data object for basic functionality
       receivePackage.mutate(
         { id, data: {} },
         {
@@ -72,8 +71,6 @@ export function PackagesPage() {
 
   const handlePickup = useCallback(
     (id: string) => {
-      // TODO(Phase-2): Add modal to collect pickup details (signature, ID verification)
-      // Phase 1: Empty data object for basic functionality
       pickupPackage.mutate(
         { id, data: {} },
         {

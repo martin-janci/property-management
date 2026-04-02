@@ -4,7 +4,9 @@
  * Browse and install integrations from the marketplace.
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../../components';
 import { IntegrationCard, type IntegrationCardProps } from '../components/IntegrationCard';
 
 // Sample data for demonstration
@@ -177,6 +179,8 @@ const categories = [
 ];
 
 export function IntegrationMarketplacePage() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -230,15 +234,24 @@ export function IntegrationMarketplacePage() {
     return result;
   }, [searchQuery, selectedCategory, showFeaturedOnly, showPremiumOnly, sortBy]);
 
-  const handleInstall = (id: string) => {
-    // TODO: Implement installation
-    console.log('Installing integration:', id);
-  };
+  const handleInstall = useCallback(
+    (id: string) => {
+      const integration = sampleIntegrations.find((i) => i.id === id);
+      if (integration?.status === 'coming_soon') {
+        showToast({ type: 'info', title: `${integration.name} is coming soon` });
+        return;
+      }
+      navigate(`/integrations/${id}/install`);
+    },
+    [navigate, showToast]
+  );
 
-  const handleViewDetails = (id: string) => {
-    // TODO: Navigate to integration details
-    console.log('Viewing integration details:', id);
-  };
+  const handleViewDetails = useCallback(
+    (id: string) => {
+      navigate(`/integrations/${id}`);
+    },
+    [navigate]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
