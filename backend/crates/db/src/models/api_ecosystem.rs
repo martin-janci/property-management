@@ -780,7 +780,7 @@ pub struct DeveloperApiKey {
 }
 
 /// Developer API key display (for listing).
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct DeveloperApiKeyDisplay {
     pub id: Uuid,
     pub name: String,

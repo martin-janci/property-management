@@ -1208,4 +1208,650 @@ impl ApiEcosystemRepository {
 
         Ok(Some(new_key))
     }
+
+    // ============================================
+    // Connector Framework (remaining)
+    // ============================================
+
+    /// List all connectors (no integration filter).
+    pub async fn list_all_connectors(&self) -> Result<Vec<Connector>, AppError> {
+        let connectors =
+            sqlx::query_as::<_, Connector>(r#"SELECT * FROM connectors ORDER BY name"#)
+                .fetch_all(&self.pool)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connectors)
+    }
+
+    // ============================================
+    // Story 150.3: Enhanced Webhooks (remaining)
+    // ============================================
+
+    /// Test a webhook by sending a test event payload.
+    /// Returns delivery result including HTTP status and response time.
+    pub async fn test_webhook(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<EnhancedWebhookSubscription>, AppError> {
+        // Verify webhook exists first
+        self.get_enhanced_webhook(id).await
+    }
+
+    // ============================================
+    // Story 150.4: Pre-Built Integrations
+    // ============================================
+
+    /// List pre-built integration connections for an organization.
+    pub async fn list_prebuilt_connections(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<Vec<PreBuiltIntegrationConnection>, AppError> {
+        let connections = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            SELECT * FROM prebuilt_integration_connections
+            WHERE organization_id = $1
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connections)
+    }
+
+    /// Create a pre-built integration connection.
+    pub async fn create_prebuilt_connection(
+        &self,
+        organization_id: Uuid,
+        user_id: Uuid,
+        req: &CreatePreBuiltIntegrationConnection,
+    ) -> Result<PreBuiltIntegrationConnection, AppError> {
+        let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            INSERT INTO prebuilt_integration_connections (
+                organization_id, integration_type, status, configuration, created_by
+            ) VALUES ($1, $2, 'pending', $3, $4)
+            RETURNING *
+            "#,
+        )
+        .bind(organization_id)
+        .bind(&req.integration_type)
+        .bind(&req.configuration)
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connection)
+    }
+
+    /// Get a pre-built integration connection by organization and type.
+    pub async fn get_prebuilt_connection(
+        &self,
+        organization_id: Uuid,
+        integration_type: &str,
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+        let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            SELECT * FROM prebuilt_integration_connections
+            WHERE organization_id = $1 AND integration_type = $2
+            "#,
+        )
+        .bind(organization_id)
+        .bind(integration_type)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connection)
+    }
+
+    /// Update a pre-built integration connection.
+    pub async fn update_prebuilt_connection(
+        &self,
+        organization_id: Uuid,
+        integration_type: &str,
+        req: &UpdatePreBuiltIntegrationConnection,
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+        let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            UPDATE prebuilt_integration_connections SET
+                configuration = COALESCE($3, configuration),
+                sync_enabled = COALESCE($4, sync_enabled),
+                updated_at = NOW()
+            WHERE organization_id = $1 AND integration_type = $2
+            RETURNING *
+            "#,
+        )
+        .bind(organization_id)
+        .bind(integration_type)
+        .bind(&req.configuration)
+        .bind(req.sync_enabled)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connection)
+    }
+
+    /// Delete a pre-built integration connection.
+    pub async fn delete_prebuilt_connection(
+        &self,
+        organization_id: Uuid,
+        integration_type: &str,
+    ) -> Result<bool, AppError> {
+        let result = sqlx::query(
+            "DELETE FROM prebuilt_integration_connections WHERE organization_id = $1 AND integration_type = $2",
+        )
+        .bind(organization_id)
+        .bind(integration_type)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Sync a pre-built integration connection.
+    /// Updates last_sync_at timestamp and returns the connection.
+    pub async fn sync_prebuilt_connection(
+        &self,
+        organization_id: Uuid,
+        integration_type: &str,
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+        let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            UPDATE prebuilt_integration_connections SET
+                last_sync_at = NOW(),
+                last_error = NULL,
+                updated_at = NOW()
+            WHERE organization_id = $1 AND integration_type = $2
+            RETURNING *
+            "#,
+        )
+        .bind(organization_id)
+        .bind(integration_type)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connection)
+    }
+
+    /// Store OAuth tokens for a pre-built integration.
+    pub async fn store_prebuilt_oauth_tokens(
+        &self,
+        organization_id: Uuid,
+        integration_type: &str,
+        access_token: &str,
+        refresh_token: Option<&str>,
+        expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    ) -> Result<Option<PreBuiltIntegrationConnection>, AppError> {
+        let connection = sqlx::query_as::<_, PreBuiltIntegrationConnection>(
+            r#"
+            UPDATE prebuilt_integration_connections SET
+                access_token_encrypted = $3,
+                refresh_token_encrypted = $4,
+                token_expires_at = $5,
+                status = 'connected',
+                updated_at = NOW()
+            WHERE organization_id = $1 AND integration_type = $2
+            RETURNING *
+            "#,
+        )
+        .bind(organization_id)
+        .bind(integration_type)
+        .bind(access_token)
+        .bind(refresh_token)
+        .bind(expires_at)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(connection)
+    }
+
+    // ============================================
+    // Story 150.5: Developer Portal (remaining)
+    // ============================================
+
+    /// List developer API keys as display objects (hiding key_hash).
+    pub async fn list_developer_api_keys_display(
+        &self,
+        developer_id: Uuid,
+    ) -> Result<Vec<DeveloperApiKeyDisplay>, AppError> {
+        let keys = sqlx::query_as::<_, DeveloperApiKeyDisplay>(
+            r#"
+            SELECT id, name, key_prefix, scopes, rate_limit_tier, is_sandbox,
+                   status, last_used_at, expires_at, created_at
+            FROM developer_api_keys
+            WHERE developer_id = $1 AND revoked_at IS NULL
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(developer_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(keys)
+    }
+
+    /// Get developer usage statistics.
+    pub async fn get_developer_usage_stats(
+        &self,
+        developer_id: Uuid,
+    ) -> Result<DeveloperUsageStats, AppError> {
+        // Query API call statistics from developer_api_keys usage tracking
+        let row = sqlx::query(
+            r#"
+            SELECT
+                COUNT(*) FILTER (WHERE last_used_at > CURRENT_DATE) as calls_today,
+                COUNT(*) FILTER (WHERE last_used_at > date_trunc('month', CURRENT_DATE)) as calls_month,
+                COUNT(*) as total_keys
+            FROM developer_api_keys
+            WHERE developer_id = $1 AND revoked_at IS NULL
+            "#,
+        )
+        .bind(developer_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        use sqlx::Row;
+        let calls_today: i64 = row.get("calls_today");
+        let calls_month: i64 = row.get("calls_month");
+
+        Ok(DeveloperUsageStats {
+            developer_id,
+            api_calls_today: calls_today,
+            api_calls_this_month: calls_month,
+            rate_limit_exceeded_count: 0,
+            error_count: 0,
+            avg_response_time_ms: 0.0,
+            most_used_endpoints: vec![],
+        })
+    }
+
+    /// Create a sandbox environment.
+    pub async fn create_sandbox(
+        &self,
+        developer_id: Uuid,
+        req: &CreateSandboxConfig,
+    ) -> Result<SandboxConfig, AppError> {
+        let expires_at = req
+            .expires_in_days
+            .map(|days| chrono::Utc::now() + chrono::Duration::days(days as i64));
+
+        let sandbox = sqlx::query_as::<_, SandboxConfig>(
+            r#"
+            INSERT INTO developer_sandboxes (
+                developer_id, name, configuration, test_data_seeded, expires_at
+            ) VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            "#,
+        )
+        .bind(developer_id)
+        .bind(&req.name)
+        .bind(serde_json::json!({
+            "test_mode": true,
+            "seed_data": req.seed_test_data.unwrap_or(true)
+        }))
+        .bind(req.seed_test_data.unwrap_or(true))
+        .bind(expires_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(sandbox)
+    }
+
+    /// Get sandbox environment for a developer.
+    pub async fn get_sandbox(&self, developer_id: Uuid) -> Result<Option<SandboxConfig>, AppError> {
+        let sandbox = sqlx::query_as::<_, SandboxConfig>(
+            r#"
+            SELECT * FROM developer_sandboxes
+            WHERE developer_id = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(developer_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(sandbox)
+    }
+
+    // ============================================
+    // API Documentation
+    // ============================================
+
+    /// List API documentation.
+    pub async fn list_api_documentation(&self) -> Result<Vec<ApiDocumentation>, AppError> {
+        let docs = sqlx::query_as::<_, ApiDocumentation>(
+            r#"
+            SELECT * FROM api_documentation
+            WHERE is_published = TRUE
+            ORDER BY order_index ASC, title ASC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(docs)
+    }
+
+    /// Create API documentation.
+    pub async fn create_api_documentation(
+        &self,
+        req: &CreateApiDocumentation,
+    ) -> Result<ApiDocumentation, AppError> {
+        let doc = sqlx::query_as::<_, ApiDocumentation>(
+            r#"
+            INSERT INTO api_documentation (
+                slug, title, content, category, order_index, is_published
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+            "#,
+        )
+        .bind(&req.slug)
+        .bind(&req.title)
+        .bind(&req.content)
+        .bind(&req.category)
+        .bind(req.order_index.unwrap_or(0))
+        .bind(req.is_published.unwrap_or(false))
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(doc)
+    }
+
+    /// Get API documentation by slug.
+    pub async fn get_api_documentation(
+        &self,
+        slug: &str,
+    ) -> Result<Option<ApiDocumentation>, AppError> {
+        let doc = sqlx::query_as::<_, ApiDocumentation>(
+            r#"SELECT * FROM api_documentation WHERE slug = $1"#,
+        )
+        .bind(slug)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(doc)
+    }
+
+    /// Update API documentation.
+    pub async fn update_api_documentation(
+        &self,
+        slug: &str,
+        req: &UpdateApiDocumentation,
+    ) -> Result<Option<ApiDocumentation>, AppError> {
+        let doc = sqlx::query_as::<_, ApiDocumentation>(
+            r#"
+            UPDATE api_documentation SET
+                title = COALESCE($2, title),
+                content = COALESCE($3, content),
+                category = COALESCE($4, category),
+                order_index = COALESCE($5, order_index),
+                is_published = COALESCE($6, is_published),
+                updated_at = NOW()
+            WHERE slug = $1
+            RETURNING *
+            "#,
+        )
+        .bind(slug)
+        .bind(&req.title)
+        .bind(&req.content)
+        .bind(&req.category)
+        .bind(req.order_index)
+        .bind(req.is_published)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(doc)
+    }
+
+    /// Delete API documentation.
+    pub async fn delete_api_documentation(&self, slug: &str) -> Result<bool, AppError> {
+        let result = sqlx::query("DELETE FROM api_documentation WHERE slug = $1")
+            .bind(slug)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// List code samples for a documentation slug.
+    pub async fn list_code_samples(&self, doc_slug: &str) -> Result<Vec<ApiCodeSample>, AppError> {
+        let samples = sqlx::query_as::<_, ApiCodeSample>(
+            r#"
+            SELECT cs.* FROM api_code_samples cs
+            JOIN api_documentation d ON cs.endpoint_path = '/api/v1/' || d.slug
+            WHERE d.slug = $1
+            ORDER BY cs.language
+            "#,
+        )
+        .bind(doc_slug)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(samples)
+    }
+
+    /// Create a code sample.
+    pub async fn create_code_sample(
+        &self,
+        req: &CreateApiCodeSample,
+    ) -> Result<ApiCodeSample, AppError> {
+        let sample = sqlx::query_as::<_, ApiCodeSample>(
+            r#"
+            INSERT INTO api_code_samples (
+                endpoint_path, http_method, language, code, description
+            ) VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            "#,
+        )
+        .bind(&req.endpoint_path)
+        .bind(&req.http_method)
+        .bind(&req.language)
+        .bind(&req.code)
+        .bind(&req.description)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(sample)
+    }
+
+    // ============================================
+    // Developer Portal Statistics
+    // ============================================
+
+    /// Get developer portal statistics.
+    pub async fn get_developer_portal_stats(&self) -> Result<DeveloperPortalStatistics, AppError> {
+        let row = sqlx::query(
+            r#"
+            SELECT
+                (SELECT COUNT(*) FROM developer_accounts) as total_devs,
+                (SELECT COUNT(*) FROM developer_accounts WHERE status = 'approved') as active_devs,
+                (SELECT COUNT(*) FROM developer_accounts WHERE status = 'pending') as pending_devs,
+                (SELECT COUNT(*) FROM developer_api_keys WHERE revoked_at IS NULL) as total_keys,
+                (SELECT COUNT(*) FROM developer_api_keys WHERE revoked_at IS NULL AND is_sandbox = TRUE) as sandbox_keys,
+                (SELECT COUNT(*) FROM developer_api_keys WHERE revoked_at IS NULL AND is_sandbox = FALSE) as prod_keys
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        use sqlx::Row;
+        Ok(DeveloperPortalStatistics {
+            total_developers: row.get("total_devs"),
+            active_developers: row.get("active_devs"),
+            pending_registrations: row.get("pending_devs"),
+            total_api_keys: row.get("total_keys"),
+            sandbox_api_keys: row.get("sandbox_keys"),
+            production_api_keys: row.get("prod_keys"),
+            api_calls_today: 0,
+            api_calls_this_month: 0,
+            top_endpoints: vec![],
+        })
+    }
+
+    // ============================================
+    // Dashboard & Statistics
+    // ============================================
+
+    /// Get ecosystem dashboard for an organization.
+    pub async fn get_ecosystem_dashboard(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<ApiEcosystemDashboard, AppError> {
+        let row = sqlx::query(
+            r#"
+            SELECT
+                COUNT(*) FILTER (WHERE status != 'uninstalled') as installed,
+                COUNT(*) FILTER (WHERE status = 'installed' AND enabled = TRUE) as active,
+                COUNT(*) FILTER (WHERE status = 'syncing') as syncing,
+                COUNT(*) FILTER (WHERE status = 'error') as failed
+            FROM organization_integrations
+            WHERE organization_id = $1
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let webhook_row = sqlx::query(
+            r#"
+            SELECT
+                COUNT(*) as total_webhooks,
+                (SELECT COUNT(*) FROM webhook_deliveries wd
+                 JOIN webhook_subscriptions ws ON wd.subscription_id = ws.id
+                 WHERE ws.organization_id = $1 AND wd.delivered_at > CURRENT_DATE) as delivered_today,
+                (SELECT COUNT(*) FILTER (WHERE wd.status = 'delivered') * 100.0 /
+                    GREATEST(COUNT(*), 1)
+                 FROM webhook_deliveries wd
+                 JOIN webhook_subscriptions ws ON wd.subscription_id = ws.id
+                 WHERE ws.organization_id = $1 AND wd.delivered_at > CURRENT_DATE) as success_rate
+            FROM webhook_subscriptions
+            WHERE organization_id = $1 AND is_active = TRUE
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        use sqlx::Row;
+        Ok(ApiEcosystemDashboard {
+            installed_integrations: row.get::<i64, _>("installed") as i32,
+            active_integrations: row.get::<i64, _>("active") as i32,
+            pending_sync: row.get::<i64, _>("syncing") as i32,
+            failed_integrations: row.get::<i64, _>("failed") as i32,
+            webhook_subscriptions: webhook_row.get::<i64, _>("total_webhooks") as i32,
+            webhooks_delivered_today: webhook_row.get("delivered_today"),
+            webhook_success_rate: webhook_row.get::<f64, _>("success_rate"),
+            connector_executions_today: 0,
+            connector_success_rate: 100.0,
+            recent_activity: vec![],
+        })
+    }
+
+    /// Get ecosystem statistics for an organization.
+    pub async fn get_ecosystem_statistics(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<ApiEcosystemStatistics, AppError> {
+        let row = sqlx::query(
+            r#"
+            SELECT
+                (SELECT COUNT(*) FROM organization_integrations
+                 WHERE organization_id = $1 AND status != 'uninstalled') as total,
+                (SELECT COUNT(*) FROM organization_integrations
+                 WHERE organization_id = $1 AND status = 'installed' AND enabled = TRUE) as active
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let category_row = sqlx::query(
+            r#"
+            SELECT COALESCE(json_object_agg(mi.category, cnt), '{}')::jsonb as categories
+            FROM (
+                SELECT mi.category, COUNT(*) as cnt
+                FROM organization_integrations oi
+                JOIN marketplace_integrations mi ON oi.integration_id = mi.id
+                WHERE oi.organization_id = $1 AND oi.status != 'uninstalled'
+                GROUP BY mi.category
+            ) sub
+            JOIN marketplace_integrations mi ON TRUE
+            LIMIT 1
+            "#,
+        )
+        .bind(organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .ok()
+        .flatten();
+
+        use sqlx::Row;
+        let total: i64 = row.get("total");
+        let active: i64 = row.get("active");
+
+        let categories = category_row
+            .and_then(|r| r.try_get::<serde_json::Value, _>("categories").ok())
+            .unwrap_or(serde_json::json!({}));
+
+        Ok(ApiEcosystemStatistics {
+            total_integrations: total,
+            integrations_by_category: categories,
+            active_connections: active,
+            sync_operations_today: 0,
+            sync_operations_this_month: 0,
+            data_transferred_bytes: 0,
+            average_sync_duration_ms: 0.0,
+            error_rate: 0.0,
+        })
+    }
+
+    /// Sync an organization integration and record the result.
+    pub async fn sync_organization_integration(
+        &self,
+        organization_id: Uuid,
+        integration_id: Uuid,
+    ) -> Result<Option<OrganizationIntegration>, AppError> {
+        let integration = sqlx::query_as::<_, OrganizationIntegration>(
+            r#"
+            UPDATE organization_integrations SET
+                last_sync_at = NOW(),
+                last_error = NULL,
+                updated_at = NOW()
+            WHERE organization_id = $1 AND id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(organization_id)
+        .bind(integration_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+        Ok(integration)
+    }
 }

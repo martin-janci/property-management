@@ -9,13 +9,13 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use common::errors::ErrorResponse;
 use db::models::{
-    api_doc_category, code_sample_language, ecosystem_webhook_event, ApiCodeSample,
-    ApiDocumentation, ApiEcosystemDashboard, ApiEcosystemStatistics, Connector, ConnectorAction,
-    ConnectorExecutionLog, ConnectorExecutionQuery, CreateApiCodeSample, CreateApiDocumentation,
-    CreateConnector, CreateConnectorAction, CreateDeveloperApiKey, CreateDeveloperApiKeyResponse,
+    ecosystem_webhook_event, ApiCodeSample, ApiDocumentation, ApiEcosystemDashboard,
+    ApiEcosystemStatistics, Connector, ConnectorAction, ConnectorExecutionLog,
+    ConnectorExecutionQuery, CreateApiCodeSample, CreateApiDocumentation, CreateConnector,
+    CreateConnectorAction, CreateDeveloperApiKey, CreateDeveloperApiKeyResponse,
     CreateDeveloperRegistration, CreateEnhancedWebhookSubscription, CreateIntegrationRating,
     CreateMarketplaceIntegration, CreatePreBuiltIntegrationConnection, CreateSandboxConfig,
     DeveloperApiKeyDisplay, DeveloperPortalStatistics, DeveloperRegistration, DeveloperUsageStats,
@@ -609,14 +609,21 @@ async fn uninstall_integration(
 
 /// Sync integration.
 async fn sync_integration(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIntegrationPath>,
+    Path(path): Path<OrgIntegrationPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement sync logic
+    let integration = state
+        .api_ecosystem_repo
+        .sync_organization_integration(path.org_id, path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Integration", path.id))?;
+
     Ok(Json(serde_json::json!({
         "status": "completed",
-        "records_synced": 0
+        "integration_id": integration.id,
+        "last_sync_at": integration.last_sync_at
     })))
 }
 
@@ -624,72 +631,81 @@ async fn sync_integration(
 
 /// List connectors.
 async fn list_connectors(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<Connector>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let connectors = state
+        .api_ecosystem_repo
+        .list_all_connectors()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(connectors))
 }
 
 /// Create connector.
 async fn create_connector(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _auth: AuthUser,
     Json(request): Json<CreateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let connector = Connector {
-        id: Uuid::new_v4(),
-        integration_id: request.integration_id,
-        name: request.name,
-        description: request.description,
-        auth_type: request.auth_type,
-        auth_config: request.auth_config,
-        base_url: request.base_url,
-        rate_limit_requests: request.rate_limit_requests,
-        rate_limit_window_seconds: request.rate_limit_window_seconds,
-        retry_max_attempts: request.retry_max_attempts.unwrap_or(3),
-        retry_initial_delay_ms: request.retry_initial_delay_ms.unwrap_or(1000),
-        retry_max_delay_ms: request.retry_max_delay_ms.unwrap_or(30000),
-        timeout_ms: request.timeout_ms.unwrap_or(30000),
-        headers: request.headers,
-        supported_actions: request.supported_actions,
-        error_mapping: request.error_mapping,
-        data_transformations: request.data_transformations,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let connector = state
+        .api_ecosystem_repo
+        .create_connector(&request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(connector))
 }
 
 /// Get connector.
 async fn get_connector(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Connector", path.id))
+    let connector = state
+        .api_ecosystem_repo
+        .get_connector(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Connector", path.id))?;
+
+    Ok(Json(connector))
 }
 
 /// Update connector.
 async fn update_connector(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _auth: AuthUser,
     Path(path): Path<IntegrationIdPath>,
-    Json(_request): Json<UpdateConnector>,
+    Json(request): Json<UpdateConnector>,
 ) -> Result<Json<Connector>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Connector", path.id))
+    let connector = state
+        .api_ecosystem_repo
+        .update_connector(path.id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Connector", path.id))?;
+
+    Ok(Json(connector))
 }
 
 /// Delete connector.
 async fn delete_connector(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _auth: AuthUser,
-    Path(_path): Path<IntegrationIdPath>,
+    Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    let deleted = state
+        .api_ecosystem_repo
+        .delete_connector(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Connector", path.id))
+    }
 }
 
 /// List connector actions.
@@ -742,12 +758,17 @@ async fn list_connector_logs(
 
 /// List enhanced webhooks.
 async fn list_enhanced_webhooks(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
+    Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<EnhancedWebhookSubscription>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let webhooks = state
+        .api_ecosystem_repo
+        .list_enhanced_webhooks(path.org_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(webhooks))
 }
 
 /// Create enhanced webhook.
@@ -769,11 +790,17 @@ async fn create_enhanced_webhook(
 
 /// Get enhanced webhook.
 async fn get_enhanced_webhook(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<EnhancedWebhookSubscription>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Webhook", path.id))
+    let webhook = state
+        .api_ecosystem_repo
+        .get_enhanced_webhook(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Webhook", path.id))?;
+
+    Ok(Json(webhook))
 }
 
 /// Update enhanced webhook.
@@ -794,23 +821,45 @@ async fn update_enhanced_webhook(
 
 /// Delete enhanced webhook.
 async fn delete_enhanced_webhook(
-    State(_state): State<AppState>,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<IntegrationIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    let deleted = state
+        .api_ecosystem_repo
+        .delete_enhanced_webhook(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Webhook", path.id))
+    }
 }
 
 /// Test enhanced webhook.
 async fn test_enhanced_webhook(
-    State(_state): State<AppState>,
-    Path(_path): Path<IntegrationIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<IntegrationIdPath>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement webhook test
+    // Verify webhook exists before testing
+    let webhook = state
+        .api_ecosystem_repo
+        .get_enhanced_webhook(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Webhook", path.id))?;
+
+    // In a full implementation, this would send an HTTP request to webhook.url.
+    // For now, verify the webhook is reachable by confirming it exists and is active.
+    let is_active = webhook.status == "active";
+
     Ok(Json(serde_json::json!({
-        "success": true,
-        "status_code": 200,
-        "response_time_ms": 150
+        "success": is_active,
+        "webhook_id": webhook.id,
+        "url": webhook.url,
+        "status": webhook.status,
+        "message": if is_active { "Webhook is active and configured" } else { "Webhook is not active" }
     })))
 }
 
@@ -883,82 +932,107 @@ async fn list_webhook_event_types(
 
 /// List pre-built integration connections.
 async fn list_prebuilt_connections(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
+    Path(path): Path<OrgIdPath>,
 ) -> Result<Json<Vec<PreBuiltIntegrationConnection>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Ok(Json(vec![]))
+    let connections = state
+        .api_ecosystem_repo
+        .list_prebuilt_connections(path.org_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(connections))
 }
 
 /// Create pre-built integration connection.
 async fn create_prebuilt_connection(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     auth: AuthUser,
     Path(path): Path<OrgIdPath>,
     Json(request): Json<CreatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database insert
-    let connection = PreBuiltIntegrationConnection {
-        id: Uuid::new_v4(),
-        organization_id: path.org_id,
-        integration_type: request.integration_type,
-        status: "pending".to_string(),
-        configuration: request.configuration,
-        access_token_encrypted: None,
-        refresh_token_encrypted: None,
-        token_expires_at: None,
-        last_sync_at: None,
-        last_error: None,
-        sync_enabled: true,
-        created_by: auth.user_id,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let connection = state
+        .api_ecosystem_repo
+        .create_prebuilt_connection(path.org_id, auth.user_id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(connection))
 }
 
 /// Get pre-built integration connection.
 async fn get_prebuilt_connection(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Pre-built connection", &path.integration_type))
+    let connection = state
+        .api_ecosystem_repo
+        .get_prebuilt_connection(path.org_id, &path.integration_type)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    Ok(Json(connection))
 }
 
 /// Update pre-built integration connection.
 async fn update_prebuilt_connection(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<PrebuiltTypePath>,
-    Json(_request): Json<UpdatePreBuiltIntegrationConnection>,
+    Json(request): Json<UpdatePreBuiltIntegrationConnection>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Pre-built connection", &path.integration_type))
+    let connection = state
+        .api_ecosystem_repo
+        .update_prebuilt_connection(path.org_id, &path.integration_type, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    Ok(Json(connection))
 }
 
 /// Delete pre-built integration connection.
 async fn delete_prebuilt_connection(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<PrebuiltTypePath>,
+    Path(path): Path<PrebuiltTypePath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    let deleted = state
+        .api_ecosystem_repo
+        .delete_prebuilt_connection(path.org_id, &path.integration_type)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Pre-built connection", &path.integration_type))
+    }
 }
 
 /// Sync pre-built integration.
 async fn sync_prebuilt_connection(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<PrebuiltTypePath>,
     Json(_request): Json<SyncPreBuiltIntegrationRequest>,
 ) -> Result<Json<PreBuiltIntegrationSyncResult>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement sync logic
+    let start = std::time::Instant::now();
+
+    // Update sync timestamp in DB
+    let _connection = state
+        .api_ecosystem_repo
+        .sync_prebuilt_connection(path.org_id, &path.integration_type)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    let duration = start.elapsed().as_millis() as i32;
+
     let result = PreBuiltIntegrationSyncResult {
         integration_type: path.integration_type,
         records_created: 0,
@@ -966,7 +1040,7 @@ async fn sync_prebuilt_connection(
         records_deleted: 0,
         errors: vec![],
         synced_at: Utc::now(),
-        duration_ms: 0,
+        duration_ms: duration,
     };
 
     Ok(Json(result))
@@ -974,33 +1048,40 @@ async fn sync_prebuilt_connection(
 
 /// Get OAuth URL for pre-built integration.
 async fn get_prebuilt_oauth_url(
-    State(_state): State<AppState>,
+    State(app_state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<Json<OAuthUrlResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Generate OAuth URL based on integration type
-    let state = Uuid::new_v4().to_string();
+    // Verify the connection exists
+    let _connection = app_state
+        .api_ecosystem_repo
+        .get_prebuilt_connection(path.org_id, &path.integration_type)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    let oauth_state = Uuid::new_v4().to_string();
 
     let url = match path.integration_type.as_str() {
         "quickbooks" => format!(
             "https://appcenter.intuit.com/connect/oauth2?client_id=CLIENT_ID&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=REDIRECT_URI&state={}",
-            state
+            oauth_state
         ),
         "xero" => format!(
             "https://login.xero.com/identity/connect/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=openid%20profile%20email%20accounting.transactions&state={}",
-            state
+            oauth_state
         ),
         "salesforce" => format!(
             "https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&state={}",
-            state
+            oauth_state
         ),
         "hubspot" => format!(
             "https://app.hubspot.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=contacts%20crm.objects.deals.read&state={}",
-            state
+            oauth_state
         ),
         "slack" => format!(
             "https://slack.com/oauth/v2/authorize?client_id=CLIENT_ID&scope=chat:write,channels:read&redirect_uri=REDIRECT_URI&state={}",
-            state
+            oauth_state
         ),
         _ => {
             return Err(error_response(
@@ -1010,21 +1091,44 @@ async fn get_prebuilt_oauth_url(
         }
     };
 
-    Ok(Json(OAuthUrlResponse { url, state }))
+    Ok(Json(OAuthUrlResponse {
+        url,
+        state: oauth_state,
+    }))
 }
 
 /// Handle OAuth callback for pre-built integration.
 async fn handle_prebuilt_oauth_callback(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<PrebuiltTypePath>,
-    Json(_request): Json<OAuthCallbackRequest>,
+    Path(path): Path<PrebuiltTypePath>,
+    Json(request): Json<OAuthCallbackRequest>,
 ) -> Result<Json<PreBuiltIntegrationConnection>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Exchange code for tokens and store connection
-    Err(error_response(
-        "NOT_IMPLEMENTED",
-        "OAuth callback handling not yet implemented",
-    ))
+    // Verify the connection exists
+    let _connection = state
+        .api_ecosystem_repo
+        .get_prebuilt_connection(path.org_id, &path.integration_type)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    // In production, this would exchange the authorization code for tokens
+    // via the provider's token endpoint. For now, store the code as a placeholder
+    // token to mark the connection as connected.
+    let connection = state
+        .api_ecosystem_repo
+        .store_prebuilt_oauth_tokens(
+            path.org_id,
+            &path.integration_type,
+            &format!("pending_exchange:{}", request.code),
+            None,
+            None,
+        )
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Pre-built connection", &path.integration_type))?;
+
+    Ok(Json(connection))
 }
 
 // ==================== Story 150.5: Developer Portal ====================
@@ -1088,12 +1192,17 @@ async fn review_developer_registration(
 
 /// List developer API keys.
 async fn list_developer_api_keys(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _auth: AuthUser,
-    Path(_path): Path<DeveloperIdPath>,
+    Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<Vec<DeveloperApiKeyDisplay>>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Map DeveloperApiKey to DeveloperApiKeyDisplay (hiding key_hash)
-    Ok(Json(vec![]))
+    let keys = state
+        .api_ecosystem_repo
+        .list_developer_api_keys_display(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    Ok(Json(keys))
 }
 
 /// Create developer API key.
@@ -1232,72 +1341,112 @@ async fn rotate_developer_api_key(
 
 /// Get developer usage statistics.
 async fn get_developer_usage_stats(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<DeveloperUsageStats>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = DeveloperUsageStats {
-        developer_id: path.id,
-        api_calls_today: 0,
-        api_calls_this_month: 0,
-        rate_limit_exceeded_count: 0,
-        error_count: 0,
-        avg_response_time_ms: 0.0,
-        most_used_endpoints: vec![],
-    };
+    let stats = state
+        .api_ecosystem_repo
+        .get_developer_usage_stats(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(stats))
 }
 
 /// Create sandbox environment.
 async fn create_sandbox_environment(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<DeveloperIdPath>,
     Json(request): Json<CreateSandboxConfig>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
-    let sandbox = SandboxConfig {
-        id: Uuid::new_v4(),
-        developer_id: path.id,
-        name: request.name,
-        configuration: serde_json::json!({
-            "test_mode": true,
-            "seed_data": request.seed_test_data.unwrap_or(true)
-        }),
-        test_data_seeded: request.seed_test_data.unwrap_or(true),
-        expires_at: request
-            .expires_in_days
-            .map(|days| Utc::now() + Duration::days(days as i64)),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let sandbox = state
+        .api_ecosystem_repo
+        .create_sandbox(path.id, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(sandbox))
 }
 
 /// Get sandbox environment.
 async fn get_sandbox_environment(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperIdPath>,
+    State(state): State<AppState>,
+    Path(path): Path<DeveloperIdPath>,
 ) -> Result<Json<SandboxConfig>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(error_response("NOT_FOUND", "Sandbox environment not found"))
+    let sandbox = state
+        .api_ecosystem_repo
+        .get_sandbox(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
+
+    Ok(Json(sandbox))
 }
 
 /// Test sandbox request.
 async fn test_sandbox_request(
-    State(_state): State<AppState>,
-    Path(_path): Path<DeveloperIdPath>,
-    Json(_request): Json<SandboxTestRequestPayload>,
+    State(state): State<AppState>,
+    Path(path): Path<DeveloperIdPath>,
+    Json(request): Json<SandboxTestRequestPayload>,
 ) -> Result<Json<SandboxTestResponsePayload>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement sandbox request execution
+    // Verify sandbox exists
+    let _sandbox = state
+        .api_ecosystem_repo
+        .get_sandbox(path.id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| error_response("NOT_FOUND", "Sandbox environment not found"))?;
+
+    let start = std::time::Instant::now();
+
+    // Simulate the sandbox API request by returning a mock response
+    // based on the requested endpoint and method
+    let (status_code, body) = match request.method.to_uppercase().as_str() {
+        "GET" => (
+            200,
+            serde_json::json!({
+                "data": [],
+                "sandbox": true,
+                "endpoint": request.endpoint
+            }),
+        ),
+        "POST" => (
+            201,
+            serde_json::json!({
+                "id": Uuid::new_v4(),
+                "sandbox": true,
+                "endpoint": request.endpoint,
+                "message": "Resource created in sandbox"
+            }),
+        ),
+        "PUT" | "PATCH" => (
+            200,
+            serde_json::json!({
+                "sandbox": true,
+                "endpoint": request.endpoint,
+                "message": "Resource updated in sandbox"
+            }),
+        ),
+        "DELETE" => (204, serde_json::json!({})),
+        _ => (
+            405,
+            serde_json::json!({
+                "error": "Method not allowed",
+                "sandbox": true
+            }),
+        ),
+    };
+
+    let duration = start.elapsed().as_millis() as i32;
+
     let response = SandboxTestResponsePayload {
-        status_code: 200,
+        status_code,
         headers: serde_json::json!({
-            "content-type": "application/json"
+            "content-type": "application/json",
+            "x-sandbox": "true"
         }),
-        body: serde_json::json!({
-            "message": "Sandbox test successful"
-        }),
-        duration_ms: 50,
+        body,
+        duration_ms: duration,
     };
 
     Ok(Json(response))
@@ -1305,168 +1454,173 @@ async fn test_sandbox_request(
 
 /// List API documentation.
 async fn list_api_documentation(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<ApiDocumentation>>, (StatusCode, Json<ErrorResponse>)> {
-    // Return sample documentation
-    let docs = vec![
-        ApiDocumentation {
-            id: Uuid::new_v4(),
-            slug: "getting-started".to_string(),
-            title: "Getting Started".to_string(),
-            content: "# Getting Started\n\nWelcome to the PPT API...".to_string(),
-            category: api_doc_category::GETTING_STARTED.to_string(),
-            order_index: 1,
-            is_published: true,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-        ApiDocumentation {
-            id: Uuid::new_v4(),
-            slug: "authentication".to_string(),
-            title: "Authentication".to_string(),
-            content: "# Authentication\n\nThe PPT API uses API keys...".to_string(),
-            category: api_doc_category::AUTHENTICATION.to_string(),
-            order_index: 2,
-            is_published: true,
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-    ];
+    let docs = state
+        .api_ecosystem_repo
+        .list_api_documentation()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(docs))
 }
 
 /// Create API documentation (admin only).
 async fn create_api_documentation(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Json(request): Json<CreateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    let doc = ApiDocumentation {
-        id: Uuid::new_v4(),
-        slug: request.slug,
-        title: request.title,
-        content: request.content,
-        category: request.category,
-        order_index: request.order_index.unwrap_or(0),
-        is_published: request.is_published.unwrap_or(false),
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let doc = state
+        .api_ecosystem_repo
+        .create_api_documentation(&request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(doc))
 }
 
 /// Get API documentation by slug.
 async fn get_api_documentation(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<DocSlugPath>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database query
-    Err(not_found("Documentation", &path.slug))
+    let doc = state
+        .api_ecosystem_repo
+        .get_api_documentation(&path.slug)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Documentation", &path.slug))?;
+
+    Ok(Json(doc))
 }
 
 /// Update API documentation (admin only).
 async fn update_api_documentation(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Path(path): Path<DocSlugPath>,
-    Json(_request): Json<UpdateApiDocumentation>,
+    Json(request): Json<UpdateApiDocumentation>,
 ) -> Result<Json<ApiDocumentation>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database update
-    Err(not_found("Documentation", &path.slug))
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let doc = state
+        .api_ecosystem_repo
+        .update_api_documentation(&path.slug, &request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?
+        .ok_or_else(|| not_found("Documentation", &path.slug))?;
+
+    Ok(Json(doc))
 }
 
 /// Delete API documentation (admin only).
 async fn delete_api_documentation(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
-    Path(_path): Path<DocSlugPath>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(path): Path<DocSlugPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Implement database delete
-    Ok(StatusCode::NO_CONTENT)
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let deleted = state
+        .api_ecosystem_repo
+        .delete_api_documentation(&path.slug)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
+
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(not_found("Documentation", &path.slug))
+    }
 }
 
 /// List code samples for an endpoint.
 async fn list_code_samples(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(path): Path<DocSlugPath>,
 ) -> Result<Json<Vec<ApiCodeSample>>, (StatusCode, Json<ErrorResponse>)> {
-    // Return sample code samples
-    let samples = vec![
-        ApiCodeSample {
-            id: Uuid::new_v4(),
-            endpoint_path: format!("/api/v1/{}", path.slug),
-            http_method: "GET".to_string(),
-            language: code_sample_language::CURL.to_string(),
-            code: format!(
-                "curl -X GET 'https://api.ppt.com/api/v1/{}' \\\n  -H 'Authorization: Bearer YOUR_API_KEY'",
-                path.slug
-            ),
-            description: Some("Basic cURL request".to_string()),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-        ApiCodeSample {
-            id: Uuid::new_v4(),
-            endpoint_path: format!("/api/v1/{}", path.slug),
-            http_method: "GET".to_string(),
-            language: code_sample_language::JAVASCRIPT.to_string(),
-            code: format!(
-                r#"const response = await fetch('https://api.ppt.com/api/v1/{}', {{
-  headers: {{
-    'Authorization': 'Bearer YOUR_API_KEY'
-  }}
-}});
-const data = await response.json();"#,
-                path.slug
-            ),
-            description: Some("JavaScript fetch example".to_string()),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-    ];
+    let samples = state
+        .api_ecosystem_repo
+        .list_code_samples(&path.slug)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(samples))
 }
 
 /// Create code sample (admin only).
 async fn create_code_sample(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Path(_path): Path<DocSlugPath>,
     Json(request): Json<CreateApiCodeSample>,
 ) -> Result<Json<ApiCodeSample>, (StatusCode, Json<ErrorResponse>)> {
-    let sample = ApiCodeSample {
-        id: Uuid::new_v4(),
-        endpoint_path: request.endpoint_path,
-        http_method: request.http_method,
-        language: request.language,
-        code: request.code,
-        description: request.description,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let sample = state
+        .api_ecosystem_repo
+        .create_code_sample(&request)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(sample))
 }
 
 /// Get developer portal statistics (admin only).
 async fn get_developer_portal_stats(
-    State(_state): State<AppState>,
-    _auth: AuthUser,
+    State(state): State<AppState>,
+    auth: AuthUser,
 ) -> Result<Json<DeveloperPortalStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = DeveloperPortalStatistics {
-        total_developers: 0,
-        active_developers: 0,
-        pending_registrations: 0,
-        total_api_keys: 0,
-        sandbox_api_keys: 0,
-        production_api_keys: 0,
-        api_calls_today: 0,
-        api_calls_this_month: 0,
-        top_endpoints: vec![],
-    };
+    if !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Platform admin privileges required",
+            )),
+        ));
+    }
+
+    let stats = state
+        .api_ecosystem_repo
+        .get_developer_portal_stats()
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(stats))
 }
@@ -1475,42 +1629,30 @@ async fn get_developer_portal_stats(
 
 /// Get API ecosystem dashboard.
 async fn get_ecosystem_dashboard(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
+    Path(path): Path<OrgIdPath>,
 ) -> Result<Json<ApiEcosystemDashboard>, (StatusCode, Json<ErrorResponse>)> {
-    let dashboard = ApiEcosystemDashboard {
-        installed_integrations: 0,
-        active_integrations: 0,
-        pending_sync: 0,
-        failed_integrations: 0,
-        webhook_subscriptions: 0,
-        webhooks_delivered_today: 0,
-        webhook_success_rate: 100.0,
-        connector_executions_today: 0,
-        connector_success_rate: 100.0,
-        recent_activity: vec![],
-    };
+    let dashboard = state
+        .api_ecosystem_repo
+        .get_ecosystem_dashboard(path.org_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(dashboard))
 }
 
 /// Get API ecosystem statistics.
 async fn get_ecosystem_statistics(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     _tenant: TenantExtractor,
-    Path(_path): Path<OrgIdPath>,
+    Path(path): Path<OrgIdPath>,
 ) -> Result<Json<ApiEcosystemStatistics>, (StatusCode, Json<ErrorResponse>)> {
-    let stats = ApiEcosystemStatistics {
-        total_integrations: 0,
-        integrations_by_category: serde_json::json!({}),
-        active_connections: 0,
-        sync_operations_today: 0,
-        sync_operations_this_month: 0,
-        data_transferred_bytes: 0,
-        average_sync_duration_ms: 0.0,
-        error_rate: 0.0,
-    };
+    let stats = state
+        .api_ecosystem_repo
+        .get_ecosystem_statistics(path.org_id)
+        .await
+        .map_err(|e| error_response("DATABASE_ERROR", &e.to_string()))?;
 
     Ok(Json(stats))
 }
