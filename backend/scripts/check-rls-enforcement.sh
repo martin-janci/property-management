@@ -65,7 +65,7 @@ for dir in "${CHECK_DIRS[@]}"; do
                     continue
                 fi
 
-                ((VIOLATIONS++))
+                ((VIOLATIONS+=1))
                 echo -e "${RED}VIOLATION${NC} [$FILE:$LINE]"
                 echo "  $CONTENT"
                 echo "  → Use RlsConnection extractor or RlsPool::acquire_with_rls() instead"
@@ -92,7 +92,7 @@ if [[ -d "$REPO_DIR" ]]; then
             LINE=$(echo "$match" | cut -d: -f2)
             CONTENT=$(echo "$match" | cut -d: -f3-)
 
-            ((WARNINGS++))
+            ((WARNINGS+=1))
             echo -e "${YELLOW}WARNING${NC} [$FILE:$LINE]"
             echo "  $CONTENT"
             echo "  → Consider if this method needs RLS context injection"
