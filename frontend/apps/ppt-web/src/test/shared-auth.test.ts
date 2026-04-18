@@ -22,7 +22,6 @@ import {
   isTokenExpired,
   setReturnUrl,
 } from '@ppt/shared';
-import { afterEach, beforeEach } from 'vitest';
 
 /** Build a signed-looking (but not verified) JWT with the given payload. */
 function makeJwt(payload: Record<string, unknown>): string {
@@ -117,12 +116,15 @@ describe('@ppt/shared - auth', () => {
 
   describe('getTokenRemainingTime', () => {
     it('returns seconds until expiry', () => {
-      const exp = Math.floor(Date.now() / 1000) + 100;
-      const token = makeJwt({ sub: 'u', iat: 0, exp });
-      const remaining = getTokenRemainingTime(token);
-      // Allow some small drift
-      expect(remaining).toBeGreaterThan(90);
-      expect(remaining).toBeLessThanOrEqual(100);
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+      try {
+        const exp = Math.floor(Date.now() / 1000) + 100;
+        const token = makeJwt({ sub: 'u', iat: 0, exp });
+        expect(getTokenRemainingTime(token)).toBe(100);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('returns 0 when already expired', () => {
