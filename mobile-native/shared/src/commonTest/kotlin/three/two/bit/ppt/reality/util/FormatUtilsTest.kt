@@ -13,14 +13,15 @@ class FormatUtilsTest {
         region: String? = null,
         postalCode: String? = null,
         country: String = "SK"
-    ): Address = Address(
-        street = street,
-        city = city,
-        district = district,
-        region = region,
-        postalCode = postalCode,
-        country = country
-    )
+    ): Address =
+        Address(
+            street = street,
+            city = city,
+            district = district,
+            region = region,
+            postalCode = postalCode,
+            country = country
+        )
 
     // -------- formatPrice (currency symbol prefix) --------
 
@@ -99,25 +100,45 @@ class FormatUtilsTest {
 
     @Test
     fun buildLocationString_default_excludes_street_and_postal() {
-        val addr = address(street = "Hlavna 1", city = "Bratislava", district = "Old Town", postalCode = "81101", region = "BA")
+        val addr =
+            address(
+                street = "Hlavna 1",
+                city = "Bratislava",
+                district = "Old Town",
+                postalCode = "81101",
+                region = "BA"
+            )
         assertEquals("Old Town, Bratislava, BA", FormatUtils.buildLocationString(addr))
     }
 
     @Test
     fun buildLocationString_includes_street_when_requested() {
         val addr = address(street = "Hlavna 1", city = "Bratislava")
-        assertEquals("Hlavna 1, Bratislava", FormatUtils.buildLocationString(addr, includeStreet = true))
+        assertEquals(
+            "Hlavna 1, Bratislava",
+            FormatUtils.buildLocationString(addr, includeStreet = true)
+        )
     }
 
     @Test
     fun buildLocationString_includes_postal_when_requested() {
         val addr = address(city = "Bratislava", postalCode = "81101")
-        assertEquals("81101, Bratislava", FormatUtils.buildLocationString(addr, includePostalCode = true))
+        assertEquals(
+            "81101, Bratislava",
+            FormatUtils.buildLocationString(addr, includePostalCode = true)
+        )
     }
 
     @Test
     fun buildLocationString_includes_all_parts_when_requested() {
-        val addr = address(street = "Hlavna 1", city = "Bratislava", district = "Old Town", region = "BA", postalCode = "81101")
+        val addr =
+            address(
+                street = "Hlavna 1",
+                city = "Bratislava",
+                district = "Old Town",
+                region = "BA",
+                postalCode = "81101"
+            )
         assertEquals(
             "Hlavna 1, 81101, Old Town, Bratislava, BA",
             FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true)
@@ -133,20 +154,36 @@ class FormatUtilsTest {
     @Test
     fun buildLocationString_skips_street_when_null_even_if_requested() {
         val addr = address(city = "Bratislava")
-        assertEquals("Bratislava", FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true))
+        assertEquals(
+            "Bratislava",
+            FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true)
+        )
     }
 
     // -------- convenience wrappers --------
 
     @Test
     fun buildSimpleLocationString_omits_street_and_postal() {
-        val addr = address(street = "Hlavna 1", city = "Bratislava", district = "Old Town", postalCode = "81101")
+        val addr =
+            address(
+                street = "Hlavna 1",
+                city = "Bratislava",
+                district = "Old Town",
+                postalCode = "81101"
+            )
         assertEquals("Old Town, Bratislava", FormatUtils.buildSimpleLocationString(addr))
     }
 
     @Test
     fun buildDetailedLocationString_includes_street_and_postal() {
-        val addr = address(street = "Hlavna 1", city = "Bratislava", district = "Old Town", region = "BA", postalCode = "81101")
+        val addr =
+            address(
+                street = "Hlavna 1",
+                city = "Bratislava",
+                district = "Old Town",
+                region = "BA",
+                postalCode = "81101"
+            )
         assertEquals(
             "Hlavna 1, 81101, Old Town, Bratislava, BA",
             FormatUtils.buildDetailedLocationString(addr)

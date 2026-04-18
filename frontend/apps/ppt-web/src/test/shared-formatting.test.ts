@@ -44,7 +44,7 @@ describe('@ppt/shared - formatting', () => {
 
     it('honors fromCents flag', () => {
       expect(formatCurrency(123456, { locale: 'en-US', currency: 'EUR', fromCents: true })).toBe(
-        '€1,234.56',
+        '€1,234.56'
       );
     });
   });
@@ -133,7 +133,7 @@ describe('@ppt/shared - formatting', () => {
           locale: 'en-US',
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }),
+        })
       ).toBe('5.00');
     });
 
@@ -176,7 +176,7 @@ describe('@ppt/shared - formatting', () => {
           postalCode: '811 01',
           city: 'Bratislava',
           country: 'Slovakia',
-        }),
+        })
       ).toBe('Main St 123, 811 01 Bratislava, Slovakia');
     });
 

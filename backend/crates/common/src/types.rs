@@ -360,37 +360,72 @@ mod tests {
 
     #[test]
     fn pagination_query_offset_first_page_is_zero() {
-        let q = PaginationQuery { page: 1, limit: 20, sort_by: None, sort_order: SortOrder::Asc };
+        let q = PaginationQuery {
+            page: 1,
+            limit: 20,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert_eq!(q.offset(), 0);
     }
 
     #[test]
     fn pagination_query_offset_second_page() {
-        let q = PaginationQuery { page: 2, limit: 20, sort_by: None, sort_order: SortOrder::Asc };
+        let q = PaginationQuery {
+            page: 2,
+            limit: 20,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert_eq!(q.offset(), 20);
     }
 
     #[test]
     fn pagination_query_offset_arbitrary_page() {
-        let q = PaginationQuery { page: 5, limit: 25, sort_by: None, sort_order: SortOrder::Asc };
+        let q = PaginationQuery {
+            page: 5,
+            limit: 25,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert_eq!(q.offset(), 100);
     }
 
     #[test]
     fn pagination_query_validates_min_page() {
-        let q = PaginationQuery { page: 0, limit: 10, sort_by: None, sort_order: SortOrder::Asc };
+        let q = PaginationQuery {
+            page: 0,
+            limit: 10,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert!(q.validate().is_err());
     }
 
     #[test]
     fn pagination_query_validates_limit_range() {
-        let q_zero = PaginationQuery { page: 1, limit: 0, sort_by: None, sort_order: SortOrder::Asc };
+        let q_zero = PaginationQuery {
+            page: 1,
+            limit: 0,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert!(q_zero.validate().is_err());
 
-        let q_over = PaginationQuery { page: 1, limit: 101, sort_by: None, sort_order: SortOrder::Asc };
+        let q_over = PaginationQuery {
+            page: 1,
+            limit: 101,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert!(q_over.validate().is_err());
 
-        let q_ok = PaginationQuery { page: 1, limit: 100, sort_by: None, sort_order: SortOrder::Asc };
+        let q_ok = PaginationQuery {
+            page: 1,
+            limit: 100,
+            sort_by: None,
+            sort_order: SortOrder::Asc,
+        };
         assert!(q_ok.validate().is_ok());
     }
 

@@ -129,7 +129,7 @@ describe('@ppt/shared - validation', () => {
           requireUppercase: true,
           requireLowercase: true,
           requireNumbers: true,
-        }),
+        })
       ).toEqual({ valid: true });
     });
 
@@ -279,7 +279,7 @@ describe('@ppt/shared - validation', () => {
     it('runs in order and returns the first failure', () => {
       const v = combineValidators<string>(
         (s) => validateRequired(s),
-        (s) => validateEmail(s),
+        (s) => validateEmail(s)
       );
       expect(v('').error).toBe('This field is required');
       expect(v('not-email').error).toBe('Invalid email format');

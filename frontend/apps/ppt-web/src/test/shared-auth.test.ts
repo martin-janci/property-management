@@ -7,8 +7,8 @@
  * the jsdom localStorage.
  */
 
-import { afterEach, beforeEach } from 'vitest';
 import {
+  ROLES,
   createAuthHeader,
   createTokenStorage,
   decodeJwt,
@@ -20,9 +20,9 @@ import {
   hasAnyRole,
   hasRolePermission,
   isTokenExpired,
-  ROLES,
   setReturnUrl,
 } from '@ppt/shared';
+import { afterEach, beforeEach } from 'vitest';
 
 /** Build a signed-looking (but not verified) JWT with the given payload. */
 function makeJwt(payload: Record<string, unknown>): string {

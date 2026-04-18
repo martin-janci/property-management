@@ -310,19 +310,40 @@ mod tests {
         let samples = [
             (MessageKey::ErrorGeneric, "error-generic"),
             (MessageKey::ErrorNotFound, "error-not-found"),
-            (MessageKey::AuthInvalidCredentials, "auth-invalid-credentials"),
+            (
+                MessageKey::AuthInvalidCredentials,
+                "auth-invalid-credentials",
+            ),
             (MessageKey::AuthLoginSuccess, "auth-login-success"),
             (MessageKey::ValidationRequired, "validation-required"),
             (MessageKey::ResourceAccessDenied, "resource-access-denied"),
             (MessageKey::FaultCreated, "fault-created"),
             (MessageKey::FaultReopenedSuccess, "fault-reopened-success"),
-            (MessageKey::DocumentShareCreatedSuccess, "document-share-created-success"),
-            (MessageKey::VotingQuorumRangeInvalid, "voting-quorum-range-invalid"),
-            (MessageKey::OrganizationRoleDeletedSuccess, "organization-role-deleted-success"),
-            (MessageKey::AnnouncementArchivedSuccess, "announcement-archived-success"),
-            (MessageKey::FormFieldUpdatedSuccess, "form-field-updated-success"),
+            (
+                MessageKey::DocumentShareCreatedSuccess,
+                "document-share-created-success",
+            ),
+            (
+                MessageKey::VotingQuorumRangeInvalid,
+                "voting-quorum-range-invalid",
+            ),
+            (
+                MessageKey::OrganizationRoleDeletedSuccess,
+                "organization-role-deleted-success",
+            ),
+            (
+                MessageKey::AnnouncementArchivedSuccess,
+                "announcement-archived-success",
+            ),
+            (
+                MessageKey::FormFieldUpdatedSuccess,
+                "form-field-updated-success",
+            ),
             (MessageKey::PackageMarkedReceived, "package-marked-received"),
-            (MessageKey::VisitorRegistrationCancelled, "visitor-registration-cancelled"),
+            (
+                MessageKey::VisitorRegistrationCancelled,
+                "visitor-registration-cancelled",
+            ),
         ];
 
         for (key, expected) in samples {
@@ -347,8 +368,7 @@ mod tests {
 
     #[test]
     fn deserializes_from_snake_case_string() {
-        let key: MessageKey =
-            serde_json::from_str("\"fault_resolved_success\"").unwrap();
+        let key: MessageKey = serde_json::from_str("\"fault_resolved_success\"").unwrap();
         assert_eq!(key, MessageKey::FaultResolvedSuccess);
     }
 
@@ -498,7 +518,8 @@ mod tests {
             assert!(!id.is_empty(), "empty id for {key:?}");
             assert!(seen.insert(id), "duplicate fluent id: {id}");
             assert!(
-                id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
+                id.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
                 "non-kebab id for {key:?}: {id}"
             );
         }
