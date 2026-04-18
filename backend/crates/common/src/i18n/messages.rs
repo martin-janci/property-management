@@ -299,3 +299,208 @@ impl std::fmt::Display for MessageKey {
         write!(f, "{}", self.as_fluent_id())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fluent_ids_are_kebab_case_and_non_empty() {
+        // Sample a representative subset to guard the convention.
+        let samples = [
+            (MessageKey::ErrorGeneric, "error-generic"),
+            (MessageKey::ErrorNotFound, "error-not-found"),
+            (MessageKey::AuthInvalidCredentials, "auth-invalid-credentials"),
+            (MessageKey::AuthLoginSuccess, "auth-login-success"),
+            (MessageKey::ValidationRequired, "validation-required"),
+            (MessageKey::ResourceAccessDenied, "resource-access-denied"),
+            (MessageKey::FaultCreated, "fault-created"),
+            (MessageKey::FaultReopenedSuccess, "fault-reopened-success"),
+            (MessageKey::DocumentShareCreatedSuccess, "document-share-created-success"),
+            (MessageKey::VotingQuorumRangeInvalid, "voting-quorum-range-invalid"),
+            (MessageKey::OrganizationRoleDeletedSuccess, "organization-role-deleted-success"),
+            (MessageKey::AnnouncementArchivedSuccess, "announcement-archived-success"),
+            (MessageKey::FormFieldUpdatedSuccess, "form-field-updated-success"),
+            (MessageKey::PackageMarkedReceived, "package-marked-received"),
+            (MessageKey::VisitorRegistrationCancelled, "visitor-registration-cancelled"),
+        ];
+
+        for (key, expected) in samples {
+            assert_eq!(key.as_fluent_id(), expected, "wrong id for {key:?}");
+        }
+    }
+
+    #[test]
+    fn display_matches_fluent_id() {
+        let key = MessageKey::AuthEmailExists;
+        assert_eq!(format!("{key}"), key.as_fluent_id());
+    }
+
+    #[test]
+    fn serializes_as_snake_case_string() {
+        let json = serde_json::to_string(&MessageKey::AuthInvalidCredentials).unwrap();
+        assert_eq!(json, "\"auth_invalid_credentials\"");
+
+        let json = serde_json::to_string(&MessageKey::ErrorRateLimited).unwrap();
+        assert_eq!(json, "\"error_rate_limited\"");
+    }
+
+    #[test]
+    fn deserializes_from_snake_case_string() {
+        let key: MessageKey =
+            serde_json::from_str("\"fault_resolved_success\"").unwrap();
+        assert_eq!(key, MessageKey::FaultResolvedSuccess);
+    }
+
+    #[test]
+    fn unknown_value_fails_to_deserialize() {
+        let result: Result<MessageKey, _> = serde_json::from_str("\"not_a_real_key\"");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn equality_and_copy_semantics() {
+        let a = MessageKey::ErrorGeneric;
+        let b = a; // Copy
+        assert_eq!(a, b);
+        assert_ne!(a, MessageKey::ErrorNotFound);
+    }
+
+    #[test]
+    fn hash_uses_value_identity() {
+        use std::collections::HashSet;
+        let mut set = HashSet::new();
+        set.insert(MessageKey::ErrorGeneric);
+        set.insert(MessageKey::ErrorGeneric);
+        set.insert(MessageKey::ErrorNotFound);
+        assert_eq!(set.len(), 2);
+    }
+
+    #[test]
+    fn no_two_variants_share_a_fluent_id() {
+        // Catch accidental copy-paste duplicates in the match arms.
+        let all = [
+            MessageKey::ErrorGeneric,
+            MessageKey::ErrorNotFound,
+            MessageKey::ErrorUnauthorized,
+            MessageKey::ErrorForbidden,
+            MessageKey::ErrorBadRequest,
+            MessageKey::ErrorConflict,
+            MessageKey::ErrorValidation,
+            MessageKey::ErrorRateLimited,
+            MessageKey::ErrorInternal,
+            MessageKey::ErrorDatabase,
+            MessageKey::ErrorExternalService,
+            MessageKey::AuthInvalidCredentials,
+            MessageKey::AuthEmailRequired,
+            MessageKey::AuthPasswordRequired,
+            MessageKey::AuthInvalidEmail,
+            MessageKey::AuthWeakPassword,
+            MessageKey::AuthEmailExists,
+            MessageKey::AuthAccountLocked,
+            MessageKey::AuthTokenExpired,
+            MessageKey::AuthTokenInvalid,
+            MessageKey::AuthSessionExpired,
+            MessageKey::AuthRegistrationSuccess,
+            MessageKey::AuthLoginSuccess,
+            MessageKey::AuthLogoutSuccess,
+            MessageKey::AuthPasswordResetSent,
+            MessageKey::AuthPasswordResetSuccess,
+            MessageKey::AuthEmailVerified,
+            MessageKey::AuthEmailVerificationSent,
+            MessageKey::AuthEmailVerificationSuccess,
+            MessageKey::AuthPasswordResetEmailSent,
+            MessageKey::AuthSessionRevoked,
+            MessageKey::ValidationRequired,
+            MessageKey::ValidationInvalidFormat,
+            MessageKey::ValidationTooShort,
+            MessageKey::ValidationTooLong,
+            MessageKey::ValidationOutOfRange,
+            MessageKey::ValidationInvalidValue,
+            MessageKey::ValidationStreetRequired,
+            MessageKey::ValidationCityRequired,
+            MessageKey::ValidationTitleRequired,
+            MessageKey::ValidationQuestionTextRequired,
+            MessageKey::ValidationCommentRequired,
+            MessageKey::ResourceNotFound,
+            MessageKey::ResourceAlreadyExists,
+            MessageKey::ResourceAccessDenied,
+            MessageKey::FaultCreated,
+            MessageKey::FaultUpdated,
+            MessageKey::FaultAssigned,
+            MessageKey::FaultResolved,
+            MessageKey::FaultClosed,
+            MessageKey::FaultCreatedSuccess,
+            MessageKey::FaultUpdatedSuccess,
+            MessageKey::FaultTriagedSuccess,
+            MessageKey::FaultAssignedSuccess,
+            MessageKey::FaultStatusUpdated,
+            MessageKey::FaultResolvedSuccess,
+            MessageKey::FaultConfirmedSuccess,
+            MessageKey::FaultReopenedSuccess,
+            MessageKey::NotificationSent,
+            MessageKey::NotificationFailed,
+            MessageKey::DocumentUploaded,
+            MessageKey::DocumentDeleted,
+            MessageKey::DocumentNotFound,
+            MessageKey::DocumentCreatedSuccess,
+            MessageKey::DocumentUpdatedSuccess,
+            MessageKey::DocumentMovedSuccess,
+            MessageKey::DocumentAccessUpdated,
+            MessageKey::DocumentFolderCreatedSuccess,
+            MessageKey::DocumentFolderUpdatedSuccess,
+            MessageKey::DocumentShareCreatedSuccess,
+            MessageKey::VoteSubmitted,
+            MessageKey::VoteAlreadyCast,
+            MessageKey::VotingClosed,
+            MessageKey::VotingEndDateMustBeFuture,
+            MessageKey::VotingStartBeforeEnd,
+            MessageKey::VotingQuorumRangeInvalid,
+            MessageKey::VotingChoicesRequired,
+            MessageKey::VotingHideReasonRequired,
+            MessageKey::OrganizationCreated,
+            MessageKey::OrganizationUpdated,
+            MessageKey::OrganizationMemberAdded,
+            MessageKey::OrganizationMemberRemoved,
+            MessageKey::OrganizationDeletedSuccess,
+            MessageKey::OrganizationMemberAddedSuccess,
+            MessageKey::OrganizationRoleUpdatedSuccess,
+            MessageKey::OrganizationMemberRemovedSuccess,
+            MessageKey::OrganizationRoleDeletedSuccess,
+            MessageKey::AnnouncementCreatedSuccess,
+            MessageKey::AnnouncementUpdatedSuccess,
+            MessageKey::AnnouncementPublishedSuccess,
+            MessageKey::AnnouncementScheduledSuccess,
+            MessageKey::AnnouncementArchivedSuccess,
+            MessageKey::FormCreatedSuccess,
+            MessageKey::FormUpdatedSuccess,
+            MessageKey::FormPublishedSuccess,
+            MessageKey::FormArchivedSuccess,
+            MessageKey::FormFieldAddedSuccess,
+            MessageKey::FormFieldUpdatedSuccess,
+            MessageKey::FormSubmittedSuccess,
+            MessageKey::MessageSentSuccess,
+            MessageKey::UserBlockedSuccess,
+            MessageKey::UserUnblockedSuccess,
+            MessageKey::PackageRegisteredSuccess,
+            MessageKey::PackageUpdatedSuccess,
+            MessageKey::PackageMarkedReceived,
+            MessageKey::PackagePickedUpSuccess,
+            MessageKey::VisitorUpdatedSuccess,
+            MessageKey::VisitorCheckedInSuccess,
+            MessageKey::VisitorCheckedOutSuccess,
+            MessageKey::VisitorRegistrationCancelled,
+        ];
+
+        let mut seen = std::collections::HashSet::new();
+        for key in all {
+            let id = key.as_fluent_id();
+            assert!(!id.is_empty(), "empty id for {key:?}");
+            assert!(seen.insert(id), "duplicate fluent id: {id}");
+            assert!(
+                id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
+                "non-kebab id for {key:?}: {id}"
+            );
+        }
+    }
+}
