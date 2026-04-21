@@ -761,15 +761,13 @@ impl TeamsClient {
             }),
         ];
 
-        let actions = if let Some(url) = link {
-            Some(vec![serde_json::json!({
+        let actions = link.map(|url| {
+            vec![serde_json::json!({
                 "type": "Action.OpenUrl",
                 "title": "View Details",
                 "url": url
-            })])
-        } else {
-            None
-        };
+            })]
+        });
 
         TeamsAdaptiveCard {
             card_type: "AdaptiveCard".to_string(),
