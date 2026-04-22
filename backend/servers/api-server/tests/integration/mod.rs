@@ -9,6 +9,9 @@
 //! - Health checks
 
 pub mod auth_tests;
+pub mod buildings_tests;
 pub mod document_access_tests;
 pub mod health_tests;
 pub mod integration_sync_tests;
+pub mod organization_tests;
+pub mod routing_tests;
