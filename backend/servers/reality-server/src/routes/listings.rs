@@ -289,14 +289,28 @@ pub async fn get_listing(
 ) -> Result<Json<ListingDetail>, (axum::http::StatusCode, String)> {
     tracing::info!(%id, "Get listing detail");
 
-    // Acquire a dedicated connection and clear any stale RLS context before
-    // running these public queries (defense-in-depth against context bleeding).
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+    // Generic public-facing error message for any DB-side failure. The detailed
+    // error is logged server-side so ops can investigate, but the client only
+    // sees "Internal server error" — raw sqlx::Error can expose pool state,
+    // connection strings fragments, or migration details.
+    fn db_error(
+        context: &'static str,
+        id: Uuid,
+        e: sqlx::Error,
+    ) -> (axum::http::StatusCode, String) {
+        tracing::error!(%id, error = %e, "{context}");
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to acquire db connection: {}", e),
+            "Internal server error".to_string(),
         )
-    })?;
+    }
+
+    // Acquire a dedicated connection and clear any stale RLS context before
+    // running these public queries (defense-in-depth against context bleeding).
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| db_error("Failed to acquire db connection", id, e))?;
 
     // Query the full listing with address and coordinates
     let listing = sqlx::query_as::<_, FullListingRow>(
@@ -315,12 +329,7 @@ pub async fn get_listing(
     .bind(id)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to fetch listing: {}", e),
-        )
-    })?;
+    .map_err(|e| db_error("Failed to fetch listing", id, e))?;
 
     match listing {
         Some(l) => {
@@ -335,9 +344,10 @@ pub async fn get_listing(
             .fetch_all(&mut *conn)
             .await
             .map_err(|e| {
+                tracing::error!(%id, error = %e, "Failed to fetch listing photos");
                 (
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to fetch listing photos: {}", e),
+                    "Internal server error".to_string(),
                 )
             })?;
 

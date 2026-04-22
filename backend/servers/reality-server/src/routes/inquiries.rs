@@ -157,11 +157,13 @@ pub async fn send_contact_message(
     }
 
     // Public endpoint: acquire a connection and clear any stale RLS context
-    // before looking up the listing's realtor.
+    // before looking up the listing's realtor. Detailed errors are logged
+    // server-side; clients only see a generic 500 message.
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to acquire db connection");
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to acquire db connection: {}", e),
+            "Internal server error".to_string(),
         )
     })?;
     let listing = sqlx::query_as::<_, (Uuid,)>(
@@ -171,9 +173,10 @@ pub async fn send_contact_message(
     .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to query listing");
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to query listing: {}", e),
+            "Internal server error".to_string(),
         )
     })?;
 
@@ -281,11 +284,13 @@ pub async fn request_viewing(
     }
 
     // Public endpoint: acquire a connection and clear any stale RLS context
-    // before looking up the listing's realtor.
+    // before looking up the listing's realtor. Detailed errors are logged
+    // server-side; clients only see a generic 500 message.
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to acquire db connection");
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to acquire db connection: {}", e),
+            "Internal server error".to_string(),
         )
     })?;
     let listing = sqlx::query_as::<_, (Uuid,)>(
@@ -295,9 +300,10 @@ pub async fn request_viewing(
     .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to query listing");
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to query listing: {}", e),
+            "Internal server error".to_string(),
         )
     })?;
 

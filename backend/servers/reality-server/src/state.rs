@@ -780,9 +780,11 @@ impl AppState {
     /// Acquire a connection for public (non-tenant-scoped) queries such as
     /// listing search/detail and inquiry create.
     ///
-    /// Clears any stale RLS context from a previous request to prevent
-    /// context bleeding. Mirrors `db::RlsPool::acquire_public` but operates
-    /// on the bare `DbPool` we keep in `AppState`.
+    /// On success, any stale RLS context from a previous request has been
+    /// cleared so the caller sees a fresh session. If clearing fails we do
+    /// NOT hand the connection back to the caller: we close it (to force
+    /// the pool to open a fresh one later) and surface the error, because
+    /// a silently-stale RLS context would be a tenant-isolation bypass.
     ///
     /// Callers must use the returned connection (`&mut *conn`) as the
     /// executor instead of passing `&self.db` directly — the latter is
@@ -794,8 +796,13 @@ impl AppState {
         if let Err(e) = db::clear_request_context(&mut *conn).await {
             tracing::warn!(
                 error = %e,
-                "Failed to clear stale RLS context on public connection acquire"
+                "Failed to clear stale RLS context on public connection acquire; dropping connection"
             );
+            // Drop the connection explicitly. It returns to the pool and is
+            // closed via the `after_release` hook configured on the pool
+            // (see db::create_rls_safe_pool).
+            drop(conn);
+            return Err(e);
         }
         Ok(conn)
     }

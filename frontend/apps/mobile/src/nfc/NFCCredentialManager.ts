@@ -260,16 +260,31 @@ export class NFCCredentialManager {
   // Private methods
 
   private async loadStoredCredentials(): Promise<void> {
+    // Stored credentials may be corrupted (partial writes, manual app-data
+    // restore, OS wipe of secure store). Never let a parse failure crash
+    // app startup: fall back to an empty list and drop the bad blob.
     const stored = await SecureStore.getItemAsync(CREDENTIALS_KEY);
     if (stored) {
-      this.credentials = JSON.parse(stored);
-      return;
+      try {
+        this.credentials = JSON.parse(stored);
+        return;
+      } catch (err) {
+        console.warn('[nfc] Stored credentials corrupted; discarding.', err);
+        this.credentials = [];
+        await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+        return;
+      }
     }
     // One-time migration from the old AsyncStorage location.
     const legacy = await AsyncStorage.getItem(LEGACY_CREDENTIALS_KEY);
     if (legacy) {
-      this.credentials = JSON.parse(legacy);
-      await this.storeCredentials();
+      try {
+        this.credentials = JSON.parse(legacy);
+        await this.storeCredentials();
+      } catch (err) {
+        console.warn('[nfc] Legacy credentials corrupted; discarding.', err);
+        this.credentials = [];
+      }
       await AsyncStorage.removeItem(LEGACY_CREDENTIALS_KEY);
     }
   }
