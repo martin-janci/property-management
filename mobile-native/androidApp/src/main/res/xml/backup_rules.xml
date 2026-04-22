@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Legacy auto-backup rules (API 23 – 30).
+  Legacy auto-backup rules (API 23 - 30).
 
-  `allowBackup` is already disabled in AndroidManifest, but these rules
-  provide defense-in-depth by explicitly excluding auth/session storage if
-  a future change re-enables auto-backup.
+  Primary protection is `android:allowBackup="false"` in AndroidManifest;
+  these rules are a defense-in-depth safety net in case backup is ever
+  re-enabled. At the moment the app has no persistent sharedprefs that hold
+  auth secrets, so there's nothing explicit to exclude. When SSO session
+  persistence is added (see SsoService.restoreSession TODO), add an
+  <exclude domain="sharedpref" path="..."/> entry that matches the actual
+  SharedPreferences filename used.
 -->
 <full-backup-content>
-    <exclude domain="sharedpref" path="reality_sso_prefs" />
-    <exclude domain="sharedpref" path="reality_auth_prefs" />
     <exclude domain="file" path="secure/" />
 </full-backup-content>
