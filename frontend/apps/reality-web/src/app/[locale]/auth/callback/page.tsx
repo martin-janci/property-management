@@ -95,9 +95,17 @@ function SsoCallbackContent() {
     // Clear saved state
     sessionStorage.removeItem('sso_state');
 
-    // Redirect to home - session cookie should already be set by the server
-    const redirectUri = searchParams.get('redirect_uri') || '/';
-    router.replace(redirectUri);
+    // Redirect to home - session cookie should already be set by the server.
+    // Only accept same-origin relative paths to prevent open-redirect attacks:
+    //   - must start with "/" (path-only)
+    //   - must NOT start with "//" or "/\" (protocol-relative URL escape)
+    const rawRedirect = searchParams.get('redirect_uri');
+    const isSafeRedirect =
+      typeof rawRedirect === 'string' &&
+      rawRedirect.startsWith('/') &&
+      !rawRedirect.startsWith('//') &&
+      !rawRedirect.startsWith('/\\');
+    router.replace(isSafeRedirect ? rawRedirect : '/');
   }, [router, searchParams]);
 
   if (error) {

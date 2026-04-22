@@ -188,17 +188,22 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   };
 
-  const sendTokenToBackend = async (token: string): Promise<void> => {
-    // This would call your API to register the device token
-    console.log('Sending push token to backend:', token);
-    // await api.registerPushToken(token, Platform.OS);
+  const sendTokenToBackend = async (_token: string): Promise<void> => {
+    // This would call your API to register the device token.
+    // NOTE: never log the token itself — it grants push-send authority for this device.
+    if (__DEV__) {
+      console.log('[push] registering device token with backend');
+    }
+    // await api.registerPushToken(_token, Platform.OS);
   };
 
   const unregisterPushNotifications = async (): Promise<void> => {
     try {
       if (expoPushToken) {
         // Remove token from backend
-        console.log('Removing push token from backend');
+        if (__DEV__) {
+          console.log('[push] unregistering device token with backend');
+        }
         // await api.unregisterPushToken(expoPushToken);
       }
 

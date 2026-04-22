@@ -678,23 +678,29 @@ impl OAuthService {
     }
 
     /// Generate a 16-byte client_id (base64url encoded).
+    ///
+    /// Uses OS-backed CSPRNG directly rather than `thread_rng` so entropy
+    /// does not depend on the ChaCha20 thread-local state being seeded first.
     fn generate_client_id(&self) -> String {
         let mut bytes = [0u8; 16];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
     /// Generate a 32-byte client_secret (base64url encoded).
     fn generate_client_secret(&self) -> String {
         let mut bytes = [0u8; 32];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
     /// Generate a 32-byte secure token (base64url encoded).
+    ///
+    /// Used for OAuth authorization codes, access tokens, and refresh tokens —
+    /// all shared secrets that require CSPRNG-quality entropy.
     fn generate_secure_token(&self) -> String {
         let mut bytes = [0u8; 32];
-        rand::thread_rng().fill_bytes(&mut bytes);
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
@@ -744,14 +750,14 @@ mod tests {
     /// Generate secure token for testing.
     fn generate_test_token() -> String {
         let mut bytes = [0u8; 32];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut bytes);
+        rand::RngCore::fill_bytes(&mut rand::rngs::OsRng, &mut bytes);
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
     /// Generate client ID for testing.
     fn generate_test_client_id() -> String {
         let mut bytes = [0u8; 16];
-        rand::RngCore::fill_bytes(&mut rand::thread_rng(), &mut bytes);
+        rand::RngCore::fill_bytes(&mut rand::rngs::OsRng, &mut bytes);
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
