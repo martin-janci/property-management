@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy auto-backup rules (API 23 – 30).
+
+  `allowBackup` is already disabled in AndroidManifest, but these rules
+  provide defense-in-depth by explicitly excluding auth/session storage if
+  a future change re-enables auto-backup.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="reality_sso_prefs" />
+    <exclude domain="sharedpref" path="reality_auth_prefs" />
+    <exclude domain="file" path="secure/" />
+</full-backup-content>

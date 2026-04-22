@@ -156,12 +156,19 @@ pub async fn send_contact_message(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    // Query the listing to get the realtor (created_by field)
+    // Public endpoint: acquire a connection and clear any stale RLS context
+    // before looking up the listing's realtor.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to acquire db connection: {}", e),
+        )
+    })?;
     let listing = sqlx::query_as::<_, (Uuid,)>(
         "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
     )
     .bind(listing_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
         (
@@ -273,12 +280,19 @@ pub async fn request_viewing(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    // Query the listing to get the realtor (created_by field)
+    // Public endpoint: acquire a connection and clear any stale RLS context
+    // before looking up the listing's realtor.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to acquire db connection: {}", e),
+        )
+    })?;
     let listing = sqlx::query_as::<_, (Uuid,)>(
         "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
     )
     .bind(listing_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
         (

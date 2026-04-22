@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Data extraction rules for API 31+ (Android 12 and above).
+
+  `allowBackup` is already disabled in AndroidManifest, but these rules
+  provide defense-in-depth by excluding auth/session storage from both
+  cloud backups and device-to-device transfers.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="reality_sso_prefs" />
+        <exclude domain="sharedpref" path="reality_auth_prefs" />
+        <exclude domain="file" path="secure/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="reality_sso_prefs" />
+        <exclude domain="sharedpref" path="reality_auth_prefs" />
+        <exclude domain="file" path="secure/" />
+    </device-transfer>
+</data-extraction-rules>

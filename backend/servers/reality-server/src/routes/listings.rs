@@ -289,6 +289,15 @@ pub async fn get_listing(
 ) -> Result<Json<ListingDetail>, (axum::http::StatusCode, String)> {
     tracing::info!(%id, "Get listing detail");
 
+    // Acquire a dedicated connection and clear any stale RLS context before
+    // running these public queries (defense-in-depth against context bleeding).
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to acquire db connection: {}", e),
+        )
+    })?;
+
     // Query the full listing with address and coordinates
     let listing = sqlx::query_as::<_, FullListingRow>(
         r#"
@@ -304,7 +313,7 @@ pub async fn get_listing(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
         (
@@ -323,7 +332,7 @@ pub async fn get_listing(
                 "SELECT url FROM listing_photos WHERE listing_id = $1 ORDER BY display_order",
             )
             .bind(id)
-            .fetch_all(&state.db)
+            .fetch_all(&mut *conn)
             .await
             .map_err(|e| {
                 (
