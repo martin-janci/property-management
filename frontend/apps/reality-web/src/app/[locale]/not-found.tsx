@@ -1,9 +1,25 @@
 /**
  * 404 page (Next.js convention) for the [locale] segment.
+ *
+ * Runs as a server component — no styled-jsx here (it's client-only).
+ * The shared `StateView` is a client component via `'use client'`, so it
+ * can be rendered from this server component without issue.
  */
 
 import { StateView } from '@/components/states';
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
+
+const linkStyle: CSSProperties = {
+  padding: '10px 20px',
+  borderRadius: 8,
+  background: '#2563eb',
+  color: '#fff',
+  fontWeight: 500,
+  textDecoration: 'none',
+  display: 'inline-block',
+  textAlign: 'center',
+};
 
 export default function NotFound() {
   return (
@@ -13,17 +29,9 @@ export default function NotFound() {
       title="Page not found"
       description="The page you're looking for doesn't exist or has moved."
     >
-      <Link href="/" className="state-action">
+      <Link href="/" style={linkStyle}>
         Back to home
       </Link>
-      <style jsx global>{`
-        .state-action {
-          padding: 10px 20px; border-radius: 8px;
-          background: #2563eb; color: #fff; font-weight: 500;
-          text-decoration: none; display: inline-block; text-align: center;
-        }
-        .state-action:hover { background: #1d4ed8; }
-      `}</style>
     </StateView>
   );
 }
