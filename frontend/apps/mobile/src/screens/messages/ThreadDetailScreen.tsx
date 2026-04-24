@@ -97,10 +97,7 @@ export function ThreadDetailScreen({
         {messages.map((message) => (
           <View
             key={message.id}
-            style={[
-              styles.bubble,
-              message.fromMe ? styles.bubbleMine : styles.bubbleTheirs,
-            ]}
+            style={[styles.bubble, message.fromMe ? styles.bubbleMine : styles.bubbleTheirs]}
           >
             {!message.fromMe && <Text style={styles.author}>{message.authorName}</Text>}
             <Text style={[styles.body, message.fromMe && styles.bodyMine]}>{message.body}</Text>

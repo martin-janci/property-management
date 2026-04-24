@@ -21,11 +21,12 @@ const MOCK_LEASE: Lease = {
   counterpartyName: 'Anna Novak',
 };
 
-const MOCK_PAYMENTS: Array<{ id: string; period: string; amount: number; paidAt: string | null }> = [
-  { id: 'p1', period: 'April 2026', amount: 850, paidAt: '2026-04-01T09:00:00Z' },
-  { id: 'p2', period: 'March 2026', amount: 850, paidAt: '2026-03-01T09:00:00Z' },
-  { id: 'p3', period: 'February 2026', amount: 850, paidAt: '2026-02-02T11:30:00Z' },
-];
+const MOCK_PAYMENTS: Array<{ id: string; period: string; amount: number; paidAt: string | null }> =
+  [
+    { id: 'p1', period: 'April 2026', amount: 850, paidAt: '2026-04-01T09:00:00Z' },
+    { id: 'p2', period: 'March 2026', amount: 850, paidAt: '2026-03-01T09:00:00Z' },
+    { id: 'p3', period: 'February 2026', amount: 850, paidAt: '2026-02-02T11:30:00Z' },
+  ];
 
 interface LeaseDetailScreenProps {
   leaseId?: string;

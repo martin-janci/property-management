@@ -1,9 +1,14 @@
 /**
  * Reality Portal direct auth API (UC-47).
  *
- * Thin fetch wrappers around `/api/v1/auth/*` endpoints exposed by
- * reality-server. Used by the email/password auth pages alongside the
- * existing SSO flow in `auth-context.tsx`.
+ * Thin fetch wrappers around `/api/v1/users/*` endpoints exposed by
+ * reality-server (see `backend/servers/reality-server/src/routes/users.rs`).
+ * Used by the email/password auth pages alongside the existing SSO flow in
+ * `auth-context.tsx`.
+ *
+ * Note: reality-server does not expose password-reset endpoints yet. The
+ * `requestPasswordReset` / `confirmPasswordReset` / `changePassword`
+ * helpers throw an informative `AuthApiError` until the backend ships.
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
@@ -55,44 +60,84 @@ async function requestJson<T>(method: string, path: string, body?: unknown): Pro
   return (await response.json()) as T;
 }
 
+/**
+ * User info returned by reality-server on login and `/users/me`.
+ *
+ * Matches the server contract exactly (snake_case wire fields are kept
+ * as-is so the wrapper stays a pure pass-through).
+ */
+export interface PortalUser {
+  id: string;
+  email: string;
+  name: string;
+  profile_image_url?: string | null;
+  is_linked_to_pm?: boolean;
+}
+
+/** Login response shape from `POST /api/v1/users/login`. */
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-  };
+  token: string;
+  expires_at: string;
+  user: PortalUser;
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  return postJson<LoginResponse>('/api/v1/auth/login', { email, password });
+  return postJson<LoginResponse>('/api/v1/users/login', { email, password });
 }
 
+/**
+ * Registers a new portal user via `POST /api/v1/users/register`.
+ *
+ * Takes `name` (the server's field) rather than `displayName`.
+ */
 export async function register(input: {
   email: string;
   password: string;
-  displayName: string;
-}): Promise<{ id: string; email: string; displayName: string }> {
-  return postJson('/api/v1/auth/register', input);
+  name: string;
+}): Promise<{ message: string; user_id: string }> {
+  return postJson('/api/v1/users/register', input);
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
-  await postJson<void>('/api/v1/auth/password-reset', { email });
+export async function requestPasswordReset(_email: string): Promise<void> {
+  // TODO: wire when reality-server exposes /api/v1/users/password-reset.
+  throw new AuthApiError(
+    'Password reset is not available yet. Please contact support.',
+    501,
+    'NOT_IMPLEMENTED'
+  );
 }
 
-export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
-  await postJson<void>('/api/v1/auth/password-reset/confirm', { token, newPassword });
+export async function confirmPasswordReset(_token: string, _newPassword: string): Promise<void> {
+  // TODO: wire when reality-server exposes /api/v1/users/password-reset/confirm.
+  throw new AuthApiError(
+    'Password reset is not available yet. Please contact support.',
+    501,
+    'NOT_IMPLEMENTED'
+  );
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await postJson<void>('/api/v1/auth/me/password', { currentPassword, newPassword });
+export async function changePassword(
+  _currentPassword: string,
+  _newPassword: string
+): Promise<void> {
+  // TODO: wire when reality-server exposes /api/v1/users/me/password.
+  throw new AuthApiError(
+    'Changing your password from the portal is not available yet. Please contact support.',
+    501,
+    'NOT_IMPLEMENTED'
+  );
 }
 
-export async function updateProfile(input: { displayName: string }): Promise<{
-  id: string;
-  email: string;
-  displayName: string;
-}> {
-  return requestJson('PATCH', '/api/v1/auth/me', input);
+/**
+ * Updates the signed-in user's profile via `PUT /api/v1/users/me`.
+ *
+ * Accepts any of `name`, `profile_image_url` or `locale`; callers typically
+ * only send `name` from the account UI.
+ */
+export async function updateProfile(input: {
+  name?: string;
+  profile_image_url?: string | null;
+  locale?: string;
+}): Promise<PortalUser> {
+  return requestJson<PortalUser>('PUT', '/api/v1/users/me', input);
 }

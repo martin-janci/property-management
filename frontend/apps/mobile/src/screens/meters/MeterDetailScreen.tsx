@@ -36,8 +36,7 @@ export function MeterDetailScreen({
   onNavigate,
 }: MeterDetailScreenProps) {
   const lastTwo = MOCK_READINGS.slice(0, 2);
-  const monthDelta =
-    lastTwo.length === 2 ? Math.max(0, lastTwo[0].value - lastTwo[1].value) : null;
+  const monthDelta = lastTwo.length === 2 ? Math.max(0, lastTwo[0].value - lastTwo[1].value) : null;
 
   return (
     <View style={s.container}>
@@ -57,9 +56,7 @@ export function MeterDetailScreen({
           <Text style={styles.metricValue}>
             {MOCK_READINGS[0].value} {MOCK_READINGS[0].unit}
           </Text>
-          <Text style={s.cardMeta}>
-            {new Date(MOCK_READINGS[0].takenAt).toLocaleDateString()}
-          </Text>
+          <Text style={s.cardMeta}>{new Date(MOCK_READINGS[0].takenAt).toLocaleDateString()}</Text>
           {monthDelta != null && (
             <Text style={[s.cardBody, { marginTop: 8 }]}>
               Used in last month: {monthDelta.toFixed(2)} {MOCK_READINGS[0].unit}
@@ -96,13 +93,21 @@ const styles = StyleSheet.create({
   backLink: { marginBottom: 8 },
   backLinkText: { color: colors.accent, fontSize: 14 },
   metricLabel: {
-    fontSize: 12, color: colors.textMuted, fontWeight: '600',
-    textTransform: 'uppercase', letterSpacing: 0.5,
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   metricValue: { fontSize: 32, fontWeight: '700', color: colors.text, marginTop: 8 },
   sectionTitle: {
-    fontSize: 14, fontWeight: '600', color: colors.textMuted,
-    marginTop: 16, marginBottom: 8, marginHorizontal: 4,
-    textTransform: 'uppercase', letterSpacing: 0.5,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginTop: 16,
+    marginBottom: 8,
+    marginHorizontal: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

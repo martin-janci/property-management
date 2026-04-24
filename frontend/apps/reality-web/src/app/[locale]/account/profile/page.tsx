@@ -3,7 +3,7 @@
 /**
  * Profile edit page (UC-47.7).
  *
- * Calls reality-server `PATCH /api/v1/auth/me` to update the display name.
+ * Calls reality-server `PUT /api/v1/users/me` to update the display name.
  */
 
 import { ProtectedRoute } from '@/components/auth';
@@ -33,7 +33,7 @@ function ProfileForm() {
     }
     setIsSaving(true);
     try {
-      await updateProfile({ displayName: displayName.trim() });
+      await updateProfile({ name: displayName.trim() });
       await refreshSession();
       setSavedAt(Date.now());
     } catch (err) {

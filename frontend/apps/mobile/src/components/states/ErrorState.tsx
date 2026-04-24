@@ -48,7 +48,10 @@ const styles = StyleSheet.create({
   icon: { fontSize: 48, marginBottom: 8 },
   title: { fontSize: 18, fontWeight: '600', color: '#1f2937', textAlign: 'center' },
   description: {
-    fontSize: 14, color: '#6b7280', textAlign: 'center', maxWidth: 320,
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    maxWidth: 320,
   },
   button: {
     marginTop: 8,

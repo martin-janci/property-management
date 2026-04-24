@@ -32,14 +32,8 @@ interface ProfileScreenProps {
 
 export function ProfileScreen({ onChangePasswordPress, onTwoFactorPress }: ProfileScreenProps) {
   const { t } = useTranslation();
-  const {
-    user,
-    logout,
-    biometricAvailable,
-    biometricEnabled,
-    enableBiometric,
-    disableBiometric,
-  } = useAuth();
+  const { user, logout, biometricAvailable, biometricEnabled, enableBiometric, disableBiometric } =
+    useAuth();
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -67,7 +61,9 @@ export function ProfileScreen({ onChangePasswordPress, onTwoFactorPress }: Profi
     } catch (error) {
       Alert.alert(
         t('common.error', 'Error'),
-        error instanceof Error ? error.message : t('auth.saveProfileFailed', 'Could not save profile')
+        error instanceof Error
+          ? error.message
+          : t('auth.saveProfileFailed', 'Could not save profile')
       );
     } finally {
       setIsSaving(false);
@@ -167,9 +163,7 @@ export function ProfileScreen({ onChangePasswordPress, onTwoFactorPress }: Profi
         )}
         {onTwoFactorPress && (
           <Pressable style={styles.row} onPress={onTwoFactorPress}>
-            <Text style={styles.rowText}>
-              {t('auth.twoFactor', 'Two-factor authentication')}
-            </Text>
+            <Text style={styles.rowText}>{t('auth.twoFactor', 'Two-factor authentication')}</Text>
             <Text style={styles.rowChevron}>›</Text>
           </Pressable>
         )}

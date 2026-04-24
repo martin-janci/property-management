@@ -37,9 +37,11 @@ import three.two.bit.ppt.reality.ui.auth.rememberAuthScope
 /**
  * Profile edit screen for Reality Portal Android (UC-47.7).
  *
- * Updates display name and contact details for the signed-in user. Until
- * SsoService gains an `updateProfile` method this persists changes via the
- * supplied callback.
+ * Wired via `Navigation.kt` to `SsoService.updateProfile`, which calls
+ * reality-server `PUT /api/v1/users/me` and pushes the refreshed user back
+ * into the shared `authState`. The screen delegates the actual network call
+ * through the supplied `onSubmit` callback so the UI stays decoupled from
+ * the service.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

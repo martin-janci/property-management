@@ -75,8 +75,8 @@ function severityColor(severity: OutageSeverity): string {
   return severity === 'high'
     ? colors.danger
     : severity === 'medium'
-    ? colors.warning
-    : colors.success;
+      ? colors.warning
+      : colors.success;
 }
 
 function formatRange(startsAt: string, endsAt: string): string {

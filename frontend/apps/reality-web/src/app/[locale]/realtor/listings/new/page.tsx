@@ -5,9 +5,9 @@
  */
 
 import { ProtectedRoute } from '@/components/auth';
-import { Footer, Header } from '@/components/ui';
 import { ListingForm } from '@/components/realtor/ListingForm';
-import { RealtorApiError, createListing, type ListingDraft } from '@/lib/realtor-api';
+import { Footer, Header } from '@/components/ui';
+import { type ListingDraft, RealtorApiError, createListing } from '@/lib/realtor-api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 

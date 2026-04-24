@@ -7,8 +7,8 @@
  * the submit handler and any post-submit navigation.
  */
 
-import { type FormEvent, useState } from 'react';
 import type { ListingDraft } from '@/lib/realtor-api';
+import { type FormEvent, useState } from 'react';
 
 interface ListingFormProps {
   initialValue?: Partial<ListingDraft>;
@@ -26,10 +26,11 @@ const PROPERTY_TYPES: ReadonlyArray<{ value: ListingDraft['propertyType']; label
   { value: 'other', label: 'Other' },
 ];
 
-const TRANSACTION_TYPES: ReadonlyArray<{ value: ListingDraft['transactionType']; label: string }> = [
-  { value: 'sale', label: 'For sale' },
-  { value: 'rent', label: 'For rent' },
-];
+const TRANSACTION_TYPES: ReadonlyArray<{ value: ListingDraft['transactionType']; label: string }> =
+  [
+    { value: 'sale', label: 'For sale' },
+    { value: 'rent', label: 'For rent' },
+  ];
 
 interface FieldErrors {
   title?: string;
@@ -141,9 +142,7 @@ export function ListingForm({
           <span className="label">Transaction</span>
           <select
             value={transactionType}
-            onChange={(e) =>
-              setTransactionType(e.target.value as ListingDraft['transactionType'])
-            }
+            onChange={(e) => setTransactionType(e.target.value as ListingDraft['transactionType'])}
             disabled={isSubmitting}
             className="input"
           >

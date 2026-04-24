@@ -85,9 +85,7 @@ export function BuildingsScreen({ onNavigate }: BuildingsScreenProps) {
               {building.yearBuilt && <Stat label="Built" value={String(building.yearBuilt)} />}
             </View>
             {building.managerName && (
-              <Text style={[s.cardMeta, { marginTop: 12 }]}>
-                Managed by {building.managerName}
-              </Text>
+              <Text style={[s.cardMeta, { marginTop: 12 }]}>Managed by {building.managerName}</Text>
             )}
           </Pressable>
         ))}

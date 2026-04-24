@@ -32,7 +32,11 @@ const useShimmer = () => {
   return value;
 };
 
-function SkeletonBlock({ width, height, radius = 6 }: { width: ViewStyle['width']; height: ViewStyle['height']; radius?: number }) {
+function SkeletonBlock({
+  width,
+  height,
+  radius = 6,
+}: { width: ViewStyle['width']; height: ViewStyle['height']; radius?: number }) {
   const shimmer = useShimmer();
   const backgroundColor = shimmer.interpolate({
     inputRange: [0, 0.5, 1],
@@ -47,7 +51,12 @@ function SkeletonBlock({ width, height, radius = 6 }: { width: ViewStyle['width'
   );
 }
 
-export function LoadingSkeleton({ cards, lines, width = '100%', height = 16 }: LoadingSkeletonProps) {
+export function LoadingSkeleton({
+  cards,
+  lines,
+  width = '100%',
+  height = 16,
+}: LoadingSkeletonProps) {
   if (cards != null) {
     return (
       <View accessibilityRole="progressbar" accessibilityLabel="Loading">

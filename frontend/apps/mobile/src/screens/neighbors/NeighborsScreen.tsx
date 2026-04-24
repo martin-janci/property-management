@@ -6,7 +6,15 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface Neighbor {
@@ -20,10 +28,31 @@ export interface Neighbor {
 }
 
 const MOCK_NEIGHBORS: Neighbor[] = [
-  { id: 'n1', name: 'Anna Novak', apartment: '3B', floor: 3, initials: 'AN', phone: '+421 905 123 456' },
-  { id: 'n2', name: 'Peter Kovac', apartment: '2A', floor: 2, initials: 'PK', email: 'peter@example.com' },
+  {
+    id: 'n1',
+    name: 'Anna Novak',
+    apartment: '3B',
+    floor: 3,
+    initials: 'AN',
+    phone: '+421 905 123 456',
+  },
+  {
+    id: 'n2',
+    name: 'Peter Kovac',
+    apartment: '2A',
+    floor: 2,
+    initials: 'PK',
+    email: 'peter@example.com',
+  },
   { id: 'n3', name: 'Eva Horvath', apartment: '5C', floor: 5, initials: 'EH' },
-  { id: 'n4', name: 'Martin Toth', apartment: '1A', floor: 1, initials: 'MT', phone: '+421 905 555 444' },
+  {
+    id: 'n4',
+    name: 'Martin Toth',
+    apartment: '1A',
+    floor: 1,
+    initials: 'MT',
+    phone: '+421 905 555 444',
+  },
 ];
 
 interface NeighborsScreenProps {
@@ -111,8 +140,12 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   avatar: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarText: { color: '#fff', fontSize: 18, fontWeight: '600' },
   info: { flex: 1 },

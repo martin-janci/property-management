@@ -39,9 +39,10 @@ import kotlinx.coroutines.launch
 /**
  * Email/password login screen for Reality Portal Android (UC-47.2).
  *
- * The reality-server expects POST /api/v1/auth/login. Wiring to the real
- * endpoint will follow once SsoService gains an `loginWithPassword` method;
- * for now this UI scaffold validates input and surfaces errors via callback.
+ * Wired via `Navigation.kt` to `SsoService.loginWithPassword`, which calls
+ * reality-server `POST /api/v1/users/login` and updates the shared
+ * `authState`. The screen itself is UI-only — it validates input, invokes
+ * the provided suspend callback and surfaces any error from the Result.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

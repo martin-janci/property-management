@@ -2,7 +2,7 @@
 
 /**
  * Registration page (UC-47.1).
- * Calls reality-server `/api/v1/auth/register`.
+ * Calls reality-server `POST /api/v1/users/register`.
  */
 
 import { AuthApiError, register } from '@/lib/auth-api';
@@ -50,7 +50,7 @@ export default function RegisterPage() {
       await register({
         email: email.trim(),
         password,
-        displayName: displayName.trim(),
+        name: displayName.trim(),
       });
       setSubmitted(true);
     } catch (error) {
@@ -145,9 +145,7 @@ export default function RegisterPage() {
                   disabled={isSubmitting}
                   className={`input ${errors.confirmPassword ? 'input-error' : ''}`}
                 />
-                {errors.confirmPassword && (
-                  <span className="error">{errors.confirmPassword}</span>
-                )}
+                {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
               </label>
 
               <button type="submit" className="submit" disabled={isSubmitting}>

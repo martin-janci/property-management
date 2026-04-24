@@ -5,8 +5,8 @@
  */
 
 import { ProtectedRoute } from '@/components/auth';
-import { Footer, Header } from '@/components/ui';
 import { ListingForm } from '@/components/realtor/ListingForm';
+import { Footer, Header } from '@/components/ui';
 import {
   type ListingDraft,
   type ListingResponse,
@@ -39,9 +39,7 @@ function EditListingContent() {
       })
       .catch((err) => {
         if (!cancelled)
-          setLoadError(
-            err instanceof RealtorApiError ? err.message : 'Could not load listing.'
-          );
+          setLoadError(err instanceof RealtorApiError ? err.message : 'Could not load listing.');
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -60,9 +58,7 @@ function EditListingContent() {
       setListing(updated);
       setSavedAt(Date.now());
     } catch (err) {
-      setSubmitError(
-        err instanceof RealtorApiError ? err.message : 'Could not save listing.'
-      );
+      setSubmitError(err instanceof RealtorApiError ? err.message : 'Could not save listing.');
     } finally {
       setIsSubmitting(false);
     }

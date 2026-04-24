@@ -35,10 +35,7 @@ export function LoadingSkeleton({
     return (
       <div role="status" aria-live="polite" aria-label={label} style={{ width: '100%' }}>
         {Array.from({ length: cards }).map((_, i) => (
-          <div
-            key={`skeleton-card-${i}`}
-            className="skeleton card"
-          />
+          <div key={`skeleton-card-${i}`} className="skeleton card" />
         ))}
         <span style={visuallyHidden}>{label}</span>
         <style jsx>{`

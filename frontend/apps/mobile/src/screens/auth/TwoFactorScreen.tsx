@@ -76,9 +76,7 @@ export function TwoFactorScreen({ onDonePress }: TwoFactorScreenProps) {
               )}
             </Text>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>
-                {t('auth.verificationCode', 'Verification code')}
-              </Text>
+              <Text style={styles.label}>{t('auth.verificationCode', 'Verification code')}</Text>
               <TextInput
                 style={[styles.input, error ? styles.inputError : undefined]}
                 value={code}
@@ -117,7 +115,13 @@ export function TwoFactorScreen({ onDonePress }: TwoFactorScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
   content: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '600', color: '#1f2937', marginBottom: 8, textAlign: 'center' },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
   subtitle: { fontSize: 16, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
   form: { gap: 16 },
   help: { fontSize: 14, color: '#6b7280', textAlign: 'center' },

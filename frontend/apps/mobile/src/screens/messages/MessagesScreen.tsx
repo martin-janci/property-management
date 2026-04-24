@@ -84,7 +84,9 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
       <View style={s.header}>
         <Text style={s.headerTitle}>Messages</Text>
         {unreadTotal > 0 && (
-          <Text style={s.headerSubtitle}>{unreadTotal} unread message{unreadTotal === 1 ? '' : 's'}</Text>
+          <Text style={s.headerSubtitle}>
+            {unreadTotal} unread message{unreadTotal === 1 ? '' : 's'}
+          </Text>
         )}
       </View>
 

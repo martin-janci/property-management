@@ -129,9 +129,7 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
     <View style={s.container}>
       <View style={s.header}>
         <Text style={s.headerTitle}>Notifications</Text>
-        {unread > 0 && (
-          <Text style={s.headerSubtitle}>{unread} unread</Text>
-        )}
+        {unread > 0 && <Text style={s.headerSubtitle}>{unread} unread</Text>}
       </View>
 
       <View style={s.filtersWrapper}>

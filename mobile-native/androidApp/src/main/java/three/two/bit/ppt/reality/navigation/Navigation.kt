@@ -1,5 +1,6 @@
 package three.two.bit.ppt.reality.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -57,7 +58,12 @@ sealed class Screen(val route: String) {
     data object ForgotPassword : Screen("auth/forgot-password")
 
     data object ResetPassword : Screen("auth/reset-password?token={token}") {
-        fun createRoute(token: String) = "auth/reset-password?token=$token"
+        /**
+         * Builds the nav route with the reset token. The token is URL-encoded
+         * because real reset tokens often contain `+`, `/`, `=` or `?`, which
+         * would otherwise break Compose-Navigation's argument parsing.
+         */
+        fun createRoute(token: String) = "auth/reset-password?token=${Uri.encode(token)}"
     }
 
     data object TwoFactor : Screen("auth/two-factor")

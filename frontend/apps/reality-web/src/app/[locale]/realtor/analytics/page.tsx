@@ -8,11 +8,7 @@
 
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import {
-  RealtorApiError,
-  type RealtorAnalytics,
-  getMyRealtorAnalytics,
-} from '@/lib/realtor-api';
+import { type RealtorAnalytics, RealtorApiError, getMyRealtorAnalytics } from '@/lib/realtor-api';
 import { useEffect, useState } from 'react';
 
 const PERIODS: ReadonlyArray<{ value: string; label: string }> = [
@@ -72,11 +68,7 @@ function AnalyticsContent() {
           <h1 className="title">Analytics</h1>
           <p className="subtitle">Performance of your listings over time.</p>
         </div>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="period"
-        >
+        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="period">
           {PERIODS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

@@ -152,10 +152,7 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
           );
         })}
 
-        <Pressable
-          style={s.primaryButton}
-          onPress={() => onNavigate?.('PersonMonthsBulk')}
-        >
+        <Pressable style={s.primaryButton} onPress={() => onNavigate?.('PersonMonthsBulk')}>
           <Text style={s.primaryButtonText}>Bulk entry…</Text>
         </Pressable>
 

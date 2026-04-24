@@ -87,11 +87,7 @@ function ResetForm() {
       <div className="ok">
         <h1 className="title">Password updated</h1>
         <p className="subtitle">You can now sign in with your new password.</p>
-        <button
-          type="button"
-          className="submit"
-          onClick={() => router.replace('/auth/login')}
-        >
+        <button type="button" className="submit" onClick={() => router.replace('/auth/login')}>
           Sign in
         </button>
         <style jsx>{`

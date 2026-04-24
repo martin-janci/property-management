@@ -32,11 +32,7 @@ export function SessionExpiredPage() {
       title="Your session has expired"
       description="Sign in again to continue. We'll bring you back to where you were."
     >
-      <button
-        type="button"
-        className="state-action state-action--primary"
-        onClick={handleSignIn}
-      >
+      <button type="button" className="state-action state-action--primary" onClick={handleSignIn}>
         Sign in
       </button>
     </StateView>

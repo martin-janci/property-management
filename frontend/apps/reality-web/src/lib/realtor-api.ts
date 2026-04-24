@@ -20,12 +20,16 @@ export class RealtorApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // Spread `init` first so caller-provided headers don't drop the defaults
+  // below. The `headers` assignment always wins, and the caller's headers
+  // (if any) are merged into it after the default `Content-Type`.
+  const { headers: callerHeaders, ...rest } = init;
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
-      ...init,
+      ...rest,
+      headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },
     });
   } catch {
     throw new RealtorApiError('Network error. Please try again.', 0);
@@ -64,9 +68,7 @@ export function getMyRealtorProfile(): Promise<RealtorProfile> {
   return request<RealtorProfile>('/api/v1/realtors/me');
 }
 
-export function updateMyRealtorProfile(
-  data: UpdateRealtorProfileRequest
-): Promise<RealtorProfile> {
+export function updateMyRealtorProfile(data: UpdateRealtorProfileRequest): Promise<RealtorProfile> {
   return request<RealtorProfile>('/api/v1/realtors/me', {
     method: 'PATCH',
     body: JSON.stringify(data),

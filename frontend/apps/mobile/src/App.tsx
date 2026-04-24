@@ -19,9 +19,9 @@ import {
   FormsScreen,
   LeaseDetailScreen,
   LeasesScreen,
+  MessagesScreen,
   MeterDetailScreen,
   MeterReadingScreen,
-  MessagesScreen,
   MetersScreen,
   NeighborsScreen,
   NewsScreen,
@@ -138,17 +138,10 @@ function MainApp() {
         return <MetersScreen onNavigate={handleNavigate} />;
       case 'MeterDetail':
         return (
-          <MeterDetailScreen
-            onBack={() => handleNavigate('Meters')}
-            onNavigate={handleNavigate}
-          />
+          <MeterDetailScreen onBack={() => handleNavigate('Meters')} onNavigate={handleNavigate} />
         );
       case 'Profile':
-        return (
-          <ProfileScreen
-            onTwoFactorPress={() => handleNavigate('TwoFactor')}
-          />
-        );
+        return <ProfileScreen onTwoFactorPress={() => handleNavigate('TwoFactor')} />;
       case 'TwoFactor':
         return <TwoFactorScreen onDonePress={() => handleNavigate('Profile')} />;
       case 'Messages':
@@ -173,10 +166,7 @@ function MainApp() {
         return <LeasesScreen onNavigate={handleNavigate} />;
       case 'LeaseDetail':
         return (
-          <LeaseDetailScreen
-            onBack={() => handleNavigate('Leases')}
-            onNavigate={handleNavigate}
-          />
+          <LeaseDetailScreen onBack={() => handleNavigate('Leases')} onNavigate={handleNavigate} />
         );
       case 'More':
         return <MoreMenu onNavigate={handleNavigate} />;
@@ -306,11 +296,7 @@ function MoreMenu({ onNavigate }: MoreMenuProps) {
         <Text style={moreStyles.subtitle}>Everything else available in the app.</Text>
       </View>
       {MORE_ITEMS.map((item) => (
-        <Pressable
-          key={item.screen}
-          style={moreStyles.row}
-          onPress={() => onNavigate(item.screen)}
-        >
+        <Pressable key={item.screen} style={moreStyles.row} onPress={() => onNavigate(item.screen)}>
           <Text style={moreStyles.rowIcon}>{item.icon}</Text>
           <Text style={moreStyles.rowLabel}>{item.label}</Text>
           <Text style={moreStyles.rowChevron}>›</Text>
