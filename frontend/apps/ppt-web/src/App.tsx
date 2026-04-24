@@ -52,6 +52,7 @@ import {
   AnnouncementsPage,
   ArticleDetailPage,
   BudgetManagementPage,
+  ChangePasswordPage,
   CreateAnnouncementPage,
   CreateFaultPage,
   CreateGroupPage,
@@ -70,6 +71,7 @@ import {
   FeedPage,
   FileDisputePage,
   FinancialDashboardPage,
+  ForgotPasswordPage,
   GroupDetailPage,
   GroupsPage,
   InvoiceManagementPage,
@@ -81,7 +83,11 @@ import {
   OutagesPage,
   PaymentManagementPage,
   PrivacySettingsPage,
+  ProfileEditPage,
+  RegisterPage,
+  ResetPasswordPage,
   ThreadDetailPage,
+  TwoFactorAuthPage,
   ViewAnnouncementPage,
   ViewOutagePage,
 } from './routes';
@@ -253,6 +259,12 @@ function App() {
                       <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password" element={<ResetPasswordPage />} />
+                        <Route path="/settings/password" element={<ChangePasswordPage />} />
+                        <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
+                        <Route path="/settings/profile" element={<ProfileEditPage />} />
                         {/* Dashboard routes (Epic 124) */}
                         <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
                         <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />

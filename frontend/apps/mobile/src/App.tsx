@@ -10,12 +10,14 @@ import { useOfflineSupport } from './hooks';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementsScreen,
+  AuthFlow,
   DashboardScreen,
   DocumentsScreen,
   FaultsListScreen,
-  LoginScreen,
   MeterReadingScreen,
+  ProfileScreen,
   ReportFaultScreen,
+  TwoFactorScreen,
   VotingScreen,
 } from './screens';
 
@@ -40,7 +42,9 @@ type Screen =
   | 'Documents'
   | 'Messages'
   | 'Settings'
-  | 'MeterReading';
+  | 'MeterReading'
+  | 'Profile'
+  | 'TwoFactor';
 
 function MainApp() {
   const { t } = useTranslation();
@@ -71,7 +75,7 @@ function MainApp() {
   }
 
   if (!isAuthenticated) {
-    return <LoginScreen />;
+    return <AuthFlow />;
   }
 
   const renderScreen = () => {
@@ -100,6 +104,14 @@ function MainApp() {
             onCancel={() => handleNavigate('Dashboard')}
           />
         );
+      case 'Profile':
+        return (
+          <ProfileScreen
+            onTwoFactorPress={() => handleNavigate('TwoFactor')}
+          />
+        );
+      case 'TwoFactor':
+        return <TwoFactorScreen onDonePress={() => handleNavigate('Profile')} />;
       default:
         return <DashboardScreen onNavigate={handleNavigate} />;
     }

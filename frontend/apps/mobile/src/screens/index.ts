@@ -1,5 +1,14 @@
-// Auth screens
-export { LoginScreen } from './auth';
+// Auth screens (UC-14)
+export {
+  LoginScreen,
+  RegisterScreen,
+  ForgotPasswordScreen,
+  TwoFactorScreen,
+  AuthFlow,
+} from './auth';
+
+// Profile screens (UC-14.6)
+export { ProfileScreen } from './profile';
 
 // Main screens
 export { DashboardScreen } from './dashboard';

@@ -10,10 +10,16 @@ import androidx.navigation.navArgument
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.ui.account.AccountScreen
+import three.two.bit.ppt.reality.ui.auth.ForgotPasswordScreen
+import three.two.bit.ppt.reality.ui.auth.LoginScreen
+import three.two.bit.ppt.reality.ui.auth.RegisterScreen
+import three.two.bit.ppt.reality.ui.auth.ResetPasswordScreen
+import three.two.bit.ppt.reality.ui.auth.TwoFactorScreen
 import three.two.bit.ppt.reality.ui.favorites.FavoritesScreen
 import three.two.bit.ppt.reality.ui.home.HomeScreen
 import three.two.bit.ppt.reality.ui.inquiries.InquiriesScreen
 import three.two.bit.ppt.reality.ui.listing.ListingDetailScreen
+import three.two.bit.ppt.reality.ui.profile.ProfileEditScreen
 import three.two.bit.ppt.reality.ui.search.SearchScreen
 
 /**
@@ -37,6 +43,20 @@ sealed class Screen(val route: String) {
     data object Account : Screen("account")
 
     data object Inquiries : Screen("inquiries")
+
+    data object Login : Screen("auth/login")
+
+    data object Register : Screen("auth/register")
+
+    data object ForgotPassword : Screen("auth/forgot-password")
+
+    data object ResetPassword : Screen("auth/reset-password?token={token}") {
+        fun createRoute(token: String) = "auth/reset-password?token=$token"
+    }
+
+    data object TwoFactor : Screen("auth/two-factor")
+
+    data object ProfileEdit : Screen("account/profile")
 }
 
 @Composable
@@ -115,6 +135,64 @@ fun RealityNavHost(
                     navController.navigate(Screen.ListingDetail.createRoute(id))
                 },
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        // Auth & profile (UC-47). Submit handlers are stubs until SsoService
+        // exposes email/password endpoints.
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmit = { _, _ -> Result.failure(NotImplementedError("Wire to SsoService")) },
+                onForgotPasswordClick = { navController.navigate(Screen.ForgotPassword.route) },
+                onRegisterClick = { navController.navigate(Screen.Register.route) },
+            )
+        }
+        composable(Screen.Register.route) {
+            RegisterScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmit = { _, _, _ ->
+                    Result.failure(NotImplementedError("Wire to SsoService"))
+                },
+                onSignInClick = { navController.popBackStack(Screen.Login.route, false) },
+            )
+        }
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                onBackClick = { navController.popBackStack() },
+                onSubmit = { _ -> Result.failure(NotImplementedError("Wire to SsoService")) },
+                onSignInClick = { navController.popBackStack(Screen.Login.route, false) },
+            )
+        }
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(navArgument("token") { type = NavType.StringType; defaultValue = "" }),
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("token") ?: ""
+            ResetPasswordScreen(
+                token = token,
+                onBackClick = { navController.popBackStack() },
+                onSubmit = { _, _ ->
+                    Result.failure(NotImplementedError("Wire to SsoService"))
+                },
+                onSuccess = {
+                    navController.popBackStack(Screen.Login.route, false)
+                },
+            )
+        }
+        composable(Screen.TwoFactor.route) {
+            TwoFactorScreen(
+                onBackClick = { navController.popBackStack() },
+                onDone = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.ProfileEdit.route) {
+            ProfileEditScreen(
+                ssoService = ssoService,
+                onBackClick = { navController.popBackStack() },
+                onSubmit = { _ ->
+                    Result.failure(NotImplementedError("Wire to SsoService"))
+                },
             )
         }
     }

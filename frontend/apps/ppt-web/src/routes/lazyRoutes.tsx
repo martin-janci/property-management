@@ -62,9 +62,27 @@ export const PrivacySettingsPage = lazy(() =>
   import('../features/privacy').then((m) => ({ default: m.PrivacySettingsPage }))
 );
 
-// Auth pages
+// Auth pages (UC-14)
 export const LoginPage = lazy(() =>
   import('../pages/LoginPage').then((m) => ({ default: m.LoginPage }))
+);
+export const RegisterPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.RegisterPage }))
+);
+export const ForgotPasswordPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.ForgotPasswordPage }))
+);
+export const ResetPasswordPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.ResetPasswordPage }))
+);
+export const ChangePasswordPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.ChangePasswordPage }))
+);
+export const TwoFactorAuthPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.TwoFactorAuthPage }))
+);
+export const ProfileEditPage = lazy(() =>
+  import('../features/auth').then((m) => ({ default: m.ProfileEditPage }))
 );
 
 // Announcements feature (UC-06)
