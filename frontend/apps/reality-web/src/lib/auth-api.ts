@@ -20,13 +20,17 @@ export class AuthApiError extends Error {
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
+  return requestJson<T>('POST', path, body);
+}
+
+async function requestJson<T>(method: string, path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
+      method,
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new AuthApiError('Network error. Please check your connection.', 0, 'NETWORK_ERROR');
@@ -79,4 +83,16 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
   await postJson<void>('/api/v1/auth/password-reset/confirm', { token, newPassword });
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await postJson<void>('/api/v1/auth/me/password', { currentPassword, newPassword });
+}
+
+export async function updateProfile(input: { displayName: string }): Promise<{
+  id: string;
+  email: string;
+  displayName: string;
+}> {
+  return requestJson('PATCH', '/api/v1/auth/me', input);
 }

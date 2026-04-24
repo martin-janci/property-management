@@ -58,6 +58,34 @@ data class SsoError(
     @SerialName("error_description") val errorDescription: String? = null
 )
 
+/** Email/password login request (UC-47.2). */
+@Serializable data class AuthLoginRequest(val email: String, val password: String)
+
+/** Login response from `/api/v1/auth/login`. */
+@Serializable
+data class AuthLoginResponse(
+    @SerialName("accessToken") val accessToken: String,
+    @SerialName("refreshToken") val refreshToken: String? = null,
+    val user: SsoUserInfo
+)
+
+/** Registration request (UC-47.1). */
+@Serializable
+data class AuthRegisterRequest(
+    val email: String,
+    val password: String,
+    val displayName: String
+)
+
+/** Password reset request (UC-47.4 step 1). */
+@Serializable data class PasswordResetRequest(val email: String)
+
+/** Password reset confirmation (UC-47.4 step 2). */
+@Serializable data class PasswordResetConfirm(val token: String, val newPassword: String)
+
+/** Profile update payload (UC-47.7). */
+@Serializable data class ProfileUpdateRequest(val displayName: String)
+
 /** Authentication state for the app. */
 sealed class AuthState {
     /** Not authenticated. */

@@ -1,14 +1,16 @@
 'use client';
 
 /**
- * Account dashboard (UC-47.6).
+ * Realtor dashboard hub (UC-51).
  *
- * Lists account-related actions for an authenticated user.
+ * Entry point for individual realtors: links to profile, listing
+ * management and analytics.
  */
 
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
+import { useMyListings } from '@ppt/reality-api-client';
 import Link from 'next/link';
 
 const SECTIONS: ReadonlyArray<{
@@ -16,42 +18,34 @@ const SECTIONS: ReadonlyArray<{
   title: string;
   description: string;
 }> = [
+  { href: '/realtor/profile', title: 'Profile', description: 'Public realtor profile and bio.' },
   {
-    href: '/account/profile',
-    title: 'Profile',
-    description: 'Update your name, contact details and avatar.',
+    href: '/realtor/listings',
+    title: 'My listings',
+    description: 'Listings you manage.',
   },
   {
-    href: '/account/password',
-    title: 'Password',
-    description: 'Change the password used to sign in.',
+    href: '/realtor/listings/new',
+    title: 'Create listing',
+    description: 'Publish a new property to the portal.',
   },
   {
-    href: '/favorites',
-    title: 'Favorites',
-    description: 'Properties you have saved for later.',
-  },
-  {
-    href: '/saved-searches',
-    title: 'Saved searches',
-    description: 'Manage your saved searches and alert preferences.',
-  },
-  {
-    href: '/inquiries',
-    title: 'Inquiries',
-    description: 'View messages and viewing requests you have sent.',
+    href: '/realtor/analytics',
+    title: 'Analytics',
+    description: 'Views, inquiries and conversions for your listings.',
   },
 ];
 
-function AccountContent() {
-  const { user, logout } = useAuth();
+function RealtorContent() {
+  const { user } = useAuth();
+  const { data: listings } = useMyListings({ limit: 1 });
 
   return (
     <div className="container">
       <header className="hero">
-        <h1 className="title">Account</h1>
+        <h1 className="title">Realtor workspace</h1>
         <p className="subtitle">
-          Signed in as <strong>{user?.email}</strong>
+          Welcome{user ? `, ${user.name}` : ''}. You have {listings?.total ?? 0} active listings.
         </p>
       </header>
 
@@ -65,10 +59,6 @@ function AccountContent() {
           </li>
         ))}
       </ul>
-
-      <button type="button" className="logout" onClick={() => void logout()}>
-        Sign out
-      </button>
 
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
@@ -86,24 +76,18 @@ function AccountContent() {
         .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,.08); }
         .card-title { font-size: 1.125rem; font-weight: 600; margin: 0 0 4px; color: #111827; }
         .card-desc { font-size: 14px; color: #6b7280; margin: 0; }
-        .logout {
-          margin-top: 32px; padding: 10px 20px; background: transparent;
-          color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px;
-          font-weight: 500; cursor: pointer;
-        }
-        .logout:hover { background: #fef2f2; }
       `}</style>
     </div>
   );
 }
 
-export default function AccountPage() {
+export default function RealtorPage() {
   return (
     <div className="page">
       <Header />
       <main>
         <ProtectedRoute>
-          <AccountContent />
+          <RealtorContent />
         </ProtectedRoute>
       </main>
       <Footer />

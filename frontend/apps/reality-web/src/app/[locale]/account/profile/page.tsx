@@ -3,20 +3,18 @@
 /**
  * Profile edit page (UC-47.7).
  *
- * UI scaffold for updating display name. The backend `PATCH /auth/me` endpoint
- * isn't surfaced via reality-api-client yet, so this page persists changes
- * locally and shows a confirmation; once the SDK exposes `authApiUpdateMe`
- * this can call it directly.
+ * Calls reality-server `PATCH /api/v1/auth/me` to update the display name.
  */
 
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
+import { AuthApiError, updateProfile } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { type FormEvent, useEffect, useState } from 'react';
 
 function ProfileForm() {
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string>();
   const [savedAt, setSavedAt] = useState<number>();
@@ -26,7 +24,7 @@ function ProfileForm() {
     if (user?.name) setDisplayName(user.name);
   }, [user?.name]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(undefined);
     if (!displayName.trim()) {
@@ -35,13 +33,11 @@ function ProfileForm() {
     }
     setIsSaving(true);
     try {
-      // Persist locally until the SDK exposes the update endpoint.
-      try {
-        sessionStorage.setItem('reality_profile_displayName', displayName.trim());
-      } catch {
-        // Storage unavailable; ignore.
-      }
+      await updateProfile({ displayName: displayName.trim() });
+      await refreshSession();
       setSavedAt(Date.now());
+    } catch (err) {
+      setError(err instanceof AuthApiError ? err.message : 'Could not save profile.');
     } finally {
       setIsSaving(false);
     }

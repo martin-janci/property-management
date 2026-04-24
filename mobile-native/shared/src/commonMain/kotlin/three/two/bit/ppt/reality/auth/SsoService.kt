@@ -139,6 +139,114 @@ class SsoService {
         _authState.value = AuthState.Unauthenticated
     }
 
+    /**
+     * Sign in with email and password (UC-47.2).
+     *
+     * Backs the new mobile auth screens and updates `authState` on success
+     * so downstream consumers (HomeScreen etc.) react automatically.
+     */
+    suspend fun loginWithPassword(email: String, password: String): Result<AuthLoginResponse> {
+        _authState.value = AuthState.Loading
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/auth/login") {
+                    setBody(AuthLoginRequest(email, password))
+                }
+            if (response.status.isSuccess()) {
+                val payload: AuthLoginResponse = response.body()
+                sessionToken = payload.accessToken
+                _authState.value = AuthState.Authenticated(payload.user, payload.accessToken)
+                Result.success(payload)
+            } else {
+                val error: SsoError = response.body()
+                _authState.value = AuthState.Error(error.errorDescription ?: error.error)
+                Result.failure(SsoException(error.error, error.errorDescription))
+            }
+        } catch (e: Exception) {
+            _authState.value = AuthState.Error(e.message ?: "Unknown error")
+            Result.failure(e)
+        }
+    }
+
+    /** Register a new account (UC-47.1). */
+    suspend fun register(email: String, password: String, displayName: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/auth/register") {
+                    setBody(AuthRegisterRequest(email, password, displayName))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                val error: SsoError = response.body()
+                Result.failure(SsoException(error.error, error.errorDescription))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Request a password reset email (UC-47.4 step 1). */
+    suspend fun requestPasswordReset(email: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/auth/password-reset") {
+                    setBody(PasswordResetRequest(email))
+                }
+            if (response.status.isSuccess()) Result.success(Unit)
+            else {
+                val error: SsoError = response.body()
+                Result.failure(SsoException(error.error, error.errorDescription))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Confirm a password reset using the emailed token (UC-47.4 step 2). */
+    suspend fun confirmPasswordReset(token: String, newPassword: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/auth/password-reset/confirm") {
+                    setBody(PasswordResetConfirm(token, newPassword))
+                }
+            if (response.status.isSuccess()) Result.success(Unit)
+            else {
+                val error: SsoError = response.body()
+                Result.failure(SsoException(error.error, error.errorDescription))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Update the signed-in user's profile (UC-47.7). */
+    suspend fun updateProfile(displayName: String): Result<SsoUserInfo> {
+        val token =
+            sessionToken ?: return Result.failure(SsoException("no_session", "Not authenticated"))
+        return try {
+            val response =
+                client.request("$baseUrl/api/v1/auth/me") {
+                    method = HttpMethod.Patch
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(ProfileUpdateRequest(displayName))
+                }
+            if (response.status.isSuccess()) {
+                val updated: SsoUserInfo = response.body()
+                val current = _authState.value
+                if (current is AuthState.Authenticated) {
+                    _authState.value = current.copy(user = updated)
+                }
+                Result.success(updated)
+            } else {
+                val error: SsoError = response.body()
+                Result.failure(SsoException(error.error, error.errorDescription))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /** Check if user is authenticated. */
     fun isAuthenticated(): Boolean = sessionToken != null
 
