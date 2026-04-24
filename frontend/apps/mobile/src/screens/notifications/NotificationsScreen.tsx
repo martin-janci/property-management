@@ -7,6 +7,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { EmptyState } from '../../components/states';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type NotificationCategory =
@@ -162,11 +163,11 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
         )}
 
         {filtered.length === 0 ? (
-          <View style={s.emptyState}>
-            <Text style={s.emptyIcon}>🔕</Text>
-            <Text style={s.emptyTitle}>You're all caught up</Text>
-            <Text style={s.emptyText}>New notifications will appear here.</Text>
-          </View>
+          <EmptyState
+            icon="🔕"
+            title="You're all caught up"
+            description="New notifications will appear here."
+          />
         ) : (
           filtered.map((notification) => (
             <Pressable

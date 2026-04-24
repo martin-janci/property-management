@@ -71,6 +71,7 @@ import {
   FeedPage,
   FileDisputePage,
   FinancialDashboardPage,
+  ForbiddenPage,
   ForgotPasswordPage,
   GroupDetailPage,
   GroupsPage,
@@ -80,12 +81,15 @@ import {
   MessagesPage,
   NewMessagePage,
   NewsListPage,
+  NotFoundPage,
   OutagesPage,
   PaymentManagementPage,
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
   ResetPasswordPage,
+  ServerErrorPage,
+  SessionExpiredPage,
   ThreadDetailPage,
   TwoFactorAuthPage,
   ViewAnnouncementPage,
@@ -337,6 +341,12 @@ function App() {
                           element={<PaymentManagementPageRoute />}
                         />
                         <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
+
+                        {/* Error / state surfaces */}
+                        <Route path="/forbidden" element={<ForbiddenPage />} />
+                        <Route path="/server-error" element={<ServerErrorPage />} />
+                        <Route path="/session-expired" element={<SessionExpiredPage />} />
+                        <Route path="*" element={<NotFoundPage />} />
                       </Routes>
                     </main>
                   </div>
