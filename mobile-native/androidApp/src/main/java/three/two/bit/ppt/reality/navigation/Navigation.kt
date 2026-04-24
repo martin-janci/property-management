@@ -59,9 +59,9 @@ sealed class Screen(val route: String) {
 
     data object ResetPassword : Screen("auth/reset-password?token={token}") {
         /**
-         * Builds the nav route with the reset token. The token is URL-encoded
-         * because real reset tokens often contain `+`, `/`, `=` or `?`, which
-         * would otherwise break Compose-Navigation's argument parsing.
+         * Builds the nav route with the reset token. The token is URL-encoded because real reset
+         * tokens often contain `+`, `/`, `=` or `?`, which would otherwise break
+         * Compose-Navigation's argument parsing.
          */
         fun createRoute(token: String) = "auth/reset-password?token=${Uri.encode(token)}"
     }
@@ -167,7 +167,7 @@ fun RealityNavHost(
             LoginScreen(
                 onBackClick = { navController.popBackStack() },
                 onSubmit = { email, password ->
-                    ssoService.loginWithPassword(email, password).map { }
+                    ssoService.loginWithPassword(email, password).map {}
                 },
                 onForgotPasswordClick = { navController.navigate(Screen.ForgotPassword.route) },
                 onRegisterClick = { navController.navigate(Screen.Register.route) },
@@ -219,7 +219,7 @@ fun RealityNavHost(
             ProfileEditScreen(
                 ssoService = ssoService,
                 onBackClick = { navController.popBackStack() },
-                onSubmit = { displayName -> ssoService.updateProfile(displayName).map { } },
+                onSubmit = { displayName -> ssoService.updateProfile(displayName).map {} },
             )
         }
 
@@ -232,9 +232,9 @@ fun RealityNavHost(
                 searches = emptyList(),
                 isLoading = false,
                 onBackClick = { navController.popBackStack() },
-                onSearchClick = { /* TODO: run search */ },
+                onSearchClick = { /* TODO: run search */},
                 onToggleAlerts = { _, _ -> /* TODO: toggle alerts */ },
-                onDelete = { /* TODO: delete saved search */ },
+                onDelete = { /* TODO: delete saved search */},
             )
         }
         composable(Screen.AgencyHub.route) {
@@ -251,7 +251,7 @@ fun RealityNavHost(
                 inquiries = emptyList(),
                 isLoading = false,
                 onBackClick = { navController.popBackStack() },
-                onInquiryClick = { /* TODO: open inquiry detail */ },
+                onInquiryClick = { /* TODO: open inquiry detail */},
             )
         }
         composable(Screen.MyListings.route) {
@@ -260,7 +260,9 @@ fun RealityNavHost(
                 isLoading = false,
                 onBackClick = { navController.popBackStack() },
                 onCreateClick = { navController.navigate(Screen.CreateListing.route) },
-                onListingClick = { id -> navController.navigate(Screen.ListingDetail.createRoute(id)) },
+                onListingClick = { id ->
+                    navController.navigate(Screen.ListingDetail.createRoute(id))
+                },
             )
         }
         composable(Screen.CreateListing.route) {

@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Agency inquiries screen for Reality Portal Android (UC-49.5).
  *
- * Lists inquiries received for the signed-in agency's listings. Caller
- * supplies the data so the screen stays decoupled from the API client.
+ * Lists inquiries received for the signed-in agency's listings. Caller supplies the data so the
+ * screen stays decoupled from the API client.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -29,9 +29,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Entry point for agency owners on Reality Portal Android (UC-49).
  *
- * Lists the available agency-management workflows. Detailed dashboards live
- * on the web; this screen exposes a focused mobile menu so the surfaces are
- * reachable from the app.
+ * Lists the available agency-management workflows. Detailed dashboards live on the web; this screen
+ * exposes a focused mobile menu so the surfaces are reachable from the app.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,9 +43,17 @@ fun AgencyHubScreen(
 ) {
     val sections =
         listOf(
-            AgencySection("Inquiries", "Review messages received for your listings.", onInquiriesClick),
+            AgencySection(
+                "Inquiries",
+                "Review messages received for your listings.",
+                onInquiriesClick
+            ),
             AgencySection("My listings", "Listings you currently manage.", onMyListingsClick),
-            AgencySection("Create listing", "Publish a new property to the portal.", onCreateListingClick),
+            AgencySection(
+                "Create listing",
+                "Publish a new property to the portal.",
+                onCreateListingClick
+            ),
             AgencySection("Analytics", "Performance of your listings over time.", onAnalyticsClick),
         )
 

@@ -142,10 +142,9 @@ class SsoService {
     /**
      * Sign in with email and password (UC-47.2).
      *
-     * Calls reality-server `POST /api/v1/users/login` and updates
-     * `authState` on success. The backend returns a session token + user
-     * info; both are fed into `AuthState.Authenticated` so downstream
-     * consumers (HomeScreen, FavoritesScreen, etc.) react automatically.
+     * Calls reality-server `POST /api/v1/users/login` and updates `authState` on success. The
+     * backend returns a session token + user info; both are fed into `AuthState.Authenticated` so
+     * downstream consumers (HomeScreen, FavoritesScreen, etc.) react automatically.
      */
     suspend fun loginWithPassword(email: String, password: String): Result<AuthLoginResponse> {
         _authState.value = AuthState.Loading
@@ -186,9 +185,8 @@ class SsoService {
     /**
      * Register a new account (UC-47.1).
      *
-     * Calls reality-server `POST /api/v1/users/register`. The server does
-     * not issue a session here — the caller should send the user through
-     * the login flow after success.
+     * Calls reality-server `POST /api/v1/users/register`. The server does not issue a session here
+     * — the caller should send the user through the login flow after success.
      */
     suspend fun register(email: String, password: String, name: String): Result<Unit> {
         return try {
@@ -213,9 +211,8 @@ class SsoService {
     /**
      * Request a password reset email (UC-47.4 step 1).
      *
-     * Reality-server does not expose password-reset endpoints yet. Until it
-     * does, this returns a clear failure so the UI can surface a
-     * "contact support" message.
+     * Reality-server does not expose password-reset endpoints yet. Until it does, this returns a
+     * clear failure so the UI can surface a "contact support" message.
      */
     suspend fun requestPasswordReset(email: String): Result<Unit> {
         // TODO: wire when reality-server exposes /api/v1/users/password-reset.
@@ -244,8 +241,8 @@ class SsoService {
     /**
      * Update the signed-in user's profile (UC-47.7).
      *
-     * Calls reality-server `PUT /api/v1/users/me`. On success the updated
-     * user is pushed back into `authState`.
+     * Calls reality-server `PUT /api/v1/users/me`. On success the updated user is pushed back into
+     * `authState`.
      */
     suspend fun updateProfile(name: String): Result<SsoUserInfo> {
         val token =

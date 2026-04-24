@@ -37,10 +37,9 @@ import androidx.compose.ui.unit.dp
 /**
  * Saved searches screen for Reality Portal Android (UC-45.2).
  *
- * Renders the user's saved searches with toggles for alert delivery. The
- * mobile-native module doesn't yet expose `/saved-searches` endpoints; the
- * screen reads/writes via the supplied callbacks so the navigation path
- * exists end-to-end.
+ * Renders the user's saved searches with toggles for alert delivery. The mobile-native module
+ * doesn't yet expose `/saved-searches` endpoints; the screen reads/writes via the supplied
+ * callbacks so the navigation path exists end-to-end.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,8 +180,7 @@ private fun EmptyState(modifier: Modifier) {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text =
-                "Save a search to get notified about new listings that match your criteria.",
+            text = "Save a search to get notified about new listings that match your criteria.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

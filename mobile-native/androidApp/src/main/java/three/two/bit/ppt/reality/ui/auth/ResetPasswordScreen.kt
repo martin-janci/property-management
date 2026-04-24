@@ -78,7 +78,8 @@ fun ResetPasswordScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "This reset link is missing a token. Request a new password reset email.",
+                    text =
+                        "This reset link is missing a token. Request a new password reset email.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -30,8 +30,7 @@ import androidx.compose.ui.unit.dp
 /**
  * "My listings" screen for Reality Portal Android (UC-51.3).
  *
- * Displays the listings the signed-in realtor manages. Caller fetches
- * data and passes it in.
+ * Displays the listings the signed-in realtor manages. Caller fetches data and passes it in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

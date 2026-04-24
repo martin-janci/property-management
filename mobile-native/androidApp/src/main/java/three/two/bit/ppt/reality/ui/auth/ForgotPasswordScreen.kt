@@ -34,8 +34,8 @@ import kotlinx.coroutines.launch
 /**
  * Request password reset (UC-47.4 step 1).
  *
- * Posts to `/api/v1/auth/password-reset`. Shows the same confirmation
- * message regardless of whether the email exists.
+ * Posts to `/api/v1/auth/password-reset`. Shows the same confirmation message regardless of whether
+ * the email exists.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

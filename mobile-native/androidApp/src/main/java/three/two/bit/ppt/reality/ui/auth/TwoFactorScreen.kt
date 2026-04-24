@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Two-factor authentication setup (UC-47.5 / UC-14.10).
  *
- * UI scaffold for enabling TOTP-based MFA. Wires up to a stub callback so the
- * screen renders end-to-end; the SsoService MFA wiring will plug in here.
+ * UI scaffold for enabling TOTP-based MFA. Wires up to a stub callback so the screen renders
+ * end-to-end; the SsoService MFA wiring will plug in here.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +64,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text =
-                    "Require a one-time code from your authenticator app whenever you sign in.",
+                text = "Require a one-time code from your authenticator app whenever you sign in.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -101,7 +100,8 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                         singleLine = true,
                         isError = error != null,
                         supportingText = { error?.let { Text(it) } },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        keyboardOptions =
+                            KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Button(

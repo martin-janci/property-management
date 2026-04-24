@@ -37,8 +37,8 @@ import kotlinx.coroutines.launch
 /**
  * Registration screen for Reality Portal Android (UC-47.1).
  *
- * Submits to reality-server `POST /api/v1/auth/register` (display name,
- * email, password). On success the user is asked to verify their email.
+ * Submits to reality-server `POST /api/v1/auth/register` (display name, email, password). On
+ * success the user is asked to verify their email.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +88,8 @@ fun RegisterScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "We sent a verification link to $email. Click the link to activate your account.",
+                    text =
+                        "We sent a verification link to $email. Click the link to activate your account.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -169,7 +170,8 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                    displayNameError = if (displayName.isBlank()) "Display name is required" else null
+                    displayNameError =
+                        if (displayName.isBlank()) "Display name is required" else null
                     emailError =
                         when {
                             email.isBlank() -> "Email is required"
@@ -199,9 +201,7 @@ fun RegisterScreen(
                         isSubmitting = false
                         result.fold(
                             onSuccess = { submitted = true },
-                            onFailure = {
-                                generalError = it.message ?: "Registration failed."
-                            },
+                            onFailure = { generalError = it.message ?: "Registration failed." },
                         )
                     }
                 },

@@ -37,10 +37,9 @@ import kotlinx.coroutines.delay
 /**
  * Shared empty/error/loading composables for the Reality Portal Android UI.
  *
- * These mirror the React-side primitives so every screen has consistent
- * empty/loading/error treatment without each one rolling its own.
+ * These mirror the React-side primitives so every screen has consistent empty/loading/error
+ * treatment without each one rolling its own.
  */
-
 @Composable
 fun EmptyState(
     title: String,
@@ -118,9 +117,8 @@ fun ErrorState(
 }
 
 /**
- * Skeleton placeholder block. Animates a soft shimmer between two surface
- * tones; honours the platform's reduce-motion preference automatically via
- * Compose's animation specs.
+ * Skeleton placeholder block. Animates a soft shimmer between two surface tones; honours the
+ * platform's reduce-motion preference automatically via Compose's animation specs.
  */
 @Composable
 fun SkeletonBlock(

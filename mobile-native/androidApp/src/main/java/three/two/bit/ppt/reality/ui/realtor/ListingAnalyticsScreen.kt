@@ -29,9 +29,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Listing analytics screen for Reality Portal Android (UC-51.10).
  *
- * Displays headline metrics for the signed-in realtor's listings. Caller
- * supplies the metrics list so the screen stays decoupled from data
- * fetching.
+ * Displays headline metrics for the signed-in realtor's listings. Caller supplies the metrics list
+ * so the screen stays decoupled from data fetching.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

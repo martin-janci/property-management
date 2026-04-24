@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 
 /** Shared helpers for the Reality Portal auth screens (UC-47). */
-
 internal val emailRegex = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
 internal const val MIN_PASSWORD_LENGTH = 8

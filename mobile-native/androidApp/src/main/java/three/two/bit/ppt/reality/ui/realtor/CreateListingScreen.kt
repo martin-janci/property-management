@@ -36,9 +36,8 @@ import kotlinx.coroutines.launch
 /**
  * Create listing screen for Reality Portal Android (UC-51.4).
  *
- * Captures the minimum fields required to publish a listing. The submit
- * handler is supplied by the caller so the API client integration stays
- * outside the UI layer.
+ * Captures the minimum fields required to publish a listing. The submit handler is supplied by the
+ * caller so the API client integration stays outside the UI layer.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -64,8 +64,8 @@ data class SsoError(
 /**
  * Login response from reality-server `POST /api/v1/users/login`.
  *
- * The reality-server returns a session token, expiry timestamp and user
- * info. Fields with snake_case names are mapped via `@SerialName`.
+ * The reality-server returns a session token, expiry timestamp and user info. Fields with
+ * snake_case names are mapped via `@SerialName`.
  */
 @Serializable
 data class AuthLoginResponse(
@@ -102,9 +102,8 @@ data class AuthRegisterResponse(
 /**
  * Password reset request (UC-47.4 step 1).
  *
- * Note: reality-server does not expose password-reset endpoints yet. The
- * model is kept so the UI can surface a clear error when the server
- * eventually implements them.
+ * Note: reality-server does not expose password-reset endpoints yet. The model is kept so the UI
+ * can surface a clear error when the server eventually implements them.
  */
 @Serializable data class PasswordResetRequest(val email: String)
 
@@ -112,8 +111,8 @@ data class AuthRegisterResponse(
 @Serializable data class PasswordResetConfirm(val token: String, val newPassword: String)
 
 /**
- * Profile update payload (UC-47.7). Matches `PUT /api/v1/users/me` —
- * reality-server accepts any of `name`, `profile_image_url` and `locale`.
+ * Profile update payload (UC-47.7). Matches `PUT /api/v1/users/me` — reality-server accepts any of
+ * `name`, `profile_image_url` and `locale`.
  */
 @Serializable
 data class ProfileUpdateRequest(
