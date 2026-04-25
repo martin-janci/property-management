@@ -8,7 +8,7 @@
 import { AuthError } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getAuthApi } from '../authApiClient';
 import '../styles/AuthPage.css';
@@ -41,7 +41,6 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function ChangePasswordPage() {
-  const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -88,8 +87,7 @@ export function ChangePasswordPage() {
 
   if (isLoading) return null;
   if (!isAuthenticated) {
-    navigate('/login', { replace: true });
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return (

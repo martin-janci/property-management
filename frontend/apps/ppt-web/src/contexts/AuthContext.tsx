@@ -64,6 +64,11 @@ export interface AuthContextValue extends AuthState {
   refreshToken: () => Promise<string | null>;
   /** Get the current access token */
   getAccessToken: () => string | null;
+  /**
+   * Update the cached user object (in-memory state + storage). Used by
+   * profile-edit screens so the UI reflects edits without forcing a reload.
+   */
+  setUser: (user: AuthUser) => void;
 }
 
 // ============================================================================
@@ -338,6 +343,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  /**
+   * Update the in-memory user and persist to storage. Lets profile-edit
+   * surfaces refresh the cached `user` so the UI doesn't show stale data
+   * until the next reload.
+   */
+  const updateUser = useCallback((next: AuthUser) => {
+    tokenStorage.setUser(next);
+    setUser(next);
+  }, []);
+
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo<AuthContextValue>(
     () => ({
@@ -348,8 +363,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       refreshToken,
       getAccessToken,
+      setUser: updateUser,
     }),
-    [user, isAuthenticated, isLoading, login, logout, refreshToken, getAccessToken]
+    [user, isAuthenticated, isLoading, login, logout, refreshToken, getAccessToken, updateUser]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

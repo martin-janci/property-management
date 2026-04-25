@@ -8,14 +8,13 @@
 
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
 
 type Step = 'idle' | 'verify' | 'enabled';
 
 export function TwoFactorAuthPage() {
-  const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const [step, setStep] = useState<Step>('idle');
   const [code, setCode] = useState('');
@@ -42,8 +41,7 @@ export function TwoFactorAuthPage() {
 
   if (isLoading) return null;
   if (!isAuthenticated) {
-    navigate('/login', { replace: true });
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return (

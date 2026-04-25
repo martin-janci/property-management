@@ -31,11 +31,24 @@ export default function ForgotPasswordPage() {
       await requestPasswordReset(trimmed);
       setSubmitted(true);
     } catch (error) {
-      // Don't leak account existence on most errors; only surface network failures.
-      if (error instanceof AuthApiError && error.code === 'NETWORK_ERROR') {
-        setGeneralError('Network error. Please check your connection and try again.');
+      if (error instanceof AuthApiError) {
+        // Surface real errors to the user instead of silently showing the
+        // "Check your inbox" confirmation. NOT_IMPLEMENTED comes from the
+        // wrapper while reality-server still lacks a password-reset
+        // endpoint; network failures should also be visible.
+        if (error.code === 'NOT_IMPLEMENTED' || error.status === 501) {
+          setGeneralError(error.message);
+        } else if (error.code === 'NETWORK_ERROR') {
+          setGeneralError('Network error. Please check your connection and try again.');
+        } else if (error.status >= 500) {
+          setGeneralError(error.message || 'Server error. Please try again later.');
+        } else {
+          // 4xx and other client-side errors: don't leak whether an account
+          // exists for this email, fall through to the confirmation screen.
+          setSubmitted(true);
+        }
       } else {
-        setSubmitted(true);
+        setGeneralError('Could not send reset email. Please try again.');
       }
     } finally {
       setIsSubmitting(false);

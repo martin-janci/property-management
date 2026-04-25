@@ -34,8 +34,12 @@ import kotlinx.coroutines.launch
 /**
  * Request password reset (UC-47.4 step 1).
  *
- * Posts to `/api/v1/auth/password-reset`. Shows the same confirmation message regardless of whether
- * the email exists.
+ * Wired via `Navigation.kt` to `SsoService.requestPasswordReset`, which
+ * is currently a stub returning `Result.failure("not_implemented")` —
+ * reality-server doesn't expose a password-reset endpoint yet. The screen
+ * shows the "Check your inbox" confirmation only when the callback
+ * succeeds; failures (including the not-implemented stub) surface their
+ * message via the error banner.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

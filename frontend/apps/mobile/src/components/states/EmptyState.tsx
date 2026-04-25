@@ -14,7 +14,7 @@ export interface EmptyStateProps {
 
 export function EmptyState({ icon = '📭', title, description, children }: EmptyStateProps) {
   return (
-    <View style={styles.container} accessibilityRole="summary">
+    <View style={styles.container} accessibilityLabel={title}>
       <Text style={styles.icon}>{icon}</Text>
       <Text style={styles.title}>{title}</Text>
       {description && <Text style={styles.description}>{description}</Text>}

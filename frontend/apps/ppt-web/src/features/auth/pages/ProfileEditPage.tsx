@@ -2,18 +2,18 @@
  * Profile Edit Page (UC-14.6).
  *
  * Lets the authenticated user view and update their basic profile fields.
- * Persists optimistically to localStorage; the backend `PATCH /me` endpoint
- * isn't exposed through @ppt/api-client yet so this is a UI-only scaffold.
+ * Persists optimistically through `useAuth().setUser`, which updates both
+ * the in-memory auth state and the storage cache so other consumers
+ * (header, dashboards) see the new name without a reload. The backend
+ * `PATCH /me` endpoint isn't exposed through `@ppt/api-client` yet.
  */
 
 import type { AuthUser } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
-
-const USER_KEY = 'ppt_user';
 
 interface FormErrors {
   firstName?: string;
@@ -22,8 +22,7 @@ interface FormErrors {
 }
 
 export function ProfileEditPage() {
-  const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, setUser } = useAuth();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -59,11 +58,9 @@ export function ProfileEditPage() {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
         };
-        try {
-          localStorage.setItem(USER_KEY, JSON.stringify(updated));
-        } catch {
-          // Storage unavailable; the in-memory update still applies.
-        }
+        // setUser persists to storage AND updates in-memory auth state, so
+        // every consumer of the context re-renders with the new name.
+        setUser(updated);
         setSavedMessage('Profile updated.');
       } catch {
         setErrors({ general: 'Could not save profile. Please try again.' });
@@ -71,13 +68,12 @@ export function ProfileEditPage() {
         setIsSubmitting(false);
       }
     },
-    [firstName, lastName, user]
+    [firstName, lastName, user, setUser]
   );
 
   if (isLoading) return null;
   if (!isAuthenticated || !user) {
-    navigate('/login', { replace: true });
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return (
