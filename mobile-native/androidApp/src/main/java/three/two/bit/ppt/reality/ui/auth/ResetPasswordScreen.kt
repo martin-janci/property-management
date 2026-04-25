@@ -34,12 +34,11 @@ import kotlinx.coroutines.launch
 /**
  * Confirm password reset (UC-47.4 step 2).
  *
- * Reads the reset token from the deep link / nav arg and delegates the
- * actual call to the `onSubmit` callback. `Navigation.kt` wires that to
- * `SsoService.confirmPasswordReset`, which is currently a stub returning
- * `Result.failure("not_implemented")` — reality-server doesn't expose
- * the confirm endpoint yet. Failures surface via the error banner so the
- * user sees the not-yet-available message rather than a fake success.
+ * Reads the reset token from the deep link / nav arg and delegates the actual call to the
+ * `onSubmit` callback. `Navigation.kt` wires that to `SsoService.confirmPasswordReset`, which is
+ * currently a stub returning `Result.failure("not_implemented")` — reality-server doesn't expose
+ * the confirm endpoint yet. Failures surface via the error banner so the user sees the
+ * not-yet-available message rather than a fake success.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
