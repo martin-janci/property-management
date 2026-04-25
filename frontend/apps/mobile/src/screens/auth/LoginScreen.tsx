@@ -13,7 +13,12 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  onRegisterPress?: () => void;
+  onForgotPasswordPress?: () => void;
+}
+
+export function LoginScreen({ onRegisterPress, onForgotPasswordPress }: LoginScreenProps = {}) {
   const { t } = useTranslation();
   const { login, authenticateWithBiometric, biometricAvailable, biometricEnabled, isLoading } =
     useAuth();
@@ -123,7 +128,7 @@ export function LoginScreen() {
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
           </View>
 
-          <Pressable style={styles.forgotPassword}>
+          <Pressable style={styles.forgotPassword} onPress={onForgotPasswordPress}>
             <Text style={styles.forgotPasswordText}>{t('auth.forgotPassword')}</Text>
           </Pressable>
 
@@ -157,8 +162,10 @@ export function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>{t('auth.dontHaveAccount')}</Text>
-          <Pressable>
-            <Text style={styles.registerLink}>{t('auth.contactManager')}</Text>
+          <Pressable onPress={onRegisterPress}>
+            <Text style={styles.registerLink}>
+              {onRegisterPress ? t('auth.signUp', 'Sign up') : t('auth.contactManager')}
+            </Text>
           </Pressable>
         </View>
       </View>
