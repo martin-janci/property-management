@@ -165,3 +165,239 @@ impl std::fmt::Display for TenantRole {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn ctx(role: TenantRole) -> TenantContext {
+        TenantContext::new(Uuid::new_v4(), Uuid::new_v4(), role)
+    }
+
+    // ---- TenantRole::level ordering ----
+
+    #[test]
+    fn role_levels_form_a_strict_hierarchy() {
+        // Higher numbers = more privileges. Pin the ordering so any change
+        // to the level() function is caught.
+        assert!(TenantRole::SuperAdmin.level() > TenantRole::PlatformAdmin.level());
+        assert!(TenantRole::PlatformAdmin.level() > TenantRole::OrgAdmin.level());
+        assert!(TenantRole::OrgAdmin.level() > TenantRole::Manager.level());
+        assert!(TenantRole::Manager.level() > TenantRole::TechnicalManager.level());
+        assert!(TenantRole::TechnicalManager.level() > TenantRole::Owner.level());
+        assert!(TenantRole::Owner.level() > TenantRole::OwnerDelegate.level());
+        assert!(TenantRole::OwnerDelegate.level() > TenantRole::PropertyManager.level());
+        assert!(TenantRole::PropertyManager.level() > TenantRole::RealEstateAgent.level());
+        assert!(TenantRole::RealEstateAgent.level() > TenantRole::Tenant.level());
+        assert!(TenantRole::Tenant.level() > TenantRole::Resident.level());
+        assert!(TenantRole::Resident.level() > TenantRole::Guest.level());
+    }
+
+    // ---- is_admin / is_manager classification ----
+
+    #[test]
+    fn is_admin_includes_only_super_platform_org() {
+        assert!(TenantRole::SuperAdmin.is_admin());
+        assert!(TenantRole::PlatformAdmin.is_admin());
+        assert!(TenantRole::OrgAdmin.is_admin());
+
+        assert!(!TenantRole::Manager.is_admin());
+        assert!(!TenantRole::TechnicalManager.is_admin());
+        assert!(!TenantRole::Owner.is_admin());
+        assert!(!TenantRole::Tenant.is_admin());
+        assert!(!TenantRole::Guest.is_admin());
+    }
+
+    #[test]
+    fn is_manager_includes_admins_and_managers() {
+        assert!(TenantRole::SuperAdmin.is_manager());
+        assert!(TenantRole::PlatformAdmin.is_manager());
+        assert!(TenantRole::OrgAdmin.is_manager());
+        assert!(TenantRole::Manager.is_manager());
+        assert!(TenantRole::TechnicalManager.is_manager());
+
+        assert!(!TenantRole::Owner.is_manager());
+        assert!(!TenantRole::OwnerDelegate.is_manager());
+        assert!(!TenantRole::PropertyManager.is_manager());
+        assert!(!TenantRole::Tenant.is_manager());
+        assert!(!TenantRole::Resident.is_manager());
+        assert!(!TenantRole::Guest.is_manager());
+    }
+
+    // ---- TenantContext::has_role ----
+
+    #[test]
+    fn has_role_passes_for_higher_or_equal_levels() {
+        let ctx = ctx(TenantRole::OrgAdmin);
+        assert!(ctx.has_role(TenantRole::Guest));
+        assert!(ctx.has_role(TenantRole::Owner));
+        assert!(ctx.has_role(TenantRole::Manager));
+        assert!(ctx.has_role(TenantRole::OrgAdmin));
+        // Same level is allowed.
+        assert!(ctx.has_role(TenantRole::OrgAdmin));
+    }
+
+    #[test]
+    fn has_role_fails_for_higher_required_levels() {
+        let ctx = ctx(TenantRole::Tenant);
+        assert!(!ctx.has_role(TenantRole::Manager));
+        assert!(!ctx.has_role(TenantRole::OrgAdmin));
+        assert!(!ctx.has_role(TenantRole::SuperAdmin));
+    }
+
+    #[test]
+    fn has_role_guest_only_passes_for_guest() {
+        let ctx = ctx(TenantRole::Guest);
+        assert!(ctx.has_role(TenantRole::Guest));
+        assert!(!ctx.has_role(TenantRole::Resident));
+        assert!(!ctx.has_role(TenantRole::Tenant));
+    }
+
+    // ---- TenantContext::can_access_building_by_role ----
+
+    #[test]
+    fn admin_and_manager_roles_can_always_access_buildings() {
+        let building_id = Uuid::new_v4();
+        for role in [
+            TenantRole::SuperAdmin,
+            TenantRole::PlatformAdmin,
+            TenantRole::OrgAdmin,
+            TenantRole::Manager,
+            TenantRole::TechnicalManager,
+        ] {
+            let ctx = ctx(role);
+            assert_eq!(
+                ctx.can_access_building_by_role(building_id),
+                Some(true),
+                "role {:?} should always grant building access",
+                role
+            );
+        }
+    }
+
+    #[test]
+    fn guest_role_is_explicitly_denied() {
+        let ctx = ctx(TenantRole::Guest);
+        assert_eq!(ctx.can_access_building_by_role(Uuid::new_v4()), Some(false));
+    }
+
+    #[test]
+    fn other_roles_require_database_check() {
+        for role in [
+            TenantRole::Owner,
+            TenantRole::OwnerDelegate,
+            TenantRole::Tenant,
+            TenantRole::Resident,
+            TenantRole::PropertyManager,
+            TenantRole::RealEstateAgent,
+        ] {
+            let ctx = ctx(role);
+            assert_eq!(
+                ctx.can_access_building_by_role(Uuid::new_v4()),
+                None,
+                "role {:?} should require an async DB check",
+                role
+            );
+        }
+    }
+
+    // ---- TenantContext::new wiring ----
+
+    #[test]
+    fn new_preserves_ids_and_role() {
+        let tenant = Uuid::new_v4();
+        let user = Uuid::new_v4();
+        let ctx = TenantContext::new(tenant, user, TenantRole::Manager);
+
+        assert_eq!(ctx.tenant_id, tenant);
+        assert_eq!(ctx.user_id, user);
+        assert_eq!(ctx.role, TenantRole::Manager);
+    }
+
+    // ---- Display ----
+
+    #[test]
+    fn role_display_uses_human_readable_names() {
+        assert_eq!(TenantRole::SuperAdmin.to_string(), "Super Admin");
+        assert_eq!(TenantRole::PlatformAdmin.to_string(), "Platform Admin");
+        assert_eq!(TenantRole::OrgAdmin.to_string(), "Organization Admin");
+        assert_eq!(TenantRole::Manager.to_string(), "Manager");
+        assert_eq!(
+            TenantRole::TechnicalManager.to_string(),
+            "Technical Manager"
+        );
+        assert_eq!(TenantRole::Owner.to_string(), "Owner");
+        assert_eq!(TenantRole::OwnerDelegate.to_string(), "Owner Delegate");
+        assert_eq!(TenantRole::Tenant.to_string(), "Tenant");
+        assert_eq!(TenantRole::Resident.to_string(), "Resident");
+        assert_eq!(TenantRole::PropertyManager.to_string(), "Property Manager");
+        assert_eq!(TenantRole::RealEstateAgent.to_string(), "Real Estate Agent");
+        assert_eq!(TenantRole::Guest.to_string(), "Guest");
+    }
+
+    // ---- Serde JSON contract ----
+
+    #[test]
+    fn role_serializes_to_snake_case() {
+        // The enum is annotated with #[serde(rename_all = "snake_case")];
+        // pin that contract because JWT claims rely on it.
+        assert_eq!(
+            serde_json::to_string(&TenantRole::OrgAdmin).unwrap(),
+            "\"org_admin\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TenantRole::TechnicalManager).unwrap(),
+            "\"technical_manager\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TenantRole::OwnerDelegate).unwrap(),
+            "\"owner_delegate\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TenantRole::PropertyManager).unwrap(),
+            "\"property_manager\""
+        );
+        assert_eq!(
+            serde_json::to_string(&TenantRole::SuperAdmin).unwrap(),
+            "\"super_admin\""
+        );
+    }
+
+    #[test]
+    fn role_round_trips_through_json() {
+        for role in [
+            TenantRole::SuperAdmin,
+            TenantRole::PlatformAdmin,
+            TenantRole::OrgAdmin,
+            TenantRole::Manager,
+            TenantRole::TechnicalManager,
+            TenantRole::Owner,
+            TenantRole::OwnerDelegate,
+            TenantRole::Tenant,
+            TenantRole::Resident,
+            TenantRole::PropertyManager,
+            TenantRole::RealEstateAgent,
+            TenantRole::Guest,
+        ] {
+            let encoded = serde_json::to_string(&role).unwrap();
+            let decoded: TenantRole = serde_json::from_str(&encoded).unwrap();
+            assert_eq!(decoded, role);
+        }
+    }
+
+    #[test]
+    fn tenant_context_round_trips_through_json() {
+        let ctx = TenantContext::new(Uuid::nil(), Uuid::nil(), TenantRole::Manager);
+        let encoded = serde_json::to_string(&ctx).unwrap();
+        // Field names in the JSON should match what handlers like
+        // api-server's `extract_tenant_context` rely on.
+        assert!(encoded.contains("\"tenant_id\""));
+        assert!(encoded.contains("\"user_id\""));
+        assert!(encoded.contains("\"role\":\"manager\""));
+
+        let decoded: TenantContext = serde_json::from_str(&encoded).unwrap();
+        assert_eq!(decoded.tenant_id, ctx.tenant_id);
+        assert_eq!(decoded.user_id, ctx.user_id);
+        assert_eq!(decoded.role, ctx.role);
+    }
+}

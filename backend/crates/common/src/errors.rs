@@ -141,3 +141,166 @@ impl AppError {
         ErrorResponse::new(self.code(), self.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- ErrorResponse builders ----
+
+    #[test]
+    fn new_populates_required_fields_and_skips_optional() {
+        let resp = ErrorResponse::new("BAD_REQUEST", "missing email");
+        assert_eq!(resp.code, "BAD_REQUEST");
+        assert_eq!(resp.message, "missing email");
+        assert!(resp.request_id.is_none());
+        assert!(resp.details.is_none());
+    }
+
+    #[test]
+    fn timestamp_is_close_to_now() {
+        let before = chrono::Utc::now();
+        let resp = ErrorResponse::new("X", "y");
+        let after = chrono::Utc::now();
+        assert!(resp.timestamp >= before);
+        assert!(resp.timestamp <= after);
+    }
+
+    #[test]
+    fn with_request_id_sets_only_request_id() {
+        let resp = ErrorResponse::new("X", "y").with_request_id("req-123");
+        assert_eq!(resp.request_id.as_deref(), Some("req-123"));
+        assert!(resp.details.is_none());
+    }
+
+    #[test]
+    fn with_details_attaches_validation_errors() {
+        let details = vec![ValidationError {
+            field: "email".to_string(),
+            message: "invalid format".to_string(),
+            code: "INVALID_EMAIL".to_string(),
+        }];
+        let resp = ErrorResponse::new("VALIDATION_ERROR", "validation failed")
+            .with_details(details.clone());
+
+        let actual = resp.details.expect("details should be set");
+        assert_eq!(actual.len(), 1);
+        assert_eq!(actual[0].field, "email");
+        assert_eq!(actual[0].code, "INVALID_EMAIL");
+    }
+
+    #[test]
+    fn convenience_builders_use_documented_codes() {
+        assert_eq!(ErrorResponse::bad_request("x").code, "BAD_REQUEST");
+        assert_eq!(ErrorResponse::forbidden("x").code, "FORBIDDEN");
+        assert_eq!(ErrorResponse::not_found("x").code, "NOT_FOUND");
+        assert_eq!(ErrorResponse::internal_error("x").code, "INTERNAL_ERROR");
+    }
+
+    // ---- Serde contract ----
+
+    #[test]
+    fn error_response_skips_optional_fields_in_json() {
+        let resp = ErrorResponse::new("BAD_REQUEST", "missing email");
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"code\":\"BAD_REQUEST\""));
+        assert!(json.contains("\"message\":\"missing email\""));
+        assert!(!json.contains("request_id"));
+        assert!(!json.contains("details"));
+        assert!(json.contains("timestamp"));
+    }
+
+    #[test]
+    fn error_response_serializes_details_when_present() {
+        let resp = ErrorResponse::new("VALIDATION_ERROR", "bad input").with_details(vec![
+            ValidationError {
+                field: "email".to_string(),
+                message: "invalid".to_string(),
+                code: "INVALID".to_string(),
+            },
+        ]);
+        let json = serde_json::to_string(&resp).unwrap();
+        assert!(json.contains("\"details\""));
+        assert!(json.contains("\"field\":\"email\""));
+    }
+
+    // ---- AppError code mapping ----
+
+    #[test]
+    fn app_error_code_matches_variant() {
+        assert_eq!(AppError::BadRequest("x".into()).code(), "BAD_REQUEST");
+        assert_eq!(AppError::Unauthorized("x".into()).code(), "UNAUTHORIZED");
+        assert_eq!(AppError::Forbidden("x".into()).code(), "FORBIDDEN");
+        assert_eq!(AppError::NotFound("x".into()).code(), "NOT_FOUND");
+        assert_eq!(AppError::Conflict("x".into()).code(), "CONFLICT");
+        assert_eq!(
+            AppError::UnprocessableEntity("x".into()).code(),
+            "UNPROCESSABLE_ENTITY"
+        );
+        assert_eq!(AppError::RateLimitExceeded.code(), "RATE_LIMIT_EXCEEDED");
+        assert_eq!(AppError::Internal("x".into()).code(), "INTERNAL_ERROR");
+        assert_eq!(AppError::Database("x".into()).code(), "DATABASE_ERROR");
+        assert_eq!(
+            AppError::ExternalService("x".into()).code(),
+            "EXTERNAL_SERVICE_ERROR"
+        );
+    }
+
+    // ---- AppError status code mapping ----
+
+    #[test]
+    fn app_error_status_code_matches_http_semantics() {
+        assert_eq!(AppError::BadRequest("x".into()).status_code(), 400);
+        assert_eq!(AppError::Unauthorized("x".into()).status_code(), 401);
+        assert_eq!(AppError::Forbidden("x".into()).status_code(), 403);
+        assert_eq!(AppError::NotFound("x".into()).status_code(), 404);
+        assert_eq!(AppError::Conflict("x".into()).status_code(), 409);
+        assert_eq!(AppError::UnprocessableEntity("x".into()).status_code(), 422);
+        assert_eq!(AppError::RateLimitExceeded.status_code(), 429);
+        assert_eq!(AppError::Internal("x".into()).status_code(), 500);
+        assert_eq!(AppError::Database("x".into()).status_code(), 500);
+        assert_eq!(AppError::ExternalService("x".into()).status_code(), 500);
+    }
+
+    // ---- AppError -> ErrorResponse round-trip ----
+
+    #[test]
+    fn to_response_propagates_code_and_message() {
+        let err = AppError::NotFound("user not found".into());
+        let resp = err.to_response();
+
+        assert_eq!(resp.code, "NOT_FOUND");
+        // Display uses the `#[error(...)]` format string.
+        assert_eq!(resp.message, "Not found: user not found");
+        assert!(resp.details.is_none());
+    }
+
+    #[test]
+    fn to_response_handles_unit_variant() {
+        let resp = AppError::RateLimitExceeded.to_response();
+        assert_eq!(resp.code, "RATE_LIMIT_EXCEEDED");
+        assert_eq!(resp.message, "Rate limit exceeded");
+    }
+
+    // ---- Display impl from thiserror ----
+
+    #[test]
+    fn display_uses_thiserror_format_strings() {
+        assert_eq!(
+            AppError::BadRequest("missing field".into()).to_string(),
+            "Bad request: missing field"
+        );
+        assert_eq!(
+            AppError::Forbidden("admin only".into()).to_string(),
+            "Forbidden: admin only"
+        );
+        assert_eq!(
+            AppError::Internal("oops".into()).to_string(),
+            "Internal server error: oops"
+        );
+        assert_eq!(
+            AppError::RateLimitExceeded.to_string(),
+            "Rate limit exceeded"
+        );
+    }
+}
