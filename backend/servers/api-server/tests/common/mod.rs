@@ -215,9 +215,11 @@ impl TestResponse {
     /// Assert status code.
     pub fn assert_status(&self, expected: StatusCode) -> &Self {
         assert_eq!(
-            self.status, expected,
+            self.status,
+            expected,
             "Expected status {}, got {}. Body: {}",
-            expected, self.status,
+            expected,
+            self.status,
             self.text()
         );
         self
@@ -326,7 +328,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     // Register user
     let register_req = app
         .post("/api/v1/auth/register")
-        .json(&user.registration_body())
+        .json(user.registration_body())
         .build();
     let register_resp = app.execute(register_req).await;
     assert_eq!(register_resp.status, StatusCode::CREATED);
@@ -337,7 +339,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     // Login to get tokens
     let login_req = app
         .post("/api/v1/auth/login")
-        .json(&user.login_body())
+        .json(user.login_body())
         .build();
     let login_resp = app.execute(login_req).await;
     assert_eq!(login_resp.status, StatusCode::OK);

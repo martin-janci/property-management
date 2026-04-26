@@ -1,0 +1,401 @@
+//! Cross-route smoke tests for the api-server.
+//!
+//! These tests provide a thin contract layer over a wide set of endpoint
+//! groups (organizations UC-27, buildings UC-15, outages UC-12, messaging UC-05,
+//! announcements UC-02, listings UC-31). They verify that:
+//!
+//! - the routes are mounted under the expected paths,
+//! - anonymous traffic is rejected with a 4xx (typically 401),
+//! - public 404 / method-not-allowed responses are returned for non-existent
+//!   resources or unsupported HTTP verbs.
+//!
+//! They deliberately do not exercise the full authenticated workflow — those
+//! flows are covered by feature-specific test files that build complete
+//! organization + membership fixtures.
+
+#[allow(dead_code)]
+mod common;
+
+use axum::{
+    body::Body,
+    http::{header, Method, Request, StatusCode},
+};
+use serde_json::json;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use common::TestApp;
+
+fn empty_request(method: Method, uri: &str) -> Request<Body> {
+    Request::builder()
+        .method(method)
+        .uri(uri)
+        .body(Body::empty())
+        .unwrap()
+}
+
+fn json_request(method: Method, uri: &str, body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body.to_string()))
+        .unwrap()
+}
+
+/// Status codes that are acceptable for an unauthenticated request to a
+/// protected route. We accept any 4xx response in the auth/validation range
+/// to keep the tests resilient to small differences between extractor
+/// orderings (e.g. RlsConnection vs. handler-level header checks).
+fn assert_protected(actual: StatusCode) {
+    assert!(
+        actual == StatusCode::UNAUTHORIZED
+            || actual == StatusCode::FORBIDDEN
+            || actual == StatusCode::BAD_REQUEST,
+        "Expected protected route to return 4xx auth/validation error, got {}",
+        actual,
+    );
+}
+
+// =============================================================================
+// Organizations (UC-27)
+// =============================================================================
+
+#[cfg(test)]
+mod organizations {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_list_organizations_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/organizations"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_create_organization_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let body = json!({
+            "name": "My Org",
+            "contact_email": "owner@example.com"
+        });
+
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/organizations", body))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_my_organizations_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/organizations/my"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_get_organization_with_invalid_uuid_returns_400(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(
+                Method::GET,
+                "/api/v1/organizations/not-a-uuid",
+            ))
+            .await;
+        assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    }
+}
+
+// =============================================================================
+// Buildings (UC-15)
+// =============================================================================
+
+#[cfg(test)]
+mod buildings {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_list_buildings_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/buildings"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_create_building_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let body = json!({
+            "organization_id": Uuid::new_v4(),
+            "street": "Main 1",
+            "city": "Bratislava",
+            "postal_code": "81101"
+        });
+
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/buildings", body))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_get_building_with_invalid_uuid_returns_400(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/buildings/not-a-uuid"))
+            .await;
+        assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[sqlx::test]
+    async fn test_list_units_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let building_id = Uuid::new_v4();
+        let response = app
+            .execute(empty_request(
+                Method::GET,
+                &format!("/api/v1/buildings/{}/units", building_id),
+            ))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_building_statistics_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let building_id = Uuid::new_v4();
+        let response = app
+            .execute(empty_request(
+                Method::GET,
+                &format!("/api/v1/buildings/{}/statistics", building_id),
+            ))
+            .await;
+        assert_protected(response.status);
+    }
+}
+
+// =============================================================================
+// Outages (UC-12)
+// =============================================================================
+
+#[cfg(test)]
+mod outages {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_list_outages_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/outages"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_active_outages_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/outages/active"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_outage_dashboard_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/outages/dashboard"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_create_outage_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let body = json!({"title": "Power outage"});
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/outages", body))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_outage_unread_count_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/outages/unread-count"))
+            .await;
+        assert_protected(response.status);
+    }
+}
+
+// =============================================================================
+// Messaging (UC-05) and Announcements (UC-02)
+// =============================================================================
+
+#[cfg(test)]
+mod messaging_and_announcements {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_messages_root_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/messages"))
+            .await;
+        // Some routes return 404 if the GET method isn't registered on root,
+        // but anything else must be a protected error.
+        assert!(
+            response.status == StatusCode::NOT_FOUND
+                || response.status == StatusCode::METHOD_NOT_ALLOWED
+                || response.status == StatusCode::UNAUTHORIZED
+                || response.status == StatusCode::FORBIDDEN
+                || response.status == StatusCode::BAD_REQUEST,
+            "Unexpected status for /api/v1/messages: {}",
+            response.status
+        );
+    }
+
+    #[sqlx::test]
+    async fn test_announcements_list_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/announcements"))
+            .await;
+        assert_protected(response.status);
+    }
+
+    #[sqlx::test]
+    async fn test_announcements_create_requires_auth(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let body = json!({"title": "Hello", "body": "Test"});
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/announcements", body))
+            .await;
+        assert_protected(response.status);
+    }
+}
+
+// =============================================================================
+// 404 / Method Tests
+// =============================================================================
+
+#[cfg(test)]
+mod routing {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_unknown_top_level_route_returns_404(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(Method::GET, "/api/v1/no-such-resource"))
+            .await;
+        assert_eq!(response.status, StatusCode::NOT_FOUND);
+    }
+
+    #[sqlx::test]
+    async fn test_unknown_nested_route_returns_404(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app
+            .execute(empty_request(
+                Method::GET,
+                "/api/v1/organizations/00000000-0000-0000-0000-000000000000/no-such-resource",
+            ))
+            .await;
+        assert!(
+            response.status == StatusCode::NOT_FOUND
+                || response.status == StatusCode::METHOD_NOT_ALLOWED
+                || response.status == StatusCode::UNAUTHORIZED,
+            "Unexpected status for unknown nested route: {}",
+            response.status
+        );
+    }
+
+    #[sqlx::test]
+    async fn test_root_returns_404_or_redirect(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+        let response = app.execute(empty_request(Method::GET, "/")).await;
+        assert!(
+            response.status == StatusCode::NOT_FOUND
+                || response.status.is_redirection()
+                || response.status == StatusCode::OK,
+            "Unexpected status for root: {}",
+            response.status
+        );
+    }
+}
+
+// =============================================================================
+// Auth endpoints — additional negative cases
+// =============================================================================
+
+#[cfg(test)]
+mod auth_negative_cases {
+    use super::*;
+
+    #[sqlx::test]
+    async fn test_login_rejects_unknown_field_only_payload(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let body = json!({"unrelated": "field"});
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/auth/login", body))
+            .await;
+        assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[sqlx::test]
+    async fn test_register_rejects_array_body(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/api/v1/auth/register")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(r#"["not", "an", "object"]"#))
+            .unwrap();
+
+        let response = app.execute(request).await;
+        assert_eq!(response.status, StatusCode::BAD_REQUEST);
+    }
+
+    #[sqlx::test]
+    async fn test_refresh_with_empty_string_token_is_rejected(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let body = json!({"refresh_token": ""});
+        let response = app
+            .execute(json_request(Method::POST, "/api/v1/auth/refresh", body))
+            .await;
+
+        assert!(
+            response.status == StatusCode::BAD_REQUEST
+                || response.status == StatusCode::UNAUTHORIZED,
+            "Empty refresh token should be rejected, got {}",
+            response.status,
+        );
+    }
+
+    #[sqlx::test]
+    async fn test_logout_with_malformed_bearer_is_rejected(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/api/v1/auth/logout")
+            .header(header::AUTHORIZATION, "Token abc")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(json!({"refresh_token": "x"}).to_string()))
+            .unwrap();
+
+        let response = app.execute(request).await;
+        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
+    }
+}
