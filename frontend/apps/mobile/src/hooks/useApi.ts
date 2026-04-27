@@ -34,6 +34,39 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
+/**
+ * Decode a JWT payload without verifying the signature.
+ *
+ * Verification happens server-side; the client only needs the payload to
+ * extract the `tenant_id` claim that goes into the `X-Tenant-ID` header
+ * (used by tenant-scoped routes such as `/voting`, `/buildings`, …).
+ *
+ * Returns `null` if the token is malformed or doesn't contain a payload.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    // Convert base64url → base64 so atob can decode it. React Native ships
+    // a global `atob`, so we rely on it instead of pulling in `Buffer`.
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
+    const json = atob(padded + padding);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Pull the tenant id from the current access token, or null if missing. */
+async function getTenantId(): Promise<string | null> {
+  const token = await getAccessToken();
+  if (!token) return null;
+  const claims = decodeJwtPayload(token);
+  const value = claims?.tenant_id;
+  return typeof value === 'string' ? value : null;
+}
+
 interface RequestOptions {
   signal?: AbortSignal;
   headers?: Record<string, string>;
@@ -46,12 +79,17 @@ export async function apiRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const accessToken = await getAccessToken();
+  const tenantId = await getTenantId();
   const url = path.startsWith('http') ? path : `${getApiBaseUrl()}${path}`;
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
     ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    // Tenant-scoped api-server routes (RlsConnection extractor) require
+    // the X-Tenant-ID header. The value comes from the JWT's `tenant_id`
+    // claim so requests stay scoped to whichever org the user logged into.
+    ...(tenantId ? { 'X-Tenant-ID': tenantId } : {}),
     ...(init.headers as Record<string, string> | undefined),
     ...options.headers,
   };

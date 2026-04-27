@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
 export type VoteType = 'simple' | 'multiple' | 'weighted' | 'ranked';
@@ -29,83 +30,87 @@ export interface Vote {
   createdBy: string;
 }
 
-// Mock data
-const mockVotes: Vote[] = [
-  {
-    id: '1',
-    title: 'Elevator Renovation Proposal',
-    description:
-      'Vote on the proposed elevator modernization project. The renovation includes new control systems, improved safety features, and energy-efficient motors.',
-    status: 'active',
+/** Subset of `VoteSummary` from `GET /api/v1/voting`. */
+interface ApiVoteSummary {
+  id: string;
+  building_id: string;
+  title: string;
+  status: string;
+  end_at: string;
+  quorum_type: string;
+  participation_count?: number | null;
+  eligible_count?: number | null;
+  quorum_met?: boolean | null;
+}
+
+/** Map the api-server's status string onto the UI's narrowed enum. */
+function toUiStatus(status: string): VoteStatus {
+  switch (status) {
+    case 'active':
+    case 'open':
+      return 'active';
+    case 'closed':
+    case 'cancelled':
+      return 'closed';
+    default:
+      return 'pending';
+  }
+}
+
+/** The list endpoint only returns summaries — no questions/options/results
+ *  detail. The screen still renders, but inline voting is disabled until
+ *  the user navigates into the (future) detail screen. */
+function toUiVote(s: ApiVoteSummary): Vote {
+  const total = s.participation_count ?? 0;
+  return {
+    id: s.id,
+    title: s.title,
+    description: '',
+    status: toUiStatus(s.status),
     type: 'simple',
-    options: [
-      { id: 'yes', label: 'Yes - Approve renovation', votes: 45, percentage: 60 },
-      { id: 'no', label: 'No - Decline proposal', votes: 30, percentage: 40 },
-    ],
-    startsAt: '2025-12-20T00:00:00Z',
-    endsAt: '2025-12-30T23:59:59Z',
-    totalVotes: 75,
-    requiredQuorum: 100,
-    currentQuorum: 75,
+    options: [],
+    startsAt: '',
+    endsAt: s.end_at,
+    totalVotes: total,
+    requiredQuorum: s.eligible_count ?? 0,
+    currentQuorum: total,
     hasVoted: false,
     createdBy: 'Building Management',
-  },
-  {
-    id: '2',
-    title: 'New Board Member Election',
-    description: 'Vote for the new board member position. Each owner can vote for one candidate.',
-    status: 'active',
-    type: 'simple',
-    options: [
-      { id: 'a', label: 'John Smith', votes: 35, percentage: 44 },
-      { id: 'b', label: 'Maria Garcia', votes: 28, percentage: 35 },
-      { id: 'c', label: 'Peter Johnson', votes: 17, percentage: 21 },
-    ],
-    startsAt: '2025-12-15T00:00:00Z',
-    endsAt: '2025-12-28T23:59:59Z',
-    totalVotes: 80,
-    requiredQuorum: 100,
-    currentQuorum: 80,
-    hasVoted: true,
-    userVote: 'a',
-    createdBy: 'Building Management',
-  },
-  {
-    id: '3',
-    title: 'Parking Space Allocation',
-    description: 'Closed vote on new parking space allocation policy.',
-    status: 'closed',
-    type: 'simple',
-    options: [
-      { id: 'rotate', label: 'Rotating system', votes: 65, percentage: 65 },
-      { id: 'fixed', label: 'Fixed assignment', votes: 35, percentage: 35 },
-    ],
-    startsAt: '2025-12-01T00:00:00Z',
-    endsAt: '2025-12-15T23:59:59Z',
-    totalVotes: 100,
-    requiredQuorum: 80,
-    currentQuorum: 100,
-    hasVoted: true,
-    userVote: 'rotate',
-    createdBy: 'Building Management',
-  },
-];
+  };
+}
 
 interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
+interface ApiVoteListResponse {
+  votes: ApiVoteSummary[];
+  total?: number;
+}
+
 export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
   const { t } = useTranslation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [votes, setVotes] = useState<Vote[]>(mockVotes);
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
+  // Voting routes use `RlsConnection` and require both Authorization and
+  // X-Tenant-ID — both are sent by `useApiQuery` (the latter pulled from
+  // the JWT's `tenant_id` claim).
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiVoteListResponse>(
+    ['voting', 'list'],
+    '/api/v1/voting',
+    { staleTime: 30_000 }
+  );
+
+  // The list endpoint may return either an array or `{ votes: [...] }`
+  // depending on backend version — accept both.
+  const apiVotes: ApiVoteSummary[] = Array.isArray(data)
+    ? (data as unknown as ApiVoteSummary[])
+    : (data?.votes ?? []);
+  const votes: Vote[] = apiVotes.map(toUiVote);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const getStatusColor = (status: VoteStatus): string => {
     switch (status) {
@@ -142,35 +147,11 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
     return t('voting.timeLeftMinutes', { minutes });
   };
 
-  const handleVote = (voteId: string, optionId: string) => {
-    Alert.alert(t('voting.confirmVoteTitle'), t('voting.confirmVoteMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('voting.vote'),
-        onPress: () => {
-          setVotes((prev) =>
-            prev.map((v) => {
-              if (v.id !== voteId) return v;
-              return {
-                ...v,
-                hasVoted: true,
-                userVote: optionId,
-                options: v.options.map((o) => ({
-                  ...o,
-                  votes: o.id === optionId ? o.votes + 1 : o.votes,
-                  percentage: Math.round(
-                    ((o.id === optionId ? o.votes + 1 : o.votes) / (v.totalVotes + 1)) * 100
-                  ),
-                })),
-                totalVotes: v.totalVotes + 1,
-                currentQuorum: v.currentQuorum + 1,
-              };
-            })
-          );
-          Alert.alert(t('voting.successTitle'), t('voting.successMessage'));
-        },
-      },
-    ]);
+  // Inline voting from the list view requires the question/option detail
+  // that only the per-vote endpoint returns. Until VoteDetailScreen exists,
+  // tapping an option just nudges the user to the (future) detail view.
+  const handleVote = (_voteId: string, _optionId: string) => {
+    Alert.alert(t('voting.confirmVoteTitle'), t('voting.openDetailToVote'));
   };
 
   const filteredVotes = votes.filter((v) => {
@@ -213,10 +194,20 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor="#2563eb" />
         }
       >
-        {filteredVotes.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>{t('common.loading') ?? 'Loading…'}</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>{t('voting.loadError') ?? "Couldn't load votes"}</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredVotes.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🗳️</Text>
             <Text style={styles.emptyTitle}>{t('voting.emptyTitle')}</Text>
