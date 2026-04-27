@@ -64,10 +64,17 @@ impl TestApp {
         // request that carries a Bearer token would surface as 500 instead
         // of the expected 401/403.
         //
-        // SAFETY: `set_var` is process-wide; every TestApp uses the same
-        // default `TestConfig::jwt_secret`, so concurrent tests within a
-        // single binary all observe a consistent value.
-        std::env::set_var("JWT_SECRET", &config.jwt_secret);
+        // `set_var` is not thread-safe on glibc when called concurrently
+        // with `getenv`, so we only call it once per process via `Once`.
+        // Every TestApp uses the same default `TestConfig::jwt_secret`,
+        // so this is enough for all tests in the binary to observe a
+        // consistent value.
+        static JWT_SECRET_ONCE: std::sync::Once = std::sync::Once::new();
+        JWT_SECRET_ONCE.call_once(|| {
+            if std::env::var("JWT_SECRET").is_err() {
+                std::env::set_var("JWT_SECRET", &config.jwt_secret);
+            }
+        });
 
         let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
         let jwt_service =
