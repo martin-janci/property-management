@@ -12,15 +12,13 @@ import kotlinx.serialization.json.Json
 /**
  * Contract tests for the listing-domain DTOs.
  *
- * The reality-server controls the JSON shape; these tests pin the client-side
- * mapping so any drift in the OpenAPI generator output, the @SerialName
- * annotations, or the manual model edits is caught at build time. They cover:
- *
+ * The reality-server controls the JSON shape; these tests pin the client-side mapping so any drift
+ * in the OpenAPI generator output, the @SerialName annotations, or the manual model edits is caught
+ * at build time. They cover:
  * - Snake_case <-> camelCase mapping for fields like primary_image, price_per_sqm.
  * - Round-trip stability for ListingDetail and ListingSummary.
  * - Decoding of API responses with optional / missing fields.
- * - SerialName mapping for ListingType, PropertyCategory, ListingStatus,
- *   ListingSortOption.
+ * - SerialName mapping for ListingType, PropertyCategory, ListingStatus, ListingSortOption.
  */
 class ListingModelsContractTest {
 
@@ -133,7 +131,7 @@ class ListingModelsContractTest {
         assertEquals(ListingStatus.ACTIVE, summary.status)
         assertEquals(250_000L, summary.price)
         assertEquals("EUR", summary.currency) // default
-        assertEquals(0, summary.imageCount)   // default
+        assertEquals(0, summary.imageCount) // default
         assertNull(summary.primaryImage)
         assertNull(summary.realtor)
     }
@@ -215,7 +213,10 @@ class ListingModelsContractTest {
 
         // With encodeDefaults = false, page/page_size/sort defaults should not be emitted.
         assertTrue(encoded.contains("\"query\":\"bratislava\""))
-        assertTrue(!encoded.contains("\"page_size\""), "page_size default should be omitted: $encoded")
+        assertTrue(
+            !encoded.contains("\"page_size\""),
+            "page_size default should be omitted: $encoded"
+        )
         assertTrue(!encoded.contains("\"sort\""), "sort default should be omitted: $encoded")
     }
 

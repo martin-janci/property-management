@@ -12,9 +12,9 @@ import kotlinx.serialization.json.Json
 /**
  * Contract tests for the favorites + saved-search DTOs.
  *
- * Pins the JSON shape that the reality-server returns for the
- * /api/v1/favorites and /api/v1/saved-searches endpoints so the
- * client-side @SerialName annotations can't drift unnoticed.
+ * Pins the JSON shape that the reality-server returns for the /api/v1/favorites and
+ * /api/v1/saved-searches endpoints so the client-side @SerialName annotations can't drift
+ * unnoticed.
  */
 class FavoritesModelsContractTest {
 
@@ -74,7 +74,10 @@ class FavoritesModelsContractTest {
     fun addFavoriteRequest_encodes_listing_id_in_snake_case() {
         val request = AddFavoriteRequest(listingId = "lst-42")
         val encoded = json.encodeToString(request)
-        assertTrue(encoded.contains("\"listing_id\":\"lst-42\""), "missing snake_case key: $encoded")
+        assertTrue(
+            encoded.contains("\"listing_id\":\"lst-42\""),
+            "missing snake_case key: $encoded"
+        )
         assertTrue(!encoded.contains("listingId"), "leaked camelCase key: $encoded")
     }
 
@@ -140,7 +143,7 @@ class FavoritesModelsContractTest {
                 .trimIndent()
         val ss: SavedSearch = json.decodeFromString(raw)
         assertEquals(false, ss.alertEnabled) // default
-        assertEquals(0, ss.newCount)         // default
+        assertEquals(0, ss.newCount) // default
         assertNull(ss.query)
         assertNull(ss.filters)
         assertNull(ss.lastNotifiedAt)

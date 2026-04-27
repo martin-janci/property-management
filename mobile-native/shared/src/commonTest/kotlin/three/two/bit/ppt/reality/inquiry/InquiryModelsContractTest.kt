@@ -12,8 +12,8 @@ import kotlinx.serialization.json.Json
 /**
  * Contract tests for the inquiry + viewing-request DTOs.
  *
- * Pins the JSON shape that the reality-server returns for the
- * /api/v1/inquiries and /api/v1/viewings endpoints.
+ * Pins the JSON shape that the reality-server returns for the /api/v1/inquiries and
+ * /api/v1/viewings endpoints.
  */
 class InquiryModelsContractTest {
 

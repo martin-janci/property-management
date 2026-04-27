@@ -11,8 +11,8 @@ import kotlinx.serialization.json.Json
 /**
  * Contract tests for the notifications + push-token + alerts DTOs.
  *
- * Pins the JSON shape that the reality-server uses for the notifications
- * surface and the saved-search alert configuration.
+ * Pins the JSON shape that the reality-server uses for the notifications surface and the
+ * saved-search alert configuration.
  */
 class NotificationModelsContractTest {
 
@@ -29,10 +29,7 @@ class NotificationModelsContractTest {
     fun notificationType_uses_snake_case_serial_names() {
         assertEquals("\"new_listing\"", json.encodeToString(NotificationType.NEW_LISTING))
         assertEquals("\"price_drop\"", json.encodeToString(NotificationType.PRICE_DROP))
-        assertEquals(
-            "\"inquiry_response\"",
-            json.encodeToString(NotificationType.INQUIRY_RESPONSE)
-        )
+        assertEquals("\"inquiry_response\"", json.encodeToString(NotificationType.INQUIRY_RESPONSE))
         assertEquals("\"listing_update\"", json.encodeToString(NotificationType.LISTING_UPDATE))
         assertEquals("\"favorite_sold\"", json.encodeToString(NotificationType.FAVORITE_SOLD))
         assertEquals("\"system\"", json.encodeToString(NotificationType.SYSTEM))
@@ -131,7 +128,10 @@ class NotificationModelsContractTest {
                 deviceId = "device-uuid-123"
             )
         val encoded = json.encodeToString(request)
-        assertTrue(encoded.contains("\"device_id\":\"device-uuid-123\""), "missing snake_case: $encoded")
+        assertTrue(
+            encoded.contains("\"device_id\":\"device-uuid-123\""),
+            "missing snake_case: $encoded"
+        )
         assertTrue(encoded.contains("\"platform\":\"ios\""))
     }
 
@@ -181,8 +181,7 @@ class NotificationModelsContractTest {
                 listingUpdates = true,
                 marketing = true
             )
-        val decoded: NotificationPreferences =
-            json.decodeFromString(json.encodeToString(prefs))
+        val decoded: NotificationPreferences = json.decodeFromString(json.encodeToString(prefs))
         assertEquals(prefs, decoded)
     }
 
