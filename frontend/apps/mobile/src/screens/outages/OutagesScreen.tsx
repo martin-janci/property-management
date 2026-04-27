@@ -6,6 +6,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export type OutageCommodity = 'water' | 'electricity' | 'gas' | 'heat' | 'internet';
@@ -23,38 +24,34 @@ export interface Outage {
   endsAt: string;
 }
 
-const MOCK_OUTAGES: Outage[] = [
-  {
-    id: 'o1',
-    commodity: 'water',
-    title: 'Cold water shutdown — pipe replacement',
-    description: 'Cold water supply will be unavailable in floors 1–6 during the maintenance.',
-    status: 'scheduled',
-    severity: 'medium',
-    startsAt: '2026-04-26T08:00:00Z',
-    endsAt: '2026-04-26T13:00:00Z',
-  },
-  {
-    id: 'o2',
-    commodity: 'electricity',
-    title: 'Common-area electricity test',
-    description: 'Brief electricity interruption in hallways and the lobby (about 15 minutes).',
-    status: 'scheduled',
-    severity: 'low',
-    startsAt: '2026-05-02T09:00:00Z',
-    endsAt: '2026-05-02T09:30:00Z',
-  },
-  {
-    id: 'o3',
-    commodity: 'heat',
-    title: 'Annual heating-system shutdown',
-    description: 'End-of-season shutdown of the central heating loop. No heating until October.',
-    status: 'in_progress',
-    severity: 'low',
-    startsAt: '2026-04-15T00:00:00Z',
-    endsAt: '2026-10-01T00:00:00Z',
-  },
-];
+interface ApiOutage {
+  id: string;
+  commodity: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  severity?: string | null;
+  starts_at: string;
+  ends_at: string;
+}
+
+interface ApiOutageListResponse {
+  outages: ApiOutage[];
+  total?: number;
+}
+
+function toUiOutage(o: ApiOutage): Outage {
+  return {
+    id: o.id,
+    commodity: (o.commodity as OutageCommodity) ?? 'water',
+    title: o.title,
+    description: o.description ?? '',
+    status: (o.status as OutageStatus) ?? 'scheduled',
+    severity: (o.severity as OutageSeverity) ?? 'low',
+    startsAt: o.starts_at,
+    endsAt: o.ends_at,
+  };
+}
 
 function commodityIcon(commodity: OutageCommodity): string {
   switch (commodity) {
@@ -102,18 +99,23 @@ interface OutagesScreenProps {
 }
 
 export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | OutageStatus>('all');
 
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiOutageListResponse>(
+    ['outages', 'list'],
+    '/api/v1/outages',
+    { staleTime: 30_000 }
+  );
+
+  const outages: Outage[] = (data?.outages ?? []).map(toUiOutage);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const filtered = useMemo(
-    () => (filter === 'all' ? MOCK_OUTAGES : MOCK_OUTAGES.filter((o) => o.status === filter)),
-    [filter]
+    () => (filter === 'all' ? outages : outages.filter((o) => o.status === filter)),
+    [outages, filter]
   );
 
   const filters: ReadonlyArray<{ value: 'all' | OutageStatus; label: string }> = [
@@ -150,9 +152,19 @@ export function OutagesScreen({ onNavigate }: OutagesScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load outages</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+          </View>
+        ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>✅</Text>
             <Text style={s.emptyTitle}>No outages</Text>

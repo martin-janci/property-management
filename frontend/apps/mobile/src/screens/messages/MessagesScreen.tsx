@@ -1,46 +1,49 @@
 /**
  * MessagesScreen (UC-05).
  *
- * Lists message threads for the signed-in user. Renders mock data until the
- * mobile app wires `@ppt/api-client/messaging` hooks (see ppt-web for the
- * fully-wired version).
+ * Lists message threads for the signed-in user against the api-server's
+ * `/api/v1/messages/threads` endpoint.
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-export interface MessageThread {
+/** Shape returned by `GET /api/v1/messages/threads`. Mirrors
+ *  `@ppt/api-client/messaging`'s `ThreadWithPreview`, kept inline so we
+ *  don't pull in the whole web-targeted client just for types. */
+interface ParticipantInfo {
   id: string;
-  participantName: string;
-  lastMessage: string;
-  lastMessageAt: string;
-  unreadCount: number;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
-const MOCK_THREADS: MessageThread[] = [
-  {
-    id: 't1',
-    participantName: 'Building manager',
-    lastMessage: 'The plumber will arrive tomorrow at 9am.',
-    lastMessageAt: '2026-04-23T16:42:00Z',
-    unreadCount: 2,
-  },
-  {
-    id: 't2',
-    participantName: 'Anna Novak (Apt 3B)',
-    lastMessage: 'Sure, I can take in your package this afternoon.',
-    lastMessageAt: '2026-04-22T11:00:00Z',
-    unreadCount: 0,
-  },
-  {
-    id: 't3',
-    participantName: 'Cleaning service',
-    lastMessage: 'We have rescheduled the lobby cleaning to Friday.',
-    lastMessageAt: '2026-04-20T08:15:00Z',
-    unreadCount: 1,
-  },
-];
+interface MessagePreview {
+  id: string;
+  content: string;
+  senderId: string;
+  isFromMe: boolean;
+  createdAt: string;
+}
+
+interface ThreadWithPreview {
+  id: string;
+  organizationId: string;
+  participantIds: string[];
+  otherParticipant: ParticipantInfo;
+  lastMessage: MessagePreview | null;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ThreadListResponse {
+  threads: ThreadWithPreview[];
+  total: number;
+  hasMore: boolean;
+}
 
 function formatRelative(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -53,31 +56,41 @@ function formatRelative(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function participantName(p: ParticipantInfo): string {
+  const full = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+  return full || p.email;
+}
+
 interface MessagesScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setRefreshing(false);
-  }, []);
-
-  const filtered = useMemo(
-    () =>
-      MOCK_THREADS.filter((t) =>
-        search.trim() === ''
-          ? true
-          : `${t.participantName} ${t.lastMessage}`.toLowerCase().includes(search.toLowerCase())
-      ),
-    [search]
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ThreadListResponse>(
+    ['messages', 'threads'],
+    '/api/v1/messages/threads',
+    { staleTime: 30_000 }
   );
 
-  const unreadTotal = MOCK_THREADS.reduce((acc, t) => acc + t.unreadCount, 0);
+  const threads = data?.threads ?? [];
+
+  const onRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return threads;
+    return threads.filter((t) =>
+      `${participantName(t.otherParticipant)} ${t.lastMessage?.content ?? ''}`
+        .toLowerCase()
+        .includes(needle)
+    );
+  }, [threads, search]);
+
+  const unreadTotal = threads.reduce((acc, t) => acc + t.unreadCount, 0);
 
   return (
     <View style={s.container}>
@@ -101,39 +114,55 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load messages</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+            <Pressable style={s.primaryButton} onPress={() => refetch()}>
+              <Text style={s.primaryButtonText}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📬</Text>
             <Text style={s.emptyTitle}>No conversations</Text>
             <Text style={s.emptyText}>Start a conversation with your manager or neighbours.</Text>
           </View>
         ) : (
-          filtered.map((thread) => (
-            <Pressable
-              key={thread.id}
-              style={s.card}
-              onPress={() => onNavigate?.('ThreadDetail', { threadId: thread.id })}
-            >
-              <View style={s.cardHeader}>
-                <Text style={s.cardTitle} numberOfLines={1}>
-                  {thread.participantName}
-                </Text>
-                <Text style={s.cardMeta}>{formatRelative(thread.lastMessageAt)}</Text>
-              </View>
-              <Text style={s.cardBody} numberOfLines={2}>
-                {thread.lastMessage}
-              </Text>
-              {thread.unreadCount > 0 && (
-                <View style={s.cardFooter}>
-                  <View style={[s.badge, { backgroundColor: colors.accent }]}>
-                    <Text style={[s.badgeText, { color: '#fff' }]}>{thread.unreadCount} new</Text>
-                  </View>
+          filtered.map((thread) => {
+            const lastAt = thread.lastMessage?.createdAt ?? thread.updatedAt;
+            return (
+              <Pressable
+                key={thread.id}
+                style={s.card}
+                onPress={() => onNavigate?.('ThreadDetail', { threadId: thread.id })}
+              >
+                <View style={s.cardHeader}>
+                  <Text style={s.cardTitle} numberOfLines={1}>
+                    {participantName(thread.otherParticipant)}
+                  </Text>
+                  <Text style={s.cardMeta}>{formatRelative(lastAt)}</Text>
                 </View>
-              )}
-            </Pressable>
-          ))
+                <Text style={s.cardBody} numberOfLines={2}>
+                  {thread.lastMessage?.content ?? 'No messages yet.'}
+                </Text>
+                {thread.unreadCount > 0 && (
+                  <View style={s.cardFooter}>
+                    <View style={[s.badge, { backgroundColor: colors.accent }]}>
+                      <Text style={[s.badgeText, { color: '#fff' }]}>{thread.unreadCount} new</Text>
+                    </View>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })
         )}
 
         <Pressable style={s.primaryButton} onPress={() => onNavigate?.('NewMessage')}>

@@ -253,6 +253,13 @@ describe('useOfflineSupport integration', () => {
     it('drains successful actions, updates lastSyncTime, and reports progress', async () => {
       const { result } = await mountHook();
 
+      // executeQueuedAction now actually calls fetch, so mock a 200
+      // response per queued action.
+      const fetchMock = jest
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
       await act(async () => {
         await result.current.addToQueue({ type: 'CREATE', endpoint: '/a', method: 'POST' });
         await result.current.addToQueue({ type: 'CREATE', endpoint: '/b', method: 'POST' });
@@ -267,6 +274,7 @@ describe('useOfflineSupport integration', () => {
         });
       });
 
+      expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(outcome).toEqual({ success: 2, failed: 0 });
       expect(await result.current.getQueuedActions()).toEqual([]);
       await waitFor(() => expect(result.current.queuedActionsCount).toBe(0));
@@ -302,6 +310,59 @@ describe('useOfflineSupport integration', () => {
       // Action is still queued because we never tried to dispatch it.
       const queue = await result.current.getQueuedActions();
       expect(queue).toHaveLength(1);
+    });
+
+    it('drops a permanently-failed (4xx) action without burning the retry budget', async () => {
+      const { result } = await mountHook();
+
+      const fetchMock = jest
+        .fn()
+        .mockResolvedValue({ ok: false, status: 422, json: async () => ({}) });
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      await act(async () => {
+        await result.current.addToQueue({
+          type: 'CREATE',
+          endpoint: '/api/v1/faults',
+          method: 'POST',
+        });
+      });
+
+      let outcome: { success: number; failed: number } | undefined;
+      await act(async () => {
+        outcome = await result.current.processQueue();
+      });
+
+      // One call (no retries — 422 is permanent), action is now in the
+      // failed bucket and gone from the queue.
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(outcome).toEqual({ success: 0, failed: 1 });
+      expect(await result.current.getQueuedActions()).toEqual([]);
+    });
+
+    it('retries a transient (5xx) failure up to the retry budget', async () => {
+      const { result } = await mountHook();
+
+      const fetchMock = jest
+        .fn()
+        .mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+      await act(async () => {
+        await result.current.addToQueue({
+          type: 'CREATE',
+          endpoint: '/api/v1/faults',
+          method: 'POST',
+        });
+      });
+
+      // First processQueue increments retries to 1; action remains.
+      await act(async () => {
+        await result.current.processQueue();
+      });
+      const queue = await result.current.getQueuedActions();
+      expect(queue).toHaveLength(1);
+      expect(queue[0].retries).toBe(1);
     });
 
     it('handles an empty queue without setting lastSyncTime or emitting progress', async () => {

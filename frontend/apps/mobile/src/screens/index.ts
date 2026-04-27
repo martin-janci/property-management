@@ -37,7 +37,6 @@ export type { Fault, FaultStatus, FaultPriority, FaultCategory } from './faults'
 export type { Announcement, AnnouncementCategory, AnnouncementAttachment } from './announcements';
 export type { Vote, VoteStatus, VoteType, VoteOption } from './voting';
 export type { Document, DocumentType } from './documents';
-export type { MessageThread } from './messages';
 export type { Neighbor } from './neighbors';
 export type { AppNotification, NotificationCategory } from './notifications';
 export type { Meter, MeterCommodity } from './meters';
