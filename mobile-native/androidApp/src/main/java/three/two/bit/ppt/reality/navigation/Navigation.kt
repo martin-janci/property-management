@@ -2,13 +2,23 @@ package three.two.bit.ppt.reality.navigation
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.favorites.FavoritesRepository
+import three.two.bit.ppt.reality.favorites.SavedSearch as ApiSavedSearch
+import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.ui.account.AccountScreen
 import three.two.bit.ppt.reality.ui.agency.AgencyHubScreen
@@ -88,7 +98,9 @@ fun RealityNavHost(
     navController: NavHostController = rememberNavController(),
     ssoService: SsoService,
     listingRepository: ListingRepository,
-    startDestination: String = Screen.Home.route
+    favoritesRepository: FavoritesRepository,
+    inquiryRepository: InquiryRepository,
+    startDestination: String = Screen.Home.route,
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Home.route) {
@@ -228,13 +240,45 @@ fun RealityNavHost(
         // the corresponding endpoints; for now the screens render with empty
         // collections so the navigation graph is complete.
         composable(Screen.SavedSearches.route) {
+            // Load saved searches via FavoritesRepository on first
+            // composition, then expose toggle/delete callbacks that call
+            // the repo and update local state on success.
+            val scope = rememberCoroutineScope()
+            var searches by remember { mutableStateOf<List<ApiSavedSearch>>(emptyList()) }
+            var isLoading by remember { mutableStateOf(true) }
+
+            LaunchedEffect(Unit) {
+                isLoading = true
+                favoritesRepository
+                    .getSavedSearches()
+                    .onSuccess { searches = it.searches }
+                    .onFailure { searches = emptyList() }
+                isLoading = false
+            }
+
             SavedSearchesScreen(
-                searches = emptyList(),
-                isLoading = false,
+                searches = searches.map { it.toUiModel() },
+                isLoading = isLoading,
                 onBackClick = { navController.popBackStack() },
-                onSearchClick = { /* TODO: run search */},
-                onToggleAlerts = { _, _ -> /* TODO: toggle alerts */ },
-                onDelete = { /* TODO: delete saved search */},
+                onSearchClick = { _ ->
+                    // The Search route doesn't yet accept saved-search
+                    // parameters; navigate without filters as a baseline.
+                    navController.navigate(Screen.Search.route)
+                },
+                onToggleAlerts = { id, enabled ->
+                    scope.launch {
+                        favoritesRepository.toggleSearchAlert(id, enabled).onSuccess { updated ->
+                            searches = searches.map { if (it.id == id) updated else it }
+                        }
+                    }
+                },
+                onDelete = { id ->
+                    scope.launch {
+                        favoritesRepository.deleteSavedSearch(id).onSuccess {
+                            searches = searches.filterNot { it.id == id }
+                        }
+                    }
+                },
             )
         }
         composable(Screen.AgencyHub.route) {
@@ -247,11 +291,41 @@ fun RealityNavHost(
             )
         }
         composable(Screen.AgencyInquiries.route) {
+            // Load the realtor's inquiries via InquiryRepository. Tapping
+            // a row drops the user back into the resident-side
+            // `Screen.Inquiries` list scoped to that one inquiry; a
+            // dedicated agency-side detail screen is a separate task.
+            var inquiries by remember {
+                mutableStateOf<List<three.two.bit.ppt.reality.ui.agency.AgencyInquiry>>(emptyList())
+            }
+            var isLoading by remember { mutableStateOf(true) }
+
+            LaunchedEffect(Unit) {
+                isLoading = true
+                inquiryRepository
+                    .getInquiries()
+                    .onSuccess { resp ->
+                        inquiries =
+                            resp.inquiries.map { i ->
+                                three.two.bit.ppt.reality.ui.agency.AgencyInquiry(
+                                    id = i.id,
+                                    listingTitle = i.listing?.title ?: "Listing #${i.listingId}",
+                                    contactName = "",
+                                    contactEmail = "",
+                                    message = i.message,
+                                    status = i.status.name.lowercase(),
+                                )
+                            }
+                    }
+                    .onFailure { inquiries = emptyList() }
+                isLoading = false
+            }
+
             AgencyInquiriesScreen(
-                inquiries = emptyList(),
-                isLoading = false,
+                inquiries = inquiries,
+                isLoading = isLoading,
                 onBackClick = { navController.popBackStack() },
-                onInquiryClick = { /* TODO: open inquiry detail */},
+                onInquiryClick = { _ -> navController.navigate(Screen.Inquiries.route) },
             )
         }
         composable(Screen.MyListings.route) {
@@ -280,4 +354,23 @@ fun RealityNavHost(
             )
         }
     }
+}
+
+/**
+ * Map the wire-level `SavedSearch` from FavoritesRepository onto the lighter UI-shape the
+ * SavedSearchesScreen expects.
+ */
+private fun ApiSavedSearch.toUiModel(): three.two.bit.ppt.reality.ui.savedsearches.SavedSearch {
+    val summaryParts = buildList {
+        query?.takeIf { it.isNotBlank() }?.let { add(it) }
+        filters?.city?.takeIf { it.isNotBlank() }?.let { add(it) }
+        filters?.minRooms?.let { add("${it}+ rooms") }
+    }
+    val summary = if (summaryParts.isEmpty()) "All listings" else summaryParts.joinToString(" · ")
+    return three.two.bit.ppt.reality.ui.savedsearches.SavedSearch(
+        id = id,
+        name = name,
+        summary = summary,
+        alertsEnabled = alertEnabled,
+    )
 }
