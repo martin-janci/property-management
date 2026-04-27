@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApiQuery } from '../../hooks/useApi';
 
 // Dashboard card types
 interface DashboardStats {
@@ -26,41 +27,31 @@ interface PendingAction {
   dueDate?: string;
 }
 
-// Mock data - would come from API
-const mockStats: DashboardStats = {
-  pendingFaults: 2,
-  unreadAnnouncements: 3,
-  activeVotes: 1,
-  unreadMessages: 5,
-  upcomingPayments: 1,
-};
+interface ApiAnnouncement {
+  id: string;
+  title: string;
+  status: string;
+  pinned: boolean;
+  published_at?: string | null;
+  created_at: string;
+}
 
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Water shutdown scheduled for maintenance',
-    createdAt: '2025-12-24T10:00:00Z',
-    category: 'maintenance',
-  },
-  {
-    id: '2',
-    title: 'Annual building meeting on January 15th',
-    createdAt: '2025-12-23T14:00:00Z',
-    category: 'event',
-  },
-  {
-    id: '3',
-    title: 'New recycling guidelines',
-    createdAt: '2025-12-22T09:00:00Z',
-    category: 'general',
-  },
-];
+interface ApiAnnouncementListResponse {
+  announcements: ApiAnnouncement[];
+}
 
-const mockPendingActions: PendingAction[] = [
-  { id: '1', type: 'vote', title: 'Vote on elevator renovation', dueDate: '2025-12-30' },
-  { id: '2', type: 'payment', title: 'Monthly fees due', dueDate: '2025-01-05' },
-  { id: '3', type: 'reading', title: 'Submit water meter reading', dueDate: '2025-01-01' },
-];
+interface ApiFaultStatistics {
+  statistics?: { open_count?: number | null; in_progress_count?: number | null };
+}
+
+interface ApiVoteListResponse {
+  votes?: Array<{ id: string; title: string; status: string; end_at: string }>;
+}
+
+interface ApiUnreadMessages {
+  unread_count?: number;
+  count?: number;
+}
 
 interface DashboardScreenProps {
   onNavigate?: (screen: string) => void;
@@ -69,17 +60,79 @@ interface DashboardScreenProps {
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const [refreshing, setRefreshing] = useState(false);
-  const [stats] = useState<DashboardStats>(mockStats);
-  const [announcements] = useState<Announcement[]>(mockAnnouncements);
-  const [pendingActions] = useState<PendingAction[]>(mockPendingActions);
+
+  // Each card pulls its own count so a single slow/down endpoint doesn't
+  // stall the whole dashboard. `staleTime` is short here because the
+  // counts are user-facing badges that should feel fresh.
+  const announcementsQuery = useApiQuery<ApiAnnouncementListResponse>(
+    ['dashboard', 'announcements'],
+    '/api/v1/announcements?status=published&limit=3',
+    { staleTime: 60_000 }
+  );
+  const faultsStatsQuery = useApiQuery<ApiFaultStatistics>(
+    ['dashboard', 'faults-stats'],
+    '/api/v1/faults/statistics',
+    { staleTime: 60_000 }
+  );
+  const votesQuery = useApiQuery<ApiVoteListResponse>(['dashboard', 'votes'], '/api/v1/voting', {
+    staleTime: 60_000,
+  });
+  const unreadMessagesQuery = useApiQuery<ApiUnreadMessages>(
+    ['dashboard', 'unread-messages'],
+    '/api/v1/messages/unread-count',
+    { staleTime: 30_000 }
+  );
+
+  const announcements: Announcement[] = (announcementsQuery.data?.announcements ?? [])
+    .slice(0, 3)
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      createdAt: a.published_at ?? a.created_at,
+      // The list endpoint doesn't expose category yet — default to general
+      // so the card colour stays neutral.
+      category: 'general',
+    }));
+
+  const stats: DashboardStats = {
+    pendingFaults:
+      (faultsStatsQuery.data?.statistics?.open_count ?? 0) +
+      (faultsStatsQuery.data?.statistics?.in_progress_count ?? 0),
+    unreadAnnouncements: announcements.length,
+    activeVotes: (votesQuery.data?.votes ?? []).filter((v) => v.status === 'active').length,
+    unreadMessages: unreadMessagesQuery.data?.unread_count ?? unreadMessagesQuery.data?.count ?? 0,
+    upcomingPayments: 0,
+  };
+
+  // The api-server has no aggregate "pending resident actions" endpoint
+  // yet. Once it exists (one feed combining vote eligibility, due
+  // payments, scheduled meter reading windows, …) this card will read
+  // from there. For now show whatever signals we already have so the
+  // card isn't silently empty.
+  const pendingActions: PendingAction[] = (votesQuery.data?.votes ?? [])
+    .filter((v) => v.status === 'active')
+    .slice(0, 3)
+    .map((v) => ({
+      id: v.id,
+      type: 'vote',
+      title: v.title,
+      dueDate: v.end_at,
+    }));
+
+  const isFetching =
+    announcementsQuery.isFetching ||
+    faultsStatsQuery.isFetching ||
+    votesQuery.isFetching ||
+    unreadMessagesQuery.isFetching;
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    // Simulate API refresh
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await Promise.all([
+      announcementsQuery.refetch(),
+      faultsStatsQuery.refetch(),
+      votesQuery.refetch(),
+      unreadMessagesQuery.refetch(),
+    ]);
+  }, [announcementsQuery, faultsStatsQuery, votesQuery, unreadMessagesQuery]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -132,7 +185,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor="#2563eb" />
         }
       >
         {/* Stats Grid */}
