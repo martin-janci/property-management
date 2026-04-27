@@ -63,6 +63,22 @@ enum Route: Hashable {
 
     /// Registration screen.
     case register
+
+    // MARK: - Saved searches / Compare / Realtors / Agencies (Android parity)
+
+    /// User's saved searches (UC-45.2).
+    case savedSearches
+
+    /// Side-by-side listing comparison (UC-46.5). Carries the listing
+    /// IDs to compare so the destination view doesn't need to read
+    /// from a side-channel.
+    case compareListings(ids: [String])
+
+    /// Realtor directory (UC-49.1).
+    case realtors
+
+    /// Agency directory (UC-51.1).
+    case agencies
 }
 
 // MARK: - Search Filters
