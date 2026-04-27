@@ -26,6 +26,7 @@ pub mod organization_member;
 pub mod password_reset;
 pub mod person_month;
 pub mod platform_admin;
+pub mod portal_password_reset;
 pub mod role;
 pub mod session;
 pub mod signature_request;
@@ -100,6 +101,7 @@ pub use platform_admin::{
     PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportUserInfo,
     SupportUserMembership, SupportUserSession,
 };
+pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
 pub use session::SessionRepository;
 pub use signature_request::SignatureRequestRepository;

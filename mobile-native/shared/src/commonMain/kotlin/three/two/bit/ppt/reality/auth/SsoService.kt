@@ -2,6 +2,7 @@ package three.two.bit.ppt.reality.auth
 
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -209,33 +210,57 @@ class SsoService {
     }
 
     /**
-     * Request a password reset email (UC-47.4 step 1).
+     * Request a password reset email (UC-44.3 step 1).
      *
-     * Reality-server does not expose password-reset endpoints yet. Until it does, this returns a
-     * clear failure so the UI can surface a "contact support" message.
+     * Calls reality-server `POST /api/v1/users/password-reset`. The server always returns 200 with
+     * a generic message regardless of whether the email is registered (intentional — it would
+     * otherwise leak account existence), so we treat any 2xx response as success.
      */
     suspend fun requestPasswordReset(email: String): Result<Unit> {
-        // TODO: wire when reality-server exposes /api/v1/users/password-reset.
-        @Suppress("UNUSED_PARAMETER") val unusedEmail = email
-        return Result.failure(
-            SsoException(
-                "not_implemented",
-                "Password reset is not available yet. Please contact support.",
-            )
-        )
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/password-reset") {
+                    setBody(PasswordResetRequest(email = email))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    SsoException(
+                        "password_reset_failed",
+                        "Server rejected the password reset request: ${response.status}",
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
-    /** Confirm a password reset using the emailed token (UC-47.4 step 2). */
+    /**
+     * Confirm a password reset using the emailed token (UC-44.3 step 2).
+     *
+     * Calls reality-server `POST /api/v1/users/password-reset/confirm`. The server returns 400 with
+     * a human-readable message for invalid / expired tokens or weak passwords; we surface those
+     * verbatim so the UI can display them.
+     */
     suspend fun confirmPasswordReset(token: String, newPassword: String): Result<Unit> {
-        // TODO: wire when reality-server exposes /api/v1/users/password-reset/confirm.
-        @Suppress("UNUSED_PARAMETER") val unusedToken = token
-        @Suppress("UNUSED_PARAMETER") val unusedPassword = newPassword
-        return Result.failure(
-            SsoException(
-                "not_implemented",
-                "Password reset is not available yet. Please contact support.",
-            )
-        )
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/password-reset/confirm") {
+                    setBody(PasswordResetConfirm(token = token, newPassword = newPassword))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                val message =
+                    runCatching { response.bodyAsText() }
+                        .getOrDefault("Reset failed: ${response.status}")
+                Result.failure(SsoException("password_reset_failed", message))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     /**

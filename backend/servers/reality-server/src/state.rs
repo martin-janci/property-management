@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
 
 use db::{
-    repositories::{PortalRepository, RealityPortalRepository},
+    repositories::{PortalPasswordResetRepository, PortalRepository, RealityPortalRepository},
     DbPool,
 };
 
@@ -723,6 +723,8 @@ pub struct AppState {
     pub portal_repo: PortalRepository,
     /// Reality Portal Professional repository (agencies, realtors, inquiries)
     pub reality_portal_repo: RealityPortalRepository,
+    /// Portal password-reset token repository (UC-44.3)
+    pub portal_password_reset_repo: PortalPasswordResetRepository,
     /// Application configuration
     pub config: AppConfig,
     /// Pending SSO sessions (OAuth flow state)
@@ -746,6 +748,7 @@ impl AppState {
     pub fn new(db: DbPool) -> Self {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
+        let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();
 
@@ -766,6 +769,7 @@ impl AppState {
             db,
             portal_repo,
             reality_portal_repo,
+            portal_password_reset_repo,
             config,
             sso_sessions: Arc::new(Mutex::new(HashMap::new())),
             user_service,

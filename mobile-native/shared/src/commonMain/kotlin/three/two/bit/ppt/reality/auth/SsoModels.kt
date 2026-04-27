@@ -99,16 +99,18 @@ data class AuthRegisterResponse(
     @SerialName("user_id") val userId: String,
 )
 
-/**
- * Password reset request (UC-47.4 step 1).
- *
- * Note: reality-server does not expose password-reset endpoints yet. The model is kept so the UI
- * can surface a clear error when the server eventually implements them.
- */
+/** Body for `POST /api/v1/users/password-reset` (UC-44.3 step 1). */
 @Serializable data class PasswordResetRequest(val email: String)
 
-/** Password reset confirmation (UC-47.4 step 2). See note on PasswordResetRequest. */
-@Serializable data class PasswordResetConfirm(val token: String, val newPassword: String)
+/** Generic acknowledgement returned by both reset endpoints. */
+@Serializable data class PasswordResetMessageResponse(val message: String)
+
+/** Body for `POST /api/v1/users/password-reset/confirm` (UC-44.3 step 2). */
+@Serializable
+data class PasswordResetConfirm(
+    val token: String,
+    @SerialName("new_password") val newPassword: String,
+)
 
 /**
  * Profile update payload (UC-47.7). Matches `PUT /api/v1/users/me` — reality-server accepts any of
