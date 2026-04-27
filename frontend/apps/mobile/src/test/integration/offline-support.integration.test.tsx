@@ -23,37 +23,52 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useOfflineSupport } from '../../hooks/useOfflineSupport';
 
 // ---------------------------------------------------------------------------
-// In-memory AsyncStorage test double (the shared setup only stubs the methods
-// with jest.fn(), so reads after writes would return undefined without this).
+// In-memory AsyncStorage test double, scoped to this file via a local
+// jest.mock() so it does NOT mutate the shared AsyncStorage stub from
+// src/test/setup.ts and therefore can't leak into other test files.
+//
+// The implementation lives entirely inside the factory closure (jest hoists
+// jest.mock() above the file's `const` bindings, so referencing an
+// outer-scope const from the factory would hit the temporal dead zone). We
+// expose the backing Map through a `__store` symbol on the default export
+// so tests can clear it between runs and inspect it from outside.
 // ---------------------------------------------------------------------------
 
-const memoryStorage = (() => {
+jest.mock('@react-native-async-storage/async-storage', () => {
   const store = new Map<string, string>();
+  const impl = {
+    getItem: jest.fn(async (key: string) => store.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      store.set(key, value);
+    }),
+    removeItem: jest.fn(async (key: string) => {
+      store.delete(key);
+    }),
+    clear: jest.fn(async () => {
+      store.clear();
+    }),
+    multiRemove: jest.fn(async (keys: string[]) => {
+      for (const k of keys) store.delete(k);
+    }),
+    getAllKeys: jest.fn(async () => Array.from(store.keys())),
+    __store: store,
+  };
+  return { __esModule: true, default: impl };
+});
 
-  const getItem = jest.fn(async (key: string) => store.get(key) ?? null);
-  const setItem = jest.fn(async (key: string, value: string) => {
-    store.set(key, value);
-  });
-  const removeItem = jest.fn(async (key: string) => {
-    store.delete(key);
-  });
-  const clear = jest.fn(async () => {
-    store.clear();
-  });
-  const multiRemove = jest.fn(async (keys: string[]) => {
-    for (const k of keys) store.delete(k);
-  });
-  const getAllKeys = jest.fn(async () => Array.from(store.keys()));
-
-  return { store, getItem, setItem, removeItem, clear, multiRemove, getAllKeys };
-})();
-
-(AsyncStorage as unknown as Record<string, unknown>).getItem = memoryStorage.getItem;
-(AsyncStorage as unknown as Record<string, unknown>).setItem = memoryStorage.setItem;
-(AsyncStorage as unknown as Record<string, unknown>).removeItem = memoryStorage.removeItem;
-(AsyncStorage as unknown as Record<string, unknown>).clear = memoryStorage.clear;
-(AsyncStorage as unknown as Record<string, unknown>).multiRemove = memoryStorage.multiRemove;
-(AsyncStorage as unknown as Record<string, unknown>).getAllKeys = memoryStorage.getAllKeys;
+// Convenience handles to the in-memory store + mock methods. After the
+// jest.mock() factory has run, `AsyncStorage` resolves to the `impl` object
+// returned above, so we can read `__store` through it.
+const mockAsyncStorage = AsyncStorage as unknown as {
+  getItem: jest.Mock;
+  setItem: jest.Mock;
+  removeItem: jest.Mock;
+  clear: jest.Mock;
+  multiRemove: jest.Mock;
+  getAllKeys: jest.Mock;
+  __store: Map<string, string>;
+};
+const mockAsyncStorageStore = mockAsyncStorage.__store;
 
 // ---------------------------------------------------------------------------
 // NetInfo mock — start online, allow tests to flip the connection state by
@@ -107,7 +122,7 @@ async function mountHook() {
 
 describe('useOfflineSupport integration', () => {
   beforeEach(() => {
-    memoryStorage.store.clear();
+    mockAsyncStorageStore.clear();
     jest.clearAllMocks();
     mockNet.state = { isConnected: true, isInternetReachable: true, type: 'wifi' };
     mockNet.listener = null;
@@ -129,21 +144,22 @@ describe('useOfflineSupport integration', () => {
     it('returns null and evicts the entry once it has expired', async () => {
       const { result } = await mountHook();
 
-      // Cache with a 50ms TTL and an artificial age that is already past it.
+      // Cache with a 1ms TTL so anything past `now` is already expired,
+      // then artificially backdate the entry to force the eviction path.
       await act(async () => {
         await result.current.cacheData('soon', 'value', 1);
       });
 
       // Move time forward by mutating the stored expiresAt directly.
-      const raw = await memoryStorage.getItem('ppt_cache_soon');
+      const raw = await mockAsyncStorage.getItem('ppt_cache_soon');
       const parsed = JSON.parse(raw ?? '{}');
       parsed.expiresAt = Date.now() - 1000;
-      await memoryStorage.setItem('ppt_cache_soon', JSON.stringify(parsed));
+      await mockAsyncStorage.setItem('ppt_cache_soon', JSON.stringify(parsed));
 
       const expired = await result.current.getCachedData<string>('soon');
       expect(expired).toBeNull();
       // The expired entry should have been evicted.
-      expect(await memoryStorage.getItem('ppt_cache_soon')).toBeNull();
+      expect(await mockAsyncStorage.getItem('ppt_cache_soon')).toBeNull();
     });
 
     it('clearCache(key) removes only the named entry', async () => {

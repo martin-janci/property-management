@@ -156,19 +156,28 @@ class NotificationModelsContractTest {
 
     @Test
     fun notificationPreferences_use_snake_case_keys() {
+        // The defaults for these fields are (true, true, true, true, false). With
+        // encodeDefaults=false the encoder skips any field that matches its default,
+        // so we pick values that are non-default for every field — that way every
+        // serialized key appears in the JSON and we can assert on the snake_case
+        // contract directly.
         val prefs =
             NotificationPreferences(
-                newListings = true,
+                newListings = false,
                 priceDrops = false,
-                inquiryResponses = true,
-                listingUpdates = true,
-                marketing = false
+                inquiryResponses = false,
+                listingUpdates = false,
+                marketing = true,
             )
         val encoded = json.encodeToString(prefs)
-        assertTrue(encoded.contains("\"new_listings\":true"))
+        assertTrue(encoded.contains("\"new_listings\":false"))
         assertTrue(encoded.contains("\"price_drops\":false"))
-        assertTrue(encoded.contains("\"inquiry_responses\":true"))
-        assertTrue(encoded.contains("\"listing_updates\":true"))
+        assertTrue(encoded.contains("\"inquiry_responses\":false"))
+        assertTrue(encoded.contains("\"listing_updates\":false"))
+        assertTrue(encoded.contains("\"marketing\":true"))
+        // Sanity-check no camelCase keys leaked through.
+        assertTrue(!encoded.contains("newListings"), "leaked camelCase: $encoded")
+        assertTrue(!encoded.contains("priceDrops"), "leaked camelCase: $encoded")
     }
 
     @Test

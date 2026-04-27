@@ -57,6 +57,18 @@ impl TestApp {
         use api_server::services::{EmailService, JwtService};
         use api_server::state::AppState;
 
+        // The `AuthUser` extractor reads `JWT_SECRET` from the process
+        // environment to validate bearer tokens. CI doesn't set this env
+        // var (see `.github/workflows/backend.yml`), so we point it at the
+        // same secret the test `JwtService` uses below — otherwise any
+        // request that carries a Bearer token would surface as 500 instead
+        // of the expected 401/403.
+        //
+        // SAFETY: `set_var` is process-wide; every TestApp uses the same
+        // default `TestConfig::jwt_secret`, so concurrent tests within a
+        // single binary all observe a consistent value.
+        std::env::set_var("JWT_SECRET", &config.jwt_secret);
+
         let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
         let jwt_service =
             JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");

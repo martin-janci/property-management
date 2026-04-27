@@ -158,9 +158,10 @@ mod authorization {
 mod tenant_header {
     use super::*;
 
-    /// A bearer token string that won't validate but lets us exercise the
-    /// codepaths that look at the `X-Tenant-ID` header before checking the
-    /// signature.
+    /// A bearer token string that won't validate. Used to exercise the
+    /// JWT validation step inside `ValidatedTenantExtractor` (see
+    /// `backend/crates/api-core/src/extractors/rls_connection.rs`), which
+    /// checks the JWT signature *before* parsing the `X-Tenant-ID` header.
     fn fake_bearer_request(method: Method, uri: &str) -> Request<Body> {
         Request::builder()
             .method(method)

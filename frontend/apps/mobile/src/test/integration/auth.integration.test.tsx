@@ -125,9 +125,11 @@ describe('AuthContext integration', () => {
   describe('login', () => {
     it('persists tokens and flips into the authenticated state on success', async () => {
       const store = primeSecureStore();
+      // The api-server returns snake_case JSON keys; keep the test aligned
+      // with the real contract so AuthContext's mapping is exercised.
       mockFetchOnce({
-        accessToken: 'new-access',
-        refreshToken: 'new-refresh',
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
         user: sampleUser,
       });
 
@@ -218,8 +220,8 @@ describe('AuthContext integration', () => {
       });
 
       mockFetchOnce({
-        accessToken: 'rotated-access',
-        refreshToken: 'rotated-refresh',
+        access_token: 'rotated-access',
+        refresh_token: 'rotated-refresh',
       });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
@@ -231,7 +233,8 @@ describe('AuthContext integration', () => {
 
       const [url, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
       expect(url).toBe(`${API_BASE}/api/v1/auth/refresh`);
-      expect(JSON.parse(init.body)).toEqual({ refreshToken: 'old-refresh' });
+      // Backend's RefreshTokenRequest uses snake_case.
+      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'old-refresh' });
 
       expect(result.current.accessToken).toBe('rotated-access');
       expect(store.get('ppt_access_token')).toBe('rotated-access');
