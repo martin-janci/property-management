@@ -32,6 +32,7 @@ import {
   ReportFaultScreen,
   ThreadDetailScreen,
   TwoFactorScreen,
+  VoteDetailScreen,
   VotingScreen,
 } from './screens';
 
@@ -53,6 +54,7 @@ type Screen =
   | 'ReportFault'
   | 'Announcements'
   | 'Voting'
+  | 'VoteDetail'
   | 'Documents'
   | 'DocumentDetail'
   | 'Messages'
@@ -89,9 +91,11 @@ function MainApp() {
   // Show toast when sync is in progress
   const isSyncingWithProgress = isSyncing && syncProgress !== null;
   const [currentScreen, setCurrentScreen] = useState<Screen>('Dashboard');
+  const [screenParams, setScreenParams] = useState<Record<string, unknown> | undefined>(undefined);
 
-  const handleNavigate = useCallback((screen: string) => {
+  const handleNavigate = useCallback((screen: string, params?: Record<string, unknown>) => {
     setCurrentScreen(screen as Screen);
+    setScreenParams(params);
   }, []);
 
   if (isLoading) {
@@ -123,6 +127,13 @@ function MainApp() {
         return <AnnouncementsScreen onNavigate={handleNavigate} />;
       case 'Voting':
         return <VotingScreen onNavigate={handleNavigate} />;
+      case 'VoteDetail':
+        return (
+          <VoteDetailScreen
+            voteId={screenParams?.voteId as string | undefined}
+            onBack={() => handleNavigate('Voting')}
+          />
+        );
       case 'Documents':
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
@@ -215,7 +226,7 @@ function MainApp() {
         <NavButton
           icon="🗳️"
           label={t('tabs.vote')}
-          isActive={currentScreen === 'Voting'}
+          isActive={currentScreen === 'Voting' || currentScreen === 'VoteDetail'}
           onPress={() => handleNavigate('Voting')}
         />
         <NavButton

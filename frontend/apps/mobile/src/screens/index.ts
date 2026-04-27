@@ -14,7 +14,7 @@ export { ProfileScreen } from './profile';
 export { DashboardScreen } from './dashboard';
 export { FaultsListScreen, ReportFaultScreen } from './faults';
 export { AnnouncementsScreen } from './announcements';
-export { VotingScreen } from './voting';
+export { VotingScreen, VoteDetailScreen } from './voting';
 export { DocumentsScreen, DocumentDetailScreen } from './documents';
 export { MeterReadingScreen, MetersScreen, MeterDetailScreen } from './meters';
 

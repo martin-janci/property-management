@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
@@ -88,7 +88,7 @@ interface ApiVoteListResponse {
   total?: number;
 }
 
-export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
+export function VotingScreen({ onNavigate }: VotingScreenProps) {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
@@ -147,11 +147,11 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
     return t('voting.timeLeftMinutes', { minutes });
   };
 
-  // Inline voting from the list view requires the question/option detail
-  // that only the per-vote endpoint returns. Until VoteDetailScreen exists,
-  // tapping an option just nudges the user to the (future) detail view.
-  const handleVote = (_voteId: string, _optionId: string) => {
-    Alert.alert(t('voting.confirmVoteTitle'), t('voting.openDetailToVote'));
+  // The list endpoint only returns summaries — so tapping a card opens the
+  // detail screen that loads questions/options/eligibility and runs the
+  // cast-vote flow.
+  const openDetail = (voteId: string) => {
+    onNavigate?.('VoteDetail', { voteId });
   };
 
   const filteredVotes = votes.filter((v) => {
@@ -215,7 +215,13 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
           </View>
         ) : (
           filteredVotes.map((vote) => (
-            <View key={vote.id} style={styles.voteCard}>
+            <Pressable
+              key={vote.id}
+              style={styles.voteCard}
+              onPress={() => openDetail(vote.id)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.openDetail') ?? `Open ${vote.title}`}
+            >
               <View style={styles.voteHeader}>
                 <View
                   style={[styles.statusBadge, { backgroundColor: getStatusColor(vote.status) }]}
@@ -256,66 +262,16 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
                 </View>
               </View>
 
-              {/* Vote Options */}
-              <View style={styles.optionsSection}>
-                {vote.options.map((option) => (
-                  <Pressable
-                    key={option.id}
-                    style={[
-                      styles.optionRow,
-                      vote.hasVoted && vote.userVote === option.id && styles.selectedOption,
-                      vote.status !== 'active' && styles.optionDisabled,
-                    ]}
-                    onPress={() => {
-                      if (!vote.hasVoted && vote.status === 'active') {
-                        handleVote(vote.id, option.id);
-                      }
-                    }}
-                    disabled={vote.hasVoted || vote.status !== 'active'}
-                  >
-                    <View style={styles.optionLeft}>
-                      <View
-                        style={[
-                          styles.radioButton,
-                          vote.hasVoted && vote.userVote === option.id && styles.radioSelected,
-                        ]}
-                      >
-                        {vote.hasVoted && vote.userVote === option.id && (
-                          <View style={styles.radioInner} />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.optionLabel,
-                          vote.hasVoted &&
-                            vote.userVote === option.id &&
-                            styles.optionLabelSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </View>
-                    {(vote.hasVoted || vote.status === 'closed') && (
-                      <View style={styles.optionRight}>
-                        <Text style={styles.percentageText}>{option.percentage}%</Text>
-                        <View style={styles.percentageBar}>
-                          <View
-                            style={[styles.percentageProgress, { width: `${option.percentage}%` }]}
-                          />
-                        </View>
-                      </View>
-                    )}
-                  </Pressable>
-                ))}
+              {/* CTA — list view doesn't ship options, detail screen handles
+                  the actual ballot. */}
+              <View style={styles.openDetailCta}>
+                <Text style={styles.openDetailText}>
+                  {vote.status === 'active'
+                    ? (t('voting.tapToVote') ?? 'Tap to view & cast ballot')
+                    : (t('voting.tapToView') ?? 'Tap to view results')}
+                </Text>
+                <Text style={styles.openDetailChevron}>›</Text>
               </View>
-
-              {/* Vote Status Message */}
-              {vote.hasVoted && (
-                <View style={styles.votedMessage}>
-                  <Text style={styles.votedIcon}>✓</Text>
-                  <Text style={styles.votedText}>{t('voting.youHaveVoted')}</Text>
-                </View>
-              )}
 
               {/* Footer */}
               <View style={styles.voteFooter}>
@@ -326,7 +282,7 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
                   {formatDate(vote.startsAt)} - {formatDate(vote.endsAt)}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))
         )}
 
@@ -490,101 +446,24 @@ const styles = StyleSheet.create({
   quorumMet: {
     backgroundColor: '#10b981',
   },
-  optionsSection: {
-    gap: 8,
-    marginBottom: 12,
-  },
-  optionRow: {
+  openDetailCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  selectedOption: {
     backgroundColor: '#eff6ff',
-    borderColor: '#2563eb',
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  optionDisabled: {
-    opacity: 0.8,
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  radioSelected: {
-    borderColor: '#2563eb',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2563eb',
-  },
-  optionLabel: {
-    fontSize: 14,
-    color: '#374151',
-    flex: 1,
-  },
-  optionLabelSelected: {
+  openDetailText: {
+    fontSize: 13,
     color: '#2563eb',
     fontWeight: '500',
   },
-  optionRight: {
-    alignItems: 'flex-end',
-    minWidth: 80,
-  },
-  percentageText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  percentageBar: {
-    height: 4,
-    width: 60,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  percentageProgress: {
-    height: '100%',
-    backgroundColor: '#2563eb',
-    borderRadius: 2,
-  },
-  votedMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    backgroundColor: '#dcfce7',
-    borderRadius: 6,
-    marginTop: 4,
-    marginBottom: 12,
-    gap: 6,
-  },
-  votedIcon: {
-    fontSize: 14,
-    color: '#16a34a',
-  },
-  votedText: {
-    fontSize: 13,
-    color: '#16a34a',
-    fontWeight: '500',
+  openDetailChevron: {
+    fontSize: 20,
+    color: '#2563eb',
+    fontWeight: '400',
   },
   voteFooter: {
     flexDirection: 'row',
