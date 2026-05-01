@@ -27,6 +27,8 @@ import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.inquiry.*
 import three.two.bit.ppt.reality.listing.ListingRepository
+import three.two.bit.ppt.reality.ui.theme.InquiryStatusColors
+import three.two.bit.ppt.reality.ui.theme.ViewingStatusColors
 
 private const val TAG = "InquiriesScreen"
 
@@ -340,21 +342,22 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
 
 @Composable
 private fun StatusBadge(status: InquiryStatus) {
-    val (color, textRes) =
+    val (bg, ink, textRes) =
         when (status) {
             InquiryStatus.PENDING ->
-                Pair(MaterialTheme.colorScheme.tertiary, R.string.status_pending)
+                Triple(InquiryStatusColors.pendingBg, InquiryStatusColors.pendingInk, R.string.status_pending)
             InquiryStatus.RESPONDED ->
-                Pair(MaterialTheme.colorScheme.primary, R.string.status_responded)
-            InquiryStatus.CLOSED -> Pair(MaterialTheme.colorScheme.outline, R.string.status_closed)
+                Triple(InquiryStatusColors.respondedBg, InquiryStatusColors.respondedInk, R.string.status_responded)
+            InquiryStatus.CLOSED ->
+                Triple(InquiryStatusColors.closedBg, InquiryStatusColors.closedInk, R.string.status_closed)
         }
 
-    Surface(shape = RoundedCornerShape(4.dp), color = color.copy(alpha = 0.12f)) {
+    Surface(shape = RoundedCornerShape(4.dp), color = bg) {
         Text(
             text = stringResource(textRes),
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = color
+            color = ink
         )
     }
 }
@@ -518,45 +521,39 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
 
 @Composable
 private fun ViewingStatusBadge(status: ViewingStatus) {
-    val (color, textRes, icon) =
-        when (status) {
-            ViewingStatus.PENDING ->
-                Triple(
-                    MaterialTheme.colorScheme.tertiary,
-                    R.string.status_pending,
-                    Icons.Default.Schedule
-                )
-            ViewingStatus.CONFIRMED ->
-                Triple(
-                    MaterialTheme.colorScheme.primary,
-                    R.string.status_confirmed,
-                    Icons.Default.CheckCircle
-                )
-            ViewingStatus.COMPLETED ->
-                Triple(
-                    MaterialTheme.colorScheme.outline,
-                    R.string.status_completed,
-                    Icons.Default.Done
-                )
-            ViewingStatus.CANCELLED ->
-                Triple(
-                    MaterialTheme.colorScheme.error,
-                    R.string.status_cancelled,
-                    Icons.Default.Cancel
-                )
-        }
+    data class BadgeAttrs(
+        val bg: androidx.compose.ui.graphics.Color,
+        val ink: androidx.compose.ui.graphics.Color,
+        val textRes: Int,
+        val icon: androidx.compose.ui.graphics.vector.ImageVector
+    )
 
-    Surface(shape = RoundedCornerShape(4.dp), color = color.copy(alpha = 0.12f)) {
+    val attrs = when (status) {
+        ViewingStatus.PENDING ->
+            BadgeAttrs(ViewingStatusColors.pendingBg, ViewingStatusColors.pendingInk,
+                R.string.status_pending, Icons.Default.Schedule)
+        ViewingStatus.CONFIRMED ->
+            BadgeAttrs(ViewingStatusColors.confirmedBg, ViewingStatusColors.confirmedInk,
+                R.string.status_confirmed, Icons.Default.CheckCircle)
+        ViewingStatus.COMPLETED ->
+            BadgeAttrs(ViewingStatusColors.completedBg, ViewingStatusColors.completedInk,
+                R.string.status_completed, Icons.Default.Done)
+        ViewingStatus.CANCELLED ->
+            BadgeAttrs(ViewingStatusColors.cancelledBg, ViewingStatusColors.cancelledInk,
+                R.string.status_cancelled, Icons.Default.Cancel)
+    }
+
+    Surface(shape = RoundedCornerShape(4.dp), color = attrs.bg) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = color)
+            Icon(attrs.icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = attrs.ink)
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = stringResource(textRes),
+                text = stringResource(attrs.textRes),
                 style = MaterialTheme.typography.labelSmall,
-                color = color
+                color = attrs.ink
             )
         }
     }

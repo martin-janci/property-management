@@ -44,21 +44,22 @@ export function ErrorState({
         .state-inline {
           padding: 2.5rem 1rem;
           text-align: center;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 0.75rem;
         }
         .state-icon { font-size: 2rem; }
-        .state-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
+        .state-title { font-size: 1.125rem; font-weight: 600; color: var(--ppt-fg-primary); margin: 0; }
         .state-text { font-size: 0.875rem; max-width: 360px; margin: 0; }
         .state-actions { display: flex; gap: 8px; }
         .state-action {
           padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
-          background: #2563eb; color: #fff; font-size: 14px; font-weight: 500;
+          background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent); font-size: 14px; font-weight: 500;
         }
-        .state-action:hover { background: #1d4ed8; }
+        .state-action:hover { background: var(--ppt-color-primary-hover); }
+        .state-action:focus-visible { outline: none; box-shadow: var(--ppt-focus-ring-shadow); }
       `}</style>
     </div>
   );

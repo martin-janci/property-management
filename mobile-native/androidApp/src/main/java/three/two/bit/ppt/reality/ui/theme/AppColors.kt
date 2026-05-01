@@ -53,12 +53,12 @@ val InfoBlueInk = Color(0xFF075985)
 object FaultStatusColors {
     val newBg        = Color(0xFFFEE2E2);   val newInk        = Color(0xFF991B1B)
     val triagedBg    = Color(0xFFDBEAFE);   val triagedInk    = Color(0xFF1D4ED8)
-    val inProgressBg = Color(0xFFEDE9FE);   val inProgressInk = Color(0xFF5B21B6)
+    val inProgressBg = Color(0xFFFEF3C7);   val inProgressInk = Color(0xFF92400E)  // amber
     val waitPartsBg  = Color(0xFFFFEDD5);   val waitPartsInk  = Color(0xFF9A3412)
-    val scheduledBg  = Color(0xFFEFF6FF);   val scheduledInk  = Color(0xFF1D4ED8)
+    val scheduledBg  = Color(0xFFEDE9FE);   val scheduledInk  = Color(0xFF5B21B6)  // violet
     val resolvedBg   = Color(0xFFD1FAE5);   val resolvedInk   = Color(0xFF065F46)
     val closedBg     = Color(0xFFF3F4F6);   val closedInk     = Color(0xFF374151)
-    val reopenedBg   = Color(0xFFFEF3C7);   val reopenedInk   = Color(0xFF92400E)
+    val reopenedBg   = Color(0xFFFEE2E2);   val reopenedInk   = Color(0xFF991B1B)  // red (same as new)
 }
 
 // ─── Priority tokens ─────────────────────────────────────────────────────────
@@ -71,9 +71,24 @@ object PriorityColors {
 
 // ─── Badge tokens ────────────────────────────────────────────────────────────
 object BadgeColors {
-    val saleBg    = Color(0xFF10B981);  val saleInk    = Color.White
-    val rentBg    = Color(0xFF3B82F6);  val rentInk    = Color.White
-    val featuredBg = Color(0xFFFBBF24); val featuredInk = Color(0xFF78350F)
+    val saleBg     = Color(0xFF10B981);  val saleInk     = Color.White
+    val rentBg     = Color(0xFF3B82F6);  val rentInk     = Color.White
+    val featuredBg = Color(0xFFFBBF24);  val featuredInk = Color(0xFF78350F)
+}
+
+// ─── Inquiry status tokens ────────────────────────────────────────────────────
+object InquiryStatusColors {
+    val pendingBg    = WarningAmberBg;    val pendingInk    = WarningAmberInk
+    val respondedBg  = SuccessGreenBg;   val respondedInk  = SuccessGreenInk
+    val closedBg     = Neutral100;       val closedInk     = Neutral600
+}
+
+// ─── Viewing status tokens ────────────────────────────────────────────────────
+object ViewingStatusColors {
+    val pendingBg    = WarningAmberBg;    val pendingInk    = WarningAmberInk
+    val confirmedBg  = SuccessGreenBg;   val confirmedInk  = SuccessGreenInk
+    val completedBg  = Neutral100;       val completedInk  = Neutral600
+    val cancelledBg  = DangerRedBg;      val cancelledInk  = DangerRedInk
 }
 
 // ─── Material3 color schemes ─────────────────────────────────────────────────

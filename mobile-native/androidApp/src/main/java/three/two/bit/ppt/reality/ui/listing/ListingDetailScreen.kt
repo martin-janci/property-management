@@ -36,6 +36,7 @@ import three.two.bit.ppt.reality.favorites.FavoritesRepository
 import three.two.bit.ppt.reality.inquiry.CreateInquiryRequest
 import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.*
+import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
@@ -403,13 +404,17 @@ private fun PriceSection(listing: ListingDetail) {
             }
         }
 
+        val typeBadgeBg = when (listing.type) {
+            ListingType.SALE -> BadgeColors.saleBg
+            ListingType.RENT -> BadgeColors.rentBg
+        }
+        val typeBadgeInk = when (listing.type) {
+            ListingType.SALE -> BadgeColors.saleInk
+            ListingType.RENT -> BadgeColors.rentInk
+        }
         Surface(
             shape = RoundedCornerShape(8.dp),
-            color =
-                when (listing.type) {
-                    ListingType.SALE -> MaterialTheme.colorScheme.primary
-                    ListingType.RENT -> MaterialTheme.colorScheme.secondary
-                }
+            color = typeBadgeBg
         ) {
             Text(
                 text =
@@ -419,7 +424,7 @@ private fun PriceSection(listing: ListingDetail) {
                     },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelLarge,
-                color = Color.White
+                color = typeBadgeInk
             )
         }
     }

@@ -8,15 +8,15 @@
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background-color: #f5f5f5;
+  background-color: var(--ppt-bg-app);
 }
 
 .state-card {
   width: 100%;
   max-width: 480px;
-  background-color: #ffffff;
+  background-color: var(--ppt-bg-surface);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--ppt-shadow-md);
   padding: 2.5rem 2rem;
   text-align: center;
 }
@@ -30,7 +30,7 @@
 .state-code {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--ppt-fg-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin: 0 0 0.5rem;
@@ -39,13 +39,13 @@
 .state-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--ppt-fg-primary);
   margin: 0 0 0.75rem;
 }
 
 .state-text {
   font-size: 0.9375rem;
-  color: #4b5563;
+  color: var(--ppt-neutral-600);
   margin: 0 0 1.5rem;
   line-height: 1.5;
 }
@@ -71,29 +71,34 @@
 }
 
 .state-action--primary {
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
 }
 
 .state-action--primary:hover {
-  background-color: #1d4ed8;
+  background-color: var(--ppt-color-primary-hover);
 }
 
 .state-action--secondary {
   background-color: transparent;
-  color: #2563eb;
-  border: 1px solid #2563eb;
+  color: var(--ppt-color-primary);
+  border: 1px solid var(--ppt-color-primary);
 }
 
 .state-action--secondary:hover {
-  background-color: #eff6ff;
+  background-color: var(--ppt-color-primary-soft-bg);
+}
+
+.state-action:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 /* Inline state (within content areas) */
 .state-inline {
   padding: 2rem 1rem;
   text-align: center;
-  color: #6b7280;
+  color: var(--ppt-fg-muted);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -118,7 +123,7 @@
 
 /* Loading skeleton primitive */
 .skeleton {
-  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+  background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
   background-size: 200% 100%;
   border-radius: 6px;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;

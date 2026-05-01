@@ -29,6 +29,7 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
+import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
@@ -516,10 +517,11 @@ fun ListingCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (listing.isFeatured) {
-                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                        Badge(containerColor = BadgeColors.featuredBg) {
                             Text(
                                 stringResource(R.string.label_featured),
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                color = BadgeColors.featuredInk
                             )
                         }
                     }
@@ -542,14 +544,18 @@ fun ListingCard(
                 }
 
                 // Type badge
+                val typeBadgeBg = when (listing.type) {
+                    ListingType.SALE -> BadgeColors.saleBg
+                    ListingType.RENT -> BadgeColors.rentBg
+                }
+                val typeBadgeInk = when (listing.type) {
+                    ListingType.SALE -> BadgeColors.saleInk
+                    ListingType.RENT -> BadgeColors.rentInk
+                }
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                     shape = RoundedCornerShape(4.dp),
-                    color =
-                        when (listing.type) {
-                            ListingType.SALE -> MaterialTheme.colorScheme.primary
-                            ListingType.RENT -> MaterialTheme.colorScheme.secondary
-                        }
+                    color = typeBadgeBg
                 ) {
                     Text(
                         text =
@@ -559,7 +565,7 @@ fun ListingCard(
                             },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White
+                        color = typeBadgeInk
                     )
                 }
 
