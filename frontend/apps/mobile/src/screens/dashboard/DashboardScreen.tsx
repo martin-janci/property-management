@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../shared/screenStyles';
 
 // Dashboard card types
 interface DashboardStats {
@@ -88,14 +89,10 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   const getCategoryColor = (category: Announcement['category']): string => {
     switch (category) {
-      case 'urgent':
-        return '#ef4444';
-      case 'maintenance':
-        return '#f59e0b';
-      case 'event':
-        return '#8b5cf6';
-      default:
-        return '#6b7280';
+      case 'urgent':   return colors.danger;
+      case 'maintenance': return colors.warning;
+      case 'event':    return '#8b5cf6';
+      default:         return colors.textMuted;
     }
   };
 
@@ -132,7 +129,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {/* Stats Grid */}
@@ -237,47 +234,25 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
-  greeting: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  logoutButton: {
-    padding: 8,
-  },
-  logoutText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    gap: 12,
-  },
+  greeting: { fontSize: 14, color: 'rgba(255, 255, 255, 0.8)' },
+  userName: { fontSize: 20, fontWeight: '600', color: colors.surface },
+  logoutButton: { padding: 8 },
+  logoutText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
+  scrollView: { flex: 1 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12 },
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -287,43 +262,22 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2563eb',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  section: {
-    padding: 16,
-  },
+  statNumber: { fontSize: 28, fontWeight: 'bold', color: colors.accent },
+  statLabel: { fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
+  section: { padding: 16 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  seeAllText: {
-    color: '#2563eb',
-    fontSize: 14,
-  },
-  actionsList: {
-    gap: 8,
-  },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  seeAllText: { color: colors.accent, fontSize: 14 },
+  actionsList: { gap: 8 },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -332,32 +286,14 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  actionIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  actionDue: {
-    fontSize: 13,
-    color: '#f59e0b',
-    marginTop: 2,
-  },
-  actionArrow: {
-    fontSize: 24,
-    color: '#9ca3af',
-  },
-  announcementsList: {
-    gap: 8,
-  },
+  actionIcon: { fontSize: 24, marginRight: 12 },
+  actionContent: { flex: 1 },
+  actionTitle: { fontSize: 15, fontWeight: '500', color: colors.text },
+  actionDue: { fontSize: 13, color: colors.warning, marginTop: 2 },
+  actionArrow: { fontSize: 24, color: colors.textSubtle },
+  announcementsList: { gap: 8 },
   announcementCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -372,35 +308,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
   categoryText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.surface,
     textTransform: 'uppercase',
   },
-  announcementDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  announcementTitle: {
-    fontSize: 15,
-    color: '#1f2937',
-    lineHeight: 20,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
+  announcementDate: { fontSize: 12, color: colors.textSubtle },
+  announcementTitle: { fontSize: 15, color: colors.text, lineHeight: 20 },
+  quickActionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   quickAction: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
@@ -410,16 +331,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  quickActionIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  quickActionLabel: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  bottomSpacer: {
-    height: 100,
-  },
+  quickActionIcon: { fontSize: 32, marginBottom: 8 },
+  quickActionLabel: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  bottomSpacer: { height: 100 },
 });

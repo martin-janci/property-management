@@ -8,6 +8,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActionQueue } from '../components/ActionQueue';
 import type { ActionButton, ActionItem } from '../hooks/useActionQueue';
+import './ManagerDashboardPage.css';
 
 interface ManagerDashboardPageProps {
   onItemAction?: (itemId: string, action: ActionButton['action'], item: ActionItem) => void;
@@ -17,15 +18,13 @@ export function ManagerDashboardPage({ onItemAction }: ManagerDashboardPageProps
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Page Header */}
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('dashboard.managerDashboard')}</h1>
-        <p className="text-gray-600">{t('dashboard.managerWelcome')}</p>
+    <div className="dashboard-page">
+      <header className="dashboard-page__header">
+        <h1 className="dashboard-page__title">{t('dashboard.managerDashboard')}</h1>
+        <p className="dashboard-page__subtitle">{t('dashboard.managerWelcome')}</p>
       </header>
 
-      {/* Quick Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="dashboard-page__stats">
         <QuickStat label={t('dashboard.stats.pendingFaults')} value="3" trend="up" color="red" />
         <QuickStat
           label={t('dashboard.stats.pendingApprovals')}
@@ -37,7 +36,6 @@ export function ManagerDashboardPage({ onItemAction }: ManagerDashboardPageProps
         <QuickStat label={t('dashboard.stats.unreadMessages')} value="5" trend="up" color="gray" />
       </div>
 
-      {/* Action Queue */}
       <ActionQueue userRole="manager" onItemAction={onItemAction} />
     </div>
   );
@@ -50,14 +48,6 @@ interface QuickStatProps {
   color: 'red' | 'orange' | 'blue' | 'green' | 'gray';
 }
 
-const colorClasses: Record<QuickStatProps['color'], string> = {
-  red: 'bg-red-50 border-red-200 text-red-800',
-  orange: 'bg-orange-50 border-orange-200 text-orange-800',
-  blue: 'bg-blue-50 border-blue-200 text-blue-800',
-  green: 'bg-green-50 border-green-200 text-green-800',
-  gray: 'bg-gray-50 border-gray-200 text-gray-800',
-};
-
 const trendIcons: Record<QuickStatProps['trend'], string> = {
   up: '↑',
   down: '↓',
@@ -66,12 +56,12 @@ const trendIcons: Record<QuickStatProps['trend'], string> = {
 
 function QuickStat({ label, value, trend, color }: QuickStatProps) {
   return (
-    <div className={`rounded-lg border p-4 ${colorClasses[color]}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-3xl font-bold">{value}</span>
-        <span className="text-lg">{trendIcons[trend]}</span>
+    <div className={`quick-stat quick-stat--${color}`}>
+      <div className="quick-stat__row">
+        <span className="quick-stat__value">{value}</span>
+        <span className="quick-stat__trend" aria-hidden="true">{trendIcons[trend]}</span>
       </div>
-      <p className="text-sm mt-1 opacity-80">{label}</p>
+      <p className="quick-stat__label">{label}</p>
     </div>
   );
 }

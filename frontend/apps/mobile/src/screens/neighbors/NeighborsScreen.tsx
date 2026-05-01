@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  avatarText: { color: colors.surface, fontSize: 18, fontWeight: '600' },
   info: { flex: 1 },
   contact: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
 });

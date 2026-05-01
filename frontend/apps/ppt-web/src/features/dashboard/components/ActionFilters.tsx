@@ -8,6 +8,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActionPriority, ActionQueueFilters, ActionType } from '../hooks/useActionQueue';
+import './ActionFilters.css';
 
 interface ActionFiltersProps {
   filters: ActionQueueFilters;
@@ -39,19 +40,6 @@ const residentActionTypes: ActionType[] = [
 
 const priorities: ActionPriority[] = ['urgent', 'high', 'medium', 'low'];
 
-const priorityColors: Record<ActionPriority, string> = {
-  urgent: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
-  high: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200',
-  medium: 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200',
-  low: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200',
-};
-
-const priorityActiveColors: Record<ActionPriority, string> = {
-  urgent: 'bg-red-600 text-white border-red-600',
-  high: 'bg-orange-500 text-white border-orange-500',
-  medium: 'bg-yellow-500 text-white border-yellow-500',
-  low: 'bg-gray-500 text-white border-gray-500',
-};
 
 export function ActionFilters({ filters, onFilterChange, stats, userRole }: ActionFiltersProps) {
   const { t } = useTranslation();
@@ -105,42 +93,32 @@ export function ActionFilters({ filters, onFilterChange, stats, userRole }: Acti
     (filters.types?.length ?? 0) > 0 || (filters.priorities?.length ?? 0) > 0 || !!filters.search;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-      {/* Search */}
+    <div className="action-filters">
       <div>
-        <label htmlFor="action-search" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="action-search" className="action-filters__label">
           {t('dashboard.searchActions')}
         </label>
-        <div className="flex gap-2">
+        <div className="action-filters__search-row">
           <input
             id="action-search"
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearchSubmit();
-              }
+              if (e.key === 'Enter') handleSearchSubmit();
             }}
             placeholder={t('dashboard.searchPlaceholder')}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+            className="action-filters__search-input"
           />
-          <button
-            type="button"
-            onClick={handleSearchSubmit}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
+          <button type="button" onClick={handleSearchSubmit} className="action-filters__search-btn">
             {t('common.search')}
           </button>
         </div>
       </div>
 
-      {/* Priority filters */}
       <div>
-        <span className="block text-sm font-medium text-gray-700 mb-2">
-          {t('dashboard.filterByPriority')}
-        </span>
-        <div className="flex flex-wrap gap-2">
+        <span className="action-filters__label">{t('dashboard.filterByPriority')}</span>
+        <div className="action-filters__chips">
           {priorities.map((priority) => {
             const isActive = filters.priorities?.includes(priority);
             const count = stats[priority];
@@ -149,32 +127,20 @@ export function ActionFilters({ filters, onFilterChange, stats, userRole }: Acti
                 key={priority}
                 type="button"
                 onClick={() => handlePriorityToggle(priority)}
-                className={`
-                  px-3 py-1.5 text-sm font-medium rounded-md border
-                  transition-colors duration-150
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                  ${isActive ? priorityActiveColors[priority] : priorityColors[priority]}
-                `}
+                className={`action-filters__chip action-filters__chip--${priority}${isActive ? ` action-filters__chip--active-${priority}` : ''}`}
                 aria-pressed={isActive}
               >
                 {t(`dashboard.priority.${priority}`)}
-                {count > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
-                    {count}
-                  </span>
-                )}
+                {count > 0 && <span className="action-filters__chip-count">{count}</span>}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Type filters */}
       <div>
-        <span className="block text-sm font-medium text-gray-700 mb-2">
-          {t('dashboard.filterByType')}
-        </span>
-        <div className="flex flex-wrap gap-2">
+        <span className="action-filters__label">{t('dashboard.filterByType')}</span>
+        <div className="action-filters__chips">
           {actionTypes.map((type) => {
             const isActive = filters.types?.includes(type);
             return (
@@ -182,16 +148,7 @@ export function ActionFilters({ filters, onFilterChange, stats, userRole }: Acti
                 key={type}
                 type="button"
                 onClick={() => handleTypeToggle(type)}
-                className={`
-                  px-3 py-1.5 text-sm font-medium rounded-md border
-                  transition-colors duration-150
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                  ${
-                    isActive
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }
-                `}
+                className={`action-filters__chip${isActive ? ' action-filters__chip--type-active' : ' action-filters__chip--type'}`}
                 aria-pressed={isActive}
               >
                 {t(`dashboard.actionType.${type}`)}
@@ -201,14 +158,9 @@ export function ActionFilters({ filters, onFilterChange, stats, userRole }: Acti
         </div>
       </div>
 
-      {/* Clear filters */}
       {hasActiveFilters && (
-        <div className="pt-2 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={handleClearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
+        <div className="action-filters__clear-row">
+          <button type="button" onClick={handleClearFilters} className="action-filters__clear-btn">
             {t('dashboard.clearFilters')}
           </button>
         </div>

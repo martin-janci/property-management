@@ -18,6 +18,7 @@ import {
 import { getApiBaseUrl } from '../../config/api';
 import { WidgetBridge } from '../../widgets';
 import type { WidgetConfig, WidgetType } from '../../widgets/types';
+import { colors } from '../shared/screenStyles';
 
 interface WidgetSettingsScreenProps {
   onNavigate: (screen: string) => void;
@@ -148,8 +149,8 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
                 <Switch
                   value={isEnabled}
                   onValueChange={(value) => handleToggleWidget(widgetType.type, value)}
-                  trackColor={{ false: '#e5e7eb', true: '#93c5fd' }}
-                  thumbColor={isEnabled ? '#2563eb' : '#f3f4f6'}
+                  trackColor={{ false: colors.border, true: colors.accentDisabled }}
+                  thumbColor={isEnabled ? colors.accent : colors.surfaceMuted}
                 />
               </View>
             );
@@ -213,27 +214,27 @@ export function WidgetSettingsScreen({ onNavigate }: WidgetSettingsScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   backButton: {
     marginBottom: 8,
   },
   backButtonText: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   unsupportedContainer: {
     flex: 1,
@@ -257,19 +258,19 @@ const styles = StyleSheet.create({
   unsupportedTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 8,
   },
   unsupportedText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   content: {
     flex: 1,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 20,
@@ -277,12 +278,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginBottom: 16,
   },
   widgetItem: {
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   widgetInfo: {
     flex: 1,
@@ -298,16 +299,16 @@ const styles = StyleSheet.create({
   widgetName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
+    color: colors.text,
   },
   widgetDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginTop: 2,
   },
   widgetMeta: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginTop: 2,
   },
   sizeChips: {
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
     // Using margin on children for RN < 0.71 compatibility (gap requires 0.71+)
   },
   sizeChip: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -324,12 +325,12 @@ const styles = StyleSheet.create({
   },
   sizeChipText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
     textTransform: 'capitalize',
   },
   emptyText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     fontStyle: 'italic',
   },
   activeWidgetItem: {
@@ -337,21 +338,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   removeButton: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.dangerBg,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   removeButtonText: {
-    color: '#dc2626',
+    color: colors.dangerDark,
     fontSize: 14,
     fontWeight: '500',
   },
   refreshButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     marginHorizontal: 16,
     marginTop: 24,
     paddingVertical: 14,
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   refreshButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -367,19 +368,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 24,
     marginBottom: 32,
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.accentSoft,
     padding: 16,
     borderRadius: 8,
   },
   instructionsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1e40af',
+    color: colors.accentDark,
     marginBottom: 8,
   },
   instructionsText: {
     fontSize: 14,
-    color: '#1e40af',
+    color: colors.accentDark,
     lineHeight: 22,
   },
 });

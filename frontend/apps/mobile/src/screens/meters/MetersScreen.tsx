@@ -166,10 +166,10 @@ export function MetersScreen({ onNavigate }: MetersScreenProps) {
 
 const styles = StyleSheet.create({
   icon: { fontSize: 20 },
-  badgeOverdue: { backgroundColor: '#fee2e2' },
+  badgeOverdue: { backgroundColor: colors.dangerBg },
   badgeOverdueText: { color: colors.danger },
-  badgeDueSoon: { backgroundColor: '#fef3c7' },
-  badgeDueSoonText: { color: '#b45309' },
+  badgeDueSoon: { backgroundColor: colors.warningBg },
+  badgeDueSoonText: { color: colors.warningDark },
   linkButton: { paddingVertical: 4 },
   linkButtonText: { color: colors.accent, fontSize: 14, fontWeight: '500' },
 });

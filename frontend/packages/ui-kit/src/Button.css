@@ -1,5 +1,7 @@
 /**
  * Button component styles.
+ * Radius 8px, Inter font, 120ms ease-standard transitions.
+ * Focus ring uses box-shadow so it doesn't add layout space.
  */
 
 .ppt-button {
@@ -8,19 +10,23 @@
   justify-content: center;
   gap: var(--ppt-space-2);
   font-family: var(--ppt-font-family);
-  font-weight: var(--ppt-font-weight-medium);
+  font-weight: var(--ppt-font-weight-semibold);
   line-height: var(--ppt-line-height-tight);
   border-radius: var(--ppt-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all var(--ppt-transition-fast);
+  transition: background-color var(--ppt-transition-fast),
+              border-color var(--ppt-transition-fast),
+              box-shadow var(--ppt-transition-fast),
+              transform var(--ppt-transition-fast);
   text-decoration: none;
   white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
 }
 
 .ppt-button:focus-visible {
-  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
-  outline-offset: var(--ppt-focus-ring-offset);
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
 }
 
 .ppt-button:disabled {
@@ -28,29 +34,30 @@
   opacity: 0.5;
 }
 
-/* Sizes */
+/* ─── Sizes ─────────────────────────────────────────────── */
 .ppt-button--sm {
   padding: var(--ppt-space-1) var(--ppt-space-3);
-  font-size: var(--ppt-font-size-sm);
+  font-size: var(--ppt-font-size-xs);
   min-height: 2rem;
 }
 
 .ppt-button--md {
-  padding: var(--ppt-space-2) var(--ppt-space-4);
-  font-size: var(--ppt-font-size-base);
-  min-height: 2.5rem;
+  padding: 9px var(--ppt-space-4);
+  font-size: var(--ppt-font-size-sm);
+  min-height: 2.375rem;
 }
 
 .ppt-button--lg {
   padding: var(--ppt-space-3) var(--ppt-space-6);
-  font-size: var(--ppt-font-size-lg);
+  font-size: var(--ppt-font-size-base);
   min-height: 3rem;
 }
 
-/* Variants */
+/* ─── Variants ──────────────────────────────────────────── */
 .ppt-button--primary {
   background-color: var(--ppt-color-primary);
-  color: var(--ppt-color-text-inverse);
+  color: var(--ppt-fg-on-accent, #ffffff);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
 }
 
 .ppt-button--primary:hover:not(:disabled) {
@@ -59,26 +66,27 @@
 
 .ppt-button--primary:active:not(:disabled) {
   background-color: var(--ppt-color-primary-active);
+  box-shadow: none;
 }
 
 .ppt-button--secondary {
-  background-color: var(--ppt-color-surface);
-  color: var(--ppt-color-text);
-  border-color: var(--ppt-color-border);
+  background-color: var(--ppt-bg-surface, var(--ppt-color-surface));
+  color: var(--ppt-fg-secondary, var(--ppt-color-text-secondary));
+  border-color: var(--ppt-border-default, var(--ppt-color-border));
 }
 
 .ppt-button--secondary:hover:not(:disabled) {
-  background-color: var(--ppt-color-surface-hover);
-  border-color: var(--ppt-color-border-hover);
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-surface-hover));
+  border-color: var(--ppt-border-strong, var(--ppt-color-border-hover));
 }
 
 .ppt-button--secondary:active:not(:disabled) {
-  background-color: var(--ppt-color-secondary-light);
+  background-color: var(--ppt-neutral-100, var(--ppt-color-secondary-light));
 }
 
 .ppt-button--danger {
   background-color: var(--ppt-color-danger);
-  color: var(--ppt-color-text-inverse);
+  color: #ffffff;
 }
 
 .ppt-button--danger:hover:not(:disabled) {
@@ -91,15 +99,15 @@
 
 .ppt-button--ghost {
   background-color: transparent;
-  color: var(--ppt-color-text);
+  color: var(--ppt-fg-secondary, var(--ppt-color-text));
 }
 
 .ppt-button--ghost:hover:not(:disabled) {
-  background-color: var(--ppt-color-surface-hover);
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-surface-hover));
 }
 
 .ppt-button--ghost:active:not(:disabled) {
-  background-color: var(--ppt-color-secondary-light);
+  background-color: var(--ppt-neutral-100, var(--ppt-color-secondary-light));
 }
 
 .ppt-button--link {
@@ -108,18 +116,20 @@
   padding: 0;
   min-height: auto;
   border-radius: 0;
+  font-weight: var(--ppt-font-weight-medium);
 }
 
 .ppt-button--link:hover:not(:disabled) {
   text-decoration: underline;
+  color: var(--ppt-color-primary-hover);
 }
 
-/* Full width */
+/* ─── Full width ────────────────────────────────────────── */
 .ppt-button--full-width {
   width: 100%;
 }
 
-/* Loading state */
+/* ─── Loading ───────────────────────────────────────────── */
 .ppt-button--loading {
   position: relative;
 }
@@ -137,15 +147,11 @@
 }
 
 @keyframes ppt-button-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* Icons */
+/* ─── Icons ─────────────────────────────────────────────── */
 .ppt-button__icon {
   display: inline-flex;
   align-items: center;

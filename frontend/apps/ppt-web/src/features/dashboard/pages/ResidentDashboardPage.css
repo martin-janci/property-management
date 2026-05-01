@@ -1,0 +1,100 @@
+.resident-page {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--ppt-space-6) var(--ppt-space-4);
+}
+
+.resident-page__header {
+  margin-bottom: var(--ppt-space-6);
+}
+
+.resident-page__title {
+  font-size: var(--ppt-font-size-2xl);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-fg-primary);
+  margin: 0 0 var(--ppt-space-2);
+}
+
+.resident-page__subtitle {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-muted);
+  margin: 0;
+}
+
+/* Quick tasks banner uses the one allowed gradient */
+.resident-page__banner {
+  background: linear-gradient(135deg, var(--ppt-brand-800, #1e40af) 0%, var(--ppt-brand-500, #3b82f6) 100%);
+  border-radius: var(--ppt-radius-lg);
+  padding: var(--ppt-space-4);
+  margin-bottom: var(--ppt-space-6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+}
+
+.resident-page__banner-icon {
+  font-size: 1.875rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.resident-page__banner-title {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-semibold);
+  margin: 0 0 2px;
+}
+
+.resident-page__banner-subtitle {
+  font-size: var(--ppt-font-size-xs);
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Recent activity section */
+.resident-page__activity {
+  margin-top: var(--ppt-space-8);
+  padding-top: var(--ppt-space-6);
+  border-top: 1px solid var(--ppt-border-subtle);
+}
+
+.resident-page__activity-title {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary);
+  margin: 0 0 var(--ppt-space-4);
+}
+
+.resident-page__activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-3);
+}
+
+/* Activity item */
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+  padding: var(--ppt-space-3);
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  border-radius: var(--ppt-radius-lg);
+}
+
+.activity-item__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.activity-item__text {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-secondary);
+  margin: 0 0 2px;
+}
+
+.activity-item__time {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted);
+  margin: 0;
+}

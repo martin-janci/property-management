@@ -54,13 +54,13 @@ const MOCK_LEASES: Lease[] = [
 function statusColor(status: LeaseStatus): { background: string; color: string } {
   switch (status) {
     case 'active':
-      return { background: '#d1fae5', color: '#047857' };
+      return { background: colors.successBg, color: colors.successDark };
     case 'pending':
-      return { background: '#fef3c7', color: '#b45309' };
+      return { background: colors.warningBg, color: colors.warningDark };
     case 'expired':
-      return { background: '#e5e7eb', color: '#374151' };
+      return { background: colors.border, color: colors.textSecondary };
     case 'terminated':
-      return { background: '#fee2e2', color: colors.danger };
+      return { background: colors.dangerBg, color: colors.danger };
   }
 }
 

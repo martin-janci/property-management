@@ -9,6 +9,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActionQueue } from '../components/ActionQueue';
 import type { ActionButton, ActionItem } from '../hooks/useActionQueue';
+import './ResidentDashboardPage.css';
 
 interface ResidentDashboardPageProps {
   onItemAction?: (itemId: string, action: ActionButton['action'], item: ActionItem) => void;
@@ -18,37 +19,25 @@ export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPagePro
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Page Header */}
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {t('dashboard.residentDashboard')}
-        </h1>
-        <p className="text-gray-600">{t('dashboard.residentWelcome')}</p>
+    <div className="resident-page">
+      <header className="resident-page__header">
+        <h1 className="resident-page__title">{t('dashboard.residentDashboard')}</h1>
+        <p className="resident-page__subtitle">{t('dashboard.residentWelcome')}</p>
       </header>
 
-      {/* Quick Tasks Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 mb-6 text-white">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl" aria-hidden="true">
-            ⚡
-          </span>
-          <div>
-            <h2 className="font-semibold">{t('dashboard.quickTasks')}</h2>
-            <p className="text-sm opacity-90">{t('dashboard.completeIn60Seconds')}</p>
-          </div>
+      <div className="resident-page__banner">
+        <span className="resident-page__banner-icon" aria-hidden="true">⚡</span>
+        <div>
+          <h2 className="resident-page__banner-title">{t('dashboard.quickTasks')}</h2>
+          <p className="resident-page__banner-subtitle">{t('dashboard.completeIn60Seconds')}</p>
         </div>
       </div>
 
-      {/* Action Queue */}
       <ActionQueue userRole="resident" onItemAction={onItemAction} />
 
-      {/* Recent Activity (Optional) */}
-      <section className="mt-8 pt-6 border-t border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {t('dashboard.recentActivity')}
-        </h2>
-        <div className="space-y-3">
+      <section className="resident-page__activity">
+        <h2 className="resident-page__activity-title">{t('dashboard.recentActivity')}</h2>
+        <div className="resident-page__activity-list">
           <ActivityItem
             icon="✅"
             text={t('dashboard.activity.meterReadingSubmitted')}
@@ -70,13 +59,11 @@ interface ActivityItemProps {
 
 function ActivityItem({ icon, text, time }: ActivityItemProps) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-      <span className="text-xl" aria-hidden="true">
-        {icon}
-      </span>
-      <div className="flex-1">
-        <p className="text-sm text-gray-700">{text}</p>
-        <p className="text-xs text-gray-500">{time}</p>
+    <div className="activity-item">
+      <span className="activity-item__icon" aria-hidden="true">{icon}</span>
+      <div>
+        <p className="activity-item__text">{text}</p>
+        <p className="activity-item__time">{time}</p>
       </div>
     </div>
   );

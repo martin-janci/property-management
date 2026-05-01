@@ -1,3 +1,4 @@
+import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';

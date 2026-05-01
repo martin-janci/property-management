@@ -1,0 +1,105 @@
+.kbd-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.kbd-help-dialog {
+  background: var(--ppt-bg-surface);
+  border-radius: var(--ppt-radius-xl);
+  box-shadow: var(--ppt-shadow-xl, 0 20px 60px rgba(0,0,0,0.3));
+  max-width: 28rem;
+  width: calc(100% - var(--ppt-space-8));
+  padding: var(--ppt-space-6);
+  outline: none;
+}
+
+.kbd-help-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ppt-space-4);
+}
+
+.kbd-help-dialog__title {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary);
+  margin: 0;
+}
+
+.kbd-help-dialog__close {
+  background: none;
+  border: none;
+  color: var(--ppt-fg-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: var(--ppt-space-1);
+  border-radius: var(--ppt-radius-sm);
+  transition: color var(--ppt-transition-fast);
+}
+
+.kbd-help-dialog__close:hover {
+  color: var(--ppt-fg-primary);
+}
+
+.kbd-help-dialog__close:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.kbd-help-dialog__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-3);
+}
+
+.kbd-help-dialog__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kbd-help-dialog__desc {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-secondary);
+}
+
+.kbd-help-dialog__keys {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-1);
+}
+
+.kbd-help-dialog__sep {
+  color: var(--ppt-fg-muted);
+}
+
+.kbd-help-dialog__key {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-sm);
+  font-size: var(--ppt-font-size-sm);
+  font-family: monospace;
+  color: var(--ppt-fg-secondary);
+}
+
+.kbd-help-dialog__footer {
+  margin-top: var(--ppt-space-6);
+  padding-top: var(--ppt-space-4);
+  border-top: 1px solid var(--ppt-border-subtle);
+  text-align: center;
+}
+
+.kbd-help-dialog__footer-note {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted);
+  margin: 0;
+}

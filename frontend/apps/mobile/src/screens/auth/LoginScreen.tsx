@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../shared/screenStyles';
 
 interface LoginScreenProps {
   onRegisterPress?: () => void;
@@ -138,7 +139,7 @@ export function LoginScreen({ onRegisterPress, onForgotPasswordPress }: LoginScr
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.surface} />
             ) : (
               <Text style={styles.loginButtonText}>{t('auth.signIn')}</Text>
             )}
@@ -176,7 +177,7 @@ export function LoginScreen({ onRegisterPress, onForgotPasswordPress }: LoginScr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -190,18 +191,18 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#2563eb',
+    color: colors.accent,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   form: {
     gap: 16,
@@ -212,21 +213,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.textSecondary,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     padding: 12,
     fontSize: 16,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: colors.danger,
   },
   errorText: {
-    color: '#ef4444',
+    color: colors.danger,
     fontSize: 12,
   },
   passwordContainer: {
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   showPasswordText: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -250,21 +251,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
   loginButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: colors.accentDisabled,
   },
   loginButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -274,17 +275,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     gap: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
   },
   biometricIcon: {
     fontSize: 20,
   },
   biometricText: {
     fontSize: 16,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   footer: {
     flexDirection: 'row',
@@ -294,11 +295,11 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: '#6b7280',
+    color: colors.textMuted,
     fontSize: 14,
   },
   registerLink: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: '500',
   },

@@ -9,20 +9,61 @@
 import { StyleSheet } from 'react-native';
 
 export const colors = {
-  background: '#f5f5f5',
+  // ─── Base palette ───────────────────────────────────────────
+  background: '#f9fafb',
   surface: '#ffffff',
   surfaceMuted: '#f3f4f6',
   border: '#e5e7eb',
+  borderStrong: '#d1d5db',
   divider: '#f3f4f6',
-  text: '#1f2937',
+  text: '#111827',
+  textSecondary: '#374151',
   textMuted: '#6b7280',
   textSubtle: '#9ca3af',
+
+  // ─── Brand ──────────────────────────────────────────────────
   accent: '#2563eb',
   accentDark: '#1d4ed8',
+  accentDisabled: '#93c5fd',
+  accentSoft: '#eff6ff',
+
+  // ─── Semantic ───────────────────────────────────────────────
   danger: '#ef4444',
+  dangerDark: '#dc2626',
+  dangerBg: '#fee2e2',
   warning: '#f59e0b',
+  warningDark: '#d97706',
+  warningBg: '#fef3c7',
   success: '#10b981',
+  successDark: '#047857',
+  successBg: '#d1fae5',
   info: '#0ea5e9',
+  infoBg: '#e0f2fe',
+
+  // ─── Fault status pill tokens ────────────────────────────────
+  statusNewBg: '#fee2e2',
+  statusNewInk: '#991b1b',
+  statusTriagedBg: '#dbeafe',
+  statusTriagedInk: '#1d4ed8',
+  statusInProgressBg: '#ede9fe',
+  statusInProgressInk: '#5b21b6',
+  statusWaitPartsBg: '#ffedd5',
+  statusWaitPartsInk: '#9a3412',
+  statusScheduledBg: '#eff6ff',
+  statusScheduledInk: '#1d4ed8',
+  statusResolvedBg: '#d1fae5',
+  statusResolvedInk: '#065f46',
+  statusClosedBg: '#f3f4f6',
+  statusClosedInk: '#374151',
+  statusReopenedBg: '#fef3c7',
+  statusReopenedInk: '#92400e',
+
+  // ─── Priority ink tokens ─────────────────────────────────────
+  priorityLowInk: '#6b7280',
+  priorityMediumInk: '#d97706',
+  priorityHighInk: '#ea580c',
+  priorityUrgentInk: '#dc2626',
+  warningInk: '#92400e',
 };
 
 export const screenStyles = StyleSheet.create({
