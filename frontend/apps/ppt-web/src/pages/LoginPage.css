@@ -52,7 +52,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   background-color: var(--ppt-color-danger-light);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--ppt-color-danger-light);
   border-radius: 6px;
   color: var(--ppt-color-danger-hover);
   font-size: 0.875rem;

@@ -160,7 +160,7 @@ function ResetForm() {
         .hint { color: var(--ppt-fg-muted); font-size: 12px; }
         .submit { margin-top: 8px; padding: 12px 16px; background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent); border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
-        .submit:disabled { background: #93c5fd; cursor: not-allowed; }
+        .submit:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
     </form>
   );

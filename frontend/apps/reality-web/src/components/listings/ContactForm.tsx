@@ -312,7 +312,7 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
         .error-message {
           padding: 12px;
           background: var(--ppt-color-danger-light);
-          border: 1px solid #fecaca;
+          border: 1px solid var(--ppt-color-danger-light);
           border-radius: 8px;
           color: var(--ppt-color-danger-hover);
           font-size: 14px;

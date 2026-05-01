@@ -226,8 +226,8 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
 
         .new-badge {
           padding: 2px 8px;
-          background: #dcfce7;
-          color: #16a34a;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success);
           border-radius: 4px;
           font-size: 12px;
           font-weight: 500;

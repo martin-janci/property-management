@@ -98,7 +98,7 @@ export function LoadingSkeleton({
       <span style={visuallyHidden}>{label}</span>
       <style jsx>{`
         .skeleton {
-          background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+          background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
           background-size: 200% 100%;
           border-radius: 6px;
           animation: shimmer 1.5s ease-in-out infinite;

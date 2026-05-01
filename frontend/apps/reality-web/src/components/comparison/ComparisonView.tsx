@@ -341,7 +341,7 @@ export function ComparisonView() {
 
         .action-btn.danger:hover {
           background: var(--ppt-color-danger-light);
-          border-color: #fecaca;
+          border-color: var(--ppt-color-danger-light);
         }
 
         .share-url {
@@ -359,7 +359,7 @@ export function ComparisonView() {
 
         .currency-warning {
           background: var(--ppt-color-warning-light);
-          border: 1px solid #fcd34d;
+          border: 1px solid var(--ppt-color-warning);
           border-radius: 8px;
           padding: 12px 16px;
           margin-bottom: 24px;
@@ -448,7 +448,7 @@ export function ComparisonView() {
 
         .remove-btn {
           padding: 6px 12px;
-          border: 1px solid #fecaca;
+          border: 1px solid var(--ppt-color-danger-light);
           border-radius: 6px;
           background: var(--ppt-color-danger-light);
           color: var(--ppt-color-danger);

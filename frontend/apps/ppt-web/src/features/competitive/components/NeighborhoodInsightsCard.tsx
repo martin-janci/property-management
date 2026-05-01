@@ -90,14 +90,14 @@ export function NeighborhoodInsightsCard({
     <div className="flex flex-col items-center">
       <div className="relative w-20 h-20">
         <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="16" fill="none" stroke="#e5e7eb" strokeWidth="2" />
+          <circle cx="18" cy="18" r="16" fill="none" stroke="var(--ppt-border-default)" strokeWidth="2" />
           {score !== undefined && (
             <circle
               cx="18"
               cy="18"
               r="16"
               fill="none"
-              stroke={score >= 70 ? '#16a34a' : score >= 50 ? '#ca8a04' : '#dc2626'}
+              stroke={score >= 70 ? '#16a34a' : score >= 50 ? '#ca8a04' : 'var(--ppt-color-danger-hover)'}
               strokeWidth="2"
               strokeDasharray={`${(score / 100) * 100.53} 100.53`}
               strokeLinecap="round"
