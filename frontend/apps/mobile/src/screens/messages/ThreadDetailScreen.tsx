@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     alignSelf: 'flex-end',
   },
-  timeMine: { color: 'rgba(255,255,255,0.85)' },
+  timeMine: { color: colors.textOnAccentSoft },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',

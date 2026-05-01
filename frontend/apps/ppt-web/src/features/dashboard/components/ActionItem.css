@@ -40,8 +40,8 @@
 }
 
 .action-item--medium {
-  background: var(--ppt-status-fault-scheduled-bg, #fefce8);
-  border-color: var(--ppt-status-fault-scheduled-ink, #713f12);
+  background: var(--ppt-status-fault-inprogress-bg);
+  border-color: var(--ppt-status-fault-inprogress-ink);
 }
 
 .action-item--low {
@@ -108,22 +108,22 @@
 
 .action-item__priority-badge--urgent {
   background: var(--ppt-status-fault-new-ink);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__priority-badge--high {
   background: var(--ppt-status-fault-waitparts-ink);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__priority-badge--medium {
-  background: #f59e0b;
-  color: #fff;
+  background: var(--ppt-color-warning);
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__priority-badge--low {
   background: var(--ppt-fg-muted);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__description {
@@ -182,7 +182,7 @@
 
 .action-item__btn--primary {
   background: var(--ppt-color-primary);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__btn--primary:hover:not(:disabled) {
@@ -202,7 +202,7 @@
 
 .action-item__btn--danger {
   background: var(--ppt-color-danger);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .action-item__btn--danger:hover:not(:disabled) {

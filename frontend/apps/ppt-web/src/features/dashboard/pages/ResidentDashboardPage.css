@@ -27,7 +27,7 @@
   border-radius: var(--ppt-radius-lg);
   padding: var(--ppt-space-4);
   margin-bottom: var(--ppt-space-6);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
   display: flex;
   align-items: center;
   gap: var(--ppt-space-3);

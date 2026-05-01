@@ -127,7 +127,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       case 'maintenance':
         return colors.warning;
       case 'event':
-        return '#8b5cf6';
+        return colors.eventCategoryInk;
       case 'financial':
         return colors.success;
       default:

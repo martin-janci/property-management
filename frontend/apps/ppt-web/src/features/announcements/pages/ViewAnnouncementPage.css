@@ -17,10 +17,10 @@
   white-space: nowrap;
 }
 
-.ann-status-pill--draft     { background: var(--ppt-bg-subtle, #f3f4f6);            color: var(--ppt-fg-secondary); }
-.ann-status-pill--scheduled { background: var(--ppt-status-fault-scheduled-bg, #eff6ff); color: var(--ppt-color-primary); }
-.ann-status-pill--published { background: var(--ppt-status-fault-resolved-bg);      color: var(--ppt-status-fault-resolved-ink); }
-.ann-status-pill--archived  { background: var(--ppt-status-fault-closed-bg);        color: var(--ppt-status-fault-closed-ink); }
+.ann-status-pill--draft     { background: var(--ppt-status-anno-draft-bg);     color: var(--ppt-status-anno-draft-ink); }
+.ann-status-pill--scheduled { background: var(--ppt-status-anno-scheduled-bg); color: var(--ppt-status-anno-scheduled-ink); }
+.ann-status-pill--published { background: var(--ppt-status-anno-published-bg); color: var(--ppt-status-anno-published-ink); }
+.ann-status-pill--archived  { background: var(--ppt-status-anno-archived-bg);  color: var(--ppt-status-anno-archived-ink); }
 
 .view-announcement__back {
   display: inline-flex;
@@ -67,7 +67,7 @@
 }
 
 .view-announcement__pin-icon {
-  color: #d97706;
+  color: var(--ppt-color-warning-hover);
 }
 
 .view-announcement__title {
@@ -197,30 +197,30 @@
 .view-announcement__btn--edit:hover { background: var(--ppt-bg-subtle, #f3f4f6); }
 
 .view-announcement__btn--publish {
-  background: var(--ppt-status-fault-resolved-ink);
-  color: #fff;
+  background: var(--ppt-status-anno-published-ink);
+  color: var(--ppt-fg-on-accent);
 }
 
 .view-announcement__btn--publish:hover { opacity: 0.9; }
 
 .view-announcement__btn--archive {
-  background: #d97706;
-  color: #fff;
+  background: var(--ppt-color-warning-hover);
+  color: var(--ppt-fg-on-accent);
 }
 
-.view-announcement__btn--archive:hover { background: #b45309; }
+.view-announcement__btn--archive:hover { background: var(--ppt-color-warning-dark); }
 
 .view-announcement__btn--pin {
   background: var(--ppt-bg-surface);
-  color: #d97706;
-  border-color: #d97706;
+  color: var(--ppt-color-warning-hover);
+  border-color: var(--ppt-color-warning-hover);
 }
 
-.view-announcement__btn--pin:hover { background: #fffbeb; }
+.view-announcement__btn--pin:hover { background: var(--ppt-color-warning-light); }
 
 .view-announcement__btn--ack {
   background: var(--ppt-color-primary);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
 }
 
 .view-announcement__btn--ack:hover { background: var(--ppt-color-primary-hover); }

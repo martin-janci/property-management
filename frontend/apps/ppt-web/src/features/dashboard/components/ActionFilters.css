@@ -43,7 +43,7 @@
 .action-filters__search-btn {
   padding: var(--ppt-space-2) var(--ppt-space-4);
   background: var(--ppt-color-primary);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
   border: none;
   border-radius: var(--ppt-radius-md);
   font-size: var(--ppt-font-size-sm);
@@ -99,9 +99,9 @@
 }
 
 .action-filters__chip--medium {
-  background: #fef9c3;
-  color: #713f12;
-  border-color: #d97706;
+  background: var(--ppt-status-fault-inprogress-bg);
+  color: var(--ppt-status-fault-inprogress-ink);
+  border-color: var(--ppt-status-fault-inprogress-ink);
 }
 
 .action-filters__chip--low {
@@ -111,10 +111,10 @@
 }
 
 /* active state — solid fill using inline style from component */
-.action-filters__chip--active-urgent  { background: var(--ppt-status-fault-new-ink);      color: #fff; border-color: var(--ppt-status-fault-new-ink); }
-.action-filters__chip--active-high    { background: var(--ppt-status-fault-waitparts-ink); color: #fff; border-color: var(--ppt-status-fault-waitparts-ink); }
-.action-filters__chip--active-medium  { background: #d97706;  color: #fff; border-color: #d97706; }
-.action-filters__chip--active-low     { background: var(--ppt-fg-muted); color: #fff; border-color: var(--ppt-fg-muted); }
+.action-filters__chip--active-urgent  { background: var(--ppt-status-fault-new-ink);      color: var(--ppt-fg-on-accent); border-color: var(--ppt-status-fault-new-ink); }
+.action-filters__chip--active-high    { background: var(--ppt-status-fault-waitparts-ink); color: var(--ppt-fg-on-accent); border-color: var(--ppt-status-fault-waitparts-ink); }
+.action-filters__chip--active-medium  { background: var(--ppt-color-warning-hover); color: var(--ppt-fg-on-accent); border-color: var(--ppt-color-warning-hover); }
+.action-filters__chip--active-low     { background: var(--ppt-fg-muted); color: var(--ppt-fg-on-accent); border-color: var(--ppt-fg-muted); }
 
 /* type chips */
 .action-filters__chip--type {
@@ -130,7 +130,7 @@
 
 .action-filters__chip--type-active {
   background: var(--ppt-color-primary);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
   border-color: var(--ppt-color-primary);
 }
 

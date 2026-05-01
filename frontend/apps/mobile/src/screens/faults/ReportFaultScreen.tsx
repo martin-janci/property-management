@@ -34,10 +34,10 @@ const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }
 ];
 
 const priorities: Array<{ value: FaultPriority; labelKey: string; color: string }> = [
-  { value: 'low', labelKey: 'priorityLow', color: '#65a30d' },
-  { value: 'medium', labelKey: 'priorityMedium', color: '#ca8a04' },
-  { value: 'high', labelKey: 'priorityHigh', color: '#ea580c' },
-  { value: 'urgent', labelKey: 'priorityUrgent', color: colors.dangerDark },
+  { value: 'low', labelKey: 'priorityLow', color: colors.priorityLowInk },
+  { value: 'medium', labelKey: 'priorityMedium', color: colors.priorityMediumInk },
+  { value: 'high', labelKey: 'priorityHigh', color: colors.priorityHighInk },
+  { value: 'urgent', labelKey: 'priorityUrgent', color: colors.priorityUrgentInk },
 ];
 
 export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProps) {

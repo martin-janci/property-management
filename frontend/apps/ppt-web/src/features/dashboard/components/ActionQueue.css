@@ -93,7 +93,7 @@
 
 .action-queue__btn--active {
   background: var(--ppt-color-primary);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
   border-color: var(--ppt-color-primary);
 }
 
@@ -147,7 +147,7 @@
 .action-queue__retry-btn {
   padding: var(--ppt-space-2) var(--ppt-space-4);
   background: var(--ppt-color-danger);
-  color: #fff;
+  color: var(--ppt-fg-on-accent);
   border: none;
   border-radius: var(--ppt-radius-md);
   font-size: var(--ppt-font-size-sm);

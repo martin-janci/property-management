@@ -40,23 +40,23 @@ export const colors = {
   info: '#0ea5e9',
   infoBg: '#e0f2fe',
 
-  // ─── Fault status pill tokens ────────────────────────────────
+  // ─── Fault status pill tokens — mirrors tokens.css --ppt-status-fault-* ────
   statusNewBg: '#fee2e2',
   statusNewInk: '#991b1b',
   statusTriagedBg: '#dbeafe',
-  statusTriagedInk: '#1d4ed8',
-  statusInProgressBg: '#ede9fe',
-  statusInProgressInk: '#5b21b6',
+  statusTriagedInk: '#1e40af',
+  statusInProgressBg: '#fef3c7',
+  statusInProgressInk: '#92400e',
   statusWaitPartsBg: '#ffedd5',
   statusWaitPartsInk: '#9a3412',
-  statusScheduledBg: '#eff6ff',
-  statusScheduledInk: '#1d4ed8',
+  statusScheduledBg: '#ede9fe',
+  statusScheduledInk: '#5b21b6',
   statusResolvedBg: '#d1fae5',
   statusResolvedInk: '#065f46',
   statusClosedBg: '#f3f4f6',
   statusClosedInk: '#374151',
-  statusReopenedBg: '#fef3c7',
-  statusReopenedInk: '#92400e',
+  statusReopenedBg: '#fee2e2',
+  statusReopenedInk: '#991b1b',
 
   // ─── Priority ink tokens ─────────────────────────────────────
   priorityLowInk: '#6b7280',
@@ -64,6 +64,13 @@ export const colors = {
   priorityHighInk: '#ea580c',
   priorityUrgentInk: '#dc2626',
   warningInk: '#92400e',
+
+  // ─── Misc ────────────────────────────────────────────────────
+  white: '#ffffff',
+  shadow: '#000000',
+  eventCategoryInk: '#8b5cf6',
+  bgOverlay: 'rgba(0,0,0,0.6)',
+  textOnAccentSoft: 'rgba(255,255,255,0.85)',
 };
 
 export const screenStyles = StyleSheet.create({
@@ -128,7 +135,7 @@ export const screenStyles = StyleSheet.create({
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   scrollView: {
     flex: 1,
@@ -139,7 +146,7 @@ export const screenStyles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
@@ -218,7 +225,7 @@ export const screenStyles = StyleSheet.create({
     marginTop: 16,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },

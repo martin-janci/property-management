@@ -91,7 +91,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     switch (category) {
       case 'urgent':   return colors.danger;
       case 'maintenance': return colors.warning;
-      case 'event':    return '#8b5cf6';
+      case 'event':    return colors.eventCategoryInk;
       default:         return colors.textMuted;
     }
   };

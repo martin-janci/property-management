@@ -34,7 +34,7 @@
 }
 
 .announcement-card__pin-icon {
-  color: #d97706;
+  color: var(--ppt-color-warning-hover);
   flex-shrink: 0;
 }
 
@@ -56,7 +56,7 @@
 }
 
 .announcement-card__flag--ack {
-  color: #d97706;
+  color: var(--ppt-color-warning-hover);
 }
 
 .announcement-card__flag--comments {
@@ -81,10 +81,10 @@
   white-space: nowrap;
 }
 
-.ann-status-pill--draft     { background: var(--ppt-bg-subtle, #f3f4f6);          color: var(--ppt-fg-secondary); }
-.ann-status-pill--scheduled { background: var(--ppt-status-fault-scheduled-bg, #eff6ff); color: var(--ppt-color-primary); }
-.ann-status-pill--published { background: var(--ppt-status-fault-resolved-bg);    color: var(--ppt-status-fault-resolved-ink); }
-.ann-status-pill--archived  { background: var(--ppt-status-fault-closed-bg);      color: var(--ppt-status-fault-closed-ink); }
+.ann-status-pill--draft     { background: var(--ppt-status-anno-draft-bg);     color: var(--ppt-status-anno-draft-ink); }
+.ann-status-pill--scheduled { background: var(--ppt-status-anno-scheduled-bg); color: var(--ppt-status-anno-scheduled-ink); }
+.ann-status-pill--published { background: var(--ppt-status-anno-published-bg); color: var(--ppt-status-anno-published-ink); }
+.ann-status-pill--archived  { background: var(--ppt-status-anno-archived-bg);  color: var(--ppt-status-anno-archived-ink); }
 
 /* actions row */
 .announcement-card__actions {
@@ -123,11 +123,11 @@
 .announcement-card__action--publish { color: var(--ppt-status-fault-resolved-ink); }
 .announcement-card__action--publish:hover { opacity: 0.8; }
 
-.announcement-card__action--archive { color: #d97706; }
-.announcement-card__action--archive:hover { color: #b45309; }
+.announcement-card__action--archive { color: var(--ppt-color-warning-hover); }
+.announcement-card__action--archive:hover { color: var(--ppt-color-warning-dark); }
 
-.announcement-card__action--pin     { color: #d97706; }
-.announcement-card__action--pin:hover { color: #b45309; }
+.announcement-card__action--pin     { color: var(--ppt-color-warning-hover); }
+.announcement-card__action--pin:hover { color: var(--ppt-color-warning-dark); }
 
 .announcement-card__action--delete  { color: var(--ppt-color-danger); margin-left: auto; }
 .announcement-card__action--delete:hover { color: var(--ppt-color-danger-hover, #b91c1c); }
