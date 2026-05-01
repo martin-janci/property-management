@@ -97,7 +97,7 @@ export function NeighborhoodInsightsCard({
               cy="18"
               r="16"
               fill="none"
-              stroke={score >= 70 ? '#16a34a' : score >= 50 ? '#ca8a04' : 'var(--ppt-color-danger-hover)'}
+              stroke={score >= 70 ? 'var(--ppt-color-success)' : score >= 50 ? 'var(--ppt-color-warning-dark)' : 'var(--ppt-color-danger-hover)'}
               strokeWidth="2"
               strokeDasharray={`${(score / 100) * 100.53} 100.53`}
               strokeLinecap="round"

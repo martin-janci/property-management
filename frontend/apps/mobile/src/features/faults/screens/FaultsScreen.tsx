@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { FaultCard, type FaultSummary } from '../components/FaultCard';
+import { colors } from '../../../screens/shared/screenStyles';
 
 interface FaultsScreenProps {
   faults: FaultSummary[];
@@ -34,7 +35,7 @@ export function FaultsScreen({
   if (isLoading && !isRefreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -64,13 +65,13 @@ export function FaultsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surfaceMuted,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surfaceMuted,
   },
   list: {
     paddingTop: 8,
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: colors.textMuted,
   },
   fab: {
     position: 'absolute',
@@ -96,10 +97,10 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
   },
   fabText: {
     fontSize: 28,
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '300',
   },
 });

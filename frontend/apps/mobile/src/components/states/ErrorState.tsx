@@ -4,6 +4,7 @@
 
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export interface ErrorStateProps {
   icon?: string;
@@ -46,19 +47,19 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   icon: { fontSize: 48, marginBottom: 8 },
-  title: { fontSize: 18, fontWeight: '600', color: '#1f2937', textAlign: 'center' },
+  title: { fontSize: 18, fontWeight: '600', color: colors.text, textAlign: 'center' },
   description: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     textAlign: 'center',
     maxWidth: 320,
   },
   button: {
     marginTop: 8,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  buttonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  buttonText: { color: colors.white, fontSize: 14, fontWeight: '600' },
 });

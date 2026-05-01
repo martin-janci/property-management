@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import type { FaultCategory } from '../components/FaultCard';
+import { colors } from '../../../screens/shared/screenStyles';
 
 interface CreateFaultScreenProps {
   buildings: Array<{ id: string; name: string }>;
@@ -167,7 +168,7 @@ export function CreateFaultScreen({
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
             <Text style={styles.submitButtonText}>{t('common.submit')}</Text>
           )}
@@ -180,7 +181,7 @@ export function CreateFaultScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
   },
   scrollView: {
     flex: 1,
@@ -192,35 +193,35 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.borderStrong,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
+    color: colors.text,
+    backgroundColor: colors.white,
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.borderStrong,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#FFFFFF',
+    color: colors.text,
+    backgroundColor: colors.white,
     minHeight: 100,
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: colors.danger,
   },
   error: {
     fontSize: 12,
-    color: '#EF4444',
+    color: colors.danger,
     marginTop: 4,
   },
   pickerContainer: {
@@ -233,19 +234,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.white,
   },
   pickerOptionSelected: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   pickerOptionText: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   pickerOptionTextSelected: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   categoryScroll: {
     marginTop: 4,
@@ -254,18 +255,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.surfaceMuted,
     marginRight: 8,
   },
   categoryChipSelected: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.accent,
   },
   categoryChipText: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   categoryChipTextSelected: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   footer: {
     position: 'absolute',
@@ -274,9 +275,9 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: colors.border,
     gap: 12,
   },
   cancelButton: {
@@ -284,19 +285,19 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.textSecondary,
   },
   submitButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.accent,
     alignItems: 'center',
   },
   submitButtonDisabled: {
@@ -305,6 +306,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: colors.white,
   },
 });

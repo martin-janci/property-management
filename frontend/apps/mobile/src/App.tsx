@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
+import { colors } from './screens/shared/screenStyles';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport } from './hooks';
 import './i18n'; // Initialize i18n
@@ -307,28 +308,28 @@ function MoreMenu({ onNavigate }: MoreMenuProps) {
 }
 
 const moreStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.surfaceMuted },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1f2937' },
-  subtitle: { fontSize: 13, color: '#6b7280', marginTop: 4 },
+  title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
+  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   rowIcon: { fontSize: 20, width: 32 },
-  rowLabel: { flex: 1, fontSize: 16, color: '#1f2937' },
-  rowChevron: { fontSize: 20, color: '#9ca3af' },
+  rowLabel: { flex: 1, fontSize: 16, color: colors.text },
+  rowChevron: { fontSize: 20, color: colors.textSubtle },
 });
 
 interface NavButtonProps {
@@ -370,26 +371,26 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surfaceMuted,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   content: {
     flex: 1,
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.border,
     paddingBottom: 24,
     paddingTop: 8,
   },
@@ -409,7 +410,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: '#ef4444',
+    backgroundColor: colors.danger,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -418,17 +419,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 10,
     fontWeight: 'bold',
   },
   navLabel: {
     fontSize: 11,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginTop: 4,
   },
   navLabelActive: {
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '600',
   },
   syncBadgeContainer: {
