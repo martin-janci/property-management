@@ -14,11 +14,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const statusConfig: Record<InquiryStatus, { label: string; color: string; bg: string }> = {
-  pending: { label: 'Pending', color: '#92400e', bg: '#fef3c7' },
-  responded: { label: 'Responded', color: '#1e40af', bg: '#dbeafe' },
+  pending: { label: 'Pending', color: 'var(--ppt-color-warning-dark)', bg: 'var(--ppt-color-warning-light)' },
+  responded: { label: 'Responded', color: 'var(--ppt-color-primary-hover)', bg: '#dbeafe' },
   scheduled: { label: 'Scheduled', color: '#6d28d9', bg: '#ede9fe' },
   completed: { label: 'Completed', color: '#166534', bg: '#dcfce7' },
-  cancelled: { label: 'Cancelled', color: '#991b1b', bg: '#fee2e2' },
+  cancelled: { label: 'Cancelled', color: 'var(--ppt-color-danger-dark)', bg: 'var(--ppt-color-danger-light)' },
 };
 
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
@@ -121,7 +121,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
 
       <style jsx>{`
         .inquiry-card {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -132,7 +132,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
           justify-content: space-between;
           align-items: flex-start;
           padding: 16px 20px;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-bg-subtle);
         }
 
         .listing-info {
@@ -149,19 +149,19 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
 
         .listing-title {
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           text-decoration: none;
           display: block;
           margin-bottom: 4px;
         }
 
         .listing-title:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .inquiry-date {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
           text-transform: capitalize;
         }
@@ -179,7 +179,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         }
 
         .message {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin: 0;
           line-height: 1.6;
         }
@@ -199,50 +199,50 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         .agent-response {
           margin-top: 16px;
           padding: 12px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
-          border-left: 3px solid #2563eb;
+          border-left: 3px solid var(--ppt-color-primary);
         }
 
         .response-label {
           font-size: 12px;
           font-weight: 600;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 4px;
           text-transform: uppercase;
         }
 
         .response-text {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin: 0;
           line-height: 1.6;
         }
 
         .response-date {
           font-size: 12px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           margin: 8px 0 0;
         }
 
         .card-footer {
           padding: 12px 20px;
-          border-top: 1px solid #f3f4f6;
+          border-top: 1px solid var(--ppt-bg-subtle);
           background: #fafafa;
         }
 
         .cancel-button {
           padding: 6px 12px;
           background: transparent;
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 6px;
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
         }
 
         .cancel-button:hover {
-          border-color: #dc2626;
-          color: #dc2626;
+          border-color: var(--ppt-color-danger-hover);
+          color: var(--ppt-color-danger-hover);
         }
 
         .cancel-confirm {
@@ -250,7 +250,7 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
           align-items: center;
           gap: 12px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .confirm-yes,
@@ -263,13 +263,13 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
         }
 
         .confirm-yes {
-          background: #dc2626;
-          color: #fff;
+          background: var(--ppt-color-danger-hover);
+          color: var(--ppt-fg-on-accent);
         }
 
         .confirm-no {
-          background: #e5e7eb;
-          color: #374151;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
         }
       `}</style>
     </div>
@@ -295,7 +295,7 @@ function InquiriesContent() {
           }
           .skeleton-card {
             height: 180px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
@@ -316,7 +316,7 @@ function InquiriesContent() {
           .error-state {
             padding: 64px 24px;
             text-align: center;
-            color: #dc2626;
+            color: var(--ppt-color-danger-hover);
           }
         `}</style>
       </div>
@@ -418,23 +418,23 @@ function InquiriesContent() {
 
         .filter-button {
           padding: 8px 16px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 20px;
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
         }
 
         .filter-button:hover {
-          border-color: #2563eb;
-          color: #2563eb;
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-color-primary);
         }
 
         .filter-button.active {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .inquiries-list {
@@ -451,13 +451,13 @@ function InquiriesContent() {
           justify-content: center;
           padding: 64px 24px;
           text-align: center;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .empty-title {
           font-size: 1.5rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
 
@@ -468,15 +468,15 @@ function InquiriesContent() {
 
         .browse-link {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           text-decoration: none;
           border-radius: 8px;
           font-weight: 600;
         }
 
         .browse-link:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .pagination {
@@ -489,8 +489,8 @@ function InquiriesContent() {
 
         .page-button {
           padding: 8px 16px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           font-size: 14px;
           cursor: pointer;
@@ -502,12 +502,12 @@ function InquiriesContent() {
         }
 
         .page-button:hover:not(:disabled) {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .page-info {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </>
@@ -534,7 +534,7 @@ export default function InquiriesPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
         .main {
           flex: 1;
@@ -548,11 +548,11 @@ export default function InquiriesPage() {
         .page-title {
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 8px;
         }
         .page-subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 32px;
         }
       `}</style>

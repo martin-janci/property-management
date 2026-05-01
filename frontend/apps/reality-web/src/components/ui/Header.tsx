@@ -302,8 +302,8 @@ export function Header() {
           width: 34px;
           height: 34px;
           border-radius: var(--ppt-radius-full);
-          background: linear-gradient(135deg, #3b82f6, #1e40af);
-          color: #fff;
+          background: linear-gradient(135deg, var(--ppt-brand-500), var(--ppt-color-primary-hover));
+          color: var(--ppt-fg-on-accent);
           display: flex;
           align-items: center;
           justify-content: center;

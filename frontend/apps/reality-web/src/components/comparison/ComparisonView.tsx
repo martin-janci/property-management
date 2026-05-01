@@ -117,17 +117,17 @@ export function ComparisonView() {
           }
           h2 {
             font-size: 24px;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 0 0 8px;
           }
           p {
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
             margin: 0 0 24px;
           }
           .browse-btn {
             display: inline-block;
-            background: #2563eb;
-            color: white;
+            background: var(--ppt-color-primary);
+            color: var(--ppt-fg-on-accent);
             padding: 12px 24px;
             border-radius: 8px;
             text-decoration: none;
@@ -320,10 +320,10 @@ export function ComparisonView() {
           align-items: center;
           gap: 8px;
           padding: 10px 16px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
-          background: white;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-secondary);
           font-size: 14px;
           font-weight: 500;
           cursor: pointer;
@@ -331,16 +331,16 @@ export function ComparisonView() {
         }
 
         .action-btn:hover {
-          border-color: #9ca3af;
-          background: #f9fafb;
+          border-color: var(--ppt-fg-subtle);
+          background: var(--ppt-bg-app);
         }
 
         .action-btn.danger {
-          color: #ef4444;
+          color: var(--ppt-color-danger);
         }
 
         .action-btn.danger:hover {
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
           border-color: #fecaca;
         }
 
@@ -351,19 +351,19 @@ export function ComparisonView() {
         .share-url input {
           width: 100%;
           padding: 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .currency-warning {
-          background: #fffbeb;
+          background: var(--ppt-color-warning-light);
           border: 1px solid #fcd34d;
           border-radius: 8px;
           padding: 12px 16px;
           margin-bottom: 24px;
-          color: #92400e;
+          color: var(--ppt-color-warning-dark);
         }
 
         .currency-warning p {
@@ -384,7 +384,7 @@ export function ComparisonView() {
         th,
         td {
           padding: 16px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
           text-align: left;
         }
 
@@ -412,7 +412,7 @@ export function ComparisonView() {
           height: 120px;
           border-radius: 8px;
           overflow: hidden;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
         }
 
         .property-image img {
@@ -428,13 +428,13 @@ export function ComparisonView() {
           align-items: center;
           justify-content: center;
           font-size: 32px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
         }
 
         .property-title {
           font-size: 14px;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 8px 0 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -443,38 +443,38 @@ export function ComparisonView() {
         }
 
         .property-link:hover .property-title {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .remove-btn {
           padding: 6px 12px;
           border: 1px solid #fecaca;
           border-radius: 6px;
-          background: #fef2f2;
-          color: #ef4444;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger);
           font-size: 13px;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .remove-btn:hover {
-          background: #fee2e2;
+          background: var(--ppt-color-danger-light);
         }
 
         .label-cell {
           font-weight: 500;
-          color: #6b7280;
-          background: #f9fafb;
+          color: var(--ppt-fg-muted);
+          background: var(--ppt-bg-app);
         }
 
         .value-cell {
           font-weight: 500;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .highlight-best {
-          background: #ecfdf5;
-          color: #059669;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-hover);
         }
 
         .toast {
@@ -491,13 +491,13 @@ export function ComparisonView() {
         }
 
         .toast-success {
-          background: #059669;
-          color: white;
+          background: var(--ppt-color-success-hover);
+          color: var(--ppt-fg-on-accent);
         }
 
         .toast-info {
-          background: #374151;
-          color: white;
+          background: var(--ppt-fg-secondary);
+          color: var(--ppt-fg-on-accent);
         }
 
         @keyframes toast-fade-in {

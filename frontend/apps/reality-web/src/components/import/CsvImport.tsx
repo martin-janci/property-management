@@ -187,8 +187,8 @@ export function CsvImport() {
         }
 
         .step-content {
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           padding: 32px;
         }
@@ -240,27 +240,27 @@ function Step({
           justify-content: center;
           font-weight: 600;
           font-size: 14px;
-          background: #e5e7eb;
-          color: #6b7280;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-muted);
         }
 
         .step.active .step-number {
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .step.complete .step-number {
-          background: #10b981;
-          color: #fff;
+          background: var(--ppt-color-success);
+          color: var(--ppt-fg-on-accent);
         }
 
         .step-label {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .step.active .step-label {
-          color: #111827;
+          color: var(--ppt-fg-primary);
           font-weight: 500;
         }
       `}</style>
@@ -275,12 +275,12 @@ function StepConnector({ complete }: { complete: boolean }) {
         .connector {
           width: 48px;
           height: 2px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           margin: 0 8px;
         }
 
         .connector.complete {
-          background: #10b981;
+          background: var(--ppt-color-success);
         }
       `}</style>
     </div>
@@ -313,7 +313,7 @@ function UploadStep({
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -336,32 +336,32 @@ function UploadStep({
           align-items: center;
           justify-content: center;
           padding: 64px 24px;
-          border: 2px dashed #d1d5db;
+          border: 2px dashed var(--ppt-border-strong);
           border-radius: 12px;
           text-align: center;
           transition: all 0.2s;
         }
 
         .upload-zone.dragging {
-          border-color: #2563eb;
-          background: #eff6ff;
+          border-color: var(--ppt-color-primary);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
 
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 16px;
         }
 
         .browse-button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border-radius: 8px;
           font-weight: 500;
           cursor: pointer;
@@ -369,13 +369,13 @@ function UploadStep({
         }
 
         .browse-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .hint {
           margin-top: 24px;
           font-size: 13px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
       `}</style>
     </div>
@@ -451,12 +451,12 @@ function MappingStep({
       <style jsx>{`
         .mapping-step h2 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 8px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
 
@@ -465,18 +465,18 @@ function MappingStep({
           gap: 16px;
           margin-bottom: 24px;
           padding: 12px 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
         }
 
         .file-info {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .error-count {
           font-size: 14px;
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
 
         .mapping-grid {
@@ -495,33 +495,33 @@ function MappingStep({
         .field-label {
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .required {
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
           margin-left: 2px;
         }
 
         select {
           padding: 10px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
         }
 
-        select:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        select:focus-visible {
+          outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+          outline-offset: var(--ppt-focus-ring-offset);
+          border-color: var(--ppt-color-primary);
         }
 
         .actions {
           display: flex;
           justify-content: space-between;
           padding-top: 24px;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         button {
@@ -534,23 +534,23 @@ function MappingStep({
         }
 
         .secondary {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .secondary:hover {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .primary {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .primary:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .primary:disabled {
@@ -686,12 +686,12 @@ function PreviewStep({
       <style jsx>{`
         .preview-step h2 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 8px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
 
@@ -704,7 +704,7 @@ function PreviewStep({
 
         .summary-card {
           padding: 20px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 12px;
           text-align: center;
         }
@@ -713,28 +713,28 @@ function PreviewStep({
           display: block;
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .summary-card .label {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .summary-card.success {
-          background: #d1fae5;
+          background: var(--ppt-color-success-light);
         }
 
         .summary-card.success .value {
-          color: #059669;
+          color: var(--ppt-color-success-hover);
         }
 
         .summary-card.error {
-          background: #fee2e2;
+          background: var(--ppt-color-danger-light);
         }
 
         .summary-card.error .value {
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
 
         .sample-section,
@@ -744,13 +744,13 @@ function PreviewStep({
 
         h3 {
           font-size: 1rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 12px;
         }
 
         .sample-table-container {
           overflow-x: auto;
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
         }
 
@@ -764,17 +764,17 @@ function PreviewStep({
         .sample-table td {
           padding: 10px 12px;
           text-align: left;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .sample-table th {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           font-weight: 600;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .sample-table td {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           max-width: 200px;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -782,14 +782,14 @@ function PreviewStep({
         }
 
         .errors-list {
-          border: 1px solid #fecaca;
+          border: 1px solid var(--ppt-color-danger-light);
           border-radius: 8px;
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
         }
 
         .error-item {
           padding: 10px 12px;
-          border-bottom: 1px solid #fecaca;
+          border-bottom: 1px solid var(--ppt-color-danger-light);
           font-size: 13px;
         }
 
@@ -798,25 +798,25 @@ function PreviewStep({
         }
 
         .error-item.warning {
-          background: #fffbeb;
-          border-color: #fde68a;
+          background: var(--ppt-color-warning-light);
+          border-color: var(--ppt-color-warning-light);
         }
 
         .error-location {
           font-weight: 500;
-          color: #991b1b;
+          color: var(--ppt-color-danger-dark);
           margin-right: 8px;
         }
 
         .error-message {
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
 
         .more-errors {
           padding: 10px 12px;
           margin: 0;
           font-size: 13px;
-          color: #991b1b;
+          color: var(--ppt-color-danger-dark);
           font-style: italic;
         }
 
@@ -825,7 +825,7 @@ function PreviewStep({
           align-items: center;
           gap: 10px;
           padding: 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
           margin-bottom: 24px;
           cursor: pointer;
@@ -838,14 +838,14 @@ function PreviewStep({
 
         .skip-option span {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .actions {
           display: flex;
           justify-content: space-between;
           padding-top: 24px;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         button {
@@ -858,23 +858,23 @@ function PreviewStep({
         }
 
         .secondary {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .secondary:hover {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .primary {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .primary:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .primary:disabled {
@@ -905,8 +905,8 @@ function ImportingState() {
         .spinner {
           width: 48px;
           height: 48px;
-          border: 3px solid #e5e7eb;
-          border-top-color: #2563eb;
+          border: 3px solid var(--ppt-border-default);
+          border-top-color: var(--ppt-color-primary);
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
@@ -919,12 +919,12 @@ function ImportingState() {
 
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
 
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
       `}</style>
@@ -946,7 +946,7 @@ function CompleteStep({
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#10b981"
+        stroke="var(--ppt-color-success)"
         strokeWidth="2"
         aria-hidden="true"
       >
@@ -994,7 +994,7 @@ function CompleteStep({
 
         h3 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0;
         }
 
@@ -1022,39 +1022,39 @@ function CompleteStep({
         }
 
         .result-item.success {
-          background: #d1fae5;
+          background: var(--ppt-color-success-light);
         }
 
         .result-item.success .value {
-          color: #059669;
+          color: var(--ppt-color-success-hover);
         }
 
         .result-item.success .label {
-          color: #047857;
+          color: var(--ppt-color-success-dark);
         }
 
         .result-item.error {
-          background: #fee2e2;
+          background: var(--ppt-color-danger-light);
         }
 
         .result-item.error .value {
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
 
         .result-item.error .label {
-          color: #b91c1c;
+          color: var(--ppt-color-danger-dark);
         }
 
         .result-item.warning {
-          background: #fef3c7;
+          background: var(--ppt-color-warning-light);
         }
 
         .result-item.warning .value {
-          color: #d97706;
+          color: var(--ppt-color-warning-hover);
         }
 
         .result-item.warning .label {
-          color: #b45309;
+          color: var(--ppt-color-warning-dark);
         }
 
         .actions {
@@ -1073,14 +1073,14 @@ function CompleteStep({
         }
 
         .view-button {
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .new-import {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
       `}</style>
     </div>
@@ -1104,8 +1104,8 @@ function LoadingState({ message }: { message: string }) {
         .spinner {
           width: 40px;
           height: 40px;
-          border: 3px solid #e5e7eb;
-          border-top-color: #2563eb;
+          border: 3px solid var(--ppt-border-default);
+          border-top-color: var(--ppt-color-primary);
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
@@ -1118,7 +1118,7 @@ function LoadingState({ message }: { message: string }) {
 
         p {
           margin-top: 16px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </div>
@@ -1133,7 +1133,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
         height="48"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#dc2626"
+        stroke="var(--ppt-color-danger)"
         strokeWidth="2"
         aria-hidden="true"
       >
@@ -1158,19 +1158,19 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
 
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
 
         button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-weight: 500;

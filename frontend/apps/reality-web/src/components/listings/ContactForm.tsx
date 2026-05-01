@@ -80,36 +80,36 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
         </button>
         <style jsx>{`
           .contact-form.success {
-            background: #fff;
+            background: var(--ppt-bg-surface);
             border-radius: 12px;
             padding: 32px;
             text-align: center;
           }
           .success-icon {
-            color: #10b981;
+            color: var(--ppt-color-success);
             margin-bottom: 16px;
           }
           .success-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 0 0 8px;
           }
           .success-text {
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
             margin: 0 0 24px;
           }
           .new-message-button {
             padding: 8px 16px;
             background: transparent;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--ppt-border-default);
             border-radius: 8px;
             font-size: 14px;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             cursor: pointer;
           }
           .new-message-button:hover {
-            background: #f9fafb;
+            background: var(--ppt-bg-app);
           }
         `}</style>
       </div>
@@ -221,7 +221,7 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
 
       <style jsx>{`
         .contact-form {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 24px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -233,15 +233,15 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
           gap: 12px;
           padding-bottom: 16px;
           margin-bottom: 16px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .agent-avatar {
           width: 48px;
           height: 48px;
           border-radius: 50%;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -258,13 +258,13 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
 
         .agent-name {
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .agent-agency {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 2px 0 0;
         }
 
@@ -276,13 +276,13 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
           display: block;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin-bottom: 6px;
         }
 
         .optional {
           font-weight: 400;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .form-input,
@@ -290,18 +290,18 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
         .form-textarea {
           width: 100%;
           padding: 10px 12px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           font-size: 14px;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .form-input:focus-visible,
+        .form-select:focus-visible,
+        .form-textarea:focus-visible {
+          outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+          outline-offset: var(--ppt-focus-ring-offset);
+          border-color: var(--ppt-color-primary);
         }
 
         .form-textarea {
@@ -311,10 +311,10 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
 
         .error-message {
           padding: 12px;
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
           border: 1px solid #fecaca;
           border-radius: 8px;
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
           font-size: 14px;
           margin-bottom: 16px;
         }
@@ -322,8 +322,8 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
         .submit-button {
           width: 100%;
           padding: 12px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 16px;
@@ -333,7 +333,7 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
         }
 
         .submit-button:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .submit-button:disabled {
@@ -343,7 +343,7 @@ export function ContactForm({ listingId, agent }: ContactFormProps) {
 
         .privacy-notice {
           font-size: 12px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           text-align: center;
           margin: 12px 0 0;
         }

@@ -99,15 +99,15 @@ function EditListingContent() {
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
         .head { margin-bottom: 24px; }
-        .title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { color: #6b7280; margin: 0 0 8px; }
-        .back { background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; font-size: 14px; }
+        .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { color: var(--ppt-fg-muted); margin: 0 0 8px; }
+        .back { background: none; border: none; color: var(--ppt-color-primary); cursor: pointer; padding: 0; font-size: 14px; }
         .back:hover { text-decoration: underline; }
-        .state { padding: 24px; text-align: center; color: #6b7280; }
-        .error { color: #dc2626; }
+        .state { padding: 24px; text-align: center; color: var(--ppt-fg-muted); }
+        .error { color: var(--ppt-color-danger-hover); }
         .success {
-          margin-bottom: 16px; padding: 12px 16px; background: #ecfdf5; color: #047857;
-          border: 1px solid #a7f3d0; border-radius: 8px; font-size: 14px;
+          margin-bottom: 16px; padding: 12px 16px; background: var(--ppt-color-success-light); color: var(--ppt-color-success-dark);
+          border: 1px solid var(--ppt-color-success); border-radius: 8px; font-size: 14px;
         }
       `}</style>
     </div>
@@ -125,7 +125,7 @@ export default function EditListingPage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

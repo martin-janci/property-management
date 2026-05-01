@@ -424,10 +424,10 @@ const summaryStyles = `
   .error-message {
     margin-top: 0.75rem;
     padding: 0.5rem 0.75rem;
-    background: #fef2f2;
+    background: var(--ppt-color-danger-light);
     border: 1px solid #fecaca;
     border-radius: 0.375rem;
-    color: #dc2626;
+    color: var(--ppt-color-danger);
     font-size: 0.875rem;
   }
 

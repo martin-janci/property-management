@@ -504,13 +504,13 @@ export function DocumentUpload({
 
         .drop-zone:hover,
         .drop-zone:focus-within {
-          border-color: #3b82f6;
-          background: #eff6ff;
+          border-color: var(--ppt-brand-500);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         .drop-zone.drag-over {
-          border-color: #3b82f6;
-          background: #dbeafe;
+          border-color: var(--ppt-brand-500);
+          background: var(--ppt-color-primary-soft-bg);
           transform: scale(1.02);
         }
 
@@ -527,7 +527,7 @@ export function DocumentUpload({
 
         .drop-zone:hover .drop-icon,
         .drop-zone.drag-over .drop-icon {
-          color: #3b82f6;
+          color: var(--ppt-brand-500);
         }
 
         .drop-text {
@@ -594,7 +594,7 @@ export function DocumentUpload({
         }
 
         .file-item.error {
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
         }
 
         .file-item.completed {
@@ -637,7 +637,7 @@ export function DocumentUpload({
         .file-error {
           display: block;
           font-size: 0.75rem;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .progress-bar {
@@ -650,14 +650,14 @@ export function DocumentUpload({
 
         .progress-fill {
           height: 100%;
-          background: #3b82f6;
+          background: var(--ppt-brand-500);
           transition: width 0.3s;
         }
 
         .processing-text {
           display: block;
           font-size: 0.75rem;
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .completed-text {
@@ -686,9 +686,9 @@ export function DocumentUpload({
         }
 
         .remove-btn:hover {
-          background: #fee2e2;
+          background: var(--ppt-color-danger-light);
           border-color: #fecaca;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .success-icon {
@@ -734,7 +734,7 @@ export function DocumentUpload({
         }
 
         .required {
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .text-input,
@@ -753,7 +753,7 @@ export function DocumentUpload({
         .textarea-input:focus,
         .select-input:focus {
           outline: none;
-          border-color: #3b82f6;
+          border-color: var(--ppt-brand-500);
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
@@ -838,12 +838,12 @@ export function DocumentUpload({
         }
 
         .btn-primary {
-          background: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .btn-secondary {

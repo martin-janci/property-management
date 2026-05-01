@@ -133,7 +133,7 @@ export function CategoryCards() {
         <style jsx>{`
           .categories-section {
             padding: 64px 16px;
-            background: #fff;
+            background: var(--ppt-bg-surface);
           }
           .container {
             max-width: 1280px;
@@ -142,7 +142,7 @@ export function CategoryCards() {
           .skeleton-header {
             height: 40px;
             width: 250px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 8px;
             margin: 0 auto 32px;
           }
@@ -153,7 +153,7 @@ export function CategoryCards() {
           }
           .skeleton-card {
             height: 120px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
           }
         `}</style>
@@ -194,7 +194,7 @@ export function CategoryCards() {
       <style jsx>{`
         .categories-section {
           padding: 48px 32px 24px;
-          background: var(--ppt-bg-app, #f9fafb);
+          background: var(--ppt-bg-app);
         }
 
         .container {
@@ -212,14 +212,14 @@ export function CategoryCards() {
         .section-title {
           font-size: 22px;
           font-weight: var(--ppt-font-weight-bold, 700);
-          color: var(--ppt-fg-primary, #111827);
+          color: var(--ppt-fg-primary);
           margin: 0;
           letter-spacing: -0.01em;
         }
 
         .section-subtitle {
           font-size: var(--ppt-font-size-sm, 14px);
-          color: var(--ppt-fg-muted, #6b7280);
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
@@ -243,8 +243,8 @@ export function CategoryCards() {
           flex-direction: column;
           gap: 8px;
           padding: 14px 14px 12px;
-          background: var(--ppt-bg-surface, #fff);
-          border: 1px solid var(--ppt-border-default, #e5e7eb);
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 10px;
           text-decoration: none;
           color: inherit;
@@ -254,7 +254,7 @@ export function CategoryCards() {
         }
 
         .category-card:hover {
-          border-color: var(--ppt-color-primary, #2563eb);
+          border-color: var(--ppt-color-primary);
           box-shadow: var(--ppt-shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
         }
 
@@ -267,8 +267,8 @@ export function CategoryCards() {
           width: 32px;
           height: 32px;
           border-radius: var(--ppt-radius-md, 8px);
-          background: var(--ppt-color-primary-soft-bg, #eff6ff);
-          color: var(--ppt-color-primary, #2563eb);
+          background: var(--ppt-color-primary-soft-bg);
+          color: var(--ppt-color-primary);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -277,13 +277,13 @@ export function CategoryCards() {
         .label {
           font-size: 13.5px;
           font-weight: var(--ppt-font-weight-semibold, 600);
-          color: var(--ppt-fg-primary, #111827);
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .count {
           font-size: var(--ppt-font-size-xs, 12px);
-          color: var(--ppt-fg-muted, #6b7280);
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
       `}</style>

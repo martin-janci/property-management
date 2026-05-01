@@ -96,7 +96,7 @@
 }
 
 .error-boundary-button--primary {
-  color: #ffffff;
+  color: var(--ppt-fg-on-accent);
   background-color: var(--color-primary, #2563eb);
   border: 1px solid transparent;
 }

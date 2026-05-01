@@ -88,12 +88,12 @@ export function ClassificationBadge({
         }
 
         .confidence-low {
-          background: #fee2e2;
-          color: #991b1b;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .confidence-low .ai-icon {
-          background: #991b1b;
+          background: var(--ppt-color-danger-dark);
         }
 
         .confidence-value {
@@ -413,8 +413,8 @@ export function ClassificationUI({
         }
 
         .btn-reject {
-          background: #fee2e2;
-          color: #991b1b;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .btn-reject:hover:not(:disabled) {
@@ -447,12 +447,12 @@ export function ClassificationUI({
         }
 
         .btn-submit {
-          background: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .btn-submit:hover:not(:disabled) {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .btn-cancel {
@@ -467,10 +467,10 @@ export function ClassificationUI({
         .error-message {
           margin-top: 0.75rem;
           padding: 0.5rem 0.75rem;
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
           border: 1px solid #fecaca;
           border-radius: 0.375rem;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
           font-size: 0.875rem;
         }
       `}</style>

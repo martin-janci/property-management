@@ -25,19 +25,19 @@
   left: -9999px;
   z-index: 10001;
   padding: 0.75rem 1rem;
-  background-color: #1e40af;
-  color: white;
+  background-color: var(--ppt-color-primary-hover);
+  color: var(--ppt-fg-on-accent);
   text-decoration: none;
   font-weight: 600;
   border-radius: 0 0 0.25rem 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.skip-link:focus {
+.skip-link:focus-visible {
   top: 0;
   left: 0;
-  outline: 2px solid #fbbf24;
-  outline-offset: 2px;
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 /* =============================================================================
@@ -75,8 +75,8 @@
 
 /* Enhanced focus ring for all focusable elements */
 :focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 /* Remove default focus outline when using focus-visible */
@@ -88,9 +88,9 @@
 button:focus-visible,
 [role="button"]:focus-visible,
 a:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+  box-shadow: var(--ppt-focus-ring-shadow);
 }
 
 /* =============================================================================
@@ -138,8 +138,8 @@ a:focus-visible {
 
 /* High contrast mode for text */
 .high-contrast-text {
-  color: #000000;
-  background-color: #ffffff;
+  color: var(--ppt-fg-primary);
+  background-color: var(--ppt-bg-surface);
 }
 
 /* =============================================================================

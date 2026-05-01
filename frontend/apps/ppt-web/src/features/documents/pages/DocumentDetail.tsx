@@ -224,7 +224,7 @@ const detailStyles = `
     width: 32px;
     height: 32px;
     border: 3px solid #e2e8f0;
-    border-top-color: #3b82f6;
+    border-top-color: var(--ppt-brand-500);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 1rem;
@@ -235,14 +235,14 @@ const detailStyles = `
   }
 
   .error-message {
-    color: #dc2626;
+    color: var(--ppt-color-danger);
     margin-bottom: 1rem;
   }
 
   .retry-btn {
     padding: 0.5rem 1rem;
-    background: #3b82f6;
-    color: white;
+    background: var(--ppt-brand-500);
+    color: var(--ppt-fg-on-accent);
     border: none;
     border-radius: 0.375rem;
     cursor: pointer;
@@ -324,13 +324,13 @@ const detailStyles = `
   }
 
   .action-btn.primary {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    color: white;
+    background: var(--ppt-brand-500);
+    border-color: var(--ppt-brand-500);
+    color: var(--ppt-fg-on-accent);
   }
 
   .action-btn.primary:hover {
-    background: #2563eb;
+    background: var(--ppt-color-primary);
   }
 
   .intelligence-section {

@@ -184,26 +184,26 @@ export function AgencyListings() {
 
         .back-link {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-decoration: none;
           display: inline-block;
           margin-bottom: 8px;
         }
 
         .back-link:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .title {
           font-size: 1.75rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .subtitle {
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
@@ -212,8 +212,8 @@ export function AgencyListings() {
           align-items: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -224,7 +224,7 @@ export function AgencyListings() {
         }
 
         .create-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .filters {
@@ -244,15 +244,15 @@ export function AgencyListings() {
         .filter-group label {
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .filter-group select {
           padding: 8px 32px 8px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
-          background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 8px center;
+          background: var(--ppt-bg-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 8px center;
           background-size: 16px;
           appearance: none;
           cursor: pointer;
@@ -261,12 +261,12 @@ export function AgencyListings() {
         .filter-stats {
           margin-left: auto;
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .table-container {
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           overflow: hidden;
         }
@@ -281,9 +281,9 @@ export function AgencyListings() {
           padding: 12px 16px;
           font-size: 13px;
           font-weight: 600;
-          color: #6b7280;
-          background: #f9fafb;
-          border-bottom: 1px solid #e5e7eb;
+          color: var(--ppt-fg-muted);
+          background: var(--ppt-bg-app);
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .pagination {
@@ -296,8 +296,8 @@ export function AgencyListings() {
 
         .pagination button {
           padding: 8px 16px;
-          border: 1px solid #d1d5db;
-          background: #fff;
+          border: 1px solid var(--ppt-border-strong);
+          background: var(--ppt-bg-surface);
           border-radius: 6px;
           font-size: 14px;
           cursor: pointer;
@@ -310,7 +310,7 @@ export function AgencyListings() {
 
         .pagination span {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </div>
@@ -319,12 +319,12 @@ export function AgencyListings() {
 
 function ListingRow({ listing }: { listing: AgencyListing }) {
   const statusConfig: Record<AgencyListingStatus, { label: string; color: string; bg: string }> = {
-    active: { label: 'Active', color: '#10b981', bg: '#d1fae5' },
-    draft: { label: 'Draft', color: '#6b7280', bg: '#e5e7eb' },
-    pending: { label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
+    active: { label: 'Active', color: 'var(--ppt-color-success)', bg: 'var(--ppt-color-success-light)' },
+    draft: { label: 'Draft', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    pending: { label: 'Pending', color: 'var(--ppt-color-warning)', bg: 'var(--ppt-color-warning-light)' },
     sold: { label: 'Sold', color: '#8b5cf6', bg: '#ede9fe' },
     rented: { label: 'Rented', color: '#06b6d4', bg: '#cffafe' },
-    withdrawn: { label: 'Withdrawn', color: '#ef4444', bg: '#fee2e2' },
+    withdrawn: { label: 'Withdrawn', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
   };
 
   const status = statusConfig[listing.status];
@@ -374,17 +374,17 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
 
       <style jsx>{`
         .listing-row {
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-bg-subtle);
         }
 
         .listing-row:hover {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .listing-row td {
           padding: 16px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .property-cell {
@@ -406,7 +406,7 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
 
         .property-title {
           font-weight: 500;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           display: -webkit-box;
           -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
@@ -415,16 +415,16 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
 
         .type-badge {
           padding: 4px 10px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
           border-radius: 4px;
           font-size: 12px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .price-cell {
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .status-badge {
@@ -435,7 +435,7 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
         }
 
         .date-cell {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .actions {
@@ -445,7 +445,7 @@ function ListingRow({ listing }: { listing: AgencyListing }) {
 
         .action-link {
           font-size: 14px;
-          color: #2563eb;
+          color: var(--ppt-color-primary);
           text-decoration: none;
         }
 
@@ -469,7 +469,7 @@ function ListingsTableSkeleton() {
         }
         .skeleton-row {
           height: 64px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 8px;
           margin-bottom: 8px;
         }
@@ -486,7 +486,7 @@ function EmptyState() {
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -508,17 +508,17 @@ function EmptyState() {
         }
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         .create-button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border-radius: 8px;
           text-decoration: none;
           font-weight: 500;
