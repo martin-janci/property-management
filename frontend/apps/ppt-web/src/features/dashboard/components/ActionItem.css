@@ -166,8 +166,8 @@
   border: 1px solid transparent;
   cursor: pointer;
   font-family: var(--ppt-font-family);
-  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast),
-              box-shadow var(--ppt-transition-fast);
+  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast), box-shadow
+    var(--ppt-transition-fast);
 }
 
 .action-item__btn:focus-visible {

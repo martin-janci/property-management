@@ -123,7 +123,12 @@
 
 /* Loading skeleton primitive */
 .skeleton {
-  background: linear-gradient(90deg, var(--ppt-bg-subtle) 0%, var(--ppt-border-default) 50%, var(--ppt-bg-subtle) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--ppt-bg-subtle) 0%,
+    var(--ppt-border-default) 50%,
+    var(--ppt-bg-subtle) 100%
+  );
   background-size: 200% 100%;
   border-radius: 6px;
   animation: skeleton-shimmer 1.5s ease-in-out infinite;

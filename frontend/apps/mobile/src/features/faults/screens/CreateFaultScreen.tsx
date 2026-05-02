@@ -16,8 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import type { FaultCategory } from '../components/FaultCard';
 import { colors } from '../../../screens/shared/screenStyles';
+import type { FaultCategory } from '../components/FaultCard';
 
 interface CreateFaultScreenProps {
   buildings: Array<{ id: string; name: string }>;

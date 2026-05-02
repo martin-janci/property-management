@@ -5,9 +5,9 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
-import { colors } from './screens/shared/screenStyles';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport } from './hooks';
+import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementsScreen,

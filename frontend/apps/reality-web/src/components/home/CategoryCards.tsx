@@ -171,7 +171,9 @@ export function CategoryCards() {
         <div className="section-header">
           <div>
             <h2 className="section-title">{t('browseByType')}</h2>
-            <p className="section-subtitle">{t('browseByTypeSubtitle', { defaultValue: 'Pick a category to narrow the search.' })}</p>
+            <p className="section-subtitle">
+              {t('browseByTypeSubtitle', { defaultValue: 'Pick a category to narrow the search.' })}
+            </p>
           </div>
         </div>
         <div className="grid">

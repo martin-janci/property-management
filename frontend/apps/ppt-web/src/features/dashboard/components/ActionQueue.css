@@ -72,8 +72,8 @@
   color: var(--ppt-fg-secondary);
   cursor: pointer;
   font-family: var(--ppt-font-family);
-  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast),
-              box-shadow var(--ppt-transition-fast);
+  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast), box-shadow
+    var(--ppt-transition-fast);
 }
 
 .action-queue__btn:hover:not(:disabled) {
@@ -119,7 +119,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Error state ─── */

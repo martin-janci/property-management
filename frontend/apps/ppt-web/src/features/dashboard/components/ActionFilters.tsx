@@ -40,7 +40,6 @@ const residentActionTypes: ActionType[] = [
 
 const priorities: ActionPriority[] = ['urgent', 'high', 'medium', 'low'];
 
-
 export function ActionFilters({ filters, onFilterChange, stats, userRole }: ActionFiltersProps) {
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState(filters.search ?? '');

@@ -47,20 +47,20 @@ interface FaultCardProps {
 }
 
 const statusPillClass: Record<FaultStatus, string> = {
-  new:           'fault-status-pill fault-status-pill--new',
-  triaged:       'fault-status-pill fault-status-pill--triaged',
-  in_progress:   'fault-status-pill fault-status-pill--in_progress',
+  new: 'fault-status-pill fault-status-pill--new',
+  triaged: 'fault-status-pill fault-status-pill--triaged',
+  in_progress: 'fault-status-pill fault-status-pill--in_progress',
   waiting_parts: 'fault-status-pill fault-status-pill--waiting_parts',
-  scheduled:     'fault-status-pill fault-status-pill--scheduled',
-  resolved:      'fault-status-pill fault-status-pill--resolved',
-  closed:        'fault-status-pill fault-status-pill--closed',
-  reopened:      'fault-status-pill fault-status-pill--reopened',
+  scheduled: 'fault-status-pill fault-status-pill--scheduled',
+  resolved: 'fault-status-pill fault-status-pill--resolved',
+  closed: 'fault-status-pill fault-status-pill--closed',
+  reopened: 'fault-status-pill fault-status-pill--reopened',
 };
 
 const priorityPillClass: Record<FaultPriority, string> = {
-  low:    'fault-priority-pill fault-priority-pill--low',
+  low: 'fault-priority-pill fault-priority-pill--low',
   medium: 'fault-priority-pill fault-priority-pill--medium',
-  high:   'fault-priority-pill fault-priority-pill--high',
+  high: 'fault-priority-pill fault-priority-pill--high',
   urgent: 'fault-priority-pill fault-priority-pill--urgent',
 };
 
@@ -105,11 +105,20 @@ export function FaultCard({ fault, onView, onEdit, onTriage }: FaultCardProps) {
         <div className="fault-card__title-row">
           {fault.priority === 'urgent' && (
             <span className="fault-card__urgent-icon" title="Urgent">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-                strokeLinejoin="round" aria-hidden="true">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </span>
           )}
@@ -118,25 +127,15 @@ export function FaultCard({ fault, onView, onEdit, onTriage }: FaultCardProps) {
       </div>
 
       <div className="fault-card__meta">
-        <span className={statusPillClass[fault.status]}>
-          {statusLabels[fault.status]}
-        </span>
-        <span className={priorityPillClass[fault.priority]}>
-          {priorityLabels[fault.priority]}
-        </span>
+        <span className={statusPillClass[fault.status]}>{statusLabels[fault.status]}</span>
+        <span className={priorityPillClass[fault.priority]}>{priorityLabels[fault.priority]}</span>
         <span className="fault-card__category">{categoryLabels[fault.category]}</span>
       </div>
 
-      <p className="fault-card__date">
-        Reported: {new Date(fault.createdAt).toLocaleDateString()}
-      </p>
+      <p className="fault-card__date">Reported: {new Date(fault.createdAt).toLocaleDateString()}</p>
 
       <div className="fault-card__actions">
-        <button
-          type="button"
-          onClick={() => onView?.(fault.id)}
-          className="fault-card__action"
-        >
+        <button type="button" onClick={() => onView?.(fault.id)} className="fault-card__action">
           View
         </button>
         {canEdit && (
@@ -149,11 +148,7 @@ export function FaultCard({ fault, onView, onEdit, onTriage }: FaultCardProps) {
           </button>
         )}
         {canTriage && (
-          <button
-            type="button"
-            onClick={() => onTriage?.(fault.id)}
-            className="fault-card__action"
-          >
+          <button type="button" onClick={() => onTriage?.(fault.id)} className="fault-card__action">
             Triage
           </button>
         )}

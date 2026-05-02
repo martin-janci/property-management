@@ -62,7 +62,14 @@ export function ViewAnnouncementPage({
   return (
     <div className="view-announcement">
       <button type="button" onClick={onBack} className="view-announcement__back">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Back to Announcements
@@ -74,7 +81,13 @@ export function ViewAnnouncementPage({
             <div className="view-announcement__badge-row">
               {announcement.pinned && (
                 <span className="view-announcement__pin-icon" title="Pinned">
-                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
                     <path d="M9.828.722a.5.5 0 01.354 0l7 3A.5.5 0 0117.5 4v1.5a.5.5 0 01-.5.5h-1v4.5a.5.5 0 01-.5.5H13v5.5a.5.5 0 01-.5.5h-5a.5.5 0 01-.5-.5V11H4.5a.5.5 0 01-.5-.5V6h-1a.5.5 0 01-.5-.5V4a.5.5 0 01.328-.472l7-3z" />
                   </svg>
                 </span>
@@ -139,9 +152,7 @@ export function ViewAnnouncementPage({
                       d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
                     />
                   </svg>
-                  <span className="view-announcement__attachment-link">
-                    {attachment.fileName}
-                  </span>
+                  <span className="view-announcement__attachment-link">{attachment.fileName}</span>
                   <span className="view-announcement__attachment-size">
                     ({Math.round(attachment.fileSize / 1024)} KB)
                   </span>
@@ -153,17 +164,29 @@ export function ViewAnnouncementPage({
 
         <div className="view-announcement__actions">
           {canEdit && (
-            <button type="button" onClick={onEdit} className="view-announcement__btn view-announcement__btn--edit">
+            <button
+              type="button"
+              onClick={onEdit}
+              className="view-announcement__btn view-announcement__btn--edit"
+            >
               Edit
             </button>
           )}
           {canPublish && (
-            <button type="button" onClick={onPublish} className="view-announcement__btn view-announcement__btn--publish">
+            <button
+              type="button"
+              onClick={onPublish}
+              className="view-announcement__btn view-announcement__btn--publish"
+            >
               Publish Now
             </button>
           )}
           {canArchive && (
-            <button type="button" onClick={onArchive} className="view-announcement__btn view-announcement__btn--archive">
+            <button
+              type="button"
+              onClick={onArchive}
+              className="view-announcement__btn view-announcement__btn--archive"
+            >
               Archive
             </button>
           )}
@@ -175,17 +198,29 @@ export function ViewAnnouncementPage({
             {announcement.pinned ? 'Unpin' : 'Pin'}
           </button>
           {announcement.acknowledgmentRequired && onAcknowledge && (
-            <button type="button" onClick={onAcknowledge} className="view-announcement__btn view-announcement__btn--ack">
+            <button
+              type="button"
+              onClick={onAcknowledge}
+              className="view-announcement__btn view-announcement__btn--ack"
+            >
               Acknowledge
             </button>
           )}
           {onMarkRead && (
-            <button type="button" onClick={onMarkRead} className="view-announcement__btn view-announcement__btn--read">
+            <button
+              type="button"
+              onClick={onMarkRead}
+              className="view-announcement__btn view-announcement__btn--read"
+            >
               Mark as Read
             </button>
           )}
           {canDelete && (
-            <button type="button" onClick={onDelete} className="view-announcement__btn view-announcement__btn--delete">
+            <button
+              type="button"
+              onClick={onDelete}
+              className="view-announcement__btn view-announcement__btn--delete"
+            >
               Delete
             </button>
           )}

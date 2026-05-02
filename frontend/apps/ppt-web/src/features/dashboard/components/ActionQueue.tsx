@@ -216,7 +216,9 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
             className="action-queue__btn"
             aria-label={t('common.refresh')}
           >
-            <span className={isLoading ? 'action-queue__spin' : ''} aria-hidden="true">🔄</span>
+            <span className={isLoading ? 'action-queue__spin' : ''} aria-hidden="true">
+              🔄
+            </span>
           </button>
         </div>
       </div>
@@ -238,7 +240,9 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
 
       {!isLoading && items.length === 0 && (
         <div className="action-queue__empty">
-          <span className="action-queue__empty-icon" aria-hidden="true">✅</span>
+          <span className="action-queue__empty-icon" aria-hidden="true">
+            ✅
+          </span>
           <h3 className="action-queue__empty-title">{t('dashboard.allCaughtUp')}</h3>
           <p className="action-queue__empty-subtitle">{t('dashboard.noItemsNeedingAttention')}</p>
         </div>
@@ -268,13 +272,10 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
       )}
 
       <p className="action-queue__kbd-hint">
-        {t('dashboard.keyboardHint')}{' '}
-        <kbd className="action-queue__kbd">j</kbd>/<kbd className="action-queue__kbd">k</kbd>{' '}
-        {t('dashboard.toNavigate')},{' '}
-        <kbd className="action-queue__kbd">Enter</kbd>{' '}
-        {t('dashboard.toOpen')},{' '}
-        <kbd className="action-queue__kbd">?</kbd>{' '}
-        {t('dashboard.forHelp')}
+        {t('dashboard.keyboardHint')} <kbd className="action-queue__kbd">j</kbd>/
+        <kbd className="action-queue__kbd">k</kbd> {t('dashboard.toNavigate')},{' '}
+        <kbd className="action-queue__kbd">Enter</kbd> {t('dashboard.toOpen')},{' '}
+        <kbd className="action-queue__kbd">?</kbd> {t('dashboard.forHelp')}
       </p>
 
       <KeyboardShortcutsHelp

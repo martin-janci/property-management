@@ -1,5 +1,5 @@
 /* Global styles for Reality Portal */
-@import '@ppt/ui-kit/tokens.css';
+@import "@ppt/ui-kit/tokens.css";
 
 * {
   box-sizing: border-box;
@@ -32,7 +32,9 @@ a:hover {
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }

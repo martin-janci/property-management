@@ -319,12 +319,24 @@ export function AgencyListings() {
 
 function ListingRow({ listing }: { listing: AgencyListing }) {
   const statusConfig: Record<AgencyListingStatus, { label: string; color: string; bg: string }> = {
-    active: { label: 'Active', color: 'var(--ppt-color-success)', bg: 'var(--ppt-color-success-light)' },
+    active: {
+      label: 'Active',
+      color: 'var(--ppt-color-success)',
+      bg: 'var(--ppt-color-success-light)',
+    },
     draft: { label: 'Draft', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
-    pending: { label: 'Pending', color: 'var(--ppt-color-warning)', bg: 'var(--ppt-color-warning-light)' },
+    pending: {
+      label: 'Pending',
+      color: 'var(--ppt-color-warning)',
+      bg: 'var(--ppt-color-warning-light)',
+    },
     sold: { label: 'Sold', color: '#8b5cf6', bg: '#ede9fe' },
     rented: { label: 'Rented', color: '#06b6d4', bg: '#cffafe' },
-    withdrawn: { label: 'Withdrawn', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
+    withdrawn: {
+      label: 'Withdrawn',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
   };
 
   const status = statusConfig[listing.status];

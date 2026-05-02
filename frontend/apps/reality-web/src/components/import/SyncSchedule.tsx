@@ -592,10 +592,26 @@ function ScheduleSkeleton() {
 
 function getHistoryStatusConfig(status: SyncHistoryItem['status']) {
   const configs = {
-    running: { label: 'Running', color: 'var(--ppt-color-primary)', bg: 'var(--ppt-color-primary-soft-bg)' },
-    completed: { label: 'Completed', color: 'var(--ppt-color-success-hover)', bg: 'var(--ppt-color-success-light)' },
-    failed: { label: 'Failed', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
-    cancelled: { label: 'Cancelled', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    running: {
+      label: 'Running',
+      color: 'var(--ppt-color-primary)',
+      bg: 'var(--ppt-color-primary-soft-bg)',
+    },
+    completed: {
+      label: 'Completed',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    failed: {
+      label: 'Failed',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
+    cancelled: {
+      label: 'Cancelled',
+      color: 'var(--ppt-fg-muted)',
+      bg: 'var(--ppt-border-default)',
+    },
   };
   return configs[status];
 }

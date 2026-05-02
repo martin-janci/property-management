@@ -23,7 +23,11 @@
 
 /* Quick tasks banner uses the one allowed gradient */
 .resident-page__banner {
-  background: linear-gradient(135deg, var(--ppt-brand-800, #1e40af) 0%, var(--ppt-brand-500, #3b82f6) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--ppt-brand-800, #1e40af) 0%,
+    var(--ppt-brand-500, #3b82f6) 100%
+  );
   border-radius: var(--ppt-radius-lg);
   padding: var(--ppt-space-4);
   margin-bottom: var(--ppt-space-6);

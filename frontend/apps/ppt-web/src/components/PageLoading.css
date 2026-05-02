@@ -22,7 +22,9 @@
 }
 
 @keyframes page-loading-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .page-loading__label {

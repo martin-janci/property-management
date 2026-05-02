@@ -15,8 +15,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 import { colors } from '../shared/screenStyles';
+import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 
 interface ReportFaultScreenProps {
   onSuccess?: () => void;

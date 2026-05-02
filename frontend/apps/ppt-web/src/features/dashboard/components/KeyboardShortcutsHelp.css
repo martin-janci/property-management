@@ -11,7 +11,7 @@
 .kbd-help-dialog {
   background: var(--ppt-bg-surface);
   border-radius: var(--ppt-radius-xl);
-  box-shadow: var(--ppt-shadow-xl, 0 20px 60px rgba(0,0,0,0.3));
+  box-shadow: var(--ppt-shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.3));
   max-width: 28rem;
   width: calc(100% - var(--ppt-space-8));
   padding: var(--ppt-space-6);

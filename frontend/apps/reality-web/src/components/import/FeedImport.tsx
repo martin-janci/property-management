@@ -955,9 +955,17 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function getFeedStatusConfig(status: FeedSource['status']) {
   const configs = {
-    active: { label: 'Active', color: 'var(--ppt-color-success-hover)', bg: 'var(--ppt-color-success-light)' },
+    active: {
+      label: 'Active',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
     paused: { label: 'Paused', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
-    error: { label: 'Error', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
+    error: {
+      label: 'Error',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
   };
   return configs[status];
 }

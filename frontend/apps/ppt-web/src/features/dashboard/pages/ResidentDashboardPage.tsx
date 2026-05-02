@@ -26,7 +26,9 @@ export function ResidentDashboardPage({ onItemAction }: ResidentDashboardPagePro
       </header>
 
       <div className="resident-page__banner">
-        <span className="resident-page__banner-icon" aria-hidden="true">⚡</span>
+        <span className="resident-page__banner-icon" aria-hidden="true">
+          ⚡
+        </span>
         <div>
           <h2 className="resident-page__banner-title">{t('dashboard.quickTasks')}</h2>
           <p className="resident-page__banner-subtitle">{t('dashboard.completeIn60Seconds')}</p>
@@ -60,7 +62,9 @@ interface ActivityItemProps {
 function ActivityItem({ icon, text, time }: ActivityItemProps) {
   return (
     <div className="activity-item">
-      <span className="activity-item__icon" aria-hidden="true">{icon}</span>
+      <span className="activity-item__icon" aria-hidden="true">
+        {icon}
+      </span>
       <div>
         <p className="activity-item__text">{text}</p>
         <p className="activity-item__time">{time}</p>

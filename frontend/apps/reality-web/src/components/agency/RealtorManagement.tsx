@@ -269,10 +269,22 @@ function RealtorCard({
   };
 
   const statusConfig: Record<RealtorStatus, { label: string; color: string; bg: string }> = {
-    active: { label: 'Active', color: 'var(--ppt-color-success)', bg: 'var(--ppt-color-success-light)' },
-    invited: { label: 'Pending', color: 'var(--ppt-color-warning)', bg: 'var(--ppt-color-warning-light)' },
+    active: {
+      label: 'Active',
+      color: 'var(--ppt-color-success)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    invited: {
+      label: 'Pending',
+      color: 'var(--ppt-color-warning)',
+      bg: 'var(--ppt-color-warning-light)',
+    },
     inactive: { label: 'Inactive', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
-    suspended: { label: 'Suspended', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
+    suspended: {
+      label: 'Suspended',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
   };
 
   const status = statusConfig[realtor.status];
@@ -316,7 +328,13 @@ function RealtorCard({
         {realtor.rating && (
           <div className="stat">
             <span className="stat-value rating">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--ppt-color-warning)" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="var(--ppt-color-warning)"
+                aria-hidden="true"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               {realtor.rating.toFixed(1)}

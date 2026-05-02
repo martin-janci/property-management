@@ -29,9 +29,8 @@
 /* ─── Interactive ───────────────────────────────────────── */
 .ppt-card--interactive {
   cursor: pointer;
-  transition: box-shadow var(--ppt-transition-normal),
-              border-color var(--ppt-transition-normal),
-              transform var(--ppt-transition-normal);
+  transition: box-shadow var(--ppt-transition-normal), border-color var(--ppt-transition-normal),
+    transform var(--ppt-transition-normal);
 }
 
 .ppt-card--interactive:hover {

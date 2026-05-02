@@ -9,9 +9,8 @@
   border-radius: var(--ppt-radius-lg);
   padding: var(--ppt-space-4);
   box-shadow: var(--ppt-shadow-md);
-  transition: box-shadow var(--ppt-transition-normal),
-              border-color var(--ppt-transition-normal),
-              transform var(--ppt-transition-normal);
+  transition: box-shadow var(--ppt-transition-normal), border-color var(--ppt-transition-normal),
+    transform var(--ppt-transition-normal);
 }
 
 .fault-card:hover {
@@ -114,14 +113,38 @@
   white-space: nowrap;
 }
 
-.fault-status-pill--new        { background: var(--ppt-status-fault-new-bg);        color: var(--ppt-status-fault-new-ink); }
-.fault-status-pill--triaged    { background: var(--ppt-status-fault-triaged-bg);    color: var(--ppt-status-fault-triaged-ink); }
-.fault-status-pill--in_progress{ background: var(--ppt-status-fault-inprogress-bg); color: var(--ppt-status-fault-inprogress-ink); }
-.fault-status-pill--waiting_parts{ background: var(--ppt-status-fault-waitparts-bg);  color: var(--ppt-status-fault-waitparts-ink); }
-.fault-status-pill--scheduled  { background: var(--ppt-status-fault-scheduled-bg);  color: var(--ppt-status-fault-scheduled-ink); }
-.fault-status-pill--resolved   { background: var(--ppt-status-fault-resolved-bg);   color: var(--ppt-status-fault-resolved-ink); }
-.fault-status-pill--closed     { background: var(--ppt-status-fault-closed-bg);     color: var(--ppt-status-fault-closed-ink); }
-.fault-status-pill--reopened   { background: var(--ppt-status-fault-reopened-bg);   color: var(--ppt-status-fault-reopened-ink); }
+.fault-status-pill--new {
+  background: var(--ppt-status-fault-new-bg);
+  color: var(--ppt-status-fault-new-ink);
+}
+.fault-status-pill--triaged {
+  background: var(--ppt-status-fault-triaged-bg);
+  color: var(--ppt-status-fault-triaged-ink);
+}
+.fault-status-pill--in_progress {
+  background: var(--ppt-status-fault-inprogress-bg);
+  color: var(--ppt-status-fault-inprogress-ink);
+}
+.fault-status-pill--waiting_parts {
+  background: var(--ppt-status-fault-waitparts-bg);
+  color: var(--ppt-status-fault-waitparts-ink);
+}
+.fault-status-pill--scheduled {
+  background: var(--ppt-status-fault-scheduled-bg);
+  color: var(--ppt-status-fault-scheduled-ink);
+}
+.fault-status-pill--resolved {
+  background: var(--ppt-status-fault-resolved-bg);
+  color: var(--ppt-status-fault-resolved-ink);
+}
+.fault-status-pill--closed {
+  background: var(--ppt-status-fault-closed-bg);
+  color: var(--ppt-status-fault-closed-ink);
+}
+.fault-status-pill--reopened {
+  background: var(--ppt-status-fault-reopened-bg);
+  color: var(--ppt-status-fault-reopened-ink);
+}
 
 /* ─── Priority indicators ─────────────────────────────── */
 .fault-priority-pill {
@@ -130,7 +153,15 @@
   letter-spacing: 0.04em;
 }
 
-.fault-priority-pill--low    { color: var(--ppt-priority-low-ink); }
-.fault-priority-pill--medium { color: var(--ppt-priority-medium-ink); }
-.fault-priority-pill--high   { color: var(--ppt-priority-high-ink); }
-.fault-priority-pill--urgent { color: var(--ppt-priority-urgent-ink); }
+.fault-priority-pill--low {
+  color: var(--ppt-priority-low-ink);
+}
+.fault-priority-pill--medium {
+  color: var(--ppt-priority-medium-ink);
+}
+.fault-priority-pill--high {
+  color: var(--ppt-priority-high-ink);
+}
+.fault-priority-pill--urgent {
+  color: var(--ppt-priority-urgent-ink);
+}

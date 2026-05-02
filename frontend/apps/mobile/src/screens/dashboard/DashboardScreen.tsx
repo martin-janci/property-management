@@ -89,10 +89,14 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   const getCategoryColor = (category: Announcement['category']): string => {
     switch (category) {
-      case 'urgent':   return colors.danger;
-      case 'maintenance': return colors.warning;
-      case 'event':    return colors.eventCategoryInk;
-      default:         return colors.textMuted;
+      case 'urgent':
+        return colors.danger;
+      case 'maintenance':
+        return colors.warning;
+      case 'event':
+        return colors.eventCategoryInk;
+      default:
+        return colors.textMuted;
     }
   };
 

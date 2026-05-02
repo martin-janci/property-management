@@ -821,10 +821,26 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function getStatusConfig(status: CrmConnectionType['status']) {
   const configs = {
-    connected: { label: 'Connected', color: 'var(--ppt-color-success-hover)', bg: 'var(--ppt-color-success-light)' },
-    disconnected: { label: 'Disconnected', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
-    error: { label: 'Error', color: 'var(--ppt-color-danger)', bg: 'var(--ppt-color-danger-light)' },
-    syncing: { label: 'Syncing', color: 'var(--ppt-color-primary)', bg: 'var(--ppt-color-primary-soft-bg)' },
+    connected: {
+      label: 'Connected',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    disconnected: {
+      label: 'Disconnected',
+      color: 'var(--ppt-fg-muted)',
+      bg: 'var(--ppt-border-default)',
+    },
+    error: {
+      label: 'Error',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
+    syncing: {
+      label: 'Syncing',
+      color: 'var(--ppt-color-primary)',
+      bg: 'var(--ppt-color-primary-soft-bg)',
+    },
   };
   return configs[status];
 }

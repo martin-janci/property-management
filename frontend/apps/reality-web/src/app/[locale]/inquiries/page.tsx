@@ -14,11 +14,27 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 const statusConfig: Record<InquiryStatus, { label: string; color: string; bg: string }> = {
-  pending: { label: 'Pending', color: 'var(--ppt-color-warning-dark)', bg: 'var(--ppt-color-warning-light)' },
-  responded: { label: 'Responded', color: 'var(--ppt-color-primary-hover)', bg: 'var(--ppt-color-primary-soft-bg)' },
+  pending: {
+    label: 'Pending',
+    color: 'var(--ppt-color-warning-dark)',
+    bg: 'var(--ppt-color-warning-light)',
+  },
+  responded: {
+    label: 'Responded',
+    color: 'var(--ppt-color-primary-hover)',
+    bg: 'var(--ppt-color-primary-soft-bg)',
+  },
   scheduled: { label: 'Scheduled', color: '#6d28d9', bg: '#ede9fe' },
-  completed: { label: 'Completed', color: 'var(--ppt-color-success-dark)', bg: 'var(--ppt-color-success-light)' },
-  cancelled: { label: 'Cancelled', color: 'var(--ppt-color-danger-dark)', bg: 'var(--ppt-color-danger-light)' },
+  completed: {
+    label: 'Completed',
+    color: 'var(--ppt-color-success-dark)',
+    bg: 'var(--ppt-color-success-light)',
+  },
+  cancelled: {
+    label: 'Cancelled',
+    color: 'var(--ppt-color-danger-dark)',
+    bg: 'var(--ppt-color-danger-light)',
+  },
 };
 
 function InquiryCard({ inquiry }: { inquiry: Inquiry }) {

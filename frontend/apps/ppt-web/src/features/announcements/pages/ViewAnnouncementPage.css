@@ -17,10 +17,22 @@
   white-space: nowrap;
 }
 
-.ann-status-pill--draft     { background: var(--ppt-status-anno-draft-bg);     color: var(--ppt-status-anno-draft-ink); }
-.ann-status-pill--scheduled { background: var(--ppt-status-anno-scheduled-bg); color: var(--ppt-status-anno-scheduled-ink); }
-.ann-status-pill--published { background: var(--ppt-status-anno-published-bg); color: var(--ppt-status-anno-published-ink); }
-.ann-status-pill--archived  { background: var(--ppt-status-anno-archived-bg);  color: var(--ppt-status-anno-archived-ink); }
+.ann-status-pill--draft {
+  background: var(--ppt-status-anno-draft-bg);
+  color: var(--ppt-status-anno-draft-ink);
+}
+.ann-status-pill--scheduled {
+  background: var(--ppt-status-anno-scheduled-bg);
+  color: var(--ppt-status-anno-scheduled-ink);
+}
+.ann-status-pill--published {
+  background: var(--ppt-status-anno-published-bg);
+  color: var(--ppt-status-anno-published-ink);
+}
+.ann-status-pill--archived {
+  background: var(--ppt-status-anno-archived-bg);
+  color: var(--ppt-status-anno-archived-ink);
+}
 
 .view-announcement__back {
   display: inline-flex;
@@ -38,7 +50,9 @@
   transition: color var(--ppt-transition-fast);
 }
 
-.view-announcement__back:hover { color: var(--ppt-color-primary-hover); }
+.view-announcement__back:hover {
+  color: var(--ppt-color-primary-hover);
+}
 
 .view-announcement__back:focus-visible {
   outline: none;
@@ -194,21 +208,27 @@
   border-color: var(--ppt-border-default);
 }
 
-.view-announcement__btn--edit:hover { background: var(--ppt-bg-subtle, #f3f4f6); }
+.view-announcement__btn--edit:hover {
+  background: var(--ppt-bg-subtle, #f3f4f6);
+}
 
 .view-announcement__btn--publish {
   background: var(--ppt-status-anno-published-ink);
   color: var(--ppt-fg-on-accent);
 }
 
-.view-announcement__btn--publish:hover { opacity: 0.9; }
+.view-announcement__btn--publish:hover {
+  opacity: 0.9;
+}
 
 .view-announcement__btn--archive {
   background: var(--ppt-color-warning-hover);
   color: var(--ppt-fg-on-accent);
 }
 
-.view-announcement__btn--archive:hover { background: var(--ppt-color-warning-dark); }
+.view-announcement__btn--archive:hover {
+  background: var(--ppt-color-warning-dark);
+}
 
 .view-announcement__btn--pin {
   background: var(--ppt-bg-surface);
@@ -216,14 +236,18 @@
   border-color: var(--ppt-color-warning-hover);
 }
 
-.view-announcement__btn--pin:hover { background: var(--ppt-color-warning-light); }
+.view-announcement__btn--pin:hover {
+  background: var(--ppt-color-warning-light);
+}
 
 .view-announcement__btn--ack {
   background: var(--ppt-color-primary);
   color: var(--ppt-fg-on-accent);
 }
 
-.view-announcement__btn--ack:hover { background: var(--ppt-color-primary-hover); }
+.view-announcement__btn--ack:hover {
+  background: var(--ppt-color-primary-hover);
+}
 
 .view-announcement__btn--read {
   background: none;
@@ -233,7 +257,9 @@
   padding-right: 0;
 }
 
-.view-announcement__btn--read:hover { color: var(--ppt-fg-primary); }
+.view-announcement__btn--read:hover {
+  color: var(--ppt-fg-primary);
+}
 
 .view-announcement__btn--delete {
   background: none;
@@ -242,7 +268,9 @@
   margin-left: auto;
 }
 
-.view-announcement__btn--delete:hover { color: var(--ppt-color-danger-hover, #b91c1c); }
+.view-announcement__btn--delete:hover {
+  color: var(--ppt-color-danger-hover, #b91c1c);
+}
 
 /* Loading spinner */
 .view-announcement__loading {
@@ -262,5 +290,7 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -12,8 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { FaultCard, type FaultSummary } from '../components/FaultCard';
 import { colors } from '../../../screens/shared/screenStyles';
+import { FaultCard, type FaultSummary } from '../components/FaultCard';
 
 interface FaultsScreenProps {
   faults: FaultSummary[];

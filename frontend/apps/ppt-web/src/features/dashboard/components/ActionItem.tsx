@@ -30,7 +30,6 @@ const typeIcons: Record<ActionItemType['type'], string> = {
   announcement_unread: '📢',
 };
 
-
 export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function ActionItem(
   { item, isSelected = false, isHighlighted = false, isExecuting = false, onAction, onSelect },
   ref
@@ -78,7 +77,9 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
     isSelected ? 'action-item--selected' : '',
     isHighlighted ? 'action-item--highlighted' : '',
     isExecuting ? 'action-item--executing' : '',
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div
@@ -105,7 +106,9 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
           <div className="action-item__content">
             <div className="action-item__title-row">
               <h3 className="action-item__title">{item.title}</h3>
-              <span className={`action-item__priority-badge action-item__priority-badge--${item.priority}`}>
+              <span
+                className={`action-item__priority-badge action-item__priority-badge--${item.priority}`}
+              >
                 {t(`dashboard.priority.${item.priority}`)}
               </span>
             </div>
@@ -115,7 +118,11 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
             <div className="action-item__meta">
               <span>{formatTimeAgo(item.createdAt)}</span>
               {item.dueDate && (
-                <span className={item.dueDate < new Date().toISOString() ? 'action-item__due--overdue' : ''}>
+                <span
+                  className={
+                    item.dueDate < new Date().toISOString() ? 'action-item__due--overdue' : ''
+                  }
+                >
                   {formatDueDate(item.dueDate)}
                 </span>
               )}

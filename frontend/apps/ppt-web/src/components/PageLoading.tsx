@@ -12,12 +12,7 @@ export function PageLoading() {
   const { t } = useTranslation();
 
   return (
-    <div
-      className="page-loading"
-      role="status"
-      aria-live="polite"
-      aria-label={t('common.loading')}
-    >
+    <div className="page-loading" role="status" aria-live="polite" aria-label={t('common.loading')}>
       <div className="page-loading__inner">
         <div className="page-loading__spinner" aria-hidden="true" />
         <span className="page-loading__label">{t('common.loading')}</span>

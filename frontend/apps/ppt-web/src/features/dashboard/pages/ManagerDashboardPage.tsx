@@ -59,7 +59,9 @@ function QuickStat({ label, value, trend, color }: QuickStatProps) {
     <div className={`quick-stat quick-stat--${color}`}>
       <div className="quick-stat__row">
         <span className="quick-stat__value">{value}</span>
-        <span className="quick-stat__trend" aria-hidden="true">{trendIcons[trend]}</span>
+        <span className="quick-stat__trend" aria-hidden="true">
+          {trendIcons[trend]}
+        </span>
       </div>
       <p className="quick-stat__label">{label}</p>
     </div>
