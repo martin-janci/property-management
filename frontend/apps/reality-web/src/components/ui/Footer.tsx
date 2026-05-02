@@ -67,7 +67,7 @@ export function Footer() {
       <style jsx>{`
         .footer {
           background-color: var(--ppt-neutral-800);
-          color: var(--ppt-border-default);
+          color: var(--ppt-fg-on-accent);
           margin-top: auto;
         }
 

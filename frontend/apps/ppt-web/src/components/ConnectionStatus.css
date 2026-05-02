@@ -63,7 +63,7 @@
   min-width: 12rem;
   padding: 0.75rem;
   background-color: var(--ppt-neutral-800);
-  color: var(--ppt-bg-subtle);
+  color: var(--ppt-fg-on-accent);
   border-radius: 0.5rem;
   box-shadow: var(--ppt-shadow-lg);
   pointer-events: none;
