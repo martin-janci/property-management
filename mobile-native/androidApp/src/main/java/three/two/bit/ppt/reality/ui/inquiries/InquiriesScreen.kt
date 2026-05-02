@@ -345,11 +345,23 @@ private fun StatusBadge(status: InquiryStatus) {
     val (bg, ink, textRes) =
         when (status) {
             InquiryStatus.PENDING ->
-                Triple(InquiryStatusColors.pendingBg, InquiryStatusColors.pendingInk, R.string.status_pending)
+                Triple(
+                    InquiryStatusColors.pendingBg,
+                    InquiryStatusColors.pendingInk,
+                    R.string.status_pending,
+                )
             InquiryStatus.RESPONDED ->
-                Triple(InquiryStatusColors.respondedBg, InquiryStatusColors.respondedInk, R.string.status_responded)
+                Triple(
+                    InquiryStatusColors.respondedBg,
+                    InquiryStatusColors.respondedInk,
+                    R.string.status_responded,
+                )
             InquiryStatus.CLOSED ->
-                Triple(InquiryStatusColors.closedBg, InquiryStatusColors.closedInk, R.string.status_closed)
+                Triple(
+                    InquiryStatusColors.closedBg,
+                    InquiryStatusColors.closedInk,
+                    R.string.status_closed,
+                )
         }
 
     Surface(shape = RoundedCornerShape(4.dp), color = bg) {
@@ -548,7 +560,12 @@ private fun ViewingStatusBadge(status: ViewingStatus) {
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(attrs.icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = attrs.ink)
+            Icon(
+                attrs.icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = attrs.ink,
+            )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = stringResource(attrs.textRes),

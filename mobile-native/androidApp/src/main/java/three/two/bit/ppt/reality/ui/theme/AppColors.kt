@@ -58,7 +58,8 @@ object FaultStatusColors {
     val scheduledBg  = Color(0xFFEDE9FE);   val scheduledInk  = Color(0xFF5B21B6)  // violet
     val resolvedBg   = Color(0xFFD1FAE5);   val resolvedInk   = Color(0xFF065F46)
     val closedBg     = Color(0xFFF3F4F6);   val closedInk     = Color(0xFF374151)
-    val reopenedBg   = Color(0xFFFEE2E2);   val reopenedInk   = Color(0xFF991B1B)  // red (same as new)
+    val reopenedBg = Color(0xFFFEE2E2)
+    val reopenedInk = Color(0xFF991B1B) // red (same as new)
 }
 
 // ─── Priority tokens ─────────────────────────────────────────────────────────
