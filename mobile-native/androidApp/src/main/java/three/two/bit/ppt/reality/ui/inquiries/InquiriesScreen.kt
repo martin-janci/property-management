@@ -438,7 +438,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
 
                 if (
                     viewing.status == ViewingStatus.PENDING ||
-                        viewing.status == ViewingStatus.CONFIRMED,
+                        viewing.status == ViewingStatus.CONFIRMED
                 ) {
                     IconButton(onClick = { showCancelDialog = true }) {
                         Icon(
