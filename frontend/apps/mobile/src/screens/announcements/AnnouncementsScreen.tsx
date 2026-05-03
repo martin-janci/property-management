@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { colors } from '../shared/screenStyles';
 
 export type AnnouncementCategory = 'general' | 'urgent' | 'maintenance' | 'event' | 'financial';
 
@@ -122,15 +123,15 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   const getCategoryColor = (category: AnnouncementCategory): string => {
     switch (category) {
       case 'urgent':
-        return '#ef4444';
+        return colors.danger;
       case 'maintenance':
-        return '#f59e0b';
+        return colors.warning;
       case 'event':
-        return '#8b5cf6';
+        return colors.eventCategoryInk;
       case 'financial':
-        return '#10b981';
+        return colors.success;
       default:
-        return '#6b7280';
+        return colors.textMuted;
     }
   };
 
@@ -229,7 +230,7 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {filteredAnnouncements.length === 0 ? (
@@ -298,41 +299,41 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
   },
   unreadBadge: {
     fontSize: 13,
-    color: '#2563eb',
+    color: colors.accent,
     marginTop: 4,
   },
   searchContainer: {
     padding: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
   filtersContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   filters: {
     flexDirection: 'row',
@@ -345,22 +346,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     gap: 4,
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   filterIcon: {
     fontSize: 14,
   },
   filterText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.surface,
   },
   scrollView: {
     flex: 1,
@@ -378,19 +379,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   announcementCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -399,14 +400,14 @@ const styles = StyleSheet.create({
   },
   unreadCard: {
     borderLeftWidth: 3,
-    borderLeftColor: '#2563eb',
+    borderLeftColor: colors.accent,
   },
   pinnedBadge: {
     marginBottom: 8,
   },
   pinnedText: {
     fontSize: 12,
-    color: '#f59e0b',
+    color: colors.warning,
     fontWeight: '600',
   },
   announcementHeader: {
@@ -429,22 +430,22 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.surface,
     textTransform: 'uppercase',
   },
   announcementDate: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 6,
   },
   announcementPreview: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -454,11 +455,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
   },
   authorText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   footerRight: {
     flexDirection: 'row',
@@ -466,11 +467,11 @@ const styles = StyleSheet.create({
   },
   attachmentBadge: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   commentsBadge: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   unreadDot: {
     position: 'absolute',
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   bottomSpacer: {
     height: 100,

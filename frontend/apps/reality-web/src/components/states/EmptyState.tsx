@@ -26,14 +26,14 @@ export function EmptyState({ icon = '📭', title, description, children }: Empt
         .state-inline {
           padding: 2.5rem 1rem;
           text-align: center;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 0.75rem;
         }
         .state-icon { font-size: 2rem; }
-        .state-title { font-size: 1.125rem; font-weight: 600; color: #111827; margin: 0; }
+        .state-title { font-size: 1.125rem; font-weight: 600; color: var(--ppt-fg-primary); margin: 0; }
         .state-text { font-size: 0.875rem; max-width: 360px; margin: 0; }
       `}</style>
     </div>

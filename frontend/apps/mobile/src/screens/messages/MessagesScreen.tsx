@@ -128,7 +128,9 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
               {thread.unreadCount > 0 && (
                 <View style={s.cardFooter}>
                   <View style={[s.badge, { backgroundColor: colors.accent }]}>
-                    <Text style={[s.badgeText, { color: '#fff' }]}>{thread.unreadCount} new</Text>
+                    <Text style={[s.badgeText, { color: colors.surface }]}>
+                      {thread.unreadCount} new
+                    </Text>
                   </View>
                 </View>
               )}

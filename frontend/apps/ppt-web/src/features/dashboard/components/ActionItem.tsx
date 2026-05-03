@@ -8,6 +8,7 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActionButton, ActionItem as ActionItemType } from '../hooks/useActionQueue';
+import './ActionItem.css';
 
 interface ActionItemProps {
   item: ActionItemType;
@@ -18,20 +19,6 @@ interface ActionItemProps {
   onSelect?: (itemId: string) => void;
 }
 
-const priorityColors: Record<ActionItemType['priority'], string> = {
-  urgent: 'bg-red-100 text-red-800 border-red-300',
-  high: 'bg-orange-100 text-orange-800 border-orange-300',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  low: 'bg-gray-100 text-gray-800 border-gray-300',
-};
-
-const priorityBadgeColors: Record<ActionItemType['priority'], string> = {
-  urgent: 'bg-red-600 text-white',
-  high: 'bg-orange-500 text-white',
-  medium: 'bg-yellow-500 text-white',
-  low: 'bg-gray-400 text-white',
-};
-
 const typeIcons: Record<ActionItemType['type'], string> = {
   fault_pending: '🔧',
   fault_escalated: '⚠️',
@@ -41,12 +28,6 @@ const typeIcons: Record<ActionItemType['type'], string> = {
   meter_due: '📊',
   person_months_due: '👥',
   announcement_unread: '📢',
-};
-
-const buttonVariants: Record<ActionButton['variant'], string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-  secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 };
 
 export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function ActionItem(
@@ -90,16 +71,20 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
     return t('dashboard.dueInDays', { days: diffDays });
   };
 
+  const rootClass = [
+    'action-item',
+    `action-item--${item.priority}`,
+    isSelected ? 'action-item--selected' : '',
+    isHighlighted ? 'action-item--highlighted' : '',
+    isExecuting ? 'action-item--executing' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
       ref={ref}
-      className={`
-        rounded-lg border p-4 transition-all duration-200
-        ${priorityColors[item.priority]}
-        ${isSelected ? 'ring-2 ring-blue-500 shadow-lg' : 'shadow-sm hover:shadow-md'}
-        ${isHighlighted ? 'animate-pulse ring-4 ring-yellow-400' : ''}
-        ${isExecuting ? 'opacity-50 pointer-events-none' : ''}
-      `}
+      className={rootClass}
       onClick={() => onSelect?.(item.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -112,35 +97,30 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
       aria-selected={isSelected}
       aria-busy={isExecuting}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          {/* Icon */}
-          <span className="text-2xl flex-shrink-0" aria-hidden="true">
+      <div className="action-item__body">
+        <div className="action-item__main">
+          <span className="action-item__icon" aria-hidden="true">
             {typeIcons[item.type]}
           </span>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900 truncate">{item.title}</h3>
+          <div className="action-item__content">
+            <div className="action-item__title-row">
+              <h3 className="action-item__title">{item.title}</h3>
               <span
-                className={`
-                  px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0
-                  ${priorityBadgeColors[item.priority]}
-                `}
+                className={`action-item__priority-badge action-item__priority-badge--${item.priority}`}
               >
                 {t(`dashboard.priority.${item.priority}`)}
               </span>
             </div>
 
-            <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+            <p className="action-item__description">{item.description}</p>
 
-            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+            <div className="action-item__meta">
               <span>{formatTimeAgo(item.createdAt)}</span>
               {item.dueDate && (
                 <span
                   className={
-                    item.dueDate < new Date().toISOString() ? 'text-red-600 font-medium' : ''
+                    item.dueDate < new Date().toISOString() ? 'action-item__due--overdue' : ''
                   }
                 >
                   {formatDueDate(item.dueDate)}
@@ -150,8 +130,7 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
           </div>
         </div>
 
-        {/* Inline Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="action-item__actions">
           {item.actions.map((action) => (
             <button
               key={action.id}
@@ -161,13 +140,7 @@ export const ActionItem = forwardRef<HTMLDivElement, ActionItemProps>(function A
                 onAction(item.id, action.action);
               }}
               disabled={isExecuting}
-              className={`
-                px-3 py-1.5 text-sm font-medium rounded-md
-                focus:outline-none focus:ring-2 focus:ring-offset-2
-                transition-colors duration-150
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${buttonVariants[action.variant]}
-              `}
+              className={`action-item__btn action-item__btn--${action.variant}`}
             >
               {action.label}
             </button>

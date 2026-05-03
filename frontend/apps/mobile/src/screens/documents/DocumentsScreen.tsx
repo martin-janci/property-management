@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { colors } from '../shared/screenStyles';
 
 export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
 
@@ -305,7 +306,7 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {filteredDocuments.length === 0 ? (
@@ -369,14 +370,14 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -388,12 +389,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: '#2563eb',
+    color: colors.accent,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
     flex: 1,
   },
   breadcrumb: {
@@ -401,9 +402,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
     flexWrap: 'wrap',
   },
   breadcrumbItem: {
@@ -412,24 +413,24 @@ const styles = StyleSheet.create({
   },
   breadcrumbLink: {
     fontSize: 13,
-    color: '#2563eb',
+    color: colors.accent,
   },
   breadcrumbSeparator: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginHorizontal: 6,
   },
   breadcrumbCurrent: {
     fontSize: 13,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   searchContainer: {
     padding: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -449,24 +450,24 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   documentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   documentDownloading: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
   },
   fileIcon: {
     fontSize: 28,
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 2,
   },
   documentMeta: {
@@ -486,11 +487,11 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   arrowIcon: {
     fontSize: 24,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   downloadIcon: {
     fontSize: 18,
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
   },
   downloadingText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   bottomSpacer: {
     height: 100,

@@ -17,6 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { colors } from '../shared/screenStyles';
 
 type Step = 'idle' | 'verify' | 'enabled';
 
@@ -113,45 +114,45 @@ export function TwoFactorScreen({ onDonePress }: TwoFactorScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, padding: 24, justifyContent: 'center' },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
-  subtitle: { fontSize: 16, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
+  subtitle: { fontSize: 16, color: colors.textMuted, textAlign: 'center', marginBottom: 24 },
   form: { gap: 16 },
-  help: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+  help: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
   inputGroup: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '500', color: '#374151' },
+  label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     padding: 12,
     fontSize: 20,
     textAlign: 'center',
     letterSpacing: 6,
   },
-  inputError: { borderColor: '#ef4444' },
-  errorText: { color: '#ef4444', fontSize: 12, textAlign: 'center' },
+  inputError: { borderColor: colors.danger },
+  errorText: { color: colors.danger, fontSize: 12, textAlign: 'center' },
   primaryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  primaryButtonText: { color: colors.surface, fontSize: 16, fontWeight: '600' },
   success: { gap: 16, alignItems: 'center' },
   successText: {
-    color: '#047857',
+    color: colors.successDark,
     fontSize: 16,
-    backgroundColor: '#ecfdf5',
+    backgroundColor: colors.successBg,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

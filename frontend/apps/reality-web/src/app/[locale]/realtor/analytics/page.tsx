@@ -25,11 +25,11 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <span className="stat-value">{value}</span>
       <style jsx>{`
         .stat {
-          background: #fff; padding: 20px; border-radius: 12px;
+          background: var(--ppt-bg-surface); padding: 20px; border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0,0,0,.1); display: flex; flex-direction: column; gap: 8px;
         }
-        .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; font-weight: 600; }
-        .stat-value { font-size: 1.875rem; font-weight: 700; color: #111827; }
+        .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: var(--ppt-fg-muted); font-weight: 600; }
+        .stat-value { font-size: 1.875rem; font-weight: 700; color: var(--ppt-fg-primary); }
       `}</style>
     </div>
   );
@@ -96,14 +96,14 @@ function AnalyticsContent() {
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
         .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-        .title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { color: #6b7280; margin: 0; }
+        .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { color: var(--ppt-fg-muted); margin: 0; }
         .period {
-          padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff;
-          font-size: 14px; color: #111827;
+          padding: 8px 12px; border: 1px solid var(--ppt-border-strong); border-radius: 8px; background: var(--ppt-bg-surface);
+          font-size: 14px; color: var(--ppt-fg-primary);
         }
-        .state { padding: 32px; text-align: center; color: #6b7280; }
-        .error { color: #dc2626; }
+        .state { padding: 32px; text-align: center; color: var(--ppt-fg-muted); }
+        .error { color: var(--ppt-color-danger-hover); }
         .grid {
           display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
           gap: 16px;
@@ -124,7 +124,7 @@ export default function RealtorAnalyticsPage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

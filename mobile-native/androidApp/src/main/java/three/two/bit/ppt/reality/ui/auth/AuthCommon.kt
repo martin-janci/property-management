@@ -11,9 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
+import three.two.bit.ppt.reality.ui.theme.DangerRedBg
+import three.two.bit.ppt.reality.ui.theme.DangerRedDark
+import three.two.bit.ppt.reality.ui.theme.SuccessGreenBg
+import three.two.bit.ppt.reality.ui.theme.SuccessGreenDark
 
 /** Shared helpers for the Reality Portal auth screens (UC-47). */
 internal val emailRegex = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
@@ -28,13 +31,13 @@ internal fun ErrorBanner(message: String) {
         modifier =
             Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFFEF2F2))
+                .background(DangerRedBg)
                 .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFB91C1C),
+            color = DangerRedDark,
         )
     }
 }
@@ -45,13 +48,13 @@ internal fun SuccessBanner(message: String) {
         modifier =
             Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFECFDF5))
+                .background(SuccessGreenBg)
                 .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF047857),
+            color = SuccessGreenDark,
         )
     }
 }

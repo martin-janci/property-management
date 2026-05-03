@@ -1,0 +1,183 @@
+.action-filters {
+  background: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-lg);
+  padding: var(--ppt-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-4);
+}
+
+.action-filters__label {
+  display: block;
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-fg-secondary);
+  margin-bottom: var(--ppt-space-1);
+}
+
+/* Search row */
+.action-filters__search-row {
+  display: flex;
+  gap: var(--ppt-space-2);
+}
+
+.action-filters__search-input {
+  flex: 1;
+  padding: var(--ppt-space-2) var(--ppt-space-3);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-md);
+  font-size: var(--ppt-font-size-sm);
+  font-family: var(--ppt-font-family);
+  color: var(--ppt-fg-primary);
+  background: var(--ppt-bg-surface);
+  transition: border-color var(--ppt-transition-fast), box-shadow var(--ppt-transition-fast);
+}
+
+.action-filters__search-input:focus {
+  outline: none;
+  border-color: var(--ppt-color-primary);
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.action-filters__search-btn {
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+  background: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
+  border: none;
+  border-radius: var(--ppt-radius-md);
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  cursor: pointer;
+  font-family: var(--ppt-font-family);
+  transition: background var(--ppt-transition-fast);
+}
+
+.action-filters__search-btn:hover {
+  background: var(--ppt-color-primary-hover);
+}
+
+.action-filters__search-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+/* Chip groups */
+.action-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ppt-space-2);
+}
+
+.action-filters__chip {
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  border-radius: var(--ppt-radius-md);
+  border: 1px solid;
+  cursor: pointer;
+  font-family: var(--ppt-font-family);
+  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast);
+}
+
+.action-filters__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+/* priority chip base colors */
+.action-filters__chip--urgent {
+  background: var(--ppt-status-fault-new-bg);
+  color: var(--ppt-status-fault-new-ink);
+  border-color: var(--ppt-status-fault-new-ink);
+}
+
+.action-filters__chip--high {
+  background: var(--ppt-status-fault-waitparts-bg);
+  color: var(--ppt-status-fault-waitparts-ink);
+  border-color: var(--ppt-status-fault-waitparts-ink);
+}
+
+.action-filters__chip--medium {
+  background: var(--ppt-status-fault-inprogress-bg);
+  color: var(--ppt-status-fault-inprogress-ink);
+  border-color: var(--ppt-status-fault-inprogress-ink);
+}
+
+.action-filters__chip--low {
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  color: var(--ppt-fg-secondary);
+  border-color: var(--ppt-border-default);
+}
+
+/* active state — solid fill using inline style from component */
+.action-filters__chip--active-urgent {
+  background: var(--ppt-status-fault-new-ink);
+  color: var(--ppt-fg-on-accent);
+  border-color: var(--ppt-status-fault-new-ink);
+}
+.action-filters__chip--active-high {
+  background: var(--ppt-status-fault-waitparts-ink);
+  color: var(--ppt-fg-on-accent);
+  border-color: var(--ppt-status-fault-waitparts-ink);
+}
+.action-filters__chip--active-medium {
+  background: var(--ppt-color-warning-hover);
+  color: var(--ppt-fg-on-accent);
+  border-color: var(--ppt-color-warning-hover);
+}
+.action-filters__chip--active-low {
+  background: var(--ppt-fg-muted);
+  color: var(--ppt-fg-on-accent);
+  border-color: var(--ppt-fg-muted);
+}
+
+/* type chips */
+.action-filters__chip--type {
+  background: var(--ppt-bg-surface);
+  color: var(--ppt-fg-secondary);
+  border-color: var(--ppt-border-default);
+}
+
+.action-filters__chip--type:hover {
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  color: var(--ppt-fg-primary);
+}
+
+.action-filters__chip--type-active {
+  background: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
+  border-color: var(--ppt-color-primary);
+}
+
+/* chip count badge */
+.action-filters__chip-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--ppt-radius-full);
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 10px;
+}
+
+/* clear row */
+.action-filters__clear-row {
+  padding-top: var(--ppt-space-2);
+  border-top: 1px solid var(--ppt-border-subtle);
+}
+
+.action-filters__clear-btn {
+  background: none;
+  border: none;
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-color-primary);
+  cursor: pointer;
+  font-family: var(--ppt-font-family);
+  padding: 0;
+  transition: color var(--ppt-transition-fast);
+}
+
+.action-filters__clear-btn:hover {
+  color: var(--ppt-color-primary-hover);
+}

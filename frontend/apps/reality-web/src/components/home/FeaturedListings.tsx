@@ -35,7 +35,7 @@ export function FeaturedListings() {
         <style jsx>{`
           .featured-section {
             padding: 64px 16px;
-            background: #f9fafb;
+            background: var(--ppt-bg-app);
           }
           .container {
             max-width: 1280px;
@@ -44,7 +44,7 @@ export function FeaturedListings() {
           .skeleton-header {
             height: 40px;
             width: 300px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 8px;
             margin-bottom: 32px;
           }
@@ -55,7 +55,7 @@ export function FeaturedListings() {
           }
           .skeleton-card {
             height: 320px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
           }
         `}</style>
@@ -123,11 +123,11 @@ export function FeaturedListings() {
               <style jsx>{`
                 .featured-section {
                   padding: 64px 16px;
-                  background: #f9fafb;
+                  background: var(--ppt-bg-app);
                 }
 
                 .featured-section:nth-child(even) {
-                  background: #fff;
+                  background: var(--ppt-bg-surface);
                 }
 
                 .container {
@@ -145,7 +145,7 @@ export function FeaturedListings() {
                 .section-title {
                   font-size: 1.5rem;
                   font-weight: bold;
-                  color: #111827;
+                  color: var(--ppt-fg-primary);
                   margin: 0;
                 }
 
@@ -153,7 +153,7 @@ export function FeaturedListings() {
                   display: flex;
                   align-items: center;
                   gap: 4px;
-                  color: #2563eb;
+                  color: var(--ppt-color-primary);
                   text-decoration: none;
                   font-weight: 500;
                   font-size: 14px;

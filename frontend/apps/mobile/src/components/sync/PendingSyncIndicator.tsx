@@ -5,6 +5,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'failed';
 
@@ -33,29 +34,29 @@ export function PendingSyncIndicator({
         return {
           icon: '⏳',
           text: t('sync.willSyncWhenOnline'),
-          color: '#ca8a04',
-          bgColor: '#fefce8',
+          color: colors.warningDark,
+          bgColor: colors.warningBg,
         };
       case 'syncing':
         return {
           icon: '↻',
           text: t('sync.syncing'),
-          color: '#2563eb',
-          bgColor: '#eff6ff',
+          color: colors.accent,
+          bgColor: colors.accentSoft,
         };
       case 'synced':
         return {
           icon: '✓',
           text: t('sync.synced'),
-          color: '#16a34a',
-          bgColor: '#f0fdf4',
+          color: colors.success,
+          bgColor: colors.successBg,
         };
       case 'failed':
         return {
           icon: '⚠',
           text: t('sync.failed'),
-          color: '#dc2626',
-          bgColor: '#fef2f2',
+          color: colors.dangerDark,
+          bgColor: colors.dangerBg,
         };
     }
   };
@@ -136,13 +137,13 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginTop: 2,
   },
   retryButton: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2563eb',
+    color: colors.accent,
     paddingHorizontal: 8,
   },
 });

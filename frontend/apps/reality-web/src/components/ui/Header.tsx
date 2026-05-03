@@ -169,32 +169,36 @@ export function Header() {
 
       <style jsx>{`
         .header {
-          background-color: #fff;
-          border-bottom: 1px solid #e5e7eb;
+          background-color: var(--ppt-bg-surface);
+          border-bottom: 1px solid var(--ppt-border-default);
           position: sticky;
           top: 0;
-          z-index: 50;
+          z-index: var(--ppt-z-sticky);
         }
 
         .header-inner {
-          max-width: 1280px;
+          max-width: var(--ppt-content-max, 1280px);
           margin: 0 auto;
-          padding: 16px;
+          padding: 0 32px;
+          height: 64px;
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          gap: 24px;
         }
 
         .logo {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #2563eb;
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--ppt-color-primary);
           text-decoration: none;
+          letter-spacing: -0.02em;
+          flex-shrink: 0;
         }
 
         .nav-desktop {
           display: none;
-          gap: 32px;
+          gap: 2px;
+          margin-left: 16px;
         }
 
         @media (min-width: 768px) {
@@ -204,42 +208,68 @@ export function Header() {
         }
 
         .nav-link {
-          color: #374151;
+          padding: 8px 14px;
+          border-radius: var(--ppt-radius-md);
+          font-size: 13.5px;
+          font-weight: var(--ppt-font-weight-medium);
+          color: var(--ppt-fg-secondary);
           text-decoration: none;
-          font-weight: 500;
-          transition: color 0.2s;
+          transition: background var(--ppt-transition-fast),
+                      color var(--ppt-transition-fast);
         }
 
         .nav-link:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
+          background: var(--ppt-color-primary-soft-bg);
+        }
+
+        .nav-link-active {
+          color: var(--ppt-color-primary);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         .auth-section {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 8px;
+          margin-left: auto;
         }
 
         .skeleton {
-          height: 40px;
+          height: 36px;
           width: 96px;
-          background-color: #e5e7eb;
-          border-radius: 8px;
+          background-color: var(--ppt-border-default);
+          border-radius: var(--ppt-radius-md);
+          animation: skeleton-pulse 1.5s ease infinite;
+        }
+
+        @keyframes skeleton-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
 
         .sign-in-button {
-          padding: 8px 16px;
-          background-color: #2563eb;
-          color: #fff;
-          border-radius: 8px;
-          border: none;
+          padding: 9px 14px;
+          background-color: transparent;
+          color: var(--ppt-fg-secondary);
+          border-radius: var(--ppt-radius-md);
+          border: 1px solid var(--ppt-border-default);
           cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-medium);
+          font-family: var(--ppt-font-family);
+          transition: background var(--ppt-transition-fast),
+                      border-color var(--ppt-transition-fast);
         }
 
         .sign-in-button:hover {
-          background-color: #1d4ed8;
+          background-color: var(--ppt-bg-subtle);
+          border-color: var(--ppt-border-strong);
+        }
+
+        .sign-in-button:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .user-container {
@@ -250,34 +280,42 @@ export function Header() {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px;
-          border-radius: 8px;
+          padding: 5px 8px;
+          border-radius: var(--ppt-radius-md);
           border: none;
           background-color: transparent;
           cursor: pointer;
+          font-family: var(--ppt-font-family);
+          transition: background var(--ppt-transition-fast);
         }
 
         .user-button:hover {
-          background-color: #f3f4f6;
+          background-color: var(--ppt-bg-subtle);
+        }
+
+        .user-button:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #2563eb;
-          color: #fff;
+          width: 34px;
+          height: 34px;
+          border-radius: var(--ppt-radius-full);
+          background: linear-gradient(135deg, var(--ppt-brand-500), var(--ppt-color-primary-hover));
+          color: var(--ppt-fg-on-accent);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
-          font-size: 14px;
+          font-weight: var(--ppt-font-weight-bold);
+          font-size: 12px;
+          flex-shrink: 0;
         }
 
         .user-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #374151;
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-medium);
+          color: var(--ppt-fg-secondary);
           display: none;
         }
 
@@ -293,28 +331,28 @@ export function Header() {
           top: 100%;
           margin-top: 8px;
           width: 220px;
-          background-color: #fff;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          border: 1px solid #e5e7eb;
-          z-index: 100;
+          background-color: var(--ppt-bg-elevated);
+          border-radius: var(--ppt-radius-lg);
+          box-shadow: var(--ppt-shadow-popover);
+          border: 1px solid var(--ppt-border-default);
+          z-index: var(--ppt-z-dropdown);
         }
 
         .dropdown-header {
-          padding: 12px;
-          border-bottom: 1px solid #e5e7eb;
+          padding: 12px 14px;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .dropdown-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #111827;
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-semibold);
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .dropdown-email {
-          font-size: 12px;
-          color: #6b7280;
+          font-size: var(--ppt-font-size-xs);
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
@@ -325,32 +363,35 @@ export function Header() {
         .menu-item {
           display: block;
           width: 100%;
-          padding: 8px 12px;
-          font-size: 14px;
-          color: #374151;
+          padding: 8px 10px;
+          font-size: var(--ppt-font-size-sm);
+          color: var(--ppt-fg-secondary);
           text-decoration: none;
-          border-radius: 4px;
+          border-radius: var(--ppt-radius-sm);
+          transition: background var(--ppt-transition-fast);
         }
 
         .menu-item:hover {
-          background-color: #f3f4f6;
+          background-color: var(--ppt-bg-subtle);
         }
 
         .sign-out-button {
           display: block;
           width: 100%;
-          padding: 8px 12px;
-          font-size: 14px;
-          color: #dc2626;
+          padding: 8px 10px;
+          font-size: var(--ppt-font-size-sm);
+          color: var(--ppt-color-danger-hover);
           text-align: left;
           border: none;
           background-color: transparent;
           cursor: pointer;
-          border-radius: 4px;
+          border-radius: var(--ppt-radius-sm);
+          font-family: var(--ppt-font-family);
+          transition: background var(--ppt-transition-fast);
         }
 
         .sign-out-button:hover {
-          background-color: #fef2f2;
+          background-color: var(--ppt-color-danger-light);
         }
 
         .mobile-menu-toggle {
@@ -359,7 +400,13 @@ export function Header() {
           border: none;
           background: transparent;
           cursor: pointer;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
+          border-radius: var(--ppt-radius-md);
+          transition: background var(--ppt-transition-fast);
+        }
+
+        .mobile-menu-toggle:hover {
+          background: var(--ppt-bg-subtle);
         }
 
         @media (min-width: 768px) {
@@ -372,8 +419,8 @@ export function Header() {
           display: flex;
           flex-direction: column;
           padding: 8px 16px 16px;
-          border-top: 1px solid #e5e7eb;
-          background: #fff;
+          border-top: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-surface);
         }
 
         @media (min-width: 768px) {
@@ -383,11 +430,16 @@ export function Header() {
         }
 
         .nav-link-mobile {
-          padding: 12px 0;
-          color: #374151;
+          padding: 12px 4px;
+          color: var(--ppt-fg-secondary);
           text-decoration: none;
-          font-weight: 500;
-          border-bottom: 1px solid #f3f4f6;
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-medium);
+          border-bottom: 1px solid var(--ppt-border-subtle);
+        }
+
+        .nav-link-mobile:hover {
+          color: var(--ppt-color-primary);
         }
 
         .nav-link-mobile:last-child {

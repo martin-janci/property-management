@@ -118,29 +118,29 @@ function LoginForm() {
       <style jsx>{`
         .form { display: flex; flex-direction: column; gap: 16px; }
         .alert {
-          padding: 12px 16px; background: #fef2f2; color: #b91c1c;
-          border: 1px solid #fecaca; border-radius: 8px; font-size: 14px;
+          padding: 12px 16px; background: var(--ppt-color-danger-light); color: var(--ppt-color-danger-dark);
+          border: 1px solid var(--ppt-color-danger); border-radius: 8px; font-size: 14px;
         }
         .field { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 14px; font-weight: 500; color: #374151; }
+        .label { font-size: 14px; font-weight: 500; color: var(--ppt-fg-secondary); }
         .input {
-          padding: 10px 12px; font-size: 16px; border: 1px solid #d1d5db;
-          border-radius: 8px; background: #fff; color: #111827;
+          padding: 10px 12px; font-size: 16px; border: 1px solid var(--ppt-border-strong);
+          border-radius: 8px; background: var(--ppt-bg-surface); color: var(--ppt-fg-primary);
         }
-        .input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-        .input-error { border-color: #dc2626; }
-        .error { color: #dc2626; font-size: 12px; }
+        .input:focus-visible { outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color); outline-offset: var(--ppt-focus-ring-offset); border-color: var(--ppt-color-primary); }
+        .input-error { border-color: var(--ppt-color-danger-hover); }
+        .error { color: var(--ppt-color-danger-hover); font-size: 12px; }
         .row { display: flex; justify-content: flex-end; }
-        .muted-link { font-size: 14px; color: #2563eb; text-decoration: none; }
+        .muted-link { font-size: 14px; color: var(--ppt-color-primary); text-decoration: none; }
         .muted-link:hover { text-decoration: underline; }
         .submit {
-          margin-top: 8px; padding: 12px 16px; background: #2563eb; color: #fff;
+          margin-top: 8px; padding: 12px 16px; background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent);
           border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
         }
-        .submit:hover:not(:disabled) { background: #1d4ed8; }
-        .submit:disabled { background: #93c5fd; cursor: not-allowed; }
-        .meta { text-align: center; font-size: 14px; color: #4b5563; margin: 8px 0 0; }
-        .link { color: #2563eb; text-decoration: none; font-weight: 500; }
+        .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
+        .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
+        .meta { text-align: center; font-size: 14px; color: var(--ppt-neutral-600); margin: 8px 0 0; }
+        .link { color: var(--ppt-color-primary); text-decoration: none; font-weight: 500; }
         .link:hover { text-decoration: underline; }
       `}</style>
     </form>
@@ -160,14 +160,14 @@ export default function LoginPage() {
       <style jsx>{`
         .page {
           min-height: 100vh; display: flex; align-items: center; justify-content: center;
-          padding: 24px; background: #f9fafb;
+          padding: 24px; background: var(--ppt-bg-app);
         }
         .card {
-          width: 100%; max-width: 420px; background: #fff; border-radius: 12px;
+          width: 100%; max-width: 420px; background: var(--ppt-bg-surface); border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 32px;
         }
-        .title { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0 0 4px; text-align: center; }
-        .subtitle { font-size: 14px; color: #6b7280; margin: 0 0 24px; text-align: center; }
+        .title { font-size: 1.5rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; text-align: center; }
+        .subtitle { font-size: 14px; color: var(--ppt-fg-muted); margin: 0 0 24px; text-align: center; }
       `}</style>
     </main>
   );

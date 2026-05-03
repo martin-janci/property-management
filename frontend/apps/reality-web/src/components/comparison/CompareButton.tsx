@@ -78,10 +78,10 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
           align-items: center;
           gap: 6px;
           padding: 6px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
-          background: white;
-          color: #6b7280;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-muted);
           font-size: 13px;
           font-weight: 500;
           cursor: pointer;
@@ -89,18 +89,18 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
         }
 
         .compare-button:hover {
-          border-color: #2563eb;
-          color: #2563eb;
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-color-primary);
         }
 
         .compare-button.active {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: white;
+          background: var(--ppt-color-primary);
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .compare-button.active:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .max-warning {
@@ -110,8 +110,8 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
           transform: translateX(-50%);
           white-space: nowrap;
           padding: 8px 12px;
-          background: #374151;
-          color: white;
+          background: var(--ppt-fg-secondary);
+          color: var(--ppt-fg-on-accent);
           font-size: 12px;
           border-radius: 6px;
           animation: fade-in 0.2s ease;
@@ -124,7 +124,7 @@ export function CompareButton({ listing, className = '' }: CompareButtonProps) {
           left: 50%;
           transform: translateX(-50%);
           border: 6px solid transparent;
-          border-top-color: #374151;
+          border-top-color: var(--ppt-fg-secondary);
         }
 
         @keyframes fade-in {

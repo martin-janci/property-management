@@ -205,20 +205,20 @@ export function AgencyDashboard() {
         .title {
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .subtitle {
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
         .period-selector {
           display: flex;
           gap: 8px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
           padding: 4px;
           border-radius: 8px;
         }
@@ -230,14 +230,14 @@ export function AgencyDashboard() {
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .period-button.active {
-          background: #fff;
-          color: #2563eb;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-color-primary);
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
@@ -254,7 +254,7 @@ export function AgencyDashboard() {
         }
 
         .section {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 24px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -270,7 +270,7 @@ export function AgencyDashboard() {
         .section-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 16px;
         }
 
@@ -280,7 +280,7 @@ export function AgencyDashboard() {
 
         .view-all {
           font-size: 14px;
-          color: #2563eb;
+          color: var(--ppt-color-primary);
           text-decoration: none;
         }
 
@@ -289,7 +289,7 @@ export function AgencyDashboard() {
         }
 
         .quick-actions {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 24px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -306,28 +306,28 @@ export function AgencyDashboard() {
           align-items: center;
           gap: 12px;
           padding: 16px 20px;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-app);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           text-decoration: none;
           font-weight: 500;
           transition: all 0.2s;
         }
 
         .action-card:hover {
-          background: #f3f4f6;
-          border-color: #d1d5db;
+          background: var(--ppt-bg-subtle);
+          border-color: var(--ppt-border-strong);
         }
 
         .action-card.primary {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .action-card.primary:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
       `}</style>
     </div>
@@ -353,7 +353,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         </svg>
       ),
-      color: '#2563eb',
+      color: 'var(--ppt-color-primary)',
     },
     {
       label: 'Total Views',
@@ -372,7 +372,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
           <circle cx="12" cy="12" r="3" />
         </svg>
       ),
-      color: '#10b981',
+      color: 'var(--ppt-color-success)',
     },
     {
       label: 'Inquiries',
@@ -390,7 +390,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       ),
-      color: '#f59e0b',
+      color: 'var(--ppt-color-warning)',
     },
     {
       label: 'Conversion Rate',
@@ -483,7 +483,7 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
           align-items: center;
           gap: 16px;
           padding: 20px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
@@ -506,19 +506,19 @@ function StatsCards({ stats }: { stats: AgencyStats }) {
         .stat-value {
           font-size: 1.5rem;
           font-weight: 700;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           display: inline;
         }
 
         .stat-total {
           font-size: 1rem;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           font-weight: 500;
         }
 
         .stat-label {
           font-size: 0.875rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-top: 2px;
         }
       `}</style>
@@ -598,16 +598,16 @@ function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
         }
 
         .bar.views {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .bar.inquiries {
-          background: #10b981;
+          background: var(--ppt-color-success);
         }
 
         .bar-label {
           font-size: 11px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           margin-top: 8px;
           white-space: nowrap;
         }
@@ -624,7 +624,7 @@ function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
           align-items: center;
           gap: 8px;
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .legend-color {
@@ -634,11 +634,11 @@ function PerformanceChart({ data }: { data: AgencyPerformance[] }) {
         }
 
         .legend-color.views {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .legend-color.inquiries {
-          background: #10b981;
+          background: var(--ppt-color-success);
         }
       `}</style>
     </div>
@@ -680,7 +680,13 @@ function RealtorLeaderboard({
             </div>
             {realtor.rating && (
               <div className="rating">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="var(--ppt-color-warning)"
+                  aria-hidden="true"
+                >
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
                 <span>{realtor.rating.toFixed(1)}</span>
@@ -697,7 +703,7 @@ function RealtorLeaderboard({
         }
 
         .empty {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           font-size: 14px;
           text-align: center;
           padding: 24px;
@@ -708,7 +714,7 @@ function RealtorLeaderboard({
           align-items: center;
           gap: 12px;
           padding: 12px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
         }
 
@@ -718,22 +724,22 @@ function RealtorLeaderboard({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 50%;
           font-size: 12px;
           font-weight: 600;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .avatar {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           font-weight: 600;
           overflow: hidden;
         }
@@ -752,12 +758,12 @@ function RealtorLeaderboard({
 
         .realtor-name {
           font-weight: 500;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .realtor-stats {
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .rating {
@@ -766,7 +772,7 @@ function RealtorLeaderboard({
           gap: 4px;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
       `}</style>
     </div>
@@ -791,7 +797,7 @@ function DashboardSkeleton() {
         .skeleton-header {
           height: 48px;
           width: 300px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 8px;
           margin-bottom: 32px;
         }
@@ -802,7 +808,7 @@ function DashboardSkeleton() {
         }
         .skeleton-stat {
           height: 100px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -825,7 +831,7 @@ function StatsCardsSkeleton() {
         }
         .skeleton-stat {
           height: 100px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -841,7 +847,7 @@ function NoAgencyMessage() {
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -865,23 +871,23 @@ function NoAgencyMessage() {
         }
         h2 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         .create-button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border-radius: 8px;
           text-decoration: none;
           font-weight: 500;
         }
         .create-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
       `}</style>
     </div>

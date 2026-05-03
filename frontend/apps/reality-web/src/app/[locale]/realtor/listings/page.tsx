@@ -45,21 +45,21 @@ function ListingCard({ listing }: { listing: AgencyListing }) {
       </div>
       <style jsx>{`
         .card {
-          background: #fff; padding: 16px; border-radius: 12px;
+          background: var(--ppt-fg-on-accent); padding: 16px; border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0,0,0,.08); display: grid; gap: 8px;
         }
         .meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .title { font-weight: 600; color: #111827; text-decoration: none; }
+        .title { font-weight: 600; color: var(--ppt-fg-primary); text-decoration: none; }
         .title:hover { text-decoration: underline; }
         .status {
           font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
-          padding: 2px 8px; border-radius: 999px; background: #e5e7eb; color: #374151;
+          padding: 2px 8px; border-radius: 999px; background: var(--ppt-border-default); color: var(--ppt-fg-secondary);
         }
-        .status-active { background: #dcfce7; color: #15803d; }
-        .status-draft { background: #fef3c7; color: #b45309; }
-        .info { font-size: 13px; color: #6b7280; display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-active { background: var(--ppt-color-success-light); color: var(--ppt-color-success-dark); }
+        .status-draft { background: var(--ppt-color-warning-light); color: var(--ppt-color-warning-dark); }
+        .info { font-size: 13px; color: var(--ppt-fg-muted); display: flex; gap: 6px; flex-wrap: wrap; }
         .actions { display: flex; justify-content: flex-end; }
-        .link { color: #2563eb; text-decoration: none; font-size: 14px; font-weight: 500; }
+        .link { color: var(--ppt-color-primary); text-decoration: none; font-size: 14px; font-weight: 500; }
         .link:hover { text-decoration: underline; }
       `}</style>
     </li>
@@ -102,17 +102,17 @@ function MyListingsContent() {
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
         .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
-        .title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { color: #6b7280; margin: 0; }
+        .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { color: var(--ppt-fg-muted); margin: 0; }
         .primary {
-          background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 8px;
+          background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent); padding: 10px 20px; border-radius: 8px;
           text-decoration: none; font-weight: 600;
         }
-        .primary:hover { background: #1d4ed8; }
-        .state { padding: 32px; text-align: center; color: #6b7280; }
-        .error { color: #dc2626; }
+        .primary:hover { background: var(--ppt-color-primary-hover); }
+        .state { padding: 32px; text-align: center; color: var(--ppt-fg-muted); }
+        .error { color: var(--ppt-color-danger-hover); }
         .empty {
-          padding: 48px 24px; text-align: center; color: #6b7280; background: #fff;
+          padding: 48px 24px; text-align: center; color: var(--ppt-fg-muted); background: var(--ppt-fg-on-accent);
           border-radius: 12px; display: flex; flex-direction: column; gap: 16px; align-items: center;
         }
         .list { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
@@ -132,7 +132,7 @@ export default function MyListingsPage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

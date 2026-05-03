@@ -35,14 +35,14 @@ export function StateView({ icon, code, title, description, children }: StateVie
           align-items: center;
           justify-content: center;
           padding: 2rem 1rem;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
         .state-card {
           width: 100%;
           max-width: 480px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          box-shadow: var(--ppt-shadow-md);
           padding: 2.5rem 2rem;
           text-align: center;
         }
@@ -54,7 +54,7 @@ export function StateView({ icon, code, title, description, children }: StateVie
         .state-code {
           font-size: 0.875rem;
           font-weight: 600;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-transform: uppercase;
           letter-spacing: 0.1em;
           margin: 0 0 0.5rem;
@@ -62,12 +62,12 @@ export function StateView({ icon, code, title, description, children }: StateVie
         .state-title {
           font-size: 1.5rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 0.75rem;
         }
         .state-text {
           font-size: 0.9375rem;
-          color: #4b5563;
+          color: var(--ppt-neutral-600);
           margin: 0 0 1.5rem;
           line-height: 1.5;
         }

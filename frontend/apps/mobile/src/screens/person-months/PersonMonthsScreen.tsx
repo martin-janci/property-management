@@ -163,12 +163,12 @@ export function PersonMonthsScreen({ onNavigate }: PersonMonthsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  badgeDraft: { backgroundColor: '#fef3c7' },
-  badgeDraftText: { color: '#b45309' },
-  badgeSubmitted: { backgroundColor: '#dbeafe' },
-  badgeSubmittedText: { color: '#1d4ed8' },
-  badgeConfirmed: { backgroundColor: '#d1fae5' },
-  badgeConfirmedText: { color: '#047857' },
+  badgeDraft: { backgroundColor: colors.warningBg },
+  badgeDraftText: { color: colors.warningDark },
+  badgeSubmitted: { backgroundColor: colors.accentSoft },
+  badgeSubmittedText: { color: colors.accentDark },
+  badgeConfirmed: { backgroundColor: colors.successBg },
+  badgeConfirmedText: { color: colors.successDark },
   viewRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   value: { fontSize: 18, fontWeight: '600', color: colors.text },
   editLink: { padding: 8 },

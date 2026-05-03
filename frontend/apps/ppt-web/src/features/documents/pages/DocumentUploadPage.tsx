@@ -42,14 +42,14 @@ export function DocumentUploadPage({
         .upload-page {
           min-height: 100%;
           padding: 2rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
         }
 
         .upload-container {
           max-width: 640px;
           margin: 0 auto;
           padding: 2rem;
-          background: white;
+          background: var(--ppt-bg-surface);
           border-radius: 0.75rem;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }

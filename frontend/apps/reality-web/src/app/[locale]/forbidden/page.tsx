@@ -13,8 +13,8 @@ import type { CSSProperties } from 'react';
 const linkStyle: CSSProperties = {
   padding: '10px 20px',
   borderRadius: 8,
-  background: '#2563eb',
-  color: '#fff',
+  background: 'var(--ppt-color-primary)',
+  color: 'var(--ppt-fg-on-accent)',
   fontWeight: 500,
   textDecoration: 'none',
   display: 'inline-block',
