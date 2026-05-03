@@ -51,7 +51,7 @@ fun ListingDetailScreen(
     repository: ListingRepository,
     ssoService: SsoService,
     onBackClick: () -> Unit,
-    onInquirySuccess: () -> Unit
+    onInquirySuccess: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -85,7 +85,7 @@ fun ListingDetailScreen(
                 .isFavorite(listingId)
                 .fold(
                     onSuccess = { isFav -> isFavorite = isFav },
-                    onFailure = { /* Silently fail - favorites status is non-critical */}
+                    onFailure = { /* Silently fail - favorites status is non-critical */},
                 )
         }
     }
@@ -103,7 +103,7 @@ fun ListingDetailScreen(
                 onFailure = { error ->
                     errorMessage = error.message
                     isLoading = false
-                }
+                },
             )
     }
 
@@ -115,7 +115,7 @@ fun ListingDetailScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
@@ -123,7 +123,7 @@ fun ListingDetailScreen(
                     IconButton(onClick = { showShareSheet = true }) {
                         Icon(
                             Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share)
+                            contentDescription = stringResource(R.string.share),
                         )
                     }
                     IconButton(
@@ -143,12 +143,12 @@ fun ListingDetailScreen(
                                         onFailure = {
                                             // Revert optimistic update on failure
                                             // Error is silently handled - could show snackbar
-                                        }
+                                        },
                                     )
                                     isFavoriteLoading = false
                                 }
                             }
-                        }
+                        },
                     ) {
                         Icon(
                             if (isFavorite) Icons.Default.Favorite
@@ -162,7 +162,7 @@ fun ListingDetailScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
         bottomBar = {
@@ -186,16 +186,16 @@ fun ListingDetailScreen(
                             context.startActivity(intent)
                         }
                     },
-                    onInquiryClick = { showInquiryDialog = true }
+                    onInquiryClick = { showInquiryDialog = true },
                 )
             }
-        }
+        },
     ) { paddingValues ->
         when {
             isLoading -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -211,12 +211,12 @@ fun ListingDetailScreen(
                                 .getListingDetail(listingId)
                                 .fold(
                                     onSuccess = { detail -> listing = detail },
-                                    onFailure = { error -> errorMessage = error.message }
+                                    onFailure = { error -> errorMessage = error.message },
                                 )
                             isLoading = false
                         }
                     },
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues),
                 )
             }
             listing != null -> {
@@ -246,7 +246,7 @@ fun ListingDetailScreen(
                             message = message,
                             name = name,
                             email = email,
-                            phone = phone
+                            phone = phone,
                         )
                     inquiryRepository
                         .createInquiry(request)
@@ -259,10 +259,10 @@ fun ListingDetailScreen(
                             onFailure = { error ->
                                 isInquirySubmitting = false
                                 inquiryError = error.message ?: "Failed to send inquiry"
-                            }
+                            },
                         )
                 }
-            }
+            },
         )
     }
 
@@ -316,13 +316,13 @@ private fun ImageGallery(images: List<ListingImage>) {
                 Modifier.fillMaxWidth()
                     .height(300.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Default.Image,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         return
@@ -341,7 +341,7 @@ private fun ImageGallery(images: List<ListingImage>) {
                         .build(),
                 contentDescription = images[page].caption,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -349,7 +349,7 @@ private fun ImageGallery(images: List<ListingImage>) {
         if (images.size > 1) {
             Row(
                 modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 repeat(images.size) { index ->
                     Box(
@@ -359,7 +359,7 @@ private fun ImageGallery(images: List<ListingImage>) {
                                 .background(
                                     if (index == pagerState.currentPage) Color.White
                                     else Color.White.copy(alpha = 0.5f)
-                                )
+                                ),
                     )
                 }
             }
@@ -368,13 +368,13 @@ private fun ImageGallery(images: List<ListingImage>) {
             Surface(
                 modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
                 shape = RoundedCornerShape(4.dp),
-                color = Color.Black.copy(alpha = 0.6f)
+                color = Color.Black.copy(alpha = 0.6f),
             ) {
                 Text(
                     text = "${pagerState.currentPage + 1}/${images.size}",
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White
+                    color = Color.White,
                 )
             }
         }
@@ -386,20 +386,20 @@ private fun PriceSection(listing: ListingDetail) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
             Text(
                 text = formatPrice(listing.price, listing.currency),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
             listing.pricePerSqm?.let { ppsm ->
                 Text(
                     text = "${formatPrice(ppsm, listing.currency)}/m²",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -414,7 +414,7 @@ private fun PriceSection(listing: ListingDetail) {
         }
         Surface(
             shape = RoundedCornerShape(8.dp),
-            color = typeBadgeBg
+            color = typeBadgeBg,
         ) {
             Text(
                 text =
@@ -424,7 +424,7 @@ private fun PriceSection(listing: ListingDetail) {
                     },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelLarge,
-                color = typeBadgeInk
+                color = typeBadgeInk,
             )
         }
     }
@@ -436,7 +436,7 @@ private fun TitleSection(listing: ListingDetail) {
         Text(
             text = listing.title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -446,13 +446,13 @@ private fun TitleSection(listing: ListingDetail) {
                 Icons.Default.LocationOn,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = buildLocationString(listing.address),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -463,12 +463,12 @@ private fun PropertyDetailsGrid(listing: ListingDetail) {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             PropertyDetailItem(
                 icon = Icons.Default.SquareFoot,
                 value = "${listing.areaSqm.toInt()}",
-                label = "m²"
+                label = "m²",
             )
 
             listing.rooms?.let { rooms ->
@@ -476,7 +476,7 @@ private fun PropertyDetailsGrid(listing: ListingDetail) {
                 PropertyDetailItem(
                     icon = Icons.Default.MeetingRoom,
                     value = "$rooms",
-                    label = stringResource(R.string.detail_rooms)
+                    label = stringResource(R.string.detail_rooms),
                 )
             }
 
@@ -485,7 +485,7 @@ private fun PropertyDetailsGrid(listing: ListingDetail) {
                 PropertyDetailItem(
                     icon = Icons.Default.Bed,
                     value = "$bedrooms",
-                    label = stringResource(R.string.detail_beds)
+                    label = stringResource(R.string.detail_beds),
                 )
             }
 
@@ -494,7 +494,7 @@ private fun PropertyDetailsGrid(listing: ListingDetail) {
                 PropertyDetailItem(
                     icon = Icons.Default.Bathtub,
                     value = "$bathrooms",
-                    label = stringResource(R.string.detail_baths)
+                    label = stringResource(R.string.detail_baths),
                 )
             }
         }
@@ -505,25 +505,25 @@ private fun PropertyDetailsGrid(listing: ListingDetail) {
 private fun PropertyDetailItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     value: String,
-    label: String
+    label: String,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             icon,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primary,
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -534,7 +534,7 @@ private fun DescriptionSection(description: String) {
         Text(
             text = stringResource(R.string.description),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -542,7 +542,7 @@ private fun DescriptionSection(description: String) {
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -553,7 +553,7 @@ private fun FeaturesSection(features: List<String>) {
         Text(
             text = stringResource(R.string.features),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -567,9 +567,9 @@ private fun FeaturesSection(features: List<String>) {
                         Icon(
                             Icons.Default.Check,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
                         )
-                    }
+                    },
                 )
             }
         }
@@ -583,7 +583,7 @@ private fun AdditionalDetailsSection(listing: ListingDetail) {
             Text(
                 text = stringResource(R.string.additional_details),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -602,13 +602,13 @@ private fun AdditionalDetailsSection(listing: ListingDetail) {
             listing.usableAreaSqm?.let {
                 DetailRow(
                     label = stringResource(R.string.detail_usable_area),
-                    value = "${it.toInt()} m²"
+                    value = "${it.toInt()} m²",
                 )
             }
             listing.landAreaSqm?.let {
                 DetailRow(
                     label = stringResource(R.string.detail_land_area),
-                    value = "${it.toInt()} m²"
+                    value = "${it.toInt()} m²",
                 )
             }
             listing.energyRating?.let {
@@ -628,17 +628,17 @@ private fun AdditionalDetailsSection(listing: ListingDetail) {
 private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -648,7 +648,7 @@ private fun RealtorSection(realtor: RealtorInfo) {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
                 model =
@@ -661,7 +661,7 @@ private fun RealtorSection(realtor: RealtorInfo) {
                 modifier =
                     Modifier.size(60.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -670,13 +670,13 @@ private fun RealtorSection(realtor: RealtorInfo) {
                 Text(
                     text = realtor.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 realtor.agency?.let { agency ->
                     Text(
                         text = agency.name,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -689,12 +689,12 @@ private fun BottomContactBar(
     realtor: RealtorInfo?,
     onCallClick: () -> Unit,
     onEmailClick: () -> Unit,
-    onInquiryClick: () -> Unit
+    onInquiryClick: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxWidth(), tonalElevation = 8.dp, shadowElevation = 8.dp) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (realtor?.phone != null) {
                 OutlinedButton(onClick = onCallClick, modifier = Modifier.weight(1f)) {
@@ -726,19 +726,19 @@ private fun ErrorContent(message: String, onRetry: () -> Unit, modifier: Modifie
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.Error,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
@@ -752,11 +752,11 @@ private fun InquiryDialog(
     isSubmitting: Boolean = false,
     errorMessage: String? = null,
     onDismiss: () -> Unit,
-    onSubmit: (message: String, name: String?, email: String?, phone: String?) -> Unit
+    onSubmit: (message: String, name: String?, email: String?, phone: String?) -> Unit,
 ) {
     var message by remember {
         mutableStateOf(
-            "Hi, I'm interested in ${listing.title}. Please contact me with more information."
+            "Hi, I'm interested in ${listing.title}. Please contact me with more information.",
         )
     }
     var name by remember { mutableStateOf("") }
@@ -777,23 +777,23 @@ private fun InquiryDialog(
                     Card(
                         colors =
                             CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                            )
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
                                 Icons.Default.Info,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = stringResource(R.string.inquiry_sign_in_hint),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
                             )
                         }
                     }
@@ -806,7 +806,7 @@ private fun InquiryDialog(
                         label = { Text(stringResource(R.string.label_name_required)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = !isSubmitting
+                        enabled = !isSubmitting,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -816,7 +816,7 @@ private fun InquiryDialog(
                         label = { Text(stringResource(R.string.label_email_required)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = !isSubmitting
+                        enabled = !isSubmitting,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -826,7 +826,7 @@ private fun InquiryDialog(
                         label = { Text(stringResource(R.string.label_phone_optional)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        enabled = !isSubmitting
+                        enabled = !isSubmitting,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -838,7 +838,7 @@ private fun InquiryDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 4,
                     maxLines = 6,
-                    enabled = !isSubmitting
+                    enabled = !isSubmitting,
                 )
 
                 // Error message display
@@ -847,7 +847,7 @@ private fun InquiryDialog(
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -859,16 +859,16 @@ private fun InquiryDialog(
                         message,
                         name.takeIf { it.isNotBlank() },
                         email.takeIf { it.isNotBlank() },
-                        phone.takeIf { it.isNotBlank() }
+                        phone.takeIf { it.isNotBlank() },
                     )
                 },
-                enabled = canSubmit
+                enabled = canSubmit,
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -882,7 +882,7 @@ private fun InquiryDialog(
             TextButton(onClick = onDismiss, enabled = !isSubmitting) {
                 Text(stringResource(R.string.cancel))
             }
-        }
+        },
     )
 }
 
@@ -896,7 +896,7 @@ private fun ShareListingSheet(listing: ListingDetail, onDismiss: () -> Unit) {
             Text(
                 text = stringResource(R.string.share_property),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -904,13 +904,13 @@ private fun ShareListingSheet(listing: ListingDetail, onDismiss: () -> Unit) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.action_share_link)) },
                 leadingContent = { Icon(Icons.Default.Link, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.share_via)) },
                 leadingContent = { Icon(Icons.Default.Share, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(32.dp))

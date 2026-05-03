@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import three.two.bit.ppt.reality.ui.theme.RealityPortalTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +21,7 @@ import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.navigation.RealityNavHost
 import three.two.bit.ppt.reality.navigation.Screen
+import three.two.bit.ppt.reality.ui.theme.RealityPortalTheme
 
 /**
  * Main activity for Reality Portal mobile app.
@@ -160,4 +160,3 @@ private fun navigateToDeepLink(navController: NavHostController, target: DeepLin
         }
     }
 }
-

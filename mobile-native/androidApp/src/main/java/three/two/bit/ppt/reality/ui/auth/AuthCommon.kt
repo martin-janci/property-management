@@ -11,13 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import three.two.bit.ppt.reality.ui.theme.DangerRedBg
 import three.two.bit.ppt.reality.ui.theme.DangerRedDark
 import three.two.bit.ppt.reality.ui.theme.SuccessGreenBg
 import three.two.bit.ppt.reality.ui.theme.SuccessGreenDark
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
 
 /** Shared helpers for the Reality Portal auth screens (UC-47). */
 internal val emailRegex = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
