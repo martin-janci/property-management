@@ -404,14 +404,16 @@ private fun PriceSection(listing: ListingDetail) {
             }
         }
 
-        val typeBadgeBg = when (listing.type) {
-            ListingType.SALE -> BadgeColors.saleBg
-            ListingType.RENT -> BadgeColors.rentBg
-        }
-        val typeBadgeInk = when (listing.type) {
-            ListingType.SALE -> BadgeColors.saleInk
-            ListingType.RENT -> BadgeColors.rentInk
-        }
+        val typeBadgeBg =
+            when (listing.type) {
+                ListingType.SALE -> BadgeColors.saleBg
+                ListingType.RENT -> BadgeColors.rentBg
+            }
+        val typeBadgeInk =
+            when (listing.type) {
+                ListingType.SALE -> BadgeColors.saleInk
+                ListingType.RENT -> BadgeColors.rentInk
+            }
         Surface(
             shape = RoundedCornerShape(8.dp),
             color = typeBadgeBg,

@@ -544,14 +544,16 @@ fun ListingCard(
                 }
 
                 // Type badge
-                val typeBadgeBg = when (listing.type) {
-                    ListingType.SALE -> BadgeColors.saleBg
-                    ListingType.RENT -> BadgeColors.rentBg
-                }
-                val typeBadgeInk = when (listing.type) {
-                    ListingType.SALE -> BadgeColors.saleInk
-                    ListingType.RENT -> BadgeColors.rentInk
-                }
+                val typeBadgeBg =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleBg
+                        ListingType.RENT -> BadgeColors.rentBg
+                    }
+                val typeBadgeInk =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleInk
+                        ListingType.RENT -> BadgeColors.rentInk
+                    }
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                     shape = RoundedCornerShape(4.dp),
