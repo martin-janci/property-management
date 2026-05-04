@@ -74,10 +74,9 @@ class InquiryRepository(
     }
 
     /**
-     * Get inquiries addressed to the signed-in realtor / agency. Backed by
-     * `GET /api/v1/realtors/inquiries`, which is the realtor-side inbox —
-     * distinct from `getInquiries()`, which returns the resident's own
-     * outgoing inquiries.
+     * Get inquiries addressed to the signed-in realtor / agency. Backed by `GET
+     * /api/v1/realtors/inquiries`, which is the realtor-side inbox — distinct from
+     * `getInquiries()`, which returns the resident's own outgoing inquiries.
      */
     suspend fun getRealtorInquiries(
         limit: Int = 20,
