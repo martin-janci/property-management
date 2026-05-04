@@ -291,10 +291,11 @@ fun RealityNavHost(
             )
         }
         composable(Screen.AgencyInquiries.route) {
-            // Load the realtor's inquiries via InquiryRepository. Tapping
-            // a row drops the user back into the resident-side
-            // `Screen.Inquiries` list scoped to that one inquiry; a
-            // dedicated agency-side detail screen is a separate task.
+            // Load the realtor's inbox via /realtors/inquiries — that's the
+            // agency-side dataset. `getInquiries()` would return the
+            // signed-in user's own outbound (resident-side) inquiries
+            // instead. Tapping a row drops into `Screen.Inquiries` for now;
+            // a dedicated realtor-side detail screen is a separate task.
             var inquiries by remember {
                 mutableStateOf<List<three.two.bit.ppt.reality.ui.agency.AgencyInquiry>>(emptyList())
             }
@@ -303,7 +304,7 @@ fun RealityNavHost(
             LaunchedEffect(Unit) {
                 isLoading = true
                 inquiryRepository
-                    .getInquiries()
+                    .getRealtorInquiries()
                     .onSuccess { resp ->
                         inquiries =
                             resp.inquiries.map { i ->

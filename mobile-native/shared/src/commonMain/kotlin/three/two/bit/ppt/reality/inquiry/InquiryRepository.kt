@@ -73,6 +73,38 @@ class InquiryRepository(
         }
     }
 
+    /**
+     * Get inquiries addressed to the signed-in realtor / agency. Backed by
+     * `GET /api/v1/realtors/inquiries`, which is the realtor-side inbox —
+     * distinct from `getInquiries()`, which returns the resident's own
+     * outgoing inquiries.
+     */
+    suspend fun getRealtorInquiries(
+        limit: Int = 20,
+        offset: Int = 0,
+        status: InquiryStatus? = null,
+    ): Result<InquiriesResponse> {
+        return try {
+            val response =
+                client.get("$baseUrl/api/v1/realtors/inquiries") {
+                    configureRequest()
+                    parameter("limit", limit)
+                    parameter("offset", offset)
+                    status?.let { parameter("status", it.toQueryParam()) }
+                }
+
+            if (response.status.isSuccess()) {
+                Result.success(response.body())
+            } else if (response.status == HttpStatusCode.Unauthorized) {
+                Result.failure(InquiryException("Please sign in to view inquiries"))
+            } else {
+                Result.failure(InquiryException("Failed to load inquiries: ${response.status}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /** Get inquiry by ID. */
     suspend fun getInquiry(inquiryId: String): Result<Inquiry> {
         return try {
