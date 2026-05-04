@@ -151,14 +151,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   body: { fontSize: 15, color: colors.text },
-  bodyMine: { color: '#fff' },
+  bodyMine: { color: colors.surface },
   time: {
     fontSize: 11,
     color: colors.textSubtle,
     marginTop: 4,
     alignSelf: 'flex-end',
   },
-  timeMine: { color: 'rgba(255,255,255,0.85)' },
+  timeMine: { color: colors.textOnAccentSoft },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -182,6 +182,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.accent,
   },
-  sendButtonDisabled: { backgroundColor: '#93c5fd' },
-  sendButtonText: { color: '#fff', fontWeight: '600' },
+  sendButtonDisabled: { backgroundColor: colors.accentDisabled },
+  sendButtonText: { color: colors.surface, fontWeight: '600' },
 });

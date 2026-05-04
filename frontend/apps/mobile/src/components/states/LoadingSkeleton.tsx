@@ -4,6 +4,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export interface LoadingSkeletonProps {
   /** Render N stacked card placeholders. */
@@ -40,7 +41,7 @@ function SkeletonBlock({
   const shimmer = useShimmer();
   const backgroundColor = shimmer.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ['#f3f4f6', '#e5e7eb', '#f3f4f6'],
+    outputRange: [colors.surfaceMuted, colors.border, colors.surfaceMuted],
   });
   return (
     <Animated.View

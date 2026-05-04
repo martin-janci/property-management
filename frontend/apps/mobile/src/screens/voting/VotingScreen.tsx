@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
+import { colors } from '../shared/screenStyles';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
 export type VoteType = 'simple' | 'multiple' | 'weighted' | 'ranked';
@@ -115,13 +116,13 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
   const getStatusColor = (status: VoteStatus): string => {
     switch (status) {
       case 'active':
-        return '#10b981';
+        return colors.success;
       case 'closed':
-        return '#6b7280';
+        return colors.textMuted;
       case 'pending':
-        return '#f59e0b';
+        return colors.warning;
       default:
-        return '#6b7280';
+        return colors.textMuted;
     }
   };
 
@@ -194,7 +195,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {isLoading ? (
@@ -295,7 +296,7 @@ export function VotingScreen({ onNavigate }: VotingScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -303,23 +304,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
   },
   activeCountBadge: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: colors.successBg,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   activeCountText: {
-    color: '#16a34a',
+    color: colors.successDark,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -327,24 +328,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     gap: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   filterText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.surface,
   },
   scrollView: {
     flex: 1,
@@ -362,19 +363,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   voteCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -394,23 +395,23 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.surface,
     textTransform: 'uppercase',
   },
   timeRemaining: {
     fontSize: 13,
-    color: '#f59e0b',
+    color: colors.warning,
     fontWeight: '600',
   },
   voteTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 6,
   },
   voteDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     lineHeight: 20,
     marginBottom: 16,
   },
@@ -424,45 +425,45 @@ const styles = StyleSheet.create({
   },
   quorumLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   quorumValue: {
     fontSize: 12,
-    color: '#374151',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   quorumBar: {
     height: 6,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: 'hidden',
   },
   quorumProgress: {
     height: '100%',
-    backgroundColor: '#f59e0b',
+    backgroundColor: colors.warning,
     borderRadius: 3,
   },
   quorumMet: {
-    backgroundColor: '#10b981',
+    backgroundColor: colors.success,
   },
   openDetailCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.accentSoft,
     borderRadius: 8,
     marginBottom: 12,
   },
   openDetailText: {
     fontSize: 13,
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '500',
   },
   openDetailChevron: {
     fontSize: 20,
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '400',
   },
   voteFooter: {
@@ -470,15 +471,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
   },
   createdBy: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   dateRange: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   bottomSpacer: {
     height: 100,

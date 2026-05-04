@@ -36,7 +36,7 @@ function FavoritesContent() {
           }
           .skeleton-card {
             height: 320px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
@@ -57,7 +57,7 @@ function FavoritesContent() {
           .error-state {
             padding: 64px 24px;
             text-align: center;
-            color: #dc2626;
+            color: var(--ppt-color-danger-hover);
           }
         `}</style>
       </div>
@@ -93,12 +93,12 @@ function FavoritesContent() {
             justify-content: center;
             padding: 64px 24px;
             text-align: center;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .empty-title {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 24px 0 8px;
           }
           .empty-text {
@@ -107,14 +107,14 @@ function FavoritesContent() {
           }
           .browse-link {
             padding: 12px 24px;
-            background: #2563eb;
-            color: #fff;
+            background: var(--ppt-color-primary);
+            color: var(--ppt-fg-on-accent);
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
           }
           .browse-link:hover {
-            background: #1d4ed8;
+            background: var(--ppt-color-primary-hover);
           }
         `}</style>
       </div>
@@ -172,8 +172,8 @@ function FavoritesContent() {
         }
         .page-button {
           padding: 8px 16px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           font-size: 14px;
           cursor: pointer;
@@ -183,11 +183,11 @@ function FavoritesContent() {
           cursor: not-allowed;
         }
         .page-button:hover:not(:disabled) {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
         .page-info {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </>
@@ -213,7 +213,7 @@ export default function FavoritesPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
         .main {
           flex: 1;
@@ -227,7 +227,7 @@ export default function FavoritesPage() {
         .page-title {
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 32px;
         }
       `}</style>

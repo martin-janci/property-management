@@ -46,8 +46,8 @@ function CreateListingContent() {
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
         .head { margin-bottom: 24px; }
-        .title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { color: #6b7280; margin: 0; }
+        .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { color: var(--ppt-fg-muted); margin: 0; }
       `}</style>
     </div>
   );
@@ -64,7 +64,7 @@ export default function CreateListingPage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

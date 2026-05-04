@@ -295,7 +295,7 @@ function ListingsContent() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .main {
@@ -303,8 +303,8 @@ function ListingsContent() {
         }
 
         .tabs-container {
-          background: #fff;
-          border-bottom: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .tabs {
@@ -321,19 +321,19 @@ function ListingsContent() {
           background: transparent;
           font-size: 14px;
           font-weight: 500;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           border-bottom: 2px solid transparent;
           transition: all 0.2s;
         }
 
         .tab:hover {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .tab.active {
-          color: #2563eb;
-          border-bottom-color: #2563eb;
+          color: var(--ppt-color-primary);
+          border-bottom-color: var(--ppt-color-primary);
         }
 
         .content-container {
@@ -383,13 +383,13 @@ function ListingsContent() {
         .results-title {
           font-size: 1.5rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .results-count {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
@@ -404,11 +404,11 @@ function ListingsContent() {
           align-items: center;
           gap: 8px;
           padding: 8px 16px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
         }
 
@@ -420,11 +420,11 @@ function ListingsContent() {
 
         .sort-select {
           padding: 8px 32px 8px 12px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
           appearance: none;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -435,8 +435,8 @@ function ListingsContent() {
 
         .view-toggle {
           display: none;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 8px;
           overflow: hidden;
         }
@@ -451,17 +451,17 @@ function ListingsContent() {
           padding: 8px;
           border: none;
           background: transparent;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
         }
 
         .view-button:first-child {
-          border-right: 1px solid #e5e7eb;
+          border-right: 1px solid var(--ppt-border-default);
         }
 
         .view-button.active {
-          background: #f3f4f6;
-          color: #2563eb;
+          background: var(--ppt-bg-subtle);
+          color: var(--ppt-color-primary);
         }
 
         .pagination {
@@ -471,7 +471,7 @@ function ListingsContent() {
 
         .pagination-info {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </div>

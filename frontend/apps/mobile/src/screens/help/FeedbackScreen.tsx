@@ -19,6 +19,7 @@ import {
 
 import { feedbackManager as globalFeedbackManager } from '../../onboarding';
 import type { FeedbackType } from '../../onboarding/types';
+import { colors } from '../shared/screenStyles';
 
 interface FeedbackTypeOption {
   type: FeedbackType;
@@ -157,7 +158,7 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
             placeholder={t('feedback.titlePlaceholder')}
             value={title}
             onChangeText={setTitle}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textSubtle}
           />
         </View>
 
@@ -171,7 +172,7 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textSubtle}
           />
         </View>
 
@@ -185,7 +186,7 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textSubtle}
           />
           <Text style={styles.helperText}>{t('feedback.emailHelper')}</Text>
         </View>
@@ -247,33 +248,33 @@ export function FeedbackScreen({ onNavigate }: FeedbackScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   backButton: {
     marginBottom: 8,
   },
   backButtonText: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   content: {
     flex: 1,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 12,
   },
   typeGrid: {
@@ -294,14 +295,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   typeButtonActive: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#2563eb',
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
   },
   typeIcon: {
     fontSize: 16,
@@ -309,19 +310,19 @@ const styles = StyleSheet.create({
   },
   typeLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   typeLabelActive: {
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
   textArea: {
     minHeight: 120,
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginTop: 8,
   },
   checkboxRow: {
@@ -340,40 +341,40 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     borderRadius: 4,
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   checkmark: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 14,
     fontWeight: 'bold',
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
   deviceInfoPreview: {
     marginTop: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 12,
   },
   deviceInfoTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4b5563',
+    color: colors.textMuted,
     marginBottom: 8,
   },
   deviceInfoText: {
     fontSize: 13,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginBottom: 4,
   },
   viewDiagnostics: {
@@ -381,23 +382,23 @@ const styles = StyleSheet.create({
   },
   viewDiagnosticsText: {
     fontSize: 14,
-    color: '#2563eb',
+    color: colors.accent,
   },
   buttonContainer: {
     padding: 16,
     gap: 12,
   },
   submitButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
   },
   submitButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: colors.accentDisabled,
   },
   submitButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -406,10 +407,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
   },
   draftButtonText: {
-    color: '#6b7280',
+    color: colors.textMuted,
     fontSize: 16,
     fontWeight: '500',
   },
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     textAlign: 'center',
     lineHeight: 20,
   },

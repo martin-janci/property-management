@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { type Locale, localeFlags, localeNames, locales } from '../i18n';
+import './LanguageSwitcher.css';
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
@@ -14,7 +15,7 @@ export function LanguageSwitcher() {
     <select
       value={currentLocale}
       onChange={handleChange}
-      className="bg-transparent border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="language-switcher"
       aria-label="Select language"
     >
       {locales.map((locale) => (

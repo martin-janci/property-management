@@ -186,31 +186,31 @@ function ProfileFormContent() {
       <style jsx>{`
         .form {
           max-width: 640px; margin: 32px auto; padding: 32px;
-          background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+          background: var(--ppt-bg-surface); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
           display: flex; flex-direction: column; gap: 16px;
         }
-        .title { font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { font-size: 14px; color: #6b7280; margin: 0 0 8px; }
-        .alert { padding: 12px 16px; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; font-size: 14px; }
-        .success { padding: 12px 16px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 8px; font-size: 14px; }
+        .title { font-size: 1.5rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { font-size: 14px; color: var(--ppt-fg-muted); margin: 0 0 8px; }
+        .alert { padding: 12px 16px; background: var(--ppt-color-danger-light); color: var(--ppt-color-danger-dark); border: 1px solid var(--ppt-color-danger); border-radius: 8px; font-size: 14px; }
+        .success { padding: 12px 16px; background: var(--ppt-color-success-light); color: var(--ppt-color-success-dark); border: 1px solid var(--ppt-color-success); border-radius: 8px; font-size: 14px; }
         .field { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 14px; font-weight: 500; color: #374151; }
+        .label { font-size: 14px; font-weight: 500; color: var(--ppt-fg-secondary); }
         .input {
-          padding: 10px 12px; font-size: 15px; border: 1px solid #d1d5db;
-          border-radius: 8px; background: #fff; color: #111827; font-family: inherit;
+          padding: 10px 12px; font-size: 15px; border: 1px solid var(--ppt-border-strong);
+          border-radius: 8px; background: var(--ppt-bg-surface); color: var(--ppt-fg-primary); font-family: inherit;
         }
-        .input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-        .input:disabled { background: #f9fafb; cursor: not-allowed; }
-        .hint { color: #6b7280; font-size: 12px; }
+        .input:focus { outline: none; border-color: var(--ppt-color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+        .input:disabled { background: var(--ppt-bg-app); cursor: not-allowed; }
+        .hint { color: var(--ppt-fg-muted); font-size: 12px; }
         .submit {
-          margin-top: 8px; padding: 12px 16px; background: #2563eb; color: #fff;
+          margin-top: 8px; padding: 12px 16px; background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent);
           border: none; border-radius: 8px; font-size: 16px; font-weight: 600;
           cursor: pointer; align-self: flex-start;
         }
-        .submit:hover:not(:disabled) { background: #1d4ed8; }
-        .submit:disabled { background: #93c5fd; cursor: not-allowed; }
-        .state { padding: 32px; text-align: center; color: #6b7280; }
-        .error { color: #dc2626; }
+        .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
+        .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
+        .state { padding: 32px; text-align: center; color: var(--ppt-fg-muted); }
+        .error { color: var(--ppt-color-danger-hover); }
       `}</style>
     </form>
   );
@@ -227,7 +227,7 @@ export default function RealtorProfilePage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

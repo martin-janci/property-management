@@ -73,25 +73,25 @@ function AccountContent() {
       <style jsx>{`
         .container { max-width: 960px; margin: 0 auto; padding: 32px 16px; }
         .hero { margin-bottom: 24px; }
-        .title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 4px; }
-        .subtitle { color: #6b7280; margin: 0; }
+        .title { font-size: 2rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; }
+        .subtitle { color: var(--ppt-fg-muted); margin: 0; }
         .grid {
           display: grid; gap: 16px; padding: 0; margin: 0; list-style: none;
           grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         }
         .card {
-          display: block; background: #fff; padding: 20px; border-radius: 12px;
+          display: block; background: var(--ppt-bg-surface); padding: 20px; border-radius: 12px;
           box-shadow: 0 1px 3px rgba(0,0,0,.1); text-decoration: none; color: inherit;
         }
         .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,.08); }
-        .card-title { font-size: 1.125rem; font-weight: 600; margin: 0 0 4px; color: #111827; }
-        .card-desc { font-size: 14px; color: #6b7280; margin: 0; }
+        .card-title { font-size: 1.125rem; font-weight: 600; margin: 0 0 4px; color: var(--ppt-fg-primary); }
+        .card-desc { font-size: 14px; color: var(--ppt-fg-muted); margin: 0; }
         .logout {
           margin-top: 32px; padding: 10px 20px; background: transparent;
-          color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px;
+          color: var(--ppt-color-danger-dark); border: 1px solid var(--ppt-color-danger-light); border-radius: 8px;
           font-weight: 500; cursor: pointer;
         }
-        .logout:hover { background: #fef2f2; }
+        .logout:hover { background: var(--ppt-color-danger-light); }
       `}</style>
     </div>
   );
@@ -108,7 +108,7 @@ export default function AccountPage() {
       </main>
       <Footer />
       <style jsx>{`
-        .page { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+        .page { min-height: 100vh; display: flex; flex-direction: column; background: var(--ppt-bg-app); }
         main { flex: 1; }
       `}</style>
     </div>

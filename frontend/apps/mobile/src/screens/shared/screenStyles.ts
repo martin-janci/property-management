@@ -9,20 +9,68 @@
 import { StyleSheet } from 'react-native';
 
 export const colors = {
-  background: '#f5f5f5',
+  // ─── Base palette ───────────────────────────────────────────
+  background: '#f9fafb',
   surface: '#ffffff',
   surfaceMuted: '#f3f4f6',
   border: '#e5e7eb',
+  borderStrong: '#d1d5db',
   divider: '#f3f4f6',
-  text: '#1f2937',
+  text: '#111827',
+  textSecondary: '#374151',
   textMuted: '#6b7280',
   textSubtle: '#9ca3af',
+
+  // ─── Brand ──────────────────────────────────────────────────
   accent: '#2563eb',
   accentDark: '#1d4ed8',
+  accentDisabled: '#93c5fd',
+  accentSoft: '#eff6ff',
+
+  // ─── Semantic ───────────────────────────────────────────────
   danger: '#ef4444',
+  dangerDark: '#dc2626',
+  dangerBg: '#fee2e2',
   warning: '#f59e0b',
+  warningDark: '#d97706',
+  warningBg: '#fef3c7',
   success: '#10b981',
+  successDark: '#047857',
+  successBg: '#d1fae5',
   info: '#0ea5e9',
+  infoBg: '#e0f2fe',
+
+  // ─── Fault status pill tokens — mirrors tokens.css --ppt-status-fault-* ────
+  statusNewBg: '#fee2e2',
+  statusNewInk: '#991b1b',
+  statusTriagedBg: '#dbeafe',
+  statusTriagedInk: '#1e40af',
+  statusInProgressBg: '#fef3c7',
+  statusInProgressInk: '#92400e',
+  statusWaitPartsBg: '#ffedd5',
+  statusWaitPartsInk: '#9a3412',
+  statusScheduledBg: '#ede9fe',
+  statusScheduledInk: '#5b21b6',
+  statusResolvedBg: '#d1fae5',
+  statusResolvedInk: '#065f46',
+  statusClosedBg: '#f3f4f6',
+  statusClosedInk: '#374151',
+  statusReopenedBg: '#fee2e2',
+  statusReopenedInk: '#991b1b',
+
+  // ─── Priority ink tokens ─────────────────────────────────────
+  priorityLowInk: '#6b7280',
+  priorityMediumInk: '#d97706',
+  priorityHighInk: '#ea580c',
+  priorityUrgentInk: '#dc2626',
+  warningInk: '#92400e',
+
+  // ─── Misc ────────────────────────────────────────────────────
+  white: '#ffffff',
+  shadow: '#000000',
+  eventCategoryInk: '#8b5cf6',
+  bgOverlay: 'rgba(0,0,0,0.6)',
+  textOnAccentSoft: 'rgba(255,255,255,0.85)',
 };
 
 export const screenStyles = StyleSheet.create({
@@ -87,7 +135,7 @@ export const screenStyles = StyleSheet.create({
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   scrollView: {
     flex: 1,
@@ -98,7 +146,7 @@ export const screenStyles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
@@ -177,7 +225,7 @@ export const screenStyles = StyleSheet.create({
     marginTop: 16,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: '600',
   },

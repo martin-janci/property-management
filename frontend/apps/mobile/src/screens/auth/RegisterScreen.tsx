@@ -21,6 +21,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { colors } from '../shared/screenStyles';
 
 const API_BASE_URL = (Constants.expoConfig?.extra?.apiUrl as string) || 'http://localhost:8080';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -181,7 +182,7 @@ export function RegisterScreen({ onSignInPress, onRegistered }: RegisterScreenPr
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.surface} />
             ) : (
               <Text style={styles.primaryButtonText}>
                 {t('auth.createAccount', 'Create account')}
@@ -247,7 +248,7 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, paddingTop: 48 },
   contentCentered: {
     padding: 24,
@@ -256,30 +257,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: { alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: 24, fontWeight: '600', color: '#1f2937', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
+  title: { fontSize: 24, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 16, color: colors.textMuted, textAlign: 'center', marginBottom: 24 },
   form: { gap: 16 },
   inputGroup: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '500', color: '#374151' },
+  label: { fontSize: 14, fontWeight: '500', color: colors.textSecondary },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     padding: 12,
     fontSize: 16,
   },
-  inputError: { borderColor: '#ef4444' },
-  errorText: { color: '#ef4444', fontSize: 12 },
+  inputError: { borderColor: colors.danger },
+  errorText: { color: colors.danger, fontSize: 12 },
   primaryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
-  primaryButtonDisabled: { backgroundColor: '#93c5fd' },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  primaryButtonDisabled: { backgroundColor: colors.accentDisabled },
+  primaryButtonText: { color: colors.surface, fontSize: 16, fontWeight: '600' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -287,6 +288,6 @@ const styles = StyleSheet.create({
     gap: 4,
     marginTop: 24,
   },
-  footerText: { color: '#6b7280', fontSize: 14 },
-  link: { color: '#2563eb', fontSize: 14, fontWeight: '500' },
+  footerText: { color: colors.textMuted, fontSize: 14 },
+  link: { color: colors.accent, fontSize: 14, fontWeight: '500' },
 });

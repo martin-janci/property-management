@@ -26,6 +26,7 @@ import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.*
 import three.two.bit.ppt.reality.ui.search.ListingCard
+import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
@@ -359,13 +360,13 @@ private fun FeaturedListingCard(listing: ListingSummary, onClick: () -> Unit) {
                 Surface(
                     modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
                     shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.primary
+                    color = BadgeColors.featuredBg
                 ) {
                     Text(
                         text = stringResource(R.string.label_featured),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = BadgeColors.featuredInk
                     )
                 }
             }

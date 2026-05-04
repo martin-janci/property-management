@@ -126,21 +126,22 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           text-align: left;
           font-family: inherit;
           padding: 1rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.5rem;
-          background: white;
+          background: var(--ppt-bg-surface);
           cursor: pointer;
           transition: all 0.15s;
         }
 
         .search-result-card:hover {
-          border-color: #3b82f6;
+          border-color: var(--ppt-brand-500);
           box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
         }
 
-        .search-result-card:focus {
-          outline: none;
-          border-color: #3b82f6;
+        .search-result-card:focus-visible {
+          outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+          outline-offset: var(--ppt-focus-ring-offset);
+          border-color: var(--ppt-brand-500);
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
@@ -159,7 +160,7 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           margin: 0;
           font-size: 1rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .result-score {
@@ -167,8 +168,8 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           padding: 0.125rem 0.5rem;
           font-size: 0.75rem;
           font-weight: 500;
-          background: #ecfdf5;
-          color: #059669;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-hover);
           border-radius: 9999px;
         }
 
@@ -179,11 +180,11 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           gap: 0.25rem;
           margin-top: 0.25rem;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .meta-separator {
-          color: #cbd5e1;
+          color: var(--ppt-border-strong);
         }
 
         .result-badges {
@@ -221,14 +222,14 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
         .highlight-field {
           font-size: 0.75rem;
           font-weight: 500;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           text-transform: uppercase;
           letter-spacing: 0.025em;
         }
 
         .highlight-snippet {
           font-size: 0.875rem;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
           line-height: 1.5;
         }
 
@@ -242,7 +243,7 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
         .result-description {
           margin: 0;
           font-size: 0.875rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           line-height: 1.5;
           display: -webkit-box;
           -webkit-line-clamp: 2;

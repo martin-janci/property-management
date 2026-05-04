@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { createDeepLink } from '../qrcode/DeepLinkHandler';
+import { colors } from '../screens/shared/screenStyles';
 
 // Configure notification handling
 Notifications.setNotificationHandler({
@@ -151,7 +152,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
           name: 'Default',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#2563eb',
+          lightColor: colors.accent,
         });
 
         await Notifications.setNotificationChannelAsync('announcements', {

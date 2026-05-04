@@ -247,22 +247,22 @@ export function ListingForm({
 
       <style jsx>{`
         .form { display: flex; flex-direction: column; gap: 16px; max-width: 720px; }
-        .alert { padding: 12px 16px; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 8px; font-size: 14px; }
+        .alert { padding: 12px 16px; background: var(--ppt-color-danger-light); color: var(--ppt-color-danger-dark); border: 1px solid var(--ppt-color-danger); border-radius: 8px; font-size: 14px; }
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
         .field { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 14px; font-weight: 500; color: #374151; }
-        .input { padding: 10px 12px; font-size: 15px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-family: inherit; }
-        .input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
-        .input-error { border-color: #dc2626; }
-        .error { color: #dc2626; font-size: 12px; }
+        .label { font-size: 14px; font-weight: 500; color: var(--ppt-fg-secondary); }
+        .input { padding: 10px 12px; font-size: 15px; border: 1px solid var(--ppt-border-strong); border-radius: 8px; background: var(--ppt-bg-surface); color: var(--ppt-fg-primary); font-family: inherit; }
+        .input:focus { outline: none; border-color: var(--ppt-color-primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+        .input-error { border-color: var(--ppt-color-danger); }
+        .error { color: var(--ppt-color-danger); font-size: 12px; }
         .submit {
-          margin-top: 8px; padding: 12px 16px; background: #2563eb; color: #fff;
+          margin-top: 8px; padding: 12px 16px; background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent);
           border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
           align-self: flex-start;
         }
-        .submit:hover:not(:disabled) { background: #1d4ed8; }
-        .submit:disabled { background: #93c5fd; cursor: not-allowed; }
+        .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
+        .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
       `}</style>
     </form>
   );

@@ -34,10 +34,10 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
       <style jsx global>{`
         .state-action {
           padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
-          background: #2563eb; color: #fff; font-weight: 500;
+          background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent); font-weight: 500;
           text-align: center; font-size: 15px;
         }
-        .state-action:hover { background: #1d4ed8; }
+        .state-action:hover { background: var(--ppt-color-primary-hover); }
       `}</style>
     </StateView>
   );

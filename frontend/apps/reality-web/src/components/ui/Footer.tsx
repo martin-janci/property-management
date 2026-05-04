@@ -66,8 +66,8 @@ export function Footer() {
 
       <style jsx>{`
         .footer {
-          background-color: #1f2937;
-          color: #e5e7eb;
+          background-color: var(--ppt-neutral-800);
+          color: var(--ppt-fg-on-accent);
           margin-top: auto;
         }
 
@@ -104,12 +104,12 @@ export function Footer() {
         .footer-logo {
           font-size: 1.25rem;
           font-weight: bold;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           text-decoration: none;
         }
 
         .footer-description {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           font-size: 14px;
           line-height: 1.6;
           margin: 0;
@@ -118,7 +118,7 @@ export function Footer() {
         .footer-title {
           font-size: 14px;
           font-weight: 600;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           text-transform: uppercase;
           letter-spacing: 0.05em;
           margin: 0 0 4px;
@@ -131,26 +131,26 @@ export function Footer() {
         }
 
         .footer-nav a {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           text-decoration: none;
           font-size: 14px;
           transition: color 0.2s;
         }
 
         .footer-nav a:hover {
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .footer-bottom {
           margin-top: 48px;
           padding-top: 24px;
-          border-top: 1px solid #374151;
+          border-top: 1px solid var(--ppt-neutral-700);
           text-align: center;
         }
 
         .footer-bottom p {
           margin: 0;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 14px;
         }
       `}</style>

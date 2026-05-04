@@ -1,0 +1,34 @@
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}
+
+.page-loading__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ppt-space-4);
+}
+
+.page-loading__spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid transparent;
+  border-bottom-color: var(--ppt-color-primary);
+  border-radius: 50%;
+  animation: page-loading-spin 0.75s linear infinite;
+}
+
+@keyframes page-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.page-loading__label {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-fg-muted);
+}

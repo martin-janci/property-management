@@ -55,11 +55,11 @@ const MOCK_FORMS: ResidentForm[] = [
 function statusBadgeStyle(status: FormStatus) {
   switch (status) {
     case 'pending':
-      return { background: '#fee2e2', color: colors.danger };
+      return { background: colors.dangerBg, color: colors.danger };
     case 'in_progress':
-      return { background: '#fef3c7', color: '#b45309' };
+      return { background: colors.warningBg, color: colors.warningDark };
     case 'completed':
-      return { background: '#d1fae5', color: '#047857' };
+      return { background: colors.successBg, color: colors.successDark };
   }
 }
 
@@ -114,7 +114,7 @@ export function FormsScreen({ onNavigate }: FormsScreenProps) {
               <Text style={s.cardBody}>{form.description}</Text>
               <View style={s.cardFooter}>
                 {form.required && (
-                  <View style={[s.badge, { backgroundColor: '#fef2f2' }]}>
+                  <View style={[s.badge, { backgroundColor: colors.dangerBg }]}>
                     <Text style={[s.badgeText, { color: colors.danger }]}>Required</Text>
                   </View>
                 )}

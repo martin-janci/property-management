@@ -133,7 +133,7 @@ export function CategoryCards() {
         <style jsx>{`
           .categories-section {
             padding: 64px 16px;
-            background: #fff;
+            background: var(--ppt-bg-surface);
           }
           .container {
             max-width: 1280px;
@@ -142,7 +142,7 @@ export function CategoryCards() {
           .skeleton-header {
             height: 40px;
             width: 250px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 8px;
             margin: 0 auto 32px;
           }
@@ -153,7 +153,7 @@ export function CategoryCards() {
           }
           .skeleton-card {
             height: 120px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
           }
         `}</style>
@@ -168,7 +168,14 @@ export function CategoryCards() {
   return (
     <section className="categories-section">
       <div className="container">
-        <h2 className="section-title">{t('browseByType')}</h2>
+        <div className="section-header">
+          <div>
+            <h2 className="section-title">{t('browseByType')}</h2>
+            <p className="section-subtitle">
+              {t('browseByTypeSubtitle', { defaultValue: 'Pick a category to narrow the search.' })}
+            </p>
+          </div>
+        </div>
         <div className="grid">
           {categories.map((category) => (
             <Link
@@ -188,61 +195,97 @@ export function CategoryCards() {
 
       <style jsx>{`
         .categories-section {
-          padding: 64px 16px;
-          background: #fff;
+          padding: 48px 32px 24px;
+          background: var(--ppt-bg-app);
         }
 
         .container {
-          max-width: 1280px;
+          max-width: var(--ppt-content-max, 1280px);
           margin: 0 auto;
         }
 
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 24px;
+        }
+
         .section-title {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #111827;
-          text-align: center;
-          margin: 0 0 32px;
+          font-size: 22px;
+          font-weight: var(--ppt-font-weight-bold, 700);
+          color: var(--ppt-fg-primary);
+          margin: 0;
+          letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+          font-size: var(--ppt-font-size-sm, 14px);
+          color: var(--ppt-fg-muted);
+          margin: 4px 0 0;
         }
 
         .grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 10px;
+        }
+
+        @media (max-width: 1024px) {
+          .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+          .grid { grid-template-columns: repeat(2, 1fr); }
+          .categories-section { padding: 32px 16px 16px; }
         }
 
         .category-card {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          padding: 24px;
-          background: #f9fafb;
-          border-radius: 12px;
+          gap: 8px;
+          padding: 14px 14px 12px;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 10px;
           text-decoration: none;
-          transition: all 0.2s;
-          text-align: center;
+          color: inherit;
+          cursor: pointer;
+          transition: border-color var(--ppt-transition-fast),
+                      box-shadow var(--ppt-transition-fast);
         }
 
         .category-card:hover {
-          background: #f3f4f6;
-          transform: translateY(-2px);
+          border-color: var(--ppt-color-primary);
+          box-shadow: var(--ppt-shadow-lg, 0 4px 12px rgba(0,0,0,0.15));
+        }
+
+        .category-card:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .icon {
-          color: #2563eb;
-          margin-bottom: 12px;
+          width: 32px;
+          height: 32px;
+          border-radius: var(--ppt-radius-md, 8px);
+          background: var(--ppt-color-primary-soft-bg);
+          color: var(--ppt-color-primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .label {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #111827;
-          margin: 0 0 4px;
+          font-size: 13.5px;
+          font-weight: var(--ppt-font-weight-semibold, 600);
+          color: var(--ppt-fg-primary);
+          margin: 0;
         }
 
         .count {
-          font-size: 14px;
-          color: #6b7280;
+          font-size: var(--ppt-font-size-xs, 12px);
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
       `}</style>
