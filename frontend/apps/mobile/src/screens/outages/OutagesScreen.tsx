@@ -40,14 +40,33 @@ interface ApiOutageListResponse {
   total?: number;
 }
 
+const OUTAGE_COMMODITIES: readonly OutageCommodity[] = [
+  'water',
+  'electricity',
+  'gas',
+  'heat',
+  'internet',
+];
+const OUTAGE_STATUSES: readonly OutageStatus[] = ['scheduled', 'in_progress', 'resolved'];
+const OUTAGE_SEVERITIES: readonly OutageSeverity[] = ['low', 'medium', 'high'];
+
+// `as Foo ?? default` doesn't actually guard at runtime — an unknown value
+// flows through and then blows up `commodityIcon` / `severityColor` /
+// `statusBadgeColor`. Narrow against the allow-list instead.
+const narrow = <T extends string>(
+  value: string | null | undefined,
+  allowed: readonly T[],
+  fallback: T
+): T => (value && (allowed as readonly string[]).includes(value) ? (value as T) : fallback);
+
 function toUiOutage(o: ApiOutage): Outage {
   return {
     id: o.id,
-    commodity: (o.commodity as OutageCommodity) ?? 'water',
+    commodity: narrow(o.commodity, OUTAGE_COMMODITIES, 'water'),
     title: o.title,
     description: o.description ?? '',
-    status: (o.status as OutageStatus) ?? 'scheduled',
-    severity: (o.severity as OutageSeverity) ?? 'low',
+    status: narrow(o.status, OUTAGE_STATUSES, 'scheduled'),
+    severity: narrow(o.severity, OUTAGE_SEVERITIES, 'low'),
     startsAt: o.starts_at,
     endsAt: o.ends_at,
   };

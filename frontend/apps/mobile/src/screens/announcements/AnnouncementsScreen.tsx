@@ -54,7 +54,10 @@ interface ApiAnnouncementListResponse {
 
 /** Coerce the api-server response into the UI's Announcement shape. The
  *  server doesn't (yet) expose category/author/attachments/comment-count
- *  on the list endpoint, so we default them. */
+ *  on the list endpoint, so we default them. `isRead` defaults to false so
+ *  newly-loaded announcements visibly distinguish themselves until the user
+ *  opens them — the screen's local `readIds` set then layers a read flag on
+ *  top of this default. */
 function toUiAnnouncement(a: ApiAnnouncement): Announcement {
   return {
     id: a.id,
@@ -63,7 +66,7 @@ function toUiAnnouncement(a: ApiAnnouncement): Announcement {
     category: 'general',
     createdAt: a.published_at ?? a.created_at,
     author: 'Building Management',
-    isRead: true,
+    isRead: false,
     isPinned: a.pinned,
     attachments: [],
     commentsCount: 0,

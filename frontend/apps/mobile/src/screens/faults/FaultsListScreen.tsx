@@ -53,14 +53,32 @@ interface ApiFaultListResponse {
   count: number;
 }
 
+const FAULT_STATUSES: readonly FaultStatus[] = ['open', 'in_progress', 'resolved', 'closed'];
+const FAULT_PRIORITIES: readonly FaultPriority[] = ['low', 'medium', 'high', 'urgent'];
+const FAULT_CATEGORIES: readonly FaultCategory[] = [
+  'plumbing',
+  'electrical',
+  'structural',
+  'hvac',
+  'elevator',
+  'security',
+  'other',
+];
+
+// Narrow an arbitrary string to a known enum value, or fall back. Plain
+// `as Foo ?? 'default'` would let an unknown value flow through, which then
+// blows up the colour-lookup tables (Record<Foo, …>) further down.
+const narrow = <T extends string>(value: string, allowed: readonly T[], fallback: T): T =>
+  (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+
 function toUiFault(f: ApiFaultSummary): Fault {
   return {
     id: f.id,
     title: f.title,
     description: f.description ?? '',
-    status: (f.status as FaultStatus) ?? 'open',
-    priority: (f.priority as FaultPriority) ?? 'medium',
-    category: (f.category as FaultCategory) ?? 'other',
+    status: narrow(f.status, FAULT_STATUSES, 'open'),
+    priority: narrow(f.priority, FAULT_PRIORITIES, 'medium'),
+    category: narrow(f.category, FAULT_CATEGORIES, 'other'),
     location: f.location_description ?? '',
     createdAt: f.created_at,
     updatedAt: f.updated_at,

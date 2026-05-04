@@ -93,13 +93,16 @@ impl PortalPasswordResetRepository {
         Ok(result.rows_affected())
     }
 
-    /// Cleanup job: delete tokens that are expired or used >1 day ago.
+    /// Cleanup job: delete tokens that are expired or were consumed more
+    /// than a day ago. Compares `used_at` (not `created_at`) so a token
+    /// that was minted long before being used still gets the full 24-hour
+    /// post-use retention window.
     pub async fn cleanup_expired(&self) -> Result<u64, SqlxError> {
         let result = sqlx::query(
             r#"
             DELETE FROM portal_password_reset_tokens
             WHERE expires_at < NOW()
-               OR (used_at IS NOT NULL AND created_at < NOW() - INTERVAL '1 day')
+               OR used_at < NOW() - INTERVAL '1 day'
             "#,
         )
         .execute(&self.pool)
