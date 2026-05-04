@@ -142,26 +142,25 @@ struct CompareListingsView: View {
         var collected: [ListingDetail] = []
         var firstError: String?
         // Fetch in parallel; preserve order so the UI matches the input
-        // sequence the user picked.
-        await withTaskGroup(of: (Int, Result<ListingDetail, Error>).self) { group in
+        // sequence the user picked. The KMP repo returns a Kotlin `Result`
+        // bridge (not async-throws), so we unwrap with getOrNull/exceptionOrNull.
+        await withTaskGroup(of: (Int, ListingDetail?, String?).self) { group in
             for (index, id) in listingIds.enumerated() {
                 group.addTask {
-                    do {
-                        let detail = try await listingRepository.getListingDetail(listingId: id)
-                        return (index, .success(detail))
-                    } catch {
-                        return (index, .failure(error))
+                    let result = await listingRepository.getListingDetail(listingId: id)
+                    if let listing = result.getOrNull() {
+                        return (index, listing, nil)
                     }
+                    return (index, nil, result.exceptionOrNull()?.message ?? "Failed to load listing")
                 }
             }
             var indexed: [(Int, ListingDetail)] = []
-            for await (index, result) in group {
-                switch result {
-                case .success(let listing):
+            for await (index, listing, errorMsg) in group {
+                if let listing {
                     indexed.append((index, listing))
-                case .failure(let error):
+                } else if let errorMsg {
                     if firstError == nil {
-                        firstError = error.localizedDescription
+                        firstError = errorMsg
                     }
                 }
             }

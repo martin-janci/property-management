@@ -28,6 +28,25 @@ export interface QueuedAction {
   syncStatus?: SyncItemStatus;
 }
 
+/**
+ * Decode a JWT payload (no signature verification — that happens server-side)
+ * and pull the `tenant_id` claim. Used so replayed offline actions can send
+ * the X-Tenant-ID header that tenant-scoped routes require.
+ */
+function extractTenantIdFromJwt(token: string): string | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded + padding)) as Record<string, unknown>;
+    const value = claims.tenant_id;
+    return typeof value === 'string' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface SyncProgress {
   total: number;
   current: number;
@@ -307,6 +326,15 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     };
     if (accessToken) {
       headers.Authorization = `Bearer ${accessToken}`;
+      // Tenant-scoped api-server routes (RlsConnection extractor on
+      // /faults, /voting, /buildings, …) reject requests without
+      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
+      // claim — extract it so replayed offline actions hit the same
+      // tenant the user was signed into when they enqueued.
+      const tenantId = extractTenantIdFromJwt(accessToken);
+      if (tenantId) {
+        headers['X-Tenant-ID'] = tenantId;
+      }
     }
 
     const response = await fetch(url, {

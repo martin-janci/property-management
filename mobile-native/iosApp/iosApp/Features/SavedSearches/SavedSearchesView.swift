@@ -152,26 +152,26 @@ struct SavedSearchesView: View {
     private func loadSearches() async {
         isLoading = true
         errorMessage = nil
-        do {
-            let result = try await favoritesRepository.getSavedSearches()
-            searches = result.searches
-        } catch {
-            errorMessage = error.localizedDescription
+        let result = await favoritesRepository.getSavedSearches()
+        if let payload = result.getOrNull() {
+            searches = payload.searches
+        } else if let error = result.exceptionOrNull() {
+            errorMessage = error.message ?? "Failed to load saved searches"
         }
         isLoading = false
     }
 
     private func toggleAlerts(id: String, enabled: Bool) async {
-        do {
-            let updated = try await favoritesRepository.toggleSearchAlert(
-                searchId: id,
-                enabled: enabled
-            )
+        let result = await favoritesRepository.toggleSearchAlert(
+            searchId: id,
+            enabled: enabled
+        )
+        if let updated = result.getOrNull() {
             if let index = searches.firstIndex(where: { $0.id == id }) {
                 searches[index] = updated
             }
-        } catch {
-            errorMessage = error.localizedDescription
+        } else if let error = result.exceptionOrNull() {
+            errorMessage = error.message ?? "Failed to toggle alert"
         }
     }
 
@@ -179,11 +179,11 @@ struct SavedSearchesView: View {
         let toDelete = offsets.map { searches[$0].id }
         for id in toDelete {
             Task {
-                do {
-                    try await favoritesRepository.deleteSavedSearch(searchId: id)
+                let result = await favoritesRepository.deleteSavedSearch(searchId: id)
+                if result.exceptionOrNull() == nil {
                     searches.removeAll { $0.id == id }
-                } catch {
-                    errorMessage = error.localizedDescription
+                } else if let error = result.exceptionOrNull() {
+                    errorMessage = error.message ?? "Failed to delete search"
                 }
             }
         }

@@ -10,39 +10,39 @@ import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 're
 import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-/** Shape returned by `GET /api/v1/messages/threads`. Mirrors
- *  `@ppt/api-client/messaging`'s `ThreadWithPreview`, kept inline so we
- *  don't pull in the whole web-targeted client just for types. */
+/** Shape returned by `GET /api/v1/messages/threads`. The api-server uses
+ *  Rust serde defaults (snake_case), so the wire format matches the field
+ *  names in `db::models::messaging::ThreadWithPreview` verbatim. */
 interface ParticipantInfo {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
 }
 
 interface MessagePreview {
   id: string;
   content: string;
-  senderId: string;
-  isFromMe: boolean;
-  createdAt: string;
+  sender_id: string;
+  is_from_me: boolean;
+  created_at: string;
 }
 
 interface ThreadWithPreview {
   id: string;
-  organizationId: string;
-  participantIds: string[];
-  otherParticipant: ParticipantInfo;
-  lastMessage: MessagePreview | null;
-  unreadCount: number;
-  createdAt: string;
-  updatedAt: string;
+  organization_id: string;
+  participant_ids: string[];
+  other_participant: ParticipantInfo;
+  last_message: MessagePreview | null;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ThreadListResponse {
   threads: ThreadWithPreview[];
   total: number;
-  hasMore: boolean;
+  has_more: boolean;
 }
 
 function formatRelative(iso: string): string {
@@ -57,7 +57,7 @@ function formatRelative(iso: string): string {
 }
 
 function participantName(p: ParticipantInfo): string {
-  const full = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim();
+  const full = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim();
   return full || p.email;
 }
 
@@ -84,13 +84,13 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
     const needle = search.trim().toLowerCase();
     if (!needle) return threads;
     return threads.filter((t) =>
-      `${participantName(t.otherParticipant)} ${t.lastMessage?.content ?? ''}`
+      `${participantName(t.other_participant)} ${t.last_message?.content ?? ''}`
         .toLowerCase()
         .includes(needle)
     );
   }, [threads, search]);
 
-  const unreadTotal = threads.reduce((acc, t) => acc + t.unreadCount, 0);
+  const unreadTotal = threads.reduce((acc, t) => acc + t.unread_count, 0);
 
   return (
     <View style={s.container}>
@@ -137,7 +137,7 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
           </View>
         ) : (
           filtered.map((thread) => {
-            const lastAt = thread.lastMessage?.createdAt ?? thread.updatedAt;
+            const lastAt = thread.last_message?.created_at ?? thread.updated_at;
             return (
               <Pressable
                 key={thread.id}
@@ -146,17 +146,19 @@ export function MessagesScreen({ onNavigate }: MessagesScreenProps) {
               >
                 <View style={s.cardHeader}>
                   <Text style={s.cardTitle} numberOfLines={1}>
-                    {participantName(thread.otherParticipant)}
+                    {participantName(thread.other_participant)}
                   </Text>
                   <Text style={s.cardMeta}>{formatRelative(lastAt)}</Text>
                 </View>
                 <Text style={s.cardBody} numberOfLines={2}>
-                  {thread.lastMessage?.content ?? 'No messages yet.'}
+                  {thread.last_message?.content ?? 'No messages yet.'}
                 </Text>
-                {thread.unreadCount > 0 && (
+                {thread.unread_count > 0 && (
                   <View style={s.cardFooter}>
                     <View style={[s.badge, { backgroundColor: colors.accent }]}>
-                      <Text style={[s.badgeText, { color: '#fff' }]}>{thread.unreadCount} new</Text>
+                      <Text style={[s.badgeText, { color: '#fff' }]}>
+                        {thread.unread_count} new
+                      </Text>
                     </View>
                   </View>
                 )}

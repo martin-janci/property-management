@@ -132,30 +132,34 @@ struct RealtorsView: View {
     private func loadRealtors() async {
         isLoading = true
         errorMessage = nil
-        do {
-            // Fan out over agencies to collect their members; merge by
-            // user id so the same realtor doesn't show up twice if
-            // reality-server later adds a multi-agency model.
-            let agenciesResp = try await agencyRepository.listAgencies()
-            var collected: [String: RealtorEntry] = [:]
-            for agency in agenciesResp.agencies {
-                let members = (try? await agencyRepository.listMembers(agencyId: agency.id)) ?? AgencyMembersResponse(members: [], total: 0)
-                for member in members.members where isRealtor(role: member.role) {
-                    let entry = RealtorEntry(
-                        id: "\(agency.id):\(member.userId)",
-                        userId: member.userId,
-                        displayName: member.name?.nonEmpty ?? member.email?.nonEmpty ?? "Realtor",
-                        email: member.email,
-                        photoUrl: member.photoUrl,
-                        agencyName: agency.name
-                    )
-                    collected[member.userId] = entry
-                }
-            }
-            entries = collected.values.sorted { $0.displayName < $1.displayName }
-        } catch {
-            errorMessage = error.localizedDescription
+        // Fan out over agencies to collect their members; merge by
+        // user id so the same realtor doesn't show up twice if
+        // reality-server later adds a multi-agency model.
+        // KMP repos surface Kotlin `Result` to Swift, not async-throws,
+        // so we unwrap with getOrNull / exceptionOrNull.
+        let agenciesResult = await agencyRepository.listAgencies()
+        guard let agenciesResp = agenciesResult.getOrNull() else {
+            errorMessage = agenciesResult.exceptionOrNull()?.message ?? "Failed to load agencies"
+            isLoading = false
+            return
         }
+        var collected: [String: RealtorEntry] = [:]
+        for agency in agenciesResp.agencies {
+            let membersResult = await agencyRepository.listMembers(agencyId: agency.id)
+            let members = membersResult.getOrNull()?.members ?? []
+            for member in members where isRealtor(role: member.role) {
+                let entry = RealtorEntry(
+                    id: "\(agency.id):\(member.userId)",
+                    userId: member.userId,
+                    displayName: member.name?.nonEmpty ?? member.email?.nonEmpty ?? "Realtor",
+                    email: member.email,
+                    photoUrl: member.photoUrl,
+                    agencyName: agency.name
+                )
+                collected[member.userId] = entry
+            }
+        }
+        entries = collected.values.sorted { $0.displayName < $1.displayName }
         isLoading = false
     }
 

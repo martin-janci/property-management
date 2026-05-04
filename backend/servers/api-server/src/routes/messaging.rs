@@ -116,13 +116,13 @@ pub fn router() -> Router<AppState> {
         // Thread endpoints
         .route("/threads", get(list_threads))
         .route("/threads", post(start_thread))
-        .route("/threads/{id}", get(get_thread))
-        .route("/threads/{id}/messages", post(send_message))
-        .route("/threads/{id}/read", post(mark_thread_read))
+        .route("/threads/:id", get(get_thread))
+        .route("/threads/:id/messages", post(send_message))
+        .route("/threads/:id/read", post(mark_thread_read))
         // Block endpoints
         .route("/users/blocked", get(list_blocked_users))
-        .route("/users/{id}/block", post(block_user))
-        .route("/users/{id}/block", delete(unblock_user))
+        .route("/users/:id/block", post(block_user))
+        .route("/users/:id/block", delete(unblock_user))
         // Stats
         .route("/unread-count", get(get_unread_count))
 }

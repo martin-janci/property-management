@@ -59,7 +59,7 @@ pub struct UpdatePrivacySettingsRequest {
 pub fn router() -> Router<AppState> {
     Router::new()
         // Neighbor endpoints
-        .route("/buildings/{building_id}/neighbors", get(list_neighbors))
+        .route("/buildings/:building_id/neighbors", get(list_neighbors))
         // Privacy settings
         .route("/users/me/privacy", get(get_privacy_settings))
         .route("/users/me/privacy", put(update_privacy_settings))

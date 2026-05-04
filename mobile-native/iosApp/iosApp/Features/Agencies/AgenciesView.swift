@@ -136,11 +136,11 @@ struct AgenciesView: View {
     private func loadAgencies() async {
         isLoading = true
         errorMessage = nil
-        do {
-            let response = try await agencyRepository.listAgencies()
+        let result = await agencyRepository.listAgencies()
+        if let response = result.getOrNull() {
             agencies = response.agencies
-        } catch {
-            errorMessage = error.localizedDescription
+        } else if let error = result.exceptionOrNull() {
+            errorMessage = error.message ?? "Failed to load agencies"
         }
         isLoading = false
     }

@@ -29,49 +29,49 @@ pub fn router() -> Router<AppState> {
         // Fund CRUD
         .route("/", get(list_funds).post(create_fund))
         .route("/dashboard", get(get_dashboard))
-        .route("/{fund_id}", get(get_fund).put(update_fund))
-        .route("/{fund_id}/health", get(get_fund_health))
+        .route("/:fund_id", get(get_fund).put(update_fund))
+        .route("/:fund_id/health", get(get_fund_health))
         // Contribution schedules
         .route(
-            "/{fund_id}/schedules",
+            "/:fund_id/schedules",
             get(list_schedules).post(create_schedule),
         )
-        .route("/{fund_id}/schedules/{schedule_id}", put(update_schedule))
+        .route("/:fund_id/schedules/:schedule_id", put(update_schedule))
         // Transactions
         .route(
-            "/{fund_id}/transactions",
+            "/:fund_id/transactions",
             get(list_transactions).post(record_transaction),
         )
         .route("/transfers", post(transfer_funds))
         // Investment policies
         .route(
-            "/{fund_id}/policies",
+            "/:fund_id/policies",
             get(list_policies).post(create_policy),
         )
-        .route("/{fund_id}/policies/active", get(get_active_policy))
+        .route("/:fund_id/policies/active", get(get_active_policy))
         // Projections
-        .route("/{fund_id}/projections", post(create_projection))
+        .route("/:fund_id/projections", post(create_projection))
         .route(
-            "/{fund_id}/projections/current",
+            "/:fund_id/projections/current",
             get(get_current_projection),
         )
         .route(
-            "/{fund_id}/projections/{projection_id}/items",
+            "/:fund_id/projections/:projection_id/items",
             get(get_projection_items).post(add_projection_items),
         )
         // Components
         .route(
-            "/{fund_id}/components",
+            "/:fund_id/components",
             get(list_components).post(create_component),
         )
         .route(
-            "/{fund_id}/components/{component_id}",
+            "/:fund_id/components/:component_id",
             put(update_component),
         )
         // Alerts
         .route("/alerts", get(list_alerts))
-        .route("/alerts/{alert_id}/acknowledge", post(acknowledge_alert))
-        .route("/alerts/{alert_id}/resolve", post(resolve_alert))
+        .route("/alerts/:alert_id/acknowledge", post(acknowledge_alert))
+        .route("/alerts/:alert_id/resolve", post(resolve_alert))
 }
 
 // ============================================================================

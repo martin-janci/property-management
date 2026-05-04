@@ -239,28 +239,28 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_fault))
         .route("/", get(list_faults))
         .route("/my", get(list_my_faults))
-        .route("/{id}", get(get_fault))
-        .route("/{id}", put(update_fault))
+        .route("/:id", get(get_fault))
+        .route("/:id", put(update_fault))
         // Workflow
-        .route("/{id}/triage", post(triage_fault))
-        .route("/{id}/assign", post(assign_fault))
-        .route("/{id}/status", put(update_status))
-        .route("/{id}/resolve", post(resolve_fault))
-        .route("/{id}/confirm", post(confirm_fault))
-        .route("/{id}/reopen", post(reopen_fault))
+        .route("/:id/triage", post(triage_fault))
+        .route("/:id/assign", post(assign_fault))
+        .route("/:id/status", put(update_status))
+        .route("/:id/resolve", post(resolve_fault))
+        .route("/:id/confirm", post(confirm_fault))
+        .route("/:id/reopen", post(reopen_fault))
         // Comments & Notes
-        .route("/{id}/comments", get(list_comments))
-        .route("/{id}/comments", post(add_comment))
-        .route("/{id}/work-notes", post(add_work_note))
+        .route("/:id/comments", get(list_comments))
+        .route("/:id/comments", post(add_comment))
+        .route("/:id/work-notes", post(add_work_note))
         // Attachments
-        .route("/{id}/attachments", get(list_attachments))
-        .route("/{id}/attachments", post(add_attachment))
+        .route("/:id/attachments", get(list_attachments))
+        .route("/:id/attachments", post(add_attachment))
         .route(
-            "/{id}/attachments/{attachment_id}",
+            "/:id/attachments/:attachment_id",
             delete(delete_attachment),
         )
         // AI
-        .route("/{id}/suggest", post(get_ai_suggestion))
+        .route("/:id/suggest", post(get_ai_suggestion))
         // Statistics
         .route("/statistics", get(get_statistics))
 }

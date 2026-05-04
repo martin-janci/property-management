@@ -90,22 +90,22 @@ pub fn router() -> Router<AppState> {
         .route("/dashboard/stats", get(get_dashboard_stats))
         // Jobs (Story 78.1)
         .route("/jobs", get(list_jobs))
-        .route("/jobs/{job_id}", get(get_job_details))
-        .route("/jobs/{job_id}/accept", post(accept_job))
-        .route("/jobs/{job_id}/decline", post(decline_job))
+        .route("/jobs/:job_id", get(get_job_details))
+        .route("/jobs/:job_id/accept", post(accept_job))
+        .route("/jobs/:job_id/decline", post(decline_job))
         .route(
-            "/jobs/{job_id}/propose-time",
+            "/jobs/:job_id/propose-time",
             post(propose_alternative_time),
         )
         // Property Access (Story 78.2)
-        .route("/jobs/{job_id}/access", get(get_access_info))
+        .route("/jobs/:job_id/access", get(get_access_info))
         .route(
-            "/jobs/{job_id}/access/generate-code",
+            "/jobs/:job_id/access/generate-code",
             post(generate_access_code),
         )
         // Work Completion & Invoicing (Story 78.3)
-        .route("/jobs/{job_id}/complete", post(submit_work_completion))
-        .route("/jobs/{job_id}/completion", get(get_work_completion))
+        .route("/jobs/:job_id/complete", post(submit_work_completion))
+        .route("/jobs/:job_id/completion", get(get_work_completion))
         .route("/invoices", get(list_invoices))
         // Profile & Feedback (Story 78.4)
         .route("/profile", get(get_profile))
