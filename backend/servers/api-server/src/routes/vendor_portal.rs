@@ -93,10 +93,7 @@ pub fn router() -> Router<AppState> {
         .route("/jobs/:job_id", get(get_job_details))
         .route("/jobs/:job_id/accept", post(accept_job))
         .route("/jobs/:job_id/decline", post(decline_job))
-        .route(
-            "/jobs/:job_id/propose-time",
-            post(propose_alternative_time),
-        )
+        .route("/jobs/:job_id/propose-time", post(propose_alternative_time))
         // Property Access (Story 78.2)
         .route("/jobs/:job_id/access", get(get_access_info))
         .route(

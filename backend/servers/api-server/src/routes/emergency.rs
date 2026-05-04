@@ -218,10 +218,7 @@ pub fn router() -> Router<AppState> {
         .route("/incidents/:id/resolve", post(resolve_incident))
         .route("/incidents/:id/close", post(close_incident))
         .route("/incidents/:id/attachments", post(add_incident_attachment))
-        .route(
-            "/incidents/:id/attachments",
-            get(list_incident_attachments),
-        )
+        .route("/incidents/:id/attachments", get(list_incident_attachments))
         .route("/incidents/:id/updates", post(add_incident_update))
         .route("/incidents/:id/updates", get(list_incident_updates))
         // Broadcast routes

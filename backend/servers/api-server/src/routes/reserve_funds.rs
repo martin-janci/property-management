@@ -44,17 +44,11 @@ pub fn router() -> Router<AppState> {
         )
         .route("/transfers", post(transfer_funds))
         // Investment policies
-        .route(
-            "/:fund_id/policies",
-            get(list_policies).post(create_policy),
-        )
+        .route("/:fund_id/policies", get(list_policies).post(create_policy))
         .route("/:fund_id/policies/active", get(get_active_policy))
         // Projections
         .route("/:fund_id/projections", post(create_projection))
-        .route(
-            "/:fund_id/projections/current",
-            get(get_current_projection),
-        )
+        .route("/:fund_id/projections/current", get(get_current_projection))
         .route(
             "/:fund_id/projections/:projection_id/items",
             get(get_projection_items).post(add_projection_items),
@@ -64,10 +58,7 @@ pub fn router() -> Router<AppState> {
             "/:fund_id/components",
             get(list_components).post(create_component),
         )
-        .route(
-            "/:fund_id/components/:component_id",
-            put(update_component),
-        )
+        .route("/:fund_id/components/:component_id", put(update_component))
         // Alerts
         .route("/alerts", get(list_alerts))
         .route("/alerts/:alert_id/acknowledge", post(acknowledge_alert))

@@ -202,4 +202,3 @@ mod tenant_header {
         assert_eq!(response.status, StatusCode::UNAUTHORIZED);
     }
 }
-

@@ -255,10 +255,7 @@ pub fn router() -> Router<AppState> {
         // Attachments
         .route("/:id/attachments", get(list_attachments))
         .route("/:id/attachments", post(add_attachment))
-        .route(
-            "/:id/attachments/:attachment_id",
-            delete(delete_attachment),
-        )
+        .route("/:id/attachments/:attachment_id", delete(delete_attachment))
         // AI
         .route("/:id/suggest", post(get_ai_suggestion))
         // Statistics

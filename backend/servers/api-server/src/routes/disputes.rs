@@ -49,10 +49,7 @@ pub fn router() -> Router<AppState> {
         .route("/:id/sessions/:session_id", get(get_session))
         .route("/:id/sessions/:session_id", patch(update_session))
         .route("/:id/sessions/:session_id/cancel", post(cancel_session))
-        .route(
-            "/:id/sessions/:session_id/attendance",
-            get(get_attendance),
-        )
+        .route("/:id/sessions/:session_id/attendance", get(get_attendance))
         .route(
             "/:id/sessions/:session_id/attendance/:party_id",
             patch(update_attendance),
@@ -86,10 +83,7 @@ pub fn router() -> Router<AppState> {
             "/:id/actions/:action_id/complete",
             post(complete_action_item),
         )
-        .route(
-            "/:id/actions/:action_id/remind",
-            post(send_action_reminder),
-        )
+        .route("/:id/actions/:action_id/remind", post(send_action_reminder))
         .route("/:id/escalations", get(list_escalations))
         .route("/:id/escalations", post(create_escalation))
         .route(
