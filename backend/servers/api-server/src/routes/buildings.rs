@@ -40,34 +40,31 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_building))
         .route("/", get(list_buildings))
         .route("/bulk", post(bulk_import_buildings))
-        .route("/{id}", get(get_building))
-        .route("/{id}", put(update_building))
-        .route("/{id}", delete(archive_building))
-        .route("/{id}/restore", post(restore_building))
+        .route("/:id", get(get_building))
+        .route("/:id", put(update_building))
+        .route("/:id", delete(archive_building))
+        .route("/:id/restore", post(restore_building))
         // Building statistics (UC-15.7)
-        .route("/{id}/statistics", get(get_building_statistics))
+        .route("/:id/statistics", get(get_building_statistics))
         // Unit management (UC-15.4-5)
-        .route("/{id}/units", get(list_units))
-        .route("/{id}/units", post(create_unit))
-        .route("/{building_id}/units/{unit_id}", get(get_unit))
-        .route("/{building_id}/units/{unit_id}", put(update_unit))
-        .route("/{building_id}/units/{unit_id}", delete(archive_unit))
-        .route("/{building_id}/units/{unit_id}/restore", post(restore_unit))
+        .route("/:id/units", get(list_units))
+        .route("/:id/units", post(create_unit))
+        .route("/:building_id/units/:unit_id", get(get_unit))
+        .route("/:building_id/units/:unit_id", put(update_unit))
+        .route("/:building_id/units/:unit_id", delete(archive_unit))
+        .route("/:building_id/units/:unit_id/restore", post(restore_unit))
         // Unit owner management (UC-15.6)
+        .route("/:building_id/units/:unit_id/owners", get(list_unit_owners))
         .route(
-            "/{building_id}/units/{unit_id}/owners",
-            get(list_unit_owners),
-        )
-        .route(
-            "/{building_id}/units/{unit_id}/owners",
+            "/:building_id/units/:unit_id/owners",
             post(assign_unit_owner),
         )
         .route(
-            "/{building_id}/units/{unit_id}/owners/{user_id}",
+            "/:building_id/units/:unit_id/owners/:user_id",
             put(update_unit_owner),
         )
         .route(
-            "/{building_id}/units/{unit_id}/owners/{user_id}",
+            "/:building_id/units/:unit_id/owners/:user_id",
             delete(remove_unit_owner),
         )
         // Unit residents (Epic 3, Story 3.3)
@@ -903,17 +900,17 @@ pub async fn restore_building(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // RLS policies handle organization access.
-    // First verify building exists in tenant scope (including archived).
-    // Note: find_by_id_any_status doesn't have an RLS variant yet, but RLS context
-    // is already set on the connection so we get tenant isolation.
-    // TODO: Add find_by_id_any_status_rls when available
-    let building = state.building_repo.restore(id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to restore building");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Failed to restore building")),
-        )
-    })?;
+    let building = state
+        .building_repo
+        .restore_rls(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to restore building");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to restore building")),
+            )
+        })?;
 
     let user_id = rls.user_id();
     rls.release().await;
@@ -1127,10 +1124,9 @@ pub async fn create_unit(
     }
 
     // Check for duplicate designation
-    // TODO: Add designation_exists_rls when available
     let exists = state
         .unit_repo
-        .designation_exists(building_id, &req.designation, None)
+        .designation_exists_rls(&mut **rls.conn(), building_id, &req.designation, None)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to check designation");
@@ -1370,11 +1366,10 @@ pub async fn update_unit(
     }
 
     // Check for duplicate designation if being updated
-    // TODO: Add designation_exists_rls when available
     if let Some(ref designation) = req.designation {
         let exists = state
             .unit_repo
-            .designation_exists(building_id, designation, Some(unit_id))
+            .designation_exists_rls(&mut **rls.conn(), building_id, designation, Some(unit_id))
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "Failed to check designation");
@@ -1604,10 +1599,9 @@ pub async fn restore_unit(
         })?;
 
     // Verify unit belongs to building
-    // TODO: Add belongs_to_building_rls when available
     let belongs = state
         .unit_repo
-        .belongs_to_building(unit_id, building_id)
+        .belongs_to_building_rls(&mut **rls.conn(), unit_id, building_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to check unit building");
@@ -1628,14 +1622,17 @@ pub async fn restore_unit(
         ));
     }
 
-    // TODO: Add restore_rls when available
-    let unit = state.unit_repo.restore(unit_id).await.map_err(|e| {
-        tracing::error!(error = %e, "Failed to restore unit");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("DB_ERROR", "Failed to restore unit")),
-        )
-    })?;
+    let unit = state
+        .unit_repo
+        .restore_rls(&mut **rls.conn(), unit_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to restore unit");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to restore unit")),
+            )
+        })?;
 
     let user_id = rls.user_id();
     rls.release().await;
@@ -1836,10 +1833,9 @@ pub async fn assign_unit_owner(
     }
 
     // Check that total ownership won't exceed 100%
-    // TODO: Add get_total_ownership_rls when available
     let current_total = state
         .unit_repo
-        .get_total_ownership(unit_id)
+        .get_total_ownership_rls(&mut **rls.conn(), unit_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to get total ownership");
@@ -1883,7 +1879,6 @@ pub async fn assign_unit_owner(
     }
 
     // Assign owner
-    // TODO: Add assign_owner_rls when available
     let assign_data = db::models::AssignUnitOwner {
         unit_id,
         user_id: req.user_id,
@@ -1894,7 +1889,7 @@ pub async fn assign_unit_owner(
 
     let owner = state
         .unit_repo
-        .assign_owner(assign_data)
+        .assign_owner_rls(&mut **rls.conn(), assign_data)
         .await
         .map_err(|e| {
             // Check for duplicate key violation
@@ -1996,10 +1991,9 @@ pub async fn update_unit_owner(
         })?;
 
     // Verify unit exists and belongs to building
-    // TODO: Add belongs_to_building_rls when available
     let belongs = state
         .unit_repo
-        .belongs_to_building(unit_id, building_id)
+        .belongs_to_building_rls(&mut **rls.conn(), unit_id, building_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to check unit building");
@@ -2034,10 +2028,10 @@ pub async fn update_unit_owner(
         }
     }
 
-    // TODO: Add update_owner_rls when available
     let owner = state
         .unit_repo
-        .update_owner(
+        .update_owner_rls(
+            &mut **rls.conn(),
             unit_id,
             owner_user_id,
             req.ownership_percentage,
@@ -2140,10 +2134,9 @@ pub async fn remove_unit_owner(
         })?;
 
     // Verify unit belongs to building
-    // TODO: Add belongs_to_building_rls when available
     let belongs = state
         .unit_repo
-        .belongs_to_building(unit_id, building_id)
+        .belongs_to_building_rls(&mut **rls.conn(), unit_id, building_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to check unit building");
@@ -2164,10 +2157,9 @@ pub async fn remove_unit_owner(
         ));
     }
 
-    // TODO: Add remove_owner_rls when available
     let removed = state
         .unit_repo
-        .remove_owner(unit_id, owner_user_id)
+        .remove_owner_rls(&mut **rls.conn(), unit_id, owner_user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to remove owner");

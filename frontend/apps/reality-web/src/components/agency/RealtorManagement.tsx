@@ -151,26 +151,26 @@ export function RealtorManagement() {
 
         .back-link {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-decoration: none;
           display: inline-block;
           margin-bottom: 8px;
         }
 
         .back-link:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .title {
           font-size: 1.75rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .subtitle {
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
@@ -179,8 +179,8 @@ export function RealtorManagement() {
           align-items: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -190,14 +190,14 @@ export function RealtorManagement() {
         }
 
         .invite-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .tabs {
           display: flex;
           gap: 4px;
           padding: 4px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
           border-radius: 10px;
           margin-bottom: 24px;
           overflow-x: auto;
@@ -213,28 +213,28 @@ export function RealtorManagement() {
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           white-space: nowrap;
           transition: all 0.2s;
         }
 
         .tab.active {
-          background: #fff;
-          color: #111827;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-primary);
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .tab-count {
           padding: 2px 8px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 10px;
           font-size: 12px;
         }
 
         .tab.active .tab-count {
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .realtor-list {
@@ -269,10 +269,22 @@ function RealtorCard({
   };
 
   const statusConfig: Record<RealtorStatus, { label: string; color: string; bg: string }> = {
-    active: { label: 'Active', color: '#10b981', bg: '#d1fae5' },
-    invited: { label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
-    inactive: { label: 'Inactive', color: '#6b7280', bg: '#e5e7eb' },
-    suspended: { label: 'Suspended', color: '#ef4444', bg: '#fee2e2' },
+    active: {
+      label: 'Active',
+      color: 'var(--ppt-color-success)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    invited: {
+      label: 'Pending',
+      color: 'var(--ppt-color-warning)',
+      bg: 'var(--ppt-color-warning-light)',
+    },
+    inactive: { label: 'Inactive', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    suspended: {
+      label: 'Suspended',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
   };
 
   const status = statusConfig[realtor.status];
@@ -316,7 +328,13 @@ function RealtorCard({
         {realtor.rating && (
           <div className="stat">
             <span className="stat-value rating">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="var(--ppt-color-warning)"
+                aria-hidden="true"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               {realtor.rating.toFixed(1)}
@@ -348,15 +366,15 @@ function RealtorCard({
           align-items: center;
           gap: 16px;
           padding: 20px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .realtor-card:hover {
-          border-color: #2563eb;
+          border-color: var(--ppt-color-primary);
           box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
         }
 
@@ -364,11 +382,11 @@ function RealtorCard({
           width: 56px;
           height: 56px;
           border-radius: 50%;
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           font-size: 1.25rem;
           font-weight: 600;
           overflow: hidden;
@@ -396,7 +414,7 @@ function RealtorCard({
         .name {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .status {
@@ -409,13 +427,13 @@ function RealtorCard({
         .title {
           display: block;
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-bottom: 2px;
         }
 
         .email {
           font-size: 13px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .stats {
@@ -434,13 +452,13 @@ function RealtorCard({
           gap: 4px;
           font-size: 1.25rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .stat-label {
           display: block;
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .actions {
@@ -450,19 +468,19 @@ function RealtorCard({
 
         .action-button {
           padding: 8px 16px;
-          border: 1px solid #e5e7eb;
-          background: #fff;
+          border: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-surface);
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .action-button:hover:not(:disabled) {
-          background: #f9fafb;
-          border-color: #d1d5db;
+          background: var(--ppt-bg-app);
+          border-color: var(--ppt-border-strong);
         }
 
         .action-button:disabled {
@@ -471,13 +489,13 @@ function RealtorCard({
         }
 
         .action-button.view {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .action-button.view:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         @media (max-width: 768px) {
@@ -490,7 +508,7 @@ function RealtorCard({
             justify-content: flex-start;
             margin-top: 12px;
             padding-top: 12px;
-            border-top: 1px solid #f3f4f6;
+            border-top: 1px solid var(--ppt-bg-subtle);
           }
           .actions {
             order: 2;
@@ -629,7 +647,7 @@ function InviteRealtorModal({
           }
 
           .modal {
-            background: #fff;
+            background: var(--ppt-bg-surface);
             border-radius: 16px;
             width: 100%;
             max-width: 480px;
@@ -642,13 +660,13 @@ function InviteRealtorModal({
             justify-content: space-between;
             align-items: center;
             padding: 20px 24px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--ppt-border-default);
           }
 
           .modal-header h2 {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 0;
           }
 
@@ -656,7 +674,7 @@ function InviteRealtorModal({
             padding: 4px;
             border: none;
             background: transparent;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
             cursor: pointer;
           }
 
@@ -672,7 +690,7 @@ function InviteRealtorModal({
             display: block;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             margin-bottom: 6px;
           }
 
@@ -680,16 +698,16 @@ function InviteRealtorModal({
           textarea {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--ppt-border-strong);
             border-radius: 8px;
             font-size: 14px;
           }
 
-          input:focus,
-          textarea:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+          input:focus-visible,
+          textarea:focus-visible {
+            outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+            outline-offset: var(--ppt-focus-ring-offset);
+            border-color: var(--ppt-color-primary);
           }
 
           textarea {
@@ -704,23 +722,23 @@ function InviteRealtorModal({
 
           .cancel-button {
             padding: 10px 20px;
-            border: 1px solid #d1d5db;
-            background: #fff;
+            border: 1px solid var(--ppt-border-strong);
+            background: var(--ppt-bg-surface);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             cursor: pointer;
           }
 
           .submit-button {
             padding: 10px 20px;
-            background: #2563eb;
+            background: var(--ppt-color-primary);
             border: none;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #fff;
+            color: var(--ppt-fg-on-accent);
             cursor: pointer;
           }
 
@@ -948,7 +966,7 @@ function RealtorDetailModal({
           }
 
           .modal {
-            background: #fff;
+            background: var(--ppt-bg-surface);
             border-radius: 16px;
             width: 100%;
             max-width: 560px;
@@ -961,13 +979,13 @@ function RealtorDetailModal({
             justify-content: space-between;
             align-items: center;
             padding: 20px 24px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--ppt-border-default);
           }
 
           .modal-header h2 {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 0;
           }
 
@@ -975,7 +993,7 @@ function RealtorDetailModal({
             padding: 4px;
             border: none;
             background: transparent;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
             cursor: pointer;
           }
 
@@ -992,11 +1010,11 @@ function RealtorDetailModal({
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: #2563eb;
+            background: var(--ppt-color-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
+            color: var(--ppt-fg-on-accent);
             font-size: 2rem;
             font-weight: 600;
             margin: 0 auto 12px;
@@ -1012,14 +1030,14 @@ function RealtorDetailModal({
           .profile-section h3 {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 0 0 4px;
           }
 
           .email,
           .phone {
             font-size: 14px;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
             margin: 0;
           }
 
@@ -1035,7 +1053,7 @@ function RealtorDetailModal({
             display: block;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             margin-bottom: 6px;
           }
 
@@ -1043,15 +1061,15 @@ function RealtorDetailModal({
           textarea {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--ppt-border-strong);
             border-radius: 8px;
             font-size: 14px;
           }
 
           input:disabled,
           textarea:disabled {
-            background: #f9fafb;
-            color: #6b7280;
+            background: var(--ppt-bg-app);
+            color: var(--ppt-fg-muted);
           }
 
           .stats-section {
@@ -1059,7 +1077,7 @@ function RealtorDetailModal({
             justify-content: center;
             gap: 32px;
             padding: 20px;
-            background: #f9fafb;
+            background: var(--ppt-bg-app);
             border-radius: 12px;
             margin-bottom: 24px;
           }
@@ -1072,12 +1090,12 @@ function RealtorDetailModal({
             display: block;
             font-size: 1.5rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
           }
 
           .stat-label {
             font-size: 12px;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
 
           .status-section label {
@@ -1092,67 +1110,67 @@ function RealtorDetailModal({
           .status-button {
             flex: 1;
             padding: 10px;
-            border: 1px solid #d1d5db;
-            background: #fff;
+            border: 1px solid var(--ppt-border-strong);
+            background: var(--ppt-bg-surface);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             cursor: pointer;
             transition: all 0.2s;
           }
 
           .status-button.active {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff;
+            background: var(--ppt-color-primary);
+            border-color: var(--ppt-color-primary);
+            color: var(--ppt-fg-on-accent);
           }
 
           .status-button.danger.active {
-            background: #ef4444;
-            border-color: #ef4444;
+            background: var(--ppt-color-danger);
+            border-color: var(--ppt-color-danger);
           }
 
           .modal-footer {
             display: flex;
             gap: 12px;
             padding: 16px 24px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--ppt-border-default);
             justify-content: flex-end;
           }
 
           .remove-button {
             margin-right: auto;
             padding: 10px 16px;
-            border: 1px solid #fecaca;
-            background: #fef2f2;
+            border: 1px solid var(--ppt-color-danger-light);
+            background: var(--ppt-color-danger-light);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #dc2626;
+            color: var(--ppt-color-danger);
             cursor: pointer;
           }
 
           .cancel-button,
           .edit-button {
             padding: 10px 20px;
-            border: 1px solid #d1d5db;
-            background: #fff;
+            border: 1px solid var(--ppt-border-strong);
+            background: var(--ppt-bg-surface);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             cursor: pointer;
           }
 
           .save-button {
             padding: 10px 20px;
-            background: #2563eb;
+            background: var(--ppt-color-primary);
             border: none;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #fff;
+            color: var(--ppt-fg-on-accent);
             cursor: pointer;
           }
 
@@ -1164,30 +1182,30 @@ function RealtorDetailModal({
           }
 
           .confirm-remove span {
-            color: #dc2626;
+            color: var(--ppt-color-danger);
             font-weight: 500;
           }
 
           .confirm-yes {
             margin-left: auto;
             padding: 10px 16px;
-            background: #dc2626;
+            background: var(--ppt-color-danger);
             border: none;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #fff;
+            color: var(--ppt-fg-on-accent);
             cursor: pointer;
           }
 
           .confirm-no {
             padding: 10px 16px;
-            border: 1px solid #d1d5db;
-            background: #fff;
+            border: 1px solid var(--ppt-border-strong);
+            background: var(--ppt-bg-surface);
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             cursor: pointer;
           }
         `}</style>
@@ -1209,7 +1227,7 @@ function RealtorListSkeleton() {
         }
         .skeleton-card {
           height: 100px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -1237,7 +1255,7 @@ function EmptyState({ tab, onInvite }: { tab: TabType; onInvite: () => void }) {
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -1263,17 +1281,17 @@ function EmptyState({ tab, onInvite }: { tab: TabType; onInvite: () => void }) {
         }
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-weight: 500;

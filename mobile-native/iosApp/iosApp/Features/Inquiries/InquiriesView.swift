@@ -290,17 +290,17 @@ enum InquiryStatus: String {
 
     var backgroundColor: Color {
         switch self {
-        case .pending: return Color.orange.opacity(0.2)
-        case .replied: return Color.green.opacity(0.2)
-        case .closed: return Color.gray.opacity(0.2)
+        case .pending: return InquiryStatusColors.pending.bg
+        case .replied: return InquiryStatusColors.replied.bg
+        case .closed:  return InquiryStatusColors.closed.bg
         }
     }
 
     var foregroundColor: Color {
         switch self {
-        case .pending: return .orange
-        case .replied: return .green
-        case .closed: return .secondary
+        case .pending: return InquiryStatusColors.pending.ink
+        case .replied: return InquiryStatusColors.replied.ink
+        case .closed:  return InquiryStatusColors.closed.ink
         }
     }
 }

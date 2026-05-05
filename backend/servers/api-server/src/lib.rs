@@ -13,7 +13,7 @@ pub mod state;
 
 use axum::{http, routing::get, Router};
 use http::HeaderValue;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::state::AppState;
@@ -264,6 +264,10 @@ pub fn create_router(state: AppState) -> Router {
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration
+        // NOTE: `allow_headers` MUST be an explicit list when paired with
+        // `allow_credentials(true)`. Per the CORS spec, browsers reject the
+        // wildcard with credentials, and tower-http panics at layer
+        // construction if the two are combined.
         .layer(
             CorsLayer::new()
                 .allow_origin(parse_default_origins())
@@ -275,7 +279,15 @@ pub fn create_router(state: AppState) -> Router {
                     http::Method::DELETE,
                     http::Method::OPTIONS,
                 ])
-                .allow_headers(Any)
+                .allow_headers([
+                    http::header::AUTHORIZATION,
+                    http::header::CONTENT_TYPE,
+                    http::header::ACCEPT,
+                    http::header::ORIGIN,
+                    http::HeaderName::from_static("x-requested-with"),
+                    http::HeaderName::from_static("x-tenant-id"),
+                    http::HeaderName::from_static("x-tenant-context"),
+                ])
                 .allow_credentials(true)
                 .max_age(std::time::Duration::from_secs(3600)),
         )

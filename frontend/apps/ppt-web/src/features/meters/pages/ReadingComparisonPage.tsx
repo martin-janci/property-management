@@ -354,7 +354,7 @@ export function ReadingComparisonPage({
                         y1={`${label.y}%`}
                         x2="100%"
                         y2={`${label.y}%`}
-                        stroke="#e5e7eb"
+                        stroke="var(--ppt-border-default)"
                         strokeWidth="1"
                       />
                     ))}

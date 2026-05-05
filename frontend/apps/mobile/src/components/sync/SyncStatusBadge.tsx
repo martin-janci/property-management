@@ -5,6 +5,7 @@
  * the number of pending sync items.
  */
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export interface SyncStatusBadgeProps {
   /** Number of pending items */
@@ -76,18 +77,18 @@ export function SyncStatusBadge({
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: '#dc2626',
+    backgroundColor: colors.dangerDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   syncingBadge: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   text: {
-    color: '#fff',
+    color: colors.white,
     fontWeight: 'bold',
   },
   syncIcon: {
-    color: '#fff',
+    color: colors.white,
   },
 });

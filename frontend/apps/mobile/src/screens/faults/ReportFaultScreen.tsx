@@ -15,6 +15,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { colors } from '../shared/screenStyles';
 import type { FaultCategory, FaultPriority } from './FaultsListScreen';
 
 interface ReportFaultScreenProps {
@@ -33,10 +34,10 @@ const categories: Array<{ value: FaultCategory; labelKey: string; icon: string }
 ];
 
 const priorities: Array<{ value: FaultPriority; labelKey: string; color: string }> = [
-  { value: 'low', labelKey: 'priorityLow', color: '#65a30d' },
-  { value: 'medium', labelKey: 'priorityMedium', color: '#ca8a04' },
-  { value: 'high', labelKey: 'priorityHigh', color: '#ea580c' },
-  { value: 'urgent', labelKey: 'priorityUrgent', color: '#dc2626' },
+  { value: 'low', labelKey: 'priorityLow', color: colors.priorityLowInk },
+  { value: 'medium', labelKey: 'priorityMedium', color: colors.priorityMediumInk },
+  { value: 'high', labelKey: 'priorityHigh', color: colors.priorityHighInk },
+  { value: 'urgent', labelKey: 'priorityUrgent', color: colors.priorityUrgentInk },
 ];
 
 export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProps) {
@@ -283,7 +284,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
               disabled={isDetectingLocation}
             >
               {isDetectingLocation ? (
-                <ActivityIndicator size="small" color="#2563eb" />
+                <ActivityIndicator size="small" color={colors.accent} />
               ) : (
                 <Text style={styles.detectButtonText}>📍</Text>
               )}
@@ -346,7 +347,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.submitButtonText}>{t('faults.submitButton')}</Text>
           )}
@@ -361,7 +362,7 @@ export function ReportFaultScreen({ onSuccess, onCancel }: ReportFaultScreenProp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -369,21 +370,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   cancelButton: {
     padding: 4,
   },
   cancelText: {
-    color: '#6b7280',
+    color: colors.textMuted,
     fontSize: 16,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
   },
   placeholder: {
     width: 50,
@@ -398,22 +399,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     padding: 12,
     fontSize: 16,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: colors.danger,
   },
   errorText: {
-    color: '#ef4444',
+    color: colors.danger,
     fontSize: 12,
     marginTop: 4,
   },
@@ -431,24 +432,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     gap: 6,
   },
   categoryButtonSelected: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#2563eb',
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
   },
   categoryIcon: {
     fontSize: 18,
   },
   categoryLabel: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   categoryLabelSelected: {
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '500',
   },
   priorityRow: {
@@ -459,18 +460,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
   priorityLabel: {
     fontSize: 14,
-    color: '#374151',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   priorityLabelSelected: {
-    color: '#fff',
+    color: colors.surface,
   },
   locationRow: {
     flexDirection: 'row',
@@ -480,10 +481,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detectButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     width: 48,
     alignItems: 'center',
     justifyContent: 'center',
@@ -508,7 +509,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: '#ef4444',
+    backgroundColor: colors.danger,
     width: 22,
     height: 22,
     borderRadius: 11,
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removePhotoText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -527,10 +528,10 @@ const styles = StyleSheet.create({
   photoButton: {
     width: 80,
     height: 80,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -541,25 +542,25 @@ const styles = StyleSheet.create({
   },
   photoButtonText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   photoHint: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginTop: 6,
   },
   submitButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
   },
   submitButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: colors.accentDisabled,
   },
   submitButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },

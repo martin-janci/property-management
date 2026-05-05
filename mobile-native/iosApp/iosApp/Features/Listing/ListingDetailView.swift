@@ -71,7 +71,7 @@ struct ListingDetailView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.largeTitle)
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.pptWarning)
             Text(errorMessage ?? String(localized: "failed_to_load_listing"))
                 .foregroundStyle(.secondary)
             Button(String(localized: "retry")) {
@@ -237,7 +237,7 @@ struct ListingDetailView: View {
                 ForEach(listing.amenities, id: \.self) { amenity in
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(Color.pptSuccess)
                         Text(amenity)
                             .font(.subheadline)
                         Spacer()
@@ -317,7 +317,7 @@ struct ListingDetailView: View {
                     } label: {
                         Image(systemName: "phone.fill")
                             .padding(12)
-                            .background(Color.green)
+                            .background(Color.pptSuccess)
                             .foregroundStyle(.white)
                             .clipShape(Circle())
                     }
@@ -353,7 +353,7 @@ struct ListingDetailView: View {
             }
         } label: {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
-                .foregroundStyle(isFavorite ? .red : .primary)
+                .foregroundStyle(isFavorite ? Color.pptDanger : Color.primary)
         }
     }
 
@@ -487,7 +487,7 @@ private struct NewInquirySheet: View {
                 if let error = errorMessage {
                     Section {
                         Text(error)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.pptDanger)
                     }
                 }
             }
@@ -551,7 +551,7 @@ private struct PhotoGalleryView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            Color.black.ignoresSafeArea()
+            Color.black.ignoresSafeArea() // fullscreen photo viewer intentionally black
 
             TabView(selection: $currentIndex) {
                 ForEach(photos.indices, id: \.self) { index in

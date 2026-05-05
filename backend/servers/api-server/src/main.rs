@@ -259,10 +259,22 @@ async fn main() -> anyhow::Result<()> {
         env!("CARGO_PKG_VERSION")
     );
 
-    // Get database URL from environment
+    // Get database URL from environment. A hardcoded fallback to a local dev
+    // database is only permitted when RUST_ENV=development to support local
+    // development; production/staging must set DATABASE_URL explicitly.
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::warn!("DATABASE_URL not set, using default");
-        "postgres://postgres:postgres@localhost:5432/ppt".to_string()
+        let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
+        if is_development {
+            tracing::warn!(
+                "DATABASE_URL not set, using development default (DEVELOPMENT MODE ONLY)"
+            );
+            "postgres://postgres:postgres@localhost:5432/ppt".to_string()
+        } else {
+            panic!(
+                "DATABASE_URL environment variable is required in non-development environments. \
+                 Set RUST_ENV=development to use the dev default."
+            );
+        }
     });
 
     // Create RLS-safe database pool with automatic context cleanup

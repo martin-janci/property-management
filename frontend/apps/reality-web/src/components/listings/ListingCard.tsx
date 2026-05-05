@@ -177,23 +177,33 @@ export function ListingCard({
       <style jsx>{`
         .card {
           display: block;
-          background: #fff;
-          border-radius: 12px;
+          background: var(--ppt-bg-surface);
+          border-radius: var(--ppt-radius-lg);
+          border: 1px solid var(--ppt-border-default);
           overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--ppt-shadow-md);
           text-decoration: none;
-          transition: all 0.2s;
+          color: inherit;
+          transition: box-shadow var(--ppt-transition-normal),
+                      border-color var(--ppt-transition-normal),
+                      transform var(--ppt-transition-normal);
         }
 
         .card:hover {
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--ppt-shadow-lg);
+          border-color: var(--ppt-border-strong);
           transform: translateY(-2px);
+        }
+
+        .card:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .image-container {
           position: relative;
           aspect-ratio: 4 / 3;
-          background: #f3f4f6;
+          background: var(--ppt-neutral-100);
         }
 
         .image {
@@ -208,93 +218,106 @@ export function ListingCard({
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .badges {
           position: absolute;
-          top: 12px;
-          left: 12px;
+          top: 10px;
+          left: 10px;
           display: flex;
-          gap: 8px;
+          gap: 4px;
+          z-index: 2;
         }
 
         .badge {
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 600;
+          padding: 3px 8px;
+          border-radius: var(--ppt-radius-sm);
+          font-size: 10px;
+          font-weight: 700;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: #fff;
         }
 
         .badge.featured {
-          background: #fbbf24;
-          color: #78350f;
+          background: var(--ppt-badge-featured-bg);
+          color: var(--ppt-badge-featured-ink);
         }
 
         .badge.sale {
-          background: #10b981;
-          color: #fff;
+          background: var(--ppt-badge-sale-bg);
+          color: var(--ppt-badge-sale-ink);
         }
 
         .badge.rent {
-          background: #3b82f6;
-          color: #fff;
+          background: var(--ppt-badge-rent-bg);
+          color: var(--ppt-badge-rent-ink);
         }
 
         .favorite-button {
           position: absolute;
-          top: 12px;
-          right: 12px;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.9);
+          top: 10px;
+          right: 10px;
+          width: 30px;
+          height: 30px;
+          border-radius: var(--ppt-radius-full);
+          background: rgba(255, 255, 255, 0.92);
           border: none;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #9ca3af;
-          transition: all 0.2s;
+          color: var(--ppt-fg-secondary);
+          transition: color var(--ppt-transition-fast),
+                      background var(--ppt-transition-fast);
+          z-index: 2;
         }
 
         .favorite-button:hover {
           background: #fff;
-          color: #ef4444;
+          color: var(--ppt-color-danger);
         }
 
         .favorite-button.active {
-          color: #ef4444;
+          color: var(--ppt-color-danger);
+        }
+
+        .favorite-button:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .content {
-          padding: 16px;
+          padding: 12px 14px 14px;
         }
 
         .price-row {
           display: flex;
           align-items: baseline;
           gap: 4px;
-          margin-bottom: 8px;
+          margin-bottom: 2px;
         }
 
         .price {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: #111827;
+          font-size: var(--ppt-font-size-xl);
+          font-weight: var(--ppt-font-weight-bold);
+          color: var(--ppt-fg-primary);
+          letter-spacing: var(--ppt-tracking-tight);
         }
 
         .price-suffix {
-          font-size: 14px;
-          color: #6b7280;
+          font-size: var(--ppt-font-size-xs);
+          color: var(--ppt-fg-muted);
+          font-weight: var(--ppt-font-weight-medium);
         }
 
         .title {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #374151;
-          margin: 0 0 8px;
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-semibold);
+          color: var(--ppt-fg-primary);
+          margin: 6px 0 0;
+          line-height: var(--ppt-line-height-snug);
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -305,23 +328,26 @@ export function ListingCard({
           display: flex;
           align-items: center;
           gap: 4px;
-          font-size: 14px;
-          color: #6b7280;
-          margin: 0 0 12px;
+          font-size: var(--ppt-font-size-xs);
+          color: var(--ppt-fg-muted);
+          margin: 4px 0 0;
         }
 
         .features {
           display: flex;
-          gap: 16px;
+          gap: 10px;
           flex-wrap: wrap;
+          margin-top: 8px;
+          padding-top: 8px;
+          border-top: 1px solid var(--ppt-border-subtle);
         }
 
         .feature {
           display: flex;
           align-items: center;
-          gap: 4px;
-          font-size: 13px;
-          color: #6b7280;
+          gap: 3px;
+          font-size: 11px;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </Link>

@@ -106,12 +106,12 @@ export function FeedImport() {
 
         h2 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
@@ -120,8 +120,8 @@ export function FeedImport() {
           align-items: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -130,7 +130,7 @@ export function FeedImport() {
         }
 
         .add-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .feeds-list {
@@ -258,8 +258,8 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
 
       <style jsx>{`
         .feed-card {
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           overflow: hidden;
         }
@@ -269,7 +269,7 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           justify-content: space-between;
           align-items: flex-start;
           padding: 20px;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-bg-subtle);
         }
 
         .feed-info {
@@ -279,23 +279,23 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
 
         .format-badge {
           padding: 6px 10px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 6px;
           font-size: 11px;
           font-weight: 600;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           text-transform: uppercase;
         }
 
         h3 {
           font-size: 1rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .feed-url {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
           max-width: 400px;
           overflow: hidden;
@@ -327,20 +327,20 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         .stat-value {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .stat-label {
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .card-actions {
           display: flex;
           gap: 8px;
           padding: 16px 20px;
-          background: #f9fafb;
-          border-top: 1px solid #f3f4f6;
+          background: var(--ppt-bg-app);
+          border-top: 1px solid var(--ppt-bg-subtle);
         }
 
         .action-button {
@@ -352,8 +352,8 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         }
 
         .action-button.sync {
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
         }
 
@@ -363,31 +363,31 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
 
         .action-button.pause,
         .action-button.history {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .action-button.delete {
-          background: #fff;
-          border: 1px solid #fecaca;
-          color: #dc2626;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger);
           margin-left: auto;
         }
 
         .action-button.delete:hover {
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
         }
 
         .history-section {
           padding: 16px 20px;
-          border-top: 1px solid #e5e7eb;
-          background: #fafafa;
+          border-top: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-subtle);
         }
 
         .history-section h4 {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin: 0 0 12px;
         }
 
@@ -402,13 +402,13 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
           align-items: center;
           gap: 12px;
           padding: 10px 12px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 6px;
           font-size: 13px;
         }
 
         .history-date {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .history-status {
@@ -419,27 +419,27 @@ function FeedCard({ feed, agencyId }: { feed: FeedSource; agencyId: string }) {
         }
 
         .history-status.completed {
-          background: #d1fae5;
-          color: #059669;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-hover);
         }
 
         .history-status.failed {
-          background: #fee2e2;
-          color: #dc2626;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger);
         }
 
         .history-status.running {
-          background: #dbeafe;
-          color: #2563eb;
+          background: var(--ppt-color-primary-soft-bg);
+          color: var(--ppt-color-primary);
         }
 
         .history-stats {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-left: auto;
         }
 
         .no-history {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 13px;
           text-align: center;
           padding: 12px;
@@ -672,7 +672,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         }
 
         .modal-content {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 16px;
           width: 90%;
           max-width: 600px;
@@ -685,12 +685,12 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           justify-content: space-between;
           align-items: center;
           padding: 20px 24px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .modal-header h2 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
@@ -699,7 +699,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           border: none;
           padding: 4px;
           cursor: pointer;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .modal-body {
@@ -723,34 +723,34 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         .form-group label {
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .form-group input,
         .form-group select {
           padding: 10px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .form-group input:focus-visible,
+        .form-group select:focus-visible {
+          outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+          outline-offset: var(--ppt-focus-ring-offset);
+          border-color: var(--ppt-color-primary);
         }
 
         .hint {
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
         .error-message {
           padding: 12px 16px;
-          background: #fee2e2;
-          color: #b91c1c;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
           border-radius: 8px;
           font-size: 14px;
         }
@@ -763,7 +763,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         .info-card {
           flex: 1;
           padding: 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
           text-align: center;
         }
@@ -771,20 +771,20 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         .info-label {
           display: block;
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-bottom: 4px;
         }
 
         .info-value {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .available-fields h4,
         .sample-items h4 {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin: 0 0 12px;
         }
 
@@ -796,15 +796,15 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
 
         .field-tag {
           padding: 4px 10px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 4px;
           font-size: 12px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .sample-items pre {
           padding: 12px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
           font-size: 11px;
           overflow-x: auto;
@@ -812,7 +812,7 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         }
 
         .mapping-hint {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 14px;
           margin: 0 0 8px;
         }
@@ -827,13 +827,13 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           width: 100px;
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .mapping-row input {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
           font-size: 13px;
         }
@@ -843,8 +843,8 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
           justify-content: flex-end;
           gap: 12px;
           padding: 16px 24px;
-          border-top: 1px solid #e5e7eb;
-          background: #f9fafb;
+          border-top: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-app);
         }
 
         .modal-footer button {
@@ -856,15 +856,15 @@ function AddFeedModal({ agencyId, onClose }: { agencyId: string; onClose: () => 
         }
 
         .secondary {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .primary {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .primary:disabled {
@@ -890,7 +890,7 @@ function FeedsSkeleton() {
         }
         .skeleton-card {
           height: 180px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -906,7 +906,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -926,23 +926,23 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           align-items: center;
           padding: 64px 24px;
           text-align: center;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
         }
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-weight: 500;
@@ -955,9 +955,17 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function getFeedStatusConfig(status: FeedSource['status']) {
   const configs = {
-    active: { label: 'Active', color: '#059669', bg: '#d1fae5' },
-    paused: { label: 'Paused', color: '#6b7280', bg: '#e5e7eb' },
-    error: { label: 'Error', color: '#dc2626', bg: '#fee2e2' },
+    active: {
+      label: 'Active',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    paused: { label: 'Paused', color: 'var(--ppt-fg-muted)', bg: 'var(--ppt-border-default)' },
+    error: {
+      label: 'Error',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
   };
   return configs[status];
 }

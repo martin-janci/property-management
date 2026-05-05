@@ -57,6 +57,25 @@ impl TestApp {
         use api_server::services::{EmailService, JwtService};
         use api_server::state::AppState;
 
+        // The `AuthUser` extractor reads `JWT_SECRET` from the process
+        // environment to validate bearer tokens. CI doesn't set this env
+        // var (see `.github/workflows/backend.yml`), so we point it at the
+        // same secret the test `JwtService` uses below — otherwise any
+        // request that carries a Bearer token would surface as 500 instead
+        // of the expected 401/403.
+        //
+        // `set_var` is not thread-safe on glibc when called concurrently
+        // with `getenv`, so we only call it once per process via `Once`.
+        // Every TestApp uses the same default `TestConfig::jwt_secret`,
+        // so this is enough for all tests in the binary to observe a
+        // consistent value.
+        static JWT_SECRET_ONCE: std::sync::Once = std::sync::Once::new();
+        JWT_SECRET_ONCE.call_once(|| {
+            if std::env::var("JWT_SECRET").is_err() {
+                std::env::set_var("JWT_SECRET", &config.jwt_secret);
+            }
+        });
+
         let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
         let jwt_service =
             JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");
@@ -215,9 +234,11 @@ impl TestResponse {
     /// Assert status code.
     pub fn assert_status(&self, expected: StatusCode) -> &Self {
         assert_eq!(
-            self.status, expected,
+            self.status,
+            expected,
             "Expected status {}, got {}. Body: {}",
-            expected, self.status,
+            expected,
+            self.status,
             self.text()
         );
         self
@@ -326,7 +347,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     // Register user
     let register_req = app
         .post("/api/v1/auth/register")
-        .json(&user.registration_body())
+        .json(user.registration_body())
         .build();
     let register_resp = app.execute(register_req).await;
     assert_eq!(register_resp.status, StatusCode::CREATED);
@@ -337,7 +358,7 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     // Login to get tokens
     let login_req = app
         .post("/api/v1/auth/login")
-        .json(&user.login_body())
+        .json(user.login_body())
         .build();
     let login_resp = app.execute(login_req).await;
     assert_eq!(login_resp.status, StatusCode::OK);

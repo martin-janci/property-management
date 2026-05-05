@@ -4,6 +4,7 @@
  * Epic 49 - Story 49.4: NFC Building Access
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 import type {
   AccessDenialReason,
@@ -12,11 +13,18 @@ import type {
   NFCCredential,
 } from './types';
 
-// WARNING: NFC credentials are stored in AsyncStorage for offline access.
-// In production, consider using react-native-keychain or expo-secure-store
-// for sensitive credential data. AsyncStorage is not encrypted on most devices.
-// See security review: docs/security/credential-storage.md
-const CREDENTIALS_KEY = '@ppt/nfc_credentials';
+// NFC credentials are sensitive (they encode building access). They're stored
+// in expo-secure-store (Android EncryptedSharedPreferences / iOS Keychain) so
+// they're encrypted at rest. Access logs are not sensitive and remain in
+// AsyncStorage for simpler querying of the last N entries.
+//
+// SecureStore has a per-value size cap of ~2 KB, which is plenty for the
+// credential list we expect (tens of entries). We stringify the whole array
+// into one slot to keep the single-slot API simple.
+const CREDENTIALS_KEY = 'ppt_nfc_credentials';
+// Legacy key used by earlier versions that stored credentials in AsyncStorage;
+// read-through once at startup so upgraded users don't lose their credentials.
+const LEGACY_CREDENTIALS_KEY = '@ppt/nfc_credentials';
 const ACCESS_LOG_KEY = '@ppt/access_log';
 const MAX_LOG_ENTRIES = 100;
 
@@ -252,14 +260,37 @@ export class NFCCredentialManager {
   // Private methods
 
   private async loadStoredCredentials(): Promise<void> {
-    const stored = await AsyncStorage.getItem(CREDENTIALS_KEY);
+    // Stored credentials may be corrupted (partial writes, manual app-data
+    // restore, OS wipe of secure store). Never let a parse failure crash
+    // app startup: fall back to an empty list and drop the bad blob.
+    const stored = await SecureStore.getItemAsync(CREDENTIALS_KEY);
     if (stored) {
-      this.credentials = JSON.parse(stored);
+      try {
+        this.credentials = JSON.parse(stored);
+        return;
+      } catch (err) {
+        console.warn('[nfc] Stored credentials corrupted; discarding.', err);
+        this.credentials = [];
+        await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+        return;
+      }
+    }
+    // One-time migration from the old AsyncStorage location.
+    const legacy = await AsyncStorage.getItem(LEGACY_CREDENTIALS_KEY);
+    if (legacy) {
+      try {
+        this.credentials = JSON.parse(legacy);
+        await this.storeCredentials();
+      } catch (err) {
+        console.warn('[nfc] Legacy credentials corrupted; discarding.', err);
+        this.credentials = [];
+      }
+      await AsyncStorage.removeItem(LEGACY_CREDENTIALS_KEY);
     }
   }
 
   private async storeCredentials(): Promise<void> {
-    await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify(this.credentials));
+    await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify(this.credentials));
   }
 
   private async apiRequest<T>(

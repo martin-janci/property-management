@@ -76,9 +76,9 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
             align-items: center;
             justify-content: center;
             height: 400px;
-            background: #f3f4f6;
+            background: var(--ppt-bg-subtle);
             border-radius: 12px;
-            color: #9ca3af;
+            color: var(--ppt-fg-subtle);
           }
           .empty-gallery p {
             margin-top: 16px;
@@ -275,7 +275,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           gap: 6px;
           padding: 8px 12px;
           background: rgba(0, 0, 0, 0.7);
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           border-radius: 20px;
           font-size: 14px;
         }
@@ -297,7 +297,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
         }
 
         .thumbnail.active {
-          border-color: #2563eb;
+          border-color: var(--ppt-color-primary);
         }
 
         .thumbnail img {
@@ -310,7 +310,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           position: absolute;
           inset: 0;
           background: rgba(0, 0, 0, 0.6);
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -337,13 +337,13 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           padding: 8px;
           background: transparent;
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           cursor: pointer;
           z-index: 10;
         }
 
         .lightbox-close:hover {
-          color: #d1d5db;
+          color: var(--ppt-border-strong);
         }
 
         .lightbox-nav {
@@ -353,7 +353,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           padding: 16px;
           background: rgba(255, 255, 255, 0.1);
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           cursor: pointer;
           border-radius: 50%;
         }
@@ -386,7 +386,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
 
         .lightbox-caption {
           margin-top: 12px;
-          color: #d1d5db;
+          color: var(--ppt-border-strong);
           font-size: 14px;
         }
 
@@ -395,7 +395,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           top: 16px;
           left: 50%;
           transform: translateX(-50%);
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           font-size: 14px;
         }
 
@@ -425,7 +425,7 @@ export function PhotoGallery({ photos, title }: PhotoGalleryProps) {
         }
 
         .lightbox-thumbnail.active {
-          border-color: #fff;
+          border-color: var(--ppt-fg-on-accent);
         }
 
         .lightbox-thumbnail img {

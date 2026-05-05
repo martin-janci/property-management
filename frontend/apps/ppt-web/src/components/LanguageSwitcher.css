@@ -1,0 +1,26 @@
+.language-switcher {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-md);
+  padding: var(--ppt-space-1) var(--ppt-space-2);
+  font-size: var(--ppt-font-size-sm);
+  font-family: var(--ppt-font-family);
+  color: var(--ppt-fg-secondary);
+  cursor: pointer;
+  transition: border-color var(--ppt-transition-fast);
+}
+
+.language-switcher:hover {
+  border-color: var(--ppt-border-strong);
+}
+
+.language-switcher:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.language-switcher:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

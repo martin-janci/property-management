@@ -4,7 +4,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use rand::Rng;
+use rand::{rngs::OsRng as RandOsRng, RngCore};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -65,9 +65,15 @@ impl AuthService {
     }
 
     /// Generate a secure random token (for email verification, password reset).
+    ///
+    /// Uses `rand::rngs::OsRng` (OS-backed CSPRNG) rather than `thread_rng`,
+    /// so token generation does not depend on the ChaCha20 thread-local state
+    /// being correctly seeded — important for one-shot tokens that are used as
+    /// a shared secret between email recipient and server.
     pub fn generate_token(&self) -> String {
-        let mut rng = rand::thread_rng();
-        let bytes: [u8; 32] = rng.gen();
+        let mut rng = RandOsRng;
+        let mut bytes = [0u8; 32];
+        rng.fill_bytes(&mut bytes);
         hex::encode(bytes)
     }
 

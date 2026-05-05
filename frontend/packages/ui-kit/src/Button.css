@@ -1,0 +1,171 @@
+/**
+ * Button component styles.
+ * Radius 8px, Inter font, 120ms ease-standard transitions.
+ * Focus ring uses box-shadow so it doesn't add layout space.
+ */
+
+.ppt-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ppt-space-2);
+  font-family: var(--ppt-font-family);
+  font-weight: var(--ppt-font-weight-semibold);
+  line-height: var(--ppt-line-height-tight);
+  border-radius: var(--ppt-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--ppt-transition-fast), border-color var(--ppt-transition-fast),
+    box-shadow var(--ppt-transition-fast), transform var(--ppt-transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ppt-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.ppt-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ─── Sizes ─────────────────────────────────────────────── */
+.ppt-button--sm {
+  padding: var(--ppt-space-1) var(--ppt-space-3);
+  font-size: var(--ppt-font-size-xs);
+  min-height: 2rem;
+}
+
+.ppt-button--md {
+  padding: 9px var(--ppt-space-4);
+  font-size: var(--ppt-font-size-sm);
+  min-height: 2.375rem;
+}
+
+.ppt-button--lg {
+  padding: var(--ppt-space-3) var(--ppt-space-6);
+  font-size: var(--ppt-font-size-base);
+  min-height: 3rem;
+}
+
+/* ─── Variants ──────────────────────────────────────────── */
+.ppt-button--primary {
+  background-color: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent, #ffffff);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.ppt-button--primary:hover:not(:disabled) {
+  background-color: var(--ppt-color-primary-hover);
+}
+
+.ppt-button--primary:active:not(:disabled) {
+  background-color: var(--ppt-color-primary-active);
+  box-shadow: none;
+}
+
+.ppt-button--secondary {
+  background-color: var(--ppt-bg-surface, var(--ppt-color-surface));
+  color: var(--ppt-fg-secondary, var(--ppt-color-text-secondary));
+  border-color: var(--ppt-border-default, var(--ppt-color-border));
+}
+
+.ppt-button--secondary:hover:not(:disabled) {
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-surface-hover));
+  border-color: var(--ppt-border-strong, var(--ppt-color-border-hover));
+}
+
+.ppt-button--secondary:active:not(:disabled) {
+  background-color: var(--ppt-neutral-100, var(--ppt-color-secondary-light));
+}
+
+.ppt-button--danger {
+  background-color: var(--ppt-color-danger);
+  color: #ffffff;
+}
+
+.ppt-button--danger:hover:not(:disabled) {
+  background-color: var(--ppt-color-danger-hover);
+}
+
+.ppt-button--danger:active:not(:disabled) {
+  background-color: var(--ppt-color-danger-dark);
+}
+
+.ppt-button--ghost {
+  background-color: transparent;
+  color: var(--ppt-fg-secondary, var(--ppt-color-text));
+}
+
+.ppt-button--ghost:hover:not(:disabled) {
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-surface-hover));
+}
+
+.ppt-button--ghost:active:not(:disabled) {
+  background-color: var(--ppt-neutral-100, var(--ppt-color-secondary-light));
+}
+
+.ppt-button--link {
+  background-color: transparent;
+  color: var(--ppt-color-primary);
+  padding: 0;
+  min-height: auto;
+  border-radius: 0;
+  font-weight: var(--ppt-font-weight-medium);
+}
+
+.ppt-button--link:hover:not(:disabled) {
+  text-decoration: underline;
+  color: var(--ppt-color-primary-hover);
+}
+
+/* ─── Full width ────────────────────────────────────────── */
+.ppt-button--full-width {
+  width: 100%;
+}
+
+/* ─── Loading ───────────────────────────────────────────── */
+.ppt-button--loading {
+  position: relative;
+}
+
+.ppt-button__spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ppt-button__spinner-icon {
+  width: 1em;
+  height: 1em;
+  animation: ppt-button-spin 1s linear infinite;
+}
+
+@keyframes ppt-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Icons ─────────────────────────────────────────────── */
+.ppt-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ppt-button__icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.ppt-button__content {
+  flex: 1;
+}

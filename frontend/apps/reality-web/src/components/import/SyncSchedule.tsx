@@ -225,8 +225,8 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         }
 
         .section {
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           padding: 24px;
         }
@@ -240,29 +240,29 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
         h3 {
           font-size: 1.125rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 14px;
           margin: 0;
         }
 
         .edit-button {
           padding: 8px 16px;
-          background: #fff;
-          border: 1px solid #d1d5db;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
         }
 
         .edit-button:hover {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .edit-form {
@@ -276,7 +276,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           justify-content: space-between;
           align-items: center;
           padding: 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
           cursor: pointer;
         }
@@ -284,7 +284,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         .toggle-row span {
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .toggle-row input[type="checkbox"] {
@@ -301,7 +301,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         .frequency-section legend {
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin-bottom: 8px;
           padding: 0;
         }
@@ -311,7 +311,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           display: block;
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin-bottom: 8px;
         }
 
@@ -326,21 +326,21 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           flex-direction: column;
           align-items: flex-start;
           padding: 16px;
-          border: 2px solid #e5e7eb;
+          border: 2px solid var(--ppt-border-default);
           border-radius: 10px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           cursor: pointer;
           text-align: left;
           transition: all 0.2s;
         }
 
         .frequency-option:hover:not(:disabled) {
-          border-color: #2563eb;
+          border-color: var(--ppt-color-primary);
         }
 
         .frequency-option.selected {
-          border-color: #2563eb;
-          background: #eff6ff;
+          border-color: var(--ppt-color-primary);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         .frequency-option:disabled {
@@ -351,19 +351,19 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         .freq-label {
           font-size: 14px;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .freq-desc {
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-top: 4px;
         }
 
         .time-section select,
         .day-section select {
           padding: 10px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
           width: 200px;
@@ -374,28 +374,28 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
           justify-content: flex-end;
           gap: 12px;
           padding-top: 16px;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         .cancel-button {
           padding: 10px 20px;
-          background: #fff;
-          border: 1px solid #d1d5db;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
         }
 
         .save-button {
           padding: 10px 20px;
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           border: none;
           border-radius: 8px;
           font-size: 14px;
           font-weight: 500;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           cursor: pointer;
         }
 
@@ -406,7 +406,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
         .schedule-display {
           padding: 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
         }
 
@@ -423,13 +423,13 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
 
         .info-label {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .info-value {
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .status-badge {
@@ -440,13 +440,13 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         }
 
         .status-badge.enabled {
-          background: #d1fae5;
-          color: #059669;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-hover);
         }
 
         .status-badge.disabled {
-          background: #e5e7eb;
-          color: #6b7280;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-muted);
         }
 
         .history-list {
@@ -457,7 +457,7 @@ export function SyncSchedule({ agencyId, connectionId, connectionName }: SyncSch
         }
 
         .no-history {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 14px;
           text-align: center;
           padding: 24px;
@@ -516,7 +516,7 @@ function HistoryItem({ item }: { item: SyncHistoryItem }) {
       <style jsx>{`
         .history-item {
           padding: 16px;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
           border-radius: 8px;
         }
 
@@ -529,7 +529,7 @@ function HistoryItem({ item }: { item: SyncHistoryItem }) {
 
         .history-date {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .history-status {
@@ -547,27 +547,27 @@ function HistoryItem({ item }: { item: SyncHistoryItem }) {
 
         .stat {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .stat strong {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .stat.error strong {
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .history-errors {
           margin-top: 12px;
           padding-top: 12px;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         .error-text {
           display: block;
           font-size: 12px;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
           margin-bottom: 4px;
         }
       `}</style>
@@ -582,7 +582,7 @@ function ScheduleSkeleton() {
       <div className="skeleton-box" style={{ height: '150px', marginTop: '24px' }} />
       <style jsx>{`
         .skeleton-box {
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -592,10 +592,26 @@ function ScheduleSkeleton() {
 
 function getHistoryStatusConfig(status: SyncHistoryItem['status']) {
   const configs = {
-    running: { label: 'Running', color: '#2563eb', bg: '#dbeafe' },
-    completed: { label: 'Completed', color: '#059669', bg: '#d1fae5' },
-    failed: { label: 'Failed', color: '#dc2626', bg: '#fee2e2' },
-    cancelled: { label: 'Cancelled', color: '#6b7280', bg: '#e5e7eb' },
+    running: {
+      label: 'Running',
+      color: 'var(--ppt-color-primary)',
+      bg: 'var(--ppt-color-primary-soft-bg)',
+    },
+    completed: {
+      label: 'Completed',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    failed: {
+      label: 'Failed',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
+    cancelled: {
+      label: 'Cancelled',
+      color: 'var(--ppt-fg-muted)',
+      bg: 'var(--ppt-border-default)',
+    },
   };
   return configs[status];
 }

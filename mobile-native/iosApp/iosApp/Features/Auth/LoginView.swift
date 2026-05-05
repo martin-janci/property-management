@@ -199,13 +199,13 @@ struct LoginView: View {
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.pptWarning)
             Text(message)
                 .font(.subheadline)
             Spacer()
         }
         .padding()
-        .background(Color.orange.opacity(0.1))
+        .background(Color.pptWarningLight)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 

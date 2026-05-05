@@ -71,16 +71,14 @@ export function ComparisonTray() {
       <style jsx>{`
         .comparison-tray {
           position: fixed;
-          bottom: 24px;
+          bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
           left: 50%;
           transform: translateX(-50%);
-          background: white;
+          background: var(--ppt-bg-surface);
           border-radius: 16px;
-          box-shadow:
-            0 10px 40px rgba(0, 0, 0, 0.15),
-            0 2px 10px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--ppt-shadow-xl);
           padding: 16px;
-          z-index: 1000;
+          z-index: var(--ppt-z-fixed);
           display: flex;
           flex-direction: column;
           gap: 12px;
@@ -95,21 +93,21 @@ export function ComparisonTray() {
 
         .count {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           font-weight: 500;
         }
 
         .clear-btn {
           background: none;
           border: none;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           font-size: 13px;
           cursor: pointer;
           padding: 4px 8px;
         }
 
         .clear-btn:hover {
-          color: #ef4444;
+          color: var(--ppt-color-danger);
         }
 
         .listings-preview {
@@ -128,7 +126,7 @@ export function ComparisonTray() {
           height: 100%;
           border-radius: 8px;
           overflow: hidden;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
         }
 
         .preview-image img {
@@ -141,8 +139,8 @@ export function ComparisonTray() {
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px dashed #d1d5db;
-          color: #9ca3af;
+          border: 2px dashed var(--ppt-border-strong);
+          color: var(--ppt-fg-subtle);
           font-size: 20px;
         }
 
@@ -152,7 +150,7 @@ export function ComparisonTray() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           font-size: 20px;
         }
 
@@ -163,9 +161,9 @@ export function ComparisonTray() {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: #ef4444;
-          color: white;
-          border: 2px solid white;
+          background: var(--ppt-color-danger);
+          color: var(--ppt-fg-on-accent);
+          border: 2px solid var(--ppt-bg-surface);
           font-size: 14px;
           line-height: 1;
           cursor: pointer;
@@ -175,14 +173,14 @@ export function ComparisonTray() {
         }
 
         .remove-btn:hover {
-          background: #dc2626;
+          background: var(--ppt-color-danger-hover);
         }
 
         .compare-btn {
           display: block;
           text-align: center;
-          background: #2563eb;
-          color: white;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           padding: 12px 24px;
           border-radius: 8px;
           text-decoration: none;
@@ -192,11 +190,11 @@ export function ComparisonTray() {
         }
 
         .compare-btn:hover:not(.disabled) {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .compare-btn.disabled {
-          background: #9ca3af;
+          background: var(--ppt-fg-subtle);
           cursor: not-allowed;
         }
 
@@ -206,6 +204,7 @@ export function ComparisonTray() {
             left: 16px;
             right: 16px;
             transform: none;
+            bottom: max(16px, calc(8px + env(safe-area-inset-bottom)));
           }
         }
       `}</style>

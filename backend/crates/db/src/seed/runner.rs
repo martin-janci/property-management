@@ -439,6 +439,7 @@ impl SeedRunner {
                             question.question_text,
                             question.question_type,
                             order as i32,
+                            question.options,
                         )
                         .await
                         .map_err(|e| SeedError::Database(e.to_string()))?;
@@ -554,7 +555,6 @@ impl SeedRunner {
                         portal_user.email,
                         portal_user.name,
                         &portal_hash,
-                        portal_user.phone,
                         pm_user_id,
                     )
                     .await

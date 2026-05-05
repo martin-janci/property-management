@@ -386,23 +386,21 @@ impl<'a> SeedFactories<'a> {
         email: &str,
         name: &str,
         password_hash: &str,
-        phone: Option<&str>,
         pm_user_id: Option<Uuid>,
     ) -> Result<Uuid, sqlx::Error> {
         let row = sqlx::query(
             r#"
             INSERT INTO portal_users (
-                email, name, password_hash, phone, pm_user_id,
+                email, name, password_hash, pm_user_id,
                 provider, email_verified, locale
             )
-            VALUES ($1, $2, $3, $4, $5, 'local', TRUE, 'sk')
+            VALUES ($1, $2, $3, $4, 'local', TRUE, 'sk')
             RETURNING id
             "#,
         )
         .bind(email)
         .bind(name)
         .bind(password_hash)
-        .bind(phone)
         .bind(pm_user_id)
         .fetch_one(self.pool)
         .await?;
@@ -709,7 +707,8 @@ impl<'a> SeedFactories<'a> {
     /// Create a question for a vote.
     ///
     /// For "yes_no" questions, options are empty (yes/no is implied).
-    /// For "single_choice" questions, a minimal set of placeholder options is generated.
+    /// Options for "single_choice" questions are passed in from the seed data.
+    /// For "yes_no" questions pass an empty slice.
     ///
     /// Returns the question's UUID.
     pub async fn create_vote_question(
@@ -718,17 +717,21 @@ impl<'a> SeedFactories<'a> {
         question_text: &str,
         question_type: &str,
         display_order: i32,
+        option_texts: &[&str],
     ) -> Result<Uuid, sqlx::Error> {
-        // yes_no questions need no explicit options; single_choice gets 3 placeholder options.
-        let options = if question_type == "single_choice" {
-            serde_json::json!([
-                {"id": Uuid::new_v4().to_string(), "text": "Facade renovation", "order": 1},
-                {"id": Uuid::new_v4().to_string(), "text": "Roof repair", "order": 2},
-                {"id": Uuid::new_v4().to_string(), "text": "Common area improvements", "order": 3}
-            ])
-        } else {
-            serde_json::json!([])
-        };
+        let options = serde_json::Value::Array(
+            option_texts
+                .iter()
+                .enumerate()
+                .map(|(i, text)| {
+                    serde_json::json!({
+                        "id": Uuid::new_v4().to_string(),
+                        "text": text,
+                        "order": i + 1
+                    })
+                })
+                .collect(),
+        );
 
         let row = sqlx::query(
             r#"

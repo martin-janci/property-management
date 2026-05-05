@@ -29,6 +29,7 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
+import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
@@ -41,7 +42,7 @@ import three.two.bit.ppt.reality.util.FormatUtils
 fun SearchScreen(
     repository: ListingRepository,
     onListingClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -73,7 +74,7 @@ fun SearchScreen(
                     category = selectedCategory,
                     minPrice = minPrice.toLongOrNull(),
                     maxPrice = maxPrice.toLongOrNull(),
-                    minRooms = minRooms
+                    minRooms = minRooms,
                 )
 
             val request =
@@ -82,7 +83,7 @@ fun SearchScreen(
                     filters = filters,
                     sort = selectedSort,
                     page = page,
-                    pageSize = 20
+                    pageSize = 20,
                 )
 
             repository
@@ -97,7 +98,7 @@ fun SearchScreen(
                         totalResults = response.total
                         currentPage = page
                     },
-                    onFailure = { error -> errorMessage = error.message ?: "Search failed" }
+                    onFailure = { error -> errorMessage = error.message ?: "Search failed" },
                 )
 
             isLoading = false
@@ -123,12 +124,12 @@ fun SearchScreen(
                                 onSearch = {
                                     keyboardController?.hide()
                                     performSearch()
-                                }
+                                },
                             ),
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Search,
-                                contentDescription = stringResource(R.string.cd_search)
+                                contentDescription = stringResource(R.string.cd_search),
                             )
                         },
                         trailingIcon = {
@@ -137,11 +138,11 @@ fun SearchScreen(
                                     onClick = {
                                         searchQuery = ""
                                         performSearch()
-                                    }
+                                    },
                                 ) {
                                     Icon(
                                         Icons.Default.Clear,
-                                        contentDescription = stringResource(R.string.cd_clear)
+                                        contentDescription = stringResource(R.string.cd_clear),
                                     )
                                 }
                             }
@@ -149,15 +150,15 @@ fun SearchScreen(
                         colors =
                             OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent
-                            )
+                                unfocusedBorderColor = Color.Transparent,
+                            ),
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
+                            contentDescription = stringResource(R.string.cd_back),
                         )
                     }
                 },
@@ -171,9 +172,9 @@ fun SearchScreen(
                                 else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             // Filter chips row
@@ -203,7 +204,7 @@ fun SearchScreen(
                         selectedSort = it
                         performSearch()
                     },
-                    onApplyPrice = { performSearch() }
+                    onApplyPrice = { performSearch() },
                 )
             }
 
@@ -213,7 +214,7 @@ fun SearchScreen(
                     text = stringResource(R.string.properties_found, totalResults),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
 
@@ -223,17 +224,17 @@ fun SearchScreen(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     colors =
                         CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                        ),
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             Icons.Default.Error,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(text = error, color = MaterialTheme.colorScheme.onErrorContainer)
@@ -252,7 +253,7 @@ fun SearchScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(searchResults) { listing ->
                         ListingCard(listing = listing, onClick = { onListingClick(listing.id) })
@@ -263,7 +264,7 @@ fun SearchScreen(
                         item {
                             Box(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 if (isLoading) {
                                     CircularProgressIndicator()
@@ -295,7 +296,7 @@ private fun FilterSection(
     onMinRoomsChange: (Int?) -> Unit,
     selectedSort: ListingSortOption,
     onSortChange: (ListingSortOption) -> Unit,
-    onApplyPrice: () -> Unit
+    onApplyPrice: () -> Unit,
 ) {
     val filterAllLabel = stringResource(R.string.filter_all)
     val filterAnyLabel = stringResource(R.string.filter_any)
@@ -311,27 +312,27 @@ private fun FilterSection(
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp)
+                .padding(16.dp),
     ) {
         // Type filter
         Text(
             text = stringResource(R.string.filter_type),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 FilterChip(
                     selected = selectedType == null,
                     onClick = { onTypeChange(null) },
-                    label = { Text(filterAllLabel) }
+                    label = { Text(filterAllLabel) },
                 )
             }
             items(ListingType.entries) { type ->
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { onTypeChange(type) },
-                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) },
                 )
             }
         }
@@ -342,21 +343,21 @@ private fun FilterSection(
         Text(
             text = stringResource(R.string.filter_category),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 FilterChip(
                     selected = selectedCategory == null,
                     onClick = { onCategoryChange(null) },
-                    label = { Text(filterAllLabel) }
+                    label = { Text(filterAllLabel) },
                 )
             }
             items(PropertyCategory.entries) { category ->
                 FilterChip(
                     selected = selectedCategory == category,
                     onClick = { onCategoryChange(category) },
-                    label = { Text(category.name.lowercase().replaceFirstChar { it.uppercase() }) }
+                    label = { Text(category.name.lowercase().replaceFirstChar { it.uppercase() }) },
                 )
             }
         }
@@ -367,12 +368,12 @@ private fun FilterSection(
         Text(
             text = stringResource(R.string.filter_price_range_eur),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedTextField(
                 value = minPrice,
@@ -380,7 +381,7 @@ private fun FilterSection(
                 placeholder = { Text(stringResource(R.string.filter_min)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             )
             Text("—")
             OutlinedTextField(
@@ -390,12 +391,12 @@ private fun FilterSection(
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onApplyPrice() })
+                keyboardActions = KeyboardActions(onDone = { onApplyPrice() }),
             )
             IconButton(onClick = onApplyPrice) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = stringResource(R.string.filter_apply)
+                    contentDescription = stringResource(R.string.filter_apply),
                 )
             }
         }
@@ -406,21 +407,21 @@ private fun FilterSection(
         Text(
             text = stringResource(R.string.filter_rooms),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             item {
                 FilterChip(
                     selected = minRooms == null,
                     onClick = { onMinRoomsChange(null) },
-                    label = { Text(filterAnyLabel) }
+                    label = { Text(filterAnyLabel) },
                 )
             }
             items(listOf(1, 2, 3, 4, 5)) { rooms ->
                 FilterChip(
                     selected = minRooms == rooms,
                     onClick = { onMinRoomsChange(rooms) },
-                    label = { Text("$rooms+") }
+                    label = { Text("$rooms+") },
                 )
             }
         }
@@ -431,7 +432,7 @@ private fun FilterSection(
         Text(
             text = stringResource(R.string.sort_by),
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(ListingSortOption.entries) { sort ->
@@ -448,7 +449,7 @@ private fun FilterSection(
                 FilterChip(
                     selected = selectedSort == sort,
                     onClick = { onSortChange(sort) },
-                    label = { Text(label) }
+                    label = { Text(label) },
                 )
             }
         }
@@ -460,25 +461,25 @@ private fun EmptySearchResults() {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.SearchOff,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.empty_search_results),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.empty_search_tip),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -490,11 +491,11 @@ fun ListingCard(
     modifier: Modifier = Modifier,
     showFavoriteButton: Boolean = false,
     isFavorite: Boolean = false,
-    onFavoriteClick: (() -> Unit)? = null
+    onFavoriteClick: (() -> Unit)? = null,
 ) {
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column {
             // Image
@@ -507,19 +508,20 @@ fun ListingCard(
                             .build(),
                     contentDescription = listing.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
 
                 // Badges row
                 Row(
                     modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     if (listing.isFeatured) {
-                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                        Badge(containerColor = BadgeColors.featuredBg) {
                             Text(
                                 stringResource(R.string.label_featured),
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                color = BadgeColors.featuredInk,
                             )
                         }
                     }
@@ -527,7 +529,7 @@ fun ListingCard(
                         Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
                             Text(
                                 stringResource(R.string.label_new),
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp),
                             )
                         }
                     }
@@ -535,21 +537,27 @@ fun ListingCard(
                         Badge(containerColor = MaterialTheme.colorScheme.error) {
                             Text(
                                 stringResource(R.string.label_reduced),
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                modifier = Modifier.padding(horizontal = 4.dp),
                             )
                         }
                     }
                 }
 
                 // Type badge
+                val typeBadgeBg =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleBg
+                        ListingType.RENT -> BadgeColors.rentBg
+                    }
+                val typeBadgeInk =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleInk
+                        ListingType.RENT -> BadgeColors.rentInk
+                    }
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
                     shape = RoundedCornerShape(4.dp),
-                    color =
-                        when (listing.type) {
-                            ListingType.SALE -> MaterialTheme.colorScheme.primary
-                            ListingType.RENT -> MaterialTheme.colorScheme.secondary
-                        }
+                    color = typeBadgeBg,
                 ) {
                     Text(
                         text =
@@ -559,7 +567,7 @@ fun ListingCard(
                             },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White
+                        color = typeBadgeInk,
                     )
                 }
 
@@ -567,7 +575,7 @@ fun ListingCard(
                 if (showFavoriteButton && onFavoriteClick != null) {
                     IconButton(
                         onClick = onFavoriteClick,
-                        modifier = Modifier.align(Alignment.BottomEnd)
+                        modifier = Modifier.align(Alignment.BottomEnd),
                     ) {
                         Icon(
                             imageVector =
@@ -576,7 +584,7 @@ fun ListingCard(
                             contentDescription =
                                 if (isFavorite) stringResource(R.string.remove_from_favorites)
                                 else stringResource(R.string.add_to_favorites),
-                            tint = if (isFavorite) MaterialTheme.colorScheme.error else Color.White
+                            tint = if (isFavorite) MaterialTheme.colorScheme.error else Color.White,
                         )
                     }
                 }
@@ -586,23 +594,23 @@ fun ListingCard(
                     Surface(
                         modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
                         shape = RoundedCornerShape(4.dp),
-                        color = Color.Black.copy(alpha = 0.6f)
+                        color = Color.Black.copy(alpha = 0.6f),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
                                 Icons.Default.PhotoLibrary,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = Color.White
+                                tint = Color.White,
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${listing.imageCount}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.White
+                                color = Color.White,
                             )
                         }
                     }
@@ -616,7 +624,7 @@ fun ListingCard(
                     text = formatPrice(listing.price, listing.currency),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -626,7 +634,7 @@ fun ListingCard(
                     text = listing.title,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -637,7 +645,7 @@ fun ListingCard(
                         Icons.Default.LocationOn,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -645,7 +653,7 @@ fun ListingCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
 
@@ -654,30 +662,30 @@ fun ListingCard(
                 // Property details
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     listing.areaSqm?.let { area ->
                         PropertyDetail(
                             icon = Icons.Default.SquareFoot,
-                            value = "${area.toInt()} ${stringResource(R.string.sqm)}"
+                            value = "${area.toInt()} ${stringResource(R.string.sqm)}",
                         )
                     }
                     listing.rooms?.let { rooms ->
                         PropertyDetail(
                             icon = Icons.Default.MeetingRoom,
-                            value = stringResource(R.string.rooms_count, rooms)
+                            value = stringResource(R.string.rooms_count, rooms),
                         )
                     }
                     listing.bedrooms?.let { bedrooms ->
                         PropertyDetail(
                             icon = Icons.Default.Bed,
-                            value = stringResource(R.string.bed_count, bedrooms)
+                            value = stringResource(R.string.bed_count, bedrooms),
                         )
                     }
                     listing.bathrooms?.let { bathrooms ->
                         PropertyDetail(
                             icon = Icons.Default.Bathtub,
-                            value = stringResource(R.string.bath_count, bathrooms)
+                            value = stringResource(R.string.bath_count, bathrooms),
                         )
                     }
                 }
@@ -693,13 +701,13 @@ private fun PropertyDetail(icon: androidx.compose.ui.graphics.vector.ImageVector
             icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

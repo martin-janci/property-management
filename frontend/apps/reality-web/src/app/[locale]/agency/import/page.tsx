@@ -99,36 +99,36 @@ export default function AgencyImportPage() {
       <style jsx>{`
         .import-page {
           min-height: 100vh;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .page-header {
-          background: #fff;
-          border-bottom: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border-bottom: 1px solid var(--ppt-border-default);
           padding: 24px 32px;
         }
 
         .back-link {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-decoration: none;
           display: inline-block;
           margin-bottom: 8px;
         }
 
         .back-link:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         h1 {
           font-size: 1.75rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
@@ -136,8 +136,8 @@ export default function AgencyImportPage() {
           display: flex;
           gap: 4px;
           padding: 16px 32px;
-          background: #fff;
-          border-bottom: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .tab {
@@ -150,19 +150,19 @@ export default function AgencyImportPage() {
           border-radius: 8px;
           font-size: 14px;
           font-weight: 500;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .tab:hover {
-          background: #f3f4f6;
-          color: #374151;
+          background: var(--ppt-bg-subtle);
+          color: var(--ppt-fg-secondary);
         }
 
         .tab.active {
-          background: #eff6ff;
-          color: #2563eb;
+          background: var(--ppt-color-primary-soft-bg);
+          color: var(--ppt-color-primary);
         }
 
         .tab-content {

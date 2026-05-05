@@ -546,11 +546,15 @@ pub struct TokenIntrospectionResponse {
 // ==================== Helper Functions ====================
 
 /// Generate PKCE code verifier (43-128 chars).
+///
+/// Uses OS CSPRNG directly — the verifier is the proof-of-possession secret
+/// that makes PKCE effective against authorization-code interception attacks,
+/// so it must be unpredictable even under adversarial timing.
 fn generate_code_verifier() -> String {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    let bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
-    base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, &bytes)
+    use rand::RngCore;
+    let mut bytes = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes)
 }
 
 /// Generate PKCE code challenge from verifier.

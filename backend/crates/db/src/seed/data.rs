@@ -88,6 +88,8 @@ pub struct SeedVoteQuestion {
     pub question_text: &'static str,
     /// "yes_no" | "single_choice"
     pub question_type: &'static str,
+    /// Možnosti odpovede pre single_choice (pre yes_no nechajte prázdne)
+    pub options: &'static [&'static str],
 }
 
 /// Seed dáta pre hlasovanie.
@@ -681,6 +683,7 @@ impl Default for SeedData {
                         SeedVoteQuestion {
                             question_text: "Súhlasíte s trvalým pridelením číslovaných parkovacích miest k jednotlivým bytovým jednotkám?",
                             question_type: "yes_no",
+                            options: &[],
                         },
                     ],
                 },
@@ -696,10 +699,12 @@ impl Default for SeedData {
                         SeedVoteQuestion {
                             question_text: "Súhlasíte so schválením rozpočtu 45 000 € na rekonštrukciu fasády a spoločných priestorov v roku 2025?",
                             question_type: "yes_no",
+                            options: &[],
                         },
                         SeedVoteQuestion {
                             question_text: "Ktorá oblasť by mala mať pri rekonštrukcii prioritu?",
                             question_type: "single_choice",
+                            options: &["Rekonštrukcia fasády", "Oprava strechy", "Úprava spoločných priestorov"],
                         },
                     ],
                 },
