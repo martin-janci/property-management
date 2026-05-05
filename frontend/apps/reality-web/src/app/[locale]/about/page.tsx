@@ -1,8 +1,11 @@
 'use client';
 
 import { Footer, Header } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function AboutPage() {
+  const t = useTranslations('pages.about');
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
@@ -15,12 +18,9 @@ export default function AboutPage() {
             marginBottom: 16,
           }}
         >
-          About Reality Portal
+          {t('title')}
         </h1>
-        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>
-          Reality Portal is the leading property listing platform across Slovakia, Czech Republic,
-          and beyond.
-        </p>
+        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{t('description')}</p>
       </main>
       <Footer />
     </div>

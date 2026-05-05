@@ -1,8 +1,11 @@
 'use client';
 
 import { Footer, Header } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function ContactPage() {
+  const t = useTranslations('pages.contact');
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
@@ -15,12 +18,12 @@ export default function ContactPage() {
             marginBottom: 16,
           }}
         >
-          Contact Us
+          {t('title')}
         </h1>
         <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>
-          For support or business inquiries, please reach out to us at{' '}
-          <a href="mailto:info@rlt.sk" style={{ color: 'var(--ppt-fg-link)' }}>
-            info@rlt.sk
+          {t('description')}{' '}
+          <a href={`mailto:${t('email')}`} style={{ color: 'var(--ppt-fg-link)' }}>
+            {t('email')}
           </a>
           .
         </p>

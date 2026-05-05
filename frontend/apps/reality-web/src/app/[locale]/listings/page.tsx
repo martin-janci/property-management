@@ -65,6 +65,10 @@ function ListingsFallback() {
           margin: 0 auto;
           padding: 24px 32px;
         }
+        @media (max-width: 640px) {
+          .tabs { padding: 0 16px; }
+          .content-container { padding: 24px 16px; }
+        }
         .search-section { margin-bottom: 24px; }
         .content-grid { display: grid; gap: 24px; }
         @media (min-width: 1024px) {
@@ -134,11 +138,12 @@ function ListingsContent() {
   }, [searchParams]);
 
   const filters = getFiltersFromUrl();
-  const { data, isLoading } = useListings(filters);
+  const currentPage = Number(searchParams.get('page') || 1);
+  const { data, isLoading } = useListings(filters, currentPage);
   const toggleFavorite = useToggleFavorite();
 
   const updateUrl = useCallback(
-    (newFilters: FilterType) => {
+    (newFilters: FilterType, page = 1) => {
       const params = new URLSearchParams();
 
       if (newFilters.query) params.set('q', newFilters.query);
@@ -153,6 +158,7 @@ function ListingsContent() {
       if (newFilters.city) params.set('city', newFilters.city);
       if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
       if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
+      if (page > 1) params.set('page', String(page));
 
       router.push(`/listings?${params.toString()}`);
     },
@@ -231,9 +237,7 @@ function ListingsContent() {
                 <div className="results-info">
                   <h1 className="results-title">{getTransactionTypeLabel()}</h1>
                   {data && (
-                    <p className="results-count">
-                      {data.total.toLocaleString()} {t('listingsFound')}
-                    </p>
+                    <p className="results-count">{t('resultsCount', { count: data.total })}</p>
                   )}
                 </div>
 
@@ -340,11 +344,7 @@ function ListingsContent() {
                     type="button"
                     className="pagination-btn"
                     disabled={data.page <= 1}
-                    onClick={() =>
-                      updateUrl({ ...filters, page: data.page - 1 } as FilterType & {
-                        page: number;
-                      })
-                    }
+                    onClick={() => updateUrl(filters, data.page - 1)}
                     aria-label={t('prevPage')}
                   >
                     ‹
@@ -356,11 +356,7 @@ function ListingsContent() {
                     type="button"
                     className="pagination-btn"
                     disabled={data.page >= data.totalPages}
-                    onClick={() =>
-                      updateUrl({ ...filters, page: data.page + 1 } as FilterType & {
-                        page: number;
-                      })
-                    }
+                    onClick={() => updateUrl(filters, data.page + 1)}
                     aria-label={t('nextPage')}
                   >
                     ›

@@ -1,8 +1,11 @@
 'use client';
 
 import { Footer, Header } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function TermsPage() {
+  const t = useTranslations('pages.terms');
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
@@ -15,12 +18,9 @@ export default function TermsPage() {
             marginBottom: 16,
           }}
         >
-          Terms of Service
+          {t('title')}
         </h1>
-        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>
-          By using Reality Portal, you agree to our terms and conditions. Full terms of service will
-          be published here.
-        </p>
+        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{t('description')}</p>
       </main>
       <Footer />
     </div>

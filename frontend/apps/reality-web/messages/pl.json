@@ -200,7 +200,7 @@
     "tabAll": "Wszystkie",
     "tabForSale": "Na sprzedaż",
     "tabForRent": "Do wynajęcia",
-    "listingsFound": "ofert znalezionych",
+    "resultsCount": "Znaleziono {count} ofert",
     "filters": "Filtry",
     "sortNewest": "Najnowsze",
     "sortOldest": "Najstarsze",
@@ -213,6 +213,25 @@
     "prevPage": "Poprzednia strona",
     "nextPage": "Następna strona",
     "pageOf": "Strona {page} z {total}"
+  },
+  "pages": {
+    "about": {
+      "title": "O Reality Portal",
+      "description": "Reality Portal to wiodąca platforma ogłoszeń nieruchomości na Słowacji, w Czechach i nie tylko."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "W sprawie wsparcia lub zapytań biznesowych prosimy o kontakt pod adresem",
+      "email": "info@rlt.sk"
+    },
+    "privacy": {
+      "title": "Polityka prywatności",
+      "description": "Zobowiązujemy się chronić Twoje dane osobowe zgodnie z RODO i obowiązującymi przepisami. Pełna polityka prywatności zostanie tutaj opublikowana."
+    },
+    "terms": {
+      "title": "Warunki korzystania",
+      "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane."
+    }
   },
   "footer": {
     "about": "O nas",

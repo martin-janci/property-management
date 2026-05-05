@@ -1,8 +1,11 @@
 'use client';
 
 import { Footer, Header } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function PrivacyPage() {
+  const t = useTranslations('pages.privacy');
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
@@ -15,12 +18,9 @@ export default function PrivacyPage() {
             marginBottom: 16,
           }}
         >
-          Privacy Policy
+          {t('title')}
         </h1>
-        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>
-          We are committed to protecting your personal data in accordance with GDPR and applicable
-          laws. Full privacy policy details will be published here.
-        </p>
+        <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7 }}>{t('description')}</p>
       </main>
       <Footer />
     </div>

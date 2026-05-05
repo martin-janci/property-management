@@ -62,16 +62,13 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="nav-desktop">
-          <Link
-            href="/listings?transactionType=sale"
-            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
-          >
+          {/* Sale/Rent are quick-filters — no active state (query params
+              unavailable in the header without Suspense; the tab bar on
+              the listings page is the authoritative selection indicator) */}
+          <Link href="/listings?transactionType=sale" className="nav-link">
             {t('search.sale')}
           </Link>
-          <Link
-            href="/listings?transactionType=rent"
-            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
-          >
+          <Link href="/listings?transactionType=rent" className="nav-link">
             {t('search.rent')}
           </Link>
           <Link

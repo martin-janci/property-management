@@ -200,7 +200,7 @@
     "tabAll": "Összes",
     "tabForSale": "Eladó",
     "tabForRent": "Kiadó",
-    "listingsFound": "hirdetés található",
+    "resultsCount": "{count} hirdetés található",
     "filters": "Szűrők",
     "sortNewest": "Legújabb",
     "sortOldest": "Legrégebbi",
@@ -213,6 +213,25 @@
     "prevPage": "Előző oldal",
     "nextPage": "Következő oldal",
     "pageOf": "{page}. oldal / {total}"
+  },
+  "pages": {
+    "about": {
+      "title": "A Reality Portalról",
+      "description": "A Reality Portal a vezető ingatlan-hirdetési platform Szlovákiában, Csehországban és azon túl."
+    },
+    "contact": {
+      "title": "Kapcsolatfelvétel",
+      "description": "Támogatással vagy üzleti kérdésekkel forduljon hozzánk a következő címen:",
+      "email": "info@rlt.sk"
+    },
+    "privacy": {
+      "title": "Adatvédelmi irányelvek",
+      "description": "Elkötelezettünk vagyunk személyes adatainak védelme mellett a GDPR és az alkalmazandó jogszabályok szerint. A teljes adatvédelmi nyilatkozat hamarosan itt kerül közzétételre."
+    },
+    "terms": {
+      "title": "Felhasználási feltételek",
+      "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek."
+    }
   },
   "footer": {
     "about": "Rólunk",

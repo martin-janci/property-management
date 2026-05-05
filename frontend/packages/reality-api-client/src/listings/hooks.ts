@@ -45,11 +45,11 @@ function buildQueryString(filters: ListingFilters, page = 1, pageSize = 20): str
 }
 
 // Listings Search with Pagination
-export function useListings(filters: ListingFilters = {}, pageSize = 20) {
+export function useListings(filters: ListingFilters = {}, page = 1, pageSize = 20) {
   return useQuery({
-    queryKey: ['listings', filters],
+    queryKey: ['listings', filters, page],
     queryFn: async (): Promise<PaginatedListings> => {
-      const queryString = buildQueryString(filters, 1, pageSize);
+      const queryString = buildQueryString(filters, page, pageSize);
       const response = await fetch(`${API_BASE}/api/v1/listings?${queryString}`, {
         credentials: 'include',
       });
