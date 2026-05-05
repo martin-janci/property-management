@@ -8,6 +8,12 @@ import Script from 'next/script';
 import { ComparisonTray } from '../../components/comparison';
 import { type Locale, locales } from '../../i18n/config';
 
+// Force dynamic rendering so the runtime env injection reads process.env at
+// request time rather than being baked into the static HTML at build time.
+// Without this, generateStaticParams would prerender all locale routes and
+// window.__ENV__ would contain build-time values, defeating runtime config.
+export const dynamic = 'force-dynamic';
+
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -75,6 +81,11 @@ export default async function LocaleLayout({ children, params }: Props) {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001',
   };
 
+  // Escape '<' so a value containing '</script>' cannot break out of the tag.
+  // JSON.stringify already escapes '"', '\', and control chars; only '<' needs
+  // special treatment for HTML embedding.
+  const safeJson = JSON.stringify(runtimeEnv).replace(/</g, '\\u003c');
+
   return (
     <html
       lang={locale}
@@ -84,11 +95,8 @@ export default async function LocaleLayout({ children, params }: Props) {
     >
       <head>
         {/* Runtime config: client components read window.__ENV__ via src/lib/env.ts */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.__ENV__=${JSON.stringify(runtimeEnv)};`,
-          }}
-        />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: intentional runtime config injection; content is server-controlled env vars, not user input */}
+        <script dangerouslySetInnerHTML={{ __html: `window.__ENV__=${safeJson};` }} />
       </head>
       <body>
         {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}

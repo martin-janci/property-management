@@ -5,6 +5,7 @@
  * Manages user session state from SSO with Property Management system.
  */
 
+import { getApiBase } from './env';
 import {
   type ReactNode,
   createContext,
@@ -48,8 +49,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-import { getApiBase } from './env';
 
 /** Auth provider props. */
 interface AuthProviderProps {
