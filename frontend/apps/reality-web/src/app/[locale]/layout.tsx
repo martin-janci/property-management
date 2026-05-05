@@ -8,12 +8,6 @@ import Script from 'next/script';
 import { ComparisonTray } from '../../components/comparison';
 import { type Locale, locales } from '../../i18n/config';
 
-// Force dynamic rendering so the runtime env injection reads process.env at
-// request time rather than being baked into the static HTML at build time.
-// Without this, generateStaticParams would prerender all locale routes and
-// window.__ENV__ would contain build-time values, defeating runtime config.
-export const dynamic = 'force-dynamic';
-
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -74,18 +68,6 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Get messages for the current locale
   const messages = await getMessages();
 
-  // Read env vars server-side (at request time) and inject into the page so
-  // client components can read them via window.__ENV__ without a rebuild.
-  const runtimeEnv = {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081',
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001',
-  };
-
-  // Escape '<' so a value containing '</script>' cannot break out of the tag.
-  // JSON.stringify already escapes '"', '\', and control chars; only '<' needs
-  // special treatment for HTML embedding.
-  const safeJson = JSON.stringify(runtimeEnv).replace(/</g, '\\u003c');
-
   return (
     <html
       lang={locale}
@@ -94,9 +76,16 @@ export default async function LocaleLayout({ children, params }: Props) {
       suppressHydrationWarning
     >
       <head>
-        {/* Runtime config: client components read window.__ENV__ via src/lib/env.ts */}
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: intentional runtime config injection; content is server-controlled env vars, not user input */}
-        <script dangerouslySetInnerHTML={{ __html: `window.__ENV__=${safeJson};` }} />
+        {/*
+         * Runtime env config: the /env.js route handler (src/app/env.js/route.ts)
+         * serves window.__ENV__ dynamically at request time, so the same built
+         * image can be deployed to different environments without a rebuild.
+         * Loaded without async/defer so it executes synchronously before the
+         * React bundle, making window.__ENV__ available to all client modules.
+         * The locale layout itself remains statically renderable.
+         */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/env.js" />
       </head>
       <body>
         {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
