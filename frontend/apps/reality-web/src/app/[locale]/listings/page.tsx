@@ -9,17 +9,87 @@
 import { ListingFilters } from '@/components/listings/ListingFilters';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { SearchBar } from '@/components/listings/SearchBar';
+import { LoadingSkeleton } from '@/components/states';
 import { Footer, Header } from '@/components/ui';
+import { useRouter } from '@/i18n/routing';
 import type { ListingFilters as FilterType, ListingSortField } from '@ppt/reality-api-client';
 import { useListings, useToggleFavorite } from '@ppt/reality-api-client';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useState } from 'react';
+
+function ListingsFallback() {
+  return (
+    <div className="page-container">
+      <Header />
+      <main className="main">
+        <div className="tabs-container">
+          <div className="tabs" />
+        </div>
+        <div className="content-container">
+          <div className="search-section">
+            <LoadingSkeleton height="48px" />
+          </div>
+          <div className="content-grid">
+            <div className="filters-desktop">
+              <LoadingSkeleton lines={8} />
+            </div>
+            <div className="results-section">
+              <LoadingSkeleton cards={6} />
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+
+      <style jsx>{`
+        .page-container {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          background: var(--ppt-bg-app);
+        }
+        .main { flex: 1; }
+        .tabs-container {
+          background: var(--ppt-bg-surface);
+          border-bottom: 1px solid var(--ppt-border-default);
+          height: 53px;
+        }
+        .tabs {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 32px;
+        }
+        .content-container {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 24px 32px;
+        }
+        @media (max-width: 640px) {
+          .tabs { padding: 0 16px; }
+          .content-container { padding: 24px 16px; }
+        }
+        .search-section { margin-bottom: 24px; }
+        .content-grid { display: grid; gap: 24px; }
+        @media (min-width: 1024px) {
+          .content-grid { grid-template-columns: 280px 1fr; }
+        }
+        .filters-desktop { display: none; }
+        @media (min-width: 1024px) {
+          .filters-desktop { display: block; }
+        }
+        .results-section { min-width: 0; }
+      `}</style>
+    </div>
+  );
+}
 
 function ListingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const t = useTranslations('listings');
 
   // Parse filters from URL
   const getFiltersFromUrl = useCallback((): FilterType => {
@@ -68,11 +138,12 @@ function ListingsContent() {
   }, [searchParams]);
 
   const filters = getFiltersFromUrl();
-  const { data, isLoading } = useListings(filters);
+  const currentPage = Number(searchParams.get('page') || 1);
+  const { data, isLoading } = useListings(filters, currentPage);
   const toggleFavorite = useToggleFavorite();
 
   const updateUrl = useCallback(
-    (newFilters: FilterType) => {
+    (newFilters: FilterType, page = 1) => {
       const params = new URLSearchParams();
 
       if (newFilters.query) params.set('q', newFilters.query);
@@ -87,6 +158,7 @@ function ListingsContent() {
       if (newFilters.city) params.set('city', newFilters.city);
       if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
       if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
+      if (page > 1) params.set('page', String(page));
 
       router.push(`/listings?${params.toString()}`);
     },
@@ -110,9 +182,9 @@ function ListingsContent() {
   };
 
   const getTransactionTypeLabel = () => {
-    if (filters.transactionType === 'sale') return 'Properties for Sale';
-    if (filters.transactionType === 'rent') return 'Properties for Rent';
-    return 'All Properties';
+    if (filters.transactionType === 'sale') return t('propertiesForSale');
+    if (filters.transactionType === 'rent') return t('propertiesForRent');
+    return t('allProperties');
   };
 
   return (
@@ -127,29 +199,29 @@ function ListingsContent() {
               className={`tab ${!filters.transactionType ? 'active' : ''}`}
               onClick={() => updateUrl({ ...filters, transactionType: undefined })}
             >
-              All
+              {t('tabAll')}
             </button>
             <button
               type="button"
               className={`tab ${filters.transactionType === 'sale' ? 'active' : ''}`}
               onClick={() => updateUrl({ ...filters, transactionType: 'sale' })}
             >
-              For Sale
+              {t('tabForSale')}
             </button>
             <button
               type="button"
               className={`tab ${filters.transactionType === 'rent' ? 'active' : ''}`}
               onClick={() => updateUrl({ ...filters, transactionType: 'rent' })}
             >
-              For Rent
+              {t('tabForRent')}
             </button>
           </div>
         </div>
 
         <div className="content-container">
-          {/* Search Bar */}
+          {/* Search Bar — initialQuery shows city if no text query set */}
           <div className="search-section">
-            <SearchBar initialQuery={filters.query} onSearch={handleSearch} />
+            <SearchBar initialQuery={filters.query ?? filters.city ?? ''} onSearch={handleSearch} />
           </div>
 
           <div className="content-grid">
@@ -165,7 +237,7 @@ function ListingsContent() {
                 <div className="results-info">
                   <h1 className="results-title">{getTransactionTypeLabel()}</h1>
                   {data && (
-                    <p className="results-count">{data.total.toLocaleString()} listings found</p>
+                    <p className="results-count">{t('resultsCount', { count: data.total })}</p>
                   )}
                 </div>
 
@@ -187,7 +259,7 @@ function ListingsContent() {
                     >
                       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                     </svg>
-                    Filters
+                    {t('filters')}
                   </button>
 
                   {/* Sort Dropdown */}
@@ -199,12 +271,12 @@ function ListingsContent() {
                       handleSortChange(sortBy as ListingSortField, sortOrder as 'asc' | 'desc');
                     }}
                   >
-                    <option value="createdAt-desc">Newest First</option>
-                    <option value="createdAt-asc">Oldest First</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="area-desc">Size: Large to Small</option>
-                    <option value="area-asc">Size: Small to Large</option>
+                    <option value="createdAt-desc">{t('sortNewest')}</option>
+                    <option value="createdAt-asc">{t('sortOldest')}</option>
+                    <option value="price-asc">{t('sortPriceLow')}</option>
+                    <option value="price-desc">{t('sortPriceHigh')}</option>
+                    <option value="area-desc">{t('sortSizeLarge')}</option>
+                    <option value="area-asc">{t('sortSizeSmall')}</option>
                   </select>
 
                   {/* View Mode Toggle */}
@@ -213,7 +285,7 @@ function ListingsContent() {
                       type="button"
                       className={`view-button ${viewMode === 'grid' ? 'active' : ''}`}
                       onClick={() => setViewMode('grid')}
-                      aria-label="Grid view"
+                      aria-label={t('gridView')}
                     >
                       <svg
                         width="18"
@@ -234,7 +306,7 @@ function ListingsContent() {
                       type="button"
                       className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
                       onClick={() => setViewMode('list')}
-                      aria-label="List view"
+                      aria-label={t('listView')}
                     >
                       <svg
                         width="18"
@@ -268,9 +340,27 @@ function ListingsContent() {
               {/* Pagination */}
               {data && data.totalPages > 1 && (
                 <div className="pagination">
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    disabled={data.page <= 1}
+                    onClick={() => updateUrl(filters, data.page - 1)}
+                    aria-label={t('prevPage')}
+                  >
+                    ‹
+                  </button>
                   <p className="pagination-info">
-                    Page {data.page} of {data.totalPages}
+                    {t('pageOf', { page: data.page, total: data.totalPages })}
                   </p>
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    disabled={data.page >= data.totalPages}
+                    onClick={() => updateUrl(filters, data.page + 1)}
+                    aria-label={t('nextPage')}
+                  >
+                    ›
+                  </button>
                 </div>
               )}
             </div>
@@ -310,7 +400,7 @@ function ListingsContent() {
         .tabs {
           max-width: 1280px;
           margin: 0 auto;
-          padding: 0 16px;
+          padding: 0 32px;
           display: flex;
           gap: 8px;
         }
@@ -339,7 +429,12 @@ function ListingsContent() {
         .content-container {
           max-width: 1280px;
           margin: 0 auto;
-          padding: 24px 16px;
+          padding: 24px 32px;
+        }
+
+        @media (max-width: 640px) {
+          .tabs { padding: 0 16px; }
+          .content-container { padding: 24px 16px; }
         }
 
         .search-section {
@@ -466,12 +561,37 @@ function ListingsContent() {
 
         .pagination {
           margin-top: 32px;
-          text-align: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
         }
 
         .pagination-info {
           font-size: 14px;
           color: var(--ppt-fg-muted);
+          margin: 0;
+        }
+
+        .pagination-btn {
+          padding: 8px 14px;
+          font-size: 18px;
+          line-height: 1;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 8px;
+          color: var(--ppt-fg-secondary);
+          cursor: pointer;
+          transition: background var(--ppt-transition-fast);
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: var(--ppt-bg-subtle);
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
       `}</style>
     </div>
@@ -480,7 +600,7 @@ function ListingsContent() {
 
 export default function ListingsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<ListingsFallback />}>
       <ListingsContent />
     </Suspense>
   );

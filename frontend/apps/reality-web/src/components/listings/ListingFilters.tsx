@@ -327,7 +327,7 @@ export function ListingFilters({
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 100;
+          z-index: var(--ppt-z-modal);
           border-radius: 0;
           overflow-y: auto;
           padding-bottom: 80px;
@@ -377,7 +377,7 @@ export function ListingFilters({
         }
 
         .filter-section {
-          border-bottom: 1px solid var(--ppt-bg-subtle);
+          border-bottom: 1px solid var(--ppt-border-default);
           padding-bottom: 16px;
           margin-bottom: 16px;
         }

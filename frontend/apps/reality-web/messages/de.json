@@ -193,6 +193,46 @@
     "branding": "Branding",
     "inviteRealtor": "Makler einladen"
   },
+  "listings": {
+    "propertiesForSale": "Immobilien zum Verkauf",
+    "propertiesForRent": "Immobilien zur Miete",
+    "allProperties": "Alle Immobilien",
+    "tabAll": "Alle",
+    "tabForSale": "Zum Verkauf",
+    "tabForRent": "Zur Miete",
+    "resultsCount": "{count} Angebote gefunden",
+    "filters": "Filter",
+    "sortNewest": "Neueste zuerst",
+    "sortOldest": "Älteste zuerst",
+    "sortPriceLow": "Preis: günstigste zuerst",
+    "sortPriceHigh": "Preis: teuerste zuerst",
+    "sortSizeLarge": "Größe: größte zuerst",
+    "sortSizeSmall": "Größe: kleinste zuerst",
+    "gridView": "Rasteransicht",
+    "listView": "Listenansicht",
+    "prevPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "pageOf": "Seite {page} von {total}"
+  },
+  "pages": {
+    "about": {
+      "title": "Über Reality Portal",
+      "description": "Reality Portal ist die führende Immobilienplattform in der Slowakei, der Tschechischen Republik und darüber hinaus."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "Für Support oder Geschäftsanfragen kontaktieren Sie uns unter",
+      "email": "info@rlt.sk"
+    },
+    "privacy": {
+      "title": "Datenschutzrichtlinie",
+      "description": "Wir sind verpflichtet, Ihre personenbezogenen Daten gemäß DSGVO und geltendem Recht zu schützen. Die vollständigen Datenschutzbestimmungen werden hier veröffentlicht."
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "description": "Durch die Nutzung von Reality Portal stimmen Sie unseren Nutzungsbedingungen zu. Die vollständigen Nutzungsbedingungen werden hier veröffentlicht."
+    }
+  },
   "footer": {
     "about": "Über uns",
     "terms": "Nutzungsbedingungen",
