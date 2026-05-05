@@ -33,7 +33,7 @@ jobs:
         include:
           - target: ppt-web
             dockerfile: docker/frontend/ppt-web.Dockerfile
-          - target: reality-web
+          - target: ppt-reality-web
             dockerfile: docker/frontend/reality-web.Dockerfile
 
     steps:
