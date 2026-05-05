@@ -41,8 +41,10 @@ pub struct AppConfig {
 impl AppConfig {
     /// Load configuration from environment variables.
     pub fn from_env() -> Self {
-        let pm_api_base =
-            std::env::var("PM_API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+        let pm_api_base = std::env::var("PM_API_URL")
+            .unwrap_or_else(|_| "http://localhost:8080".to_string())
+            .trim_end_matches('/')
+            .to_string();
         Self {
             pm_oauth_authorize_url: std::env::var("PM_OAUTH_AUTHORIZE_URL")
                 .unwrap_or_else(|_| format!("{}/api/v1/oauth/authorize", pm_api_base)),
