@@ -3,8 +3,8 @@
  * Renders the Header so the navigation bar doesn't flash out during page transitions.
  */
 
-import { Header } from '@/components/ui';
 import { LoadingSkeleton } from '@/components/states';
+import { Header } from '@/components/ui';
 
 export default function Loading() {
   return (

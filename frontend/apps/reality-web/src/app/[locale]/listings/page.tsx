@@ -215,10 +215,7 @@ function ListingsContent() {
         <div className="content-container">
           {/* Search Bar — initialQuery shows city if no text query set */}
           <div className="search-section">
-            <SearchBar
-              initialQuery={filters.query ?? filters.city ?? ''}
-              onSearch={handleSearch}
-            />
+            <SearchBar initialQuery={filters.query ?? filters.city ?? ''} onSearch={handleSearch} />
           </div>
 
           <div className="content-grid">
@@ -234,7 +231,9 @@ function ListingsContent() {
                 <div className="results-info">
                   <h1 className="results-title">{getTransactionTypeLabel()}</h1>
                   {data && (
-                    <p className="results-count">{data.total.toLocaleString()} {t('listingsFound')}</p>
+                    <p className="results-count">
+                      {data.total.toLocaleString()} {t('listingsFound')}
+                    </p>
                   )}
                 </div>
 
@@ -342,7 +341,9 @@ function ListingsContent() {
                     className="pagination-btn"
                     disabled={data.page <= 1}
                     onClick={() =>
-                      updateUrl({ ...filters, page: data.page - 1 } as FilterType & { page: number })
+                      updateUrl({ ...filters, page: data.page - 1 } as FilterType & {
+                        page: number;
+                      })
                     }
                     aria-label={t('prevPage')}
                   >
@@ -356,7 +357,9 @@ function ListingsContent() {
                     className="pagination-btn"
                     disabled={data.page >= data.totalPages}
                     onClick={() =>
-                      updateUrl({ ...filters, page: data.page + 1 } as FilterType & { page: number })
+                      updateUrl({ ...filters, page: data.page + 1 } as FilterType & {
+                        page: number;
+                      })
                     }
                     aria-label={t('nextPage')}
                   >

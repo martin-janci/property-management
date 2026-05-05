@@ -50,7 +50,7 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileMenu]);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '?');
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}?`);
 
   return (
     <header className="header">
@@ -108,16 +108,32 @@ export function Header() {
                     <p className="dropdown-email">{user?.email}</p>
                   </div>
                   <div className="dropdown-menu">
-                    <Link href="/favorites" className="menu-item" onClick={() => setShowDropdown(false)}>
+                    <Link
+                      href="/favorites"
+                      className="menu-item"
+                      onClick={() => setShowDropdown(false)}
+                    >
                       {t('common.favorites')}
                     </Link>
-                    <Link href="/saved-searches" className="menu-item" onClick={() => setShowDropdown(false)}>
+                    <Link
+                      href="/saved-searches"
+                      className="menu-item"
+                      onClick={() => setShowDropdown(false)}
+                    >
                       {t('nav.savedSearches')}
                     </Link>
-                    <Link href="/inquiries" className="menu-item" onClick={() => setShowDropdown(false)}>
+                    <Link
+                      href="/inquiries"
+                      className="menu-item"
+                      onClick={() => setShowDropdown(false)}
+                    >
                       {t('nav.myInquiries')}
                     </Link>
-                    <Link href="/account/profile" className="menu-item" onClick={() => setShowDropdown(false)}>
+                    <Link
+                      href="/account/profile"
+                      className="menu-item"
+                      onClick={() => setShowDropdown(false)}
+                    >
                       {t('nav.profile')}
                     </Link>
                     <button type="button" onClick={logout} className="sign-out-button">

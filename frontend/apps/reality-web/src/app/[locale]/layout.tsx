@@ -4,6 +4,7 @@ import { QueryProvider } from '@/lib/query-provider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 import { ComparisonTray } from '../../components/comparison';
 import { type Locale, locales } from '../../i18n/config';
 
@@ -74,23 +75,11 @@ export default async function LocaleLayout({ children, params }: Props) {
       // override with a stored user preference at runtime.
       suppressHydrationWarning
     >
-      {/* Inline script sets data-color-scheme before first paint to avoid flash */}
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-(function(){
-  try {
-    var stored = localStorage.getItem('ppt-color-scheme');
-    var scheme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-color-scheme', scheme);
-  } catch(e) {}
-})();
-            `.trim(),
-          }}
-        />
-      </head>
       <body>
+        {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
+        <Script id="color-scheme-init" strategy="beforeInteractive">{`
+(function(){try{var s=localStorage.getItem('ppt-color-scheme');var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();
+        `}</Script>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>
