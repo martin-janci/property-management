@@ -969,7 +969,20 @@ impl<'a> SeedFactories<'a> {
         .execute(&mut *tx)
         .await?;
 
-        // 9. Delete portal_users (listing_inquiries were already cascade-deleted via listings)
+        // 9. Delete listing_inquiries where the seed portal user is the realtor.
+        //    listing_inquiries.realtor_id has no ON DELETE CASCADE, so this must be explicit.
+        //    inquiry_messages cascade-delete automatically when listing_inquiries is deleted.
+        sqlx::query(
+            r#"
+            DELETE FROM listing_inquiries
+            WHERE realtor_id IN (SELECT id FROM portal_users WHERE email LIKE $1)
+            "#,
+        )
+        .bind(&portal_pattern)
+        .execute(&mut *tx)
+        .await?;
+
+        // 10. Delete portal_users (remaining cascade children are handled by ON DELETE CASCADE)
         let portal_users_result = sqlx::query(
             r#"
             DELETE FROM portal_users WHERE email LIKE $1
