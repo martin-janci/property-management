@@ -136,7 +136,7 @@ pub struct SeedListing {
     /// "draft" | "active" | "archived"
     pub status: &'static str,
     pub building_index: usize,
-    /// Voliteľný index jednotky — None = manuálne zadaná adresa
+    /// Voliteľný index jednotky — None = inzerát nie je viazaný na jednotku (použije sa adresa budovy)
     pub unit_index: Option<usize>,
     /// Index do seed_data.users (PPT používateľ, ktorý vytvoril inzerát)
     pub created_by_user_index: usize,

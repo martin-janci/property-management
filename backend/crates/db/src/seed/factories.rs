@@ -301,14 +301,11 @@ impl<'a> SeedFactories<'a> {
         let (floor, size_sqm) = if let Some(uid) = unit_id {
             let unit = sqlx::query("SELECT floor, size_sqm FROM units WHERE id = $1")
                 .bind(uid)
-                .fetch_optional(self.pool)
+                .fetch_one(self.pool)
                 .await?;
-            unit.map(|r| {
-                let f: i32 = r.get("floor");
-                let s: Option<Decimal> = r.get("size_sqm");
-                (Some(f), s)
-            })
-            .unwrap_or((None, None))
+            let f: i32 = unit.get("floor");
+            let s: Option<Decimal> = unit.get("size_sqm");
+            (Some(f), s)
         } else {
             (None, None)
         };
