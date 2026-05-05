@@ -68,6 +68,13 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Get messages for the current locale
   const messages = await getMessages();
 
+  // Read env vars server-side (at request time) and inject into the page so
+  // client components can read them via window.__ENV__ without a rebuild.
+  const runtimeEnv = {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081',
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001',
+  };
+
   return (
     <html
       lang={locale}
@@ -75,6 +82,14 @@ export default async function LocaleLayout({ children, params }: Props) {
       // override with a stored user preference at runtime.
       suppressHydrationWarning
     >
+      <head>
+        {/* Runtime config: client components read window.__ENV__ via src/lib/env.ts */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV__=${JSON.stringify(runtimeEnv)};`,
+          }}
+        />
+      </head>
       <body>
         {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
         <Script id="color-scheme-init" strategy="beforeInteractive">{`

@@ -7,7 +7,7 @@
  * hooks once the SDK is regenerated.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+import { getApiBase } from './env';
 
 export class RealtorApiError extends Error {
   constructor(
@@ -26,7 +26,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { headers: callerHeaders, ...rest } = init;
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(`${getApiBase()}${path}`, {
       credentials: 'include',
       ...rest,
       headers: { 'Content-Type': 'application/json', ...(callerHeaders ?? {}) },

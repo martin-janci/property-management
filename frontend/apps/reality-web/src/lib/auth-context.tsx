@@ -49,8 +49,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/** API base URL for reality-server */
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+import { getApiBase } from './env';
 
 /** Auth provider props. */
 interface AuthProviderProps {
@@ -64,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkSession = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sso/session`, {
+      const response = await fetch(`${getApiBase()}/api/v1/sso/session`, {
         credentials: 'include',
       });
 
@@ -100,12 +99,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     sessionStorage.setItem('sso_state', state);
     params.set('state', state);
 
-    window.location.href = `${API_BASE}/api/v1/sso/login?${params.toString()}`;
+    window.location.href = `${getApiBase()}/api/v1/sso/login?${params.toString()}`;
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await fetch(`${API_BASE}/api/v1/sso/logout`, {
+      await fetch(`${getApiBase()}/api/v1/sso/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -116,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/v1/sso/refresh`, {
+      const response = await fetch(`${getApiBase()}/api/v1/sso/refresh`, {
         method: 'POST',
         credentials: 'include',
       });

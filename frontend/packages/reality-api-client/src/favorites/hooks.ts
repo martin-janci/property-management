@@ -8,14 +8,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getApiBase } from '../config';
 import type {
   CreateSavedSearchRequest,
   PaginatedFavorites,
   SavedSearch,
   UpdateSavedSearchRequest,
 } from './types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
 // Favorites Hooks
 
@@ -27,7 +26,7 @@ export function useFavorites(page = 1, pageSize = 20) {
       params.set('page', String(page));
       params.set('pageSize', String(pageSize));
 
-      const response = await fetch(`${API_BASE}/api/v1/favorites?${params}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites?${params}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorites');
@@ -40,7 +39,7 @@ export function useFavoriteIds() {
   return useQuery({
     queryKey: ['favorite-ids'],
     queryFn: async (): Promise<string[]> => {
-      const response = await fetch(`${API_BASE}/api/v1/favorites/ids`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/ids`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch favorite IDs');
@@ -61,7 +60,7 @@ export function useAddFavorite() {
       listingId: string;
       notes?: string;
     }): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/favorites`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId, notes }),
@@ -82,7 +81,7 @@ export function useRemoveFavorite() {
 
   return useMutation({
     mutationFn: async (listingId: string): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/favorites/${listingId}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -102,7 +101,7 @@ export function useSavedSearches() {
   return useQuery({
     queryKey: ['saved-searches'],
     queryFn: async (): Promise<SavedSearch[]> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch saved searches');
@@ -115,7 +114,7 @@ export function useSavedSearch(id: string) {
   return useQuery({
     queryKey: ['saved-search', id],
     queryFn: async (): Promise<SavedSearch> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches/${id}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch saved search');
@@ -130,7 +129,7 @@ export function useCreateSavedSearch() {
 
   return useMutation({
     mutationFn: async (data: CreateSavedSearchRequest): Promise<SavedSearch> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -156,7 +155,7 @@ export function useUpdateSavedSearch() {
       id: string;
       data: UpdateSavedSearchRequest;
     }): Promise<SavedSearch> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches/${id}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -177,7 +176,7 @@ export function useDeleteSavedSearch() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches/${id}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -200,7 +199,7 @@ export function useToggleSearchAlert() {
       id: string;
       enabled: boolean;
     }): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/saved-searches/${id}/alerts`, {
+      const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}/alerts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled }),

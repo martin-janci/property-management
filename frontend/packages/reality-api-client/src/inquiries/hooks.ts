@@ -8,6 +8,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getApiBase } from '../config';
 import type {
   AvailableViewingSlotsResponse,
   CreateInquiryRequest,
@@ -15,8 +16,6 @@ import type {
   InquiryStatus,
   PaginatedInquiries,
 } from './types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
 // User's Inquiries
 export function useMyInquiries(status?: InquiryStatus, page = 1, pageSize = 20) {
@@ -28,7 +27,7 @@ export function useMyInquiries(status?: InquiryStatus, page = 1, pageSize = 20) 
       params.set('pageSize', String(pageSize));
       if (status) params.set('status', status);
 
-      const response = await fetch(`${API_BASE}/api/v1/inquiries?${params}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/inquiries?${params}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch inquiries');
@@ -42,7 +41,7 @@ export function useInquiry(id: string) {
   return useQuery({
     queryKey: ['inquiry', id],
     queryFn: async (): Promise<Inquiry> => {
-      const response = await fetch(`${API_BASE}/api/v1/inquiries/${id}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/inquiries/${id}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch inquiry');
@@ -58,7 +57,7 @@ export function useCreateInquiry() {
 
   return useMutation({
     mutationFn: async (data: CreateInquiryRequest): Promise<Inquiry> => {
-      const response = await fetch(`${API_BASE}/api/v1/inquiries`, {
+      const response = await fetch(`${getApiBase()}/api/v1/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -79,7 +78,7 @@ export function useCancelInquiry() {
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/inquiries/${id}/cancel`, {
+      const response = await fetch(`${getApiBase()}/api/v1/inquiries/${id}/cancel`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -97,7 +96,7 @@ export function useAvailableViewingSlots(listingId: string) {
   return useQuery({
     queryKey: ['available-viewing-slots', listingId],
     queryFn: async (): Promise<AvailableViewingSlotsResponse> => {
-      const response = await fetch(`${API_BASE}/api/v1/listings/${listingId}/viewing-slots`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings/${listingId}/viewing-slots`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch available viewing slots');
