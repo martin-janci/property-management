@@ -11,7 +11,7 @@
  * helpers throw an informative `AuthApiError` until the backend ships.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+import { getApiBase } from './env';
 
 export class AuthApiError extends Error {
   constructor(
@@ -31,7 +31,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 async function requestJson<T>(method: string, path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(`${getApiBase()}${path}`, {
       method,
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

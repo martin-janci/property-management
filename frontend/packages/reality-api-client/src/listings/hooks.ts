@@ -8,6 +8,7 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { getApiBase } from '../config';
 import type {
   CategoryCount,
   FeaturedListingsResponse,
@@ -16,8 +17,6 @@ import type {
   PaginatedListings,
   SearchSuggestion,
 } from './types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
 // Helper to build query string
 function buildQueryString(filters: ListingFilters, page = 1, pageSize = 20): string {
@@ -50,7 +49,7 @@ export function useListings(filters: ListingFilters = {}, page = 1, pageSize = 2
     queryKey: ['listings', filters, page],
     queryFn: async (): Promise<PaginatedListings> => {
       const queryString = buildQueryString(filters, page, pageSize);
-      const response = await fetch(`${API_BASE}/api/v1/listings?${queryString}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings?${queryString}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch listings');
@@ -65,7 +64,7 @@ export function useInfiniteListings(filters: ListingFilters = {}, pageSize = 20)
     queryKey: ['listings-infinite', filters],
     queryFn: async ({ pageParam = 1 }): Promise<PaginatedListings> => {
       const queryString = buildQueryString(filters, pageParam, pageSize);
-      const response = await fetch(`${API_BASE}/api/v1/listings?${queryString}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings?${queryString}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch listings');
@@ -86,7 +85,7 @@ export function useListing(slug: string) {
   return useQuery({
     queryKey: ['listing', slug],
     queryFn: async (): Promise<ListingDetail> => {
-      const response = await fetch(`${API_BASE}/api/v1/listings/${slug}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings/${slug}`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch listing');
@@ -101,7 +100,7 @@ export function useFeaturedListings() {
   return useQuery({
     queryKey: ['featured-listings'],
     queryFn: async (): Promise<FeaturedListingsResponse> => {
-      const response = await fetch(`${API_BASE}/api/v1/listings/featured`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings/featured`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch featured listings');
@@ -116,7 +115,7 @@ export function useCategoryCounts() {
   return useQuery({
     queryKey: ['category-counts'],
     queryFn: async (): Promise<CategoryCount[]> => {
-      const response = await fetch(`${API_BASE}/api/v1/listings/categories`, {
+      const response = await fetch(`${getApiBase()}/api/v1/listings/categories`, {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch category counts');
@@ -132,7 +131,7 @@ export function useSearchSuggestions(query: string) {
     queryKey: ['search-suggestions', query],
     queryFn: async (): Promise<SearchSuggestion[]> => {
       const response = await fetch(
-        `${API_BASE}/api/v1/listings/suggestions?q=${encodeURIComponent(query)}`,
+        `${getApiBase()}/api/v1/listings/suggestions?q=${encodeURIComponent(query)}`,
         { credentials: 'include' }
       );
       if (!response.ok) throw new Error('Failed to fetch suggestions');
@@ -155,7 +154,7 @@ export function useToggleFavorite() {
       listingId: string;
       isFavorite: boolean;
     }): Promise<void> => {
-      const response = await fetch(`${API_BASE}/api/v1/favorites/${listingId}`, {
+      const response = await fetch(`${getApiBase()}/api/v1/favorites/${listingId}`, {
         method: isFavorite ? 'DELETE' : 'POST',
         credentials: 'include',
       });
@@ -173,7 +172,7 @@ export function useToggleFavorite() {
 export function useRecordView() {
   return useMutation({
     mutationFn: async (listingId: string): Promise<void> => {
-      await fetch(`${API_BASE}/api/v1/listings/${listingId}/view`, {
+      await fetch(`${getApiBase()}/api/v1/listings/${listingId}/view`, {
         method: 'POST',
         credentials: 'include',
       });

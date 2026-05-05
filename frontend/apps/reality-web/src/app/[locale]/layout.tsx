@@ -75,6 +75,18 @@ export default async function LocaleLayout({ children, params }: Props) {
       // override with a stored user preference at runtime.
       suppressHydrationWarning
     >
+      <head>
+        {/*
+         * Runtime env config: the /env.js route handler (src/app/env.js/route.ts)
+         * serves window.__ENV__ dynamically at request time, so the same built
+         * image can be deployed to different environments without a rebuild.
+         * Loaded without async/defer so it executes synchronously before the
+         * React bundle, making window.__ENV__ available to all client modules.
+         * The locale layout itself remains statically renderable.
+         */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/env.js" />
+      </head>
       <body>
         {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
         <Script id="color-scheme-init" strategy="beforeInteractive">{`
