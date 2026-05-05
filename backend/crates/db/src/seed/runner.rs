@@ -545,10 +545,7 @@ impl SeedRunner {
             let mut portal_user_ids: Vec<Uuid> = Vec::new();
 
             for portal_user in &seed_data.portal_users {
-                let pm_user_id = portal_user
-                    .pm_user_index
-                    .map(resolve_user)
-                    .transpose()?;
+                let pm_user_id = portal_user.pm_user_index.map(resolve_user).transpose()?;
 
                 let portal_user_id = factories
                     .create_portal_user(
