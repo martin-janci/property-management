@@ -171,7 +171,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "axum 0.7.9",
  "axum-extra",
@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "aes-gcm",
  "ammonia",
@@ -1265,7 +1265,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "axum 0.7.9",
  "chrono",
@@ -1548,7 +1548,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "argon2",
  "chrono",
@@ -2738,7 +2738,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -4185,7 +4185,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.355"
+version = "0.2.356"
 dependencies = [
  "anyhow",
  "api-core",

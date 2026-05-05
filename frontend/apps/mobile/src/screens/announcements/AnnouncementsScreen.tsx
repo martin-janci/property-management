@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 
 export type AnnouncementCategory = 'general' | 'urgent' | 'maintenance' | 'event' | 'financial';
@@ -32,93 +33,68 @@ export interface Announcement {
   commentsCount: number;
 }
 
-// Mock data
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Annual Building Meeting - January 15th',
-    content:
-      'Dear residents,\n\nWe would like to invite you to our annual building meeting scheduled for January 15th, 2025 at 6:00 PM in the community room.\n\nAgenda:\n1. 2024 Financial Report\n2. Planned renovations for 2025\n3. Election of new board members\n4. Open discussion\n\nPlease confirm your attendance by January 10th.',
-    category: 'event',
-    createdAt: '2025-12-23T14:00:00Z',
-    author: 'Building Management',
-    isRead: false,
-    isPinned: true,
-    attachments: [{ id: 'a1', name: 'Agenda.pdf', url: '#', type: 'pdf' }],
-    commentsCount: 5,
-  },
-  {
-    id: '2',
-    title: 'URGENT: Water Shutdown Tomorrow',
-    content:
-      'Due to emergency pipe repairs, water will be shut off tomorrow (December 25th) from 9:00 AM to 3:00 PM.\n\nPlease store water for essential needs. We apologize for the inconvenience.',
-    category: 'urgent',
-    createdAt: '2025-12-24T10:00:00Z',
-    author: 'Maintenance Team',
-    isRead: false,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 12,
-  },
-  {
-    id: '3',
-    title: 'New Recycling Guidelines',
-    content:
-      'Starting January 1st, 2025, we will be implementing new recycling guidelines in accordance with city regulations.\n\nKey changes:\n- Plastic types 1-7 now accepted\n- Glass must be separated by color\n- New textile recycling bin available\n\nPlease see the attached guide for details.',
+/** API shape returned by `GET /api/v1/announcements`. The response holds
+ *  the full Announcement model, but only some fields map onto our UI; the
+ *  rest are filled with sensible defaults. */
+interface ApiAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  status: string;
+  pinned: boolean;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ApiAnnouncementListResponse {
+  announcements: ApiAnnouncement[];
+  total?: number;
+}
+
+/** Coerce the api-server response into the UI's Announcement shape. The
+ *  server doesn't (yet) expose category/author/attachments/comment-count
+ *  on the list endpoint, so we default them. `isRead` defaults to false so
+ *  newly-loaded announcements visibly distinguish themselves until the user
+ *  opens them — the screen's local `readIds` set then layers a read flag on
+ *  top of this default. */
+function toUiAnnouncement(a: ApiAnnouncement): Announcement {
+  return {
+    id: a.id,
+    title: a.title,
+    content: a.content,
     category: 'general',
-    createdAt: '2025-12-22T09:00:00Z',
+    createdAt: a.published_at ?? a.created_at,
     author: 'Building Management',
-    isRead: true,
-    isPinned: false,
-    attachments: [
-      { id: 'a2', name: 'Recycling Guide.pdf', url: '#', type: 'pdf' },
-      { id: 'a3', name: 'Bin Locations.jpg', url: '#', type: 'image' },
-    ],
-    commentsCount: 3,
-  },
-  {
-    id: '4',
-    title: 'Monthly Fees Payment Reminder',
-    content:
-      'This is a friendly reminder that monthly building fees for January 2025 are due by January 5th.\n\nPayment can be made via:\n- Bank transfer\n- Direct debit (if enrolled)\n- Online portal\n\nContact us if you have any questions.',
-    category: 'financial',
-    createdAt: '2025-12-20T08:00:00Z',
-    author: 'Financial Department',
-    isRead: true,
-    isPinned: false,
+    isRead: false,
+    isPinned: a.pinned,
     attachments: [],
     commentsCount: 0,
-  },
-  {
-    id: '5',
-    title: 'Elevator Maintenance Schedule',
-    content:
-      'The main elevator will undergo scheduled maintenance on the following dates:\n\n- January 8th: 10:00 AM - 2:00 PM\n- January 22nd: 10:00 AM - 2:00 PM\n\nThe service elevator will remain operational during these times.',
-    category: 'maintenance',
-    createdAt: '2025-12-18T11:00:00Z',
-    author: 'Maintenance Team',
-    isRead: true,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 2,
-  },
-];
+  };
+}
 
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
   const [filter, setFilter] = useState<'all' | AnnouncementCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiAnnouncementListResponse>(
+    ['announcements', 'list'],
+    '/api/v1/announcements?status=published',
+    { staleTime: 60_000 }
+  );
+
+  const announcements: Announcement[] = (data?.announcements ?? [])
+    .map(toUiAnnouncement)
+    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const getCategoryColor = (category: AnnouncementCategory): string => {
     switch (category) {
@@ -168,7 +144,12 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   };
 
   const markAsRead = (id: string) => {
-    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+    setReadIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   };
 
   const filteredAnnouncements = announcements
@@ -230,10 +211,20 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {filteredAnnouncements.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>Couldn't load announcements</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredAnnouncements.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📭</Text>
             <Text style={styles.emptyTitle}>No announcements</Text>

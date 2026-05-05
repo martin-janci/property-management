@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 
 export type FaultStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
@@ -28,53 +29,63 @@ export interface Fault {
   assignedTo?: string;
 }
 
-// Mock data
-const mockFaults: Fault[] = [
-  {
-    id: '1',
-    title: 'Leaking pipe in basement',
-    description: 'Water is dripping from the ceiling pipe near the storage units',
-    status: 'in_progress',
-    priority: 'high',
-    category: 'plumbing',
-    location: 'Basement, Section B',
-    createdAt: '2025-12-20T10:00:00Z',
-    updatedAt: '2025-12-23T14:30:00Z',
-    photos: [],
-    reportedBy: 'John Doe',
-    assignedTo: 'Maintenance Team',
-  },
-  {
-    id: '2',
-    title: 'Elevator stuck on 3rd floor',
-    description: 'The main elevator is not responding and appears stuck',
-    status: 'open',
-    priority: 'urgent',
-    category: 'elevator',
-    location: 'Main lobby',
-    createdAt: '2025-12-24T08:00:00Z',
-    updatedAt: '2025-12-24T08:00:00Z',
-    photos: [],
-    reportedBy: 'Jane Smith',
-  },
-  {
-    id: '3',
-    title: 'Broken light in stairwell',
-    description: 'Light bulb burnt out on 5th floor stairwell',
-    status: 'resolved',
-    priority: 'low',
-    category: 'electrical',
-    location: '5th floor stairwell',
-    createdAt: '2025-12-18T16:00:00Z',
-    updatedAt: '2025-12-22T11:00:00Z',
-    photos: [],
-    reportedBy: 'Mike Johnson',
-    assignedTo: 'Electrician',
-  },
-];
-
 interface FaultsListScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
+}
+
+/** Subset of `FaultSummary` from the api-server that the list view needs. */
+interface ApiFaultSummary {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: string;
+  priority: string;
+  category: string;
+  location_description?: string | null;
+  created_at: string;
+  updated_at: string;
+  reporter_name?: string | null;
+  assignee_name?: string | null;
+}
+
+interface ApiFaultListResponse {
+  faults: ApiFaultSummary[];
+  count: number;
+}
+
+const FAULT_STATUSES: readonly FaultStatus[] = ['open', 'in_progress', 'resolved', 'closed'];
+const FAULT_PRIORITIES: readonly FaultPriority[] = ['low', 'medium', 'high', 'urgent'];
+const FAULT_CATEGORIES: readonly FaultCategory[] = [
+  'plumbing',
+  'electrical',
+  'structural',
+  'hvac',
+  'elevator',
+  'security',
+  'other',
+];
+
+// Narrow an arbitrary string to a known enum value, or fall back. Plain
+// `as Foo ?? 'default'` would let an unknown value flow through, which then
+// blows up the colour-lookup tables (Record<Foo, …>) further down.
+const narrow = <T extends string>(value: string, allowed: readonly T[], fallback: T): T =>
+  (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+
+function toUiFault(f: ApiFaultSummary): Fault {
+  return {
+    id: f.id,
+    title: f.title,
+    description: f.description ?? '',
+    status: narrow(f.status, FAULT_STATUSES, 'open'),
+    priority: narrow(f.priority, FAULT_PRIORITIES, 'medium'),
+    category: narrow(f.category, FAULT_CATEGORIES, 'other'),
+    location: f.location_description ?? '',
+    createdAt: f.created_at,
+    updatedAt: f.updated_at,
+    photos: [],
+    reportedBy: f.reporter_name ?? 'Resident',
+    assignedTo: f.assignee_name ?? undefined,
+  };
 }
 
 const statusBgColor: Record<FaultStatus, string> = {
@@ -119,15 +130,19 @@ const formatDate = (dateString: string): string => {
 };
 
 export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [faults] = useState<Fault[]>(mockFaults);
   const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
 
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiFaultListResponse>(
+    ['faults', 'list'],
+    '/api/v1/faults',
+    { staleTime: 30_000 }
+  );
+
+  const faults: Fault[] = (data?.faults ?? []).map(toUiFault);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const filteredFaults = faults.filter((fault) => {
     if (filter === 'all') return true;
@@ -162,10 +177,20 @@ export function FaultsListScreen({ onNavigate }: FaultsListScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {filteredFaults.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>Couldn't load faults</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredFaults.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🔧</Text>
             <Text style={styles.emptyTitle}>No faults found</Text>

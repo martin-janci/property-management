@@ -7,6 +7,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
 export interface NewsArticle {
@@ -19,51 +20,59 @@ export interface NewsArticle {
   read: boolean;
 }
 
-const MOCK_ARTICLES: NewsArticle[] = [
-  {
-    id: 'a1',
-    title: 'Renovation works begin on the south façade',
-    excerpt:
-      'Scaffolding will be installed on April 28. Expect noise on weekdays between 8am and 5pm.',
-    category: 'building',
-    publishedAt: '2026-04-23T07:30:00Z',
-    read: false,
-  },
-  {
-    id: 'a2',
-    title: 'Spring street fair this weekend',
-    excerpt: 'The annual spring fair returns to our street on Saturday with live music and food.',
-    category: 'district',
-    publishedAt: '2026-04-22T15:00:00Z',
-    read: false,
-  },
-  {
-    id: 'a3',
-    title: 'Discount on smart thermostats for residents',
-    excerpt: 'Our partner offers 20% off smart thermostats with installation through May.',
-    category: 'partner',
-    publishedAt: '2026-04-19T10:00:00Z',
-    read: true,
-  },
-];
+interface ApiNewsArticle {
+  id: string;
+  title: string;
+  summary?: string | null;
+  excerpt?: string | null;
+  body?: string | null;
+  category?: string | null;
+  published_at?: string | null;
+  created_at: string;
+  image_url?: string | null;
+  read?: boolean;
+}
+
+interface ApiNewsListResponse {
+  articles: ApiNewsArticle[];
+  total?: number;
+}
+
+function toUiArticle(a: ApiNewsArticle): NewsArticle {
+  const cat = (a.category ?? 'building') as NewsArticle['category'];
+  return {
+    id: a.id,
+    title: a.title,
+    excerpt: a.excerpt ?? a.summary ?? a.body?.slice(0, 200) ?? '',
+    category: cat === 'building' || cat === 'district' || cat === 'partner' ? cat : 'building',
+    publishedAt: a.published_at ?? a.created_at,
+    imageUrl: a.image_url ?? undefined,
+    read: a.read ?? false,
+  };
+}
 
 interface NewsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function NewsScreen({ onNavigate }: NewsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | NewsArticle['category']>('all');
 
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiNewsListResponse>(
+    ['news', 'list'],
+    '/api/v1/news',
+    { staleTime: 60_000 }
+  );
+
+  const articles: NewsArticle[] = (data?.articles ?? []).map(toUiArticle);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const filtered = useMemo(
-    () => (filter === 'all' ? MOCK_ARTICLES : MOCK_ARTICLES.filter((a) => a.category === filter)),
-    [filter]
+    () => (filter === 'all' ? articles : articles.filter((a) => a.category === filter)),
+    [articles, filter]
   );
 
   const filters: ReadonlyArray<{ value: 'all' | NewsArticle['category']; label: string }> = [
@@ -100,9 +109,19 @@ export function NewsScreen({ onNavigate }: NewsScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} />}
       >
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={s.emptyState}>
+            <Text style={s.emptyIcon}>⚠️</Text>
+            <Text style={s.emptyTitle}>Couldn't load news</Text>
+            <Text style={s.emptyText}>{error.message}</Text>
+          </View>
+        ) : filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>📰</Text>
             <Text style={s.emptyTitle}>Nothing new</Text>

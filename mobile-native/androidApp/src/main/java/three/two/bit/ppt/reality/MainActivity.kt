@@ -9,6 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -125,8 +127,30 @@ fun RealityPortalApp(
 ) {
     val navController = rememberNavController()
 
-    // Create listing repository - in production this would be injected via DI
-    val listingRepository = remember { ListingRepository(baseUrl = ApiConfig.requireBaseUrl()) }
+    // Repositories — in production these would be injected via DI.
+    // The session token comes from SsoService's `authState`; we re-derive
+    // (and re-create the repos) when it flips between Unauthenticated and
+    // Authenticated so authenticated calls carry the bearer header.
+    val baseUrl = ApiConfig.requireBaseUrl()
+    val authState by ssoService.authState.collectAsState()
+    val sessionToken =
+        (authState as? three.two.bit.ppt.reality.auth.AuthState.Authenticated)?.sessionToken
+    val listingRepository =
+        remember(sessionToken) { ListingRepository(baseUrl = baseUrl, sessionToken = sessionToken) }
+    val favoritesRepository =
+        remember(sessionToken) {
+            three.two.bit.ppt.reality.favorites.FavoritesRepository(
+                baseUrl = baseUrl,
+                sessionToken = sessionToken,
+            )
+        }
+    val inquiryRepository =
+        remember(sessionToken) {
+            three.two.bit.ppt.reality.inquiry.InquiryRepository(
+                baseUrl = baseUrl,
+                sessionToken = sessionToken,
+            )
+        }
 
     // Handle pending deep link navigation (Epic 122)
     LaunchedEffect(pendingDeepLink) {
@@ -139,7 +163,9 @@ fun RealityPortalApp(
     RealityNavHost(
         navController = navController,
         ssoService = ssoService,
-        listingRepository = listingRepository
+        listingRepository = listingRepository,
+        favoritesRepository = favoritesRepository,
+        inquiryRepository = inquiryRepository,
     )
 }
 

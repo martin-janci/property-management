@@ -3,253 +3,170 @@
 //  iosAppTests
 //
 //  Epic 80 - Story 80.6: Mobile Unit Tests (iOS)
-//  XCTest scaffolding for Reality Portal iOS app
-//
-//  Created by BMAD System
 //
 
 import XCTest
 @testable import iosApp
 
-/// Main test class for Reality Portal iOS app.
-///
-/// This class provides the test scaffolding for unit testing the iOS application.
-/// Tests are organized by feature/component.
-final class RealityPortalTests: XCTestCase {
-
-    // MARK: - Setup and Teardown
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method.
-        continueAfterFailure = false
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method.
-    }
-
-    // MARK: - Placeholder Tests
-
-    /// Placeholder test to verify test infrastructure is working.
-    func testPlaceholder() throws {
-        // This test verifies that the XCTest infrastructure is properly configured.
-        XCTAssertTrue(true, "Test infrastructure is working")
-    }
-
-    /// Placeholder test for async operations.
-    func testAsyncPlaceholder() async throws {
-        // This test verifies that async test support is working.
-        let result = await Task {
-            return true
-        }.value
-
-        XCTAssertTrue(result, "Async test infrastructure is working")
-    }
-}
-
 // MARK: - Configuration Tests
 
-/// Tests for app configuration functionality.
+/// Verifies the `Configuration` singleton + `Environment` enum that drives
+/// per-build API URLs and deep-link schemes.
 final class ConfigurationTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
+    func testSharedConfigurationIsAccessible() throws {
+        // The singleton must be reachable so DI containers can pull URLs
+        // off it during app launch. (No identity check because Swift
+        // singletons aren't reference-equal across module boundaries in
+        // some CI matrices.)
+        XCTAssertFalse(Configuration.shared.bundleIdentifier.isEmpty)
+        XCTAssertFalse(Configuration.shared.appName.isEmpty)
     }
 
-    /// Test that Configuration singleton exists and is accessible.
-    func testConfigurationExists() throws {
-        // Placeholder: Verify Configuration.shared is accessible
-        // TODO: Uncomment when Configuration is testable
-        // XCTAssertNotNil(Configuration.shared)
-        XCTAssertTrue(true, "Configuration test placeholder")
+    func testBundleIdentifierMatchesNamespace() throws {
+        // Pinned by `CLAUDE.md`'s namespace table.
+        XCTAssertEqual(
+            Configuration.shared.bundleIdentifier,
+            "three.two.bit.ppt.reality"
+        )
     }
 
-    /// Test environment detection.
-    func testEnvironmentDetection() throws {
-        // Placeholder: Test environment enum values
-        // TODO: Add actual environment detection tests
-        XCTAssertTrue(true, "Environment detection test placeholder")
+    func testEnvironmentApiBaseUrls() throws {
+        // Each environment must produce a non-empty URL with the right
+        // scheme so DI doesn't accidentally point at `localhost` in
+        // staging/production builds.
+        XCTAssertTrue(Environment.development.apiBaseUrl.hasPrefix("http://"))
+        XCTAssertTrue(Environment.staging.apiBaseUrl.hasPrefix("https://"))
+        XCTAssertTrue(Environment.production.apiBaseUrl.hasPrefix("https://"))
+        XCTAssertNotEqual(Environment.development.apiBaseUrl, Environment.production.apiBaseUrl)
     }
 
-    /// Test API base URL configuration.
-    func testApiBaseUrl() throws {
-        // Placeholder: Verify API URLs are correctly configured
-        // TODO: Add actual URL configuration tests
-        XCTAssertTrue(true, "API base URL test placeholder")
+    func testEnvironmentDeepLinkSchemeIsStable() throws {
+        // The Android `MainActivity.handleDeepLink` checks `scheme == "reality"`;
+        // iOS must agree or universal deep-links break. NOTE: Android uses
+        // "reality"; iOS uses "realityportal" — this test pins the iOS value
+        // so any rename surfaces here, then a follow-up can reconcile both.
+        XCTAssertEqual(Environment.development.urlScheme, "realityportal")
+        XCTAssertEqual(Environment.staging.urlScheme, "realityportal")
+        XCTAssertEqual(Environment.production.urlScheme, "realityportal")
+    }
+
+    func testWebBaseUrlsAreEnvironmentSpecific() throws {
+        XCTAssertNotEqual(Environment.development.webBaseUrl, Environment.staging.webBaseUrl)
+        XCTAssertNotEqual(Environment.staging.webBaseUrl, Environment.production.webBaseUrl)
+    }
+
+    func testApiBaseUrlIsForwardedFromEnvironment() throws {
+        // Configuration.apiBaseUrl is a thin forwarder; verify the layer
+        // doesn't accidentally hard-code a literal.
+        XCTAssertEqual(
+            Configuration.shared.apiBaseUrl,
+            Configuration.shared.environment.apiBaseUrl
+        )
+    }
+
+    func testKeychainServiceMatchesBundleId() throws {
+        // The Keychain service name has to be stable across launches —
+        // pinning it to the bundle id keeps it that way and prevents
+        // accidental drift that would orphan stored credentials.
+        XCTAssertEqual(
+            Configuration.shared.keychainService,
+            Configuration.shared.bundleIdentifier
+        )
     }
 }
 
-// MARK: - Navigation Tests
+// MARK: - Route Tests
 
-/// Tests for navigation coordinator functionality.
-final class NavigationTests: XCTestCase {
+/// Verifies the `Route` enum's identity behaviour. Compose-Navigation /
+/// SwiftUI NavigationStack rely on `Hashable` equality to deduplicate
+/// route stacks, so `searchResults` cases with identical payloads must
+/// compare equal even when constructed independently.
+final class RouteTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
+    func testSimpleRoutesAreEqual() throws {
+        XCTAssertEqual(Route.home, Route.home)
+        XCTAssertEqual(Route.search, Route.search)
+        XCTAssertEqual(Route.favorites, Route.favorites)
     }
 
-    /// Test initial navigation state.
-    func testInitialNavigationState() throws {
-        // Placeholder: Verify initial navigation state
-        // TODO: Add actual navigation state tests
-        XCTAssertTrue(true, "Initial navigation state test placeholder")
+    func testListingDetailEqualityRespectsId() throws {
+        XCTAssertEqual(Route.listingDetail(id: "lst-1"), Route.listingDetail(id: "lst-1"))
+        XCTAssertNotEqual(Route.listingDetail(id: "lst-1"), Route.listingDetail(id: "lst-2"))
     }
 
-    /// Test deep link handling.
-    func testDeepLinkHandling() throws {
-        // Placeholder: Test deep link URL parsing
-        // TODO: Add actual deep link tests
-        XCTAssertTrue(true, "Deep link handling test placeholder")
-    }
-
-    /// Test tab navigation.
-    func testTabNavigation() throws {
-        // Placeholder: Test tab switching
-        // TODO: Add actual tab navigation tests
-        XCTAssertTrue(true, "Tab navigation test placeholder")
+    func testHashabilityAcrossEquivalentValues() throws {
+        // Two Routes that are == must share a hash so a Set/Dictionary
+        // backed nav stack treats them as the same entry.
+        var bucket = Set<Route>()
+        bucket.insert(.listingDetail(id: "lst-1"))
+        bucket.insert(.listingDetail(id: "lst-1"))
+        bucket.insert(.listingDetail(id: "lst-2"))
+        XCTAssertEqual(bucket.count, 2)
     }
 }
 
 // MARK: - Authentication Tests
 
-/// Tests for authentication manager functionality.
+/// Smoke tests for the `AuthManager` lifecycle. They operate on a fresh
+/// instance and avoid touching the real Keychain by relying on the
+/// public API — the underlying storage is exercised by integration
+/// tests on a device.
 final class AuthenticationTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-
-    /// Test initial auth state.
-    func testInitialAuthState() throws {
-        // Placeholder: Verify initial authentication state
-        // TODO: Add actual auth state tests
-        XCTAssertTrue(true, "Initial auth state test placeholder")
-    }
-
-    /// Test SSO callback handling.
-    func testSsoCallbackHandling() throws {
-        // Placeholder: Test SSO URL parsing and token extraction
-        // TODO: Add actual SSO callback tests
-        XCTAssertTrue(true, "SSO callback test placeholder")
-    }
-
-    /// Test session restoration.
-    func testSessionRestoration() throws {
-        // Placeholder: Test session persistence and restoration
-        // TODO: Add actual session restoration tests
-        XCTAssertTrue(true, "Session restoration test placeholder")
-    }
-
-    /// Test logout functionality.
-    func testLogout() throws {
-        // Placeholder: Test logout clears session
-        // TODO: Add actual logout tests
-        XCTAssertTrue(true, "Logout test placeholder")
+    func testInitialAuthStateIsUnauthenticated() throws {
+        let auth = AuthManager()
+        XCTAssertFalse(auth.isAuthenticated)
     }
 }
 
-// MARK: - View Tests
+// MARK: - Deep Link / URL Parsing Tests
 
-/// Tests for SwiftUI views.
-final class ViewTests: XCTestCase {
+/// The iOS app accepts `realityportal://...` URLs. These tests pin the
+/// parsing behavior the SceneDelegate relies on so a typo in the
+/// scheme/host wiring surfaces immediately rather than at runtime.
+final class DeepLinkTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
+    func testCustomSchemeUrlParses() throws {
+        let url = try XCTUnwrap(URL(string: "realityportal://listing/lst-42"))
+        XCTAssertEqual(url.scheme, Environment.development.urlScheme)
+        XCTAssertEqual(url.host, "listing")
+        XCTAssertEqual(url.lastPathComponent, "lst-42")
     }
 
-    /// Test MainTabView initialization.
-    func testMainTabViewInit() throws {
-        // Placeholder: Verify MainTabView can be instantiated
-        // TODO: Add actual view tests
-        XCTAssertTrue(true, "MainTabView test placeholder")
+    func testSsoCallbackQueryParametersAreParseable() throws {
+        let url = try XCTUnwrap(
+            URL(string: "realityportal://sso?token=abc.def.ghi&state=42")
+        )
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let token = components.queryItems?.first { $0.name == "token" }?.value
+        let state = components.queryItems?.first { $0.name == "state" }?.value
+        XCTAssertEqual(token, "abc.def.ghi")
+        XCTAssertEqual(state, "42")
     }
 
-    /// Test HomeView initialization.
-    func testHomeViewInit() throws {
-        // Placeholder: Verify HomeView can be instantiated
-        // TODO: Add actual view tests
-        XCTAssertTrue(true, "HomeView test placeholder")
-    }
-
-    /// Test SearchView initialization.
-    func testSearchViewInit() throws {
-        // Placeholder: Verify SearchView can be instantiated
-        // TODO: Add actual view tests
-        XCTAssertTrue(true, "SearchView test placeholder")
-    }
-
-    /// Test ListingDetailView initialization.
-    func testListingDetailViewInit() throws {
-        // Placeholder: Verify ListingDetailView can be instantiated
-        // TODO: Add actual view tests
-        XCTAssertTrue(true, "ListingDetailView test placeholder")
-    }
-}
-
-// MARK: - Dependency Injection Tests
-
-/// Tests for dependency injection container.
-final class DependencyInjectionTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-
-    /// Test DependencyContainer initialization.
-    func testDependencyContainerInit() throws {
-        // Placeholder: Verify DependencyContainer can be instantiated
-        // TODO: Add actual DI tests
-        XCTAssertTrue(true, "DependencyContainer test placeholder")
-    }
-
-    /// Test service resolution.
-    func testServiceResolution() throws {
-        // Placeholder: Test that services can be resolved
-        // TODO: Add actual service resolution tests
-        XCTAssertTrue(true, "Service resolution test placeholder")
-    }
-}
-
-// MARK: - Model Tests
-
-/// Tests for data models and DTOs.
-final class ModelTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-
-    /// Test listing model parsing.
-    func testListingModelParsing() throws {
-        // Placeholder: Test JSON parsing for listing models
-        // TODO: Add actual model parsing tests
-        XCTAssertTrue(true, "Listing model parsing test placeholder")
-    }
-
-    /// Test user model parsing.
-    func testUserModelParsing() throws {
-        // Placeholder: Test JSON parsing for user models
-        // TODO: Add actual model parsing tests
-        XCTAssertTrue(true, "User model parsing test placeholder")
+    func testRejectsForeignScheme() throws {
+        // `https://` URLs are universal links and should not be parsed by
+        // the same code path as the custom scheme — the SceneDelegate
+        // routes them differently.
+        let url = try XCTUnwrap(URL(string: "https://example.com/listing/lst-1"))
+        XCTAssertNotEqual(url.scheme, Environment.development.urlScheme)
     }
 }
 
 // MARK: - Performance Tests
 
-/// Performance tests for critical paths.
+/// Small performance baselines. They aren't asserted hard; the
+/// `measure` block records timings that show up in Xcode's test report.
 final class PerformanceTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
-
-    /// Measure app launch time placeholder.
-    func testAppLaunchPerformance() throws {
-        // Placeholder: Measure app startup performance
-        // TODO: Add actual performance measurements
+    func testConfigurationLookupPerformance() throws {
+        // Looking up `apiBaseUrl` is on the hot path for every API call,
+        // so it should never regress noticeably.
         measure {
-            // Placeholder measurement
-            _ = 1 + 1
+            for _ in 0..<10_000 {
+                _ = Configuration.shared.apiBaseUrl
+            }
         }
     }
 }

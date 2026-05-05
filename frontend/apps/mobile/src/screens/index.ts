@@ -14,7 +14,7 @@ export { ProfileScreen } from './profile';
 export { DashboardScreen } from './dashboard';
 export { FaultsListScreen, ReportFaultScreen } from './faults';
 export { AnnouncementsScreen } from './announcements';
-export { VotingScreen } from './voting';
+export { VotingScreen, VoteDetailScreen } from './voting';
 export { DocumentsScreen, DocumentDetailScreen } from './documents';
 export { MeterReadingScreen, MetersScreen, MeterDetailScreen } from './meters';
 
@@ -37,7 +37,6 @@ export type { Fault, FaultStatus, FaultPriority, FaultCategory } from './faults'
 export type { Announcement, AnnouncementCategory, AnnouncementAttachment } from './announcements';
 export type { Vote, VoteStatus, VoteType, VoteOption } from './voting';
 export type { Document, DocumentType } from './documents';
-export type { MessageThread } from './messages';
 export type { Neighbor } from './neighbors';
 export type { AppNotification, NotificationCategory } from './notifications';
 export type { Meter, MeterCommodity } from './meters';

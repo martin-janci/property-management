@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
 
 export type VoteStatus = 'active' | 'closed' | 'pending';
@@ -30,83 +31,87 @@ export interface Vote {
   createdBy: string;
 }
 
-// Mock data
-const mockVotes: Vote[] = [
-  {
-    id: '1',
-    title: 'Elevator Renovation Proposal',
-    description:
-      'Vote on the proposed elevator modernization project. The renovation includes new control systems, improved safety features, and energy-efficient motors.',
-    status: 'active',
+/** Subset of `VoteSummary` from `GET /api/v1/voting`. */
+interface ApiVoteSummary {
+  id: string;
+  building_id: string;
+  title: string;
+  status: string;
+  end_at: string;
+  quorum_type: string;
+  participation_count?: number | null;
+  eligible_count?: number | null;
+  quorum_met?: boolean | null;
+}
+
+/** Map the api-server's status string onto the UI's narrowed enum. */
+function toUiStatus(status: string): VoteStatus {
+  switch (status) {
+    case 'active':
+    case 'open':
+      return 'active';
+    case 'closed':
+    case 'cancelled':
+      return 'closed';
+    default:
+      return 'pending';
+  }
+}
+
+/** The list endpoint only returns summaries — no questions/options/results
+ *  detail. The screen still renders, but inline voting is disabled until
+ *  the user navigates into the (future) detail screen. */
+function toUiVote(s: ApiVoteSummary): Vote {
+  const total = s.participation_count ?? 0;
+  return {
+    id: s.id,
+    title: s.title,
+    description: '',
+    status: toUiStatus(s.status),
     type: 'simple',
-    options: [
-      { id: 'yes', label: 'Yes - Approve renovation', votes: 45, percentage: 60 },
-      { id: 'no', label: 'No - Decline proposal', votes: 30, percentage: 40 },
-    ],
-    startsAt: '2025-12-20T00:00:00Z',
-    endsAt: '2025-12-30T23:59:59Z',
-    totalVotes: 75,
-    requiredQuorum: 100,
-    currentQuorum: 75,
+    options: [],
+    startsAt: '',
+    endsAt: s.end_at,
+    totalVotes: total,
+    requiredQuorum: s.eligible_count ?? 0,
+    currentQuorum: total,
     hasVoted: false,
     createdBy: 'Building Management',
-  },
-  {
-    id: '2',
-    title: 'New Board Member Election',
-    description: 'Vote for the new board member position. Each owner can vote for one candidate.',
-    status: 'active',
-    type: 'simple',
-    options: [
-      { id: 'a', label: 'John Smith', votes: 35, percentage: 44 },
-      { id: 'b', label: 'Maria Garcia', votes: 28, percentage: 35 },
-      { id: 'c', label: 'Peter Johnson', votes: 17, percentage: 21 },
-    ],
-    startsAt: '2025-12-15T00:00:00Z',
-    endsAt: '2025-12-28T23:59:59Z',
-    totalVotes: 80,
-    requiredQuorum: 100,
-    currentQuorum: 80,
-    hasVoted: true,
-    userVote: 'a',
-    createdBy: 'Building Management',
-  },
-  {
-    id: '3',
-    title: 'Parking Space Allocation',
-    description: 'Closed vote on new parking space allocation policy.',
-    status: 'closed',
-    type: 'simple',
-    options: [
-      { id: 'rotate', label: 'Rotating system', votes: 65, percentage: 65 },
-      { id: 'fixed', label: 'Fixed assignment', votes: 35, percentage: 35 },
-    ],
-    startsAt: '2025-12-01T00:00:00Z',
-    endsAt: '2025-12-15T23:59:59Z',
-    totalVotes: 100,
-    requiredQuorum: 80,
-    currentQuorum: 100,
-    hasVoted: true,
-    userVote: 'rotate',
-    createdBy: 'Building Management',
-  },
-];
+  };
+}
 
 interface VotingScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
-export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
+interface ApiVoteListResponse {
+  votes: ApiVoteSummary[];
+  total?: number;
+}
+
+export function VotingScreen({ onNavigate }: VotingScreenProps) {
   const { t } = useTranslation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [votes, setVotes] = useState<Vote[]>(mockVotes);
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
+  // Voting routes use `RlsConnection` and require both Authorization and
+  // X-Tenant-ID — both are sent by `useApiQuery` (the latter pulled from
+  // the JWT's `tenant_id` claim).
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiVoteListResponse>(
+    ['voting', 'list'],
+    '/api/v1/voting',
+    { staleTime: 30_000 }
+  );
+
+  // The list endpoint may return either an array or `{ votes: [...] }`
+  // depending on backend version — accept both.
+  const apiVotes: ApiVoteSummary[] = Array.isArray(data)
+    ? (data as unknown as ApiVoteSummary[])
+    : (data?.votes ?? []);
+  const votes: Vote[] = apiVotes.map(toUiVote);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const getStatusColor = (status: VoteStatus): string => {
     switch (status) {
@@ -143,35 +148,11 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
     return t('voting.timeLeftMinutes', { minutes });
   };
 
-  const handleVote = (voteId: string, optionId: string) => {
-    Alert.alert(t('voting.confirmVoteTitle'), t('voting.confirmVoteMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('voting.vote'),
-        onPress: () => {
-          setVotes((prev) =>
-            prev.map((v) => {
-              if (v.id !== voteId) return v;
-              return {
-                ...v,
-                hasVoted: true,
-                userVote: optionId,
-                options: v.options.map((o) => ({
-                  ...o,
-                  votes: o.id === optionId ? o.votes + 1 : o.votes,
-                  percentage: Math.round(
-                    ((o.id === optionId ? o.votes + 1 : o.votes) / (v.totalVotes + 1)) * 100
-                  ),
-                })),
-                totalVotes: v.totalVotes + 1,
-                currentQuorum: v.currentQuorum + 1,
-              };
-            })
-          );
-          Alert.alert(t('voting.successTitle'), t('voting.successMessage'));
-        },
-      },
-    ]);
+  // The list endpoint only returns summaries — so tapping a card opens the
+  // detail screen that loads questions/options/eligibility and runs the
+  // cast-vote flow.
+  const openDetail = (voteId: string) => {
+    onNavigate?.('VoteDetail', { voteId });
   };
 
   const filteredVotes = votes.filter((v) => {
@@ -214,10 +195,20 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {filteredVotes.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>{t('common.loading') ?? 'Loading…'}</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>{t('voting.loadError') ?? "Couldn't load votes"}</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredVotes.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🗳️</Text>
             <Text style={styles.emptyTitle}>{t('voting.emptyTitle')}</Text>
@@ -225,7 +216,13 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
           </View>
         ) : (
           filteredVotes.map((vote) => (
-            <View key={vote.id} style={styles.voteCard}>
+            <Pressable
+              key={vote.id}
+              style={styles.voteCard}
+              onPress={() => openDetail(vote.id)}
+              accessibilityRole="button"
+              accessibilityLabel={t('voting.openDetail') ?? `Open ${vote.title}`}
+            >
               <View style={styles.voteHeader}>
                 <View
                   style={[styles.statusBadge, { backgroundColor: getStatusColor(vote.status) }]}
@@ -266,66 +263,16 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
                 </View>
               </View>
 
-              {/* Vote Options */}
-              <View style={styles.optionsSection}>
-                {vote.options.map((option) => (
-                  <Pressable
-                    key={option.id}
-                    style={[
-                      styles.optionRow,
-                      vote.hasVoted && vote.userVote === option.id && styles.selectedOption,
-                      vote.status !== 'active' && styles.optionDisabled,
-                    ]}
-                    onPress={() => {
-                      if (!vote.hasVoted && vote.status === 'active') {
-                        handleVote(vote.id, option.id);
-                      }
-                    }}
-                    disabled={vote.hasVoted || vote.status !== 'active'}
-                  >
-                    <View style={styles.optionLeft}>
-                      <View
-                        style={[
-                          styles.radioButton,
-                          vote.hasVoted && vote.userVote === option.id && styles.radioSelected,
-                        ]}
-                      >
-                        {vote.hasVoted && vote.userVote === option.id && (
-                          <View style={styles.radioInner} />
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.optionLabel,
-                          vote.hasVoted &&
-                            vote.userVote === option.id &&
-                            styles.optionLabelSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                    </View>
-                    {(vote.hasVoted || vote.status === 'closed') && (
-                      <View style={styles.optionRight}>
-                        <Text style={styles.percentageText}>{option.percentage}%</Text>
-                        <View style={styles.percentageBar}>
-                          <View
-                            style={[styles.percentageProgress, { width: `${option.percentage}%` }]}
-                          />
-                        </View>
-                      </View>
-                    )}
-                  </Pressable>
-                ))}
+              {/* CTA — list view doesn't ship options, detail screen handles
+                  the actual ballot. */}
+              <View style={styles.openDetailCta}>
+                <Text style={styles.openDetailText}>
+                  {vote.status === 'active'
+                    ? (t('voting.tapToVote') ?? 'Tap to view & cast ballot')
+                    : (t('voting.tapToView') ?? 'Tap to view results')}
+                </Text>
+                <Text style={styles.openDetailChevron}>›</Text>
               </View>
-
-              {/* Vote Status Message */}
-              {vote.hasVoted && (
-                <View style={styles.votedMessage}>
-                  <Text style={styles.votedIcon}>✓</Text>
-                  <Text style={styles.votedText}>{t('voting.youHaveVoted')}</Text>
-                </View>
-              )}
 
               {/* Footer */}
               <View style={styles.voteFooter}>
@@ -336,7 +283,7 @@ export function VotingScreen({ onNavigate: _onNavigate }: VotingScreenProps) {
                   {formatDate(vote.startsAt)} - {formatDate(vote.endsAt)}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))
         )}
 
@@ -500,101 +447,24 @@ const styles = StyleSheet.create({
   quorumMet: {
     backgroundColor: colors.success,
   },
-  optionsSection: {
-    gap: 8,
-    marginBottom: 12,
-  },
-  optionRow: {
+  openDetailCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  selectedOption: {
     backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  optionDisabled: {
-    opacity: 0.8,
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  radioSelected: {
-    borderColor: colors.accent,
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.accent,
-  },
-  optionLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    flex: 1,
-  },
-  optionLabelSelected: {
+  openDetailText: {
+    fontSize: 13,
     color: colors.accent,
     fontWeight: '500',
   },
-  optionRight: {
-    alignItems: 'flex-end',
-    minWidth: 80,
-  },
-  percentageText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  percentageBar: {
-    height: 4,
-    width: 60,
-    backgroundColor: colors.border,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  percentageProgress: {
-    height: '100%',
-    backgroundColor: colors.accent,
-    borderRadius: 2,
-  },
-  votedMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    backgroundColor: colors.successBg,
-    borderRadius: 6,
-    marginTop: 4,
-    marginBottom: 12,
-    gap: 6,
-  },
-  votedIcon: {
-    fontSize: 14,
-    color: colors.successDark,
-  },
-  votedText: {
-    fontSize: 13,
-    color: colors.successDark,
-    fontWeight: '500',
+  openDetailChevron: {
+    fontSize: 20,
+    color: colors.accent,
+    fontWeight: '400',
   },
   voteFooter: {
     flexDirection: 'row',
