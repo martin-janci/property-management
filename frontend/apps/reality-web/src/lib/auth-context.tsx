@@ -5,7 +5,6 @@
  * Manages user session state from SSO with Property Management system.
  */
 
-import { getApiBase } from './env';
 import {
   type ReactNode,
   createContext,
@@ -15,6 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { getApiBase } from './env';
 
 /** User information from SSO. */
 export interface SsoUser {
