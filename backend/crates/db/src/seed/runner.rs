@@ -547,7 +547,7 @@ impl SeedRunner {
             for portal_user in &seed_data.portal_users {
                 let pm_user_id = portal_user
                     .pm_user_index
-                    .map(|i| resolve_user(i))
+                    .map(resolve_user)
                     .transpose()?;
 
                 let portal_user_id = factories

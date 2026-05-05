@@ -267,6 +267,7 @@ impl<'a> SeedFactories<'a> {
     /// `published_at` is derived from status: "active" → 14 days ago, "archived" → 60 days ago.
     ///
     /// Returns the listing's UUID.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_listing(
         &self,
         org_id: Uuid,
@@ -413,6 +414,7 @@ impl<'a> SeedFactories<'a> {
     /// `read_at` and `responded_at` are derived from status.
     ///
     /// Returns the inquiry's UUID.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_inquiry(
         &self,
         listing_id: Uuid,
@@ -525,6 +527,7 @@ impl<'a> SeedFactories<'a> {
     /// are computed automatically based on the given status, spaced out in the past.
     ///
     /// Returns the fault's UUID.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_fault(
         &self,
         org_id: Uuid,
@@ -638,6 +641,7 @@ impl<'a> SeedFactories<'a> {
     /// - "draft": end_at 7 days in the future, not yet published
     ///
     /// Returns the vote's UUID.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_vote(
         &self,
         org_id: Uuid,
@@ -764,6 +768,7 @@ impl<'a> SeedFactories<'a> {
     /// - "draft"/"scheduled": None
     ///
     /// Returns the announcement's UUID.
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_announcement(
         &self,
         org_id: Uuid,
