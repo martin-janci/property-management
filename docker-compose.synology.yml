@@ -106,6 +106,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-ppt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ppt}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT secret required}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?TOTP encryption key required (64-char hex, 32 bytes)}
+      INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:?Integration encryption key required (64-char hex, 32 bytes)}
       RUST_LOG: ${RUST_LOG:-warn}
       S3_ENDPOINT: ${S3_ENDPOINT}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
@@ -147,6 +149,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-ppt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ppt}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
+      PM_CLIENT_SECRET: ${PM_CLIENT_SECRET:?PM_CLIENT_SECRET required for OAuth client}
+      PM_API_URL: ${PM_API_URL:-http://api-server:8080}
+      PM_API_HEALTH_URL: ${PM_API_HEALTH_URL:-http://api-server:8080/health}
       RUST_LOG: ${RUST_LOG:-warn}
       S3_ENDPOINT: ${S3_ENDPOINT}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
@@ -190,9 +195,9 @@ services:
     environment:
       <<: *common-env
     ports:
-      - "3000:80"
+      - "3000:8080"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 60s
       timeout: 10s
       retries: 3
