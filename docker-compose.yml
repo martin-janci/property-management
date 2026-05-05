@@ -24,6 +24,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-ppt}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ppt} -d ${POSTGRES_DB:-ppt}"]
       interval: 30s
@@ -65,13 +66,15 @@ services:
   # ==========================================================================
 
   api-server:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-api-server:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-api-server:${VERSION:-latest}
     container_name: ppt-api-server
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-ppt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ppt}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT secret required}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?TOTP encryption key required (64-char hex, 32 bytes)}
+      INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:?Integration encryption key required (64-char hex, 32 bytes)}
       RUST_LOG: ${RUST_LOG:-info}
       S3_ENDPOINT: ${S3_ENDPOINT}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
@@ -105,13 +108,16 @@ services:
       - ppt-external
 
   reality-server:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-reality-server:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-reality-server:${VERSION:-latest}
     container_name: ppt-reality-server
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-ppt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ppt}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       JWT_SECRET: ${JWT_SECRET}
+      PM_CLIENT_SECRET: ${PM_CLIENT_SECRET:?PM_CLIENT_SECRET required for OAuth client}
+      PM_API_URL: ${PM_API_URL:-http://api-server:8080}
+      PM_API_HEALTH_URL: ${PM_API_HEALTH_URL:-http://api-server:8080/health}
       RUST_LOG: ${RUST_LOG:-info}
       S3_ENDPOINT: ${S3_ENDPOINT}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
@@ -149,13 +155,13 @@ services:
   # ==========================================================================
 
   ppt-web:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-web:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-web:${VERSION:-latest}
     container_name: ppt-web
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3000:8080"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -170,7 +176,7 @@ services:
       - ppt-external
 
   reality-web:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-reality-web:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-reality-web:${VERSION:-latest}
     container_name: ppt-reality-web
     restart: unless-stopped
     environment:

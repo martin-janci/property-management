@@ -98,7 +98,7 @@ services:
   # ==========================================================================
 
   api-server:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-api-server:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-api-server:${VERSION:-latest}
     container_name: ppt-api-server
     restart: unless-stopped
     environment:
@@ -139,7 +139,7 @@ services:
       - ppt-network
 
   reality-server:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-reality-server:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-reality-server:${VERSION:-latest}
     container_name: ppt-reality-server
     restart: unless-stopped
     environment:
@@ -184,7 +184,7 @@ services:
   # ==========================================================================
 
   ppt-web:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-web:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-web:${VERSION:-latest}
     container_name: ppt-web
     restart: unless-stopped
     environment:
@@ -206,7 +206,7 @@ services:
       - ppt-network
 
   reality-web:
-    image: ${REGISTRY:-ghcr.io/hanibalsk}/ppt-reality-web:${VERSION:-latest}
+    image: ${REGISTRY:-ghcr.io/martin-janci}/ppt-reality-web:${VERSION:-latest}
     container_name: ppt-reality-web
     restart: unless-stopped
     environment:
