@@ -7,7 +7,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '../../../i18n/routing';
 import { useState } from 'react';
 
 export function HeroSearch() {

@@ -193,6 +193,27 @@
     "branding": "Branding",
     "inviteRealtor": "Pozvat makléře"
   },
+  "listings": {
+    "propertiesForSale": "Nemovitosti k prodeji",
+    "propertiesForRent": "Nemovitosti k pronájmu",
+    "allProperties": "Všechny nemovitosti",
+    "tabAll": "Vše",
+    "tabForSale": "Na prodej",
+    "tabForRent": "K pronájmu",
+    "listingsFound": "nabídek nalezeno",
+    "filters": "Filtry",
+    "sortNewest": "Nejnovější",
+    "sortOldest": "Nejstarší",
+    "sortPriceLow": "Cena: od nejnižší",
+    "sortPriceHigh": "Cena: od nejvyšší",
+    "sortSizeLarge": "Plocha: od největší",
+    "sortSizeSmall": "Plocha: od nejmenší",
+    "gridView": "Zobrazení mřížky",
+    "listView": "Zobrazení seznamu",
+    "prevPage": "Předchozí stránka",
+    "nextPage": "Další stránka",
+    "pageOf": "Stránka {page} z {total}"
+  },
   "footer": {
     "about": "O nás",
     "terms": "Obchodní podmínky",

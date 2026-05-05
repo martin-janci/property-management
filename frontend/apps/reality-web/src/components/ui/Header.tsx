@@ -9,8 +9,8 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { Link } from '../../i18n/routing';
+import { useEffect, useRef, useState } from 'react';
+import { Link, usePathname } from '../../i18n/routing';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
@@ -18,6 +18,39 @@ export function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const t = useTranslations();
+  const pathname = usePathname();
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest('.mobile-menu-toggle')
+      ) {
+        setShowMobileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileMenu]);
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '?');
 
   return (
     <header className="header">
@@ -29,13 +62,22 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="nav-desktop">
-          <Link href="/listings?transactionType=sale" className="nav-link">
+          <Link
+            href="/listings?transactionType=sale"
+            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
+          >
             {t('search.sale')}
           </Link>
-          <Link href="/listings?transactionType=rent" className="nav-link">
+          <Link
+            href="/listings?transactionType=rent"
+            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
+          >
             {t('search.rent')}
           </Link>
-          <Link href="/listings" className="nav-link">
+          <Link
+            href="/listings"
+            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
+          >
             {t('nav.allListings')}
           </Link>
         </nav>
@@ -47,12 +89,14 @@ export function Header() {
           {isLoading ? (
             <div className="skeleton" />
           ) : isAuthenticated ? (
-            <div
-              className="user-container"
-              onMouseEnter={() => setShowDropdown(true)}
-              onMouseLeave={() => setShowDropdown(false)}
-            >
-              <button type="button" className="user-button">
+            <div className="user-container" ref={dropdownRef}>
+              <button
+                type="button"
+                className="user-button"
+                onClick={() => setShowDropdown((v) => !v)}
+                aria-expanded={showDropdown}
+                aria-haspopup="true"
+              >
                 <div className="avatar">{user?.name.charAt(0).toUpperCase()}</div>
                 <span className="user-name">{user?.name}</span>
               </button>
@@ -64,16 +108,16 @@ export function Header() {
                     <p className="dropdown-email">{user?.email}</p>
                   </div>
                   <div className="dropdown-menu">
-                    <Link href="/favorites" className="menu-item">
+                    <Link href="/favorites" className="menu-item" onClick={() => setShowDropdown(false)}>
                       {t('common.favorites')}
                     </Link>
-                    <Link href="/saved-searches" className="menu-item">
+                    <Link href="/saved-searches" className="menu-item" onClick={() => setShowDropdown(false)}>
                       {t('nav.savedSearches')}
                     </Link>
-                    <Link href="/inquiries" className="menu-item">
+                    <Link href="/inquiries" className="menu-item" onClick={() => setShowDropdown(false)}>
                       {t('nav.myInquiries')}
                     </Link>
-                    <Link href="/profile" className="menu-item">
+                    <Link href="/account/profile" className="menu-item" onClick={() => setShowDropdown(false)}>
                       {t('nav.profile')}
                     </Link>
                     <button type="button" onClick={logout} className="sign-out-button">
@@ -93,8 +137,9 @@ export function Header() {
           <button
             type="button"
             className="mobile-menu-toggle"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            onClick={() => setShowMobileMenu((v) => !v)}
             aria-label="Toggle menu"
+            aria-expanded={showMobileMenu}
           >
             <svg
               width="24"
@@ -117,7 +162,7 @@ export function Header() {
 
       {/* Mobile Navigation */}
       {showMobileMenu && (
-        <nav className="nav-mobile">
+        <nav className="nav-mobile" ref={mobileMenuRef}>
           <Link
             href="/listings?transactionType=sale"
             className="nav-link-mobile"

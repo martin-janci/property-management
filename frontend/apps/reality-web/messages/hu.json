@@ -193,6 +193,27 @@
     "branding": "Arculat",
     "inviteRealtor": "Ügynök meghívása"
   },
+  "listings": {
+    "propertiesForSale": "Eladó ingatlanok",
+    "propertiesForRent": "Kiadó ingatlanok",
+    "allProperties": "Összes ingatlan",
+    "tabAll": "Összes",
+    "tabForSale": "Eladó",
+    "tabForRent": "Kiadó",
+    "listingsFound": "hirdetés található",
+    "filters": "Szűrők",
+    "sortNewest": "Legújabb",
+    "sortOldest": "Legrégebbi",
+    "sortPriceLow": "Ár: legolcsóbbtól",
+    "sortPriceHigh": "Ár: legdrágábbtól",
+    "sortSizeLarge": "Méret: legnagyobbtól",
+    "sortSizeSmall": "Méret: legkisebbtől",
+    "gridView": "Rácsnézet",
+    "listView": "Listanézet",
+    "prevPage": "Előző oldal",
+    "nextPage": "Következő oldal",
+    "pageOf": "{page}. oldal / {total}"
+  },
   "footer": {
     "about": "Rólunk",
     "terms": "Felhasználási feltételek",

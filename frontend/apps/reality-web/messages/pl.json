@@ -193,6 +193,27 @@
     "branding": "Branding",
     "inviteRealtor": "Zaproś agenta"
   },
+  "listings": {
+    "propertiesForSale": "Nieruchomości na sprzedaż",
+    "propertiesForRent": "Nieruchomości do wynajęcia",
+    "allProperties": "Wszystkie nieruchomości",
+    "tabAll": "Wszystkie",
+    "tabForSale": "Na sprzedaż",
+    "tabForRent": "Do wynajęcia",
+    "listingsFound": "ofert znalezionych",
+    "filters": "Filtry",
+    "sortNewest": "Najnowsze",
+    "sortOldest": "Najstarsze",
+    "sortPriceLow": "Cena: od najniższej",
+    "sortPriceHigh": "Cena: od najwyższej",
+    "sortSizeLarge": "Powierzchnia: od największej",
+    "sortSizeSmall": "Powierzchnia: od najmniejszej",
+    "gridView": "Widok siatki",
+    "listView": "Widok listy",
+    "prevPage": "Poprzednia strona",
+    "nextPage": "Następna strona",
+    "pageOf": "Strona {page} z {total}"
+  },
   "footer": {
     "about": "O nas",
     "terms": "Regulamin",

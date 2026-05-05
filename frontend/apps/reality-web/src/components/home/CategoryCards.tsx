@@ -8,7 +8,7 @@
 
 import { useCategoryCounts } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
+import { Link } from '../../i18n/routing';
 
 const categoryIcons: Record<string, JSX.Element> = {
   apartment: (

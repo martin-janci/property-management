@@ -71,14 +71,14 @@ export function ComparisonTray() {
       <style jsx>{`
         .comparison-tray {
           position: fixed;
-          bottom: 24px;
+          bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
           left: 50%;
           transform: translateX(-50%);
           background: var(--ppt-bg-surface);
           border-radius: 16px;
           box-shadow: var(--ppt-shadow-xl);
           padding: 16px;
-          z-index: 1000;
+          z-index: var(--ppt-z-fixed);
           display: flex;
           flex-direction: column;
           gap: 12px;
@@ -204,6 +204,7 @@ export function ComparisonTray() {
             left: 16px;
             right: 16px;
             transform: none;
+            bottom: max(16px, calc(8px + env(safe-area-inset-bottom)));
           }
         }
       `}</style>

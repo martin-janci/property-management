@@ -193,6 +193,27 @@
     "branding": "Branding",
     "inviteRealtor": "Makler einladen"
   },
+  "listings": {
+    "propertiesForSale": "Immobilien zum Verkauf",
+    "propertiesForRent": "Immobilien zur Miete",
+    "allProperties": "Alle Immobilien",
+    "tabAll": "Alle",
+    "tabForSale": "Zum Verkauf",
+    "tabForRent": "Zur Miete",
+    "listingsFound": "Angebote gefunden",
+    "filters": "Filter",
+    "sortNewest": "Neueste zuerst",
+    "sortOldest": "Älteste zuerst",
+    "sortPriceLow": "Preis: günstigste zuerst",
+    "sortPriceHigh": "Preis: teuerste zuerst",
+    "sortSizeLarge": "Größe: größte zuerst",
+    "sortSizeSmall": "Größe: kleinste zuerst",
+    "gridView": "Rasteransicht",
+    "listView": "Listenansicht",
+    "prevPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "pageOf": "Seite {page} von {total}"
+  },
   "footer": {
     "about": "Über uns",
     "terms": "Nutzungsbedingungen",

@@ -193,6 +193,27 @@
     "branding": "Branding",
     "inviteRealtor": "Pozvať makléra"
   },
+  "listings": {
+    "propertiesForSale": "Nehnuteľnosti na predaj",
+    "propertiesForRent": "Nehnuteľnosti na prenájom",
+    "allProperties": "Všetky nehnuteľnosti",
+    "tabAll": "Všetky",
+    "tabForSale": "Na predaj",
+    "tabForRent": "Na prenájom",
+    "listingsFound": "ponúk nájdených",
+    "filters": "Filtre",
+    "sortNewest": "Najnovšie",
+    "sortOldest": "Najstaršie",
+    "sortPriceLow": "Cena: od najnižšej",
+    "sortPriceHigh": "Cena: od najvyššej",
+    "sortSizeLarge": "Plocha: od najväčšej",
+    "sortSizeSmall": "Plocha: od najmenšej",
+    "gridView": "Zobrazenie mriežky",
+    "listView": "Zobrazenie zoznamu",
+    "prevPage": "Predchádzajúca strana",
+    "nextPage": "Ďalšia strana",
+    "pageOf": "Strana {page} z {total}"
+  },
   "footer": {
     "about": "O nás",
     "terms": "Obchodné podmienky",

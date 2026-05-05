@@ -68,7 +68,28 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html
+      lang={locale}
+      // Apply system color scheme by default; JS in ColorSchemeScript can
+      // override with a stored user preference at runtime.
+      suppressHydrationWarning
+    >
+      {/* Inline script sets data-color-scheme before first paint to avoid flash */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  try {
+    var stored = localStorage.getItem('ppt-color-scheme');
+    var scheme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-color-scheme', scheme);
+  } catch(e) {}
+})();
+            `.trim(),
+          }}
+        />
+      </head>
       <body>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>

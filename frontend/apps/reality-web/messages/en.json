@@ -193,6 +193,27 @@
     "branding": "Branding",
     "inviteRealtor": "Invite Realtor"
   },
+  "listings": {
+    "propertiesForSale": "Properties for Sale",
+    "propertiesForRent": "Properties for Rent",
+    "allProperties": "All Properties",
+    "tabAll": "All",
+    "tabForSale": "For Sale",
+    "tabForRent": "For Rent",
+    "listingsFound": "listings found",
+    "filters": "Filters",
+    "sortNewest": "Newest First",
+    "sortOldest": "Oldest First",
+    "sortPriceLow": "Price: Low to High",
+    "sortPriceHigh": "Price: High to Low",
+    "sortSizeLarge": "Size: Large to Small",
+    "sortSizeSmall": "Size: Small to Large",
+    "gridView": "Grid view",
+    "listView": "List view",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "pageOf": "Page {page} of {total}"
+  },
   "footer": {
     "about": "About",
     "terms": "Terms of Service",
