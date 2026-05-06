@@ -62,7 +62,32 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
                         for c in &wt.containers {
                             let _ = ctx.svc.docker.remove_container(c).await;
                         }
-                        // Phase 1 has shared backend → no DB to dump. Phase 3 will add pg_dump here.
+                        // If dedicated backend, dump DB before drop.
+                        if let Some(db) = wt.db_name.clone() {
+                            let dump_path_str = format!(
+                                "{}/{}-{}.dump",
+                                ctx.cfg.snapshot_dir,
+                                wt.name,
+                                now.timestamp()
+                            );
+                            let dump_path = std::path::Path::new(&dump_path_str);
+                            if let Err(e) = ctx.svc.postgres.dump(&db, dump_path).await {
+                                tracing::warn!(error = %e, db = %db, "pg_dump failed during gc stop");
+                            } else {
+                                wt.dump_path = Some(dump_path_str.clone());
+                                if let Err(e) =
+                                    crate::infra::postgres::PostgresOps::drop(
+                                        &ctx.svc.postgres,
+                                        &db,
+                                    )
+                                    .await
+                                {
+                                    tracing::warn!(error = %e, db = %db, "pg drop failed");
+                                } else {
+                                    wt.db_name = None;
+                                }
+                            }
+                        }
                         wt.state = WorktreeState::Closed;
                         wt.closed_at = Some(now);
                         ctx.svc.store.upsert_worktree(&wt).await?;
@@ -76,6 +101,10 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
                         let dir = std::path::PathBuf::from(&ctx.cfg.worktree_dir)
                             .join(crate::infra::git::sanitize(&wt.branch));
                         let _ = tokio::fs::remove_dir_all(&dir).await;
+                        // Remove DB dump if present.
+                        if let Some(ref dump) = wt.dump_path {
+                            let _ = tokio::fs::remove_file(dump).await;
+                        }
                         report.cleaned.push(wt.name.clone());
                     }
                 }
