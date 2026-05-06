@@ -18,10 +18,14 @@ pub struct WorkflowRun {
 
 impl GhClient {
     pub fn new(token: impl Into<String>, repo: impl Into<String>) -> Self {
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .expect("build GH HTTP client");
         Self {
             token: token.into(),
             repo: repo.into(),
-            http: reqwest::Client::new(),
+            http,
         }
     }
 
