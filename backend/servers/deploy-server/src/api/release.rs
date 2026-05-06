@@ -2,7 +2,8 @@
 use crate::config::TargetsConfig;
 use crate::domain::{Release, ReleaseState};
 use crate::infra::{
-    BlueGreenDeployer, CaddyClient, CallerIdentity, DockerClient, StagingDeploySpec, Store,
+    BlueGreenDeployer, BlueGreenSpec, CaddyClient, CallerIdentity, DockerClient, StagingDeploySpec,
+    Store,
 };
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
@@ -151,19 +152,7 @@ pub async fn wake_handler(
         .targets
         .get("staging")
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
-    let spec = StagingDeploySpec {
-        tag: rel.tag.clone(),
-        api_image: rel.images.get("api-server").cloned().unwrap_or_default(),
-        reality_image: rel
-            .images
-            .get("reality-server")
-            .cloned()
-            .unwrap_or_default(),
-        ppt_web_image: rel.images.get("ppt-web").cloned().unwrap_or_default(),
-        reality_web_image: rel.images.get("reality-web").cloned().unwrap_or_default(),
-        domain_suffix: target_cfg.domain_suffix.clone(),
-        target_name: "staging".into(),
-    };
+    let spec = BlueGreenSpec::from_release(&rel, "staging", &target_cfg.domain_suffix);
     let docker = svc
         .docker_pool
         .get(&target)

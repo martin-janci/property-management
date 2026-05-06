@@ -328,10 +328,8 @@ pub async fn close_handler(
     wt.state = WorktreeState::Closing;
     svc.store.upsert_worktree(&wt).await?;
 
-    // Stop containers, ignore individual errors (best-effort cleanup).
-    for c in &wt.containers {
-        let _ = svc.docker.stop_container(c).await;
-    }
+    // Stop+remove containers, best-effort cleanup with debug-level logging on failure.
+    svc.docker.cleanup_containers(&wt.containers).await;
 
     // Unregister Caddy routes for all worktree URLs.
     for url_opt in [

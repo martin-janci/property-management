@@ -73,27 +73,7 @@ pub async fn promote_handler(
         }));
     }
 
-    let spec = BlueGreenSpec {
-        tag: candidate.tag.clone(),
-        target_name: req.target.clone(),
-        api_image: candidate
-            .images
-            .get("api-server")
-            .cloned()
-            .unwrap_or_default(),
-        reality_image: candidate
-            .images
-            .get("reality-server")
-            .cloned()
-            .unwrap_or_default(),
-        ppt_web_image: candidate.images.get("ppt-web").cloned().unwrap_or_default(),
-        reality_web_image: candidate
-            .images
-            .get("reality-web")
-            .cloned()
-            .unwrap_or_default(),
-        domain_suffix: target_cfg.domain_suffix.clone(),
-    };
+    let spec = BlueGreenSpec::from_release(&candidate, &req.target, &target_cfg.domain_suffix);
     let docker = svc
         .release_svc
         .docker_pool
@@ -124,23 +104,11 @@ pub async fn promote_handler(
                 tracing::warn!(error = %e, auto = auto, "health grace failed");
                 if auto {
                     if let Some(prev) = &prev_release {
-                        let prev_spec = BlueGreenSpec {
-                            tag: prev.tag.clone(),
-                            target_name: req.target.clone(),
-                            api_image: prev.images.get("api-server").cloned().unwrap_or_default(),
-                            reality_image: prev
-                                .images
-                                .get("reality-server")
-                                .cloned()
-                                .unwrap_or_default(),
-                            ppt_web_image: prev.images.get("ppt-web").cloned().unwrap_or_default(),
-                            reality_web_image: prev
-                                .images
-                                .get("reality-web")
-                                .cloned()
-                                .unwrap_or_default(),
-                            domain_suffix: target_cfg.domain_suffix.clone(),
-                        };
+                        let prev_spec = BlueGreenSpec::from_release(
+                            prev,
+                            &req.target,
+                            &target_cfg.domain_suffix,
+                        );
                         match deployer.deploy(&prev_spec).await {
                             Ok(_) => {
                                 tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
@@ -267,31 +235,7 @@ pub async fn rollback_handler(
         .current_release_for(&req.target, live_state)
         .await?;
 
-    let spec = BlueGreenSpec {
-        tag: target_release.tag.clone(),
-        target_name: req.target.clone(),
-        api_image: target_release
-            .images
-            .get("api-server")
-            .cloned()
-            .unwrap_or_default(),
-        reality_image: target_release
-            .images
-            .get("reality-server")
-            .cloned()
-            .unwrap_or_default(),
-        ppt_web_image: target_release
-            .images
-            .get("ppt-web")
-            .cloned()
-            .unwrap_or_default(),
-        reality_web_image: target_release
-            .images
-            .get("reality-web")
-            .cloned()
-            .unwrap_or_default(),
-        domain_suffix: target_cfg.domain_suffix.clone(),
-    };
+    let spec = BlueGreenSpec::from_release(&target_release, &req.target, &target_cfg.domain_suffix);
     let docker = svc
         .release_svc
         .docker_pool

@@ -61,9 +61,7 @@ pub async fn tick_handler(
             WorktreeState::Running => {
                 if let Some(last) = wt.last_traffic_at {
                     if now - last > pause_after {
-                        for c in &wt.containers {
-                            let _ = ctx.svc.docker.stop_container(c).await;
-                        }
+                        ctx.svc.docker.cleanup_containers(&wt.containers).await;
                         wt.state = WorktreeState::Paused;
                         ctx.svc.store.upsert_worktree(&wt).await?;
                         report.paused.push(wt.name.clone());
@@ -73,9 +71,7 @@ pub async fn tick_handler(
             WorktreeState::Paused => {
                 if let Some(last) = wt.last_traffic_at {
                     if now - last > stop_after {
-                        for c in &wt.containers {
-                            let _ = ctx.svc.docker.remove_container(c).await;
-                        }
+                        ctx.svc.docker.cleanup_containers(&wt.containers).await;
                         // If dedicated backend, dump DB before drop.
                         if let Some(db) = wt.db_name.clone() {
                             let dump_path_str = format!(
@@ -123,12 +119,7 @@ pub async fn tick_handler(
                 // 5 min — recent Closing rows are presumed in-flight.
                 let stuck_threshold = chrono::Duration::minutes(5);
                 if wt.closed_at.is_none() && (now - wt.created_at) > stuck_threshold {
-                    for c in &wt.containers {
-                        let _ = ctx.svc.docker.stop_container(c).await;
-                    }
-                    for c in &wt.containers {
-                        let _ = ctx.svc.docker.remove_container(c).await;
-                    }
+                    ctx.svc.docker.cleanup_containers(&wt.containers).await;
                     wt.state = WorktreeState::Closed;
                     wt.closed_at = Some(now);
                     ctx.svc.store.upsert_worktree(&wt).await?;
@@ -150,15 +141,15 @@ pub async fn tick_handler(
     {
         if let Some(promoted) = rel.promoted_at {
             if Utc::now() - promoted > staging_idle {
-                for color in ["blue", "green"] {
-                    for service in ["api", "reality", "ppt", "reality-web"] {
-                        let _ = ctx
-                            .svc
-                            .docker
-                            .stop_container(&format!("staging-{service}-{color}"))
-                            .await;
-                    }
-                }
+                let staging_containers: Vec<String> = ["blue", "green"]
+                    .iter()
+                    .flat_map(|color| {
+                        crate::infra::BG_SERVICES
+                            .iter()
+                            .map(move |service| format!("staging-{service}-{color}"))
+                    })
+                    .collect();
+                ctx.svc.docker.cleanup_containers(&staging_containers).await;
                 report.paused_targets.push("staging".into());
             }
         }

@@ -11,6 +11,11 @@ use futures_util::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Service names participating in blue/green deploys.
+/// Used by the deployer itself and by lifecycle code (gc, etc.) that needs to
+/// enumerate per-target containers without hardcoding the list.
+pub const BG_SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web"];
+
 pub struct BlueGreenDeployer {
     pub docker: Arc<DockerClient>,
     pub caddy: Arc<CaddyClient>,
@@ -27,6 +32,30 @@ pub struct BlueGreenSpec {
     pub target_name: String,
 }
 
+impl BlueGreenSpec {
+    /// Build a deploy spec from a Release row + target config.
+    /// Use this instead of inlining the boilerplate in deploy/promote/rollback handlers.
+    pub fn from_release(
+        rel: &crate::domain::Release,
+        target_name: &str,
+        domain_suffix: &str,
+    ) -> Self {
+        Self {
+            tag: rel.tag.clone(),
+            target_name: target_name.to_string(),
+            api_image: rel.images.get("api-server").cloned().unwrap_or_default(),
+            reality_image: rel
+                .images
+                .get("reality-server")
+                .cloned()
+                .unwrap_or_default(),
+            ppt_web_image: rel.images.get("ppt-web").cloned().unwrap_or_default(),
+            reality_web_image: rel.images.get("reality-web").cloned().unwrap_or_default(),
+            domain_suffix: domain_suffix.to_string(),
+        }
+    }
+}
+
 impl BlueGreenDeployer {
     pub async fn deploy(&self, spec: &BlueGreenSpec) -> Result<()> {
         let docker = self.docker.bollard();
@@ -39,14 +68,12 @@ impl BlueGreenDeployer {
             self.pull_image(docker, img).await?;
         }
 
-        const SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web"];
-
         // Check how many of each color is running. Pick the OPPOSITE color of whichever
         // has more services running. If tied (everything down or split), default to "blue".
         let target_name = &spec.target_name;
         let mut blue_count = 0u8;
         let mut green_count = 0u8;
-        for service in SERVICES {
+        for service in BG_SERVICES {
             if self
                 .docker
                 .is_running(&format!("{target_name}-{service}-blue"))
@@ -154,16 +181,11 @@ impl BlueGreenDeployer {
             )
             .await?;
 
-        for service in SERVICES {
-            let _ = self
-                .docker
-                .stop_container(&format!("{target_name}-{service}-{prev_color}"))
-                .await;
-            let _ = self
-                .docker
-                .remove_container(&format!("{target_name}-{service}-{prev_color}"))
-                .await;
-        }
+        let prev_containers: Vec<String> = BG_SERVICES
+            .iter()
+            .map(|s| format!("{target_name}-{s}-{prev_color}"))
+            .collect();
+        self.docker.cleanup_containers(&prev_containers).await;
         Ok(())
     }
 

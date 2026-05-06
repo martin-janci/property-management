@@ -269,6 +269,42 @@ impl DockerClient {
             .await;
         Ok(())
     }
+
+    /// Best-effort stop+remove of a list of containers.
+    /// Logs each individual failure but never returns an error — used during cleanup paths
+    /// where progress matters more than completeness.
+    pub async fn cleanup_containers(&self, names: &[String]) {
+        for name in names {
+            if let Err(e) = self
+                .docker
+                .stop_container(name, Some(StopContainerOptions { t: 10 }))
+                .await
+            {
+                tracing::debug!(
+                    container = %name,
+                    error = %e,
+                    "stop_container failed during cleanup (ignored)"
+                );
+            }
+            if let Err(e) = self
+                .docker
+                .remove_container(
+                    name,
+                    Some(RemoveContainerOptions {
+                        force: true,
+                        ..Default::default()
+                    }),
+                )
+                .await
+            {
+                tracing::debug!(
+                    container = %name,
+                    error = %e,
+                    "remove_container failed during cleanup (ignored)"
+                );
+            }
+        }
+    }
 }
 
 fn pick_local_port_for_tunnel(_target: &str) -> u16 {
