@@ -109,7 +109,7 @@ BEGIN
         PERFORM set_request_context(NULL, NULL, TRUE);
     EXCEPTION
         WHEN undefined_function THEN
-            PERFORM set_config('app.is_super_admin', 'true', FALSE);
+            PERFORM set_config('app.is_super_admin', 'true', TRUE);
     END;
 
     -- Organization (the create_default_roles trigger seeds 8 system roles).
@@ -200,7 +200,7 @@ BEGIN
         PERFORM clear_request_context();
     EXCEPTION
         WHEN undefined_function THEN
-            PERFORM set_config('app.is_super_admin', 'false', FALSE);
+            PERFORM set_config('app.is_super_admin', 'false', TRUE);
     END;
 END
 $$;
