@@ -39,15 +39,48 @@ impl BlueGreenDeployer {
             self.pull_image(docker, img).await?;
         }
 
-        let target = &spec.target_name;
-        let next_color = if self
-            .docker
-            .is_running(&format!("{target}-api-blue"))
-            .await
-            .unwrap_or(false)
-        {
+        const SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web"];
+
+        // Check how many of each color is running. Pick the OPPOSITE color of whichever
+        // has more services running. If tied (everything down or split), default to "blue".
+        let target_name = &spec.target_name;
+        let mut blue_count = 0u8;
+        let mut green_count = 0u8;
+        for service in SERVICES {
+            if self
+                .docker
+                .is_running(&format!("{target_name}-{service}-blue"))
+                .await
+                .unwrap_or(false)
+            {
+                blue_count += 1;
+            }
+            if self
+                .docker
+                .is_running(&format!("{target_name}-{service}-green"))
+                .await
+                .unwrap_or(false)
+            {
+                green_count += 1;
+            }
+        }
+
+        // Decide next_color: the color that has FEWER (or no) live services.
+        // Tie-breaker (both 0 or equal): "blue" — first deploy goes blue.
+        let next_color = if blue_count > green_count {
             "green"
+        } else if green_count > blue_count {
+            "blue"
+        } else if blue_count == 0 && green_count == 0 {
+            "blue" // first deploy
         } else {
+            // Tied with both running — partial mixed state. Pick "blue" to recover but log warning.
+            tracing::warn!(
+                target = %target_name,
+                blue_count,
+                green_count,
+                "blue/green target is in mixed state — both colors have running services; recovering by deploying blue"
+            );
             "blue"
         };
         let prev_color = if next_color == "blue" {
@@ -57,31 +90,31 @@ impl BlueGreenDeployer {
         };
 
         self.run_service(
-            &format!("{target}-api-{next_color}"),
+            &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
             8080,
-            target,
+            target_name,
         )
         .await?;
         self.run_service(
-            &format!("{target}-reality-{next_color}"),
+            &format!("{target_name}-reality-{next_color}"),
             &spec.reality_image,
             8081,
-            target,
+            target_name,
         )
         .await?;
         self.run_service(
-            &format!("{target}-ppt-{next_color}"),
+            &format!("{target_name}-ppt-{next_color}"),
             &spec.ppt_web_image,
             80,
-            target,
+            target_name,
         )
         .await?;
         self.run_service(
-            &format!("{target}-reality-web-{next_color}"),
+            &format!("{target_name}-reality-web-{next_color}"),
             &spec.reality_web_image,
             3000,
-            target,
+            target_name,
         )
         .await?;
 
@@ -89,36 +122,36 @@ impl BlueGreenDeployer {
         self.caddy
             .register_route(
                 &format!("api.{suffix}"),
-                &format!("{target}-api-{next_color}:8080"),
+                &format!("{target_name}-api-{next_color}:8080"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("reality-api.{suffix}"),
-                &format!("{target}-reality-{next_color}:8081"),
+                &format!("{target_name}-reality-{next_color}:8081"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("ppt.{suffix}"),
-                &format!("{target}-ppt-{next_color}:80"),
+                &format!("{target_name}-ppt-{next_color}:80"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("reality.{suffix}"),
-                &format!("{target}-reality-web-{next_color}:3000"),
+                &format!("{target_name}-reality-web-{next_color}:3000"),
             )
             .await?;
 
-        for s in ["api", "reality", "ppt", "reality-web"] {
+        for service in SERVICES {
             let _ = self
                 .docker
-                .stop_container(&format!("{target}-{s}-{prev_color}"))
+                .stop_container(&format!("{target_name}-{service}-{prev_color}"))
                 .await;
             let _ = self
                 .docker
-                .remove_container(&format!("{target}-{s}-{prev_color}"))
+                .remove_container(&format!("{target_name}-{service}-{prev_color}"))
                 .await;
         }
         Ok(())
