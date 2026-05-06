@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
+    @apply antialiased;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
@@ -31,15 +31,28 @@
   }
 
   .app-nav {
-    @apply flex items-center gap-4 px-6 py-3 bg-white border-b border-gray-200 shadow-sm;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--color-surface, #ffffff);
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   }
 
   .app-nav a {
-    @apply text-gray-700 hover:text-blue-600 no-underline font-medium text-sm;
+    color: var(--color-text-secondary, #4b5563);
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .app-nav a:hover {
+    color: var(--color-primary, #2563eb);
   }
 
   .app-nav a[aria-current="page"] {
-    @apply text-blue-600;
+    color: var(--color-primary, #2563eb);
   }
 
   main#main-content {
@@ -51,19 +64,27 @@
   }
 
   .error-page h1 {
-    @apply text-2xl font-semibold text-gray-900 mb-3;
+    @apply text-2xl font-semibold mb-3;
+    color: var(--color-text, #111827);
   }
 
   .error-page p {
-    @apply text-gray-600 mb-4;
+    @apply mb-4;
+    color: var(--color-text-secondary, #6b7280);
   }
 
   .error-page a {
-    @apply text-blue-600 hover:text-blue-800 underline;
+    color: var(--color-primary, #2563eb);
+    text-decoration: underline;
+  }
+
+  .error-page a:hover {
+    color: var(--color-primary-hover, #1d4ed8);
   }
 
   .loading-page {
-    @apply max-w-2xl mx-auto px-6 py-16 text-center text-gray-600;
+    @apply max-w-2xl mx-auto px-6 py-16 text-center;
+    color: var(--color-text-secondary, #6b7280);
   }
 
   .dispute-detail-page,

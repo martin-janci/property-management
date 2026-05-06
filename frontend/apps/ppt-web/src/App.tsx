@@ -221,6 +221,7 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -231,8 +232,10 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
-      <ConnectionStatus />
-      <LanguageSwitcher />
+      <div className="ml-auto flex items-center gap-3">
+        {isAuthenticated && <ConnectionStatus />}
+        <LanguageSwitcher />
+      </div>
     </nav>
   );
 }
@@ -1669,10 +1672,79 @@ function BudgetManagementPageRoute() {
 
 function Home() {
   const { t } = useTranslation();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
   return (
-    <div>
-      <h1>{t('home.title')}</h1>
-      <p>{t('home.welcome')}</p>
+    <div className="space-y-10">
+      <section className="text-center py-10">
+        <h1 className="text-3xl md:text-4xl font-bold mb-3">{t('home.title')}</h1>
+        <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
+          {t('home.welcome')}
+        </p>
+        {!isAuthenticated && (
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="px-5 py-2.5 rounded-lg font-medium text-white"
+              style={{ backgroundColor: 'var(--color-primary, #2563eb)' }}
+            >
+              {t('auth.signIn')}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className="px-5 py-2.5 rounded-lg font-medium"
+              style={{
+                color: 'var(--color-primary, #2563eb)',
+                border: '1px solid var(--color-primary, #2563eb)',
+              }}
+            >
+              {t('auth.register', { defaultValue: 'Register' })}
+            </button>
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
+              }
+              className="px-5 py-2.5 rounded-lg font-medium text-white"
+              style={{ backgroundColor: 'var(--color-primary, #2563eb)' }}
+            >
+              {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { to: '/documents', titleKey: 'nav.documents' },
+          { to: '/news', titleKey: 'nav.news' },
+          { to: '/disputes', titleKey: 'nav.disputes' },
+          { to: '/outages', titleKey: 'nav.outages' },
+          { to: '/emergency', titleKey: 'nav.emergency' },
+          { to: '/settings/accessibility', titleKey: 'nav.accessibility' },
+        ].map((card) => (
+          <Link
+            key={card.to}
+            to={card.to}
+            className="block p-5 rounded-xl"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+              {t(card.titleKey)}
+            </span>
+          </Link>
+        ))}
+      </section>
     </div>
   );
 }
