@@ -420,3 +420,173 @@ async fn dedicated_open_close_with_dump() {
         "expected 200 or 500, got {st}"
     );
 }
+
+#[tokio::test]
+#[ignore] // requires docker daemon to actually deploy; without it, tests the auth + parse paths.
+async fn promote_and_rollback_flow() {
+    let tmp = tempdir().unwrap();
+    let store = Arc::new(Store::open(&tmp.path().join("state.db")).await.unwrap());
+
+    let caddy_mock = MockServer::start();
+    caddy_mock.mock(|when, then| {
+        when.method(PUT);
+        then.status(200);
+    });
+
+    let bare = tmp.path().join("origin.git");
+    std::fs::create_dir_all(&bare).unwrap();
+    std::process::Command::new("git")
+        .args(["init", "--bare"])
+        .arg(&bare)
+        .status()
+        .unwrap();
+
+    let git = Arc::new(GitFetcher::new(
+        bare.to_string_lossy().to_string(),
+        tmp.path().join("worktrees"),
+        "/dev/null",
+    ));
+    let docker = Arc::new(DockerClient::from_socket("unix:///var/run/docker.sock").unwrap());
+    let caddy = Arc::new(CaddyClient::new(caddy_mock.base_url()));
+
+    let api_key = "test-token";
+    let hash = hex::encode(<sha2::Sha256 as sha2::Digest>::digest(api_key.as_bytes()));
+    let api_keys = Arc::new(ApiKeyValidator::new(vec![ApiKey {
+        name: "test".into(),
+        hash,
+    }]));
+    let oidc = Arc::new(OidcValidator::new(OidcConfig {
+        issuer: "x".into(),
+        jwks_url: "http://x".into(),
+        audience: "x".into(),
+        allowed_repos: vec![],
+        allowed_refs: vec![],
+    }));
+    let webhook_cfg = deploy_server::api::webhook::WebhookConfig {
+        secret: "wh".into(),
+    };
+
+    let mut targets_map = HashMap::new();
+    targets_map.insert(
+        "prod".into(),
+        Target {
+            docker_socket: "unix:///var/run/docker.sock".into(),
+            caddy_url: caddy_mock.base_url(),
+            domain_suffix: "rlt.sk".into(),
+            idle_timeout: None,
+            promote_strategy: Some("blue-green".into()),
+            rollback_mode: "manual".into(),
+            health_grace: None, // skip health check in test
+        },
+    );
+    let targets_cfg = Arc::new(TargetsConfig {
+        targets: targets_map,
+    });
+
+    let cfg = Arc::new(Config {
+        bind: "0.0.0.0:0".into(),
+        state_dir: tmp.path().to_string_lossy().into(),
+        worktree_dir: tmp.path().join("worktrees").to_string_lossy().into(),
+        snapshot_dir: tmp.path().join("snapshots").to_string_lossy().into(),
+        default_ttl_seconds: 172_800,
+        idle_pause_seconds: 1800,
+        idle_stop_seconds: 86400,
+        git_repo_url: bare.to_string_lossy().into(),
+        postgres_admin_url: "postgres://test/postgres".into(),
+        postgres_template_db: "ppt_dev_template".into(),
+        postgres_user_db_prefix: "ppt_wt_".into(),
+        backend_image_prefix: "ghcr.io/test".into(),
+        gh_repo: "test/repo".into(),
+    });
+
+    let postgres = Arc::new(PostgresOps {
+        admin_url: cfg.postgres_admin_url.clone(),
+        template_db: cfg.postgres_template_db.clone(),
+        user_db_prefix: cfg.postgres_user_db_prefix.clone(),
+    });
+    let gh = Arc::new(GhClient::new("dummy", "test/repo"));
+
+    let deployer = Arc::new(StagingDeployer {
+        docker: docker.clone(),
+        caddy: caddy.clone(),
+    });
+    let release_svc = Arc::new(ReleaseService {
+        store: store.clone(),
+        deployer,
+        targets: targets_cfg.clone(),
+        image_prefix: "ghcr.io/test".into(),
+    });
+    let promote_svc = Arc::new(PromoteService {
+        release_svc: release_svc.clone(),
+        health: Arc::new(HealthProbe::new()),
+        targets: targets_cfg.clone(),
+    });
+
+    let app = router::build(
+        store.clone(),
+        git,
+        docker,
+        caddy,
+        api_keys,
+        oidc,
+        "ppt-frontend-dev:local".into(),
+        "dev.ppt.rlt.sk".into(),
+        "dev.rlt.sk".into(),
+        webhook_cfg,
+        cfg,
+        release_svc,
+        postgres,
+        gh,
+        "ghcr.io/test".into(),
+        promote_svc,
+    );
+
+    let server = axum_test::TestServer::new(app).unwrap();
+
+    // 1. Register a prod-candidate
+    let images = serde_json::json!({
+        "api-server": "ghcr.io/test/ppt-api-server:v1.0.0",
+        "reality-server": "ghcr.io/test/ppt-reality-server:v1.0.0",
+        "ppt-web": "ghcr.io/test/ppt-web:v1.0.0",
+        "reality-web": "ghcr.io/test/reality-web:v1.0.0",
+    });
+    let reg = server
+        .post("/api/release")
+        .add_header("Authorization", "Bearer test-token")
+        .json(&serde_json::json!({"tag": "v1.0.0", "images": images}))
+        .await;
+    reg.assert_status_ok();
+
+    // 2. Dry-run promote
+    let dry = server
+        .post("/api/promote")
+        .add_header("Authorization", "Bearer test-token")
+        .json(&serde_json::json!({"tag": "v1.0.0", "target": "prod", "dry_run": true}))
+        .await;
+    dry.assert_status_ok();
+    assert!(dry.text().contains("v1.0.0"));
+
+    // 3. Real promote — will fail at deployer.deploy() because images aren't real, but auth + parse paths run.
+    let promote = server
+        .post("/api/promote")
+        .add_header("Authorization", "Bearer test-token")
+        .json(&serde_json::json!({"tag": "v1.0.0", "target": "prod"}))
+        .await;
+    let st = promote.status_code();
+    assert!(
+        st == 200 || st.as_u16() == 500,
+        "promote: expected 200 or 500, got {st}"
+    );
+
+    // 4. Rollback (no `to` — would need previous to exist; expect 404 or 500)
+    let rollback = server
+        .post("/api/rollback")
+        .add_header("Authorization", "Bearer test-token")
+        .json(&serde_json::json!({"target": "prod"}))
+        .await;
+    let rst = rollback.status_code();
+    assert!(
+        rst == 200 || rst.as_u16() == 404 || rst.as_u16() == 500,
+        "rollback: unexpected {rst}"
+    );
+}
