@@ -37,7 +37,11 @@ import {
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, WebSocketProvider, useAuth } from './contexts';
-import { CommandPaletteDialog, useNavigationCommands } from './features/command-palette';
+import {
+  CommandPaletteDialog,
+  CommandPaletteProvider,
+  useNavigationCommands,
+} from './features/command-palette';
 import { ManagerDashboardPage, ResidentDashboardPage } from './features/dashboard';
 import type {
   DisputeCategory,
@@ -254,103 +258,108 @@ function App() {
           <AnnouncerProvider>
             <WebSocketWrapper>
               <BrowserRouter>
-                <CommandPaletteWrapper>
-                  <SkipNavigation mainContentId="main-content" />
-                  <OfflineIndicator />
-                  <div className="app">
-                    <AppNavigation />
-                    <main id="main-content">
-                      <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/register" element={<RegisterPage />} />
-                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                        <Route path="/reset-password" element={<ResetPasswordPage />} />
-                        <Route path="/settings/password" element={<ChangePasswordPage />} />
-                        <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
-                        <Route path="/settings/profile" element={<ProfileEditPage />} />
-                        {/* Dashboard routes (Epic 124) */}
-                        <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-                        <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
-                        {/* Document Intelligence routes (Epic 39) */}
-                        <Route path="/documents" element={<DocumentsPageRoute />} />
-                        <Route path="/documents/upload" element={<DocumentUploadPage />} />
-                        <Route path="/documents/:documentId" element={<DocumentDetailRoute />} />
-                        {/* News routes (Epic 59) */}
-                        <Route path="/news" element={<NewsListPage />} />
-                        <Route path="/news/:articleId" element={<ArticleDetailRoute />} />
-                        {/* Emergency contacts route (Epic 62) */}
-                        <Route path="/emergency" element={<EmergencyContactDirectoryPage />} />
-                        {/* Accessibility settings route (Epic 60) */}
-                        <Route
-                          path="/settings/accessibility"
-                          element={<AccessibilitySettingsPage />}
-                        />
-                        {/* Privacy settings route (Epic 63) */}
-                        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
-                        {/* Dispute Resolution routes (Epic 77) */}
-                        <Route path="/disputes" element={<DisputesPageRoute />} />
-                        <Route path="/disputes/new" element={<FileDisputePageRoute />} />
-                        <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
-                        {/* Outages routes (UC-12) */}
-                        <Route path="/outages" element={<OutagesPageRoute />} />
-                        <Route path="/outages/new" element={<CreateOutagePageRoute />} />
-                        <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
-                        <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
-                        {/* Announcements routes (UC-06) */}
-                        <Route path="/announcements" element={<AnnouncementsPageRoute />} />
-                        <Route
-                          path="/announcements/new"
-                          element={<CreateAnnouncementPageRoute />}
-                        />
-                        <Route
-                          path="/announcements/:announcementId"
-                          element={<ViewAnnouncementPageRoute />}
-                        />
-                        <Route
-                          path="/announcements/:announcementId/edit"
-                          element={<EditAnnouncementPageRoute />}
-                        />
-                        {/* Messaging routes (UC-07) */}
-                        <Route path="/messages" element={<MessagesPageRoute />} />
-                        <Route path="/messages/new" element={<NewMessagePageRoute />} />
-                        <Route path="/messages/:threadId" element={<ThreadDetailPageRoute />} />
-                        {/* Faults routes (UC-03) */}
-                        <Route path="/faults" element={<FaultsPageRoute />} />
-                        <Route path="/faults/new" element={<CreateFaultPageRoute />} />
-                        <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
-                        <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
-                        {/* Community routes (Epic 42) */}
-                        <Route path="/community" element={<FeedPageRoute />} />
-                        <Route path="/community/groups" element={<GroupsPageRoute />} />
-                        <Route path="/community/groups/new" element={<CreateGroupPageRoute />} />
-                        <Route
-                          path="/community/groups/:groupId"
-                          element={<GroupDetailPageRoute />}
-                        />
-                        <Route path="/community/events" element={<EventsPageRoute />} />
-                        <Route path="/community/marketplace" element={<MarketplacePageRoute />} />
-                        {/* Financial routes (Epic 52) */}
-                        <Route path="/financial" element={<FinancialDashboardPageRoute />} />
-                        <Route
-                          path="/financial/invoices"
-                          element={<InvoiceManagementPageRoute />}
-                        />
-                        <Route
-                          path="/financial/payments"
-                          element={<PaymentManagementPageRoute />}
-                        />
-                        <Route path="/financial/budgets" element={<BudgetManagementPageRoute />} />
+                <CommandPaletteProvider>
+                  <CommandPaletteWrapper>
+                    <SkipNavigation mainContentId="main-content" />
+                    <OfflineIndicator />
+                    <div className="app">
+                      <AppNavigation />
+                      <main id="main-content">
+                        <Routes>
+                          <Route path="/" element={<Home />} />
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route path="/register" element={<RegisterPage />} />
+                          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                          <Route path="/reset-password" element={<ResetPasswordPage />} />
+                          <Route path="/settings/password" element={<ChangePasswordPage />} />
+                          <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
+                          <Route path="/settings/profile" element={<ProfileEditPage />} />
+                          {/* Dashboard routes (Epic 124) */}
+                          <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
+                          <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
+                          {/* Document Intelligence routes (Epic 39) */}
+                          <Route path="/documents" element={<DocumentsPageRoute />} />
+                          <Route path="/documents/upload" element={<DocumentUploadPage />} />
+                          <Route path="/documents/:documentId" element={<DocumentDetailRoute />} />
+                          {/* News routes (Epic 59) */}
+                          <Route path="/news" element={<NewsListPage />} />
+                          <Route path="/news/:articleId" element={<ArticleDetailRoute />} />
+                          {/* Emergency contacts route (Epic 62) */}
+                          <Route path="/emergency" element={<EmergencyContactDirectoryPage />} />
+                          {/* Accessibility settings route (Epic 60) */}
+                          <Route
+                            path="/settings/accessibility"
+                            element={<AccessibilitySettingsPage />}
+                          />
+                          {/* Privacy settings route (Epic 63) */}
+                          <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                          {/* Dispute Resolution routes (Epic 77) */}
+                          <Route path="/disputes" element={<DisputesPageRoute />} />
+                          <Route path="/disputes/new" element={<FileDisputePageRoute />} />
+                          <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
+                          {/* Outages routes (UC-12) */}
+                          <Route path="/outages" element={<OutagesPageRoute />} />
+                          <Route path="/outages/new" element={<CreateOutagePageRoute />} />
+                          <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
+                          <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
+                          {/* Announcements routes (UC-06) */}
+                          <Route path="/announcements" element={<AnnouncementsPageRoute />} />
+                          <Route
+                            path="/announcements/new"
+                            element={<CreateAnnouncementPageRoute />}
+                          />
+                          <Route
+                            path="/announcements/:announcementId"
+                            element={<ViewAnnouncementPageRoute />}
+                          />
+                          <Route
+                            path="/announcements/:announcementId/edit"
+                            element={<EditAnnouncementPageRoute />}
+                          />
+                          {/* Messaging routes (UC-07) */}
+                          <Route path="/messages" element={<MessagesPageRoute />} />
+                          <Route path="/messages/new" element={<NewMessagePageRoute />} />
+                          <Route path="/messages/:threadId" element={<ThreadDetailPageRoute />} />
+                          {/* Faults routes (UC-03) */}
+                          <Route path="/faults" element={<FaultsPageRoute />} />
+                          <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+                          <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
+                          <Route path="/faults/:faultId/edit" element={<EditFaultPageRoute />} />
+                          {/* Community routes (Epic 42) */}
+                          <Route path="/community" element={<FeedPageRoute />} />
+                          <Route path="/community/groups" element={<GroupsPageRoute />} />
+                          <Route path="/community/groups/new" element={<CreateGroupPageRoute />} />
+                          <Route
+                            path="/community/groups/:groupId"
+                            element={<GroupDetailPageRoute />}
+                          />
+                          <Route path="/community/events" element={<EventsPageRoute />} />
+                          <Route path="/community/marketplace" element={<MarketplacePageRoute />} />
+                          {/* Financial routes (Epic 52) */}
+                          <Route path="/financial" element={<FinancialDashboardPageRoute />} />
+                          <Route
+                            path="/financial/invoices"
+                            element={<InvoiceManagementPageRoute />}
+                          />
+                          <Route
+                            path="/financial/payments"
+                            element={<PaymentManagementPageRoute />}
+                          />
+                          <Route
+                            path="/financial/budgets"
+                            element={<BudgetManagementPageRoute />}
+                          />
 
-                        {/* Error / state surfaces */}
-                        <Route path="/forbidden" element={<ForbiddenPage />} />
-                        <Route path="/server-error" element={<ServerErrorPage />} />
-                        <Route path="/session-expired" element={<SessionExpiredPage />} />
-                        <Route path="*" element={<NotFoundPage />} />
-                      </Routes>
-                    </main>
-                  </div>
-                </CommandPaletteWrapper>
+                          {/* Error / state surfaces */}
+                          <Route path="/forbidden" element={<ForbiddenPage />} />
+                          <Route path="/server-error" element={<ServerErrorPage />} />
+                          <Route path="/session-expired" element={<SessionExpiredPage />} />
+                          <Route path="*" element={<NotFoundPage />} />
+                        </Routes>
+                      </main>
+                    </div>
+                  </CommandPaletteWrapper>
+                </CommandPaletteProvider>
               </BrowserRouter>
             </WebSocketWrapper>
           </AnnouncerProvider>
