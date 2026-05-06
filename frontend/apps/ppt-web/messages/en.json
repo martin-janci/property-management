@@ -581,6 +581,90 @@
       "acknowledged": "Acknowledged"
     }
   },
+  "dashboard": {
+    "managerActionQueue": "Action Queue",
+    "residentActionQueue": "Your Tasks",
+    "managerDashboard": "Manager Dashboard",
+    "residentDashboard": "My Dashboard",
+    "managerWelcome": "Here's what needs your attention today.",
+    "residentWelcome": "Complete these tasks to stay up to date.",
+    "itemsNeedingAttention_one": "{{count}} item needs attention",
+    "itemsNeedingAttention_other": "{{count}} items need attention",
+    "filters": "Filters",
+    "searchActions": "Search actions",
+    "searchPlaceholder": "Search by title or description...",
+    "filterByPriority": "Filter by priority",
+    "filterByType": "Filter by type",
+    "clearFilters": "Clear all filters",
+    "priority": {
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "actionType": {
+      "fault_pending": "Pending faults",
+      "fault_escalated": "Escalated faults",
+      "approval_pending": "Pending approvals",
+      "vote_active": "Active votes",
+      "message_unread": "Unread messages",
+      "meter_due": "Meter readings",
+      "person_months_due": "Person-months",
+      "announcement_unread": "Unread announcements"
+    },
+    "action": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "view": "View",
+      "dismiss": "Dismiss",
+      "complete": "Complete",
+      "escalate": "Escalate"
+    },
+    "confirmAction": "Are you sure you want to {{action}}?",
+    "allCaughtUp": "All caught up!",
+    "noItemsNeedingAttention": "No items needing your attention right now.",
+    "errorLoadingQueue": "Error loading queue",
+    "actionQueue": "Action Queue",
+    "keyboardHint": "Keyboard shortcuts:",
+    "toNavigate": "to navigate",
+    "toOpen": "to open",
+    "forHelp": "for help",
+    "minutesAgo_one": "{{count}} minute ago",
+    "minutesAgo_other": "{{count}} minutes ago",
+    "hoursAgo_one": "{{count}} hour ago",
+    "hoursAgo_other": "{{count}} hours ago",
+    "daysAgo_one": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago",
+    "overdue": "{{days}} days overdue",
+    "dueToday": "Today",
+    "dueTomorrow": "Tomorrow",
+    "dueInDays": "In {{days}} days",
+    "quickTasks": "Quick tasks",
+    "completeIn60Seconds": "Most tasks complete in under 60 seconds",
+    "recentActivity": "Recent activity",
+    "activity": {
+      "meterReadingSubmitted": "Meter reading submitted",
+      "voteSubmitted": "Vote submitted",
+      "faultReported": "Fault reported"
+    },
+    "stats": {
+      "pendingFaults": "Pending faults",
+      "pendingApprovals": "Pending approvals",
+      "activeVotes": "Active votes",
+      "unreadMessages": "Unread messages"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "nextItem": "Next item",
+      "prevItem": "Previous item",
+      "openItem": "Open selected item",
+      "approve": "Approve action",
+      "reject": "Reject action",
+      "closeFilters": "Close filters",
+      "showHelp": "Show this help",
+      "hint": "Focus the action list to use these shortcuts"
+    }
+  },
   "delegation": {
     "title": "Delegations",
     "subtitle": "Manage your ownership delegations",
