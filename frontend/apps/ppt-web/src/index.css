@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
+    @apply antialiased;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
@@ -30,18 +30,6 @@
     @apply min-h-screen flex flex-col;
   }
 
-  .app-nav {
-    @apply flex items-center gap-4 px-6 py-3 bg-white border-b border-gray-200 shadow-sm;
-  }
-
-  .app-nav a {
-    @apply text-gray-700 hover:text-blue-600 no-underline font-medium text-sm;
-  }
-
-  .app-nav a[aria-current="page"] {
-    @apply text-blue-600;
-  }
-
   main#main-content {
     @apply flex-1 px-6 py-6 max-w-7xl w-full mx-auto;
   }
@@ -50,24 +38,94 @@
     @apply max-w-2xl mx-auto px-6 py-16 text-center;
   }
 
-  .error-page h1 {
-    @apply text-2xl font-semibold text-gray-900 mb-3;
-  }
-
-  .error-page p {
-    @apply text-gray-600 mb-4;
-  }
-
-  .error-page a {
-    @apply text-blue-600 hover:text-blue-800 underline;
-  }
-
   .loading-page {
-    @apply max-w-2xl mx-auto px-6 py-16 text-center text-gray-600;
+    @apply max-w-2xl mx-auto px-6 py-16 text-center;
   }
 
   .dispute-detail-page,
   .dispute-detail-page > * {
     @apply max-w-4xl mx-auto;
   }
+}
+
+/*
+ * Unlayered overrides — these need to win over the unlayered global
+ * rules in features/settings/styles/accessibility.css
+ * (`a { color: var(--color-primary); }` and `button, a { ... }`).
+ * Tailwind @layer rules always lose to unlayered ones in the cascade,
+ * so component-level theming for the nav and error pages lives here.
+ */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-surface, #ffffff);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.app-nav a {
+  color: var(--color-text-secondary, #4b5563);
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.app-nav a:hover {
+  color: var(--color-primary, #2563eb);
+}
+
+.app-nav a[aria-current="page"] {
+  color: var(--color-primary, #2563eb);
+}
+
+.error-page h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-text, #111827);
+}
+
+.error-page p {
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.error-page a {
+  color: var(--color-primary, #2563eb);
+  text-decoration: underline;
+}
+
+.error-page a:hover {
+  color: var(--color-primary-hover, #1d4ed8);
+}
+
+.loading-page {
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/*
+ * Buttons styled inline with --color-primary background must keep
+ * their explicit text color even though the global rule
+ * `button, a { color: var(--color-primary) }` would otherwise paint
+ * them blue-on-blue.
+ */
+.btn-primary-token {
+  color: #ffffff;
+  background-color: var(--color-primary, #2563eb);
+}
+
+.btn-primary-token:hover {
+  background-color: var(--color-primary-hover, #1d4ed8);
+}
+
+.btn-outline-token {
+  color: var(--color-primary, #2563eb);
+  background-color: transparent;
+  border: 1px solid var(--color-primary, #2563eb);
+}
+
+.btn-outline-token:hover {
+  background-color: var(--color-surface-hover, #f3f4f6);
 }
