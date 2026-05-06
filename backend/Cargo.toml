@@ -7,6 +7,7 @@ members = [
     "crates/integrations",
     "servers/api-server",
     "servers/reality-server",
+    "servers/deploy-server",
 ]
 
 [workspace.package]
@@ -104,6 +105,15 @@ common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
+
+# Phase 1: deploy-server
+bollard = "0.16"
+listenfd = "1.0"
+tokio-util = { version = "0.7", features = ["io"] }
+futures-util = "0.3"
+async-trait = "0.1"
+tempfile = "3.10"
+which = "6.0"
 
 [profile.release]
 strip = "symbols"
