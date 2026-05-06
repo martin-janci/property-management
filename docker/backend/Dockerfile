@@ -100,9 +100,6 @@ RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     cargo build --release --bin api-server --bin reality-server; \
     fi
 
-# Strip debug symbols for smaller binaries
-RUN strip target/release/api-server target/release/reality-server || true
-
 # =============================================================================
 # Stage 4: Runtime Base - Minimal production image base
 # =============================================================================
