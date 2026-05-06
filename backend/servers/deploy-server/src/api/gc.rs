@@ -17,6 +17,65 @@ use axum::Json;
 use chrono::Utc;
 use std::sync::Arc;
 
+/// Pure decision the GC tick can take for a single worktree, given its current
+/// state and timing fields. Extracted so the timing logic can be unit-tested
+/// without spinning up Docker/Postgres.
+#[derive(Debug, PartialEq, Eq)]
+pub enum GcDecision {
+    NoOp,
+    PauseRunning,
+    StopPaused,
+    Cleanup,
+    RecoverStuckClosing,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn gc_decision(
+    state: WorktreeState,
+    last_traffic_at: Option<chrono::DateTime<chrono::Utc>>,
+    closed_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_at: chrono::DateTime<chrono::Utc>,
+    ttl_seconds: i64,
+    now: chrono::DateTime<chrono::Utc>,
+    pause_after: chrono::Duration,
+    stop_after: chrono::Duration,
+) -> GcDecision {
+    match state {
+        WorktreeState::Running => {
+            if let Some(last) = last_traffic_at {
+                if now - last > pause_after {
+                    return GcDecision::PauseRunning;
+                }
+            }
+            GcDecision::NoOp
+        }
+        WorktreeState::Paused => {
+            if let Some(last) = last_traffic_at {
+                if now - last > stop_after {
+                    return GcDecision::StopPaused;
+                }
+            }
+            GcDecision::NoOp
+        }
+        WorktreeState::Closed => {
+            if let Some(closed) = closed_at {
+                if (now - closed).num_seconds() > ttl_seconds {
+                    return GcDecision::Cleanup;
+                }
+            }
+            GcDecision::NoOp
+        }
+        WorktreeState::Closing => {
+            let stuck_threshold = chrono::Duration::minutes(5);
+            if closed_at.is_none() && (now - created_at) > stuck_threshold {
+                GcDecision::RecoverStuckClosing
+            } else {
+                GcDecision::NoOp
+            }
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct GcContext {
     pub svc: Arc<WorktreeService>,
@@ -57,74 +116,68 @@ pub async fn tick_handler(
                 continue;
             }
         };
-        match wt.state {
-            WorktreeState::Running => {
-                if let Some(last) = wt.last_traffic_at {
-                    if now - last > pause_after {
-                        ctx.svc.docker.cleanup_containers(&wt.containers).await;
-                        wt.state = WorktreeState::Paused;
-                        ctx.svc.store.upsert_worktree(&wt).await?;
-                        report.paused.push(wt.name.clone());
-                    }
-                }
+        let decision = gc_decision(
+            wt.state.clone(),
+            wt.last_traffic_at,
+            wt.closed_at,
+            wt.created_at,
+            wt.ttl_seconds,
+            now,
+            pause_after,
+            stop_after,
+        );
+        match decision {
+            GcDecision::NoOp => continue,
+            GcDecision::PauseRunning => {
+                ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                wt.state = WorktreeState::Paused;
+                ctx.svc.store.upsert_worktree(&wt).await?;
+                report.paused.push(wt.name.clone());
             }
-            WorktreeState::Paused => {
-                if let Some(last) = wt.last_traffic_at {
-                    if now - last > stop_after {
-                        ctx.svc.docker.cleanup_containers(&wt.containers).await;
-                        // If dedicated backend, dump DB before drop.
-                        if let Some(db) = wt.db_name.clone() {
-                            let dump_path_str = format!(
-                                "{}/{}-{}.dump",
-                                ctx.cfg.snapshot_dir,
-                                wt.name,
-                                now.timestamp()
-                            );
-                            let dump_path = std::path::Path::new(&dump_path_str);
-                            if let Err(e) = ctx.svc.postgres.dump(&db, dump_path).await {
-                                tracing::warn!(error = %e, db = %db, "pg_dump failed during gc stop");
-                            } else {
-                                wt.dump_path = Some(dump_path_str.clone());
-                                if let Err(e) = ctx.svc.postgres.drop_db(&db).await {
-                                    tracing::warn!(error = %e, db = %db, "pg drop failed");
-                                } else {
-                                    wt.db_name = None;
-                                }
-                            }
+            GcDecision::StopPaused => {
+                ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                // If dedicated backend, dump DB before drop.
+                if let Some(db) = wt.db_name.clone() {
+                    let dump_path_str = format!(
+                        "{}/{}-{}.dump",
+                        ctx.cfg.snapshot_dir,
+                        wt.name,
+                        now.timestamp()
+                    );
+                    let dump_path = std::path::Path::new(&dump_path_str);
+                    if let Err(e) = ctx.svc.postgres.dump(&db, dump_path).await {
+                        tracing::warn!(error = %e, db = %db, "pg_dump failed during gc stop");
+                    } else {
+                        wt.dump_path = Some(dump_path_str.clone());
+                        if let Err(e) = ctx.svc.postgres.drop_db(&db).await {
+                            tracing::warn!(error = %e, db = %db, "pg drop failed");
+                        } else {
+                            wt.db_name = None;
                         }
-                        wt.state = WorktreeState::Closed;
-                        wt.closed_at = Some(now);
-                        ctx.svc.store.upsert_worktree(&wt).await?;
-                        report.stopped.push(wt.name.clone());
                     }
                 }
+                wt.state = WorktreeState::Closed;
+                wt.closed_at = Some(now);
+                ctx.svc.store.upsert_worktree(&wt).await?;
+                report.stopped.push(wt.name.clone());
             }
-            WorktreeState::Closed => {
-                if let Some(closed_at) = wt.closed_at {
-                    if (now - closed_at).num_seconds() > wt.ttl_seconds {
-                        let dir = std::path::PathBuf::from(&ctx.cfg.worktree_dir)
-                            .join(crate::infra::git::sanitize(&wt.branch));
-                        let _ = tokio::fs::remove_dir_all(&dir).await;
-                        // Remove DB dump if present.
-                        if let Some(ref dump) = wt.dump_path {
-                            let _ = tokio::fs::remove_file(dump).await;
-                        }
-                        report.cleaned.push(wt.name.clone());
-                    }
+            GcDecision::Cleanup => {
+                let dir = std::path::PathBuf::from(&ctx.cfg.worktree_dir)
+                    .join(crate::infra::git::sanitize(&wt.branch));
+                let _ = tokio::fs::remove_dir_all(&dir).await;
+                // Remove DB dump if present.
+                if let Some(ref dump) = wt.dump_path {
+                    let _ = tokio::fs::remove_file(dump).await;
                 }
+                report.cleaned.push(wt.name.clone());
             }
-            WorktreeState::Closing => {
+            GcDecision::RecoverStuckClosing => {
                 // Recovery: a previous close_handler crash left this stuck (#8).
-                // Heuristic: only recover if closed_at is None AND created_at is older than
-                // 5 min — recent Closing rows are presumed in-flight.
-                let stuck_threshold = chrono::Duration::minutes(5);
-                if wt.closed_at.is_none() && (now - wt.created_at) > stuck_threshold {
-                    ctx.svc.docker.cleanup_containers(&wt.containers).await;
-                    wt.state = WorktreeState::Closed;
-                    wt.closed_at = Some(now);
-                    ctx.svc.store.upsert_worktree(&wt).await?;
-                    report.stopped.push(wt.name.clone());
-                }
+                ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                wt.state = WorktreeState::Closed;
+                wt.closed_at = Some(now);
+                ctx.svc.store.upsert_worktree(&wt).await?;
+                report.stopped.push(wt.name.clone());
             }
         }
     }
@@ -157,4 +210,123 @@ pub async fn tick_handler(
     }
 
     Ok(Json(report))
+}
+
+#[cfg(test)]
+mod gc_decision_tests {
+    use super::*;
+    use crate::domain::WorktreeState;
+    use chrono::{Duration, Utc};
+
+    #[test]
+    fn running_with_recent_traffic_no_op() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Running,
+            Some(now - Duration::seconds(60)),
+            None,
+            now,
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::NoOp);
+    }
+
+    #[test]
+    fn running_with_stale_traffic_pauses() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Running,
+            Some(now - Duration::seconds(2000)),
+            None,
+            now,
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::PauseRunning);
+    }
+
+    #[test]
+    fn paused_idle_24h_stops() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Paused,
+            Some(now - Duration::seconds(90000)),
+            None,
+            now,
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::StopPaused);
+    }
+
+    #[test]
+    fn closed_past_ttl_cleans_up() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Closed,
+            None,
+            Some(now - Duration::seconds(200000)),
+            now,
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::Cleanup);
+    }
+
+    #[test]
+    fn closed_within_ttl_no_op() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Closed,
+            None,
+            Some(now - Duration::seconds(60)),
+            now,
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::NoOp);
+    }
+
+    #[test]
+    fn closing_stuck_over_5min_recovers() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Closing,
+            None,
+            None,
+            now - Duration::seconds(400),
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::RecoverStuckClosing);
+    }
+
+    #[test]
+    fn closing_recent_no_op() {
+        let now = Utc::now();
+        let d = gc_decision(
+            WorktreeState::Closing,
+            None,
+            None,
+            now - Duration::seconds(60),
+            86400,
+            now,
+            Duration::seconds(1800),
+            Duration::seconds(86400),
+        );
+        assert_eq!(d, GcDecision::NoOp);
+    }
 }

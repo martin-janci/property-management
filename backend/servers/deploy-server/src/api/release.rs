@@ -33,6 +33,30 @@ fn default_target() -> String {
     "staging".into()
 }
 
+/// Construct the {service -> image} map published to GHCR for a given tag.
+///
+/// Documented inconsistency, matching what `docker-frontend.yml`/`docker-backend.yml`
+/// actually push: backend images carry the `ppt-` prefix (`ppt-api-server`,
+/// `ppt-reality-server`), and so does `ppt-web`. `reality-web` is published as
+/// `reality-web` *without* the prefix. Single source of truth lives here.
+pub fn build_staging_images(image_prefix: &str, tag: &str) -> HashMap<String, String> {
+    let mut images = HashMap::new();
+    images.insert(
+        "api-server".into(),
+        format!("{image_prefix}/ppt-api-server:{tag}"),
+    );
+    images.insert(
+        "reality-server".into(),
+        format!("{image_prefix}/ppt-reality-server:{tag}"),
+    );
+    images.insert("ppt-web".into(), format!("{image_prefix}/ppt-web:{tag}"));
+    images.insert(
+        "reality-web".into(),
+        format!("{image_prefix}/reality-web:{tag}"),
+    );
+    images
+}
+
 pub async fn deploy_handler(
     State(svc): State<Arc<ReleaseService>>,
     axum::Extension(caller): axum::Extension<CallerIdentity>,
@@ -52,26 +76,7 @@ pub async fn deploy_handler(
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
-    let mut images = HashMap::new();
-    images.insert(
-        "api-server".into(),
-        format!("{}/ppt-api-server:{}", svc.image_prefix, req.tag),
-    );
-    images.insert(
-        "reality-server".into(),
-        format!("{}/ppt-reality-server:{}", svc.image_prefix, req.tag),
-    );
-    images.insert(
-        "ppt-web".into(),
-        format!("{}/ppt-web:{}", svc.image_prefix, req.tag),
-    );
-    // Note: docker-frontend.yml pushes `ppt-web` and `reality-web` (without `ppt-` prefix on reality-web).
-    // Backend images use `ppt-api-server` and `ppt-reality-server` (with prefix). Workflow inconsistency,
-    // matching what's actually published to GHCR.
-    images.insert(
-        "reality-web".into(),
-        format!("{}/reality-web:{}", svc.image_prefix, req.tag),
-    );
+    let images = build_staging_images(&svc.image_prefix, &req.tag);
 
     let spec = StagingDeploySpec {
         tag: req.tag.clone(),
@@ -172,4 +177,26 @@ pub async fn wake_handler(
     Ok(Json(
         serde_json::json!({"woke": target.as_str(), "tag": rel.tag}),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn staging_image_map_includes_reality_web_without_ppt_prefix() {
+        // Documented inconsistency: reality-web is published as "reality-web",
+        // not "ppt-reality-web". Pin that invariant so a refactor accidentally
+        // renaming it would fail this test.
+        let images = build_staging_images("ghcr.io/test", "abc1234");
+        assert_eq!(images["api-server"], "ghcr.io/test/ppt-api-server:abc1234");
+        assert_eq!(
+            images["reality-server"],
+            "ghcr.io/test/ppt-reality-server:abc1234"
+        );
+        assert_eq!(images["ppt-web"], "ghcr.io/test/ppt-web:abc1234");
+        // NOT ppt-reality-web — see docker-frontend.yml.
+        assert_eq!(images["reality-web"], "ghcr.io/test/reality-web:abc1234");
+        assert_eq!(images.len(), 4);
+    }
 }

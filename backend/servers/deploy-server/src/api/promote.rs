@@ -297,4 +297,9 @@ mod tests {
         assert_eq!(parse_duration_secs("1h"), Some(3600));
         assert_eq!(parse_duration_secs("garbage"), None);
     }
+
+    #[test]
+    fn duration_parse_empty_returns_none() {
+        assert_eq!(parse_duration_secs(""), None);
+    }
 }
