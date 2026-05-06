@@ -1,4 +1,4 @@
-// backend/servers/deploy-server/src/infra/staging.rs
+// backend/servers/deploy-server/src/infra/blue_green.rs
 use crate::infra::{CaddyClient, DockerClient};
 use crate::Result;
 use bollard::container::{
@@ -11,23 +11,24 @@ use futures_util::StreamExt;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub struct StagingDeployer {
+pub struct BlueGreenDeployer {
     pub docker: Arc<DockerClient>,
     pub caddy: Arc<CaddyClient>,
 }
 
 #[derive(Debug, Clone)]
-pub struct StagingDeploySpec {
+pub struct BlueGreenSpec {
     pub tag: String,
     pub api_image: String,
     pub reality_image: String,
     pub ppt_web_image: String,
     pub reality_web_image: String,
     pub domain_suffix: String,
+    pub target_name: String,
 }
 
-impl StagingDeployer {
-    pub async fn deploy(&self, spec: &StagingDeploySpec) -> Result<()> {
+impl BlueGreenDeployer {
+    pub async fn deploy(&self, spec: &BlueGreenSpec) -> Result<()> {
         let docker = self.docker.bollard();
         for img in [
             &spec.api_image,
@@ -38,9 +39,10 @@ impl StagingDeployer {
             self.pull_image(docker, img).await?;
         }
 
+        let target = &spec.target_name;
         let next_color = if self
             .docker
-            .is_running("staging-api-blue")
+            .is_running(&format!("{target}-api-blue"))
             .await
             .unwrap_or(false)
         {
@@ -54,24 +56,32 @@ impl StagingDeployer {
             "blue"
         };
 
-        self.run_service(&format!("staging-api-{next_color}"), &spec.api_image, 8080)
-            .await?;
         self.run_service(
-            &format!("staging-reality-{next_color}"),
+            &format!("{target}-api-{next_color}"),
+            &spec.api_image,
+            8080,
+            target,
+        )
+        .await?;
+        self.run_service(
+            &format!("{target}-reality-{next_color}"),
             &spec.reality_image,
             8081,
+            target,
         )
         .await?;
         self.run_service(
-            &format!("staging-ppt-{next_color}"),
+            &format!("{target}-ppt-{next_color}"),
             &spec.ppt_web_image,
             80,
+            target,
         )
         .await?;
         self.run_service(
-            &format!("staging-reality-web-{next_color}"),
+            &format!("{target}-reality-web-{next_color}"),
             &spec.reality_web_image,
             3000,
+            target,
         )
         .await?;
 
@@ -79,36 +89,36 @@ impl StagingDeployer {
         self.caddy
             .register_route(
                 &format!("api.{suffix}"),
-                &format!("staging-api-{next_color}:8080"),
+                &format!("{target}-api-{next_color}:8080"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("reality-api.{suffix}"),
-                &format!("staging-reality-{next_color}:8081"),
+                &format!("{target}-reality-{next_color}:8081"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("ppt.{suffix}"),
-                &format!("staging-ppt-{next_color}:80"),
+                &format!("{target}-ppt-{next_color}:80"),
             )
             .await?;
         self.caddy
             .register_route(
                 &format!("reality.{suffix}"),
-                &format!("staging-reality-web-{next_color}:3000"),
+                &format!("{target}-reality-web-{next_color}:3000"),
             )
             .await?;
 
         for s in ["api", "reality", "ppt", "reality-web"] {
             let _ = self
                 .docker
-                .stop_container(&format!("staging-{s}-{prev_color}"))
+                .stop_container(&format!("{target}-{s}-{prev_color}"))
                 .await;
             let _ = self
                 .docker
-                .remove_container(&format!("staging-{s}-{prev_color}"))
+                .remove_container(&format!("{target}-{s}-{prev_color}"))
                 .await;
         }
         Ok(())
@@ -126,7 +136,13 @@ impl StagingDeployer {
         Ok(())
     }
 
-    async fn run_service(&self, name: &str, image: &str, container_port: u16) -> Result<()> {
+    async fn run_service(
+        &self,
+        name: &str,
+        image: &str,
+        container_port: u16,
+        target: &str,
+    ) -> Result<()> {
         let docker = self.docker.bollard();
         let _ = docker
             .remove_container(
@@ -142,7 +158,7 @@ impl StagingDeployer {
         exposed.insert(format!("{container_port}/tcp"), HashMap::<(), ()>::new());
 
         let host_config = HostConfig {
-            network_mode: Some("ppt-staging".into()),
+            network_mode: Some(format!("ppt-{target}")),
             restart_policy: Some(bollard::models::RestartPolicy {
                 name: Some(bollard::models::RestartPolicyNameEnum::UNLESS_STOPPED),
                 ..Default::default()
@@ -174,3 +190,7 @@ impl StagingDeployer {
         Ok(())
     }
 }
+
+// Backward-compat aliases (callers from Phase 2 use the staging names).
+pub type StagingDeployer = BlueGreenDeployer;
+pub type StagingDeploySpec = BlueGreenSpec;

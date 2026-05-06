@@ -73,6 +73,7 @@ pub async fn deploy_handler(
         ppt_web_image: images["ppt-web"].clone(),
         reality_web_image: images["reality-web"].clone(),
         domain_suffix: target_cfg.domain_suffix.clone(),
+        target_name: "staging".into(),
     };
     svc.deployer.deploy(&spec).await?;
 
@@ -118,6 +119,7 @@ pub async fn wake_handler(
         ppt_web_image: rel.images.get("ppt-web").cloned().unwrap_or_default(),
         reality_web_image: rel.images.get("reality-web").cloned().unwrap_or_default(),
         domain_suffix: target_cfg.domain_suffix.clone(),
+        target_name: "staging".into(),
     };
     svc.deployer.deploy(&spec).await?;
     Ok(Json(serde_json::json!({"woke": "staging", "tag": rel.tag})))
