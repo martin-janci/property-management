@@ -5,9 +5,9 @@
 FROM caddy:2.10-builder AS builder
 
 RUN xcaddy build \
-    --with github.com/caddy-dns/cloudflare \
-    --with github.com/caddy-dns/hetzner \
-    --with github.com/caddy-dns/acmedns
+    --with github.com/caddy-dns/cloudflare@v0.2.4 \
+    --with github.com/caddy-dns/hetzner@v1.0.0 \
+    --with github.com/caddy-dns/acmedns@v0.6.0
 
 FROM caddy:2.10
 
