@@ -1,6 +1,6 @@
 // backend/servers/deploy-server/src/api/release.rs
 use crate::config::TargetsConfig;
-use crate::domain::{Release, ReleaseState};
+use crate::domain::{Release, ReleaseState, TargetKind};
 use crate::infra::{
     BlueGreenDeployer, BlueGreenSpec, CaddyClient, CallerIdentity, DockerClient, StagingDeploySpec,
     Store,
@@ -10,6 +10,7 @@ use axum::extract::{Path, State};
 use axum::Json;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -38,17 +39,18 @@ pub async fn deploy_handler(
     Json(req): Json<DeployRequest>,
 ) -> Result<Json<Release>> {
     caller.require_scope("release:deploy")?;
-    if req.target != "staging" {
+    let target = TargetKind::from_str(&req.target)
+        .map_err(|e| DeployError::Config(format!("invalid target: {e}")))?;
+    if target != TargetKind::Staging {
         return Err(DeployError::BadRequest(format!(
-            "target {} not supported in Phase 2 (prod is Phase 4)",
-            req.target
+            "target {target} not supported in Phase 2 (prod is Phase 4)",
         )));
     }
     let target_cfg = svc
         .targets
         .targets
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("unknown target {}", req.target)))?;
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
     let mut images = HashMap::new();
     images.insert(
@@ -78,17 +80,17 @@ pub async fn deploy_handler(
         ppt_web_image: images["ppt-web"].clone(),
         reality_web_image: images["reality-web"].clone(),
         domain_suffix: target_cfg.domain_suffix.clone(),
-        target_name: "staging".into(),
+        target_name: target.as_str().into(),
     };
     let docker = svc
         .docker_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
         .clone();
     let caddy = svc
         .caddy_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
         .clone();
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
@@ -97,7 +99,7 @@ pub async fn deploy_handler(
         tag: req.tag.clone(),
         images,
         state: ReleaseState::Staging,
-        target: Some("staging".into()),
+        target: Some(target.as_str().into()),
         promoted_at: Some(chrono::Utc::now()),
         notes: None,
     };
@@ -123,7 +125,7 @@ pub async fn register_candidate_handler(
         tag: req.tag,
         images: req.images,
         state: ReleaseState::Candidate,
-        target: Some("prod".into()),
+        target: Some(TargetKind::Prod.as_str().into()),
         promoted_at: None,
         notes: req.notes,
     };
@@ -137,33 +139,37 @@ pub async fn wake_handler(
     Path(target): Path<String>,
 ) -> Result<Json<serde_json::Value>> {
     caller.require_scope("release:wake")?;
-    if target != "staging" {
+    let target = TargetKind::from_str(&target)
+        .map_err(|e| DeployError::Config(format!("invalid target: {e}")))?;
+    if target != TargetKind::Staging {
         return Err(DeployError::BadRequest(
             "only staging supported in Phase 2".into(),
         ));
     }
     let rel = svc
         .store
-        .current_release_for("staging", "staging")
+        .current_release_for(target.as_str(), target.live_release_state_str())
         .await?
         .ok_or_else(|| DeployError::NotFound("no staging release recorded".into()))?;
     let target_cfg = svc
         .targets
         .targets
-        .get("staging")
+        .get(target.as_str())
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
-    let spec = BlueGreenSpec::from_release(&rel, "staging", &target_cfg.domain_suffix);
+    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), &target_cfg.domain_suffix);
     let docker = svc
         .docker_pool
-        .get(&target)
+        .get(target.as_str())
         .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
         .clone();
     let caddy = svc
         .caddy_pool
-        .get(&target)
+        .get(target.as_str())
         .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
         .clone();
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
-    Ok(Json(serde_json::json!({"woke": "staging", "tag": rel.tag})))
+    Ok(Json(
+        serde_json::json!({"woke": target.as_str(), "tag": rel.tag}),
+    ))
 }

@@ -1,12 +1,13 @@
 // backend/servers/deploy-server/src/api/promote.rs
 use crate::api::release::ReleaseService;
 use crate::config::TargetsConfig;
-use crate::domain::ReleaseState;
+use crate::domain::{ReleaseState, TargetKind};
 use crate::infra::{BlueGreenDeployer, BlueGreenSpec, CallerIdentity, HealthProbe};
 use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::Json;
 use serde::Deserialize;
+use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -39,11 +40,13 @@ pub async fn promote_handler(
     Json(req): Json<PromoteRequest>,
 ) -> Result<Json<PromoteResponse>> {
     caller.require_scope("release:promote")?;
+    let target = TargetKind::from_str(&req.target)
+        .map_err(|e| DeployError::Config(format!("invalid target: {e}")))?;
     let target_cfg = svc
         .targets
         .targets
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("unknown target {}", req.target)))?;
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
     let candidate = svc
         .release_svc
@@ -52,48 +55,40 @@ pub async fn promote_handler(
         .await?
         .ok_or_else(|| DeployError::NotFound(format!("release {}", req.tag)))?;
 
-    let live_state = if req.target == "prod" {
-        "prod"
-    } else {
-        "staging"
-    };
+    let live_state = target.live_release_state_str();
     let prev_release = svc
         .release_svc
         .store
-        .current_release_for(&req.target, live_state)
+        .current_release_for(target.as_str(), live_state)
         .await?;
 
     if req.dry_run {
         return Ok(Json(PromoteResponse {
             previous_tag: prev_release.map(|r| r.tag),
             promoted_tag: req.tag.clone(),
-            target: req.target.clone(),
+            target: target.as_str().into(),
             dry_run: true,
             health_grace_passed: false,
         }));
     }
 
-    let spec = BlueGreenSpec::from_release(&candidate, &req.target, &target_cfg.domain_suffix);
+    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), &target_cfg.domain_suffix);
     let docker = svc
         .release_svc
         .docker_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
         .clone();
     let caddy = svc
         .release_svc
         .caddy_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
         .clone();
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
 
-    let new_state = if req.target == "prod" {
-        ReleaseState::Prod
-    } else {
-        ReleaseState::Staging
-    };
+    let new_state = target.live_release_state();
     let health_grace_passed = if let Some(grace) = &target_cfg.health_grace {
         let secs = parse_duration_secs(grace).unwrap_or(60);
         let url = format!("https://api.{}/health", target_cfg.domain_suffix);
@@ -106,7 +101,7 @@ pub async fn promote_handler(
                     if let Some(prev) = &prev_release {
                         let prev_spec = BlueGreenSpec::from_release(
                             prev,
-                            &req.target,
+                            target.as_str(),
                             &target_cfg.domain_suffix,
                         );
                         match deployer.deploy(&prev_spec).await {
@@ -144,7 +139,7 @@ pub async fn promote_handler(
 
     let mut updated = candidate;
     updated.state = new_state;
-    updated.target = Some(req.target.clone());
+    updated.target = Some(target.as_str().into());
     updated.promoted_at = Some(chrono::Utc::now());
     svc.release_svc.store.upsert_release(&updated).await?;
 
@@ -152,7 +147,7 @@ pub async fn promote_handler(
     if let Some(older_prev) = svc
         .release_svc
         .store
-        .current_release_for(&req.target, "previous")
+        .current_release_for(target.as_str(), "previous")
         .await?
     {
         // Don't archive the just-promoted candidate or the soon-to-be Previous.
@@ -172,7 +167,7 @@ pub async fn promote_handler(
     Ok(Json(PromoteResponse {
         previous_tag: prev_release.map(|r| r.tag),
         promoted_tag: req.tag.clone(),
-        target: req.target.clone(),
+        target: target.as_str().into(),
         dry_run: false,
         health_grace_passed,
     }))
@@ -203,11 +198,13 @@ pub async fn rollback_handler(
     Json(req): Json<RollbackRequest>,
 ) -> Result<Json<PromoteResponse>> {
     caller.require_scope("release:rollback")?;
+    let target = TargetKind::from_str(&req.target)
+        .map_err(|e| DeployError::Config(format!("invalid target: {e}")))?;
     let target_cfg = svc
         .targets
         .targets
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("unknown target {}", req.target)))?;
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
     // Determine the release to roll back TO.
     let target_release = if let Some(to) = req.to.clone() {
@@ -219,46 +216,39 @@ pub async fn rollback_handler(
     } else {
         svc.release_svc
             .store
-            .current_release_for(&req.target, "previous")
+            .current_release_for(target.as_str(), "previous")
             .await?
             .ok_or_else(|| DeployError::NotFound("no previous release recorded".into()))?
     };
 
-    let live_state = if req.target == "prod" {
-        "prod"
-    } else {
-        "staging"
-    };
+    let live_state = target.live_release_state_str();
     let current = svc
         .release_svc
         .store
-        .current_release_for(&req.target, live_state)
+        .current_release_for(target.as_str(), live_state)
         .await?;
 
-    let spec = BlueGreenSpec::from_release(&target_release, &req.target, &target_cfg.domain_suffix);
+    let spec =
+        BlueGreenSpec::from_release(&target_release, target.as_str(), &target_cfg.domain_suffix);
     let docker = svc
         .release_svc
         .docker_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
         .clone();
     let caddy = svc
         .release_svc
         .caddy_pool
-        .get(&req.target)
-        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
         .clone();
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
 
     // Promote rolled-back release to live, demote current to Previous.
     let mut rolled_back = target_release;
-    rolled_back.state = if req.target == "prod" {
-        ReleaseState::Prod
-    } else {
-        ReleaseState::Staging
-    };
-    rolled_back.target = Some(req.target.clone());
+    rolled_back.state = target.live_release_state();
+    rolled_back.target = Some(target.as_str().into());
     rolled_back.promoted_at = Some(chrono::Utc::now());
     let promoted_tag = rolled_back.tag.clone();
     svc.release_svc.store.upsert_release(&rolled_back).await?;
@@ -267,7 +257,7 @@ pub async fn rollback_handler(
     if let Some(older_prev) = svc
         .release_svc
         .store
-        .current_release_for(&req.target, "previous")
+        .current_release_for(target.as_str(), "previous")
         .await?
     {
         // Don't archive the rolled-back tag (might still be marked as previous in DB)
@@ -289,7 +279,7 @@ pub async fn rollback_handler(
     Ok(Json(PromoteResponse {
         previous_tag: current.map(|r| r.tag),
         promoted_tag,
-        target: req.target,
+        target: target.as_str().into(),
         dry_run: false,
         health_grace_passed: true,
     }))

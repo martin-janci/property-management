@@ -9,7 +9,7 @@
 //! tracking via Caddy access log tailing.
 use crate::api::worktree::WorktreeService;
 use crate::config::Config;
-use crate::domain::WorktreeState;
+use crate::domain::{TargetKind, WorktreeState};
 use crate::infra::CallerIdentity;
 use crate::Result;
 use axum::extract::State;
@@ -133,10 +133,11 @@ pub async fn tick_handler(
     // NOTE: Phase 2 lacks per-target traffic tracking; we rely on `promoted_at`
     // as a proxy. Phase 6 will add proper traffic tracking via Caddy access log tail.
     let staging_idle = chrono::Duration::seconds(8 * 3600);
+    let staging = TargetKind::Staging;
     if let Some(rel) = ctx
         .svc
         .store
-        .current_release_for("staging", "staging")
+        .current_release_for(staging.as_str(), staging.live_release_state_str())
         .await?
     {
         if let Some(promoted) = rel.promoted_at {
@@ -146,11 +147,11 @@ pub async fn tick_handler(
                     .flat_map(|color| {
                         crate::infra::BG_SERVICES
                             .iter()
-                            .map(move |service| format!("staging-{service}-{color}"))
+                            .map(move |service| format!("{}-{service}-{color}", staging.as_str()))
                     })
                     .collect();
                 ctx.svc.docker.cleanup_containers(&staging_containers).await;
-                report.paused_targets.push("staging".into());
+                report.paused_targets.push(staging.as_str().into());
             }
         }
     }
