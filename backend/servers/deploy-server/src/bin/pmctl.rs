@@ -61,6 +61,21 @@ enum Cmd {
     },
     /// Print SSH tunnel + psql command for a worktree's dedicated DB.
     Psql { name: String },
+    /// Promote a registered candidate tag to a target.
+    Promote {
+        tag: String,
+        #[arg(long)]
+        target: String,
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Rollback a target to its previous release (or explicit tag).
+    Rollback {
+        #[arg(long)]
+        target: String,
+        #[arg(long)]
+        to: Option<String>,
+    },
 }
 
 #[derive(Serialize)]
@@ -201,6 +216,30 @@ async fn main() -> anyhow::Result<()> {
             println!("#");
             println!("# Terminal 2 — connect with psql:");
             println!("psql postgres://ppt:ppt_dev_password@localhost:5433/{db_name}");
+        }
+        Cmd::Promote {
+            tag,
+            target,
+            dry_run,
+        } => {
+            let body = serde_json::json!({"tag": tag, "target": target, "dry_run": dry_run});
+            let resp = http
+                .post(format!("{}/api/promote", cli.url))
+                .header("Authorization", &auth)
+                .json(&body)
+                .send()
+                .await?;
+            print_resp(resp, cli.json).await?;
+        }
+        Cmd::Rollback { target, to } => {
+            let body = serde_json::json!({"target": target, "to": to});
+            let resp = http
+                .post(format!("{}/api/rollback", cli.url))
+                .header("Authorization", &auth)
+                .json(&body)
+                .send()
+                .await?;
+            print_resp(resp, cli.json).await?;
         }
     }
     Ok(())
