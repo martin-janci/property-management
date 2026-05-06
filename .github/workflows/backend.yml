@@ -223,3 +223,14 @@ jobs:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
           RUST_LOG: debug
         run: cargo test --test rls_penetration_tests -- --ignored --nocapture
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo deny check
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: backend/Cargo.toml
+          arguments: --workspace
+          rust-version: stable

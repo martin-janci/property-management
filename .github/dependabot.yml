@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+    groups:
+      tokio:
+        patterns: ["tokio*"]
+      axum:
+        patterns: ["axum*", "tower*"]
+      serde:
+        patterns: ["serde*"]
+      sqlx:
+        patterns: ["sqlx*"]
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
