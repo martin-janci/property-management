@@ -1,0 +1,20 @@
+# docker/frontend/Dockerfile.dev.worktree
+# Bind-mount runner for worktree dev mode. Source is mounted at /app at runtime.
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache git \
+ && corepack enable \
+ && corepack prepare pnpm@9.15.0 --activate
+
+# pnpm store mounted as named volume → fast install across worktrees
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+# Default: run ppt-web; override APP=reality-web to run reality.
+ENV APP=ppt-web
+
+EXPOSE 5173 3000
+
+ENTRYPOINT ["sh", "-c", "cd /app/frontend && pnpm install --prefer-offline --frozen-lockfile=false && pnpm --filter ./apps/$APP dev --host 0.0.0.0 --port ${PORT:-5173}"]
