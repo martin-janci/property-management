@@ -79,17 +79,19 @@ COPY backend/servers ./servers
 COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 # Build the applications
+# Build both binaries in a single cargo invocation so the matrix workflow
+# can share a single GHA cache scope (see .github/workflows/docker-build.yml).
 ENV SQLX_OFFLINE=true
 RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     if [ "$TARGETARCH" = "arm64" ]; then \
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
     export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
-    cargo build --release --target $RUST_TARGET -p api-server -p reality-server && \
+    cargo build --release --target $RUST_TARGET --bin api-server --bin reality-server && \
     mkdir -p target/release && \
     cp target/$RUST_TARGET/release/api-server target/release/api-server && \
     cp target/$RUST_TARGET/release/reality-server target/release/reality-server; \
     else \
-    cargo build --release -p api-server -p reality-server; \
+    cargo build --release --bin api-server --bin reality-server; \
     fi
 
 # Strip debug symbols for smaller binaries
