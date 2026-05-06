@@ -89,6 +89,31 @@ pub async fn deploy_handler(
     Ok(Json(rel))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RegisterRequest {
+    pub tag: String,
+    pub images: HashMap<String, String>,
+    #[serde(default)]
+    pub notes: Option<String>,
+}
+
+pub async fn register_candidate_handler(
+    State(svc): State<Arc<ReleaseService>>,
+    axum::Extension(_caller): axum::Extension<CallerIdentity>,
+    Json(req): Json<RegisterRequest>,
+) -> Result<Json<Release>> {
+    let rel = Release {
+        tag: req.tag,
+        images: req.images,
+        state: ReleaseState::Candidate,
+        target: Some("prod".into()),
+        promoted_at: None,
+        notes: req.notes,
+    };
+    svc.store.upsert_release(&rel).await?;
+    Ok(Json(rel))
+}
+
 pub async fn wake_handler(
     State(svc): State<Arc<ReleaseService>>,
     Path(target): Path<String>,

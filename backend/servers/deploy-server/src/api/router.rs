@@ -68,6 +68,7 @@ pub fn build(
             Router::new()
                 .route("/api/deploy", post(release::deploy_handler))
                 .route("/api/wake/:target", post(release::wake_handler))
+                .route("/api/release", post(release::register_candidate_handler))
                 .with_state(release_svc),
         )
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
