@@ -125,12 +125,8 @@ impl BlueGreenDeployer {
             .await?;
         self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 80, 30)
             .await?;
-        self.wait_until_ready(
-            &format!("{target_name}-reality-web-{next_color}"),
-            3000,
-            30,
-        )
-        .await?;
+        self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
+            .await?;
 
         let suffix = &spec.domain_suffix;
         self.caddy

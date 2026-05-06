@@ -9,6 +9,7 @@ pub enum ReleaseState {
     Staging,
     Prod,
     Previous,
+    Archived,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

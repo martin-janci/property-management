@@ -89,12 +89,7 @@ pub async fn tick_handler(
                                 tracing::warn!(error = %e, db = %db, "pg_dump failed during gc stop");
                             } else {
                                 wt.dump_path = Some(dump_path_str.clone());
-                                if let Err(e) = crate::infra::postgres::PostgresOps::drop(
-                                    &ctx.svc.postgres,
-                                    &db,
-                                )
-                                .await
-                                {
+                                if let Err(e) = ctx.svc.postgres.drop_db(&db).await {
                                     tracing::warn!(error = %e, db = %db, "pg drop failed");
                                 } else {
                                     wt.db_name = None;
@@ -122,7 +117,24 @@ pub async fn tick_handler(
                     }
                 }
             }
-            WorktreeState::Closing => {} // transient, leave for next tick
+            WorktreeState::Closing => {
+                // Recovery: a previous close_handler crash left this stuck (#8).
+                // Heuristic: only recover if closed_at is None AND created_at is older than
+                // 5 min — recent Closing rows are presumed in-flight.
+                let stuck_threshold = chrono::Duration::minutes(5);
+                if wt.closed_at.is_none() && (now - wt.created_at) > stuck_threshold {
+                    for c in &wt.containers {
+                        let _ = ctx.svc.docker.stop_container(c).await;
+                    }
+                    for c in &wt.containers {
+                        let _ = ctx.svc.docker.remove_container(c).await;
+                    }
+                    wt.state = WorktreeState::Closed;
+                    wt.closed_at = Some(now);
+                    ctx.svc.store.upsert_worktree(&wt).await?;
+                    report.stopped.push(wt.name.clone());
+                }
+            }
         }
     }
 

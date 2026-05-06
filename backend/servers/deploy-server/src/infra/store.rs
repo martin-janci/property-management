@@ -162,6 +162,7 @@ impl Store {
             crate::domain::ReleaseState::Staging => "staging",
             crate::domain::ReleaseState::Prod => "prod",
             crate::domain::ReleaseState::Previous => "previous",
+            crate::domain::ReleaseState::Archived => "archived",
         };
         sqlx::query(
             r#"INSERT INTO release (tag, images, state, target, promoted_at, notes)
@@ -324,6 +325,7 @@ impl ReleaseRow {
             "staging" => ReleaseState::Staging,
             "prod" => ReleaseState::Prod,
             "previous" => ReleaseState::Previous,
+            "archived" => ReleaseState::Archived,
             other => {
                 return Err(crate::DeployError::Internal(format!(
                     "bad release state {other}"

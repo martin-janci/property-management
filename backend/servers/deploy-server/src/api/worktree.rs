@@ -318,6 +318,16 @@ pub async fn close_handler(
         .await?
         .ok_or_else(|| DeployError::NotFound(format!("worktree {name}")))?;
 
+    // Refuse to re-close already-closed worktrees (no-op idempotency) (#8).
+    if matches!(wt.state, WorktreeState::Closed) {
+        return Ok(Json(wt));
+    }
+
+    // Atomic: mark in-progress before any side effects, so a crash leaves a recoverable
+    // trace that GC can pick up after the stuck-Closing threshold (#8).
+    wt.state = WorktreeState::Closing;
+    svc.store.upsert_worktree(&wt).await?;
+
     // Stop containers, ignore individual errors (best-effort cleanup).
     for c in &wt.containers {
         let _ = svc.docker.stop_container(c).await;
@@ -340,12 +350,18 @@ pub async fn close_handler(
     Ok(Json(wt))
 }
 
-fn pick_port(seed: &str) -> u16 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut h = DefaultHasher::new();
-    seed.hash(&mut h);
-    51000 + (h.finish() % 1000) as u16
+fn pick_port(_seed: &str) -> u16 {
+    // Probe for an OS-assigned free port (#11). Closing the listener releases the port
+    // back to the kernel; there's a tiny race window before docker binds it, but
+    // Docker handles "address already in use" with a clear error.
+    use std::net::TcpListener;
+    if let Ok(listener) = TcpListener::bind("127.0.0.1:0") {
+        if let Ok(addr) = listener.local_addr() {
+            return addr.port();
+        }
+    }
+    // Fallback: deterministic in 51000-51999 — best-effort.
+    51000
 }
 
 #[cfg(test)]
@@ -353,10 +369,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pick_port_deterministic_and_in_range() {
+    fn pick_port_returns_nonzero_port() {
+        // Probe-based: returns an OS-assigned port or the 51000 fallback.
+        let p = pick_port("foo");
+        assert!(p > 0, "pick_port must return a non-zero port, got {p}");
+    }
+
+    #[test]
+    fn pick_port_returns_valid_ports_across_calls() {
+        // Probe-based: both calls return either OS-assigned ports or the 51000 fallback.
         let a = pick_port("foo");
-        let b = pick_port("foo");
-        assert_eq!(a, b);
-        assert!((51000..52000).contains(&a));
+        let b = pick_port("bar");
+        assert!(a > 0 && b > 0);
     }
 }

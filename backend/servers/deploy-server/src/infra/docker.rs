@@ -271,12 +271,17 @@ impl DockerClient {
     }
 }
 
-fn pick_local_port_for_tunnel(target: &str) -> u16 {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    let mut h = DefaultHasher::new();
-    target.hash(&mut h);
-    22300 + (h.finish() % 100) as u16
+fn pick_local_port_for_tunnel(_target: &str) -> u16 {
+    // Probe for a free local port (#11). Closing the listener releases it before
+    // ssh -L binds, so the standard race window applies — ssh will fail loudly
+    // if a different process snatches it in between.
+    use std::net::TcpListener;
+    if let Ok(listener) = TcpListener::bind("127.0.0.1:0") {
+        if let Ok(addr) = listener.local_addr() {
+            return addr.port();
+        }
+    }
+    22300
 }
 
 fn spawn_ssh_tunnel(user: &str, host: &str, port: u16, local_port: u16) -> crate::Result<()> {

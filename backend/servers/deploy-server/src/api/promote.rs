@@ -180,6 +180,22 @@ pub async fn promote_handler(
     updated.promoted_at = Some(chrono::Utc::now());
     svc.release_svc.store.upsert_release(&updated).await?;
 
+    // Demote any older Previous rows for this target before adding a new Previous (#10).
+    if let Some(older_prev) = svc
+        .release_svc
+        .store
+        .current_release_for(&req.target, "previous")
+        .await?
+    {
+        // Don't archive the just-promoted candidate or the soon-to-be Previous.
+        let about_to_become_prev = prev_release.as_ref().map(|r| r.tag.clone());
+        if older_prev.tag != updated.tag && Some(older_prev.tag.clone()) != about_to_become_prev {
+            let mut older = older_prev;
+            older.state = ReleaseState::Archived;
+            svc.release_svc.store.upsert_release(&older).await?;
+        }
+    }
+
     if let Some(mut prev) = prev_release.clone() {
         prev.state = ReleaseState::Previous;
         svc.release_svc.store.upsert_release(&prev).await?;
@@ -302,6 +318,24 @@ pub async fn rollback_handler(
     rolled_back.promoted_at = Some(chrono::Utc::now());
     let promoted_tag = rolled_back.tag.clone();
     svc.release_svc.store.upsert_release(&rolled_back).await?;
+
+    // Demote any older Previous rows for this target before adding a new Previous (#10).
+    if let Some(older_prev) = svc
+        .release_svc
+        .store
+        .current_release_for(&req.target, "previous")
+        .await?
+    {
+        // Don't archive the rolled-back tag (might still be marked as previous in DB)
+        // or the row that's about to become the new Previous.
+        let about_to_become_prev = current.as_ref().map(|r| r.tag.clone());
+        if older_prev.tag != rolled_back.tag && Some(older_prev.tag.clone()) != about_to_become_prev
+        {
+            let mut older = older_prev;
+            older.state = ReleaseState::Archived;
+            svc.release_svc.store.upsert_release(&older).await?;
+        }
+    }
 
     if let Some(mut cur) = current.clone() {
         cur.state = ReleaseState::Previous;

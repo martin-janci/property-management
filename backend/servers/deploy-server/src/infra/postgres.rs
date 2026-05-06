@@ -22,7 +22,7 @@ impl PostgresOps {
         .await
     }
 
-    pub async fn drop(&self, db_name: &str) -> Result<()> {
+    pub async fn drop_db(&self, db_name: &str) -> Result<()> {
         let _ = run_psql(
             &self.admin_url,
             &format!(
@@ -53,6 +53,9 @@ impl PostgresOps {
     }
 
     pub async fn restore(&self, db_name: &str, dump: &Path) -> Result<()> {
+        // Drop any partial state from a previous failed restore (#12). Best-effort —
+        // ignore errors (DB may not exist).
+        let _ = self.drop_db(db_name).await;
         self.create_from_template(db_name).await?;
         let url = self.admin_url.replace("/postgres", &format!("/{db_name}"));
         let status = Command::new("pg_restore")
