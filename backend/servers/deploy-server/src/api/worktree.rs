@@ -200,8 +200,17 @@ pub async fn open_handler(
                 db
             );
 
-            let jwt_secret = std::env::var("PPT_JWT_SECRET")
-                .unwrap_or_else(|_| "dev-secret-min-32-chars-please-replace-replace".into());
+            let jwt_secret = std::env::var("PPT_JWT_SECRET").map_err(|_| {
+                DeployError::Config(
+                    "PPT_JWT_SECRET env var is not set; refusing to start a dedicated backend with a default secret. \
+                     Set it in /etc/ppt-deploy/secrets.env (referenced by the systemd unit's EnvironmentFile)".into()
+                )
+            })?;
+            if jwt_secret.len() < 32 {
+                return Err(DeployError::Config(
+                    "PPT_JWT_SECRET must be at least 32 characters".into()
+                ));
+            }
 
             svc.docker
                 .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {

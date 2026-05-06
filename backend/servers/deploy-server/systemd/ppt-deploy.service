@@ -12,6 +12,7 @@ Group=ppt-deploy
 Environment=PPT_DEPLOY_ETC=/etc/ppt-deploy
 Environment=RUST_LOG=info
 Environment=LISTEN_FDS=1
+EnvironmentFile=-/etc/ppt-deploy/secrets.env
 StandardOutput=journal
 StandardError=journal
 TimeoutStopSec=30s

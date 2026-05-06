@@ -157,6 +157,21 @@ echo "$TOKEN" > "$HOME/.config/ppt-deploy/token"
 chmod 600 "$HOME/.config/ppt-deploy/token"
 ```
 
+### 11.1 Generate JWT secret for dedicated backends
+
+Dedicated worktree backends and the staging/prod backend containers receive `JWT_SECRET` from the deploy server. The deploy server reads it from `/etc/ppt-deploy/secrets.env` (referenced by the systemd unit's `EnvironmentFile=`).
+
+```bash
+sudo install -m 0600 -o ppt-deploy -g ppt-deploy /dev/null /etc/ppt-deploy/secrets.env
+sudo tee /etc/ppt-deploy/secrets.env >/dev/null <<EOF
+PPT_JWT_SECRET=$(openssl rand -hex 32)
+EOF
+sudo chmod 600 /etc/ppt-deploy/secrets.env
+sudo chown ppt-deploy:ppt-deploy /etc/ppt-deploy/secrets.env
+```
+
+The deploy server fails with HTTP 500 + a clear error if this var is missing — there is **no** silent fallback. Do not skip this step before opening a dedicated-backend worktree.
+
 Generate token for the GC cron (a separate API key avoids leaking the human-facing one):
 
 ```bash
