@@ -36,9 +36,32 @@ impl DockerClient {
     pub fn from_socket(docker_socket: &str) -> Result<Self> {
         let docker = if docker_socket.starts_with("unix://") {
             Docker::connect_with_unix(docker_socket, 30, bollard::API_DEFAULT_VERSION)?
-        } else if let Some(rest) = docker_socket.strip_prefix("ssh://") {
-            let local_port = pick_local_port_for_tunnel(rest);
-            spawn_ssh_tunnel(rest, local_port)?;
+        } else if docker_socket.starts_with("ssh://") {
+            let url = url::Url::parse(docker_socket)
+                .map_err(|e| crate::DeployError::Config(format!("invalid ssh URI: {e}")))?;
+            let user = url.username();
+            let host = url.host_str().ok_or_else(|| {
+                crate::DeployError::Config(format!("ssh URI missing host: {docker_socket}"))
+            })?;
+            let port = url.port().unwrap_or(22);
+
+            // Strict validation: user and host must be alphanumeric + .-_ only.
+            // No leading dash (option-injection), no shell metacharacters.
+            let user_ok = user.is_empty()
+                || user
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'));
+            let host_ok = host
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'));
+            if !user_ok || !host_ok || user.starts_with('-') || host.starts_with('-') {
+                return Err(crate::DeployError::Config(format!(
+                    "ssh URI user/host contains disallowed characters: {docker_socket}"
+                )));
+            }
+
+            let local_port = pick_local_port_for_tunnel(docker_socket);
+            spawn_ssh_tunnel(user, host, port, local_port)?;
             Docker::connect_with_http(
                 &format!("tcp://127.0.0.1:{local_port}"),
                 30,
@@ -256,26 +279,37 @@ fn pick_local_port_for_tunnel(target: &str) -> u16 {
     22300 + (h.finish() % 100) as u16
 }
 
-fn spawn_ssh_tunnel(remote: &str, local_port: u16) -> crate::Result<()> {
+fn spawn_ssh_tunnel(user: &str, host: &str, port: u16, local_port: u16) -> crate::Result<()> {
     use std::process::Stdio;
     if std::net::TcpStream::connect(format!("127.0.0.1:{local_port}")).is_ok() {
         return Ok(());
     }
+
+    // Build ssh args with explicit -p and -l flags rather than user@host concatenation.
+    let mut args = vec![
+        "-N".to_string(),
+        "-L".to_string(),
+        format!("127.0.0.1:{local_port}:/var/run/docker.sock"),
+        "-o".to_string(),
+        "StrictHostKeyChecking=accept-new".to_string(),
+        "-o".to_string(),
+        "ServerAliveInterval=30".to_string(),
+        "-p".to_string(),
+        port.to_string(),
+    ];
+    if !user.is_empty() {
+        args.push("-l".to_string());
+        args.push(user.to_string());
+    }
+    args.push(host.to_string());
+
     std::process::Command::new("ssh")
-        .args([
-            "-N",
-            "-L",
-            &format!("127.0.0.1:{local_port}:/var/run/docker.sock"),
-            "-o",
-            "StrictHostKeyChecking=accept-new",
-            "-o",
-            "ServerAliveInterval=30",
-            remote,
-        ])
+        .args(&args)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
         .map_err(|e| crate::DeployError::Config(format!("ssh tunnel spawn: {e}")))?;
+
     for _ in 0..20 {
         std::thread::sleep(std::time::Duration::from_millis(100));
         if std::net::TcpStream::connect(format!("127.0.0.1:{local_port}")).is_ok() {
