@@ -58,9 +58,12 @@ pub async fn deploy_handler(
         "ppt-web".into(),
         format!("{}/ppt-web:{}", svc.image_prefix, req.tag),
     );
+    // Note: docker-frontend.yml pushes `ppt-web` and `reality-web` (without `ppt-` prefix on reality-web).
+    // Backend images use `ppt-api-server` and `ppt-reality-server` (with prefix). Workflow inconsistency,
+    // matching what's actually published to GHCR.
     images.insert(
         "reality-web".into(),
-        format!("{}/ppt-reality-web:{}", svc.image_prefix, req.tag),
+        format!("{}/reality-web:{}", svc.image_prefix, req.tag),
     );
 
     let spec = StagingDeploySpec {
