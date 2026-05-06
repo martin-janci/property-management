@@ -36,10 +36,14 @@ impl DockerClient {
     pub fn from_socket(docker_socket: &str) -> Result<Self> {
         let docker = if docker_socket.starts_with("unix://") {
             Docker::connect_with_unix(docker_socket, 30, bollard::API_DEFAULT_VERSION)?
-        } else if docker_socket.starts_with("ssh://") {
-            return Err(crate::DeployError::Config(format!(
-                "ssh:// docker socket not supported in MVP: {docker_socket}"
-            )));
+        } else if let Some(rest) = docker_socket.strip_prefix("ssh://") {
+            let local_port = pick_local_port_for_tunnel(rest);
+            spawn_ssh_tunnel(rest, local_port)?;
+            Docker::connect_with_http(
+                &format!("tcp://127.0.0.1:{local_port}"),
+                30,
+                bollard::API_DEFAULT_VERSION,
+            )?
         } else {
             Docker::connect_with_local_defaults()?
         };
@@ -242,6 +246,45 @@ impl DockerClient {
             .await;
         Ok(())
     }
+}
+
+fn pick_local_port_for_tunnel(target: &str) -> u16 {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut h = DefaultHasher::new();
+    target.hash(&mut h);
+    22300 + (h.finish() % 100) as u16
+}
+
+fn spawn_ssh_tunnel(remote: &str, local_port: u16) -> crate::Result<()> {
+    use std::process::Stdio;
+    if std::net::TcpStream::connect(format!("127.0.0.1:{local_port}")).is_ok() {
+        return Ok(());
+    }
+    std::process::Command::new("ssh")
+        .args([
+            "-N",
+            "-L",
+            &format!("127.0.0.1:{local_port}:/var/run/docker.sock"),
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            "-o",
+            "ServerAliveInterval=30",
+            remote,
+        ])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| crate::DeployError::Config(format!("ssh tunnel spawn: {e}")))?;
+    for _ in 0..20 {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        if std::net::TcpStream::connect(format!("127.0.0.1:{local_port}")).is_ok() {
+            return Ok(());
+        }
+    }
+    Err(crate::DeployError::Config(format!(
+        "ssh tunnel did not come up on port {local_port}"
+    )))
 }
 
 #[cfg(test)]
