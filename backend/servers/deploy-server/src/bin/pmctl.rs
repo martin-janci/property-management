@@ -43,6 +43,14 @@ enum Cmd {
     List,
     /// Print version of the server.
     Version,
+    /// Deploy a tag to a target (staging only in Phase 2).
+    Deploy {
+        target: String,
+        #[arg(long)]
+        tag: String,
+    },
+    /// Resume a paused target on demand.
+    Wake { target: String },
 }
 
 #[derive(Serialize)]
@@ -115,6 +123,24 @@ async fn main() -> anyhow::Result<()> {
         }
         Cmd::Version => {
             let resp = http.get(format!("{}/health", cli.url)).send().await?;
+            print_resp(resp, cli.json).await?;
+        }
+        Cmd::Deploy { target, tag } => {
+            let body = serde_json::json!({"tag": tag, "target": target});
+            let resp = http
+                .post(format!("{}/api/deploy", cli.url))
+                .header("Authorization", &auth)
+                .json(&body)
+                .send()
+                .await?;
+            print_resp(resp, cli.json).await?;
+        }
+        Cmd::Wake { target } => {
+            let resp = http
+                .post(format!("{}/api/wake/{target}", cli.url))
+                .header("Authorization", &auth)
+                .send()
+                .await?;
             print_resp(resp, cli.json).await?;
         }
     }
