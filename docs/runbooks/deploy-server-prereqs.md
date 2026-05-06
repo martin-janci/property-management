@@ -299,3 +299,86 @@ pmctl rollback --target=prod
 ```
 
 This redeploys the previous Release marked `state=previous` for prod.
+
+## 13. Migrate to rootless Docker (Phase 6 polish)
+
+The deploy server initially runs against rootful `/var/run/docker.sock` with `ppt-deploy` in the `docker` group. Rootless Docker is more secure (a deploy-server bug can't escalate to host root). Migration is non-trivial — perform when the deploy flow is stable and you have time to debug.
+
+### 13.1 Install rootless Docker for `ppt-deploy` user
+
+```bash
+sudo apt install -y dbus-user-session uidmap
+sudo loginctl enable-linger ppt-deploy
+sudo -u ppt-deploy bash -c '
+  curl -fsSL https://get.docker.com/rootless | sh
+  echo "export DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock" >> ~/.bashrc
+  echo "export PATH=$HOME/bin:$PATH" >> ~/.bashrc
+'
+```
+
+The rootless socket lives at `/run/user/<uid>/docker.sock` (where uid is `ppt-deploy`'s).
+
+### 13.2 Update Caddy / external proxy
+
+Rootless Docker by default cannot bind to ports below 1024 without `setcap`. Either:
+- Run all containers on high ports (e.g. 8080, 8081) and rely on Caddy's reverse proxy
+- Or set `sudo setcap cap_net_bind_service=+ep $(which rootlesskit)` to allow privileged ports
+
+The current setup already uses high ports + Caddy, so the simpler "high ports only" path works.
+
+### 13.3 Update systemd unit
+
+Edit `/etc/systemd/system/ppt-deploy.service` so it talks to the rootless socket:
+
+```ini
+[Service]
+Environment=DOCKER_HOST=unix:///run/user/<uid>/docker.sock
+```
+
+Where `<uid>` is `ppt-deploy`'s uid (usually `id -u ppt-deploy`).
+
+### 13.4 Update `targets.yaml`
+
+Change staging target's `docker_socket`:
+
+```yaml
+staging:
+  docker_socket: unix:///run/user/<uid>/docker.sock
+  caddy_url: http://localhost:2019
+  domain_suffix: staging.rlt.sk
+```
+
+Restart deploy server: `sudo systemctl restart ppt-deploy.socket`.
+
+### 13.5 Validation
+
+Sanity-check the rootless docker is working:
+
+```bash
+sudo -u ppt-deploy DOCKER_HOST=unix:///run/user/$(id -u ppt-deploy)/docker.sock docker ps
+```
+
+Then exercise a worktree open and verify the container appears under the rootless instance:
+
+```bash
+pmctl open feature/migrate-test
+```
+
+### 13.6 Rollback path
+
+If rootless misbehaves, revert by:
+- Setting `DOCKER_HOST` back to `/var/run/docker.sock` in systemd unit
+- Reverting `targets.yaml` `docker_socket` to `unix:///var/run/docker.sock`
+- `sudo systemctl daemon-reload && sudo systemctl restart ppt-deploy.service`
+
+The rootless install is independent of the rootful one; both can coexist during validation.
+
+### 13.7 Remove `ppt-deploy` from `docker` group
+
+After validation:
+
+```bash
+sudo gpasswd -d ppt-deploy docker
+```
+
+This removes the only path to escalation. The deploy server now operates with the same security posture as a regular user account.
