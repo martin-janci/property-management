@@ -106,6 +106,50 @@ pub fn sanitize(branch: &str) -> String {
         .to_lowercase()
 }
 
+/// Strict validator for inputs that flow into shell-out commands or SQL.
+/// Allows: alphanumeric, `-`, `_`, `.`, `/`. Rejects leading `-` (git option flag).
+/// Returns the input unchanged if valid; Err if not.
+pub fn validate_branch_strict(branch: &str) -> crate::Result<&str> {
+    if branch.is_empty() || branch.starts_with('-') || branch.starts_with('.') {
+        return Err(crate::DeployError::BadRequest(format!(
+            "invalid branch name: {branch:?}"
+        )));
+    }
+    if !branch
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '/'))
+    {
+        return Err(crate::DeployError::BadRequest(format!(
+            "branch contains disallowed characters: {branch:?}"
+        )));
+    }
+    Ok(branch)
+}
+
+/// Strict validator for `alias` and database names.
+/// Allows: alphanumeric, `-`, `_`. No path separators, no leading dash.
+pub fn validate_alias_strict(alias: &str) -> crate::Result<&str> {
+    if alias.is_empty() || alias.starts_with('-') {
+        return Err(crate::DeployError::BadRequest(format!(
+            "invalid alias: {alias:?}"
+        )));
+    }
+    if alias.len() > 30 {
+        return Err(crate::DeployError::BadRequest(
+            "alias too long (max 30 chars)".into(),
+        ));
+    }
+    if !alias
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_'))
+    {
+        return Err(crate::DeployError::BadRequest(format!(
+            "alias contains disallowed characters: {alias:?}"
+        )));
+    }
+    Ok(alias)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,5 +224,42 @@ mod tests {
         );
         let dest = fetcher.fetch_branch("feature-x").await.unwrap();
         assert!(dest.join("README.md").exists());
+    }
+}
+
+#[cfg(test)]
+mod strict_tests {
+    use super::*;
+
+    #[test]
+    fn alias_strict_accepts_valid() {
+        assert!(validate_alias_strict("feature-uc14").is_ok());
+        assert!(validate_alias_strict("uc14").is_ok());
+        assert!(validate_alias_strict("a_b-c").is_ok());
+    }
+
+    #[test]
+    fn alias_strict_rejects_sql_injection() {
+        assert!(validate_alias_strict("a\";DROP DATABASE \"x\";--").is_err());
+        assert!(validate_alias_strict("a/b").is_err());
+        assert!(validate_alias_strict("").is_err());
+        assert!(validate_alias_strict("-foo").is_err());
+        assert!(validate_alias_strict(&"a".repeat(31)).is_err());
+    }
+
+    #[test]
+    fn branch_strict_accepts_valid() {
+        assert!(validate_branch_strict("main").is_ok());
+        assert!(validate_branch_strict("feature/UC-14").is_ok());
+        assert!(validate_branch_strict("hotfix/v1.2.3").is_ok());
+    }
+
+    #[test]
+    fn branch_strict_rejects_injection() {
+        assert!(validate_branch_strict("--upload-pack=evil").is_err());
+        assert!(validate_branch_strict("-foo").is_err());
+        assert!(validate_branch_strict(".hidden").is_err());
+        assert!(validate_branch_strict("a;rm -rf /").is_err());
+        assert!(validate_branch_strict("").is_err());
     }
 }

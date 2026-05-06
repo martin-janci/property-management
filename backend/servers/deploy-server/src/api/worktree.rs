@@ -56,6 +56,11 @@ pub async fn open_handler(
         ));
     }
 
+    // Strict input validation — defense against SQL injection (db_name interpolation)
+    // and command/option injection (git fetch <branch>, image tag interpolation).
+    crate::infra::git::validate_branch_strict(&req.branch)?;
+    crate::infra::git::validate_alias_strict(&name)?;
+
     // Resume from dump if a closed worktree with this name exists within TTL window.
     let existing = svc.store.get_worktree(&name).await?;
     let resume_db: Option<String> = if let Some(ref ex) = existing {
@@ -177,7 +182,7 @@ pub async fn open_handler(
             // Run backend containers.
             // Image tag matches docker-build.yml's `type=ref,event=branch` which
             // replaces `/` with `-` but preserves case. So `feature/UC-14` → `feature-UC-14`.
-            let branch_tag = req.branch.replace('/', "-").replace('_', "-");
+            let branch_tag = req.branch.replace(['/', '_'], "-");
             let api_image = format!("{}/ppt-api-server:{}", svc.backend_image_prefix, branch_tag);
             let reality_image = format!(
                 "{}/ppt-reality-server:{}",
