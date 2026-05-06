@@ -1,0 +1,58 @@
+name: Release tag → register prod-candidate
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for backend + frontend image workflows
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Waiting for image builds for tag $TAG"
+          for i in $(seq 1 90); do
+            backend_done=$(gh run list --workflow=docker-build.yml --branch="$TAG" --limit 1 --json status -q '.[0].status' 2>/dev/null || echo "")
+            frontend_done=$(gh run list --workflow=docker-frontend.yml --branch="$TAG" --limit 1 --json status -q '.[0].status' 2>/dev/null || echo "")
+            if [ "$backend_done" = "completed" ] && [ "$frontend_done" = "completed" ]; then
+              echo "Both workflows completed."
+              break
+            fi
+            echo "Backend: ${backend_done:-pending}, Frontend: ${frontend_done:-pending}; sleeping 10s..."
+            sleep 10
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get OIDC token for ppt-deploy
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken('ppt-deploy');
+            core.setOutput('token', token);
+
+      - name: POST /api/release with image manifest
+        env:
+          DEPLOY_URL: https://deploy.rlt.sk
+          IMAGE_PREFIX: ghcr.io/martin-janci
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          IMAGES=$(jq -n \
+            --arg api "$IMAGE_PREFIX/ppt-api-server:$TAG" \
+            --arg reality "$IMAGE_PREFIX/ppt-reality-server:$TAG" \
+            --arg pptweb "$IMAGE_PREFIX/ppt-web:$TAG" \
+            --arg realityweb "$IMAGE_PREFIX/reality-web:$TAG" \
+            '{"api-server":$api,"reality-server":$reality,"ppt-web":$pptweb,"reality-web":$realityweb}')
+          curl -fsS -X POST "$DEPLOY_URL/api/release" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\":\"$TAG\",\"images\":$IMAGES}"
