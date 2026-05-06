@@ -11,3 +11,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Injected by @ppt/vite-plugin-worktree
+declare const __PPT_WORKTREE_NAME__: string;
+declare const __PPT_WORKTREE_BRANCH__: string;
+declare const __PPT_IS_WORKTREE__: boolean;

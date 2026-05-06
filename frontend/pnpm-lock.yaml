@@ -157,6 +157,9 @@ importers:
       '@axe-core/react':
         specifier: ^4.10.0
         version: 4.11.0
+      '@ppt/vite-plugin-worktree':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-ppt-worktree
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1
@@ -233,6 +236,9 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.2.0)
     devDependencies:
+      '@ppt/vite-plugin-worktree':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-ppt-worktree
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.9.1
