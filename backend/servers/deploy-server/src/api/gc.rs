@@ -75,12 +75,11 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
                                 tracing::warn!(error = %e, db = %db, "pg_dump failed during gc stop");
                             } else {
                                 wt.dump_path = Some(dump_path_str.clone());
-                                if let Err(e) =
-                                    crate::infra::postgres::PostgresOps::drop(
-                                        &ctx.svc.postgres,
-                                        &db,
-                                    )
-                                    .await
+                                if let Err(e) = crate::infra::postgres::PostgresOps::drop(
+                                    &ctx.svc.postgres,
+                                    &db,
+                                )
+                                .await
                                 {
                                     tracing::warn!(error = %e, db = %db, "pg drop failed");
                                 } else {

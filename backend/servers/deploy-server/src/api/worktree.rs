@@ -56,6 +56,34 @@ pub async fn open_handler(
         ));
     }
 
+    // Resume from dump if a closed worktree with this name exists within TTL window.
+    let existing = svc.store.get_worktree(&name).await?;
+    let resume_db: Option<String> = if let Some(ref ex) = existing {
+        if matches!(ex.state, WorktreeState::Closed)
+            && matches!(req.backend, BackendMode::Dedicated)
+        {
+            if let (Some(db), Some(dump_path)) = (
+                ex.db_name.clone().or_else(|| {
+                    // db was dropped during gc; reconstruct expected name
+                    Some(format!("{}{}", svc.postgres.user_db_prefix, name))
+                }),
+                ex.dump_path.clone(),
+            ) {
+                tracing::info!(name=%name, dump=%dump_path, "resuming worktree from pg dump");
+                svc.postgres
+                    .restore(&db, std::path::Path::new(&dump_path))
+                    .await?;
+                Some(db)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
     // 1. Fetch source.
     let source_path = svc.git.fetch_branch(&req.branch).await?;
 
@@ -106,34 +134,41 @@ pub async fn open_handler(
 
     // 5. Dedicated backend branch.
     if matches!(req.backend, BackendMode::Dedicated) {
-        let db = format!("{}{}", svc.postgres.user_db_prefix, name);
-
-        // Create DB from template.
-        svc.postgres.create_from_template(&db).await?;
+        let db = if let Some(existing_db) = resume_db.clone() {
+            // Already restored above
+            existing_db
+        } else {
+            let db = format!("{}{}", svc.postgres.user_db_prefix, name);
+            svc.postgres.create_from_template(&db).await?;
+            db
+        };
         db_name = Some(db.clone());
 
-        // Dispatch GHA workflow.
-        svc.gh
-            .dispatch_workflow("docker-build.yml", &req.branch)
-            .await?;
-
-        // Poll for completion (up to 10 min).
-        let mut completed = false;
-        for _ in 0..60 {
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-            if let Some(run) = svc.gh.latest_run("docker-build.yml", &req.branch).await? {
-                if run.status == "completed" {
-                    if run.conclusion.as_deref() != Some("success") {
-                        return Err(DeployError::Internal(format!(
-                            "workflow failed: {}",
-                            run.html_url
-                        )));
+        // Dispatch GHA workflow (skip if resuming — images cached from previous open).
+        let completed = if resume_db.is_some() {
+            true
+        } else {
+            svc.gh
+                .dispatch_workflow("docker-build.yml", &req.branch)
+                .await?;
+            let mut completed = false;
+            for _ in 0..60 {
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+                if let Some(run) = svc.gh.latest_run("docker-build.yml", &req.branch).await? {
+                    if run.status == "completed" {
+                        if run.conclusion.as_deref() != Some("success") {
+                            return Err(DeployError::Internal(format!(
+                                "workflow failed: {}",
+                                run.html_url
+                            )));
+                        }
+                        completed = true;
+                        break;
                     }
-                    completed = true;
-                    break;
                 }
             }
-        }
+            completed
+        };
         if !completed {
             backend_status = "building".into();
             // Don't fail — return URLs for frontend, backend will come online when build finishes.
@@ -143,10 +178,7 @@ pub async fn open_handler(
             // Image tag matches docker-build.yml's `type=ref,event=branch` which
             // replaces `/` with `-` but preserves case. So `feature/UC-14` → `feature-UC-14`.
             let branch_tag = req.branch.replace('/', "-").replace('_', "-");
-            let api_image = format!(
-                "{}/ppt-api-server:{}",
-                svc.backend_image_prefix, branch_tag
-            );
+            let api_image = format!("{}/ppt-api-server:{}", svc.backend_image_prefix, branch_tag);
             let reality_image = format!(
                 "{}/ppt-reality-server:{}",
                 svc.backend_image_prefix, branch_tag
