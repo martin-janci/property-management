@@ -1,0 +1,21 @@
+# backend/servers/deploy-server/systemd/ppt-deploy.service
+[Unit]
+Description=ppt-deploy on-demand server
+Requires=ppt-deploy.socket
+After=network.target docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ppt-deploy
+User=ppt-deploy
+Group=ppt-deploy
+Environment=PPT_DEPLOY_ETC=/etc/ppt-deploy
+Environment=RUST_LOG=info
+Environment=LISTEN_FDS=1
+StandardOutput=journal
+StandardError=journal
+TimeoutStopSec=30s
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
