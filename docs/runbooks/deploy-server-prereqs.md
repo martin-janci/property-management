@@ -117,3 +117,81 @@ Repo → Settings → Webhooks → Add webhook:
 - Content type: `application/json`
 - Secret: generated value, also written to `/etc/ppt-deploy/auth.yaml` as `webhook_secret`
 - Events: Pull requests, Pushes, Packages
+
+## 11. Phase 1 deployment (one-time)
+
+Build binary on Hetzner box (or pull from CI artifact in a future iteration):
+
+```bash
+git clone <repo> /opt/ppt-deploy-build
+cd /opt/ppt-deploy-build/backend
+cargo build --release -p deploy-server --bin ppt-deploy --bin pmctl
+sudo install -m 0755 target/release/ppt-deploy /usr/local/bin/
+sudo install -m 0755 target/release/pmctl       /usr/local/bin/
+```
+
+Configure systemd:
+
+```bash
+sudo cp /opt/ppt-deploy-build/backend/servers/deploy-server/systemd/*.{socket,service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now ppt-deploy.socket ppt-deploy-gc.timer
+```
+
+Generate API key for the Claude skill:
+
+```bash
+TOKEN=$(openssl rand -hex 32)
+HASH=$(printf "%s" "$TOKEN" | sha256sum | awk '{print $1}')
+echo "API key (give to Claude skill): $TOKEN"
+
+sudo tee -a /etc/ppt-deploy/auth.yaml <<EOF
+api_keys:
+  - name: claude-skill
+    hash: "$HASH"
+EOF
+
+# On the operator's laptop:
+mkdir -p "$HOME/.config/ppt-deploy"
+echo "$TOKEN" > "$HOME/.config/ppt-deploy/token"
+chmod 600 "$HOME/.config/ppt-deploy/token"
+```
+
+Generate token for the GC cron (a separate API key avoids leaking the human-facing one):
+
+```bash
+GC_TOKEN=$(openssl rand -hex 32)
+GC_HASH=$(printf "%s" "$GC_TOKEN" | sha256sum | awk '{print $1}')
+
+sudo tee -a /etc/ppt-deploy/auth.yaml <<EOF
+  - name: gc-cron
+    hash: "$GC_HASH"
+EOF
+
+sudo tee /etc/ppt-deploy/gc.env <<EOF
+PMCTL_TOKEN=$GC_TOKEN
+EOF
+sudo chmod 600 /etc/ppt-deploy/gc.env
+```
+
+Test:
+
+```bash
+PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl version
+```
+
+Expected: JSON `{"status":"ok","version":"..."}`.
+
+Open a worktree for smoke verification:
+
+```bash
+PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl open feature/test --json
+```
+
+Expected: JSON with `worktree.urls.ppt` set to `https://wt-feature-test.dev.ppt.rlt.sk` (or similar), and the URL should resolve once Caddy provisions the wildcard cert.
+
+Close it:
+
+```bash
+PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl close feature-test --json
+```
