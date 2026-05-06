@@ -1,5 +1,5 @@
 // backend/servers/deploy-server/src/api/router.rs
-use crate::api::{health, worktree};
+use crate::api::{health, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::infra::{audit, AuthState, CaddyClient, DockerClient, GitFetcher, Store};
 use axum::middleware::from_fn_with_state;
@@ -18,6 +18,7 @@ pub fn build(
     frontend_image: String,
     domain_dev_ppt: String,
     domain_dev_reality: String,
+    webhook_cfg: webhook::WebhookConfig,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -40,7 +41,12 @@ pub fn build(
         .route("/api/worktrees", get(worktree::list_handler))
         .route("/api/worktree/:name", get(worktree::get_handler))
         .route("/api/worktree/:name/close", post(worktree::close_handler))
-        .with_state(svc)
+        .with_state(svc.clone())
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
         .route("/health", get(health::handler))
+        .merge(
+            Router::new()
+                .route("/api/webhook/github", post(webhook::handler))
+                .with_state((svc, webhook_cfg)),
+        )
 }

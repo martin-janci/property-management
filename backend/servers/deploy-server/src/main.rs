@@ -39,6 +39,10 @@ async fn main() -> anyhow::Result<()> {
     let api_keys = Arc::new(ApiKeyValidator::new(auth.api_keys.clone()));
     let oidc = Arc::new(OidcValidator::new(auth.oidc.clone()));
 
+    let webhook_cfg = deploy_server::api::webhook::WebhookConfig {
+        secret: auth.webhook_secret.clone(),
+    };
+
     let app = router::build(
         store,
         git,
@@ -55,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
             "dev.{}",
             staging.domain_suffix.trim_start_matches("staging.")
         ),
+        webhook_cfg,
     );
 
     let mut fd = ListenFd::from_env();
