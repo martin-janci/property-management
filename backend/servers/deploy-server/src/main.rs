@@ -76,6 +76,13 @@ async fn main() -> anyhow::Result<()> {
         targets: Arc::new(targets.clone()),
     });
 
+    if let Ok(log_path) = std::env::var("CADDY_ACCESS_LOG") {
+        let store_clone = store.clone();
+        tokio::spawn(async move {
+            deploy_server::infra::traffic::tail_caddy_log(log_path, store_clone).await;
+        });
+    }
+
     let postgres = Arc::new(PostgresOps {
         admin_url: cfg.postgres_admin_url.clone(),
         template_db: cfg.postgres_template_db.clone(),

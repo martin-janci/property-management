@@ -8,6 +8,7 @@ pub mod git;
 pub mod health;
 pub mod postgres;
 pub mod store;
+pub mod traffic;
 
 pub use audit::{auth_and_audit, AuthState, CallerIdentity};
 pub use blue_green::{BlueGreenDeployer, BlueGreenSpec, StagingDeploySpec, StagingDeployer};

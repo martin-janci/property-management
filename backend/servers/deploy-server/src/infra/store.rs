@@ -109,6 +109,16 @@ impl Store {
         rows.into_iter().map(WorktreeRow::into_domain).collect()
     }
 
+    pub async fn update_last_traffic(&self, name: &str) -> Result<()> {
+        let now = chrono::Utc::now().timestamp();
+        sqlx::query("UPDATE worktree SET last_traffic_at = ? WHERE name = ?")
+            .bind(now)
+            .bind(name)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn record_audit(
         &self,
         caller_kind: &str,
