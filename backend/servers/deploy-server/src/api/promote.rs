@@ -176,6 +176,101 @@ fn parse_duration_secs(s: &str) -> Option<u64> {
     s.parse().ok()
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RollbackRequest {
+    pub target: String,
+    pub to: Option<String>,
+}
+
+pub async fn rollback_handler(
+    State(svc): State<Arc<PromoteService>>,
+    Json(req): Json<RollbackRequest>,
+) -> Result<Json<PromoteResponse>> {
+    let target_cfg = svc
+        .targets
+        .targets
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("unknown target {}", req.target)))?;
+
+    // Determine the release to roll back TO.
+    let target_release = if let Some(to) = req.to.clone() {
+        svc.release_svc
+            .store
+            .get_release(&to)
+            .await?
+            .ok_or_else(|| DeployError::NotFound(format!("release {to}")))?
+    } else {
+        svc.release_svc
+            .store
+            .current_release_for(&req.target, "previous")
+            .await?
+            .ok_or_else(|| DeployError::NotFound("no previous release recorded".into()))?
+    };
+
+    let live_state = if req.target == "prod" {
+        "prod"
+    } else {
+        "staging"
+    };
+    let current = svc
+        .release_svc
+        .store
+        .current_release_for(&req.target, live_state)
+        .await?;
+
+    let spec = BlueGreenSpec {
+        tag: target_release.tag.clone(),
+        target_name: req.target.clone(),
+        api_image: target_release
+            .images
+            .get("api-server")
+            .cloned()
+            .unwrap_or_default(),
+        reality_image: target_release
+            .images
+            .get("reality-server")
+            .cloned()
+            .unwrap_or_default(),
+        ppt_web_image: target_release
+            .images
+            .get("ppt-web")
+            .cloned()
+            .unwrap_or_default(),
+        reality_web_image: target_release
+            .images
+            .get("reality-web")
+            .cloned()
+            .unwrap_or_default(),
+        domain_suffix: target_cfg.domain_suffix.clone(),
+    };
+    svc.release_svc.deployer.deploy(&spec).await?;
+
+    // Promote rolled-back release to live, demote current to Previous.
+    let mut rolled_back = target_release;
+    rolled_back.state = if req.target == "prod" {
+        ReleaseState::Prod
+    } else {
+        ReleaseState::Staging
+    };
+    rolled_back.target = Some(req.target.clone());
+    rolled_back.promoted_at = Some(chrono::Utc::now());
+    let promoted_tag = rolled_back.tag.clone();
+    svc.release_svc.store.upsert_release(&rolled_back).await?;
+
+    if let Some(mut cur) = current.clone() {
+        cur.state = ReleaseState::Previous;
+        svc.release_svc.store.upsert_release(&cur).await?;
+    }
+
+    Ok(Json(PromoteResponse {
+        previous_tag: current.map(|r| r.tag),
+        promoted_tag,
+        target: req.target,
+        dry_run: false,
+        health_grace_passed: true,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

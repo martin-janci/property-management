@@ -75,6 +75,7 @@ pub fn build(
         .merge(
             Router::new()
                 .route("/api/promote", post(promote::promote_handler))
+                .route("/api/rollback", post(promote::rollback_handler))
                 .with_state(promote_svc),
         )
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
