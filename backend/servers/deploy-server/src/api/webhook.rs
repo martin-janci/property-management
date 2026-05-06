@@ -39,20 +39,85 @@ pub async fn handler(
     headers: HeaderMap,
     body: axum::body::Bytes,
 ) -> Result<Json<serde_json::Value>> {
-    verify_signature(&headers, &body, &cfg.secret)?;
+    let started = std::time::Instant::now();
+    if let Err(e) = verify_signature(&headers, &body, &cfg.secret) {
+        // Best-effort audit; don't fail the audit attempt.
+        let _ = svc
+            .store
+            .record_audit(
+                "webhook",
+                "github",
+                "POST /api/webhook/github",
+                None,
+                &format!("error:bad_signature:{e}"),
+                started.elapsed().as_millis() as i64,
+            )
+            .await;
+        return Err(e);
+    }
     let payload: WebhookPayload = serde_json::from_slice(&body)
         .map_err(|e| DeployError::BadRequest(format!("bad json: {e}")))?;
 
-    if payload.action.as_deref() == Some("closed") {
+    let action = payload.action.as_deref().unwrap_or("?");
+    let pr_ref = payload
+        .pull_request
+        .as_ref()
+        .map(|pr| pr.head.git_ref.as_str())
+        .unwrap_or("");
+    let params_json = serde_json::json!({"action": action, "ref": pr_ref}).to_string();
+
+    let mut close_result = "ok".to_string();
+    if action == "closed" {
         if let Some(pr) = &payload.pull_request {
             let name = sanitize(&pr.head.git_ref);
-            // Best-effort close; ignore not-found.
             if svc.store.get_worktree(&name).await?.is_some() {
                 let path = axum::extract::Path(name.clone());
-                let _ = crate::api::worktree::close_handler(State(svc.clone()), path).await;
+                match crate::api::worktree::close_handler(State(svc.clone()), path).await {
+                    Ok(_) => {
+                        // Record the synthesized close as its own audit entry attributing it to the webhook.
+                        let _ = svc
+                            .store
+                            .record_audit(
+                                "webhook",
+                                "github",
+                                &format!("POST /api/worktree/{name}/close (synthesized)"),
+                                Some(&params_json),
+                                "ok",
+                                started.elapsed().as_millis() as i64,
+                            )
+                            .await;
+                    }
+                    Err(e) => {
+                        close_result = format!("error:close_failed:{e}");
+                        let _ = svc
+                            .store
+                            .record_audit(
+                                "webhook",
+                                "github",
+                                &format!("POST /api/worktree/{name}/close (synthesized)"),
+                                Some(&params_json),
+                                &close_result,
+                                started.elapsed().as_millis() as i64,
+                            )
+                            .await;
+                    }
+                }
             }
         }
     }
+
+    let _ = svc
+        .store
+        .record_audit(
+            "webhook",
+            "github",
+            "POST /api/webhook/github",
+            Some(&params_json),
+            &close_result,
+            started.elapsed().as_millis() as i64,
+        )
+        .await;
+
     Ok(Json(serde_json::json!({"ok": true})))
 }
 
