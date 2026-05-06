@@ -9,6 +9,7 @@ pub mod health;
 pub mod postgres;
 pub mod store;
 pub mod traffic;
+pub mod worktree_lock;
 
 pub use audit::{auth_and_audit, AuthState, CallerIdentity};
 pub use blue_green::{BlueGreenDeployer, BlueGreenSpec, StagingDeploySpec, StagingDeployer};
@@ -19,3 +20,4 @@ pub use git::GitFetcher;
 pub use health::HealthProbe;
 pub use postgres::PostgresOps;
 pub use store::{AuditEntry, Store};
+pub use worktree_lock::WorktreeLockRegistry;

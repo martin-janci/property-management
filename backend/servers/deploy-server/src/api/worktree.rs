@@ -3,7 +3,7 @@ use crate::domain::{BackendMode, Worktree, WorktreeState, WorktreeUrls};
 use crate::infra::git::sanitize;
 use crate::infra::{
     CaddyClient, CallerIdentity, DockerClient, FrontendDevSpec, GhClient, GitFetcher, PostgresOps,
-    Store,
+    Store, WorktreeLockRegistry,
 };
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
@@ -23,6 +23,7 @@ pub struct WorktreeService {
     pub postgres: Arc<PostgresOps>,
     pub gh: Arc<GhClient>,
     pub backend_image_prefix: String,
+    pub worktree_locks: Arc<WorktreeLockRegistry>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,6 +61,11 @@ pub async fn open_handler(
     // and command/option injection (git fetch <branch>, image tag interpolation).
     crate::infra::git::validate_branch_strict(&req.branch)?;
     crate::infra::git::validate_alias_strict(&name)?;
+
+    // Serialize concurrent open/close/GC for the same worktree name.
+    // Held until function returns; prevents duplicate containers, port collisions,
+    // and double pg_restore from racing /api/worktree calls (#11).
+    let _lock = svc.worktree_locks.acquire(&name).await;
 
     // Resume from dump if a closed worktree with this name exists within TTL window.
     let existing = svc.store.get_worktree(&name).await?;
@@ -294,6 +300,9 @@ pub async fn close_handler(
     State(svc): State<Arc<WorktreeService>>,
     Path(name): Path<String>,
 ) -> Result<Json<Worktree>> {
+    // Serialize against concurrent open/close/GC for the same worktree (#11, #12).
+    let _lock = svc.worktree_locks.acquire(&name).await;
+
     let mut wt = svc
         .store
         .get_worktree(&name)

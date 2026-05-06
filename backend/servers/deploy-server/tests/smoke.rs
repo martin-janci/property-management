@@ -8,6 +8,7 @@ use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{ApiKey, Config, OidcConfig, Target, TargetsConfig};
 use deploy_server::infra::{
     CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, Store,
+    WorktreeLockRegistry,
 };
 use httpmock::prelude::*;
 use std::collections::HashMap;
@@ -187,6 +188,7 @@ async fn open_status_close_flow() {
         gh,
         "ghcr.io/test".into(),
         promote_svc,
+        Arc::new(WorktreeLockRegistry::new()),
     );
 
     let server = axum_test::TestServer::new(app).unwrap();
@@ -414,6 +416,7 @@ async fn dedicated_open_close_with_dump() {
         gh,
         "ghcr.io/test".into(),
         promote_svc,
+        Arc::new(WorktreeLockRegistry::new()),
     );
 
     let server = axum_test::TestServer::new(app).unwrap();
@@ -555,6 +558,7 @@ async fn promote_and_rollback_flow() {
         gh,
         "ghcr.io/test".into(),
         promote_svc,
+        Arc::new(WorktreeLockRegistry::new()),
     );
 
     let server = axum_test::TestServer::new(app).unwrap();

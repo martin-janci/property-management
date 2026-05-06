@@ -35,6 +35,7 @@ async fn main() -> anyhow::Result<()> {
         .context("targets.staging missing")?;
 
     let store = Arc::new(Store::open(&PathBuf::from(&cfg.state_dir).join("state.db")).await?);
+    let worktree_locks = Arc::new(deploy_server::infra::WorktreeLockRegistry::new());
     let git = Arc::new(GitFetcher::new(
         &cfg.git_repo_url,
         &cfg.worktree_dir,
@@ -116,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
         gh,
         cfg.backend_image_prefix.clone(),
         promote_svc,
+        worktree_locks,
     );
 
     let mut fd = ListenFd::from_env();

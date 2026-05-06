@@ -43,6 +43,15 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
     };
     let worktrees = ctx.svc.store.list_worktrees().await?;
     for mut wt in worktrees {
+        // Skip worktrees currently being mutated by an open/close call.
+        // Prevents GC from dropping a dedicated DB while open_handler is mid-flight (#12).
+        let _lock = match ctx.svc.worktree_locks.try_acquire(&wt.name).await {
+            Some(g) => g,
+            None => {
+                tracing::debug!(name = %wt.name, "skipping GC tick — worktree is being mutated");
+                continue;
+            }
+        };
         match wt.state {
             WorktreeState::Running => {
                 if let Some(last) = wt.last_traffic_at {

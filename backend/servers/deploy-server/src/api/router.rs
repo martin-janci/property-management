@@ -4,6 +4,7 @@ use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
 use crate::infra::{
     audit, AuthState, CaddyClient, DockerClient, GhClient, GitFetcher, PostgresOps, Store,
+    WorktreeLockRegistry,
 };
 use axum::middleware::from_fn_with_state;
 use axum::routing::{get, post};
@@ -28,6 +29,7 @@ pub fn build(
     gh: Arc<GhClient>,
     backend_image_prefix: String,
     promote_svc: Arc<promote::PromoteService>,
+    worktree_locks: Arc<WorktreeLockRegistry>,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -40,6 +42,7 @@ pub fn build(
         postgres,
         gh,
         backend_image_prefix,
+        worktree_locks,
     });
 
     let auth_state = AuthState {
