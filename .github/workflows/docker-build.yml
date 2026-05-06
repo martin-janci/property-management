@@ -104,9 +104,11 @@ jobs:
       - name: POST /api/deploy
         env:
           DEPLOY_URL: https://deploy.rlt.sk
-          TAG: ${{ github.sha }}
+          FULL_SHA: ${{ github.sha }}
         run: |
+          # Short SHA matches `type=sha,prefix=` default in metadata-action (7 chars).
+          SHORT_SHA="${FULL_SHA:0:7}"
           curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"$TAG\", \"target\": \"staging\"}"
+            -d "{\"tag\": \"$SHORT_SHA\", \"target\": \"staging\"}"
