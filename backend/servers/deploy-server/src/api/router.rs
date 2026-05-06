@@ -79,11 +79,13 @@ pub fn build(
                 .route("/api/rollback", post(promote::rollback_handler))
                 .with_state(promote_svc),
         )
+        .layer(axum::extract::DefaultBodyLimit::max(1024 * 1024))
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
         .route("/health", get(health::handler))
         .merge(
             Router::new()
                 .route("/api/webhook/github", post(webhook::handler))
-                .with_state((svc, webhook_cfg)),
+                .with_state((svc, webhook_cfg))
+                .layer(axum::extract::DefaultBodyLimit::max(64 * 1024)),
         )
 }
