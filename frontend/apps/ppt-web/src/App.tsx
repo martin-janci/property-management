@@ -280,11 +280,29 @@ function App() {
                             <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
                             <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
                             {/* Document Intelligence routes (Epic 39) */}
-                            <Route path="/documents" element={<DocumentsPageRoute />} />
-                            <Route path="/documents/upload" element={<DocumentUploadPage />} />
+                            <Route
+                              path="/documents"
+                              element={
+                                <ProtectedRoute>
+                                  <DocumentsPageRoute />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path="/documents/upload"
+                              element={
+                                <ProtectedRoute>
+                                  <DocumentUploadPage />
+                                </ProtectedRoute>
+                              }
+                            />
                             <Route
                               path="/documents/:documentId"
-                              element={<DocumentDetailRoute />}
+                              element={
+                                <ProtectedRoute>
+                                  <DocumentDetailRoute />
+                                </ProtectedRoute>
+                              }
                             />
                             {/* News routes (Epic 59) */}
                             <Route

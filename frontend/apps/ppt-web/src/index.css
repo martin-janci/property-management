@@ -38,7 +38,7 @@
     @apply text-gray-700 hover:text-blue-600 no-underline font-medium text-sm;
   }
 
-  .app-nav a.active {
+  .app-nav a[aria-current="page"] {
     @apply text-blue-600;
   }
 
