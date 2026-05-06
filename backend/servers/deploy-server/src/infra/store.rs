@@ -133,6 +133,58 @@ impl Store {
         .await?;
         Ok(())
     }
+
+    pub async fn upsert_release(&self, rel: &crate::domain::Release) -> Result<()> {
+        let images = serde_json::to_string(&rel.images).unwrap();
+        let state = match rel.state {
+            crate::domain::ReleaseState::Candidate => "candidate",
+            crate::domain::ReleaseState::Staging => "staging",
+            crate::domain::ReleaseState::Prod => "prod",
+            crate::domain::ReleaseState::Previous => "previous",
+        };
+        sqlx::query(
+            r#"INSERT INTO release (tag, images, state, target, promoted_at, notes)
+               VALUES (?, ?, ?, ?, ?, ?)
+               ON CONFLICT(tag) DO UPDATE SET
+                 images=excluded.images, state=excluded.state, target=excluded.target,
+                 promoted_at=excluded.promoted_at, notes=excluded.notes"#,
+        )
+        .bind(&rel.tag)
+        .bind(images)
+        .bind(state)
+        .bind(rel.target.as_deref())
+        .bind(rel.promoted_at.map(|t| t.timestamp()))
+        .bind(rel.notes.as_deref())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_release(&self, tag: &str) -> Result<Option<crate::domain::Release>> {
+        let row = sqlx::query_as::<_, ReleaseRow>(
+            r#"SELECT tag, images, state, target, promoted_at, notes FROM release WHERE tag = ?"#,
+        )
+        .bind(tag)
+        .fetch_optional(&self.pool)
+        .await?;
+        row.map(ReleaseRow::into_domain).transpose()
+    }
+
+    pub async fn current_release_for(
+        &self,
+        target: &str,
+        state: &str,
+    ) -> Result<Option<crate::domain::Release>> {
+        let row = sqlx::query_as::<_, ReleaseRow>(
+            r#"SELECT tag, images, state, target, promoted_at, notes FROM release
+               WHERE target = ? AND state = ? ORDER BY promoted_at DESC LIMIT 1"#,
+        )
+        .bind(target)
+        .bind(state)
+        .fetch_optional(&self.pool)
+        .await?;
+        row.map(ReleaseRow::into_domain).transpose()
+    }
 }
 
 #[derive(sqlx::FromRow)]
@@ -194,6 +246,43 @@ impl WorktreeRow {
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct ReleaseRow {
+    tag: String,
+    images: String,
+    state: String,
+    target: Option<String>,
+    promoted_at: Option<i64>,
+    notes: Option<String>,
+}
+
+impl ReleaseRow {
+    fn into_domain(self) -> Result<crate::domain::Release> {
+        use crate::domain::ReleaseState;
+        let state = match self.state.as_str() {
+            "candidate" => ReleaseState::Candidate,
+            "staging" => ReleaseState::Staging,
+            "prod" => ReleaseState::Prod,
+            "previous" => ReleaseState::Previous,
+            other => {
+                return Err(crate::DeployError::Internal(format!(
+                    "bad release state {other}"
+                )))
+            }
+        };
+        let images: std::collections::HashMap<String, String> = serde_json::from_str(&self.images)
+            .map_err(|e| crate::DeployError::Internal(format!("bad images json: {e}")))?;
+        Ok(crate::domain::Release {
+            tag: self.tag,
+            images,
+            state,
+            target: self.target,
+            promoted_at: self.promoted_at.map(|t| Utc.timestamp_opt(t, 0).unwrap()),
+            notes: self.notes,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -229,6 +318,28 @@ mod tests {
 
         let list = store.list_worktrees().await.unwrap();
         assert_eq!(list.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn release_upsert_and_get() {
+        use crate::domain::{Release, ReleaseState};
+        use std::collections::HashMap;
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("state.db")).await.unwrap();
+        let mut images = HashMap::new();
+        images.insert("api-server".into(), "ghcr.io/x/api:v1".into());
+        let rel = Release {
+            tag: "v1.0.0".into(),
+            images,
+            state: ReleaseState::Candidate,
+            target: Some("staging".into()),
+            promoted_at: None,
+            notes: None,
+        };
+        store.upsert_release(&rel).await.unwrap();
+        let got = store.get_release("v1.0.0").await.unwrap().unwrap();
+        assert_eq!(got.tag, "v1.0.0");
+        assert!(matches!(got.state, ReleaseState::Candidate));
     }
 
     #[tokio::test]
