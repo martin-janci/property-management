@@ -23,6 +23,7 @@ tower-http = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = "0.9"
+shellexpand = "3.1"
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "chrono", "json", "migrate"] }
 jsonwebtoken = { workspace = true }
 clap = { workspace = true }
