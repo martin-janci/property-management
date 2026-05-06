@@ -4,7 +4,9 @@ use deploy_server::api::release::ReleaseService;
 use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{load_yaml, AuthConfig, Config, TargetsConfig};
-use deploy_server::infra::{CaddyClient, DockerClient, GitFetcher, StagingDeployer, Store};
+use deploy_server::infra::{
+    CaddyClient, DockerClient, GhClient, GitFetcher, PostgresOps, StagingDeployer, Store,
+};
 use listenfd::ListenFd;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -57,6 +59,16 @@ async fn main() -> anyhow::Result<()> {
             .unwrap_or_else(|_| "ghcr.io/martin-janci".into()),
     });
 
+    let postgres = Arc::new(PostgresOps {
+        admin_url: cfg.postgres_admin_url.clone(),
+        template_db: cfg.postgres_template_db.clone(),
+        user_db_prefix: cfg.postgres_user_db_prefix.clone(),
+    });
+    let gh = Arc::new(GhClient::new(
+        auth.gh_api_token.clone(),
+        cfg.gh_repo.clone(),
+    ));
+
     let app = router::build(
         store,
         git,
@@ -76,6 +88,9 @@ async fn main() -> anyhow::Result<()> {
         webhook_cfg,
         cfg_arc,
         release_svc,
+        postgres,
+        gh,
+        cfg.backend_image_prefix.clone(),
     );
 
     let mut fd = ListenFd::from_env();

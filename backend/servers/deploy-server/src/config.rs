@@ -14,10 +14,40 @@ pub struct Config {
     pub idle_pause_seconds: i64,
     pub idle_stop_seconds: i64,
     pub git_repo_url: String,
+    #[serde(default = "default_postgres_admin_url")]
+    pub postgres_admin_url: String,
+    #[serde(default = "default_postgres_template_db")]
+    pub postgres_template_db: String,
+    #[serde(default = "default_postgres_user_db_prefix")]
+    pub postgres_user_db_prefix: String,
+    #[serde(default = "default_backend_image_prefix")]
+    pub backend_image_prefix: String,
+    #[serde(default = "default_gh_repo")]
+    pub gh_repo: String,
 }
 
 fn default_ttl() -> i64 {
     172_800
+}
+
+fn default_postgres_admin_url() -> String {
+    "postgres://ppt:ppt_dev_password@localhost:5432/postgres".into()
+}
+
+fn default_postgres_template_db() -> String {
+    "ppt_dev_template".into()
+}
+
+fn default_postgres_user_db_prefix() -> String {
+    "ppt_wt_".into()
+}
+
+fn default_backend_image_prefix() -> String {
+    "ghcr.io/martin-janci".into()
+}
+
+fn default_gh_repo() -> String {
+    "martin-janci/property-management".into()
 }
 
 #[derive(Debug, Clone, Deserialize)]

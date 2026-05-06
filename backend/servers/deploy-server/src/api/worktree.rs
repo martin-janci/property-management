@@ -1,7 +1,10 @@
 // backend/servers/deploy-server/src/api/worktree.rs
 use crate::domain::{BackendMode, Worktree, WorktreeState, WorktreeUrls};
 use crate::infra::git::sanitize;
-use crate::infra::{CaddyClient, CallerIdentity, DockerClient, FrontendDevSpec, GitFetcher, Store};
+use crate::infra::{
+    CaddyClient, CallerIdentity, DockerClient, FrontendDevSpec, GhClient, GitFetcher, PostgresOps,
+    Store,
+};
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
 use axum::Json;
@@ -17,6 +20,9 @@ pub struct WorktreeService {
     pub frontend_image: String,
     pub domain_dev_ppt: String,     // "dev.ppt.rlt.sk"
     pub domain_dev_reality: String, // "dev.rlt.sk"
+    pub postgres: Arc<PostgresOps>,
+    pub gh: Arc<GhClient>,
+    pub backend_image_prefix: String,
 }
 
 #[derive(Debug, Deserialize)]

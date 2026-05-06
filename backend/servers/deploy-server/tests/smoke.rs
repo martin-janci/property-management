@@ -5,7 +5,9 @@ use deploy_server::api::release::ReleaseService;
 use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{ApiKey, Config, OidcConfig, Target, TargetsConfig};
-use deploy_server::infra::{CaddyClient, DockerClient, GitFetcher, StagingDeployer, Store};
+use deploy_server::infra::{
+    CaddyClient, DockerClient, GhClient, GitFetcher, PostgresOps, StagingDeployer, Store,
+};
 use httpmock::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -114,6 +116,11 @@ async fn open_status_close_flow() {
         idle_pause_seconds: 1800,
         idle_stop_seconds: 86400,
         git_repo_url: bare.to_string_lossy().into(),
+        postgres_admin_url: "postgres://test/postgres".into(),
+        postgres_template_db: "ppt_dev_template".into(),
+        postgres_user_db_prefix: "ppt_wt_".into(),
+        backend_image_prefix: "ghcr.io/test".into(),
+        gh_repo: "owner/repo".into(),
     });
 
     let mut targets_map = HashMap::new();
@@ -144,6 +151,13 @@ async fn open_status_close_flow() {
         image_prefix: "ghcr.io/test".into(),
     });
 
+    let postgres = Arc::new(PostgresOps {
+        admin_url: "postgres://test/postgres".into(),
+        template_db: "ppt_dev_template".into(),
+        user_db_prefix: "ppt_wt_".into(),
+    });
+    let gh = Arc::new(GhClient::new("dummy", "owner/repo"));
+
     let app = router::build(
         store.clone(),
         git,
@@ -157,6 +171,9 @@ async fn open_status_close_flow() {
         webhook_cfg,
         cfg,
         release_svc,
+        postgres,
+        gh,
+        "ghcr.io/test".into(),
     );
 
     let server = axum_test::TestServer::new(app).unwrap();

@@ -2,7 +2,9 @@
 use crate::api::{gc, health, release, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
-use crate::infra::{audit, AuthState, CaddyClient, DockerClient, GitFetcher, Store};
+use crate::infra::{
+    audit, AuthState, CaddyClient, DockerClient, GhClient, GitFetcher, PostgresOps, Store,
+};
 use axum::middleware::from_fn_with_state;
 use axum::routing::{get, post};
 use axum::Router;
@@ -22,6 +24,9 @@ pub fn build(
     webhook_cfg: webhook::WebhookConfig,
     cfg: Arc<Config>,
     release_svc: Arc<release::ReleaseService>,
+    postgres: Arc<PostgresOps>,
+    gh: Arc<GhClient>,
+    backend_image_prefix: String,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -31,6 +36,9 @@ pub fn build(
         frontend_image,
         domain_dev_ppt,
         domain_dev_reality,
+        postgres,
+        gh,
+        backend_image_prefix,
     });
 
     let auth_state = AuthState {
