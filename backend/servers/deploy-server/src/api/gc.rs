@@ -1,4 +1,12 @@
 // backend/servers/deploy-server/src/api/gc.rs
+//! Garbage collection / lifecycle housekeeping.
+//!
+//! Runs every 5 min via systemd timer. Drives worktree pause/stop/cleanup
+//! state transitions and handles staging idle pause.
+//!
+//! NOTE: per-target traffic tracking is currently a heuristic based on
+//! `release.promoted_at`. Phase 6 will replace this with proper traffic
+//! tracking via Caddy access log tailing.
 use crate::api::worktree::WorktreeService;
 use crate::config::Config;
 use crate::domain::WorktreeState;
@@ -19,6 +27,7 @@ pub struct GcReport {
     pub paused: Vec<String>,
     pub stopped: Vec<String>,
     pub cleaned: Vec<String>,
+    pub paused_targets: Vec<String>,
 }
 
 pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>> {
@@ -30,6 +39,7 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
         paused: vec![],
         stopped: vec![],
         cleaned: vec![],
+        paused_targets: vec![],
     };
     let worktrees = ctx.svc.store.list_worktrees().await?;
     for mut wt in worktrees {
@@ -73,5 +83,32 @@ pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>
             WorktreeState::Closing => {} // transient, leave for next tick
         }
     }
+
+    // Staging idle 8h heuristic.
+    // NOTE: Phase 2 lacks per-target traffic tracking; we rely on `promoted_at`
+    // as a proxy. Phase 6 will add proper traffic tracking via Caddy access log tail.
+    let staging_idle = chrono::Duration::seconds(8 * 3600);
+    if let Some(rel) = ctx
+        .svc
+        .store
+        .current_release_for("staging", "staging")
+        .await?
+    {
+        if let Some(promoted) = rel.promoted_at {
+            if Utc::now() - promoted > staging_idle {
+                for color in ["blue", "green"] {
+                    for service in ["api", "reality", "ppt", "reality-web"] {
+                        let _ = ctx
+                            .svc
+                            .docker
+                            .stop_container(&format!("staging-{service}-{color}"))
+                            .await;
+                    }
+                }
+                report.paused_targets.push("staging".into());
+            }
+        }
+    }
+
     Ok(Json(report))
 }
