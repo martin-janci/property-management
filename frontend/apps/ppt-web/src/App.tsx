@@ -1687,19 +1687,14 @@ function Home() {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="px-5 py-2.5 rounded-lg font-medium text-white"
-              style={{ backgroundColor: 'var(--color-primary, #2563eb)' }}
+              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
             >
               {t('auth.signIn')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/register')}
-              className="px-5 py-2.5 rounded-lg font-medium"
-              style={{
-                color: 'var(--color-primary, #2563eb)',
-                border: '1px solid var(--color-primary, #2563eb)',
-              }}
+              className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
             >
               {t('auth.register', { defaultValue: 'Register' })}
             </button>
@@ -1712,8 +1707,7 @@ function Home() {
               onClick={() =>
                 navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
               }
-              className="px-5 py-2.5 rounded-lg font-medium text-white"
-              style={{ backgroundColor: 'var(--color-primary, #2563eb)' }}
+              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
             >
               {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
             </button>
