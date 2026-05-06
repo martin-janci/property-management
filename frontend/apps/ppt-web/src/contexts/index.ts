@@ -13,6 +13,8 @@ export type {
   LoginCredentials,
 } from './AuthContext';
 
+export { OrganizationProvider } from './OrganizationProvider';
+
 export { WebSocketProvider, useWebSocketContext, eventToQueryKeys } from './WebSocketContext';
 export type {
   WebSocketProviderProps,

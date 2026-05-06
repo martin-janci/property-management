@@ -1,4 +1,5 @@
 import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
+import './index.css'; // Tailwind base + components + utilities + minimal app shell styles
 import { OpenAPI } from '@ppt/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
