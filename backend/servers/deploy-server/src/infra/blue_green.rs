@@ -118,6 +118,20 @@ impl BlueGreenDeployer {
         )
         .await?;
 
+        // Wait for each container to reach a ready state before flipping Caddy upstream.
+        self.wait_until_ready(&format!("{target_name}-api-{next_color}"), 8080, 30)
+            .await?;
+        self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 30)
+            .await?;
+        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 80, 30)
+            .await?;
+        self.wait_until_ready(
+            &format!("{target_name}-reality-web-{next_color}"),
+            3000,
+            30,
+        )
+        .await?;
+
         let suffix = &spec.domain_suffix;
         self.caddy
             .register_route(
@@ -221,6 +235,72 @@ impl BlueGreenDeployer {
             .await
             .map_err(crate::DeployError::Docker)?;
         Ok(())
+    }
+
+    /// Poll the container's runtime state until it's "ready enough" to receive traffic.
+    ///
+    /// The deploy-server host doesn't share the `ppt-{target}` bridge network with the
+    /// staging containers, so we can't TCP-connect to `container_name:port` directly.
+    /// Instead, we inspect the container and treat it as ready when:
+    ///   - a Docker healthcheck is configured AND has reported HEALTHY, OR
+    ///   - no healthcheck exists, but the container has been in `running` state
+    ///     for at least `grace` seconds (typical axum/next.js processes bind their
+    ///     listener within the first 2-3 seconds).
+    ///
+    /// This eliminates the worst 502 windows (image still pulling, container exited
+    /// immediately) while keeping the dependency surface small. A future pass should
+    /// either join the bridge network or expose a host-side port for a real probe.
+    async fn wait_until_ready(
+        &self,
+        container_name: &str,
+        _container_port: u16,
+        timeout_secs: u64,
+    ) -> crate::Result<()> {
+        use std::time::Duration;
+        use tokio::time::sleep;
+
+        let docker = self.docker.bollard();
+        let deadline = std::time::Instant::now() + Duration::from_secs(timeout_secs);
+        let mut first_running_at: Option<std::time::Instant> = None;
+        let grace = Duration::from_secs(3);
+
+        while std::time::Instant::now() < deadline {
+            match docker.inspect_container(container_name, None).await {
+                Ok(info) => {
+                    let state = info.state.as_ref();
+                    let running = state.and_then(|s| s.running).unwrap_or(false);
+                    let health = state.and_then(|s| s.health.as_ref()).and_then(|h| h.status);
+
+                    if running {
+                        // If a healthcheck is configured AND it has reported healthy → ready immediately.
+                        if let Some(status) = health {
+                            let dbg = format!("{status:?}");
+                            // bollard's HealthStatusEnum: HEALTHY, UNHEALTHY, STARTING, NONE.
+                            // Match HEALTHY but exclude UNHEALTHY which contains "HEALTHY" as substring.
+                            if dbg.contains("HEALTHY") && !dbg.contains("UN") {
+                                return Ok(());
+                            }
+                        }
+                        // No healthcheck (or still starting): running for >=grace seconds → assume ready.
+                        let now = std::time::Instant::now();
+                        let first = first_running_at.get_or_insert(now);
+                        if now.duration_since(*first) >= grace {
+                            return Ok(());
+                        }
+                    } else {
+                        first_running_at = None;
+                    }
+                }
+                Err(e) => {
+                    tracing::debug!(error = %e, container = %container_name, "inspect during readiness");
+                }
+            }
+            sleep(Duration::from_millis(500)).await;
+        }
+
+        Err(crate::DeployError::Internal(format!(
+            "container {container_name} not ready within {timeout_secs}s"
+        )))
     }
 }
 
