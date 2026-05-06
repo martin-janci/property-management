@@ -195,3 +195,107 @@ Close it:
 ```bash
 PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl close feature-test --json
 ```
+
+## 12. Prod-on-different-server (Phase 5 opt-in)
+
+When prod migrates to a separate host, follow these steps. Until then, prod and staging share the Hetzner box; this section is only relevant for migration.
+
+### 12.1 Provision new prod host
+
+- New VPS (cloud provider X). Install Docker + ssh access.
+- Create user `prod-deploy` with `docker` group membership.
+- Add deploy server's SSH public key to `~prod-deploy/.ssh/authorized_keys`.
+
+### 12.2 SSH key from deploy server → new prod host
+
+On the deploy server (Hetzner):
+
+```bash
+sudo -u ppt-deploy ssh-keygen -t ed25519 -N '' -f /var/lib/ppt-deploy/.ssh/prod-host
+sudo cat /var/lib/ppt-deploy/.ssh/prod-host.pub
+```
+
+Copy the printed public key to the new prod host's `~prod-deploy/.ssh/authorized_keys`. Optionally restrict to docker socket forwarding only:
+
+```
+restrict,permitlisten="/var/run/docker.sock" ssh-ed25519 AAAA... prod-host
+```
+
+(Adjust based on security posture; the simplest workable form is no restriction beyond the user's normal docker group access.)
+
+Test the connection from deploy server:
+
+```bash
+sudo -u ppt-deploy ssh -i /var/lib/ppt-deploy/.ssh/prod-host \
+  -o StrictHostKeyChecking=accept-new \
+  prod-deploy@new-prod.rlt.sk \
+  docker version
+```
+
+This both verifies the key works and adds the host to known_hosts.
+
+### 12.3 Caddy on prod host
+
+Install custom Caddy build (same image as Hetzner: `ghcr.io/martin-janci/ppt-caddy:latest`). Bind admin API on Tailnet IP only:
+
+```caddy
+{
+    admin <prod-tailnet-ip>:2019
+}
+```
+
+The deploy server uses `ssh://` for Docker but raw HTTP (over Tailnet) for Caddy admin API. Both hosts join the same Tailnet; ACL restricts admin port 2019 to deploy server's tailnet IP.
+
+### 12.4 Update `targets.yaml`
+
+```yaml
+targets:
+  staging:
+    docker_socket: unix:///var/run/docker.sock
+    caddy_url: http://localhost:2019
+    domain_suffix: staging.rlt.sk
+    idle_timeout: 8h
+    rollback_mode: manual
+  prod:
+    docker_socket: ssh://prod-deploy@new-prod.rlt.sk
+    caddy_url: http://<prod-tailnet-ip>:2019
+    domain_suffix: rlt.sk
+    promote_strategy: blue-green
+    rollback_mode: manual
+    health_grace: 60s
+  staging-elsewhere:
+    # Pre-flight: test the SSH path before flipping prod.
+    docker_socket: ssh://prod-deploy@new-prod.rlt.sk
+    caddy_url: http://<prod-tailnet-ip>:2019
+    domain_suffix: staging.rlt.sk
+```
+
+Restart deploy server: `sudo systemctl restart ppt-deploy.socket`.
+
+### 12.5 Test on `staging-elsewhere` first
+
+```bash
+pmctl deploy staging-elsewhere --tag=v1.2.3
+```
+
+Verify backend + frontend respond on `*.staging.rlt.sk` resolved against the new host's Caddy. Once green, do a real prod promote.
+
+### 12.6 Real prod promote
+
+```bash
+git tag v1.2.3 && git push --tags        # CI registers candidate via release.yml workflow
+pmctl promote v1.2.3 --target=prod --dry-run
+pmctl promote v1.2.3 --target=prod
+```
+
+Watch `pmctl logs` and `journalctl -u ppt-deploy.service` for errors.
+
+### 12.7 Rollback
+
+If anything goes wrong:
+
+```bash
+pmctl rollback --target=prod
+```
+
+This redeploys the previous Release marked `state=previous` for prod.
