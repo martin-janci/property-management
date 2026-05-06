@@ -104,3 +104,8 @@ common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
+
+[profile.release]
+strip = "symbols"
+lto = "thin"
+codegen-units = 1

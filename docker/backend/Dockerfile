@@ -34,7 +34,11 @@ ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
+    mold \
+    clang \
     && rm -rf /var/lib/apt/lists/*
+
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
 
 # Install cargo-chef
 RUN cargo install cargo-chef --locked
@@ -45,6 +49,8 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     gcc-aarch64-linux-gnu \
     libc6-dev-arm64-cross \
     libssl-dev:arm64 \
+    mold \
+    clang \
     && rm -rf /var/lib/apt/lists/* \
     && rustup target add aarch64-unknown-linux-gnu; \
     fi
