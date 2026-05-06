@@ -139,11 +139,27 @@ pub async fn promote_handler(
                                 .unwrap_or_default(),
                             domain_suffix: target_cfg.domain_suffix.clone(),
                         };
-                        let _ = deployer.deploy(&prev_spec).await;
-                        return Err(DeployError::Internal(format!(
-                            "health grace failed; auto-rolled back to {}",
-                            prev.tag
-                        )));
+                        match deployer.deploy(&prev_spec).await {
+                            Ok(_) => {
+                                tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
+                                return Err(DeployError::Internal(format!(
+                                    "health grace failed; AUTO-ROLLED BACK to {}",
+                                    prev.tag
+                                )));
+                            }
+                            Err(rollback_err) => {
+                                tracing::error!(
+                                    error = %rollback_err,
+                                    attempted_rollback_tag = %prev.tag,
+                                    "AUTO-ROLLBACK FAILED — system is in indeterminate state, manual intervention required"
+                                );
+                                return Err(DeployError::Internal(format!(
+                                    "health grace failed AND auto-rollback to {} ALSO FAILED ({rollback_err}); \
+                                     system in indeterminate state — manual intervention required",
+                                    prev.tag
+                                )));
+                            }
+                        }
                     }
                     return Err(DeployError::Internal(
                         "health grace failed; no previous release to roll back to".into(),
