@@ -36,6 +36,20 @@ impl DockerClient {
         Ok(Self { docker })
     }
 
+    pub fn bollard(&self) -> &Docker {
+        &self.docker
+    }
+
+    pub async fn is_running(&self, name: &str) -> Result<bool> {
+        match self.docker.inspect_container(name, None).await {
+            Ok(c) => Ok(c.state.and_then(|s| s.running).unwrap_or(false)),
+            Err(bollard::errors::Error::DockerResponseServerError {
+                status_code: 404, ..
+            }) => Ok(false),
+            Err(e) => Err(crate::DeployError::Docker(e)),
+        }
+    }
+
     pub async fn run_frontend_dev(&self, spec: &FrontendDevSpec) -> Result<String> {
         // Idempotency: remove existing container with the same name first.
         let _ = self
