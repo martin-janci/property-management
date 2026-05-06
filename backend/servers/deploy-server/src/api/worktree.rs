@@ -208,7 +208,7 @@ pub async fn open_handler(
             })?;
             if jwt_secret.len() < 32 {
                 return Err(DeployError::Config(
-                    "PPT_JWT_SECRET must be at least 32 characters".into()
+                    "PPT_JWT_SECRET must be at least 32 characters".into(),
                 ));
             }
 
@@ -305,22 +305,15 @@ pub async fn close_handler(
         let _ = svc.docker.stop_container(c).await;
     }
 
-    // Unregister Caddy routes.
-    if let Some(host) = wt
-        .urls
-        .ppt
-        .as_deref()
-        .and_then(|u| u.strip_prefix("https://"))
-    {
-        let _ = svc.caddy.unregister_route(host).await;
-    }
-    if let Some(host) = wt
-        .urls
-        .reality
-        .as_deref()
-        .and_then(|u| u.strip_prefix("https://"))
-    {
-        let _ = svc.caddy.unregister_route(host).await;
+    // Unregister Caddy routes for all worktree URLs.
+    for url_opt in [
+        wt.urls.ppt.as_deref(),
+        wt.urls.reality.as_deref(),
+        wt.urls.api.as_deref(),
+    ] {
+        if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
+            let _ = svc.caddy.unregister_route(host).await;
+        }
     }
 
     wt.state = WorktreeState::Closed;
