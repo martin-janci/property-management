@@ -51,6 +51,14 @@ enum Cmd {
     },
     /// Resume a paused target on demand.
     Wake { target: String },
+    /// Stream container logs.
+    Logs {
+        name: String,
+        #[arg(short = 'f', long)]
+        follow: bool,
+        #[arg(long)]
+        service: Option<String>,
+    },
 }
 
 #[derive(Serialize)]
@@ -142,6 +150,35 @@ async fn main() -> anyhow::Result<()> {
                 .send()
                 .await?;
             print_resp(resp, cli.json).await?;
+        }
+        Cmd::Logs {
+            name,
+            follow,
+            service,
+        } => {
+            let mut url = format!("{}/api/logs/{name}?follow={follow}", cli.url);
+            if let Some(s) = service {
+                url.push_str(&format!("&service={s}"));
+            }
+            let resp = http
+                .get(&url)
+                .header("Authorization", &auth)
+                .send()
+                .await?
+                .error_for_status()?;
+            let mut stream = resp.bytes_stream();
+            use futures_util::StreamExt;
+            while let Some(chunk) = stream.next().await {
+                if let Ok(bytes) = chunk {
+                    // Parse SSE — each event is `data: <line>\n\n`.
+                    let s = String::from_utf8_lossy(&bytes);
+                    for line in s.lines() {
+                        if let Some(payload) = line.strip_prefix("data: ") {
+                            println!("{payload}");
+                        }
+                    }
+                }
+            }
         }
     }
     Ok(())

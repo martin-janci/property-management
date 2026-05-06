@@ -35,7 +35,7 @@ async-trait = "0.1"
 tempfile = "3.10"
 which = "6.0"
 dirs = "5.0"
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["stream"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 thiserror = { workspace = true }
