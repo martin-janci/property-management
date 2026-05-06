@@ -84,3 +84,29 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_PREFIX }}/ppt-${{ matrix.target }}:${{ steps.meta.outputs.version }} 2>/dev/null || true
+
+  trigger-staging-deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Get OIDC token for ppt-deploy
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken('ppt-deploy');
+            core.setOutput('token', token);
+
+      - name: POST /api/deploy
+        env:
+          DEPLOY_URL: https://deploy.rlt.sk
+          TAG: ${{ github.sha }}
+        run: |
+          curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
+            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\": \"$TAG\", \"target\": \"staging\"}"
