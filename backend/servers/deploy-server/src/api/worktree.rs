@@ -56,16 +56,10 @@ pub async fn open_handler(
         ));
     }
 
-    if matches!(req.backend, BackendMode::Dedicated) {
-        return Err(DeployError::BadRequest(
-            "dedicated backend mode is implemented in Phase 3".into(),
-        ));
-    }
-
     // 1. Fetch source.
     let source_path = svc.git.fetch_branch(&req.branch).await?;
 
-    // 2. Allocate ports (deterministic hash of name → 51000–51999 range).
+    // 2. Allocate frontend ports.
     let port_ppt = pick_port(&format!("{name}-ppt"));
     let port_reality = pick_port(&format!("{name}-reality"));
 
@@ -90,12 +84,12 @@ pub async fn open_handler(
             app: "reality-web".into(),
             source_path: source_path.to_string_lossy().to_string(),
             host_port: port_reality,
-            pnpm_volume: pnpm_volume.clone(),
+            pnpm_volume,
             image: svc.frontend_image.clone(),
         })
         .await?;
 
-    // 4. Register Caddy routes.
+    // 4. Register frontend Caddy routes.
     let host_ppt = format!("wt-{name}.{}", svc.domain_dev_ppt);
     let host_reality = format!("wt-{name}.{}", svc.domain_dev_reality);
     svc.caddy
@@ -105,7 +99,106 @@ pub async fn open_handler(
         .register_route(&host_reality, &format!("127.0.0.1:{port_reality}"))
         .await?;
 
-    // 5. Persist state.
+    let mut containers = vec![ppt_container, reality_container];
+    let mut api_url: Option<String> = None;
+    let mut db_name: Option<String> = None;
+    let mut backend_status = "ready".to_string();
+
+    // 5. Dedicated backend branch.
+    if matches!(req.backend, BackendMode::Dedicated) {
+        let db = format!("{}{}", svc.postgres.user_db_prefix, name);
+
+        // Create DB from template.
+        svc.postgres.create_from_template(&db).await?;
+        db_name = Some(db.clone());
+
+        // Dispatch GHA workflow.
+        svc.gh
+            .dispatch_workflow("docker-build.yml", &req.branch)
+            .await?;
+
+        // Poll for completion (up to 10 min).
+        let mut completed = false;
+        for _ in 0..60 {
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            if let Some(run) = svc.gh.latest_run("docker-build.yml", &req.branch).await? {
+                if run.status == "completed" {
+                    if run.conclusion.as_deref() != Some("success") {
+                        return Err(DeployError::Internal(format!(
+                            "workflow failed: {}",
+                            run.html_url
+                        )));
+                    }
+                    completed = true;
+                    break;
+                }
+            }
+        }
+        if !completed {
+            backend_status = "building".into();
+            // Don't fail — return URLs for frontend, backend will come online when build finishes.
+            // Operator can call status to check.
+        } else {
+            // Run backend containers.
+            let api_image = format!(
+                "{}/ppt-api-server:branch-{}",
+                svc.backend_image_prefix,
+                sanitize(&req.branch)
+            );
+            let reality_image = format!(
+                "{}/ppt-reality-server:branch-{}",
+                svc.backend_image_prefix,
+                sanitize(&req.branch)
+            );
+
+            let api_port = pick_port(&format!("{name}-api"));
+            let reality_port = pick_port(&format!("{name}-reality-api"));
+            let api_c = format!("wt-{name}-api");
+            let reality_c = format!("wt-{name}-reality-api");
+
+            let db_url = format!(
+                "{}/{}",
+                svc.postgres.admin_url.trim_end_matches("/postgres"),
+                db
+            );
+
+            let jwt_secret = std::env::var("PPT_JWT_SECRET")
+                .unwrap_or_else(|_| "dev-secret-min-32-chars-please-replace-replace".into());
+
+            svc.docker
+                .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                    container_name: api_c.clone(),
+                    image: api_image,
+                    host_port: api_port,
+                    container_port: 8080,
+                    db_url: db_url.clone(),
+                    jwt_secret: jwt_secret.clone(),
+                })
+                .await?;
+            svc.docker
+                .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                    container_name: reality_c.clone(),
+                    image: reality_image,
+                    host_port: reality_port,
+                    container_port: 8081,
+                    db_url,
+                    jwt_secret,
+                })
+                .await?;
+
+            // Caddy routes for backend
+            let host_api = format!("api.wt-{name}.{}", svc.domain_dev_ppt);
+            svc.caddy
+                .register_route(&host_api, &format!("127.0.0.1:{api_port}"))
+                .await?;
+            api_url = Some(format!("https://{host_api}"));
+
+            containers.push(api_c);
+            containers.push(reality_c);
+        }
+    }
+
+    // 6. Persist state.
     let now = chrono::Utc::now();
     let wt = Worktree {
         name: name.clone(),
@@ -115,10 +208,10 @@ pub async fn open_handler(
         urls: WorktreeUrls {
             ppt: Some(format!("https://{host_ppt}")),
             reality: Some(format!("https://{host_reality}")),
-            api: None,
+            api: api_url,
         },
-        containers: vec![ppt_container, reality_container],
-        db_name: None,
+        containers,
+        db_name,
         dump_path: None,
         ttl_seconds: req.ttl_seconds.unwrap_or(172_800),
         last_traffic_at: Some(now),
@@ -130,7 +223,7 @@ pub async fn open_handler(
 
     Ok(Json(OpenResponse {
         worktree: wt,
-        backend_status: "ready".into(),
+        backend_status,
     }))
 }
 

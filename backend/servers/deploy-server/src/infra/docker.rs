@@ -22,6 +22,16 @@ pub struct FrontendDevSpec {
     pub image: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct BackendDedicatedSpec {
+    pub container_name: String,
+    pub image: String,
+    pub host_port: u16,
+    pub container_port: u16, // 8080 (api) or 8081 (reality)
+    pub db_url: String,
+    pub jwt_secret: String,
+}
+
 impl DockerClient {
     pub fn from_socket(docker_socket: &str) -> Result<Self> {
         let docker = if docker_socket.starts_with("unix://") {
@@ -143,6 +153,71 @@ impl DockerClient {
             .start_container(&create.id, None::<StartContainerOptions<String>>)
             .await?;
 
+        Ok(create.id)
+    }
+
+    pub async fn run_backend_dedicated(&self, spec: &BackendDedicatedSpec) -> Result<String> {
+        let _ = self
+            .docker
+            .remove_container(
+                &spec.container_name,
+                Some(RemoveContainerOptions {
+                    force: true,
+                    ..Default::default()
+                }),
+            )
+            .await;
+
+        let env = vec![
+            format!("DATABASE_URL={}", spec.db_url),
+            format!("JWT_SECRET={}", spec.jwt_secret),
+            "RUST_LOG=info".to_string(),
+        ];
+
+        let port_str = format!("{}/tcp", spec.container_port);
+        let mut port_bindings = HashMap::new();
+        port_bindings.insert(
+            port_str.clone(),
+            Some(vec![PortBinding {
+                host_ip: Some("127.0.0.1".to_string()),
+                host_port: Some(spec.host_port.to_string()),
+            }]),
+        );
+
+        let mut exposed_ports = HashMap::new();
+        exposed_ports.insert(port_str, HashMap::<(), ()>::new());
+
+        let host_config = HostConfig {
+            port_bindings: Some(port_bindings),
+            restart_policy: Some(bollard::models::RestartPolicy {
+                name: Some(bollard::models::RestartPolicyNameEnum::UNLESS_STOPPED),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let config = Config {
+            image: Some(spec.image.clone()),
+            env: Some(env),
+            exposed_ports: Some(exposed_ports),
+            host_config: Some(host_config),
+            ..Default::default()
+        };
+
+        let create = self
+            .docker
+            .create_container(
+                Some(CreateContainerOptions {
+                    name: spec.container_name.clone(),
+                    platform: None,
+                }),
+                config,
+            )
+            .await?;
+
+        self.docker
+            .start_container(&create.id, None::<StartContainerOptions<String>>)
+            .await?;
         Ok(create.id)
     }
 
