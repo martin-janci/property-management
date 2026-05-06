@@ -1,5 +1,5 @@
 // backend/servers/deploy-server/src/api/router.rs
-use crate::api::{gc, health, webhook, worktree};
+use crate::api::{gc, health, release, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
 use crate::infra::{audit, AuthState, CaddyClient, DockerClient, GitFetcher, Store};
@@ -21,6 +21,7 @@ pub fn build(
     domain_dev_reality: String,
     webhook_cfg: webhook::WebhookConfig,
     cfg: Arc<Config>,
+    release_svc: Arc<release::ReleaseService>,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -53,6 +54,12 @@ pub fn build(
             Router::new()
                 .route("/api/gc/tick", post(gc::tick_handler))
                 .with_state(gc_ctx),
+        )
+        .merge(
+            Router::new()
+                .route("/api/deploy", post(release::deploy_handler))
+                .route("/api/wake/:target", post(release::wake_handler))
+                .with_state(release_svc),
         )
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
         .route("/health", get(health::handler))

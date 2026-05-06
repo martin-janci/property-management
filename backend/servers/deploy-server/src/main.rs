@@ -1,9 +1,10 @@
 // backend/servers/deploy-server/src/main.rs
 use anyhow::Context;
+use deploy_server::api::release::ReleaseService;
 use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{load_yaml, AuthConfig, Config, TargetsConfig};
-use deploy_server::infra::{CaddyClient, DockerClient, GitFetcher, Store};
+use deploy_server::infra::{CaddyClient, DockerClient, GitFetcher, StagingDeployer, Store};
 use listenfd::ListenFd;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -44,6 +45,18 @@ async fn main() -> anyhow::Result<()> {
         secret: auth.webhook_secret.clone(),
     };
 
+    let deployer = Arc::new(StagingDeployer {
+        docker: docker.clone(),
+        caddy: caddy.clone(),
+    });
+    let release_svc = Arc::new(ReleaseService {
+        store: store.clone(),
+        deployer,
+        targets: Arc::new(targets.clone()),
+        image_prefix: std::env::var("PPT_IMAGE_PREFIX")
+            .unwrap_or_else(|_| "ghcr.io/martin-janci".into()),
+    });
+
     let app = router::build(
         store,
         git,
@@ -62,6 +75,7 @@ async fn main() -> anyhow::Result<()> {
         ),
         webhook_cfg,
         cfg_arc,
+        release_svc,
     );
 
     let mut fd = ListenFd::from_env();
