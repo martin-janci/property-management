@@ -10,6 +10,7 @@
 use crate::api::worktree::WorktreeService;
 use crate::config::Config;
 use crate::domain::WorktreeState;
+use crate::infra::CallerIdentity;
 use crate::Result;
 use axum::extract::State;
 use axum::Json;
@@ -30,7 +31,11 @@ pub struct GcReport {
     pub paused_targets: Vec<String>,
 }
 
-pub async fn tick_handler(State(ctx): State<GcContext>) -> Result<Json<GcReport>> {
+pub async fn tick_handler(
+    State(ctx): State<GcContext>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
+) -> Result<Json<GcReport>> {
+    caller.require_scope("gc:tick")?;
     let now = Utc::now();
     let pause_after = chrono::Duration::seconds(ctx.cfg.idle_pause_seconds);
     let stop_after = chrono::Duration::seconds(ctx.cfg.idle_stop_seconds);

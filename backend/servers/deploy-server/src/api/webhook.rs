@@ -1,6 +1,7 @@
 // backend/servers/deploy-server/src/api/webhook.rs
 use crate::api::worktree::WorktreeService;
 use crate::infra::git::sanitize;
+use crate::infra::CallerIdentity;
 use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::http::HeaderMap;
@@ -72,7 +73,21 @@ pub async fn handler(
             let name = sanitize(&pr.head.git_ref);
             if svc.store.get_worktree(&name).await?.is_some() {
                 let path = axum::extract::Path(name.clone());
-                match crate::api::worktree::close_handler(State(svc.clone()), path).await {
+                // Synthesize a caller for the internal close — webhook auth is HMAC-based
+                // and bypasses the bearer auth middleware, so we mint a webhook identity
+                // with just the scope it needs.
+                let webhook_caller = CallerIdentity {
+                    kind: "webhook".into(),
+                    id: "github".into(),
+                    scopes: vec!["worktree:close".into()],
+                };
+                match crate::api::worktree::close_handler(
+                    State(svc.clone()),
+                    axum::Extension(webhook_caller),
+                    path,
+                )
+                .await
+                {
                     Ok(_) => {
                         // Record the synthesized close as its own audit entry attributing it to the webhook.
                         let _ = svc

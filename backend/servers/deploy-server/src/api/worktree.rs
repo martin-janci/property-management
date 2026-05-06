@@ -50,6 +50,7 @@ pub async fn open_handler(
     axum::Extension(caller): axum::Extension<CallerIdentity>,
     Json(req): Json<OpenRequest>,
 ) -> Result<Json<OpenResponse>> {
+    caller.require_scope("worktree:open")?;
     let name = req.alias.clone().unwrap_or_else(|| sanitize(&req.branch));
     if name.is_empty() {
         return Err(DeployError::BadRequest(
@@ -282,8 +283,10 @@ pub async fn open_handler(
 
 pub async fn get_handler(
     State(svc): State<Arc<WorktreeService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Path(name): Path<String>,
 ) -> Result<Json<Worktree>> {
+    caller.require_scope("worktree:read")?;
     let wt = svc
         .store
         .get_worktree(&name)
@@ -292,14 +295,20 @@ pub async fn get_handler(
     Ok(Json(wt))
 }
 
-pub async fn list_handler(State(svc): State<Arc<WorktreeService>>) -> Result<Json<Vec<Worktree>>> {
+pub async fn list_handler(
+    State(svc): State<Arc<WorktreeService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
+) -> Result<Json<Vec<Worktree>>> {
+    caller.require_scope("worktree:read")?;
     Ok(Json(svc.store.list_worktrees().await?))
 }
 
 pub async fn close_handler(
     State(svc): State<Arc<WorktreeService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Path(name): Path<String>,
 ) -> Result<Json<Worktree>> {
+    caller.require_scope("worktree:close")?;
     // Serialize against concurrent open/close/GC for the same worktree (#11, #12).
     let _lock = svc.worktree_locks.acquire(&name).await;
 

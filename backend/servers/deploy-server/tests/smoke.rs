@@ -97,6 +97,7 @@ async fn open_status_close_flow() {
     let api_keys = Arc::new(ApiKeyValidator::new(vec![ApiKey {
         name: "test".into(),
         hash,
+        scopes: vec!["*".to_string()],
     }]));
     let oidc = Arc::new(OidcValidator::new(OidcConfig {
         issuer: "x".into(),
@@ -324,6 +325,7 @@ async fn dedicated_open_close_with_dump() {
     let api_keys = Arc::new(ApiKeyValidator::new(vec![ApiKey {
         name: "test".into(),
         hash,
+        scopes: vec!["*".to_string()],
     }]));
     let oidc = Arc::new(OidcValidator::new(OidcConfig {
         issuer: "x".into(),
@@ -466,6 +468,7 @@ async fn promote_and_rollback_flow() {
     let api_keys = Arc::new(ApiKeyValidator::new(vec![ApiKey {
         name: "test".into(),
         hash,
+        scopes: vec!["*".to_string()],
     }]));
     let oidc = Arc::new(OidcValidator::new(OidcConfig {
         issuer: "x".into(),

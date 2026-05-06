@@ -33,9 +33,10 @@ fn default_target() -> String {
 
 pub async fn deploy_handler(
     State(svc): State<Arc<ReleaseService>>,
-    axum::Extension(_caller): axum::Extension<CallerIdentity>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Json(req): Json<DeployRequest>,
 ) -> Result<Json<Release>> {
+    caller.require_scope("release:deploy")?;
     if req.target != "staging" {
         return Err(DeployError::BadRequest(format!(
             "target {} not supported in Phase 2 (prod is Phase 4)",
@@ -113,9 +114,10 @@ pub struct RegisterRequest {
 
 pub async fn register_candidate_handler(
     State(svc): State<Arc<ReleaseService>>,
-    axum::Extension(_caller): axum::Extension<CallerIdentity>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Json(req): Json<RegisterRequest>,
 ) -> Result<Json<Release>> {
+    caller.require_scope("release:register")?;
     let rel = Release {
         tag: req.tag,
         images: req.images,
@@ -130,8 +132,10 @@ pub async fn register_candidate_handler(
 
 pub async fn wake_handler(
     State(svc): State<Arc<ReleaseService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Path(target): Path<String>,
 ) -> Result<Json<serde_json::Value>> {
+    caller.require_scope("release:wake")?;
     if target != "staging" {
         return Err(DeployError::BadRequest(
             "only staging supported in Phase 2".into(),

@@ -140,6 +140,11 @@ sudo systemctl enable --now ppt-deploy.socket ppt-deploy-gc.timer
 
 Generate API key for the Claude skill:
 
+> **Per-token scopes (fail-closed):** every API key MUST declare its `scopes`. A
+> token with no scopes (or with no `scopes:` block at all) cannot reach any
+> endpoint — the server fails the request with HTTP 403. Use `*` only for an
+> emergency admin token.
+
 ```bash
 TOKEN=$(openssl rand -hex 32)
 HASH=$(printf "%s" "$TOKEN" | sha256sum | awk '{print $1}')
@@ -149,12 +154,52 @@ sudo tee -a /etc/ppt-deploy/auth.yaml <<EOF
 api_keys:
   - name: claude-skill
     hash: "$HASH"
+    scopes:
+      - worktree:open
+      - worktree:close
+      - worktree:read
 EOF
 
 # On the operator's laptop:
 mkdir -p "$HOME/.config/ppt-deploy"
 echo "$TOKEN" > "$HOME/.config/ppt-deploy/token"
 chmod 600 "$HOME/.config/ppt-deploy/token"
+```
+
+Available scopes (one token per role; mix-and-match per `name`):
+
+| Scope                | Endpoint(s) gated                                    |
+|----------------------|------------------------------------------------------|
+| `worktree:open`      | `POST /api/worktree`                                 |
+| `worktree:close`     | `POST /api/worktree/:name/close`                     |
+| `worktree:read`      | `GET /api/worktree/:name`, `GET /api/worktrees`      |
+| `gc:tick`            | `POST /api/gc/tick`                                  |
+| `audit:read`         | `GET /api/audit`                                     |
+| `release:deploy`     | `POST /api/deploy`                                   |
+| `release:wake`       | `POST /api/wake/:target`                             |
+| `release:register`   | `POST /api/release`                                  |
+| `release:promote`    | `POST /api/promote`                                  |
+| `release:rollback`   | `POST /api/rollback`                                 |
+| `*`                  | wildcard — grants all scopes (admin only)            |
+
+Example multi-token layout:
+
+```yaml
+api_keys:
+  - name: claude-skill
+    hash: "..."
+    scopes:
+      - worktree:open
+      - worktree:close
+      - worktree:read
+  - name: gc-cron
+    hash: "..."
+    scopes:
+      - gc:tick
+  - name: admin
+    hash: "..."
+    scopes:
+      - "*"   # full access (use sparingly; rotate often)
 ```
 
 ### 11.1 Generate JWT secret for dedicated backends
@@ -181,6 +226,8 @@ GC_HASH=$(printf "%s" "$GC_TOKEN" | sha256sum | awk '{print $1}')
 sudo tee -a /etc/ppt-deploy/auth.yaml <<EOF
   - name: gc-cron
     hash: "$GC_HASH"
+    scopes:
+      - gc:tick
 EOF
 
 sudo tee /etc/ppt-deploy/gc.env <<EOF

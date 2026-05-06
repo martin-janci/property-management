@@ -2,7 +2,7 @@
 use crate::api::release::ReleaseService;
 use crate::config::TargetsConfig;
 use crate::domain::ReleaseState;
-use crate::infra::{BlueGreenDeployer, BlueGreenSpec, HealthProbe};
+use crate::infra::{BlueGreenDeployer, BlueGreenSpec, CallerIdentity, HealthProbe};
 use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::Json;
@@ -35,8 +35,10 @@ pub struct PromoteResponse {
 
 pub async fn promote_handler(
     State(svc): State<Arc<PromoteService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Json(req): Json<PromoteRequest>,
 ) -> Result<Json<PromoteResponse>> {
+    caller.require_scope("release:promote")?;
     let target_cfg = svc
         .targets
         .targets
@@ -213,8 +215,10 @@ pub struct RollbackRequest {
 
 pub async fn rollback_handler(
     State(svc): State<Arc<PromoteService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Json(req): Json<RollbackRequest>,
 ) -> Result<Json<PromoteResponse>> {
+    caller.require_scope("release:rollback")?;
     let target_cfg = svc
         .targets
         .targets

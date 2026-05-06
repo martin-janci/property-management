@@ -22,6 +22,27 @@ pub struct AuthState {
 pub struct CallerIdentity {
     pub kind: String,
     pub id: String,
+    pub scopes: Vec<String>,
+}
+
+impl CallerIdentity {
+    /// True if the caller has the requested scope, or holds the `*` wildcard.
+    pub fn has_scope(&self, required: &str) -> bool {
+        self.scopes.iter().any(|s| s == required || s == "*")
+    }
+
+    /// Returns Forbidden if the caller does not hold the required scope.
+    /// Used to fail-closed at the start of every state-mutating handler.
+    pub fn require_scope(&self, scope: &str) -> crate::Result<()> {
+        if self.has_scope(scope) {
+            Ok(())
+        } else {
+            Err(crate::DeployError::Forbidden(format!(
+                "missing required scope: {scope}; caller {}:{} has scopes {:?}",
+                self.kind, self.id, self.scopes
+            )))
+        }
+    }
 }
 
 pub async fn auth_and_audit(
@@ -56,17 +77,33 @@ pub async fn auth_and_audit(
     };
 
     // Try API key first (fast), then OIDC (slower).
-    let identity = if let Some(name) = state.api_keys.validate(&token) {
+    let identity = if let Some((name, scopes)) = state.api_keys.validate(&token) {
         CallerIdentity {
             kind: "api_key".into(),
             id: name.into(),
+            scopes: scopes.to_vec(),
         }
     } else {
         match state.oidc.validate(&token).await {
-            Ok(claims) => CallerIdentity {
-                kind: "oidc".into(),
-                id: format!("{}@{}", claims.repository, claims.git_ref),
-            },
+            Ok(claims) => {
+                // OIDC scope derivation is intentionally simple — we map common GitHub
+                // ref patterns to the minimum scopes needed by the matching CI workflow.
+                // Refine when CI patterns stabilize.
+                let mut scopes = vec![];
+                if claims.git_ref == "refs/heads/main" {
+                    scopes.push("release:deploy".to_string());
+                } else if claims.git_ref.starts_with("refs/tags/v") {
+                    scopes.push("release:register".to_string());
+                } else if claims.git_ref.starts_with("refs/heads/feature/") {
+                    scopes.push("worktree:open".to_string());
+                    scopes.push("worktree:close".to_string());
+                }
+                CallerIdentity {
+                    kind: "oidc".into(),
+                    id: format!("{}@{}", claims.repository, claims.git_ref),
+                    scopes,
+                }
+            }
             Err(e) => {
                 let _ = state
                     .store

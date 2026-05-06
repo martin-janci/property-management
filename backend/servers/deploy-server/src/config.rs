@@ -87,6 +87,8 @@ pub struct AuthConfig {
 pub struct ApiKey {
     pub name: String,
     pub hash: String,
+    #[serde(default)]
+    pub scopes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
