@@ -19,6 +19,7 @@ async fn main() -> anyhow::Result<()> {
     let etc =
         PathBuf::from(std::env::var("PPT_DEPLOY_ETC").unwrap_or_else(|_| "/etc/ppt-deploy".into()));
     let cfg: Config = load_yaml(&etc.join("config.yaml")).context("load config.yaml")?;
+    let cfg_arc = Arc::new(cfg.clone());
     let targets: TargetsConfig =
         load_yaml(&etc.join("targets.yaml")).context("load targets.yaml")?;
     let auth: AuthConfig = load_yaml(&etc.join("auth.yaml")).context("load auth.yaml")?;
@@ -60,6 +61,7 @@ async fn main() -> anyhow::Result<()> {
             staging.domain_suffix.trim_start_matches("staging.")
         ),
         webhook_cfg,
+        cfg_arc,
     );
 
     let mut fd = ListenFd::from_env();
