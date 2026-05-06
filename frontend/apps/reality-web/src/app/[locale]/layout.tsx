@@ -4,6 +4,7 @@ import { QueryProvider } from '@/lib/query-provider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { DevPanelMount } from '../../components/DevPanelMount';
 import { ComparisonTray } from '../../components/comparison';
 import { type Locale, locales } from '../../i18n/config';
 
@@ -76,6 +77,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               <ComparisonProvider>
                 {children}
                 <ComparisonTray />
+                <DevPanelMount />
               </ComparisonProvider>
             </AuthProvider>
           </QueryProvider>
