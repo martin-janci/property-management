@@ -59,6 +59,8 @@ enum Cmd {
         #[arg(long)]
         service: Option<String>,
     },
+    /// Print SSH tunnel + psql command for a worktree's dedicated DB.
+    Psql { name: String },
 }
 
 #[derive(Serialize)]
@@ -179,6 +181,26 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
             }
+        }
+        Cmd::Psql { name } => {
+            let resp = http
+                .get(format!("{}/api/worktree/{name}", cli.url))
+                .header("Authorization", &auth)
+                .send()
+                .await?
+                .error_for_status()?;
+            let wt: serde_json::Value = resp.json().await?;
+            let db_name = wt["db_name"]
+                .as_str()
+                .ok_or_else(|| anyhow::anyhow!("worktree {name} has no dedicated DB (shared mode)"))?;
+            let host = std::env::var("PPT_DEPLOY_HOST").unwrap_or_else(|_| "deploy.rlt.sk".into());
+            println!("# Run these commands in two terminals:");
+            println!("#");
+            println!("# Terminal 1 — open SSH tunnel (keep running):");
+            println!("ssh -N -L 5433:localhost:5432 deploy@{host}");
+            println!("#");
+            println!("# Terminal 2 — connect with psql:");
+            println!("psql postgres://ppt:ppt_dev_password@localhost:5433/{db_name}");
         }
     }
     Ok(())
