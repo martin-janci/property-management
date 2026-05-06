@@ -18,4 +18,4 @@ pub use gh::{GhClient, WorkflowRun};
 pub use git::GitFetcher;
 pub use health::HealthProbe;
 pub use postgres::PostgresOps;
-pub use store::Store;
+pub use store::{AuditEntry, Store};

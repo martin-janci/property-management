@@ -1,5 +1,5 @@
 // backend/servers/deploy-server/src/api/router.rs
-use crate::api::{gc, health, logs, promote, release, webhook, worktree};
+use crate::api::{audit_query, gc, health, logs, promote, release, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
 use crate::infra::{
@@ -59,6 +59,7 @@ pub fn build(
         .route("/api/worktree/:name", get(worktree::get_handler))
         .route("/api/worktree/:name/close", post(worktree::close_handler))
         .route("/api/logs/:name", get(logs::handler))
+        .route("/api/audit", get(audit_query::list_handler))
         .with_state(svc.clone())
         .merge(
             Router::new()

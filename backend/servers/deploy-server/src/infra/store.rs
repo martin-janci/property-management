@@ -144,6 +144,17 @@ impl Store {
         Ok(())
     }
 
+    pub async fn list_audit(&self, limit: i64) -> Result<Vec<AuditEntry>> {
+        let rows = sqlx::query_as::<_, AuditRow>(
+            r#"SELECT id, ts, caller_kind, caller_id, endpoint, params, result, duration_ms
+                FROM audit ORDER BY ts DESC LIMIT ?"#,
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(AuditRow::into_domain).collect())
+    }
+
     pub async fn upsert_release(&self, rel: &crate::domain::Release) -> Result<()> {
         let images = serde_json::to_string(&rel.images).unwrap();
         let state = match rel.state {
@@ -194,6 +205,45 @@ impl Store {
         .fetch_optional(&self.pool)
         .await?;
         row.map(ReleaseRow::into_domain).transpose()
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AuditEntry {
+    pub id: i64,
+    pub ts: i64,
+    pub caller_kind: String,
+    pub caller_id: String,
+    pub endpoint: String,
+    pub params: Option<String>,
+    pub result: Option<String>,
+    pub duration_ms: Option<i64>,
+}
+
+#[derive(sqlx::FromRow)]
+struct AuditRow {
+    id: i64,
+    ts: i64,
+    caller_kind: String,
+    caller_id: String,
+    endpoint: String,
+    params: Option<String>,
+    result: Option<String>,
+    duration_ms: Option<i64>,
+}
+
+impl AuditRow {
+    fn into_domain(self) -> AuditEntry {
+        AuditEntry {
+            id: self.id,
+            ts: self.ts,
+            caller_kind: self.caller_kind,
+            caller_id: self.caller_id,
+            endpoint: self.endpoint,
+            params: self.params,
+            result: self.result,
+            duration_ms: self.duration_ms,
+        }
     }
 }
 

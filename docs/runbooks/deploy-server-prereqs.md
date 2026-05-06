@@ -255,7 +255,7 @@ targets:
     caddy_url: http://localhost:2019
     domain_suffix: staging.rlt.sk
     idle_timeout: 8h
-    rollback_mode: manual
+    rollback_mode: auto      # Phase 6 default: try auto-rollback on staging first
   prod:
     docker_socket: ssh://prod-deploy@new-prod.rlt.sk
     caddy_url: http://<prod-tailnet-ip>:2019
