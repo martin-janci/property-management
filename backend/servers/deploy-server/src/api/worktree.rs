@@ -140,15 +140,16 @@ pub async fn open_handler(
             // Operator can call status to check.
         } else {
             // Run backend containers.
+            // Image tag matches docker-build.yml's `type=ref,event=branch` which
+            // replaces `/` with `-` but preserves case. So `feature/UC-14` → `feature-UC-14`.
+            let branch_tag = req.branch.replace('/', "-").replace('_', "-");
             let api_image = format!(
-                "{}/ppt-api-server:branch-{}",
-                svc.backend_image_prefix,
-                sanitize(&req.branch)
+                "{}/ppt-api-server:{}",
+                svc.backend_image_prefix, branch_tag
             );
             let reality_image = format!(
-                "{}/ppt-reality-server:branch-{}",
-                svc.backend_image_prefix,
-                sanitize(&req.branch)
+                "{}/ppt-reality-server:{}",
+                svc.backend_image_prefix, branch_tag
             );
 
             let api_port = pick_port(&format!("{name}-api"));
