@@ -2,6 +2,7 @@
 pub mod gc;
 pub mod health;
 pub mod logs;
+pub mod promote;
 pub mod release;
 pub mod router;
 pub mod webhook;

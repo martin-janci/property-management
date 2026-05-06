@@ -190,9 +190,9 @@ async fn main() -> anyhow::Result<()> {
                 .await?
                 .error_for_status()?;
             let wt: serde_json::Value = resp.json().await?;
-            let db_name = wt["db_name"]
-                .as_str()
-                .ok_or_else(|| anyhow::anyhow!("worktree {name} has no dedicated DB (shared mode)"))?;
+            let db_name = wt["db_name"].as_str().ok_or_else(|| {
+                anyhow::anyhow!("worktree {name} has no dedicated DB (shared mode)")
+            })?;
             let host = std::env::var("PPT_DEPLOY_HOST").unwrap_or_else(|_| "deploy.rlt.sk".into());
             println!("# Run these commands in two terminals:");
             println!("#");

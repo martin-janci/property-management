@@ -1,5 +1,5 @@
 // backend/servers/deploy-server/src/api/router.rs
-use crate::api::{gc, health, logs, release, webhook, worktree};
+use crate::api::{gc, health, logs, promote, release, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
 use crate::infra::{
@@ -27,6 +27,7 @@ pub fn build(
     postgres: Arc<PostgresOps>,
     gh: Arc<GhClient>,
     backend_image_prefix: String,
+    promote_svc: Arc<promote::PromoteService>,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -70,6 +71,11 @@ pub fn build(
                 .route("/api/wake/:target", post(release::wake_handler))
                 .route("/api/release", post(release::register_candidate_handler))
                 .with_state(release_svc),
+        )
+        .merge(
+            Router::new()
+                .route("/api/promote", post(promote::promote_handler))
+                .with_state(promote_svc),
         )
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit))
         .route("/health", get(health::handler))

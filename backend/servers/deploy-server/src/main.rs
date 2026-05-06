@@ -1,11 +1,13 @@
 // backend/servers/deploy-server/src/main.rs
 use anyhow::Context;
+use deploy_server::api::promote::PromoteService;
 use deploy_server::api::release::ReleaseService;
 use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{load_yaml, AuthConfig, Config, TargetsConfig};
 use deploy_server::infra::{
-    CaddyClient, DockerClient, GhClient, GitFetcher, PostgresOps, StagingDeployer, Store,
+    CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, StagingDeployer,
+    Store,
 };
 use listenfd::ListenFd;
 use std::path::PathBuf;
@@ -59,6 +61,12 @@ async fn main() -> anyhow::Result<()> {
             .unwrap_or_else(|_| "ghcr.io/martin-janci".into()),
     });
 
+    let promote_svc = Arc::new(PromoteService {
+        release_svc: release_svc.clone(),
+        health: Arc::new(HealthProbe::new()),
+        targets: Arc::new(targets.clone()),
+    });
+
     let postgres = Arc::new(PostgresOps {
         admin_url: cfg.postgres_admin_url.clone(),
         template_db: cfg.postgres_template_db.clone(),
@@ -91,6 +99,7 @@ async fn main() -> anyhow::Result<()> {
         postgres,
         gh,
         cfg.backend_image_prefix.clone(),
+        promote_svc,
     );
 
     let mut fd = ListenFd::from_env();
