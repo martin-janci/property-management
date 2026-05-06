@@ -1,4 +1,70 @@
-fn main() -> anyhow::Result<()> {
-    println!("ppt-deploy stub");
+// backend/servers/deploy-server/src/main.rs
+use anyhow::Context;
+use deploy_server::api::router;
+use deploy_server::auth::{ApiKeyValidator, OidcValidator};
+use deploy_server::config::{load_yaml, AuthConfig, Config, TargetsConfig};
+use deploy_server::infra::{CaddyClient, DockerClient, GitFetcher, Store};
+use listenfd::ListenFd;
+use std::path::PathBuf;
+use std::sync::Arc;
+use tokio::net::TcpListener;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .json()
+        .init();
+
+    let etc =
+        PathBuf::from(std::env::var("PPT_DEPLOY_ETC").unwrap_or_else(|_| "/etc/ppt-deploy".into()));
+    let cfg: Config = load_yaml(&etc.join("config.yaml")).context("load config.yaml")?;
+    let targets: TargetsConfig =
+        load_yaml(&etc.join("targets.yaml")).context("load targets.yaml")?;
+    let auth: AuthConfig = load_yaml(&etc.join("auth.yaml")).context("load auth.yaml")?;
+
+    let staging = targets
+        .targets
+        .get("staging")
+        .context("targets.staging missing")?;
+
+    let store = Arc::new(Store::open(&PathBuf::from(&cfg.state_dir).join("state.db")).await?);
+    let git = Arc::new(GitFetcher::new(
+        &cfg.git_repo_url,
+        &cfg.worktree_dir,
+        &auth.gh_deploy_key_path,
+    ));
+    let docker = Arc::new(DockerClient::from_socket(&staging.docker_socket)?);
+    let caddy = Arc::new(CaddyClient::new(&staging.caddy_url));
+    let api_keys = Arc::new(ApiKeyValidator::new(auth.api_keys.clone()));
+    let oidc = Arc::new(OidcValidator::new(auth.oidc.clone()));
+
+    let app = router::build(
+        store,
+        git,
+        docker,
+        caddy,
+        api_keys,
+        oidc,
+        std::env::var("PPT_FRONTEND_IMAGE").unwrap_or_else(|_| "ppt-frontend-dev:local".into()),
+        format!(
+            "dev.ppt.{}",
+            staging.domain_suffix.trim_start_matches("staging.")
+        ),
+        format!(
+            "dev.{}",
+            staging.domain_suffix.trim_start_matches("staging.")
+        ),
+    );
+
+    let mut fd = ListenFd::from_env();
+    let listener = if let Some(l) = fd.take_tcp_listener(0)? {
+        l.set_nonblocking(true)?;
+        TcpListener::from_std(l)?
+    } else {
+        TcpListener::bind(&cfg.bind).await?
+    };
+    tracing::info!(bind = %listener.local_addr()?, "ppt-deploy listening");
+    axum::serve(listener, app).await?;
     Ok(())
 }
