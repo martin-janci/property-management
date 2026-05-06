@@ -1,0 +1,255 @@
+// backend/servers/deploy-server/src/infra/store.rs
+use crate::domain::{BackendMode, Worktree, WorktreeState, WorktreeUrls};
+use crate::Result;
+use chrono::{TimeZone, Utc};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::{Pool, Sqlite};
+use std::path::Path;
+use std::str::FromStr;
+
+#[derive(Clone)]
+pub struct Store {
+    pool: Pool<Sqlite>,
+}
+
+impl Store {
+    pub async fn open(db_path: &Path) -> Result<Self> {
+        let opts =
+            SqliteConnectOptions::from_str(&format!("sqlite://{}?mode=rwc", db_path.display()))
+                .map_err(|e| crate::DeployError::Config(format!("sqlite opts: {e}")))?
+                .create_if_missing(true);
+
+        let pool = SqlitePoolOptions::new()
+            .max_connections(8)
+            .connect_with(opts)
+            .await?;
+
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .map_err(|e| crate::DeployError::Internal(format!("migrate: {e}")))?;
+
+        Ok(Self { pool })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn pool(&self) -> &Pool<Sqlite> {
+        &self.pool
+    }
+
+    pub async fn upsert_worktree(&self, wt: &Worktree) -> Result<()> {
+        let urls = serde_json::to_string(&wt.urls).unwrap();
+        let containers = serde_json::to_string(&wt.containers).unwrap();
+        let backend = match wt.backend_mode {
+            BackendMode::Shared => "shared",
+            BackendMode::Dedicated => "dedicated",
+        };
+        let state = match wt.state {
+            WorktreeState::Running => "running",
+            WorktreeState::Paused => "paused",
+            WorktreeState::Closing => "closing",
+            WorktreeState::Closed => "closed",
+        };
+
+        sqlx::query(
+            r#"INSERT INTO worktree
+                (name, branch, backend_mode, state, urls, containers, db_name, dump_path,
+                 ttl_seconds, last_traffic_at, closed_at, created_at, created_by)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(name) DO UPDATE SET
+                  branch=excluded.branch,
+                  backend_mode=excluded.backend_mode,
+                  state=excluded.state,
+                  urls=excluded.urls,
+                  containers=excluded.containers,
+                  db_name=excluded.db_name,
+                  dump_path=excluded.dump_path,
+                  ttl_seconds=excluded.ttl_seconds,
+                  last_traffic_at=excluded.last_traffic_at,
+                  closed_at=excluded.closed_at"#,
+        )
+        .bind(&wt.name)
+        .bind(&wt.branch)
+        .bind(backend)
+        .bind(state)
+        .bind(urls)
+        .bind(containers)
+        .bind(wt.db_name.as_deref())
+        .bind(wt.dump_path.as_deref())
+        .bind(wt.ttl_seconds)
+        .bind(wt.last_traffic_at.map(|t| t.timestamp()))
+        .bind(wt.closed_at.map(|t| t.timestamp()))
+        .bind(wt.created_at.timestamp())
+        .bind(&wt.created_by)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_worktree(&self, name: &str) -> Result<Option<Worktree>> {
+        let row = sqlx::query_as::<_, WorktreeRow>(
+            r#"SELECT name, branch, backend_mode, state, urls, containers, db_name, dump_path,
+                       ttl_seconds, last_traffic_at, closed_at, created_at, created_by
+                FROM worktree WHERE name = ?"#,
+        )
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await?;
+        row.map(WorktreeRow::into_domain).transpose()
+    }
+
+    pub async fn list_worktrees(&self) -> Result<Vec<Worktree>> {
+        let rows = sqlx::query_as::<_, WorktreeRow>(
+            r#"SELECT name, branch, backend_mode, state, urls, containers, db_name, dump_path,
+                       ttl_seconds, last_traffic_at, closed_at, created_at, created_by
+                FROM worktree ORDER BY created_at DESC"#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        rows.into_iter().map(WorktreeRow::into_domain).collect()
+    }
+
+    pub async fn record_audit(
+        &self,
+        caller_kind: &str,
+        caller_id: &str,
+        endpoint: &str,
+        params: Option<&str>,
+        result: &str,
+        duration_ms: i64,
+    ) -> Result<()> {
+        sqlx::query(
+            r#"INSERT INTO audit (ts, caller_kind, caller_id, endpoint, params, result, duration_ms)
+               VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+        )
+        .bind(Utc::now().timestamp())
+        .bind(caller_kind)
+        .bind(caller_id)
+        .bind(endpoint)
+        .bind(params)
+        .bind(result)
+        .bind(duration_ms)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct WorktreeRow {
+    name: String,
+    branch: String,
+    backend_mode: String,
+    state: String,
+    urls: String,
+    containers: String,
+    db_name: Option<String>,
+    dump_path: Option<String>,
+    ttl_seconds: i64,
+    last_traffic_at: Option<i64>,
+    closed_at: Option<i64>,
+    created_at: i64,
+    created_by: String,
+}
+
+impl WorktreeRow {
+    fn into_domain(self) -> Result<Worktree> {
+        let backend_mode = match self.backend_mode.as_str() {
+            "shared" => BackendMode::Shared,
+            "dedicated" => BackendMode::Dedicated,
+            other => {
+                return Err(crate::DeployError::Internal(format!(
+                    "bad backend_mode {other}"
+                )))
+            }
+        };
+        let state = match self.state.as_str() {
+            "running" => WorktreeState::Running,
+            "paused" => WorktreeState::Paused,
+            "closing" => WorktreeState::Closing,
+            "closed" => WorktreeState::Closed,
+            other => return Err(crate::DeployError::Internal(format!("bad state {other}"))),
+        };
+        let urls: WorktreeUrls = serde_json::from_str(&self.urls)
+            .map_err(|e| crate::DeployError::Internal(format!("bad urls json: {e}")))?;
+        let containers: Vec<String> = serde_json::from_str(&self.containers)
+            .map_err(|e| crate::DeployError::Internal(format!("bad containers json: {e}")))?;
+        Ok(Worktree {
+            name: self.name,
+            branch: self.branch,
+            backend_mode,
+            state,
+            urls,
+            containers,
+            db_name: self.db_name,
+            dump_path: self.dump_path,
+            ttl_seconds: self.ttl_seconds,
+            last_traffic_at: self
+                .last_traffic_at
+                .map(|t| Utc.timestamp_opt(t, 0).unwrap()),
+            closed_at: self.closed_at.map(|t| Utc.timestamp_opt(t, 0).unwrap()),
+            created_at: Utc.timestamp_opt(self.created_at, 0).unwrap(),
+            created_by: self.created_by,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[tokio::test]
+    async fn upsert_and_get_round_trip() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("state.db")).await.unwrap();
+        let wt = Worktree {
+            name: "foo".into(),
+            branch: "feature/foo".into(),
+            backend_mode: BackendMode::Shared,
+            state: WorktreeState::Running,
+            urls: WorktreeUrls {
+                ppt: Some("https://x".into()),
+                reality: None,
+                api: None,
+            },
+            containers: vec!["c1".into()],
+            db_name: None,
+            dump_path: None,
+            ttl_seconds: 7200,
+            last_traffic_at: None,
+            closed_at: None,
+            created_at: Utc::now(),
+            created_by: "test".into(),
+        };
+        store.upsert_worktree(&wt).await.unwrap();
+        let got = store.get_worktree("foo").await.unwrap().unwrap();
+        assert_eq!(got.branch, "feature/foo");
+        assert_eq!(got.containers, vec!["c1".to_string()]);
+
+        let list = store.list_worktrees().await.unwrap();
+        assert_eq!(list.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn audit_insert() {
+        let dir = tempdir().unwrap();
+        let store = Store::open(&dir.path().join("state.db")).await.unwrap();
+        store
+            .record_audit(
+                "api_key",
+                "claude-skill",
+                "POST /api/worktree",
+                Some("{}"),
+                "ok",
+                42,
+            )
+            .await
+            .unwrap();
+        let row: (i64,) = sqlx::query_as("SELECT count(*) FROM audit")
+            .fetch_one(store.pool())
+            .await
+            .unwrap();
+        assert_eq!(row.0, 1);
+    }
+}
