@@ -238,6 +238,7 @@ function AppNavigation() {
 }
 
 function RouteLoading() {
+  const { t } = useTranslation();
   return (
     <div
       className="flex items-center justify-center py-16"
@@ -245,7 +246,11 @@ function RouteLoading() {
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+        aria-hidden="true"
+      />
+      <span className="sr-only">{t('common.loading')}</span>
     </div>
   );
 }
