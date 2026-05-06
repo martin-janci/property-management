@@ -1,7 +1,9 @@
 // backend/servers/deploy-server/src/api/release.rs
 use crate::config::TargetsConfig;
 use crate::domain::{Release, ReleaseState};
-use crate::infra::{CallerIdentity, StagingDeploySpec, StagingDeployer, Store};
+use crate::infra::{
+    BlueGreenDeployer, CaddyClient, CallerIdentity, DockerClient, StagingDeploySpec, Store,
+};
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
 use axum::Json;
@@ -12,7 +14,8 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct ReleaseService {
     pub store: Arc<Store>,
-    pub deployer: Arc<StagingDeployer>,
+    pub docker_pool: Arc<HashMap<String, Arc<DockerClient>>>,
+    pub caddy_pool: Arc<HashMap<String, Arc<CaddyClient>>>,
     pub targets: Arc<TargetsConfig>,
     pub image_prefix: String,
 }
@@ -75,7 +78,18 @@ pub async fn deploy_handler(
         domain_suffix: target_cfg.domain_suffix.clone(),
         target_name: "staging".into(),
     };
-    svc.deployer.deploy(&spec).await?;
+    let docker = svc
+        .docker_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .clone();
+    let caddy = svc
+        .caddy_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .clone();
+    let deployer = BlueGreenDeployer { docker, caddy };
+    deployer.deploy(&spec).await?;
 
     let rel = Release {
         tag: req.tag.clone(),
@@ -146,6 +160,17 @@ pub async fn wake_handler(
         domain_suffix: target_cfg.domain_suffix.clone(),
         target_name: "staging".into(),
     };
-    svc.deployer.deploy(&spec).await?;
+    let docker = svc
+        .docker_pool
+        .get(&target)
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
+        .clone();
+    let caddy = svc
+        .caddy_pool
+        .get(&target)
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
+        .clone();
+    let deployer = BlueGreenDeployer { docker, caddy };
+    deployer.deploy(&spec).await?;
     Ok(Json(serde_json::json!({"woke": "staging", "tag": rel.tag})))
 }

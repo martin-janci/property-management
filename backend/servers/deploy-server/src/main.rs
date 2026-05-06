@@ -6,10 +6,10 @@ use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{load_yaml, AuthConfig, Config, TargetsConfig};
 use deploy_server::infra::{
-    CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, StagingDeployer,
-    Store,
+    CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, Store,
 };
 use listenfd::ListenFd;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::net::TcpListener;
@@ -49,13 +49,22 @@ async fn main() -> anyhow::Result<()> {
         secret: auth.webhook_secret.clone(),
     };
 
-    let deployer = Arc::new(StagingDeployer {
-        docker: docker.clone(),
-        caddy: caddy.clone(),
-    });
+    let mut docker_pool: HashMap<String, Arc<DockerClient>> = HashMap::new();
+    let mut caddy_pool: HashMap<String, Arc<CaddyClient>> = HashMap::new();
+    for (name, t) in &targets.targets {
+        docker_pool.insert(
+            name.clone(),
+            Arc::new(DockerClient::from_socket(&t.docker_socket)?),
+        );
+        caddy_pool.insert(name.clone(), Arc::new(CaddyClient::new(&t.caddy_url)));
+    }
+    let docker_pool = Arc::new(docker_pool);
+    let caddy_pool = Arc::new(caddy_pool);
+
     let release_svc = Arc::new(ReleaseService {
         store: store.clone(),
-        deployer,
+        docker_pool,
+        caddy_pool,
         targets: Arc::new(targets.clone()),
         image_prefix: std::env::var("PPT_IMAGE_PREFIX")
             .unwrap_or_else(|_| "ghcr.io/martin-janci".into()),

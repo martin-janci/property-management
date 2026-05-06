@@ -7,8 +7,7 @@ use deploy_server::api::router;
 use deploy_server::auth::{ApiKeyValidator, OidcValidator};
 use deploy_server::config::{ApiKey, Config, OidcConfig, Target, TargetsConfig};
 use deploy_server::infra::{
-    CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, StagingDeployer,
-    Store,
+    CaddyClient, DockerClient, GhClient, GitFetcher, HealthProbe, PostgresOps, Store,
 };
 use httpmock::prelude::*;
 use std::collections::HashMap;
@@ -142,13 +141,18 @@ async fn open_status_close_flow() {
         targets: targets_map,
     });
 
-    let deployer = Arc::new(StagingDeployer {
-        docker: docker.clone(),
-        caddy: caddy.clone(),
-    });
+    let mut docker_pool: HashMap<String, Arc<DockerClient>> = HashMap::new();
+    docker_pool.insert("staging".into(), docker.clone());
+    let docker_pool = Arc::new(docker_pool);
+
+    let mut caddy_pool: HashMap<String, Arc<CaddyClient>> = HashMap::new();
+    caddy_pool.insert("staging".into(), caddy.clone());
+    let caddy_pool = Arc::new(caddy_pool);
+
     let release_svc = Arc::new(ReleaseService {
         store: store.clone(),
-        deployer,
+        docker_pool,
+        caddy_pool,
         targets: targets_cfg.clone(),
         image_prefix: "ghcr.io/test".into(),
     });
@@ -371,13 +375,18 @@ async fn dedicated_open_close_with_dump() {
     });
     let gh = Arc::new(GhClient::new("dummy", "test/repo"));
 
-    let deployer = Arc::new(StagingDeployer {
-        docker: docker.clone(),
-        caddy: caddy.clone(),
-    });
+    let mut docker_pool: HashMap<String, Arc<DockerClient>> = HashMap::new();
+    docker_pool.insert("staging".into(), docker.clone());
+    let docker_pool = Arc::new(docker_pool);
+
+    let mut caddy_pool: HashMap<String, Arc<CaddyClient>> = HashMap::new();
+    caddy_pool.insert("staging".into(), caddy.clone());
+    let caddy_pool = Arc::new(caddy_pool);
+
     let release_svc = Arc::new(ReleaseService {
         store: store.clone(),
-        deployer,
+        docker_pool,
+        caddy_pool,
         targets: targets_cfg.clone(),
         image_prefix: "ghcr.io/test".into(),
     });
@@ -506,13 +515,20 @@ async fn promote_and_rollback_flow() {
     });
     let gh = Arc::new(GhClient::new("dummy", "test/repo"));
 
-    let deployer = Arc::new(StagingDeployer {
-        docker: docker.clone(),
-        caddy: caddy.clone(),
-    });
+    let mut docker_pool: HashMap<String, Arc<DockerClient>> = HashMap::new();
+    docker_pool.insert("staging".into(), docker.clone());
+    docker_pool.insert("prod".into(), docker.clone());
+    let docker_pool = Arc::new(docker_pool);
+
+    let mut caddy_pool: HashMap<String, Arc<CaddyClient>> = HashMap::new();
+    caddy_pool.insert("staging".into(), caddy.clone());
+    caddy_pool.insert("prod".into(), caddy.clone());
+    let caddy_pool = Arc::new(caddy_pool);
+
     let release_svc = Arc::new(ReleaseService {
         store: store.clone(),
-        deployer,
+        docker_pool,
+        caddy_pool,
         targets: targets_cfg.clone(),
         image_prefix: "ghcr.io/test".into(),
     });

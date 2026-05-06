@@ -2,7 +2,7 @@
 use crate::api::release::ReleaseService;
 use crate::config::TargetsConfig;
 use crate::domain::ReleaseState;
-use crate::infra::{BlueGreenSpec, HealthProbe};
+use crate::infra::{BlueGreenDeployer, BlueGreenSpec, HealthProbe};
 use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::Json;
@@ -92,7 +92,20 @@ pub async fn promote_handler(
             .unwrap_or_default(),
         domain_suffix: target_cfg.domain_suffix.clone(),
     };
-    svc.release_svc.deployer.deploy(&spec).await?;
+    let docker = svc
+        .release_svc
+        .docker_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .clone();
+    let caddy = svc
+        .release_svc
+        .caddy_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .clone();
+    let deployer = BlueGreenDeployer { docker, caddy };
+    deployer.deploy(&spec).await?;
 
     let new_state = if req.target == "prod" {
         ReleaseState::Prod
@@ -126,7 +139,7 @@ pub async fn promote_handler(
                                 .unwrap_or_default(),
                             domain_suffix: target_cfg.domain_suffix.clone(),
                         };
-                        let _ = svc.release_svc.deployer.deploy(&prev_spec).await;
+                        let _ = deployer.deploy(&prev_spec).await;
                         return Err(DeployError::Internal(format!(
                             "health grace failed; auto-rolled back to {}",
                             prev.tag
@@ -243,7 +256,20 @@ pub async fn rollback_handler(
             .unwrap_or_default(),
         domain_suffix: target_cfg.domain_suffix.clone(),
     };
-    svc.release_svc.deployer.deploy(&spec).await?;
+    let docker = svc
+        .release_svc
+        .docker_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {}", req.target)))?
+        .clone();
+    let caddy = svc
+        .release_svc
+        .caddy_pool
+        .get(&req.target)
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {}", req.target)))?
+        .clone();
+    let deployer = BlueGreenDeployer { docker, caddy };
+    deployer.deploy(&spec).await?;
 
     // Promote rolled-back release to live, demote current to Previous.
     let mut rolled_back = target_release;
