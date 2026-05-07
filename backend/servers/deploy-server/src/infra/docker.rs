@@ -7,6 +7,8 @@ use bollard::container::{
 use bollard::models::{HostConfig, Mount, MountTypeEnum, PortBinding};
 use bollard::Docker;
 use std::collections::HashMap;
+use std::time::Duration;
+use tokio::time::Instant;
 
 pub struct DockerClient {
     docker: Docker,
@@ -84,6 +86,58 @@ impl DockerClient {
                 status_code: 404, ..
             }) => Ok(false),
             Err(e) => Err(crate::DeployError::Docker(e)),
+        }
+    }
+
+    /// Resolve a container's IPv4 address on the default `bridge` network.
+    ///
+    /// Used to construct Caddy reverse-proxy upstreams that point at the
+    /// container directly rather than at `127.0.0.1:<host_port>`. The latter
+    /// fails when Caddy itself runs in a container — its loopback is its own,
+    /// not the host's. The bridge network is shared with `ppt-caddy` so the
+    /// container IP is reachable from there.
+    ///
+    /// Caveat: bridge IPs are NOT stable across container restarts on the
+    /// default bridge network. For full stability, switch worktree+Caddy
+    /// containers to a user-defined network and use container *names* as
+    /// upstreams (Docker's embedded DNS resolves them); tracked as a
+    /// follow-up.
+    pub async fn bridge_ip(&self, name: &str) -> Result<String> {
+        let info = self.docker.inspect_container(name, None).await?;
+        info.network_settings
+            .and_then(|ns| {
+                ns.networks
+                    .and_then(|nets| nets.get("bridge").cloned())
+                    .and_then(|n| n.ip_address)
+            })
+            .filter(|s| !s.is_empty())
+            // Distinct error variant (not `Internal`) so the retry loop in
+            // `bridge_ip_with_retry` can match this case structurally instead
+            // of grepping the message text. A refactor of the message can't
+            // silently break retry behavior.
+            .ok_or_else(|| crate::DeployError::BridgeIpNotReady(name.to_string()))
+    }
+
+    /// Like `bridge_ip`, but polls until the IP is assigned or `timeout` elapses.
+    ///
+    /// Right after `start_container` Docker may not have assigned a bridge IP yet,
+    /// so a direct `bridge_ip` call returns `BridgeIpNotReady(name)`. This helper
+    /// polls every 100 ms until either an IP appears or `timeout` is reached. Real
+    /// Docker errors (socket gone, container disappeared) propagate immediately —
+    /// only the typed `BridgeIpNotReady` variant is retried.
+    pub async fn bridge_ip_with_retry(&self, name: &str, timeout: Duration) -> Result<String> {
+        let deadline = Instant::now() + timeout;
+        loop {
+            match self.bridge_ip(name).await {
+                Ok(ip) => return Ok(ip),
+                Err(e) => {
+                    let is_not_ready = matches!(&e, crate::DeployError::BridgeIpNotReady(_));
+                    if !is_not_ready || Instant::now() >= deadline {
+                        return Err(e);
+                    }
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                }
+            }
         }
     }
 

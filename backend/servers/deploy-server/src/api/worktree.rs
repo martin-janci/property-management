@@ -10,6 +10,13 @@ use axum::extract::{Path, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::time::Duration;
+
+/// Max time we'll poll Docker for a freshly-started container's bridge IP
+/// before bailing. Docker normally assigns within a few hundred ms; 10 s gives
+/// plenty of margin for a stressed daemon without making a hung start hang the
+/// caller for a wt-open lifetime.
+const BRIDGE_IP_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Clone)]
 pub struct WorktreeService {
@@ -139,14 +146,57 @@ pub async fn open_handler(
         .await?;
 
     // 4. Register frontend Caddy routes.
+    //
+    // Upstream MUST be the container's docker-bridge IP (not the host's
+    // `127.0.0.1:<host_port>`). Caddy itself runs in a container; its
+    // loopback is its own, not the host's. Pointing at the bridge IP works
+    // because Caddy and the worktree dev containers share the default bridge
+    // network. The container's *internal* port is also fixed by the
+    // `ppt-frontend-dev:local` Dockerfile (5173 for Vite/ppt-web, 3000 for
+    // Next/reality-web).
+    //
+    // `bridge_ip_with_retry` polls because Docker doesn't always assign a
+    // bridge IP synchronously with `start_container`; without the poll loop a
+    // fast caller can race the daemon and see "no bridge network IP yet".
+    //
+    // Caveat: default-bridge IPs aren't stable across container restarts.
+    // Tracked as a follow-up to migrate to a user-defined network with
+    // container-name DNS, which would survive restarts.
     let host_ppt = format!("wt-{name}.{}", svc.domain_dev_ppt);
     let host_reality = format!("wt-{name}.{}", svc.domain_dev_reality);
-    svc.caddy
-        .register_route(&host_ppt, &format!("127.0.0.1:{port_ppt}"))
-        .await?;
-    svc.caddy
-        .register_route(&host_reality, &format!("127.0.0.1:{port_reality}"))
-        .await?;
+    let route_result: Result<()> = async {
+        let ppt_bridge_ip = svc
+            .docker
+            .bridge_ip_with_retry(&ppt_container, BRIDGE_IP_TIMEOUT)
+            .await?;
+        let reality_bridge_ip = svc
+            .docker
+            .bridge_ip_with_retry(&reality_container, BRIDGE_IP_TIMEOUT)
+            .await?;
+        svc.caddy
+            .register_route(&host_ppt, &format!("{ppt_bridge_ip}:5173"))
+            .await?;
+        svc.caddy
+            .register_route(&host_reality, &format!("{reality_bridge_ip}:3000"))
+            .await?;
+        Ok(())
+    }
+    .await;
+    if let Err(e) = route_result {
+        // We've already started both frontend containers but haven't persisted
+        // the worktree row yet — roll the side effects back so we don't leak
+        // orphans the next `pmctl close` won't know about.
+        let started = vec![ppt_container.clone(), reality_container.clone()];
+        tracing::warn!(
+            error = %e,
+            containers = ?started,
+            "frontend bridge-IP/route registration failed; cleaning up containers"
+        );
+        svc.docker.cleanup_containers(&started).await;
+        let _ = svc.caddy.unregister_route(&host_ppt).await;
+        let _ = svc.caddy.unregister_route(&host_reality).await;
+        return Err(e);
+    }
 
     let mut containers = vec![ppt_container, reality_container];
     let mut api_url: Option<String> = None;
@@ -267,32 +317,61 @@ pub async fn open_handler(
                 ));
             }
 
-            svc.docker
-                .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
-                    container_name: api_c.clone(),
-                    image: api_image,
-                    host_port: api_port,
-                    container_port: 8080,
-                    db_url: db_url.clone(),
-                    jwt_secret: jwt_secret.clone(),
-                })
-                .await?;
-            svc.docker
-                .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
-                    container_name: reality_c.clone(),
-                    image: reality_image,
-                    host_port: reality_port,
-                    container_port: 8081,
-                    db_url,
-                    jwt_secret,
-                })
-                .await?;
-
-            // Caddy routes for backend
+            // Run both backend containers and register the api Caddy route in
+            // a single try block; on any failure here, force-remove all
+            // containers (frontend + whatever backend we managed to start) and
+            // unregister the api route. Keeps the worktree row from being
+            // persisted with orphan side effects on disk.
             let host_api = format!("api.wt-{name}.{}", svc.domain_dev_ppt);
-            svc.caddy
-                .register_route(&host_api, &format!("127.0.0.1:{api_port}"))
-                .await?;
+            let backend_result: Result<()> = async {
+                svc.docker
+                    .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                        container_name: api_c.clone(),
+                        image: api_image,
+                        host_port: api_port,
+                        container_port: 8080,
+                        db_url: db_url.clone(),
+                        jwt_secret: jwt_secret.clone(),
+                    })
+                    .await?;
+                svc.docker
+                    .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                        container_name: reality_c.clone(),
+                        image: reality_image,
+                        host_port: reality_port,
+                        container_port: 8081,
+                        db_url,
+                        jwt_secret,
+                    })
+                    .await?;
+
+                // Caddy routes for backend — same bridge-IP rationale as the
+                // frontend routes above. api container's internal port is 8080.
+                let api_bridge_ip = svc
+                    .docker
+                    .bridge_ip_with_retry(&api_c, BRIDGE_IP_TIMEOUT)
+                    .await?;
+                svc.caddy
+                    .register_route(&host_api, &format!("{api_bridge_ip}:8080"))
+                    .await?;
+                Ok(())
+            }
+            .await;
+            if let Err(e) = backend_result {
+                let mut to_clean = containers.clone();
+                to_clean.push(api_c.clone());
+                to_clean.push(reality_c.clone());
+                tracing::warn!(
+                    error = %e,
+                    containers = ?to_clean,
+                    "dedicated backend bring-up failed; cleaning up all worktree containers"
+                );
+                svc.docker.cleanup_containers(&to_clean).await;
+                let _ = svc.caddy.unregister_route(&host_ppt).await;
+                let _ = svc.caddy.unregister_route(&host_reality).await;
+                let _ = svc.caddy.unregister_route(&host_api).await;
+                return Err(e);
+            }
             api_url = Some(format!("https://{host_api}"));
 
             containers.push(api_c);
