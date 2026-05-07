@@ -103,7 +103,7 @@ jobs:
 
       - name: POST /api/deploy
         env:
-          DEPLOY_URL: https://deploy.rlt.sk
+          DEPLOY_URL: https://onyx.rlt.sk
           FULL_SHA: ${{ github.sha }}
         run: |
           # Short SHA matches `type=sha,prefix=` default in metadata-action (7 chars).

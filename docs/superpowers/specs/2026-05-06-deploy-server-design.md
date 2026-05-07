@@ -61,7 +61,7 @@ A small, on-demand deployment control plane (`ppt-deploy`) that manages containe
                                     │  │  *.dev.rlt.sk                 │            │
   Claude skill (laptop) ─ API key ►│  │  *.dev.ppt.rlt.sk             │            │
                                     │  │  *.staging.rlt.sk             │            │
-  GH webhook (PR closed) ──────────►│  │  deploy.rlt.sk                │            │
+  GH webhook (PR closed) ──────────►│  │  onyx.rlt.sk                │            │
                                     │  │  rlt.sk + ppt.rlt.sk (prod)   │            │
                                     │  └────┬───────┬──────────────────┘            │
                                     │       │       │                               │
@@ -484,7 +484,7 @@ Deliverables:
 
 ### Phase 6 — Polish
 
-- Read-only web dashboard (audit log, worktree status, deploy history) on `deploy.rlt.sk/dashboard`
+- Read-only web dashboard (audit log, worktree status, deploy history) on `onyx.rlt.sk/dashboard`
 - Auto-rollback on staging (precursor to prod auto-rollback)
 - Dependabot + cargo-deny for dep hygiene
 - Per-worktree token scoping (if security needs change)

@@ -418,7 +418,7 @@ jobs:
 
       - name: POST /api/release
         env:
-          DEPLOY_URL: https://deploy.rlt.sk
+          DEPLOY_URL: https://onyx.rlt.sk
           IMAGE_PREFIX: ghcr.io/martin-janci
         run: |
           TAG="${GITHUB_REF#refs/tags/}"

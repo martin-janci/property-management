@@ -6,8 +6,8 @@ use serde::Serialize;
 #[derive(Parser)]
 #[command(name = "pmctl", version)]
 struct Cli {
-    /// Deploy server base URL (default: from $PPT_DEPLOY_URL or https://deploy.rlt.sk)
-    #[arg(long, env = "PPT_DEPLOY_URL", default_value = "https://deploy.rlt.sk")]
+    /// Deploy server base URL (default: from $PPT_DEPLOY_URL or https://onyx.rlt.sk)
+    #[arg(long, env = "PPT_DEPLOY_URL", default_value = "https://onyx.rlt.sk")]
     url: String,
     /// API token (default: from $PPT_DEPLOY_TOKEN or ~/.config/ppt-deploy/token)
     #[arg(long, env = "PPT_DEPLOY_TOKEN")]
@@ -215,7 +215,7 @@ async fn main() -> anyhow::Result<()> {
             let db_name = wt["db_name"].as_str().ok_or_else(|| {
                 anyhow::anyhow!("worktree {name} has no dedicated DB (shared mode)")
             })?;
-            let host = std::env::var("PPT_DEPLOY_HOST").unwrap_or_else(|_| "deploy.rlt.sk".into());
+            let host = std::env::var("PPT_DEPLOY_HOST").unwrap_or_else(|_| "onyx.rlt.sk".into());
             println!("# Run these commands in two terminals:");
             println!("#");
             println!("# Terminal 1 — open SSH tunnel (keep running):");

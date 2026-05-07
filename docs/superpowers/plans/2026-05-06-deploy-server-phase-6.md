@@ -141,7 +141,7 @@ Commit `docs(runbook): recommend auto rollback mode for staging`.
 
 ### Task P6.3: Read-only web dashboard
 
-Static SPA at `deploy.rlt.sk/dashboard` served by Caddy. The deploy server exposes JSON endpoints; the SPA fetches them.
+Static SPA at `onyx.rlt.sk/dashboard` served by Caddy. The deploy server exposes JSON endpoints; the SPA fetches them.
 
 Create a tiny static dashboard:
 ```

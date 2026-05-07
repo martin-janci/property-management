@@ -10,7 +10,7 @@ Add wildcard A/AAAA records pointing at the Hetzner VPS:
 - `*.dev.ppt.rlt.sk` → <hetzner-ipv4>
 - `*.staging.rlt.sk` → <hetzner-ipv4>
 - `*.staging.ppt.rlt.sk` → <hetzner-ipv4>
-- `deploy.rlt.sk` → <hetzner-ipv4>
+- `onyx.rlt.sk` → <hetzner-ipv4>
 
 Verify via `dig +short test.dev.rlt.sk @1.1.1.1`.
 
@@ -113,7 +113,7 @@ sudo systemctl enable --now ppt-deploy.socket ppt-deploy-gc.timer
 ## 10. GitHub webhook
 
 Repo → Settings → Webhooks → Add webhook:
-- Payload URL: `https://deploy.rlt.sk/api/webhook/github`
+- Payload URL: `https://onyx.rlt.sk/api/webhook/github`
 - Content type: `application/json`
 - Secret: generated value, also written to `/etc/ppt-deploy/auth.yaml` as `webhook_secret`
 - Events: Pull requests, Pushes, Packages
@@ -239,7 +239,7 @@ sudo chmod 600 /etc/ppt-deploy/gc.env
 Test:
 
 ```bash
-PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl version
+PPT_DEPLOY_URL=https://onyx.rlt.sk pmctl version
 ```
 
 Expected: JSON `{"status":"ok","version":"..."}`.
@@ -247,7 +247,7 @@ Expected: JSON `{"status":"ok","version":"..."}`.
 Open a worktree for smoke verification:
 
 ```bash
-PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl open feature/test --json
+PPT_DEPLOY_URL=https://onyx.rlt.sk pmctl open feature/test --json
 ```
 
 Expected: JSON with `worktree.urls.ppt` set to `https://wt-feature-test.dev.ppt.rlt.sk` (or similar), and the URL should resolve once Caddy provisions the wildcard cert.
@@ -255,7 +255,7 @@ Expected: JSON with `worktree.urls.ppt` set to `https://wt-feature-test.dev.ppt.
 Close it:
 
 ```bash
-PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl close feature-test --json
+PPT_DEPLOY_URL=https://onyx.rlt.sk pmctl close feature-test --json
 ```
 
 ## 12. Prod-on-different-server (Phase 5 opt-in)

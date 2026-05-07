@@ -514,7 +514,7 @@ Add wildcard A/AAAA records pointing at the Hetzner VPS:
 - `*.dev.ppt.rlt.sk` → <hetzner-ipv4>
 - `*.staging.rlt.sk` → <hetzner-ipv4>
 - `*.staging.ppt.rlt.sk` → <hetzner-ipv4>
-- `deploy.rlt.sk` → <hetzner-ipv4>
+- `onyx.rlt.sk` → <hetzner-ipv4>
 
 Verify via `dig +short test.dev.rlt.sk @1.1.1.1`.
 
@@ -606,7 +606,7 @@ sudo systemctl enable --now ppt-deploy.socket ppt-deploy-gc.timer
 ## 10. GitHub webhook
 
 Repo → Settings → Webhooks → Add webhook:
-- Payload URL: `https://deploy.rlt.sk/api/webhook/github`
+- Payload URL: `https://onyx.rlt.sk/api/webhook/github`
 - Content type: `application/json`
 - Secret: generated value, also written to `/etc/ppt-deploy/auth.yaml` as `webhook_secret`
 - Events: Pull requests, Pushes, Packages
@@ -2972,7 +2972,7 @@ Accept=false
 WantedBy=sockets.target
 ```
 
-> Caddy on the same host terminates TLS for `deploy.rlt.sk` and reverse-proxies to `127.0.0.1:8443`. The deploy server itself does NOT terminate TLS — Caddy does.
+> Caddy on the same host terminates TLS for `onyx.rlt.sk` and reverse-proxies to `127.0.0.1:8443`. The deploy server itself does NOT terminate TLS — Caddy does.
 
 - [ ] **Step 2: Service unit**
 
@@ -3065,8 +3065,8 @@ use serde::Serialize;
 #[derive(Parser)]
 #[command(name = "pmctl", version)]
 struct Cli {
-    /// Deploy server base URL (default: from $PPT_DEPLOY_URL or https://deploy.rlt.sk)
-    #[arg(long, env = "PPT_DEPLOY_URL", default_value = "https://deploy.rlt.sk")]
+    /// Deploy server base URL (default: from $PPT_DEPLOY_URL or https://onyx.rlt.sk)
+    #[arg(long, env = "PPT_DEPLOY_URL", default_value = "https://onyx.rlt.sk")]
     url: String,
     /// API token (default: from $PPT_DEPLOY_TOKEN or ~/.config/ppt-deploy/token)
     #[arg(long, env = "PPT_DEPLOY_TOKEN")]
@@ -4149,7 +4149,7 @@ chmod 600 "$HOME/.config/ppt-deploy/token"
 Test:
 
 ```bash
-PPT_DEPLOY_URL=https://deploy.rlt.sk pmctl version
+PPT_DEPLOY_URL=https://onyx.rlt.sk pmctl version
 ```
 
 Expected: JSON `{"status":"ok","version":"..."}`.

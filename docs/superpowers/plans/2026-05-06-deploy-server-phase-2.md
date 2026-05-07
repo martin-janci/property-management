@@ -591,7 +591,7 @@ trigger-staging-deploy:
 
     - name: POST /api/deploy
       env:
-        DEPLOY_URL: https://deploy.rlt.sk
+        DEPLOY_URL: https://onyx.rlt.sk
         TAG: ${{ github.sha }}
       run: |
         curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
