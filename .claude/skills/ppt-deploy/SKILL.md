@@ -21,7 +21,11 @@ security add-generic-password -s ppt-deploy-token -a "$USER" -w
 
 # In your shell rc (~/.zshrc, ~/.bashrc, etc.):
 export PPT_DEPLOY_URL=https://onyx.rlt.sk
-export PPT_DEPLOY_TOKEN=$(security find-generic-password -s ppt-deploy-token -w 2>/dev/null)
+# NOTE: do NOT swallow stderr from `security` — if the keychain entry is
+# missing, you want to see "The specified item could not be found" rather
+# than silently exporting an empty token (which produces confusing 401s).
+PPT_DEPLOY_TOKEN=$(security find-generic-password -s ppt-deploy-token -w) \
+  && export PPT_DEPLOY_TOKEN
 ```
 
 If `pmctl` isn't on `$PATH`, build it:
@@ -39,8 +43,15 @@ sudo install target/release/pmctl /usr/local/bin/pmctl
 - `pmctl close <name>` → graceful shutdown, marks for TTL cleanup.
 - `pmctl status [name]` / `pmctl list` → state introspection.
 - `pmctl version` / `pmctl --json` → JSON output for parsing.
-- `pmctl logs <name> [--service api|reality|ppt|reality-web]` → SSE log stream.
-- `pmctl deploy <tag>` / `pmctl promote <tag>` / `pmctl rollback` → release lifecycle.
+- `pmctl logs <name> [--service ppt|reality|api|reality-api|all]` → SSE log
+  stream. Container suffixes correspond to `wt-<name>-{ppt|reality|api|reality-api}`;
+  `all` (default) aggregates them. `reality-web` is NOT a valid value (the
+  frontend container suffix is `reality`, not `reality-web`).
+- Release lifecycle:
+  - `pmctl deploy <target> --tag <vX.Y.Z>` (target is positional; `--tag` flag)
+  - `pmctl promote <tag> --target <staging|prod> [--dry-run]` (tag positional, `--target` required)
+  - `pmctl rollback --target <staging|prod> [--to <tag>]` (both via flags; field is `to`, not `tag`)
+  - `pmctl wake <target>` (resume paused target)
 
 ### Without `pmctl` (raw curl)
 

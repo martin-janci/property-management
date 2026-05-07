@@ -10,13 +10,13 @@ or `/health`. There is no `/v1/...` prefix.
 | `/api/worktrees` | GET | — | List |
 | `/api/worktree/{name}` | GET | — | Status |
 | `/api/worktree/{name}/close` | POST | — | Close (graceful) |
-| `/api/logs/{name}` | GET | — | SSE stream; query `?service=api|reality|ppt|reality-web` |
-| `/api/audit` | GET | — | Recent audit rows; query `?limit=N` (max 200) |
+| `/api/logs/{name}` | GET | — | SSE stream; query `?service=ppt\|reality\|api\|reality-api\|all` (default `all`). `reality-web` is NOT valid — the frontend container suffix is `reality`. |
+| `/api/audit` | GET | — | Recent audit rows; query `?limit=N` clamped to `1..=500` (default 100). |
 | `/api/deploy` | POST | `{tag, target?}` | Staging deploy (Phase 2). Default target=`staging`. |
 | `/api/wake/{target}` | POST | — | Resume a paused/stopped target. |
 | `/api/release` | POST | `{tag, images}` | Register prod-candidate (called by release.yml on tag push). |
-| `/api/promote` | POST | `{tag, target?}` | Promote candidate to live (Phase 4). |
-| `/api/rollback` | POST | `{target, tag?}` | Rollback target to previous (or specified) release. |
+| `/api/promote` | POST | `{tag, target, dry_run?}` | Promote candidate to live (Phase 4). `target` is required; `dry_run` is bool, default false. |
+| `/api/rollback` | POST | `{target, to?}` | Rollback. `target` required; optional `to` (note: field is `to`, NOT `tag`) — when present, rolls forward/back to that specific tag instead of the previous one. |
 | `/api/gc/tick` | POST | — | Bearer auth (systemd timer; not for humans). |
 | `/api/webhook/github` | POST | GH webhook payload | HMAC-only (no bearer); validates `X-Hub-Signature-256`. |
 
@@ -41,9 +41,14 @@ export PPT_DEPLOY_TOKEN=$(security find-generic-password -s ppt-deploy-token -w)
 
 The token's grant set is checked per endpoint. The default operator token
 has scope `*` (all). CI tokens are typically scoped tighter:
-- `release:deploy` — `/api/deploy`
-- `release:register` — `/api/release` (prod candidates)
-- `release:promote` / `release:rollback`
-- `worktree:open` / `worktree:close` / `worktree:read`
-- `gc:tick` — `/api/gc/tick`
-- `audit:read` — `/api/audit`
+- `release:deploy` — `POST /api/deploy`
+- `release:register` — `POST /api/release` (prod candidates from tag-push)
+- `release:wake` — `POST /api/wake/{target}`
+- `release:promote` — `POST /api/promote`
+- `release:rollback` — `POST /api/rollback`
+- `worktree:open` — `POST /api/worktree`
+- `worktree:close` — `POST /api/worktree/{name}/close`
+- `worktree:read` — `GET /api/worktrees`, `GET /api/worktree/{name}`,
+  `GET /api/logs/{name}`
+- `gc:tick` — `POST /api/gc/tick` (used only by the systemd timer)
+- `audit:read` — `GET /api/audit`
