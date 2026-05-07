@@ -1,12 +1,14 @@
 #!/bin/bash
 #
-# Install git hooks for version management and code quality
+# Install git hooks for code quality
 #
 # This script installs the pre-commit hook that:
 #   1. Checks Rust formatting (cargo fmt)
 #   2. Checks Kotlin formatting (spotless)
-#   3. Checks TypeScript/JavaScript linting (eslint)
-#   4. Auto-bumps patch version on every commit
+#   3. Checks TypeScript/JavaScript linting (Biome)
+#   4. Checks TypeScript types
+#
+# Version bumping happens automatically via CI after merge to main.
 #
 # Usage:
 #   ./scripts/install-hooks.sh
@@ -52,17 +54,16 @@ echo ""
 echo "  Pre-commit hook runs:"
 echo "    1. Rust formatting check     (cargo fmt --check)"
 echo "    2. Kotlin formatting check   (spotless)"
-echo "    3. TypeScript/JS lint        (eslint)"
-echo "    4. Auto version bump         (patch version)"
+echo "    3. TypeScript/JS lint        (Biome)"
+echo "    4. TypeScript type checking  (tsc)"
 echo ""
 echo -e "${CYAN}If a check fails, the hook will show:${NC}"
 echo "    - What failed"
 echo "    - Exact command to fix it"
 echo "    - How to commit again"
 echo ""
-echo -e "${CYAN}Manual version bumping:${NC}"
-echo "    ./scripts/bump-version.sh patch   # 0.1.0 -> 0.1.1 (auto)"
-echo "    ./scripts/bump-version.sh minor   # 0.1.1 -> 0.2.0"
-echo "    ./scripts/bump-version.sh major   # 0.2.0 -> 1.0.0"
+echo -e "${CYAN}Version bumping (patch auto on merge to main via CI):${NC}"
+echo "    ./scripts/bump-version.sh minor   # 0.1.x -> 0.2.0"
+echo "    ./scripts/bump-version.sh major   # 0.x.y -> 1.0.0"
 echo ""
 echo -e "${GREEN}Done!${NC}"
