@@ -6,17 +6,14 @@ import type { ScreenMap } from './types.js';
 export class ScreenMapParseError extends Error {
   constructor(
     public readonly filePath: string,
-    public readonly issues: string[],
+    public readonly issues: string[]
   ) {
     super(`Invalid screen-map at ${filePath}:\n  - ${issues.join('\n  - ')}`);
     this.name = 'ScreenMapParseError';
   }
 }
 
-export function parseScreenMapString(
-  source: string,
-  filePath: string,
-): ScreenMap {
+export function parseScreenMapString(source: string, filePath: string): ScreenMap {
   const parsed = matter(source);
   const result = ScreenMapFrontmatterSchema.safeParse(parsed.data);
   if (!result.success) {

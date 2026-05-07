@@ -29,8 +29,7 @@ Runs the `@ppt/screen-map` CLI in validate mode against the repo's `docs/screens
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT/frontend"
-pnpm --filter @ppt/screen-map cli validate --root "$REPO_ROOT" "$@"
+pnpm -C "$REPO_ROOT/frontend" --filter @ppt/screen-map cli validate --root "$REPO_ROOT"
 ```
 
 ## Output handling

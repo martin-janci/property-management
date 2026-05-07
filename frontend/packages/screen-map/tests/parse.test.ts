@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parseScreenMap, parseScreenMapString } from '../src/parse.js';
 
@@ -13,18 +13,14 @@ describe('parseScreenMap', () => {
     const screen = await parseScreenMap(validFixture);
     expect(screen.frontmatter.id).toBe('ppt/building-detail');
     expect(screen.frontmatter.product).toBe('ppt');
-    expect(screen.frontmatter.implementations['ppt-web']?.buildStatus).toBe(
-      'shipped',
-    );
+    expect(screen.frontmatter.implementations['ppt-web']?.buildStatus).toBe('shipped');
     expect(screen.body).toContain('## Functionality Checklist');
     expect(screen.body).toContain('## Agent Log');
     expect(screen.filePath).toBe(validFixture);
   });
 
   it('throws a descriptive error on invalid frontmatter', async () => {
-    await expect(parseScreenMap(invalidFixture)).rejects.toThrow(
-      /id must match/,
-    );
+    await expect(parseScreenMap(invalidFixture)).rejects.toThrow(/id must match/);
   });
 });
 

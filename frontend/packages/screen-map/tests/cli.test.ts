@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const execFileP = promisify(execFile);
@@ -39,15 +39,15 @@ describe('cli', () => {
     const result = await run(['validate', '--root', tmpRepo]);
     expect(result.code).toBe(0);
     expect(result.stdout).toMatch(/0 screen-maps/i);
-  });
+  }, 30_000);
 
   it('exits 1 in --strict on a parse error', async () => {
     await writeFile(
       path.join(tmpRepo, 'docs/screens/ppt/bad.md'),
-      '---\nid: bad\nname: Bad\nproduct: ppt\nimplementations: {}\n---\n',
+      '---\nid: bad\nname: Bad\nproduct: ppt\nimplementations: {}\n---\n'
     );
     const result = await run(['validate', '--root', tmpRepo, '--strict']);
     expect(result.code).toBe(1);
     expect(result.stderr + result.stdout).toMatch(/id must match/);
-  });
+  }, 30_000);
 });

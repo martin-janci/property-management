@@ -1,6 +1,6 @@
-import { mkdir, writeFile, rm } from 'node:fs/promises';
-import path from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { discoverScreenMaps } from '../src/discover.js';
 
@@ -25,10 +25,7 @@ describe('discoverScreenMaps', () => {
     await mkdir(path.join(tmpRoot, 'reality'), { recursive: true });
     await writeFile(path.join(tmpRoot, 'ppt', 'a.md'), '---\nid: ppt/a\n---\n');
     await writeFile(path.join(tmpRoot, 'ppt', 'b.md'), '---\nid: ppt/b\n---\n');
-    await writeFile(
-      path.join(tmpRoot, 'reality', 'c.md'),
-      '---\nid: reality/c\n---\n',
-    );
+    await writeFile(path.join(tmpRoot, 'reality', 'c.md'), '---\nid: reality/c\n---\n');
 
     const found = await discoverScreenMaps(tmpRoot);
     const ids = found.map((f) => path.relative(tmpRoot, f)).sort();

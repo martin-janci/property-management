@@ -17,10 +17,7 @@ export interface ValidationContext {
   resolveDiagramRef: (ref: string) => boolean;
 }
 
-export function validateScreenMap(
-  screen: ScreenMap,
-  ctx: ValidationContext,
-): ValidationIssue[] {
+export function validateScreenMap(screen: ScreenMap, ctx: ValidationContext): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const { frontmatter } = screen;
 

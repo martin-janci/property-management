@@ -3,14 +3,11 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { buildValidationContext } from './context.js';
 import { discoverScreenMaps } from './discover.js';
-import { parseScreenMap, ScreenMapParseError } from './parse.js';
+import { ScreenMapParseError, parseScreenMap } from './parse.js';
 import { validateScreenMap } from './validate.js';
 
 const program = new Command();
-program
-  .name('screen-map')
-  .description('CLI for the @ppt/screen-map system')
-  .version('0.1.0');
+program.name('screen-map').description('CLI for the @ppt/screen-map system').version('0.1.0');
 
 program
   .command('validate')
@@ -36,7 +33,7 @@ program
         for (const issue of issues) {
           const tag = issue.severity === 'error' ? 'error' : 'warn ';
           process.stdout.write(
-            `  ${tag} ${path.relative(repoRoot, file)} :: ${issue.path} :: ${issue.message}\n`,
+            `  ${tag} ${path.relative(repoRoot, file)} :: ${issue.path} :: ${issue.message}\n`
           );
           if (issue.severity === 'error') totalErrors += 1;
           else totalWarnings += 1;
@@ -44,9 +41,7 @@ program
       } catch (err) {
         if (err instanceof ScreenMapParseError) {
           for (const issue of err.issues) {
-            process.stderr.write(
-              `  parse ${path.relative(repoRoot, file)} :: ${issue}\n`,
-            );
+            process.stderr.write(`  parse ${path.relative(repoRoot, file)} :: ${issue}\n`);
           }
           totalErrors += 1;
         } else {
@@ -55,7 +50,7 @@ program
       }
     }
     process.stdout.write(
-      `Validated ${files.length} screen-maps: ${totalErrors} errors, ${totalWarnings} warnings.\n`,
+      `Validated ${files.length} screen-maps: ${totalErrors} errors, ${totalWarnings} warnings.\n`
     );
     if (opts.strict && totalErrors > 0) process.exit(1);
   });

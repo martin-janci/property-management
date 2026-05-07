@@ -2,31 +2,11 @@ import { z } from 'zod';
 
 export const ProductSchema = z.enum(['ppt', 'reality']);
 
-export const PlatformSchema = z.enum([
-  'ppt-web',
-  'reality-web',
-  'mobile',
-  'mobile-native',
-]);
+export const PlatformSchema = z.enum(['ppt-web', 'reality-web', 'mobile', 'mobile-native']);
 
-export const BuildStatusSchema = z.enum([
-  'planned',
-  'in-progress',
-  'shipped',
-  'n/a',
-]);
-export const RedesignStatusSchema = z.enum([
-  'not-started',
-  'in-progress',
-  'applied',
-  'n/a',
-]);
-export const ApiStatusSchema = z.enum([
-  'stub',
-  'partial',
-  'complete',
-  'n/a',
-]);
+export const BuildStatusSchema = z.enum(['planned', 'in-progress', 'shipped', 'n/a']);
+export const RedesignStatusSchema = z.enum(['not-started', 'in-progress', 'applied', 'n/a']);
+export const ApiStatusSchema = z.enum(['stub', 'partial', 'complete', 'n/a']);
 
 export const RelatedRelSchema = z.enum(['parent', 'child', 'action', 'sibling']);
 export const DiagramKindSchema = z.enum(['sequence', 'flow', 'state', 'class']);
@@ -64,9 +44,7 @@ const IdSchema = z.string().regex(/^(ppt|reality)\/[a-z0-9-]+$/, {
   message: 'id must match <product>/<slug> using kebab-case',
 });
 
-const IsoDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' });
+const IsoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' });
 
 export const ScreenMapFrontmatterSchema = z
   .object({
@@ -96,6 +74,4 @@ export const ScreenMapFrontmatterSchema = z
     }
   });
 
-export type ScreenMapFrontmatterInput = z.input<
-  typeof ScreenMapFrontmatterSchema
->;
+export type ScreenMapFrontmatterInput = z.input<typeof ScreenMapFrontmatterSchema>;

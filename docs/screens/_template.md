@@ -25,7 +25,7 @@ useCases: []
 epics: []
 designSources: []
 owner: <team>
-# lastReview: 2026-05-07
+# lastReview: '2026-05-07'
 ---
 
 ## Functionality Checklist

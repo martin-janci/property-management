@@ -2,10 +2,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   apiServerEndpoints,
-  realityServerEndpoints,
-  pptWebRoutes,
-  realityWebRoutes,
   mobileScreens,
+  pptWebRoutes,
+  realityServerEndpoints,
+  realityWebRoutes,
 } from '@ppt/sitemap';
 import { discoverScreenMaps } from './discover.js';
 import { parseScreenMap } from './parse.js';
@@ -22,10 +22,9 @@ export interface BuildContextOptions {
  * filesystem-aware diagram-ref resolver.
  */
 export async function buildValidationContext(
-  options: BuildContextOptions,
+  options: BuildContextOptions
 ): Promise<ValidationContext> {
-  const screensDir =
-    options.screensDir ?? path.join(options.repoRoot, 'docs/screens');
+  const screensDir = options.screensDir ?? path.join(options.repoRoot, 'docs/screens');
 
   // Note: `ApiEndpoint` in @ppt/sitemap uses `operationId` as its identifier
   // (no `id` field). Screen-maps reference endpoints by these operationId values.
@@ -61,9 +60,7 @@ export async function buildValidationContext(
 function resolveDiagramRef(ref: string, repoRoot: string): boolean {
   const [filePart, anchor] = ref.split('#');
   if (!filePart) return false;
-  const abs = path.isAbsolute(filePart)
-    ? filePart
-    : path.join(repoRoot, filePart);
+  const abs = path.isAbsolute(filePart) ? filePart : path.join(repoRoot, filePart);
   if (!existsSync(abs)) return false;
   if (!anchor) return true;
   // Best-effort: check the anchor appears as a `#`/`##`/... heading slug.
@@ -79,9 +76,10 @@ function resolveDiagramRef(ref: string, repoRoot: string): boolean {
 function extractHeadingSlugs(markdown: string): Set<string> {
   const slugs = new Set<string>();
   const headingRe = /^#{1,6}\s+(.+?)\s*$/gm;
-  let m: RegExpExecArray | null;
-  while ((m = headingRe.exec(markdown))) {
+  let m: RegExpExecArray | null = headingRe.exec(markdown);
+  while (m !== null) {
     slugs.add(slugify(m[1]));
+    m = headingRe.exec(markdown);
   }
   return slugs;
 }

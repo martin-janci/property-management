@@ -9,7 +9,7 @@ export async function discoverScreenMaps(rootDir: string): Promise<string[]> {
 
   for (const product of PRODUCT_DIRS) {
     const dir = path.join(rootDir, product);
-    let entries;
+    let entries: string[];
     try {
       entries = await readdir(dir);
     } catch {

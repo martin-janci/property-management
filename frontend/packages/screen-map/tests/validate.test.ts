@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { validateScreenMap } from '../src/validate.js';
 import type { ScreenMap, ValidationContext } from '../src/index.js';
+import { validateScreenMap } from '../src/validate.js';
 
 const ctx: ValidationContext = {
   knownEndpointIds: new Set(['building_get', 'building_update', 'units_list']),
@@ -9,11 +9,7 @@ const ctx: ValidationContext = {
     'mobile-building-detail-screen',
     'ppt-buildings-list',
   ]),
-  knownScreenIds: new Set([
-    'ppt/building-detail',
-    'ppt/buildings-list',
-    'ppt/building-edit',
-  ]),
+  knownScreenIds: new Set(['ppt/building-detail', 'ppt/buildings-list', 'ppt/building-edit']),
   resolveDiagramRef: (ref) => ref === 'docs/sequence-diagrams.md#building-detail-load',
 };
 
@@ -38,9 +34,7 @@ const baseScreen = (): ScreenMap => ({
     },
     endpoints: ['building_get', 'units_list'],
     relatedScreens: [{ id: 'ppt/buildings-list', rel: 'parent' }],
-    diagrams: [
-      { ref: 'docs/sequence-diagrams.md#building-detail-load', kind: 'sequence' },
-    ],
+    diagrams: [{ ref: 'docs/sequence-diagrams.md#building-detail-load', kind: 'sequence' }],
   },
 });
 
@@ -87,9 +81,7 @@ describe('validateScreenMap', () => {
 
   it('flags a diagram ref that does not resolve', () => {
     const screen = baseScreen();
-    screen.frontmatter.diagrams = [
-      { ref: 'docs/no-such.md#anchor', kind: 'sequence' },
-    ];
+    screen.frontmatter.diagrams = [{ ref: 'docs/no-such.md#anchor', kind: 'sequence' }];
     const issues = validateScreenMap(screen, ctx);
     expect(issues).toContainEqual({
       severity: 'error',
