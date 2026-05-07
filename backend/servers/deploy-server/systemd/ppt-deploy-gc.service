@@ -4,5 +4,13 @@ Description=ppt-deploy GC tick (one-shot)
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/curl -s -X POST -H "Authorization: Bearer ${PMCTL_TOKEN}" http://127.0.0.1:8443/api/gc/tick
+# curl flags:
+#  -f   : fail on non-2xx (so a 401/500 surfaces as non-zero exit, journald sees it)
+#  -S   : show errors even when -s is used
+#  -s   : silent (no progress meter; keeps journald clean)
+#  --max-time 30 : hard cap so a hung deploy server can't wedge the timer
+#  --retry 2 / --retry-delay 5 : be forgiving of a slow socket-activation cold start
+ExecStart=/usr/bin/curl -fSs --max-time 30 --retry 2 --retry-delay 5 \
+  -X POST -H "Authorization: Bearer ${PMCTL_TOKEN}" \
+  http://127.0.0.1:8443/api/gc/tick
 EnvironmentFile=/etc/ppt-deploy/gc.env

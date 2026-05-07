@@ -26,13 +26,22 @@ impl HealthProbe {
     /// Check `attempts` times over `total_secs`, sleeping `total_secs / attempts` between checks.
     /// Returns Ok(()) if all checks pass; Err on the first failure.
     ///
-    /// The per-attempt sleep is clamped to **at least 1 second** so that callers
-    /// passing `total_secs < attempts` (or very small totals) don't end up in a
-    /// tight retry loop hammering the target. The `total_secs` budget remains
-    /// the floor — this method may take longer than `total_secs` when the
-    /// caller picked an under-budgeted ratio, which is the desired behavior.
+    /// Validation:
+    /// - `attempts == 0` is rejected with `BadRequest` — silently returning Ok would
+    ///   be a false-positive readiness signal (we'd report "healthy" without ever
+    ///   contacting the target).
+    /// - The per-attempt sleep is clamped to **at least 1 second** so that callers
+    ///   passing `total_secs < attempts` (or very small totals) don't end up in a
+    ///   tight retry loop hammering the target. The `total_secs` budget becomes
+    ///   the floor in that case — this method may take longer than `total_secs`,
+    ///   which is the desired behavior for a graceful health probe.
     pub async fn grace_check(&self, url: &str, attempts: u32, total_secs: u64) -> Result<()> {
-        let interval = (total_secs / attempts.max(1) as u64).max(1);
+        if attempts == 0 {
+            return Err(crate::DeployError::BadRequest(
+                "grace_check requires attempts >= 1".into(),
+            ));
+        }
+        let interval = (total_secs / attempts as u64).max(1);
         for i in 0..attempts {
             sleep(Duration::from_secs(interval)).await;
             let resp = self
@@ -82,5 +91,12 @@ mod tests {
         let url = format!("{}/health", server.base_url());
         let res = probe.grace_check(&url, 1, 1).await;
         assert!(res.is_err());
+    }
+
+    #[tokio::test]
+    async fn grace_check_rejects_zero_attempts() {
+        let probe = HealthProbe::new();
+        let res = probe.grace_check("http://127.0.0.1:1", 0, 5).await;
+        assert!(matches!(res, Err(crate::DeployError::BadRequest(_))));
     }
 }

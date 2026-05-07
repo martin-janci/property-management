@@ -80,6 +80,12 @@ const nextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
 
+  // Workspace packages whose `main` points at TypeScript source rather than
+  // built JS. Next won't compile TS from `node_modules` by default; listing
+  // them here lets the Next compiler pick them up. Add new TS-only workspace
+  // deps here (or build them to `dist/*` and switch their `main`/`exports`).
+  transpilePackages: ['@ppt/dev-panel'],
+
   // Image optimization
   images: {
     domains: ['api.reality-portal.sk', 'api.reality-portal.cz', 'api.reality-portal.eu'],

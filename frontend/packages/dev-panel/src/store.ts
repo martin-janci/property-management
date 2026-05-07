@@ -18,12 +18,21 @@ export function parseMode(v: unknown): ApiMode {
   return isApiMode(v) ? v : 'local';
 }
 
+/**
+ * Resolve the active mode: localStorage override (if valid) ▸ caller's
+ * `defaultMode` argument (validated, since TS-level `as ApiMode` casts at the
+ * call site are unsound) ▸ hard fallback to `'local'`.
+ *
+ * Validating `defaultMode` at runtime defends against build-time env-var typos
+ * propagating into the dev panel and breaking the mode switcher when the value
+ * doesn't match any of the buttons.
+ */
 export function getMode(defaultMode: ApiMode): ApiMode {
   try {
     const v = localStorage.getItem(KEY);
     if (isApiMode(v)) return v;
   } catch {}
-  return defaultMode;
+  return isApiMode(defaultMode) ? defaultMode : 'local';
 }
 
 export function setMode(mode: ApiMode): void {

@@ -97,13 +97,28 @@ impl GitFetcher {
     }
 }
 
+/// Sanitize a branch ref into a worktree-safe alias.
+///
+/// Replaces every non-ASCII-alphanumeric character with `-`, **collapses runs
+/// of `-`** into a single dash, trims leading/trailing dashes, and lowercases.
+/// Collapsing matters because `validate_branch_strict` allows both `/` and `_`,
+/// so a branch like `feature/_x` would otherwise sanitize to `feature--x`,
+/// which doesn't match the worktree-name shape that the frontend tooling
+/// produces.
 pub fn sanitize(branch: &str) -> String {
-    branch
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
-        .collect::<String>()
-        .trim_matches('-')
-        .to_lowercase()
+    let mut out = String::with_capacity(branch.len());
+    let mut last_was_dash = false;
+    for c in branch.chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c.to_ascii_lowercase());
+            last_was_dash = false;
+        } else if !last_was_dash {
+            out.push('-');
+            last_was_dash = true;
+        }
+        // else: skip — collapse run of dashes
+    }
+    out.trim_matches('-').to_string()
 }
 
 /// Strict validator for inputs that flow into shell-out commands or SQL.
@@ -159,6 +174,11 @@ mod tests {
         assert_eq!(sanitize("feature/UC-14"), "feature-uc-14");
         assert_eq!(sanitize("hotfix/Critical Fix"), "hotfix-critical-fix");
         assert_eq!(sanitize("///---bad---///"), "bad");
+        // Adjacent separators (e.g. `/_`) are now collapsed to a single dash so
+        // the alias matches what the frontend worktree sanitizer produces.
+        assert_eq!(sanitize("feature/_x"), "feature-x");
+        assert_eq!(sanitize("a//b__c"), "a-b-c");
+        assert_eq!(sanitize("--leading-and-trailing--"), "leading-and-trailing");
     }
 
     #[tokio::test]
