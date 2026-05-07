@@ -260,9 +260,20 @@ impl BlueGreenDeployer {
             self.pull_image(docker, img).await?;
         }
 
+        let target_name = &spec.target_name;
+
+        // Make sure the Caddy container shares the `ppt-{target}` Docker
+        // network so its Docker-DNS lookup of `<target>-{api,reality,ppt,reality-web}-{color}`
+        // upstreams succeeds. ppt-caddy defaults to only the host bridge —
+        // without this, every prod/staging request would 502 with
+        // "host not found in upstream". Idempotent: no-op if already
+        // connected.
+        self.docker
+            .ensure_network_membership(&format!("ppt-{target_name}"), "ppt-caddy")
+            .await?;
+
         // Check how many of each color is running. Pick the OPPOSITE color of whichever
         // has more services running. If tied (everything down or split), default to "blue".
-        let target_name = &spec.target_name;
         let mut blue_count = 0u8;
         let mut green_count = 0u8;
         for service in BG_SERVICES {
@@ -321,6 +332,27 @@ impl BlueGreenDeployer {
         let mut ppt_env = env_for("ppt");
         ppt_env.push(format!("BG_TARGET={target_name}"));
         ppt_env.push(format!("BG_COLOR={next_color}"));
+
+        // reality-server's `/health` periodically pings the PM API. Without
+        // an override it uses `${PM_API_URL}/health` — which is the public
+        // `https://api.<ppt_apex>` host that goes Container → DNS → CF →
+        // onyx → Caddy. That CF round-trip produced SSL handshake errors
+        // (CF Full mode + onyx cert lifecycle) and pinned reality-server's
+        // `/health` to `unhealthy`, keeping wait_until_ready in STARTING
+        // and timing the deploy out without registering Caddy routes.
+        // Override `PM_API_HEALTH_URL` to hit the api-server container
+        // directly over the `ppt-{target}` Docker network. Color-aware
+        // because the container name encodes blue/green.
+        //
+        // PM_API_URL stays at the public host: it's also the prefix for
+        // OAuth `/authorize` URLs that the BROWSER is redirected to during
+        // SSO, and the browser obviously can't resolve internal Docker
+        // names. Only the server-to-server health probe needs the
+        // shortcut.
+        let mut reality_env = env_for("reality");
+        reality_env.push(format!(
+            "PM_API_HEALTH_URL=http://{target_name}-api-{next_color}:8080/health"
+        ));
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
@@ -334,7 +366,7 @@ impl BlueGreenDeployer {
             &spec.reality_image,
             8081,
             target_name,
-            env_for("reality"),
+            reality_env,
         )
         .await?;
         // ppt-web's nginx listens on 8080 (see docker/frontend/ppt-web.Dockerfile —

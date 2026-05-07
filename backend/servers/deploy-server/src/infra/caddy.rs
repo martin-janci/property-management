@@ -31,8 +31,30 @@ impl CaddyClient {
         }
     }
 
-    /// Register a host → upstream mapping. Idempotent: replaces existing route for `host`.
+    /// Register a host → upstream mapping. Idempotent: always leaves Caddy
+    /// with exactly one route for `host`, regardless of how many times it's
+    /// called or what the prior `@id` index state was.
+    ///
+    /// Strategy: DELETE-by-id (looped — see `unregister_route`) first, then
+    /// POST-append a fresh route to `apps.http.servers.srv0.routes`.
+    ///
+    /// The earlier PUT-by-id-with-POST-fallback was supposed to be idempotent
+    /// but observed behaviour on long-running Caddy instances showed duplicate
+    /// routes accumulating across redeploys: PUT returned 404 every time
+    /// (Caddy's `@id` annotation is per-config-write, and routes appended via
+    /// `/routes/...` without explicit `@id` in older deploy-server versions
+    /// weren't tagged), so the fallback POST appended a new entry on each
+    /// call. After three deploys, three routes for `rlt.sk` — each pointing
+    /// at a different blue/green color, and Caddy dispatches to the FIRST
+    /// match, frequently the dead container. Forcing DELETE first guarantees
+    /// the array contains exactly one entry per host after this call.
     pub async fn register_route(&self, host: &str, upstream: &str) -> Result<()> {
+        // DELETE-loop sweeps any stale routes carrying this `@id` (could be
+        // multiple from older deploy-server versions), then POST appends one
+        // fresh route. Reuses `unregister_route` so the loop-until-404
+        // sweeping logic lives in one place.
+        self.unregister_route(host).await?;
+
         let route_id = format!("ppt-deploy-{}", sanitize_id(host));
         let payload = json!({
             "@id": route_id,
@@ -44,42 +66,51 @@ impl CaddyClient {
                 }
             ]
         });
-        let url = format!("{}/id/{}", self.base, route_id);
-        let resp = self.http.put(&url).json(&payload).send().await?;
-        let status = resp.status();
-        if status.is_success() {
-            return Ok(());
-        }
-        // Fallback only on 404 (route doesn't exist yet) — append to
-        // apps.http.servers.srv0.routes. Any other status (401/403/5xx) is a real
-        // failure and we surface it directly instead of masking with a duplicate POST.
-        if status.as_u16() != 404 {
-            return Err(crate::DeployError::Internal(format!(
-                "caddy register PUT failed: {status}"
-            )));
-        }
         let append_url = format!("{}/config/apps/http/servers/srv0/routes/...", self.base);
-        self.http
+        let resp = self
+            .http
             .post(&append_url)
             .json(&json!([payload]))
             .send()
-            .await?
-            .error_for_status()?;
+            .await?;
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(crate::DeployError::Internal(format!(
+                "caddy register POST failed: {status} — {body}"
+            )));
+        }
         Ok(())
     }
 
+    /// Remove ALL routes registered under this host's `@id`. Loops DELETE
+    /// until Caddy returns 404, which is the documented "no such id" reply
+    /// for `/id/<id>` requests. Older deploy-server versions could leave
+    /// duplicates (see `register_route` doc); this sweep cleans them up.
+    /// 404 on the first call is the normal "wasn't there" path and is OK.
     pub async fn unregister_route(&self, host: &str) -> Result<()> {
         let route_id = format!("ppt-deploy-{}", sanitize_id(host));
         let url = format!("{}/id/{}", self.base, route_id);
-        let resp = self.http.delete(&url).send().await?;
-        if resp.status().is_success() || resp.status().as_u16() == 404 {
-            Ok(())
-        } else {
-            Err(crate::DeployError::Internal(format!(
-                "caddy unregister: {}",
-                resp.status()
-            )))
+        // Loop until 404 — older deploy-server versions appended duplicate
+        // routes carrying the same `@id`, and a single DELETE only removes
+        // the FIRST match. Bounded at 16 iterations as a safety net so a
+        // bug in Caddy's id index doesn't lock us into a hot loop.
+        for _ in 0..16 {
+            let resp = self.http.delete(&url).send().await?;
+            let status = resp.status();
+            if status.as_u16() == 404 {
+                return Ok(());
+            }
+            if !status.is_success() {
+                return Err(crate::DeployError::Internal(format!(
+                    "caddy unregister: {status}"
+                )));
+            }
+            // 200/2xx → an entry was removed. Loop again to sweep duplicates.
         }
+        Err(crate::DeployError::Internal(format!(
+            "caddy unregister: {host} still resolved after 16 DELETE iterations"
+        )))
     }
 }
 
@@ -94,19 +125,110 @@ mod tests {
     use super::*;
     use httpmock::prelude::*;
 
-    #[tokio::test]
-    async fn register_route_calls_admin_api() {
-        let server = MockServer::start();
-        let m = server.mock(|when, then| {
-            when.method(PUT).path_contains("/id/ppt-deploy-");
-            then.status(200);
+    /// Spin up a tiny in-process axum server that records the arrival order
+    /// of every request (method) and lets the caller program the DELETE
+    /// status sequence. Returns `(addr, log, server_task)`. Caller aborts
+    /// `server_task` after asserting on `log`.
+    ///
+    /// Why bespoke instead of httpmock: httpmock 0.7 doesn't expose request
+    /// arrival order or stateful response sequences, both of which we need
+    /// to assert that DELETE strictly precedes POST and that the DELETE
+    /// loop terminates exactly when 404 arrives.
+    async fn spawn_caddy_stub(
+        delete_status_sequence: Vec<u16>,
+    ) -> (
+        std::net::SocketAddr,
+        std::sync::Arc<std::sync::Mutex<Vec<&'static str>>>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::{Arc, Mutex};
+
+        let log: Arc<Mutex<Vec<&'static str>>> = Arc::new(Mutex::new(Vec::new()));
+        let delete_idx = Arc::new(AtomicUsize::new(0));
+        let delete_seq = Arc::new(delete_status_sequence);
+
+        let log_d = log.clone();
+        let log_p = log.clone();
+        let di = delete_idx.clone();
+        let ds = delete_seq.clone();
+
+        let app = axum::Router::new()
+            .route(
+                "/id/*tail",
+                axum::routing::delete(move || {
+                    let log = log_d.clone();
+                    let idx = di.clone();
+                    let seq = ds.clone();
+                    async move {
+                        log.lock().unwrap().push("DELETE");
+                        let n = idx.fetch_add(1, Ordering::SeqCst);
+                        let status = seq.get(n).copied().unwrap_or(404);
+                        axum::http::StatusCode::from_u16(status).unwrap()
+                    }
+                }),
+            )
+            .route(
+                "/config/apps/http/servers/srv0/routes/...",
+                axum::routing::post(move || {
+                    let log = log_p.clone();
+                    async move {
+                        log.lock().unwrap().push("POST");
+                        axum::http::StatusCode::OK
+                    }
+                }),
+            );
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server_task = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
         });
-        let client = CaddyClient::new(server.base_url());
+        (addr, log, server_task)
+    }
+
+    #[tokio::test]
+    async fn register_route_does_delete_strictly_before_post() {
+        // Happy path: no stale routes. DELETE returns 404 immediately, then
+        // POST appends one fresh route. Asserts the EXACT arrival order
+        // (`["DELETE", "POST"]`) so a refactor that swapped the calls would
+        // fail loudly — not just hit counts that swapping would still pass.
+        let (addr, log, task) = spawn_caddy_stub(vec![404]).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
         client
             .register_route("wt-uc14.dev.ppt.rlt.sk", "127.0.0.1:51001")
             .await
             .unwrap();
-        m.assert();
+
+        let final_log = log.lock().unwrap().clone();
+        assert_eq!(
+            final_log,
+            vec!["DELETE", "POST"],
+            "happy path must be DELETE then POST in that order"
+        );
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn register_route_sweeps_existing_duplicates_then_posts_once() {
+        // Caddy holds two stale duplicate routes for this `@id` (older
+        // deploy-server versions could leave them). The DELETE loop must
+        // run three times — 200, 200, 404 — before a single POST appends
+        // the fresh route. Order matters, so we assert the entire log.
+        let (addr, log, task) = spawn_caddy_stub(vec![200, 200, 404]).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
+        client
+            .register_route("dup.example.com", "127.0.0.1:9999")
+            .await
+            .unwrap();
+
+        let final_log = log.lock().unwrap().clone();
+        assert_eq!(
+            final_log,
+            vec!["DELETE", "DELETE", "DELETE", "POST"],
+            "loop must DELETE until 404, then POST once"
+        );
+        task.abort();
     }
 
     #[tokio::test]

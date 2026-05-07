@@ -110,6 +110,14 @@ impl SeedRunner {
         Self { pool, config }
     }
 
+    /// Borrow the underlying pool. Used by `ppt-seed` to perform follow-up
+    /// inserts (e.g. seeding the `reality-portal` OAuth client) without
+    /// having to re-create a connection. Read-only handle on purpose:
+    /// callers shouldn't be mutating the runner's connection lifecycle.
+    pub fn pool(&self) -> &DbPool {
+        &self.pool
+    }
+
     /// Execute the seeding process.
     ///
     /// This will:

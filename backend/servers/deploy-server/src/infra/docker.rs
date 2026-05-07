@@ -141,6 +141,49 @@ impl DockerClient {
         }
     }
 
+    /// Idempotently connect `container` to `network`.
+    ///
+    /// Caddy in `ppt-caddy` defaults to the host bridge only. To resolve
+    /// `prod-api-blue:8080` upstreams over Docker DNS it has to share the
+    /// `ppt-prod` network with the backend containers. The deploy-server
+    /// brings up new backends on each blue/green flip and registers Caddy
+    /// routes that point at their container names — without this hookup
+    /// Caddy would 502 on every prod request because DNS wouldn't resolve.
+    ///
+    /// Inspects the container first; no-ops if already on `network`. Real
+    /// errors (container missing, network missing, daemon unreachable)
+    /// propagate.
+    pub async fn ensure_network_membership(&self, network: &str, container: &str) -> Result<()> {
+        let info = self.docker.inspect_container(container, None).await?;
+        let already_connected = info
+            .network_settings
+            .as_ref()
+            .and_then(|ns| ns.networks.as_ref())
+            .map(|nets| nets.contains_key(network))
+            .unwrap_or(false);
+        if already_connected {
+            return Ok(());
+        }
+
+        use bollard::network::ConnectNetworkOptions;
+        self.docker
+            .connect_network(
+                network,
+                ConnectNetworkOptions {
+                    container: container.to_string(),
+                    ..Default::default()
+                },
+            )
+            .await
+            .map_err(crate::DeployError::Docker)?;
+        tracing::info!(
+            network = %network,
+            container = %container,
+            "connected ppt-caddy to per-target network"
+        );
+        Ok(())
+    }
+
     pub async fn run_frontend_dev(&self, spec: &FrontendDevSpec) -> Result<String> {
         // Idempotency: remove existing container with the same name first.
         let _ = self
