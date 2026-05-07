@@ -89,10 +89,7 @@ pub struct GcContext {
 /// All errors are swallowed (debug-logged) — Caddy may legitimately not have
 /// the route (already cleaned, server restarted, etc.) and we don't want a
 /// transient admin-API failure to abort the rest of the GC tick.
-async fn unregister_worktree_routes(
-    ctx: &GcContext,
-    wt: &crate::domain::Worktree,
-) {
+async fn unregister_worktree_routes(ctx: &GcContext, wt: &crate::domain::Worktree) {
     for url_opt in [
         wt.urls.ppt.as_deref(),
         wt.urls.reality.as_deref(),

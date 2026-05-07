@@ -3,13 +3,15 @@ targets = [{ triple = "x86_64-unknown-linux-gnu" }]
 
 [advisories]
 yanked = "deny"
-# Downgrade `unmaintained` from default `deny` to `warn`. Unmaintained
-# advisories aren't security vulnerabilities — they're notices that a crate's
-# upstream has moved on. We can't kick the affected transitive deps out of our
-# tree without a major dependency overhaul (AWS SDK, sqlx 0.7, validator 0.16
-# all pull in long-tail unmaintained crates). Tracked separately as a
-# "dependency hygiene" follow-up.
-unmaintained = "warn"
+# cargo-deny v0.19+ changed `unmaintained` from a severity (`deny|warn|allow`)
+# to a SCOPE (`all|workspace|transitive|none`). Setting it to `workspace` means
+# we still get caught if WE add an unmaintained crate to the workspace, but
+# transitive unmaintained crates pulled in by long-tail upstreams (AWS SDK,
+# sqlx 0.7, validator 0.16) don't fail the build — those advisories are notices
+# that an upstream's repo went read-only, not actual security vulnerabilities,
+# and we can't kick them out of the tree without major dependency overhauls.
+# Tracked separately as a "dependency hygiene" follow-up.
+unmaintained = "workspace"
 ignore = [
     # ---------------------------------------------------------------------
     # Vulnerabilities (real CVEs) — kept on the `ignore` list with a written

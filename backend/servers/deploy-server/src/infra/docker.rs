@@ -317,9 +317,8 @@ impl DockerClient {
 /// cold-path (only runs at client construction) and we want the simplest
 /// dependency-free primitive.
 fn tunnel_port_registry() -> &'static std::sync::Mutex<std::collections::HashMap<String, u16>> {
-    static REGISTRY: std::sync::OnceLock<
-        std::sync::Mutex<std::collections::HashMap<String, u16>>,
-    > = std::sync::OnceLock::new();
+    static REGISTRY: std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<String, u16>>> =
+        std::sync::OnceLock::new();
     REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
 }
 
