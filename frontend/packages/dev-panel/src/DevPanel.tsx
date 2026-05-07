@@ -1,7 +1,7 @@
 // frontend/packages/dev-panel/src/DevPanel.tsx
 import type React from 'react';
 import { useState } from 'react';
-import { type ApiMode, getMode, setMode } from './store';
+import { type ApiMode, getMode, isApiMode, setMode } from './store';
 
 export interface DevPanelProps {
   defaultMode: ApiMode;
@@ -44,7 +44,16 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           id="ppt-dev-panel-mode"
           aria-label="API mode (local, worktree, or mock)"
           value={mode}
-          onChange={(e) => apply(e.target.value as ApiMode)}
+          onChange={(e) => {
+            // Defense in depth: a tampered DOM (devtools-edit, future option
+            // added to one place but not another, etc.) could deliver a value
+            // that isn't a valid ApiMode. Validate before persisting to
+            // localStorage and notifying the parent.
+            const next = e.target.value;
+            if (isApiMode(next)) {
+              apply(next);
+            }
+          }}
         >
           <option value="local">local</option>
           <option value="worktree">worktree</option>

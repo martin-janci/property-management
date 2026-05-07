@@ -10,13 +10,18 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Copy all workspace package.json files
+# Copy all workspace package.json files. Every workspace package referenced
+# via `workspace:*` in any consumed package.json must have its manifest
+# copied here; otherwise `pnpm install` fails with "in the dependencies
+# field, no project of name X found".
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 COPY frontend/packages/shared/package.json ./packages/shared/
 COPY frontend/packages/ui-kit/package.json ./packages/ui-kit/
 COPY frontend/packages/api-client/package.json ./packages/api-client/
 COPY frontend/packages/reality-api-client/package.json ./packages/reality-api-client/
 COPY frontend/packages/sitemap/package.json ./packages/sitemap/
+COPY frontend/packages/dev-panel/package.json ./packages/dev-panel/
+COPY frontend/packages/vite-plugin-ppt-worktree/package.json ./packages/vite-plugin-ppt-worktree/
 COPY frontend/apps/ppt-web/package.json ./apps/ppt-web/
 
 RUN pnpm install
