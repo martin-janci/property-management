@@ -37,6 +37,14 @@ pub enum DeployError {
     #[error("config error: {0}")]
     Config(String),
 
+    /// Transient: container is created/started but Docker hasn't finished
+    /// assigning a bridge-network IP yet. Callers (notably `worktree::open`)
+    /// match this variant structurally to retry, instead of inspecting the
+    /// `Internal(String)` text. Surfaces as a generic 500 to clients on
+    /// timeout — the retry loop catches the in-process race.
+    #[error("bridge IP not ready yet for container {0}")]
+    BridgeIpNotReady(String),
+
     #[error("internal: {0}")]
     Internal(String),
 }

@@ -14,7 +14,7 @@ or `/health`. There is no `/v1/...` prefix.
 | `/api/audit` | GET | — | Recent audit rows; query `?limit=N` clamped to `1..=500` (default 100). |
 | `/api/deploy` | POST | `{tag, target?}` | Staging deploy (Phase 2). Default target=`staging`. |
 | `/api/wake/{target}` | POST | — | Resume a paused/stopped target. |
-| `/api/release` | POST | `{tag, images}` | Register prod-candidate (called by release.yml on tag push). |
+| `/api/release` | POST | `{tag, images, notes?}` | Register prod-candidate (called by release.yml on tag push). `notes` is optional and gets stored verbatim on the candidate row. |
 | `/api/promote` | POST | `{tag, target, dry_run?}` | Promote candidate to live (Phase 4). `target` is required; `dry_run` is bool, default false. |
 | `/api/rollback` | POST | `{target, to?}` | Rollback. `target` required; optional `to` (note: field is `to`, NOT `tag`) — when present, rolls forward/back to that specific tag instead of the previous one. |
 | `/api/gc/tick` | POST | — | Bearer auth (systemd timer; not for humans). |

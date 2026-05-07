@@ -111,31 +111,28 @@ impl DockerClient {
                     .and_then(|n| n.ip_address)
             })
             .filter(|s| !s.is_empty())
-            .ok_or_else(|| {
-                crate::DeployError::Internal(format!(
-                    "container {name} has no bridge network IP yet"
-                ))
-            })
+            // Distinct error variant (not `Internal`) so the retry loop in
+            // `bridge_ip_with_retry` can match this case structurally instead
+            // of grepping the message text. A refactor of the message can't
+            // silently break retry behavior.
+            .ok_or_else(|| crate::DeployError::BridgeIpNotReady(name.to_string()))
     }
 
     /// Like `bridge_ip`, but polls until the IP is assigned or `timeout` elapses.
     ///
     /// Right after `start_container` Docker may not have assigned a bridge IP yet,
-    /// so a direct `bridge_ip` call returns "no bridge network IP yet". This helper
+    /// so a direct `bridge_ip` call returns `BridgeIpNotReady(name)`. This helper
     /// polls every 100 ms until either an IP appears or `timeout` is reached. Real
     /// Docker errors (socket gone, container disappeared) propagate immediately —
-    /// only the "no IP yet" case is retried.
+    /// only the typed `BridgeIpNotReady` variant is retried.
     pub async fn bridge_ip_with_retry(&self, name: &str, timeout: Duration) -> Result<String> {
         let deadline = Instant::now() + timeout;
         loop {
             match self.bridge_ip(name).await {
                 Ok(ip) => return Ok(ip),
                 Err(e) => {
-                    let is_no_ip_yet = matches!(
-                        &e,
-                        crate::DeployError::Internal(msg) if msg.contains("has no bridge network IP yet")
-                    );
-                    if !is_no_ip_yet || Instant::now() >= deadline {
+                    let is_not_ready = matches!(&e, crate::DeployError::BridgeIpNotReady(_));
+                    if !is_not_ready || Instant::now() >= deadline {
                         return Err(e);
                     }
                     tokio::time::sleep(Duration::from_millis(100)).await;
