@@ -31,7 +31,7 @@ export function attachApi(
     });
   });
 
-  app.get('/api/screens/:id', (c) => {
+  app.get('/api/screens/:id{.+}', (c) => {
     const id = c.req.param('id');
     const screen = opts.session.screens.find((s) => s.frontmatter.id === id);
     if (!screen) return c.json({ error: 'not found' }, 404);
@@ -42,7 +42,7 @@ export function attachApi(
     });
   });
 
-  app.post('/api/screens/:id/review', async (c) => {
+  app.post('/api/screens/:id{.+}/review', async (c) => {
     const id = c.req.param('id');
     const idx = opts.session.screens.findIndex((s) => s.frontmatter.id === id);
     if (idx < 0) return c.json({ error: 'not found' }, 404);
