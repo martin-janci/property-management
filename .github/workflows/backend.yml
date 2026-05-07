@@ -165,7 +165,11 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
           RUST_LOG: warn
-        run: cargo test --test rls_smoke_tests -- --ignored --nocapture
+        # `--test-threads=1`: the smoke tests share a single Postgres database
+        # and use a `Smoke%` wildcard for cleanup. Running them in parallel
+        # causes one test's cleanup to wipe rows the next test just inserted,
+        # producing mismatched counts and false-positive isolation failures.
+        run: cargo test --test rls_smoke_tests -- --ignored --nocapture --test-threads=1
 
   # Story 80.1: RLS Security Penetration Tests (full suite)
   # NOTE: Security tests depend on 'check' job to ensure code quality before running

@@ -30,6 +30,25 @@ impl TestDb {
             .connect(&database_url)
             .await?;
 
+        // CI runs as the `postgres` superuser. Postgres normally bypasses RLS
+        // for the table owner (and for superusers) UNLESS `FORCE ROW LEVEL
+        // SECURITY` is set. The 00006 migration sets FORCE on
+        // `organization_members` and `roles`, but NOT on `buildings` (or the
+        // many other tenant-scoped tables added in 00007+) — that's a
+        // pre-existing schema gap, separate from this PR.
+        //
+        // Without this, the smoke test's tenant-isolation assertions all fail
+        // because RLS is silently bypassed and the SELECT returns rows from
+        // both tenants. We force RLS on the tables this test exercises so the
+        // policies are actually evaluated. This is idempotent and applies only
+        // to whatever DB the test connects to (CI's ephemeral `ppt_test`).
+        //
+        // Tracked as a follow-up: add FORCE to all tenant-scoped tables in a
+        // dedicated migration (out of scope for the deploy-server PR).
+        sqlx::query("ALTER TABLE buildings FORCE ROW LEVEL SECURITY")
+            .execute(&pool)
+            .await?;
+
         Ok(Self { pool })
     }
 
@@ -94,7 +113,12 @@ impl TestDb {
     }
 
     async fn cleanup(&self) {
-        // Clean up in reverse order of dependencies
+        // FORCE RLS is on, so DELETEs need super-admin context to bypass the
+        // per-row policy. Without this, cleanup is a silent no-op and leftover
+        // rows from a previous run leak into subsequent tests (which then see
+        // unexpected building counts and assert-fail).
+        let _ = self.set_request_context(None, None, true).await;
+        // Clean up in reverse order of dependencies.
         let _ = sqlx::query("DELETE FROM buildings WHERE name LIKE 'Smoke%'")
             .execute(&self.pool)
             .await;
@@ -107,6 +131,7 @@ impl TestDb {
         let _ = sqlx::query("DELETE FROM organizations WHERE name LIKE 'Smoke%'")
             .execute(&self.pool)
             .await;
+        let _ = self.clear_context().await;
     }
 }
 
