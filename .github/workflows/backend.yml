@@ -160,10 +160,40 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
         run: sqlx database create && sqlx migrate run
 
+      - name: Create non-superuser test role
+        # Postgres exempts SUPERUSERS from RLS entirely (FORCE ROW LEVEL
+        # SECURITY only binds the table OWNER, not superusers). The default
+        # `postgres` user IS a superuser, so connecting as it bypasses RLS
+        # silently and the smoke tests can never see tenant isolation.
+        #
+        # We create a separate non-superuser role for the test connection so
+        # RLS policies actually run. Grants are scoped to the test database
+        # and schema; the role is created idempotently so re-runs are fine.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d ppt_test <<'SQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_runner') THEN
+                CREATE ROLE rls_test_runner LOGIN PASSWORD 'rls_test_runner';
+              END IF;
+            END $$;
+            GRANT CONNECT ON DATABASE ppt_test TO rls_test_runner;
+            GRANT USAGE ON SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL TABLES IN SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO rls_test_runner;
+            GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO rls_test_runner;
+          SQL
+
       - name: Run RLS smoke tests
         working-directory: backend
         env:
-          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+          # Connect as the non-superuser role so RLS is actually enforced.
+          TEST_DATABASE_URL: postgres://rls_test_runner:rls_test_runner@localhost:5432/ppt_test
           RUST_LOG: warn
         # `--test-threads=1`: the smoke tests share a single Postgres database
         # and use a `Smoke%` wildcard for cleanup. Running them in parallel

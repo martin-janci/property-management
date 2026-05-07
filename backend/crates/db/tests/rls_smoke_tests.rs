@@ -30,24 +30,16 @@ impl TestDb {
             .connect(&database_url)
             .await?;
 
-        // CI runs as the `postgres` superuser. Postgres normally bypasses RLS
-        // for the table owner (and for superusers) UNLESS `FORCE ROW LEVEL
-        // SECURITY` is set. The 00006 migration sets FORCE on
-        // `organization_members` and `roles`, but NOT on `buildings` (or the
-        // many other tenant-scoped tables added in 00007+) — that's a
-        // pre-existing schema gap, separate from this PR.
+        // RLS is enforced for non-owner non-superuser roles WITHOUT needing
+        // `FORCE ROW LEVEL SECURITY`. The CI workflow creates a dedicated
+        // `rls_test_runner` role (non-superuser, granted only the privileges
+        // it needs) and `TEST_DATABASE_URL` connects as that role.
         //
-        // Without this, the smoke test's tenant-isolation assertions all fail
-        // because RLS is silently bypassed and the SELECT returns rows from
-        // both tenants. We force RLS on the tables this test exercises so the
-        // policies are actually evaluated. This is idempotent and applies only
-        // to whatever DB the test connects to (CI's ephemeral `ppt_test`).
-        //
-        // Tracked as a follow-up: add FORCE to all tenant-scoped tables in a
-        // dedicated migration (out of scope for the deploy-server PR).
-        sqlx::query("ALTER TABLE buildings FORCE ROW LEVEL SECURITY")
-            .execute(&pool)
-            .await?;
+        // If you run this test locally and `TEST_DATABASE_URL` points at a
+        // superuser, RLS will be silently bypassed and the assertions will
+        // all fail — that's a configuration issue, not a test bug. See
+        // .github/workflows/backend.yml's "Create non-superuser test role"
+        // step for the exact role/grants.
 
         Ok(Self { pool })
     }
@@ -163,6 +155,14 @@ async fn smoke_test_cross_tenant_isolation() {
         .create_test_user("smoke_user_b@test.com", "User B")
         .await
         .expect("Failed to create user B");
+
+    // organization_members has RLS with a WITH CHECK predicate
+    // (`organization_id = get_current_org_id() OR is_super_admin()`).
+    // Setup needs super-admin context to bypass it before flipping back to a
+    // per-tenant context for the actual isolation assertions.
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
 
     // Add users to their respective orgs
     sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
