@@ -184,14 +184,17 @@ pub fn build_service_envs(
 
     let mut reality_env = std::mem::take(&mut backend_env);
     reality_env.push(format!("PM_CLIENT_SECRET={pm_client_secret}"));
-    // Point reality-server at the api-server inside the same target's
-    // network so the SSO/OAuth handshake doesn't have to round-trip through
-    // public DNS + Cloudflare. `<target>-api-blue/green` is the blue/green
-    // container name; we point at the bare base hostname and let the active
-    // color win via Caddy. For now, hit the public api.<ppt_apex> host —
-    // simpler than threading the active-color name into env config and
-    // works because Caddy already proxies to the live color.
-    reality_env.push(format!("PM_API_BASE_URL=https://api.{}", target.ppt_apex));
+    // Point reality-server at the api-server inside the same target's tree
+    // so the SSO/OAuth handshake reaches the right backend. Variable name
+    // is `PM_API_URL` (verified against reality-server/src/state.rs:44 —
+    // the value is read into `pm_api_base` and used as the prefix for the
+    // OAuth authorize/token/userinfo/introspect URLs). Easy to confuse with
+    // `API_BASE_URL` or `PM_API_BASE_URL`; those names are not consulted
+    // by reality-server. Hits the public api.<ppt_apex> host so the SSO
+    // round-trip flows through Caddy, which already proxies to the active
+    // blue/green color — simpler than threading the active-color name into
+    // env config.
+    reality_env.push(format!("PM_API_URL=https://api.{}", target.ppt_apex));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
