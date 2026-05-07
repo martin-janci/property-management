@@ -362,9 +362,13 @@ impl BlueGreenDeployer {
         .await?;
 
         // Wait for each container to reach a ready state before flipping Caddy upstream.
-        self.wait_until_ready(&format!("{target_name}-api-{next_color}"), 8080, 30)
+        // Backends (api / reality) get a longer timeout because they run all DB
+        // migrations on first boot of a fresh target DB before binding the
+        // listener — 30s wasn't enough head-room on a cold `ppt_prod` /
+        // `ppt_staging`. Frontends stay on 30s; they bind sooner.
+        self.wait_until_ready(&format!("{target_name}-api-{next_color}"), 8080, 90)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 30)
+        self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 90)
             .await?;
         self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 8080, 30)
             .await?;
@@ -490,20 +494,28 @@ impl BlueGreenDeployer {
     /// The deploy-server host doesn't share the `ppt-{target}` bridge network with the
     /// staging containers, so we can't TCP-connect to `container_name:port` directly.
     /// Instead, we inspect the container and treat it as ready when:
-    ///   - a Docker healthcheck is configured AND has reported HEALTHY, OR
-    ///   - no healthcheck exists, but the container has been in `running` state
-    ///     for at least `grace` seconds (typical axum/next.js processes bind their
-    ///     listener within the first 2-3 seconds).
+    ///   1. a Docker healthcheck is configured AND has reported HEALTHY, OR
+    ///   2. a Docker healthcheck is configured but is still STARTING — keep
+    ///      polling until it transitions to HEALTHY/UNHEALTHY (or the overall
+    ///      `timeout_secs` elapses), OR
+    ///   3. no healthcheck is configured (or status is Empty/None), but the
+    ///      container has been in `running` state for at least `grace` seconds
+    ///      (typical axum/next.js processes bind their listener within 2-3s).
     ///
-    /// This eliminates the worst 502 windows (image still pulling, container exited
-    /// immediately) while keeping the dependency surface small. A future pass should
-    /// either join the bridge network or expose a host-side port for a real probe.
+    /// Distinguishing STARTING from "no healthcheck" matters when the app does
+    /// real startup work — e.g. api-server runs ~100 SQL migrations on first
+    /// boot of a fresh target DB, which takes longer than the 3s `grace`. The
+    /// previous logic would treat the container as ready on `grace` regardless
+    /// of healthcheck state, flipping Caddy upstream BEFORE `/health` could
+    /// pass and producing a 502 window. Holding off until HEALTHY (or timeout)
+    /// fixes that race.
     async fn wait_until_ready(
         &self,
         container_name: &str,
         _container_port: u16,
         timeout_secs: u64,
     ) -> crate::Result<()> {
+        use bollard::models::HealthStatusEnum;
         use std::time::Duration;
         use tokio::time::sleep;
 
@@ -520,15 +532,33 @@ impl BlueGreenDeployer {
                     let health = state.and_then(|s| s.health.as_ref()).and_then(|h| h.status);
 
                     if running {
-                        // If a healthcheck is configured AND it has reported healthy → ready immediately.
-                        if matches!(health, Some(bollard::models::HealthStatusEnum::HEALTHY)) {
-                            return Ok(());
-                        }
-                        // No healthcheck (or still starting): running for >=grace seconds → assume ready.
-                        let now = std::time::Instant::now();
-                        let first = first_running_at.get_or_insert(now);
-                        if now.duration_since(*first) >= grace {
-                            return Ok(());
+                        match health {
+                            Some(HealthStatusEnum::HEALTHY) => return Ok(()),
+                            Some(HealthStatusEnum::UNHEALTHY) => {
+                                return Err(crate::DeployError::Internal(format!(
+                                    "container {container_name} reported UNHEALTHY"
+                                )));
+                            }
+                            // STARTING: a healthcheck is configured and the
+                            // app is still warming up (e.g. running migrations
+                            // before binding the listener). Keep polling — do
+                            // NOT fall back to the grace heuristic, because
+                            // that would flip Caddy before `/health` succeeds.
+                            Some(HealthStatusEnum::STARTING) => {
+                                // intentionally fall through to next poll
+                            }
+                            // No healthcheck (None) or status Empty: fall back
+                            // to the original "running for grace seconds"
+                            // heuristic. Keeps support for static images
+                            // (e.g. ppt-web nginx) that don't always have a
+                            // healthcheck wired up.
+                            _ => {
+                                let now = std::time::Instant::now();
+                                let first = first_running_at.get_or_insert(now);
+                                if now.duration_since(*first) >= grace {
+                                    return Ok(());
+                                }
+                            }
                         }
                     } else {
                         first_running_at = None;

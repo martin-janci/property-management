@@ -291,9 +291,15 @@ async fn main() -> anyhow::Result<()> {
     // are empty databases (created from `ppt_dev_template` which is also
     // empty); without this call the first request would fail with
     // `relation "users" does not exist`.
+    // `.context()` keeps the original `MigrateError` as the source so a
+    // failure surfaces with both the human-readable context and the
+    // chained underlying cause (e.g. `permission denied for relation X`)
+    // when anyhow renders the error chain — `map_err(|e| anyhow!("{e}"))`
+    // would have flattened that into a single string.
+    use anyhow::Context;
     db::run_migrations(&db_pool)
         .await
-        .map_err(|e| anyhow::anyhow!("DB migration failed: {e}"))?;
+        .context("DB migration failed")?;
     tracing::info!("Database migrations applied (or already current)");
 
     // Create email service (development mode by default)
