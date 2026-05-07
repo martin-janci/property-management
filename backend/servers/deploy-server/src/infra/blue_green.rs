@@ -122,8 +122,19 @@ pub fn build_service_envs(
     // (see ops docs). Per-target database name pattern: `ppt_<target>`
     // (e.g. `ppt_prod`, `ppt_staging`) — those databases must exist before
     // first deploy (ops creates them from `ppt_dev_template`).
-    let database_url =
-        format!("postgres://ppt:{postgres_password}@ppt-postgres:5432/ppt_{target_name}");
+    //
+    // Build the URL via `url::Url::set_password` rather than `format!()` so
+    // passwords containing reserved URL characters (`@`, `:`, `/`, `#`,
+    // etc.) are correctly percent-encoded. Mirrors `PostgresOps::url_for`'s
+    // approach for the same reason.
+    let mut url = url::Url::parse("postgres://ppt@ppt-postgres:5432/").map_err(|e| {
+        crate::DeployError::Config(format!("internal: bad postgres URL template: {e}"))
+    })?;
+    url.set_password(Some(&postgres_password)).map_err(|()| {
+        crate::DeployError::Config("failed to set postgres password on URL".into())
+    })?;
+    url.set_path(&format!("/ppt_{target_name}"));
+    let database_url: String = url.into();
 
     // CORS allow-list — both UIs and both APIs from this target's tree, so
     // the browser running on rlt.sk / ppt.rlt.sk can talk to api.rlt.sk
@@ -354,10 +365,13 @@ impl BlueGreenDeployer {
         let cfg = Config {
             image: Some(image.to_string()),
             exposed_ports: Some(exposed),
-            // Pass `None` instead of `Some(empty_vec)` when there's nothing
-            // to inject — bollard treats `Some(Vec)` as "wipe whatever the
-            // image set as defaults" while `None` preserves them. Static
-            // services like ppt-web rely on Dockerfile-baked defaults.
+            // Docker MERGES image env (`Dockerfile ENV`) with container env
+            // — explicitly verified: `docker run -e FOO=bar node:20-alpine env`
+            // still shows the image's `NODE_VERSION` and `PATH`. So setting
+            // `Some(env)` doesn't wipe defaults like `NODE_ENV=production`,
+            // `PORT=3000`, `HOSTNAME=0.0.0.0` baked into reality-web. We
+            // still pass `None` for the empty case as a small clarity win
+            // (no allocation of an empty Vec on the wire).
             env: if env.is_empty() { None } else { Some(env) },
             host_config: Some(host_config),
             ..Default::default()
