@@ -236,10 +236,14 @@ pub fn build_service_envs(
             format!("NEXT_PUBLIC_SITE_URL=https://{}", target.reality_apex),
         ],
     );
-    // ppt-web is a Vite-built static bundle: API URL was inlined at build
+    // ppt-web is a Vite-built static bundle: API URL is inlined at build
     // time as the relative path `/api` (see docker-frontend.yml build-args).
-    // No runtime env needed today; entry stays so the deployer's env-lookup
-    // is uniform across all four services.
+    // The cross-origin shim happens at request time inside the container's
+    // own nginx — `/api/` and `/ws/` are proxied to the matching color of
+    // api-server in the same network. The two BG_* vars that drive that
+    // proxy upstream are appended in `BlueGreenDeployer::deploy` because
+    // the color is only known after the next-color decision; this entry
+    // stays empty here.
     envs.insert("ppt".into(), vec![]);
     Ok(envs)
 }
@@ -306,10 +310,17 @@ impl BlueGreenDeployer {
         };
 
         // Per-service env: if the spec doesn't have an entry for a service
-        // we pass an empty Vec rather than panicking. ppt-web legitimately
-        // has no env today; missing api/reality entries would surface as
-        // crash-looping containers, which is recoverable but bad UX.
+        // we pass an empty Vec rather than panicking. Missing api/reality
+        // entries would surface as crash-looping containers (recoverable,
+        // but bad UX). ppt-web's `BG_TARGET` / `BG_COLOR` are appended
+        // here because the color is only known at this point — the
+        // ppt-web image's nginx renders /api and /ws proxy upstreams from
+        // them at startup so SPA fetches reach the same-color api-server
+        // in the same Docker network.
         let env_for = |s: &str| spec.service_envs.get(s).cloned().unwrap_or_default();
+        let mut ppt_env = env_for("ppt");
+        ppt_env.push(format!("BG_TARGET={target_name}"));
+        ppt_env.push(format!("BG_COLOR={next_color}"));
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
@@ -326,12 +337,19 @@ impl BlueGreenDeployer {
             env_for("reality"),
         )
         .await?;
+        // ppt-web's nginx listens on 8080 (see docker/frontend/ppt-web.Dockerfile —
+        // `EXPOSE 8080` matched by `listen 8080` in the rendered nginx
+        // config). Earlier code passed 80 here and in the Caddy upstream
+        // below, which would have refused the connection on the bridge
+        // network — caught when this PR's nginx changes were first wired
+        // up. Aligning to 8080 across run_service / wait_until_ready /
+        // register_route.
         self.run_service(
             &format!("{target_name}-ppt-{next_color}"),
             &spec.ppt_web_image,
-            80,
+            8080,
             target_name,
-            env_for("ppt"),
+            ppt_env,
         )
         .await?;
         self.run_service(
@@ -348,7 +366,7 @@ impl BlueGreenDeployer {
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 30)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 80, 30)
+        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 8080, 30)
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
@@ -375,7 +393,7 @@ impl BlueGreenDeployer {
             )
             .await?;
         self.caddy
-            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:80"))
+            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:8080"))
             .await?;
         self.caddy
             .register_route(
