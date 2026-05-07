@@ -174,13 +174,22 @@ jobs:
   security-tests:
     runs-on: ubuntu-latest
     needs: check
-    # Run weekly, on security PRs, or when RLS-related files change
+    # Run weekly OR on PRs whose title mentions "security"/"rls".
+    #
+    # Notes:
+    # - GitHub Actions has NO `toLower()` expression function — its `contains()`
+    #   is already case-insensitive (per the expressions docs), so the previous
+    #   `contains(toLower(...), ...)` form was a workflow-file syntax error and
+    #   blocked the entire `backend.yml` run from starting (manifested as
+    #   "This run likely failed because of a workflow file issue").
+    # - `github.event.pull_request.changed_files` is the *count* (an integer),
+    #   not a list of filenames, so `contains(<int>, 'rls')` never matched
+    #   anything anyway. To gate by changed paths, use `dorny/paths-filter` or
+    #   the workflow's top-level `paths:` filter — left as a follow-up.
     if: |
       github.event_name == 'schedule' ||
-      contains(toLower(github.event.pull_request.title), 'security') ||
-      contains(toLower(github.event.pull_request.title), 'rls') ||
-      contains(github.event.pull_request.changed_files, 'rls') ||
-      contains(github.event.pull_request.changed_files, 'tenant_context')
+      contains(github.event.pull_request.title, 'security') ||
+      contains(github.event.pull_request.title, 'rls')
 
     services:
       postgres:
