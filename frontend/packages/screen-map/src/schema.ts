@@ -44,7 +44,16 @@ const IdSchema = z.string().regex(/^(ppt|reality)\/[a-z0-9-]+$/, {
   message: 'id must match <product>/<slug> using kebab-case',
 });
 
-const IsoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' });
+const IsoDateSchema = z.preprocess(
+  (value) => {
+    if (value instanceof Date) {
+      // gray-matter (via js-yaml) auto-coerces unquoted ISO dates into Date.
+      return value.toISOString().slice(0, 10);
+    }
+    return value;
+  },
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' }),
+);
 
 export const ScreenMapFrontmatterSchema = z
   .object({
