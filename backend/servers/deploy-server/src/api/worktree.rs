@@ -71,7 +71,13 @@ pub async fn open_handler(
     let _lock = svc.worktree_locks.acquire(&name).await;
 
     // Resume from dump if a closed worktree with this name exists within TTL window.
+    //
+    // We track the dump path that was used to resume so we can carry it forward
+    // onto the new Worktree row. Without this, a future GC `Cleanup` (after the
+    // next close) wouldn't know which file on disk to delete and old dumps would
+    // accumulate forever in `snapshot_dir`.
     let existing = svc.store.get_worktree(&name).await?;
+    let mut resumed_dump_path: Option<String> = None;
     let resume_db: Option<String> = if let Some(ref ex) = existing {
         if matches!(ex.state, WorktreeState::Closed)
             && matches!(req.backend, BackendMode::Dedicated)
@@ -87,6 +93,7 @@ pub async fn open_handler(
                 svc.postgres
                     .restore(&db, std::path::Path::new(&dump_path))
                     .await?;
+                resumed_dump_path = Some(dump_path);
                 Some(db)
             } else {
                 None
@@ -267,7 +274,11 @@ pub async fn open_handler(
         },
         containers,
         db_name,
-        dump_path: None,
+        // Keep the previous dump on the row when resuming from one. The dump
+        // file is still on disk (restore reads from it) and we want the next
+        // GC `Cleanup` after the next close to find and remove it. The next
+        // close will overwrite this with a fresh dump anyway.
+        dump_path: resumed_dump_path,
         ttl_seconds: req.ttl_seconds.unwrap_or(172_800),
         last_traffic_at: Some(now),
         closed_at: None,

@@ -1,43 +1,19 @@
-import { execSync } from 'node:child_process';
-import { resolve } from 'node:path';
+// frontend/packages/vite-plugin-ppt-worktree/src/index.js
+//
+// ESM entry point for Vite consumers. The Next.js consumer (which uses
+// CommonJS in `next.config.js`) imports from `../detect.cjs` directly via the
+// package's `./detect` export. Both entry points share **one** implementation
+// of `detectWorktree` / `sanitize` — this file re-exports them from
+// `detect.cjs` rather than maintaining a parallel copy. That guarantees the
+// ESM and CJS consumers can never silently drift.
+import detect from '../detect.cjs';
+
+const { detectWorktree, sanitize } = detect;
+
+export { detectWorktree, sanitize };
 
 /**
  * @typedef {{ name: string, branch: string, isWorktree: boolean }} WorktreeInfo
- */
-
-/**
- * Detect git branch + whether the cwd is in a git worktree.
- * @param {string} [cwd]
- * @returns {WorktreeInfo}
- */
-export function detectWorktree(cwd = process.cwd()) {
-  try {
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd, encoding: 'utf8' }).trim();
-    const sanitized = sanitize(branch);
-    const gitCommonDir = execSync('git rev-parse --git-common-dir', {
-      cwd,
-      encoding: 'utf8',
-    }).trim();
-    const gitDir = execSync('git rev-parse --git-dir', { cwd, encoding: 'utf8' }).trim();
-    const isWorktree = resolve(cwd, gitDir) !== resolve(cwd, gitCommonDir);
-    return { name: sanitized, branch, isWorktree };
-  } catch {
-    return { name: 'unknown', branch: 'unknown', isWorktree: false };
-  }
-}
-
-/**
- * @param {string} branch
- * @returns {string}
- */
-export function sanitize(branch) {
-  return branch
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-/**
  * @typedef {{ cwd?: string }} PluginOptions
  */
 

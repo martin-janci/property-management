@@ -1,6 +1,16 @@
-// CommonJS shim of detectWorktree for consumers that load via Node directly
-// (e.g. Next.js next.config.js). Mirrors the logic in src/index.ts so changes
-// must be kept in sync.
+// frontend/packages/vite-plugin-ppt-worktree/detect.cjs
+//
+// CANONICAL implementation of `detectWorktree` and `sanitize`.
+//
+// This file is the single source of truth for worktree detection logic.
+// The ESM entry point (`src/index.js`) re-exports from here so both the Vite
+// plugin (ESM) and Next.js's `next.config.js` (CJS via `require`) end up
+// running identical code — no parallel copy to keep in sync.
+//
+// Why CJS as the canonical form: `next.config.js` MUST be CommonJS in Next 14,
+// so we'd need a CJS copy regardless. Going the other direction (CJS importing
+// ESM) requires top-level await and breaks `next start`. Keeping the canonical
+// version in CJS and re-exporting via ESM works in every consumer.
 const { execSync } = require('node:child_process');
 const { resolve } = require('node:path');
 

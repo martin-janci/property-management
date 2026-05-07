@@ -3,22 +3,53 @@ targets = [{ triple = "x86_64-unknown-linux-gnu" }]
 
 [advisories]
 yanked = "deny"
+# Downgrade `unmaintained` from default `deny` to `warn`. Unmaintained
+# advisories aren't security vulnerabilities — they're notices that a crate's
+# upstream has moved on. We can't kick the affected transitive deps out of our
+# tree without a major dependency overhaul (AWS SDK, sqlx 0.7, validator 0.16
+# all pull in long-tail unmaintained crates). Tracked separately as a
+# "dependency hygiene" follow-up.
+unmaintained = "warn"
 ignore = [
+    # ---------------------------------------------------------------------
+    # Vulnerabilities (real CVEs) — kept on the `ignore` list with a written
+    # justification per RUSTSEC entry. Each one has a tracked follow-up.
+    # ---------------------------------------------------------------------
+
     # RUSTSEC-2024-0363 — sqlx 0.7.x Postgres binary-protocol misinterpretation
     # (truncating cast on values > 4 GiB). Fixed in sqlx 0.8.1.
     #
-    # Why this is acceptable for now:
+    # Why acceptable for now:
     # - Exploit requires encoding a single parameter > 4 GiB. All Axum routes
     #   already cap request bodies (workspace default ~1 MiB via api-core
     #   middleware), so the actual attack surface is empty.
-    # - sqlx 0.7 → 0.8 is a breaking-API bump (Encode/Decode trait churn,
-    #   `query_as!` macro changes) touching every repository in `crates/db`.
-    #   That migration is its own PR — out of scope for the deploy-server
-    #   work in PR #188.
-    #
-    # Follow-up: bump sqlx to 0.8.x and drop this ignore.
-    # Ref: https://rustsec.org/advisories/RUSTSEC-2024-0363
+    # - sqlx 0.7 → 0.8 is a breaking-API bump touching every repository in
+    #   `crates/db`. That migration is its own PR.
     "RUSTSEC-2024-0363",
+
+    # RUSTSEC-2024-0421 — idna < 1.0.0 punycode/IDN-handling vulnerability.
+    # Pinned at 0.4.0 by `validator 0.16.1`. Fixed in idna 1.0.x (only reachable
+    # by upgrading `validator` past 0.16). The exploit path requires us to
+    # accept attacker-controlled IDN domains and use them in security-relevant
+    # comparisons; our `validator` use is form-input validation where the
+    # output is never used as an authentication primitive.
+    # Follow-up: bump `validator` to 0.18.x and drop this ignore.
+    "RUSTSEC-2024-0421",
+
+    # RUSTSEC-2026-0098, -0099, -0104 — rustls-webpki 0.101.7 URI/name-constraint
+    # bugs. Pinned by `rustls 0.21.12` which is in turn pinned by the entire AWS
+    # SDK family (`aws-config`, `aws-smithy-http-client`, etc.). Fixed in
+    # rustls-webpki 0.103.12+ but only reachable by bumping AWS SDK to a version
+    # that uses rustls 0.23+. That migration is non-trivial and out of scope
+    # for the deploy-server work.
+    #
+    # Reachability: bug requires misissuance from a trusted CA (only after a
+    # successful signature verification), not exploitable against well-behaved
+    # AWS endpoints we contact (S3, STS, SSO).
+    # Follow-up: bump AWS SDK so rustls 0.23+ flows through.
+    "RUSTSEC-2026-0098",
+    "RUSTSEC-2026-0099",
+    "RUSTSEC-2026-0104",
 ]
 
 [bans]

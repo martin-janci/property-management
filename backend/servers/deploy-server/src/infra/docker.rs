@@ -307,17 +307,53 @@ impl DockerClient {
     }
 }
 
-fn pick_local_port_for_tunnel(_target: &str) -> u16 {
-    // Probe for a free local port (#11). Closing the listener releases it before
-    // ssh -L binds, so the standard race window applies — ssh will fail loudly
-    // if a different process snatches it in between.
-    use std::net::TcpListener;
-    if let Ok(listener) = TcpListener::bind("127.0.0.1:0") {
-        if let Ok(addr) = listener.local_addr() {
-            return addr.port();
+/// Process-wide cache mapping `ssh://...` Docker socket URIs to the local
+/// loopback port we already opened a tunnel on. Without this, every call to
+/// `DockerClient::from_socket` for the same target would pick a new ephemeral
+/// port and call `spawn_ssh_tunnel`, accumulating orphan `ssh -N -L` processes
+/// (each pinned to a different local port that nothing reuses).
+///
+/// Using `Mutex<HashMap>` instead of `OnceLock<DashMap>` because the lookup is
+/// cold-path (only runs at client construction) and we want the simplest
+/// dependency-free primitive.
+fn tunnel_port_registry() -> &'static std::sync::Mutex<std::collections::HashMap<String, u16>> {
+    static REGISTRY: std::sync::OnceLock<
+        std::sync::Mutex<std::collections::HashMap<String, u16>>,
+    > = std::sync::OnceLock::new();
+    REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
+}
+
+fn pick_local_port_for_tunnel(target: &str) -> u16 {
+    let registry = tunnel_port_registry();
+
+    // Reuse a previously-allocated port for the same ssh target so the existing
+    // tunnel is reused (`spawn_ssh_tunnel` is idempotent — it short-circuits if
+    // the local port is already accepting connections).
+    if let Ok(map) = registry.lock() {
+        if let Some(&port) = map.get(target) {
+            return port;
         }
     }
-    22300
+
+    // First call for this target — probe for a free local port. Closing the
+    // listener releases it before ssh -L binds, so the standard race window
+    // applies — ssh will fail loudly if a different process snatches it in
+    // between (#11).
+    use std::net::TcpListener;
+    let port = if let Ok(listener) = TcpListener::bind("127.0.0.1:0") {
+        listener.local_addr().map(|a| a.port()).unwrap_or(22300)
+    } else {
+        22300
+    };
+
+    // Cache the mapping. `entry().or_insert()` handles the race where two
+    // threads probe in parallel — the second insert is a no-op and we return
+    // whichever port "won". That's fine because `spawn_ssh_tunnel` short-
+    // circuits when the cached port already responds.
+    if let Ok(mut map) = registry.lock() {
+        return *map.entry(target.to_string()).or_insert(port);
+    }
+    port
 }
 
 fn spawn_ssh_tunnel(user: &str, host: &str, port: u16, local_port: u16) -> crate::Result<()> {

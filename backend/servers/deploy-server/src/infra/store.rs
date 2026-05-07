@@ -119,6 +119,19 @@ impl Store {
         Ok(())
     }
 
+    /// Delete a worktree row from the store. Called by GC after `GcDecision::Cleanup`
+    /// has removed the on-disk worktree directory and any pg_dump file. Without this,
+    /// `list_worktrees` would keep returning already-cleaned entries and GC would
+    /// re-run cleanup on every tick (a no-op the first time, but wasted work + audit
+    /// noise on every subsequent tick).
+    pub async fn delete_worktree(&self, name: &str) -> Result<()> {
+        sqlx::query("DELETE FROM worktree WHERE name = ?")
+            .bind(name)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn record_audit(
         &self,
         caller_kind: &str,

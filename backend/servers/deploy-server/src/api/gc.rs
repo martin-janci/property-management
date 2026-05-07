@@ -82,6 +82,30 @@ pub struct GcContext {
     pub cfg: Arc<Config>,
 }
 
+/// Best-effort unregistration of a worktree's Caddy routes. Mirrors the same
+/// logic used by `close_handler`; called by GC's pause/stop transitions so
+/// stopped containers don't leave dangling routes that 502 forever.
+///
+/// All errors are swallowed (debug-logged) — Caddy may legitimately not have
+/// the route (already cleaned, server restarted, etc.) and we don't want a
+/// transient admin-API failure to abort the rest of the GC tick.
+async fn unregister_worktree_routes(
+    ctx: &GcContext,
+    wt: &crate::domain::Worktree,
+) {
+    for url_opt in [
+        wt.urls.ppt.as_deref(),
+        wt.urls.reality.as_deref(),
+        wt.urls.api.as_deref(),
+    ] {
+        if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
+            if let Err(e) = ctx.svc.caddy.unregister_route(host).await {
+                tracing::debug!(host = %host, error = %e, "caddy unregister failed during gc (ignored)");
+            }
+        }
+    }
+}
+
 #[derive(serde::Serialize)]
 pub struct GcReport {
     pub paused: Vec<String>,
@@ -130,12 +154,17 @@ pub async fn tick_handler(
             GcDecision::NoOp => continue,
             GcDecision::PauseRunning => {
                 ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                // Unregister Caddy routes — without this, the routes keep
+                // pointing at dead upstreams and visitors hit persistent 502s
+                // until the worktree is reopened and the route gets overwritten.
+                unregister_worktree_routes(&ctx, &wt).await;
                 wt.state = WorktreeState::Paused;
                 ctx.svc.store.upsert_worktree(&wt).await?;
                 report.paused.push(wt.name.clone());
             }
             GcDecision::StopPaused => {
                 ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                unregister_worktree_routes(&ctx, &wt).await;
                 // If dedicated backend, dump DB before drop.
                 if let Some(db) = wt.db_name.clone() {
                     let dump_path_str = format!(
@@ -169,11 +198,19 @@ pub async fn tick_handler(
                 if let Some(ref dump) = wt.dump_path {
                     let _ = tokio::fs::remove_file(dump).await;
                 }
+                // Drop the row last — only after fs/dump removals have run, so
+                // a partial cleanup leaves enough breadcrumbs for the next tick
+                // to retry. After this the worktree is fully gone; subsequent
+                // ticks won't see it in `list_worktrees`.
+                if let Err(e) = ctx.svc.store.delete_worktree(&wt.name).await {
+                    tracing::warn!(name = %wt.name, error = %e, "delete_worktree failed");
+                }
                 report.cleaned.push(wt.name.clone());
             }
             GcDecision::RecoverStuckClosing => {
                 // Recovery: a previous close_handler crash left this stuck (#8).
                 ctx.svc.docker.cleanup_containers(&wt.containers).await;
+                unregister_worktree_routes(&ctx, &wt).await;
                 wt.state = WorktreeState::Closed;
                 wt.closed_at = Some(now);
                 ctx.svc.store.upsert_worktree(&wt).await?;
