@@ -136,6 +136,17 @@ async fn smoke_test_cross_tenant_isolation() {
         .expect("Failed to connect to test database");
     db.cleanup().await;
 
+    // ALL setup runs as super-admin so RLS-enforced trigger inserts succeed.
+    // Most importantly: `INSERT INTO organizations` fires the
+    // `create_default_roles()` trigger which inserts into `roles` — and
+    // `roles` has a WITH CHECK that requires
+    // `organization_id = get_current_org_id() OR is_super_admin()`.
+    // Without super-admin context here, the trigger fails with
+    // "new row violates row-level security policy for table \"roles\"".
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
+
     // Create two tenants
     let org_a = db
         .create_test_org("Smoke Org A")
@@ -155,14 +166,6 @@ async fn smoke_test_cross_tenant_isolation() {
         .create_test_user("smoke_user_b@test.com", "User B")
         .await
         .expect("Failed to create user B");
-
-    // organization_members has RLS with a WITH CHECK predicate
-    // (`organization_id = get_current_org_id() OR is_super_admin()`).
-    // Setup needs super-admin context to bypass it before flipping back to a
-    // per-tenant context for the actual isolation assertions.
-    db.set_request_context(None, None, true)
-        .await
-        .expect("Failed to set super-admin context for setup");
 
     // Add users to their respective orgs
     sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
@@ -261,6 +264,13 @@ async fn smoke_test_null_context_blocks_access() {
         .expect("Failed to connect to test database");
     db.cleanup().await;
 
+    // Setup runs as super-admin so the `create_default_roles` trigger that
+    // fires on `INSERT INTO organizations` can populate `roles` (which is
+    // RLS-protected with WITH CHECK).
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
+
     // Create a tenant and building
     let org = db
         .create_test_org("Smoke Null Context Org")
@@ -308,6 +318,13 @@ async fn smoke_test_context_clearing() {
         .await
         .expect("Failed to connect to test database");
     db.cleanup().await;
+
+    // Setup runs as super-admin so the `create_default_roles` trigger that
+    // fires on `INSERT INTO organizations` can populate `roles` (which is
+    // RLS-protected with WITH CHECK).
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
 
     let org = db
         .create_test_org("Smoke Context Clear Org")
