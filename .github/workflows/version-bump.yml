@@ -1,0 +1,48 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bump-version:
+    name: Bump Patch Version
+    runs-on: ubuntu-latest
+    # Skip if the commit was made by this workflow (avoid infinite loop)
+    if: "!startsWith(github.event.head_commit.message, 'chore(version):')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node (for package.json sync)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bump patch version
+        run: ./scripts/bump-version.sh patch
+
+      - name: Commit and push version bump
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          git add VERSION
+          git add backend/Cargo.toml 2>/dev/null || true
+          git add frontend/package.json 2>/dev/null || true
+          git add "frontend/apps/*/package.json" 2>/dev/null || true
+          git add "frontend/packages/*/package.json" 2>/dev/null || true
+          git add mobile-native/gradle.properties 2>/dev/null || true
+          git add docs/api/typespec/main.tsp 2>/dev/null || true
+          git diff --cached --quiet && echo "No version files changed" && exit 0
+          git commit -m "chore(version): bump to $VERSION"
+          git push

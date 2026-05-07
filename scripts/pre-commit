@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# pre-commit hook - Code quality checks and auto version bump
+# pre-commit hook - Code quality checks
 #
 # This hook runs:
 #   1. Rust formatting check (cargo fmt)
@@ -8,7 +8,8 @@
 #   3. Kotlin formatting check (spotless)
 #   4. TypeScript/JavaScript lint (Biome)
 #   5. TypeScript type checking
-#   6. Auto-bump patch version
+#
+# Version bumping happens automatically via CI after merge to main.
 #
 # To install this hook:
 #   ./scripts/install-hooks.sh
@@ -29,8 +30,6 @@ else
     SCRIPTS_DIR="$SCRIPT_DIR"
 fi
 
-VERSION_FILE="$ROOT_DIR/VERSION"
-BUMP_SCRIPT="$SCRIPTS_DIR/bump-version.sh"
 BACKEND_DIR="$ROOT_DIR/backend"
 MOBILE_NATIVE_DIR="$ROOT_DIR/mobile-native"
 
@@ -198,57 +197,13 @@ if echo "$STAGED_FILES" | grep -q '^frontend/.*\.\(ts\|tsx\)$'; then
 fi
 
 # =============================================================================
-# Exit early if any check failed
+# Exit
 # =============================================================================
 if [[ $FAILED -eq 1 ]]; then
     echo ""
     echo -e "${RED}Commit aborted due to pre-commit hook failures.${NC}"
     echo -e "${YELLOW}Fix the issues above and try again.${NC}"
     exit 1
-fi
-
-# =============================================================================
-# Check 6: Version Bump (only if other checks passed)
-# =============================================================================
-
-# Check if VERSION file exists
-if [[ ! -f "$VERSION_FILE" ]]; then
-    echo "VERSION file not found, skipping version bump"
-    exit 0
-fi
-
-# Check if bump script exists
-if [[ ! -f "$BUMP_SCRIPT" ]]; then
-    echo "bump-version.sh not found, skipping version bump"
-    exit 0
-fi
-
-# Skip if VERSION file is already staged (manual bump was done)
-if echo "$STAGED_FILES" | grep -q '^VERSION$'; then
-    echo "VERSION already changed, skipping auto-bump"
-    exit 0
-fi
-
-# If only VERSION file or package.json files are staged, skip bump
-if echo "$STAGED_FILES" | grep -qvE '^(VERSION|.*package\.json|mobile-native/gradle\.properties|docs/api/typespec/main\.tsp|backend/Cargo\.toml)$'; then
-    echo -e "${YELLOW}Auto-bumping patch version...${NC}"
-
-    # Bump patch version
-    "$BUMP_SCRIPT" patch
-
-    # Stage the updated files
-    git add "$VERSION_FILE"
-    git add "$ROOT_DIR/backend/Cargo.toml" 2>/dev/null || true
-    git add "$ROOT_DIR/frontend/package.json" 2>/dev/null || true
-    git add "$ROOT_DIR/frontend/apps/*/package.json" 2>/dev/null || true
-    git add "$ROOT_DIR/frontend/packages/*/package.json" 2>/dev/null || true
-    git add "$ROOT_DIR/mobile-native/gradle.properties" 2>/dev/null || true
-    git add "$ROOT_DIR/docs/api/typespec/main.tsp" 2>/dev/null || true
-
-    NEW_VERSION=$(cat "$VERSION_FILE" | tr -d '[:space:]')
-    echo -e "${GREEN}Version bumped to $NEW_VERSION${NC}"
-else
-    echo "Only version files changed, skipping auto-bump"
 fi
 
 exit 0
