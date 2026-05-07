@@ -92,7 +92,14 @@ ENV HOSTNAME="0.0.0.0"
 USER nextjs
 EXPOSE 3000
 
+# `127.0.0.1` not `localhost`: Alpine's BusyBox wget tries IPv6 first per
+# RFC 6724 ordering, and `localhost` resolves to BOTH `127.0.0.1` and
+# `::1`. Next.js standalone with `HOSTNAME=0.0.0.0` binds IPv4 only, so the
+# IPv6 connect refused and the healthcheck flapped to UNHEALTHY despite
+# the server actually serving on `127.0.0.1:3000`. The deploy-server's
+# wait_until_ready (post-#218) treats UNHEALTHY as a hard fail and bailed
+# every blue/green flip without registering Caddy routes for the new color.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget -q --spider http://localhost:3000/api/health || exit 1
+    CMD wget -q --spider http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "apps/reality-web/server.js"]

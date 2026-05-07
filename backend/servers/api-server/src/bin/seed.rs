@@ -370,7 +370,7 @@ async fn main() -> anyhow::Result<()> {
                 };
                 println!("Seeding `reality-portal` OAuth client...");
                 println!("  redirect_uris: {:?}", redirect_uris);
-                upsert_reality_portal_client(&runner.pool(), secret, &redirect_uris).await?;
+                upsert_reality_portal_client(runner.pool(), secret, &redirect_uris).await?;
                 println!("  ✓ reality-portal client UPSERT complete");
                 println!();
             }
