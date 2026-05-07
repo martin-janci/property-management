@@ -26,6 +26,7 @@
     "@ppt/sitemap": "workspace:*",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3",
+    "yauzl-promise": "^4.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
