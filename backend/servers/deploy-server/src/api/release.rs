@@ -67,11 +67,12 @@ pub async fn deploy_handler(
     caller.require_scope("release:deploy")?;
     let target = TargetKind::from_str(&req.target)
         .map_err(|e| DeployError::Config(format!("invalid target: {e}")))?;
-    if target != TargetKind::Staging {
-        return Err(DeployError::BadRequest(format!(
-            "target {target} not supported in Phase 2 (prod is Phase 4)",
-        )));
-    }
+    // Allow any target that's actually configured. Earlier the handler
+    // refused everything except `staging` while prod was a Phase 4 milestone;
+    // with the dual-apex routing in place (PR #209) and a `prod` target in
+    // `/etc/ppt-deploy/targets.yaml`, the same blue/green flow drives both
+    // staging and prod. Configuration is the source of truth — if the operator
+    // hasn't added a `prod:` block, we still 404 below with `unknown target`.
     let target_cfg = svc
         .targets
         .targets

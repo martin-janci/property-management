@@ -2,7 +2,7 @@ name: Docker Build & Push (Multiplatform)
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'backend/**'
       - 'docker/backend/**'
@@ -68,7 +68,7 @@ jobs:
           file: docker/backend/Dockerfile
           target: ${{ matrix.target }}
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || inputs.push == true) }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v') || inputs.push == true) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # Shared cache scope: both matrix jobs (api-server + reality-server)
@@ -85,14 +85,26 @@ jobs:
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_PREFIX }}/ppt-${{ matrix.target }}:${{ steps.meta.outputs.version }} 2>/dev/null || true
 
-  trigger-staging-deploy:
+  # Branch-keyed auto-deploy: main → prod, dev → staging.
+  # Tag pushes deliberately skip this job — release.yml handles tag pushes via
+  # the `register-candidate → manual promote` flow.
+  trigger-deploy:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
+      - name: Pick deploy target from branch
+        id: target
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Get OIDC token for ppt-deploy
         uses: actions/github-script@v7
         id: oidc
@@ -104,11 +116,22 @@ jobs:
       - name: POST /api/deploy
         env:
           DEPLOY_URL: https://onyx.rlt.sk
-          FULL_SHA: ${{ github.sha }}
+          # We deploy by BRANCH tag (e.g. `main`, `dev`), not by short SHA.
+          # docker-build.yml and docker-frontend.yml are paths-filtered, so a
+          # backend-only push on main only updates `ppt-api-server:main` and
+          # `ppt-reality-server:main`; `ppt-web:<sha>` and `ppt-reality-web:<sha>`
+          # for the same SHA never exist, and a SHA-based deploy would 404 on
+          # those pulls. The branch tag is rewritten by every successful build
+          # of either workflow, so `:main` (or `:dev`) on each of the four
+          # service images always points at the most recent successful build of
+          # that service for that branch — independent of which workflow last
+          # ran. Side effect: per-commit precision is lost in the auto-deploy
+          # path; tag-based releases (release.yml → /api/release with vX.Y.Z)
+          # keep their commit-specific semantics.
+          BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
+          TARGET: ${{ steps.target.outputs.name }}
         run: |
-          # Short SHA matches `type=sha,prefix=` default in metadata-action (7 chars).
-          SHORT_SHA="${FULL_SHA:0:7}"
           curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"$SHORT_SHA\", \"target\": \"staging\"}"
+            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"
