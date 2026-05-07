@@ -9,6 +9,9 @@ permissions:
   contents: read
   packages: read
   id-token: write
+  # `actions: read` is required for the wait step's `gh run list` calls. Without
+  # it the API returns 403 and the loop spins until the 15-minute timeout.
+  actions: read
 
 jobs:
   trigger:
@@ -71,11 +74,15 @@ jobs:
           OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          # Image names ALL carry the `ppt-` prefix in GHCR (matches
+          # docker-build.yml + docker-frontend.yml's matrix). The service KEYS
+          # in the JSON manifest stay short (`reality-web`, etc.) so consumers
+          # of /api/release don't need to know about the registry naming.
           IMAGES=$(jq -n \
             --arg api "$IMAGE_PREFIX/ppt-api-server:$TAG" \
             --arg reality "$IMAGE_PREFIX/ppt-reality-server:$TAG" \
             --arg pptweb "$IMAGE_PREFIX/ppt-web:$TAG" \
-            --arg realityweb "$IMAGE_PREFIX/reality-web:$TAG" \
+            --arg realityweb "$IMAGE_PREFIX/ppt-reality-web:$TAG" \
             '{"api-server":$api,"reality-server":$reality,"ppt-web":$pptweb,"reality-web":$realityweb}')
           curl -fsS -X POST "$DEPLOY_URL/api/release" \
             -H "Authorization: Bearer $OIDC_TOKEN" \

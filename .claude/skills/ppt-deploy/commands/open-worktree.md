@@ -17,12 +17,23 @@ description: Spawn a worktree dev environment for the current branch (or specifi
    ```
    Capture output JSON (contains `worktree.urls.ppt`, `worktree.urls.reality`, `worktree.name`).
 
-3. Write `frontend/.env.local` (in the user's worktree, not server side):
-   ```
-   VITE_API_DEFAULT=worktree
-   VITE_API_BASE=<urls.ppt>
-   VITE_REALITY_API_BASE=<urls.reality>
-   ```
+3. Write `.env.local` files for whichever app(s) the user is running.
+   The variable names here MUST match what the apps actually read (otherwise
+   the dev panel toggles to "worktree" but the API calls keep going local):
+   - **ppt-web** (`frontend/apps/ppt-web/.env.local`):
+     ```
+     VITE_API_DEFAULT=worktree
+     VITE_API_URL=<urls.ppt>
+     VITE_API_BASE_URL=<urls.ppt>
+     ```
+     `VITE_API_URL` is read by the generated OpenAPI client; `VITE_API_BASE_URL`
+     is read by the feature-specific fetch clients (auth, buildings, etc.).
+     Setting both keeps everything pointed at the worktree backend.
+   - **reality-web** (`frontend/apps/reality-web/.env.local`):
+     ```
+     NEXT_PUBLIC_API_DEFAULT=worktree
+     NEXT_PUBLIC_API_URL=<urls.reality>
+     ```
 
 4. Report to user:
    ```
@@ -35,4 +46,4 @@ description: Spawn a worktree dev environment for the current branch (or specifi
 ## Notes
 
 - If pmctl returns 409 conflict, the worktree already exists — call `pmctl status <name>` and report current URLs instead.
-- For dedicated backend (Phase 3): pass `--backend=dedicated --as=<alias>`. Phase 1 returns 400 for this.
+- For dedicated backend (Phase 3): pass `--backend=dedicated --alias=<alias>`. Phase 1 returns 400 for this.

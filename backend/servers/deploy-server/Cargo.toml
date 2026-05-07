@@ -29,12 +29,14 @@ shellexpand = "3.1"
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite", "chrono", "json", "migrate"] }
 jsonwebtoken = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
-listenfd = "1.0"
-bollard = "0.16"
-tokio-util = { version = "0.7", features = ["io"] }
-futures-util = "0.3"
-async-trait = "0.1"
-which = "6.0"
+# Inherit deploy-server-specific deps from `[workspace.dependencies]` so we
+# don't end up with two pinned versions across the workspace.
+listenfd = { workspace = true }
+bollard = { workspace = true }
+tokio-util = { workspace = true }
+futures-util = { workspace = true }
+async-trait = { workspace = true }
+which = { workspace = true }
 dirs = "5.0"
 reqwest = { workspace = true, features = ["stream"] }
 tracing = { workspace = true }

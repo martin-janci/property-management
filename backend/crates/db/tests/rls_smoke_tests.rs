@@ -2,6 +2,14 @@
 //!
 //! These tests run on every PR to catch basic RLS regressions quickly.
 //! For comprehensive testing, see `rls_penetration_tests.rs` (runs weekly).
+//!
+//! Schema mapping (kept here so the test stays in sync with migration drift):
+//! - `buildings`     → columns are `street`, `city`, `postal_code`, `country`
+//!   (NOT `address_line1`; that name was used by an earlier migration that
+//!   was renamed in `00007_create_buildings.sql`).
+//! - `organization_members` → role-as-string lives in `role_type` (default
+//!   `'member'`); `role_id` is a separate UUID FK to the `roles` table for
+//!   custom-role lookups (we don't need that here).
 
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::time::Duration;
@@ -132,14 +140,14 @@ async fn smoke_test_cross_tenant_isolation() {
         .expect("Failed to create user B");
 
     // Add users to their respective orgs
-    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, 'manager')")
+    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
         .bind(org_a)
         .bind(user_a)
         .execute(&db.pool)
         .await
         .expect("Failed to add user A to org A");
 
-    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, 'manager')")
+    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
         .bind(org_b)
         .bind(user_b)
         .execute(&db.pool)
@@ -150,7 +158,7 @@ async fn smoke_test_cross_tenant_isolation() {
     db.set_request_context(Some(org_a), Some(user_a), true)
         .await
         .expect("Failed to set context");
-    sqlx::query("INSERT INTO buildings (organization_id, name, address_line1, city, country) VALUES ($1, 'Smoke Building A', 'Addr A', 'City A', 'Country A')")
+    sqlx::query("INSERT INTO buildings (organization_id, name, street, city, postal_code, country) VALUES ($1, 'Smoke Building A', 'Addr A', 'City A', '00000', 'Country A')")
         .bind(org_a)
         .execute(&db.pool)
         .await
@@ -159,7 +167,7 @@ async fn smoke_test_cross_tenant_isolation() {
     db.set_request_context(Some(org_b), Some(user_b), true)
         .await
         .expect("Failed to set context");
-    sqlx::query("INSERT INTO buildings (organization_id, name, address_line1, city, country) VALUES ($1, 'Smoke Building B', 'Addr B', 'City B', 'Country B')")
+    sqlx::query("INSERT INTO buildings (organization_id, name, street, city, postal_code, country) VALUES ($1, 'Smoke Building B', 'Addr B', 'City B', '00000', 'Country B')")
         .bind(org_b)
         .execute(&db.pool)
         .await
@@ -242,7 +250,7 @@ async fn smoke_test_null_context_blocks_access() {
     db.set_request_context(Some(org), Some(user), true)
         .await
         .expect("Failed to set context");
-    sqlx::query("INSERT INTO buildings (organization_id, name, address_line1, city, country) VALUES ($1, 'Smoke Null Building', 'Addr', 'City', 'Country')")
+    sqlx::query("INSERT INTO buildings (organization_id, name, street, city, postal_code, country) VALUES ($1, 'Smoke Null Building', 'Addr', 'City', '00000', 'Country')")
         .bind(org)
         .execute(&db.pool)
         .await
@@ -289,7 +297,7 @@ async fn smoke_test_context_clearing() {
     db.set_request_context(Some(org), Some(user), true)
         .await
         .expect("Failed to set context");
-    sqlx::query("INSERT INTO buildings (organization_id, name, address_line1, city, country) VALUES ($1, 'Smoke Clear Building', 'Addr', 'City', 'Country')")
+    sqlx::query("INSERT INTO buildings (organization_id, name, street, city, postal_code, country) VALUES ($1, 'Smoke Clear Building', 'Addr', 'City', '00000', 'Country')")
         .bind(org)
         .execute(&db.pool)
         .await

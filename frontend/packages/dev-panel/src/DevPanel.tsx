@@ -39,8 +39,13 @@ export const DevPanel: React.FC<DevPanelProps> = ({
       }}
     >
       <div>
-        API:&nbsp;
-        <select value={mode} onChange={(e) => apply(e.target.value as ApiMode)}>
+        <label htmlFor="ppt-dev-panel-mode">API:&nbsp;</label>
+        <select
+          id="ppt-dev-panel-mode"
+          aria-label="API mode (local, worktree, or mock)"
+          value={mode}
+          onChange={(e) => apply(e.target.value as ApiMode)}
+        >
           <option value="local">local</option>
           <option value="worktree">worktree</option>
           <option value="mock">mock</option>

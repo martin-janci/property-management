@@ -37,8 +37,10 @@ fn default_target() -> String {
 ///
 /// Documented inconsistency, matching what `docker-frontend.yml`/`docker-backend.yml`
 /// actually push: backend images carry the `ppt-` prefix (`ppt-api-server`,
-/// `ppt-reality-server`), and so does `ppt-web`. `reality-web` is published as
-/// `reality-web` *without* the prefix. Single source of truth lives here.
+/// `ppt-reality-server`), and so does `ppt-web`. `reality-web`'s **service key**
+/// remains `reality-web` (so consumers don't churn) but the registry image is
+/// `ppt-reality-web` to match the `target: ppt-reality-web` matrix entry in
+/// `.github/workflows/docker-frontend.yml`. Single source of truth lives here.
 pub fn build_staging_images(image_prefix: &str, tag: &str) -> HashMap<String, String> {
     let mut images = HashMap::new();
     images.insert(
@@ -52,7 +54,7 @@ pub fn build_staging_images(image_prefix: &str, tag: &str) -> HashMap<String, St
     images.insert("ppt-web".into(), format!("{image_prefix}/ppt-web:{tag}"));
     images.insert(
         "reality-web".into(),
-        format!("{image_prefix}/reality-web:{tag}"),
+        format!("{image_prefix}/ppt-reality-web:{tag}"),
     );
     images
 }
@@ -184,10 +186,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn staging_image_map_includes_reality_web_without_ppt_prefix() {
-        // Documented inconsistency: reality-web is published as "reality-web",
-        // not "ppt-reality-web". Pin that invariant so a refactor accidentally
-        // renaming it would fail this test.
+    fn staging_image_map_uses_ppt_prefix_for_all_images() {
+        // Pinned invariant: every backend AND frontend image is published under
+        // the `ppt-` prefix in GHCR (`ppt-api-server`, `ppt-reality-server`,
+        // `ppt-web`, `ppt-reality-web`). The **service key** stays `reality-web`
+        // (so promote/wake/release callers don't churn) but the **image** path
+        // matches docker-frontend.yml's `target: ppt-reality-web` matrix entry.
         let images = build_staging_images("ghcr.io/test", "abc1234");
         assert_eq!(images["api-server"], "ghcr.io/test/ppt-api-server:abc1234");
         assert_eq!(
@@ -195,8 +199,10 @@ mod tests {
             "ghcr.io/test/ppt-reality-server:abc1234"
         );
         assert_eq!(images["ppt-web"], "ghcr.io/test/ppt-web:abc1234");
-        // NOT ppt-reality-web — see docker-frontend.yml.
-        assert_eq!(images["reality-web"], "ghcr.io/test/reality-web:abc1234");
+        assert_eq!(
+            images["reality-web"],
+            "ghcr.io/test/ppt-reality-web:abc1234"
+        );
         assert_eq!(images.len(), 4);
     }
 }
