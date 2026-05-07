@@ -160,12 +160,46 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
         run: sqlx database create && sqlx migrate run
 
+      - name: Create non-superuser test role
+        # Postgres exempts SUPERUSERS from RLS entirely (FORCE ROW LEVEL
+        # SECURITY only binds the table OWNER, not superusers). The default
+        # `postgres` user IS a superuser, so connecting as it bypasses RLS
+        # silently and the smoke tests can never see tenant isolation.
+        #
+        # We create a separate non-superuser role for the test connection so
+        # RLS policies actually run. Grants are scoped to the test database
+        # and schema; the role is created idempotently so re-runs are fine.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d ppt_test <<'SQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_runner') THEN
+                CREATE ROLE rls_test_runner LOGIN PASSWORD 'rls_test_runner';
+              END IF;
+            END $$;
+            GRANT CONNECT ON DATABASE ppt_test TO rls_test_runner;
+            GRANT USAGE ON SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL TABLES IN SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO rls_test_runner;
+            GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO rls_test_runner;
+          SQL
+
       - name: Run RLS smoke tests
         working-directory: backend
         env:
-          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+          # Connect as the non-superuser role so RLS is actually enforced.
+          TEST_DATABASE_URL: postgres://rls_test_runner:rls_test_runner@localhost:5432/ppt_test
           RUST_LOG: warn
-        run: cargo test --test rls_smoke_tests -- --ignored --nocapture
+        # `--test-threads=1`: the smoke tests share a single Postgres database
+        # and use a `Smoke%` wildcard for cleanup. Running them in parallel
+        # causes one test's cleanup to wipe rows the next test just inserted,
+        # producing mismatched counts and false-positive isolation failures.
+        run: cargo test --test rls_smoke_tests -- --ignored --nocapture --test-threads=1
 
   # Story 80.1: RLS Security Penetration Tests (full suite)
   # NOTE: Security tests depend on 'check' job to ensure code quality before running
@@ -174,13 +208,22 @@ jobs:
   security-tests:
     runs-on: ubuntu-latest
     needs: check
-    # Run weekly, on security PRs, or when RLS-related files change
+    # Run weekly OR on PRs whose title mentions "security"/"rls".
+    #
+    # Notes:
+    # - GitHub Actions has NO `toLower()` expression function — its `contains()`
+    #   is already case-insensitive (per the expressions docs), so the previous
+    #   `contains(toLower(...), ...)` form was a workflow-file syntax error and
+    #   blocked the entire `backend.yml` run from starting (manifested as
+    #   "This run likely failed because of a workflow file issue").
+    # - `github.event.pull_request.changed_files` is the *count* (an integer),
+    #   not a list of filenames, so `contains(<int>, 'rls')` never matched
+    #   anything anyway. To gate by changed paths, use `dorny/paths-filter` or
+    #   the workflow's top-level `paths:` filter — left as a follow-up.
     if: |
       github.event_name == 'schedule' ||
-      contains(toLower(github.event.pull_request.title), 'security') ||
-      contains(toLower(github.event.pull_request.title), 'rls') ||
-      contains(github.event.pull_request.changed_files, 'rls') ||
-      contains(github.event.pull_request.changed_files, 'tenant_context')
+      contains(github.event.pull_request.title, 'security') ||
+      contains(github.event.pull_request.title, 'rls')
 
     services:
       postgres:
@@ -223,3 +266,14 @@ jobs:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
           RUST_LOG: debug
         run: cargo test --test rls_penetration_tests -- --ignored --nocapture
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo deny check
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: backend/Cargo.toml
+          arguments: --workspace
+          rust-version: stable

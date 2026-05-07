@@ -1,3 +1,4 @@
+import pptWorktreePlugin from '@ppt/vite-plugin-worktree';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
@@ -5,6 +6,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [
     react(),
+    pptWorktreePlugin(),
     // Bundle analyzer - generates stats.html after build
     visualizer({
       filename: 'dist/stats.html',

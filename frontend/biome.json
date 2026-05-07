@@ -60,7 +60,8 @@
       "**/.next/**",
       "**/generated/**",
       "**/*.gen.ts",
-      "**/pnpm-lock.yaml"
+      "**/pnpm-lock.yaml",
+      "**/public/mockServiceWorker.js"
     ]
   }
 }
