@@ -177,7 +177,7 @@ git commit -m "feat(epic-{N}): story {N}.{M} - {description}"
 Single source of truth: `VERSION` file (semantic versioning X.Y.Z)
 
 ```bash
-# Patch auto-bumps on every commit via pre-commit hook
+# Patch auto-bumps via CI after merge to main (version-bump.yml workflow)
 # Manual bumps:
 ./scripts/bump-version.sh minor   # 0.1.x -> 0.2.0
 ./scripts/bump-version.sh major   # 0.x.y -> 1.0.0
