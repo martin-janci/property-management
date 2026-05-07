@@ -97,23 +97,47 @@ pub fn build_service_envs(
     target_name: &str,
     target: &crate::config::Target,
 ) -> crate::Result<std::collections::HashMap<String, Vec<String>>> {
-    let postgres_password = std::env::var("POSTGRES_PASSWORD").map_err(|_| {
-        crate::DeployError::Config(
-            "POSTGRES_PASSWORD env var is not set; refusing to start backend containers \
-             without a database password. Set it in /etc/ppt-deploy/secrets.env."
-                .into(),
-        )
-    })?;
-    let jwt_secret = std::env::var("PPT_JWT_SECRET").map_err(|_| {
-        crate::DeployError::Config(
-            "PPT_JWT_SECRET env var is not set; refusing to start backend containers \
-             without a JWT secret. Set it in /etc/ppt-deploy/secrets.env."
-                .into(),
-        )
-    })?;
+    fn require(name: &str) -> crate::Result<String> {
+        std::env::var(name).map_err(|_| {
+            crate::DeployError::Config(format!(
+                "{name} env var is not set; refusing to start backend containers \
+                 without it. Set it in /etc/ppt-deploy/secrets.env."
+            ))
+        })
+    }
+
+    let postgres_password = require("POSTGRES_PASSWORD")?;
+    let jwt_secret = require("PPT_JWT_SECRET")?;
     if jwt_secret.len() < 32 {
         return Err(crate::DeployError::Config(
             "PPT_JWT_SECRET must be at least 32 characters".into(),
+        ));
+    }
+    // Both extra encryption keys must be 64 hex chars (32 bytes for AES-256).
+    // api-server panics at startup without `TOTP_ENCRYPTION_KEY` and warns
+    // (but otherwise stores secrets in plaintext) without
+    // `INTEGRATION_ENCRYPTION_KEY`. We treat both as required so the deploy
+    // never silently downgrades data-at-rest protection in a target.
+    let totp_key = require("PPT_TOTP_ENCRYPTION_KEY")?;
+    if totp_key.len() != 64 || !totp_key.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(crate::DeployError::Config(
+            "PPT_TOTP_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)".into(),
+        ));
+    }
+    let integration_key = require("PPT_INTEGRATION_ENCRYPTION_KEY")?;
+    if integration_key.len() != 64 || !integration_key.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(crate::DeployError::Config(
+            "PPT_INTEGRATION_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)".into(),
+        ));
+    }
+    // OAuth client secret used by reality-server when authenticating to the
+    // api-server's OAuth provider (client_id = "reality-portal" by default).
+    // The matching record on the api-server side is seeded via app
+    // migrations / data fixtures, not the deploy-server.
+    let pm_client_secret = require("PPT_PM_CLIENT_SECRET")?;
+    if pm_client_secret.len() < 32 {
+        return Err(crate::DeployError::Config(
+            "PPT_PM_CLIENT_SECRET must be at least 32 characters".into(),
         ));
     }
 
@@ -144,16 +168,34 @@ pub fn build_service_envs(
         target.reality_apex, target.ppt_apex
     );
 
-    let backend_env = vec![
+    // Shared baseline both backends need. Per-service additions are made
+    // below where they differ (api-server has TOTP+INTEGRATION encryption
+    // keys; reality-server has the PM OAuth client secret).
+    let mut backend_env = vec![
         format!("DATABASE_URL={database_url}"),
         format!("JWT_SECRET={jwt_secret}"),
         format!("CORS_ALLOWED_ORIGINS={cors}"),
         "RUST_LOG=info".into(),
     ];
 
+    let mut api_env = backend_env.clone();
+    api_env.push(format!("TOTP_ENCRYPTION_KEY={totp_key}"));
+    api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
+
+    let mut reality_env = std::mem::take(&mut backend_env);
+    reality_env.push(format!("PM_CLIENT_SECRET={pm_client_secret}"));
+    // Point reality-server at the api-server inside the same target's
+    // network so the SSO/OAuth handshake doesn't have to round-trip through
+    // public DNS + Cloudflare. `<target>-api-blue/green` is the blue/green
+    // container name; we point at the bare base hostname and let the active
+    // color win via Caddy. For now, hit the public api.<ppt_apex> host —
+    // simpler than threading the active-color name into env config and
+    // works because Caddy already proxies to the live color.
+    reality_env.push(format!("PM_API_BASE_URL=https://api.{}", target.ppt_apex));
+
     let mut envs = std::collections::HashMap::new();
-    envs.insert("api".into(), backend_env.clone());
-    envs.insert("reality".into(), backend_env);
+    envs.insert("api".into(), api_env);
+    envs.insert("reality".into(), reality_env);
     // Next.js reads window.__ENV__ (served by /env.js) at runtime; the
     // env.js route handler reads NEXT_PUBLIC_* from process.env.
     envs.insert(
