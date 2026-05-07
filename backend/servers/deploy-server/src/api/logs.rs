@@ -1,5 +1,6 @@
 // backend/servers/deploy-server/src/api/logs.rs
 use crate::api::worktree::WorktreeService;
+use crate::infra::CallerIdentity;
 use crate::{DeployError, Result};
 use axum::extract::{Path, Query, State};
 use axum::response::sse::{Event, Sse};
@@ -20,26 +21,27 @@ pub struct LogsQuery {
 
 pub async fn handler(
     State(svc): State<Arc<WorktreeService>>,
+    axum::Extension(caller): axum::Extension<CallerIdentity>,
     Path(name): Path<String>,
     Query(q): Query<LogsQuery>,
 ) -> Result<Sse<impl Stream<Item = std::result::Result<Event, Infallible>>>> {
+    caller.require_scope("worktree:read")?;
+
     let wt = svc
         .store
         .get_worktree(&name)
         .await?
         .ok_or_else(|| DeployError::NotFound(format!("worktree {name}")))?;
 
-    // Pick container by service hint or aggregate.
+    // Pick container by exact service hint or aggregate. Container names follow
+    // `wt-{worktree_name}-{service}` so an exact match prevents `api` from matching
+    // both `wt-x-api` and `wt-x-reality-api`.
     let svc_filter = q.service.as_deref().unwrap_or("all");
+    let expected = format!("wt-{name}-{svc_filter}");
     let containers: Vec<String> = wt
         .containers
         .iter()
-        .filter(|c| {
-            if svc_filter == "all" {
-                return true;
-            }
-            c.ends_with(&format!("-{svc_filter}"))
-        })
+        .filter(|c| svc_filter == "all" || c.as_str() == expected.as_str())
         .cloned()
         .collect();
 

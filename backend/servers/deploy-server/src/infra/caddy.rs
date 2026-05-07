@@ -30,16 +30,25 @@ impl CaddyClient {
         });
         let url = format!("{}/id/{}", self.base, route_id);
         let resp = self.http.put(&url).json(&payload).send().await?;
-        if !resp.status().is_success() {
-            // Fallback: route doesn't exist yet, append to apps.http.servers.srv0.routes.
-            let append_url = format!("{}/config/apps/http/servers/srv0/routes/...", self.base);
-            self.http
-                .post(&append_url)
-                .json(&json!([payload]))
-                .send()
-                .await?
-                .error_for_status()?;
+        let status = resp.status();
+        if status.is_success() {
+            return Ok(());
         }
+        // Fallback only on 404 (route doesn't exist yet) — append to
+        // apps.http.servers.srv0.routes. Any other status (401/403/5xx) is a real
+        // failure and we surface it directly instead of masking with a duplicate POST.
+        if status.as_u16() != 404 {
+            return Err(crate::DeployError::Internal(format!(
+                "caddy register PUT failed: {status}"
+            )));
+        }
+        let append_url = format!("{}/config/apps/http/servers/srv0/routes/...", self.base);
+        self.http
+            .post(&append_url)
+            .json(&json!([payload]))
+            .send()
+            .await?
+            .error_for_status()?;
         Ok(())
     }
 

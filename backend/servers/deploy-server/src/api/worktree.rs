@@ -24,6 +24,8 @@ pub struct WorktreeService {
     pub gh: Arc<GhClient>,
     pub backend_image_prefix: String,
     pub worktree_locks: Arc<WorktreeLockRegistry>,
+    /// Filesystem path where dedicated-backend pg_dumps are written on close.
+    pub snapshot_dir: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -339,6 +341,35 @@ pub async fn close_handler(
     ] {
         if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
             let _ = svc.caddy.unregister_route(host).await;
+        }
+    }
+
+    // Dedicated backend: dump → drop the per-worktree Postgres DB so resume-from-dump
+    // works on the next open. Without this, GC's Paused → Closed transition handles it
+    // eventually (P3.6), but explicit close should not skip it — otherwise open_handler
+    // will hit `database already exists` when create_from_template runs.
+    if matches!(wt.backend_mode, BackendMode::Dedicated) {
+        if let Some(ref db) = wt.db_name.clone() {
+            let dump_path_str = format!(
+                "{}/{}-{}.dump",
+                svc.snapshot_dir,
+                wt.name,
+                chrono::Utc::now().timestamp()
+            );
+            let dump_path = std::path::Path::new(&dump_path_str);
+            match svc.postgres.dump(db, dump_path).await {
+                Ok(()) => {
+                    wt.dump_path = Some(dump_path_str);
+                    if let Err(e) = svc.postgres.drop_db(db).await {
+                        tracing::warn!(error = %e, db = %db, "drop_db failed during close (kept dump)");
+                    } else {
+                        wt.db_name = None;
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, db = %db, "pg_dump failed during close — leaving DB live");
+                }
+            }
         }
     }
 

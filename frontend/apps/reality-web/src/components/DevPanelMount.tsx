@@ -1,5 +1,5 @@
 'use client';
-import { type ApiMode, DevPanel } from '@ppt/dev-panel';
+import { type ApiMode, DevPanel, getMode } from '@ppt/dev-panel';
 import { useEffect, useState } from 'react';
 
 export function DevPanelMount() {
@@ -11,11 +11,11 @@ export function DevPanelMount() {
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
-    const initialMode =
-      typeof window !== 'undefined'
-        ? (localStorage.getItem('ppt-dev-panel-mode') ?? 'local')
-        : 'local';
-    if (initialMode === 'mock') {
+    if (typeof window === 'undefined') return;
+    const defaultMode = (process.env.NEXT_PUBLIC_API_DEFAULT as ApiMode) || 'local';
+    // Reuse the dev-panel store's parsing/validation rather than reading
+    // localStorage directly (avoids drift if the storage key/format changes).
+    if (getMode(defaultMode) === 'mock') {
       import('../mocks/browser').then(({ worker }) => {
         void worker.start({ onUnhandledRequest: 'bypass' });
       });

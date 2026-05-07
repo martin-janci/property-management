@@ -36,6 +36,22 @@ pub async fn tail_caddy_log(path: String, store: Arc<Store>) {
     }
 }
 
+#[cfg(not(unix))]
+async fn tail_iteration(
+    _path: &str,
+    _store: &Arc<Store>,
+    _offset: &mut u64,
+    _last_inode: &mut Option<u64>,
+    _first_open: &mut bool,
+) -> std::io::Result<()> {
+    // Caddy access log tail relies on inode-based rotation detection (Unix-only).
+    // The deploy-server is Linux-only by design (systemd socket activation).
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "Caddy log tail is Unix-only (deploy-server is designed for Linux/systemd)",
+    ))
+}
+
 #[cfg(unix)]
 async fn tail_iteration(
     path: &str,
@@ -102,6 +118,7 @@ async fn tail_iteration(
 pub fn parse_worktree_from_host(host: &str) -> Option<String> {
     host.strip_prefix("wt-")
         .and_then(|s| s.split('.').next())
+        .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
 }
 
@@ -120,5 +137,8 @@ mod tests {
             parse_worktree_from_host("wt-uc14.dev.rlt.sk"),
             Some("uc14".into())
         );
+        // Empty name (host like "wt-.dev...") rejected.
+        assert_eq!(parse_worktree_from_host("wt-.dev.ppt.rlt.sk"), None);
+        assert_eq!(parse_worktree_from_host("wt-"), None);
     }
 }

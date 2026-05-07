@@ -11,7 +11,10 @@ User=ppt-deploy
 Group=ppt-deploy
 Environment=PPT_DEPLOY_ETC=/etc/ppt-deploy
 Environment=RUST_LOG=info
-Environment=LISTEN_FDS=1
+# LISTEN_FDS / LISTEN_PID are set automatically by systemd when this service is
+# started via socket activation (Requires=ppt-deploy.socket). Hardcoding them
+# here would lie to the binary on direct `systemctl start ppt-deploy.service`
+# invocations and confuse the listenfd crate's check.
 EnvironmentFile=-/etc/ppt-deploy/secrets.env
 StandardOutput=journal
 StandardError=journal

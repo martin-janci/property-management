@@ -11,6 +11,17 @@ pub struct PostgresOps {
 }
 
 impl PostgresOps {
+    /// Build a connection URL pointing at `db_name` while preserving the original
+    /// admin URL's user/host/port/query-string. Replaces only the path component to
+    /// avoid the failure mode where `replace("/postgres", ...)` would mangle a URL
+    /// whose username or host happened to contain the literal `/postgres`.
+    fn url_for(&self, db_name: &str) -> Result<String> {
+        let mut url = url::Url::parse(&self.admin_url)
+            .map_err(|e| crate::DeployError::Config(format!("bad postgres admin_url: {e}")))?;
+        url.set_path(&format!("/{db_name}"));
+        Ok(url.into())
+    }
+
     pub async fn create_from_template(&self, db_name: &str) -> Result<()> {
         run_psql(
             &self.admin_url,
@@ -38,7 +49,7 @@ impl PostgresOps {
     }
 
     pub async fn dump(&self, db_name: &str, out: &Path) -> Result<()> {
-        let url = self.admin_url.replace("/postgres", &format!("/{db_name}"));
+        let url = self.url_for(db_name)?;
         let status = Command::new("pg_dump")
             .args(["-Fc", "-f", out.to_str().unwrap(), "--no-owner", "--no-acl"])
             .arg(&url)
@@ -57,7 +68,7 @@ impl PostgresOps {
         // ignore errors (DB may not exist).
         let _ = self.drop_db(db_name).await;
         self.create_from_template(db_name).await?;
-        let url = self.admin_url.replace("/postgres", &format!("/{db_name}"));
+        let url = self.url_for(db_name)?;
         let status = Command::new("pg_restore")
             .args([
                 "-d",

@@ -72,7 +72,7 @@ pub async fn promote_handler(
         }));
     }
 
-    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), &target_cfg.domain_suffix);
+    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), &target_cfg.domain_suffix)?;
     let docker = svc
         .release_svc
         .docker_pool
@@ -103,7 +103,7 @@ pub async fn promote_handler(
                             prev,
                             target.as_str(),
                             &target_cfg.domain_suffix,
-                        );
+                        )?;
                         match deployer.deploy(&prev_spec).await {
                             Ok(_) => {
                                 tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
@@ -229,7 +229,7 @@ pub async fn rollback_handler(
         .await?;
 
     let spec =
-        BlueGreenSpec::from_release(&target_release, target.as_str(), &target_cfg.domain_suffix);
+        BlueGreenSpec::from_release(&target_release, target.as_str(), &target_cfg.domain_suffix)?;
     let docker = svc
         .release_svc
         .docker_pool

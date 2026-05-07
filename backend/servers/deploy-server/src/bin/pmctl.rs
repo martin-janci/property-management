@@ -91,10 +91,17 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     let token = match cli.token {
         Some(t) => t,
-        None => std::fs::read_to_string(dirs::config_dir().unwrap().join("ppt-deploy/token"))
-            .context("read ~/.config/ppt-deploy/token")?
-            .trim()
-            .to_string(),
+        None => {
+            let config_dir = dirs::config_dir().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "no user config directory available; pass --token or set $PPT_DEPLOY_TOKEN"
+                )
+            })?;
+            std::fs::read_to_string(config_dir.join("ppt-deploy/token"))
+                .context("read ~/.config/ppt-deploy/token (pass --token or $PPT_DEPLOY_TOKEN to override)")?
+                .trim()
+                .to_string()
+        }
     };
 
     let http = reqwest::Client::new();

@@ -35,24 +35,30 @@ pub struct BlueGreenSpec {
 impl BlueGreenSpec {
     /// Build a deploy spec from a Release row + target config.
     /// Use this instead of inlining the boilerplate in deploy/promote/rollback handlers.
+    /// Fails with a clear error if any required service image is missing — better than
+    /// running `docker pull` on an empty ref and getting cryptic registry errors.
     pub fn from_release(
         rel: &crate::domain::Release,
         target_name: &str,
         domain_suffix: &str,
-    ) -> Self {
-        Self {
+    ) -> crate::Result<Self> {
+        fn require(rel: &crate::domain::Release, key: &str) -> crate::Result<String> {
+            rel.images.get(key).cloned().ok_or_else(|| {
+                crate::DeployError::BadRequest(format!(
+                    "release {} is missing image for service '{}'",
+                    rel.tag, key
+                ))
+            })
+        }
+        Ok(Self {
             tag: rel.tag.clone(),
             target_name: target_name.to_string(),
-            api_image: rel.images.get("api-server").cloned().unwrap_or_default(),
-            reality_image: rel
-                .images
-                .get("reality-server")
-                .cloned()
-                .unwrap_or_default(),
-            ppt_web_image: rel.images.get("ppt-web").cloned().unwrap_or_default(),
-            reality_web_image: rel.images.get("reality-web").cloned().unwrap_or_default(),
+            api_image: require(rel, "api-server")?,
+            reality_image: require(rel, "reality-server")?,
+            ppt_web_image: require(rel, "ppt-web")?,
+            reality_web_image: require(rel, "reality-web")?,
             domain_suffix: domain_suffix.to_string(),
-        }
+        })
     }
 }
 
@@ -292,13 +298,8 @@ impl BlueGreenDeployer {
 
                     if running {
                         // If a healthcheck is configured AND it has reported healthy → ready immediately.
-                        if let Some(status) = health {
-                            let dbg = format!("{status:?}");
-                            // bollard's HealthStatusEnum: HEALTHY, UNHEALTHY, STARTING, NONE.
-                            // Match HEALTHY but exclude UNHEALTHY which contains "HEALTHY" as substring.
-                            if dbg.contains("HEALTHY") && !dbg.contains("UN") {
-                                return Ok(());
-                            }
+                        if matches!(health, Some(bollard::models::HealthStatusEnum::HEALTHY)) {
+                            return Ok(());
                         }
                         // No healthcheck (or still starting): running for >=grace seconds → assume ready.
                         let now = std::time::Instant::now();

@@ -161,7 +161,7 @@ pub async fn wake_handler(
         .targets
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
-    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), &target_cfg.domain_suffix);
+    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), &target_cfg.domain_suffix)?;
     let docker = svc
         .docker_pool
         .get(target.as_str())

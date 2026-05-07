@@ -32,7 +32,6 @@ bollard = "0.16"
 tokio-util = { version = "0.7", features = ["io"] }
 futures-util = "0.3"
 async-trait = "0.1"
-tempfile = "3.10"
 which = "6.0"
 dirs = "5.0"
 reqwest = { workspace = true, features = ["stream"] }

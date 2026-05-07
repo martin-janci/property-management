@@ -16,18 +16,43 @@ jobs:
     steps:
       - name: Wait for backend + frontend image workflows
         run: |
+          set -euo pipefail
           TAG="${GITHUB_REF#refs/tags/}"
           echo "Waiting for image builds for tag $TAG"
+          done=false
           for i in $(seq 1 90); do
-            backend_done=$(gh run list --workflow=docker-build.yml --branch="$TAG" --limit 1 --json status -q '.[0].status' 2>/dev/null || echo "")
-            frontend_done=$(gh run list --workflow=docker-frontend.yml --branch="$TAG" --limit 1 --json status -q '.[0].status' 2>/dev/null || echo "")
-            if [ "$backend_done" = "completed" ] && [ "$frontend_done" = "completed" ]; then
-              echo "Both workflows completed."
-              break
+            backend=$(gh run list --workflow=docker-build.yml --branch="$TAG" --limit 1 \
+              --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
+            frontend=$(gh run list --workflow=docker-frontend.yml --branch="$TAG" --limit 1 \
+              --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
+            backend_status=$(echo "$backend" | jq -r '.status // ""')
+            backend_conclusion=$(echo "$backend" | jq -r '.conclusion // ""')
+            frontend_status=$(echo "$frontend" | jq -r '.status // ""')
+            frontend_conclusion=$(echo "$frontend" | jq -r '.conclusion // ""')
+
+            # Fail fast if either workflow finished unsuccessfully — no point waiting longer.
+            for c in "$backend_conclusion" "$frontend_conclusion"; do
+              if [ -n "$c" ] && [ "$c" != "success" ]; then
+                echo "::error::image workflow conclusion=$c — refusing to register prod-candidate"
+                exit 1
+              fi
+            done
+
+            if [ "$backend_status" = "completed" ] && [ "$frontend_status" = "completed" ]; then
+              if [ "$backend_conclusion" = "success" ] && [ "$frontend_conclusion" = "success" ]; then
+                echo "Both workflows completed successfully."
+                done=true
+                break
+              fi
             fi
-            echo "Backend: ${backend_done:-pending}, Frontend: ${frontend_done:-pending}; sleeping 10s..."
+            echo "Backend: ${backend_status:-pending}/${backend_conclusion:-?}, Frontend: ${frontend_status:-pending}/${frontend_conclusion:-?}; sleeping 10s..."
             sleep 10
           done
+
+          if [ "$done" != "true" ]; then
+            echo "::error::image workflows did not complete-success within timeout (15 min)"
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

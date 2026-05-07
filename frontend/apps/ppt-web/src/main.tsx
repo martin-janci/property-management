@@ -8,7 +8,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './i18n'; // Initialize i18n
-import { worker } from './mocks/browser';
+// MSW is intentionally NOT imported at the top — it's loaded via dynamic import only
+// when bootstrap detects mode === 'mock' AND DEV. Keeps the production bundle MSW-free.
 
 // Override the generated client's hardcoded BASE with the configured API URL.
 // VITE_API_URL is set in .env.* files; falls back to empty string so that
@@ -29,6 +30,7 @@ const initialMode = getMode(defaultMode);
 
 async function bootstrap() {
   if (import.meta.env.DEV && initialMode === 'mock') {
+    const { worker } = await import('./mocks/browser');
     await worker.start({ onUnhandledRequest: 'bypass' });
   }
 

@@ -43,6 +43,7 @@ pub fn build(
         gh,
         backend_image_prefix,
         worktree_locks,
+        snapshot_dir: cfg.snapshot_dir.clone(),
     });
 
     let auth_state = AuthState {
