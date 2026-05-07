@@ -437,6 +437,22 @@ impl BlueGreenDeployer {
                 &format!("{target_name}-reality-web-{next_color}:3000"),
             )
             .await?;
+        // `www.` alias for the Reality Portal apex. Slovak users habitually
+        // type `www.` even on bare-apex domains, so a missing route means a
+        // visitor lands on `www.rlt.sk/...` and gets `ERR_SSL_PROTOCOL_ERROR`
+        // (Caddy can't auto-issue a cert for a host with no matching site).
+        // For staging that's `www.staging.rlt.sk`; the route is inert until
+        // DNS for that host points at onyx, which is fine.
+        //
+        // No `www.` for the PM apex (`ppt.rlt.sk`) because operator-facing
+        // dashboards aren't typed by hand with a www prefix; if a need ever
+        // comes up, the same one-liner pattern applies.
+        self.caddy
+            .register_route(
+                &format!("www.{reality_apex}"),
+                &format!("{target_name}-reality-web-{next_color}:3000"),
+            )
+            .await?;
 
         let prev_containers: Vec<String> = BG_SERVICES
             .iter()
