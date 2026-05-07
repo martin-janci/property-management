@@ -45,6 +45,7 @@ sha2 = { workspace = true }
 hex = { workspace = true }
 uuid = { workspace = true }
 url = "2"
+subtle = "2"
 
 [dev-dependencies]
 httpmock = "0.7"

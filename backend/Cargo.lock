@@ -1990,6 +1990,7 @@ dependencies = [
  "sha2 0.10.9",
  "shellexpand",
  "sqlx",
+ "subtle",
  "tempfile",
  "thiserror 1.0.69",
  "tokio",

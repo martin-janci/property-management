@@ -25,8 +25,14 @@ impl HealthProbe {
 
     /// Check `attempts` times over `total_secs`, sleeping `total_secs / attempts` between checks.
     /// Returns Ok(()) if all checks pass; Err on the first failure.
+    ///
+    /// The per-attempt sleep is clamped to **at least 1 second** so that callers
+    /// passing `total_secs < attempts` (or very small totals) don't end up in a
+    /// tight retry loop hammering the target. The `total_secs` budget remains
+    /// the floor — this method may take longer than `total_secs` when the
+    /// caller picked an under-budgeted ratio, which is the desired behavior.
     pub async fn grace_check(&self, url: &str, attempts: u32, total_secs: u64) -> Result<()> {
-        let interval = total_secs / attempts.max(1) as u64;
+        let interval = (total_secs / attempts.max(1) as u64).max(1);
         for i in 0..attempts {
             sleep(Duration::from_secs(interval)).await;
             let resp = self

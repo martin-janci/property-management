@@ -1,7 +1,7 @@
 import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
 import './index.css'; // Tailwind base + components + utilities + minimal app shell styles
 import { OpenAPI } from '@ppt/api-client';
-import { type ApiMode, DevPanel, getMode } from '@ppt/dev-panel';
+import { type ApiMode, DevPanel, getMode, parseMode } from '@ppt/dev-panel';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -25,7 +25,9 @@ const queryClient = new QueryClient({
   },
 });
 
-const defaultMode: ApiMode = (import.meta.env.VITE_API_DEFAULT as ApiMode) || 'local';
+// Validate the build-time env override against the allowed ApiMode values so
+// a typo in VITE_API_DEFAULT can't put the app in an unknown mode.
+const defaultMode: ApiMode = parseMode(import.meta.env.VITE_API_DEFAULT);
 const initialMode = getMode(defaultMode);
 
 async function bootstrap() {

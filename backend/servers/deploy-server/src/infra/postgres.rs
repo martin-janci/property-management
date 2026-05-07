@@ -13,9 +13,11 @@ pub struct PostgresOps {
 impl PostgresOps {
     /// Build a connection URL pointing at `db_name` while preserving the original
     /// admin URL's user/host/port/query-string. Replaces only the path component to
-    /// avoid the failure mode where `replace("/postgres", ...)` would mangle a URL
-    /// whose username or host happened to contain the literal `/postgres`.
-    fn url_for(&self, db_name: &str) -> Result<String> {
+    /// avoid the failure mode where `replace("/postgres", ...)` or
+    /// `trim_end_matches("/postgres")` would mangle a URL whose username, host, or
+    /// query happened to contain the literal `/postgres` (or whose path is not
+    /// exactly `/postgres`, e.g. `?sslmode=require`).
+    pub fn url_for(&self, db_name: &str) -> Result<String> {
         let mut url = url::Url::parse(&self.admin_url)
             .map_err(|e| crate::DeployError::Config(format!("bad postgres admin_url: {e}")))?;
         url.set_path(&format!("/{db_name}"));

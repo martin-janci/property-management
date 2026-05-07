@@ -203,11 +203,10 @@ pub async fn open_handler(
             let api_c = format!("wt-{name}-api");
             let reality_c = format!("wt-{name}-reality-api");
 
-            let db_url = format!(
-                "{}/{}",
-                svc.postgres.admin_url.trim_end_matches("/postgres"),
-                db
-            );
+            // Use PostgresOps::url_for so the per-DB connection string preserves
+            // the admin URL's user/host/port/query (e.g. `?sslmode=require`) and
+            // doesn't break when the admin path is anything other than `/postgres`.
+            let db_url = svc.postgres.url_for(&db)?;
 
             let jwt_secret = std::env::var("PPT_JWT_SECRET").map_err(|_| {
                 DeployError::Config(
