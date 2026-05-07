@@ -22,9 +22,13 @@ export default defineConfig({
     // the container via the deploy-server's Caddy reverse proxy at hosts like
     // `wt-<name>.dev.ppt.rlt.sk` — without this they 403 with
     // `Blocked request. This host (...) is not allowed`.
-    // `true` accepts any host header; only ever applied in `vite dev`,
-    // production builds don't run a server.
-    allowedHosts: true,
+    //
+    // A leading-dot entry is Vite's documented suffix-match form: `.dev.ppt.rlt.sk`
+    // matches `dev.ppt.rlt.sk` itself AND any subdomain of it (`wt-foo.dev.ppt.rlt.sk`).
+    // Explicit list keeps Vite's DNS-rebinding protection intact — random hostnames
+    // pointed at the dev server are still rejected, only our worktree subdomains
+    // pass. Only ever applied in `vite dev`; production builds don't run a server.
+    allowedHosts: ['.dev.ppt.rlt.sk'],
     // Proxy /api/* to the api-server in local dev so relative-path fetches
     // (OpenAPI.BASE = '' and VITE_API_BASE_URL = '') resolve correctly without
     // setting VITE_API_URL. In production VITE_API_URL must be set explicitly.

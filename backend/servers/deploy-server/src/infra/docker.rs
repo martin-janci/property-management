@@ -7,6 +7,8 @@ use bollard::container::{
 use bollard::models::{HostConfig, Mount, MountTypeEnum, PortBinding};
 use bollard::Docker;
 use std::collections::HashMap;
+use std::time::Duration;
+use tokio::time::Instant;
 
 pub struct DockerClient {
     docker: Docker,
@@ -114,6 +116,32 @@ impl DockerClient {
                     "container {name} has no bridge network IP yet"
                 ))
             })
+    }
+
+    /// Like `bridge_ip`, but polls until the IP is assigned or `timeout` elapses.
+    ///
+    /// Right after `start_container` Docker may not have assigned a bridge IP yet,
+    /// so a direct `bridge_ip` call returns "no bridge network IP yet". This helper
+    /// polls every 100 ms until either an IP appears or `timeout` is reached. Real
+    /// Docker errors (socket gone, container disappeared) propagate immediately —
+    /// only the "no IP yet" case is retried.
+    pub async fn bridge_ip_with_retry(&self, name: &str, timeout: Duration) -> Result<String> {
+        let deadline = Instant::now() + timeout;
+        loop {
+            match self.bridge_ip(name).await {
+                Ok(ip) => return Ok(ip),
+                Err(e) => {
+                    let is_no_ip_yet = matches!(
+                        &e,
+                        crate::DeployError::Internal(msg) if msg.contains("has no bridge network IP yet")
+                    );
+                    if !is_no_ip_yet || Instant::now() >= deadline {
+                        return Err(e);
+                    }
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                }
+            }
+        }
     }
 
     pub async fn run_frontend_dev(&self, spec: &FrontendDevSpec) -> Result<String> {
