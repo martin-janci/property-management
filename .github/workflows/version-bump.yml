@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
 
+# Serialize runs so rapid merges to main don't race each other.
+# cancel-in-progress: false means later runs queue instead of being dropped.
+concurrency:
+  group: version-bump-main
+  cancel-in-progress: false
+
 jobs:
   bump-version:
     name: Bump Patch Version
@@ -17,6 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # GITHUB_TOKEN push does not re-trigger push-based workflows (GitHub
+          # prevents workflow recursion). That is intentional here — the version
+          # bump commit does not need to kick off CI again. If downstream
+          # workflows ever need to react to it, switch to a PAT/GitHub App token
+          # or trigger them via workflow_run instead.
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
