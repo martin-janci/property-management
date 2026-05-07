@@ -44,14 +44,22 @@ if (isDev) {
 // `style-src 'unsafe-inline'`: Next.js CSS-in-JS + next-intl inject inline
 // `<style>` blocks; same nonce migration will cover them.
 //
-// `'unsafe-eval'` is intentionally NOT allowed — dev hot-reload may need
-// it for some React Native Fast Refresh flows, but next-dev does not.
+// `'unsafe-eval'` (dev only): Next.js 14 Fast Refresh runtime
+// (`@next/react-refresh-utils/runtime`) evaluates hot-updated module code via
+// `eval()`. Without it, the dev bundle throws EvalError on first paint, the
+// client never hydrates, and styled-jsx never injects component CSS — the
+// page is left with only globals.css and looks completely unstyled. Production
+// builds don't ship react-refresh, so the prod CSP is unaffected.
+const scriptSrc = ["'self'", "'unsafe-inline'"];
+if (isDev) {
+  scriptSrc.push("'unsafe-eval'");
+}
 const securityHeaders = [
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      `script-src ${scriptSrc.join(' ')}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
