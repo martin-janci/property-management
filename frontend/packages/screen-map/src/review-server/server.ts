@@ -10,7 +10,7 @@ export interface ServerOptions {
   onFinish: () => void;
 }
 
-export function buildServer(opts: ServerOptions): Hono {
+export async function buildServer(opts: ServerOptions): Promise<Hono> {
   const app = new Hono();
   const here = path.dirname(fileURLToPath(import.meta.url));
   const clientDir = path.join(here, 'client');
@@ -38,6 +38,9 @@ export function buildServer(opts: ServerOptions): Hono {
     return c.body(js, 200, { 'Content-Type': 'application/javascript' });
   });
 
-  // API routes wired in api.ts (Task 12).
+  // API routes.
+  const { attachApi } = await import('./api.js');
+  attachApi(app, opts);
+
   return app;
 }
