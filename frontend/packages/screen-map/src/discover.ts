@@ -12,12 +12,13 @@ export async function discoverScreenMaps(rootDir: string): Promise<string[]> {
     let entries: string[];
     try {
       entries = await readdir(dir);
-    } catch {
-      continue;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw err;
     }
     for (const entry of entries) {
       if (IGNORED.has(entry)) continue;
-      if (entry === '.gitkeep') continue;
+      // .gitkeep is filtered by the .md suffix check below; no separate case.
       if (!entry.endsWith('.md')) continue;
       const full = path.join(dir, entry);
       const s = await stat(full);
