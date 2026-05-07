@@ -35,6 +35,14 @@ pub struct BlueGreenSpec {
     /// ppt-web is served at this exact host; api-server at `api.<ppt_apex>`.
     pub ppt_apex: String,
     pub target_name: String,
+    /// Per-service environment variables to inject into each container,
+    /// keyed by short service name (`api`, `reality`, `ppt`, `reality-web`).
+    /// Each value is a list of `KEY=VALUE` strings passed straight to
+    /// Docker. Without this, backend containers panic at startup because
+    /// they can't read `DATABASE_URL` / `JWT_SECRET`. Constructed in the
+    /// HTTP handlers (deploy/promote) where access to secrets and target
+    /// config is centralized.
+    pub service_envs: std::collections::HashMap<String, Vec<String>>,
 }
 
 impl BlueGreenSpec {
@@ -46,6 +54,7 @@ impl BlueGreenSpec {
         rel: &crate::domain::Release,
         target_name: &str,
         target: &crate::config::Target,
+        service_envs: std::collections::HashMap<String, Vec<String>>,
     ) -> crate::Result<Self> {
         fn require(rel: &crate::domain::Release, key: &str) -> crate::Result<String> {
             rel.images.get(key).cloned().ok_or_else(|| {
@@ -64,8 +73,102 @@ impl BlueGreenSpec {
             reality_web_image: require(rel, "reality-web")?,
             reality_apex: target.reality_apex.clone(),
             ppt_apex: target.ppt_apex.clone(),
+            service_envs,
         })
     }
+}
+
+/// Build the per-service environment map for a target deploy.
+///
+/// Reads shared secrets from the deploy-server's own environment
+/// (`POSTGRES_PASSWORD`, `PPT_JWT_SECRET`) and templates per-service env
+/// strings using the target's apex hostnames. Each backend service gets a
+/// dedicated `DATABASE_URL` pointing at `ppt_<target_name>` on the shared
+/// `ppt-postgres` container; both backends share the same JWT secret so
+/// SSO between them works. The Next.js `reality-web` gets the public API
+/// URLs that its `/env.js` route serves to the browser. `ppt-web` is
+/// Vite-built static and currently has nothing useful to inject (its API
+/// URL is baked at build time as the relative path `/api`).
+///
+/// Errors out with a clear `Config` error if the deploy-server's own env
+/// is missing the required secrets — better than starting containers
+/// that crash-loop with empty values.
+pub fn build_service_envs(
+    target_name: &str,
+    target: &crate::config::Target,
+) -> crate::Result<std::collections::HashMap<String, Vec<String>>> {
+    let postgres_password = std::env::var("POSTGRES_PASSWORD").map_err(|_| {
+        crate::DeployError::Config(
+            "POSTGRES_PASSWORD env var is not set; refusing to start backend containers \
+             without a database password. Set it in /etc/ppt-deploy/secrets.env."
+                .into(),
+        )
+    })?;
+    let jwt_secret = std::env::var("PPT_JWT_SECRET").map_err(|_| {
+        crate::DeployError::Config(
+            "PPT_JWT_SECRET env var is not set; refusing to start backend containers \
+             without a JWT secret. Set it in /etc/ppt-deploy/secrets.env."
+                .into(),
+        )
+    })?;
+    if jwt_secret.len() < 32 {
+        return Err(crate::DeployError::Config(
+            "PPT_JWT_SECRET must be at least 32 characters".into(),
+        ));
+    }
+
+    // The `ppt-postgres` container is reachable by name from the
+    // `ppt-<target>` bridge network once it's connected to that network
+    // (see ops docs). Per-target database name pattern: `ppt_<target>`
+    // (e.g. `ppt_prod`, `ppt_staging`) — those databases must exist before
+    // first deploy (ops creates them from `ppt_dev_template`).
+    //
+    // Build the URL via `url::Url::set_password` rather than `format!()` so
+    // passwords containing reserved URL characters (`@`, `:`, `/`, `#`,
+    // etc.) are correctly percent-encoded. Mirrors `PostgresOps::url_for`'s
+    // approach for the same reason.
+    let mut url = url::Url::parse("postgres://ppt@ppt-postgres:5432/").map_err(|e| {
+        crate::DeployError::Config(format!("internal: bad postgres URL template: {e}"))
+    })?;
+    url.set_password(Some(&postgres_password)).map_err(|()| {
+        crate::DeployError::Config("failed to set postgres password on URL".into())
+    })?;
+    url.set_path(&format!("/ppt_{target_name}"));
+    let database_url: String = url.into();
+
+    // CORS allow-list — both UIs and both APIs from this target's tree, so
+    // the browser running on rlt.sk / ppt.rlt.sk can talk to api.rlt.sk
+    // and api.ppt.rlt.sk without 'Access-Control-Allow-Origin' rejections.
+    let cors = format!(
+        "https://{0},https://api.{0},https://{1},https://api.{1}",
+        target.reality_apex, target.ppt_apex
+    );
+
+    let backend_env = vec![
+        format!("DATABASE_URL={database_url}"),
+        format!("JWT_SECRET={jwt_secret}"),
+        format!("CORS_ALLOWED_ORIGINS={cors}"),
+        "RUST_LOG=info".into(),
+    ];
+
+    let mut envs = std::collections::HashMap::new();
+    envs.insert("api".into(), backend_env.clone());
+    envs.insert("reality".into(), backend_env);
+    // Next.js reads window.__ENV__ (served by /env.js) at runtime; the
+    // env.js route handler reads NEXT_PUBLIC_* from process.env.
+    envs.insert(
+        "reality-web".into(),
+        vec![
+            format!("NEXT_PUBLIC_API_URL=https://api.{}", target.reality_apex),
+            format!("NEXT_PUBLIC_SITE_URL=https://{}", target.reality_apex),
+        ],
+    );
+    // ppt-web is a Vite-built static bundle: API URL was inlined at build
+    // time as the relative path `/api` (see docker-frontend.yml build-args).
+    // No runtime env needed today; entry stays so the deployer's env-lookup
+    // is uniform across all four services.
+    envs.insert("ppt".into(), vec![]);
+    Ok(envs)
 }
 
 impl BlueGreenDeployer {
@@ -129,11 +232,17 @@ impl BlueGreenDeployer {
             "blue"
         };
 
+        // Per-service env: if the spec doesn't have an entry for a service
+        // we pass an empty Vec rather than panicking. ppt-web legitimately
+        // has no env today; missing api/reality entries would surface as
+        // crash-looping containers, which is recoverable but bad UX.
+        let env_for = |s: &str| spec.service_envs.get(s).cloned().unwrap_or_default();
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
             8080,
             target_name,
+            env_for("api"),
         )
         .await?;
         self.run_service(
@@ -141,6 +250,7 @@ impl BlueGreenDeployer {
             &spec.reality_image,
             8081,
             target_name,
+            env_for("reality"),
         )
         .await?;
         self.run_service(
@@ -148,6 +258,7 @@ impl BlueGreenDeployer {
             &spec.ppt_web_image,
             80,
             target_name,
+            env_for("ppt"),
         )
         .await?;
         self.run_service(
@@ -155,6 +266,7 @@ impl BlueGreenDeployer {
             &spec.reality_web_image,
             3000,
             target_name,
+            env_for("reality-web"),
         )
         .await?;
 
@@ -225,6 +337,7 @@ impl BlueGreenDeployer {
         image: &str,
         container_port: u16,
         target: &str,
+        env: Vec<String>,
     ) -> Result<()> {
         let docker = self.docker.bollard();
         let _ = docker
@@ -252,6 +365,14 @@ impl BlueGreenDeployer {
         let cfg = Config {
             image: Some(image.to_string()),
             exposed_ports: Some(exposed),
+            // Docker MERGES image env (`Dockerfile ENV`) with container env
+            // — explicitly verified: `docker run -e FOO=bar node:20-alpine env`
+            // still shows the image's `NODE_VERSION` and `PATH`. So setting
+            // `Some(env)` doesn't wipe defaults like `NODE_ENV=production`,
+            // `PORT=3000`, `HOSTNAME=0.0.0.0` baked into reality-web. We
+            // still pass `None` for the empty case as a small clarity win
+            // (no allocation of an empty Vec on the wire).
+            env: if env.is_empty() { None } else { Some(env) },
             host_config: Some(host_config),
             ..Default::default()
         };

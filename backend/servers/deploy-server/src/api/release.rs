@@ -2,8 +2,8 @@
 use crate::config::TargetsConfig;
 use crate::domain::{Release, ReleaseState, TargetKind};
 use crate::infra::{
-    BlueGreenDeployer, BlueGreenSpec, CaddyClient, CallerIdentity, DockerClient, StagingDeploySpec,
-    Store,
+    build_service_envs, BlueGreenDeployer, BlueGreenSpec, CaddyClient, CallerIdentity,
+    DockerClient, StagingDeploySpec, Store,
 };
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
@@ -80,6 +80,7 @@ pub async fn deploy_handler(
         .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
     let images = build_staging_images(&svc.image_prefix, &req.tag);
+    let service_envs = build_service_envs(target.as_str(), target_cfg)?;
 
     let spec = StagingDeploySpec {
         tag: req.tag.clone(),
@@ -90,6 +91,7 @@ pub async fn deploy_handler(
         reality_apex: target_cfg.reality_apex.clone(),
         ppt_apex: target_cfg.ppt_apex.clone(),
         target_name: target.as_str().into(),
+        service_envs,
     };
     let docker = svc
         .docker_pool
@@ -165,7 +167,8 @@ pub async fn wake_handler(
         .targets
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
-    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), target_cfg)?;
+    let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), target_cfg, service_envs)?;
     let docker = svc
         .docker_pool
         .get(target.as_str())
