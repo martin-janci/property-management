@@ -171,10 +171,28 @@ pub fn build_service_envs(
     // Shared baseline both backends need. Per-service additions are made
     // below where they differ (api-server has TOTP+INTEGRATION encryption
     // keys; reality-server has the PM OAuth client secret).
+    //
+    // Several URL-shaped vars (BASE_URL / APP_BASE_URL / API_BASE_URL) are
+    // read by individual modules with localhost defaults that break in
+    // prod (e.g. signed email links pointing at http://localhost:3000).
+    // We inject the right per-target apexes so those modules don't have
+    // to know about the deploy topology.
+    let app_base_url = format!("https://{}", target.ppt_apex);
+    let api_base_url = format!("https://api.{}", target.ppt_apex);
     let mut backend_env = vec![
         format!("DATABASE_URL={database_url}"),
         format!("JWT_SECRET={jwt_secret}"),
         format!("CORS_ALLOWED_ORIGINS={cors}"),
+        // `APP_BASE_URL` is consumed by api-server's EmailService for
+        // verification links; `BASE_URL` is read by routes/agencies and
+        // signatures::DEFAULT_BASE_URL falls back to localhost without it.
+        // Setting both to the PM UI's apex covers both code paths.
+        format!("APP_BASE_URL={app_base_url}"),
+        format!("BASE_URL={app_base_url}"),
+        // `API_BASE_URL` is used by integrations callbacks (e.g. webhook
+        // URLs we hand out to Adobe Sign / DocuSign) and must point at the
+        // public api.<ppt_apex> host the third party can reach.
+        format!("API_BASE_URL={api_base_url}"),
         "RUST_LOG=info".into(),
     ];
 
@@ -194,7 +212,17 @@ pub fn build_service_envs(
     // round-trip flows through Caddy, which already proxies to the active
     // blue/green color — simpler than threading the active-color name into
     // env config.
-    reality_env.push(format!("PM_API_URL=https://api.{}", target.ppt_apex));
+    reality_env.push(format!("PM_API_URL={api_base_url}"));
+    // `SSO_CALLBACK_URL` defaults to `http://localhost:8081/api/v1/sso/callback`
+    // — that endpoint is on reality-server itself, exposed publicly at
+    // `<reality_apex>/api/v1/sso/callback` so the user's browser can reach
+    // it after the OAuth redirect from api-server. Without overriding the
+    // default, the redirect from PM SSO would point at localhost in the
+    // user's browser → broken login.
+    reality_env.push(format!(
+        "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
+        target.reality_apex
+    ));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
@@ -208,10 +236,14 @@ pub fn build_service_envs(
             format!("NEXT_PUBLIC_SITE_URL=https://{}", target.reality_apex),
         ],
     );
-    // ppt-web is a Vite-built static bundle: API URL was inlined at build
+    // ppt-web is a Vite-built static bundle: API URL is inlined at build
     // time as the relative path `/api` (see docker-frontend.yml build-args).
-    // No runtime env needed today; entry stays so the deployer's env-lookup
-    // is uniform across all four services.
+    // The cross-origin shim happens at request time inside the container's
+    // own nginx — `/api/` and `/ws/` are proxied to the matching color of
+    // api-server in the same network. The two BG_* vars that drive that
+    // proxy upstream are appended in `BlueGreenDeployer::deploy` because
+    // the color is only known after the next-color decision; this entry
+    // stays empty here.
     envs.insert("ppt".into(), vec![]);
     Ok(envs)
 }
@@ -278,10 +310,17 @@ impl BlueGreenDeployer {
         };
 
         // Per-service env: if the spec doesn't have an entry for a service
-        // we pass an empty Vec rather than panicking. ppt-web legitimately
-        // has no env today; missing api/reality entries would surface as
-        // crash-looping containers, which is recoverable but bad UX.
+        // we pass an empty Vec rather than panicking. Missing api/reality
+        // entries would surface as crash-looping containers (recoverable,
+        // but bad UX). ppt-web's `BG_TARGET` / `BG_COLOR` are appended
+        // here because the color is only known at this point — the
+        // ppt-web image's nginx renders /api and /ws proxy upstreams from
+        // them at startup so SPA fetches reach the same-color api-server
+        // in the same Docker network.
         let env_for = |s: &str| spec.service_envs.get(s).cloned().unwrap_or_default();
+        let mut ppt_env = env_for("ppt");
+        ppt_env.push(format!("BG_TARGET={target_name}"));
+        ppt_env.push(format!("BG_COLOR={next_color}"));
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
@@ -298,12 +337,19 @@ impl BlueGreenDeployer {
             env_for("reality"),
         )
         .await?;
+        // ppt-web's nginx listens on 8080 (see docker/frontend/ppt-web.Dockerfile —
+        // `EXPOSE 8080` matched by `listen 8080` in the rendered nginx
+        // config). Earlier code passed 80 here and in the Caddy upstream
+        // below, which would have refused the connection on the bridge
+        // network — caught when this PR's nginx changes were first wired
+        // up. Aligning to 8080 across run_service / wait_until_ready /
+        // register_route.
         self.run_service(
             &format!("{target_name}-ppt-{next_color}"),
             &spec.ppt_web_image,
-            80,
+            8080,
             target_name,
-            env_for("ppt"),
+            ppt_env,
         )
         .await?;
         self.run_service(
@@ -316,11 +362,15 @@ impl BlueGreenDeployer {
         .await?;
 
         // Wait for each container to reach a ready state before flipping Caddy upstream.
-        self.wait_until_ready(&format!("{target_name}-api-{next_color}"), 8080, 30)
+        // Backends (api / reality) get a longer timeout because they run all DB
+        // migrations on first boot of a fresh target DB before binding the
+        // listener — 30s wasn't enough head-room on a cold `ppt_prod` /
+        // `ppt_staging`. Frontends stay on 30s; they bind sooner.
+        self.wait_until_ready(&format!("{target_name}-api-{next_color}"), 8080, 90)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 30)
+        self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 90)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 80, 30)
+        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 8080, 30)
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
@@ -347,7 +397,7 @@ impl BlueGreenDeployer {
             )
             .await?;
         self.caddy
-            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:80"))
+            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:8080"))
             .await?;
         self.caddy
             .register_route(
@@ -444,20 +494,28 @@ impl BlueGreenDeployer {
     /// The deploy-server host doesn't share the `ppt-{target}` bridge network with the
     /// staging containers, so we can't TCP-connect to `container_name:port` directly.
     /// Instead, we inspect the container and treat it as ready when:
-    ///   - a Docker healthcheck is configured AND has reported HEALTHY, OR
-    ///   - no healthcheck exists, but the container has been in `running` state
-    ///     for at least `grace` seconds (typical axum/next.js processes bind their
-    ///     listener within the first 2-3 seconds).
+    ///   1. a Docker healthcheck is configured AND has reported HEALTHY, OR
+    ///   2. a Docker healthcheck is configured but is still STARTING — keep
+    ///      polling until it transitions to HEALTHY/UNHEALTHY (or the overall
+    ///      `timeout_secs` elapses), OR
+    ///   3. no healthcheck is configured (or status is Empty/None), but the
+    ///      container has been in `running` state for at least `grace` seconds
+    ///      (typical axum/next.js processes bind their listener within 2-3s).
     ///
-    /// This eliminates the worst 502 windows (image still pulling, container exited
-    /// immediately) while keeping the dependency surface small. A future pass should
-    /// either join the bridge network or expose a host-side port for a real probe.
+    /// Distinguishing STARTING from "no healthcheck" matters when the app does
+    /// real startup work — e.g. api-server runs ~100 SQL migrations on first
+    /// boot of a fresh target DB, which takes longer than the 3s `grace`. The
+    /// previous logic would treat the container as ready on `grace` regardless
+    /// of healthcheck state, flipping Caddy upstream BEFORE `/health` could
+    /// pass and producing a 502 window. Holding off until HEALTHY (or timeout)
+    /// fixes that race.
     async fn wait_until_ready(
         &self,
         container_name: &str,
         _container_port: u16,
         timeout_secs: u64,
     ) -> crate::Result<()> {
+        use bollard::models::HealthStatusEnum;
         use std::time::Duration;
         use tokio::time::sleep;
 
@@ -474,15 +532,33 @@ impl BlueGreenDeployer {
                     let health = state.and_then(|s| s.health.as_ref()).and_then(|h| h.status);
 
                     if running {
-                        // If a healthcheck is configured AND it has reported healthy → ready immediately.
-                        if matches!(health, Some(bollard::models::HealthStatusEnum::HEALTHY)) {
-                            return Ok(());
-                        }
-                        // No healthcheck (or still starting): running for >=grace seconds → assume ready.
-                        let now = std::time::Instant::now();
-                        let first = first_running_at.get_or_insert(now);
-                        if now.duration_since(*first) >= grace {
-                            return Ok(());
+                        match health {
+                            Some(HealthStatusEnum::HEALTHY) => return Ok(()),
+                            Some(HealthStatusEnum::UNHEALTHY) => {
+                                return Err(crate::DeployError::Internal(format!(
+                                    "container {container_name} reported UNHEALTHY"
+                                )));
+                            }
+                            // STARTING: a healthcheck is configured and the
+                            // app is still warming up (e.g. running migrations
+                            // before binding the listener). Keep polling — do
+                            // NOT fall back to the grace heuristic, because
+                            // that would flip Caddy before `/health` succeeds.
+                            Some(HealthStatusEnum::STARTING) => {
+                                // intentionally fall through to next poll
+                            }
+                            // No healthcheck (None) or status Empty: fall back
+                            // to the original "running for grace seconds"
+                            // heuristic. Keeps support for static images
+                            // (e.g. ppt-web nginx) that don't always have a
+                            // healthcheck wired up.
+                            _ => {
+                                let now = std::time::Instant::now();
+                                let first = first_running_at.get_or_insert(now);
+                                if now.duration_since(*first) >= grace {
+                                    return Ok(());
+                                }
+                            }
                         }
                     } else {
                         first_running_at = None;

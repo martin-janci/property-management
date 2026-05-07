@@ -298,6 +298,22 @@ async fn main() -> anyhow::Result<()> {
     let db = db::create_rls_safe_pool(&database_url).await?;
     tracing::info!("Connected to database with RLS-safe pool");
 
+    // Apply any pending migrations. Same migration set as api-server (both
+    // share the per-target Postgres database). Concurrency-safe via sqlx's
+    // advisory lock — if api-server happens to be migrating in parallel
+    // (typical blue/green spin-up), this call blocks then sees zero pending.
+    // Required on first deploy of a fresh target where the database was
+    // created empty from `ppt_dev_template`.
+    // `.context()` preserves the underlying `MigrateError` as the source
+    // for anyhow's chained-error rendering — `map_err(|e| anyhow!("{e}"))`
+    // would have flattened the cause into a single string and lost the
+    // backtrace.
+    use anyhow::Context;
+    db::run_migrations(&db)
+        .await
+        .context("DB migration failed")?;
+    tracing::info!("Database migrations applied (or already current)");
+
     // Create application state
     let state = AppState::new(db);
 

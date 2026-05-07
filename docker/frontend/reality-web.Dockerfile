@@ -35,11 +35,28 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Copy dependencies from deps stage
+# Copy dependencies from deps stage. Every workspace package whose source
+# is imported (transitively) by the reality-web build needs its own
+# `node_modules` here — pnpm's isolated/symlink layout gives each package
+# directory its own resolution. Missing `packages/dev-panel/node_modules`
+# was the root of the docker-frontend.yml CI break since the dev-panel
+# landed: reality-web's `[locale]/layout.tsx` imports `<DevPanelMount />`,
+# which pulls in `@ppt/dev-panel`, whose source imports `react` — and
+# `next build`'s type-check phase failed with
+# `Cannot find module 'react'` because dev-panel's @types/react wasn't
+# materialized in its package directory.
+#
+# Adding `dev-panel` (the new culprit) plus `sitemap` (next-on-the-list
+# transitive workspace dep) to the explicit copy list. ppt-web's
+# Dockerfile sidesteps this by `COPY --from=deps /app/ ./` (whole tree);
+# reality-web keeps the selective list because next.js's standalone
+# output expects this exact layout for the runtime image.
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=deps /app/packages/ui-kit/node_modules ./packages/ui-kit/node_modules
 COPY --from=deps /app/packages/reality-api-client/node_modules ./packages/reality-api-client/node_modules
+COPY --from=deps /app/packages/dev-panel/node_modules ./packages/dev-panel/node_modules
+COPY --from=deps /app/packages/sitemap/node_modules ./packages/sitemap/node_modules
 COPY --from=deps /app/apps/reality-web/node_modules ./apps/reality-web/node_modules
 
 # Copy source
