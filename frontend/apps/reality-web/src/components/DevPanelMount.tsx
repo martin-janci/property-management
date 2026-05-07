@@ -1,5 +1,5 @@
 'use client';
-import { DevPanel, type ApiMode } from '@ppt/dev-panel';
+import { type ApiMode, DevPanel } from '@ppt/dev-panel';
 import { useEffect, useState } from 'react';
 
 export function DevPanelMount() {
@@ -26,10 +26,5 @@ export function DevPanelMount() {
   if (!mounted) return null; // avoid SSR mismatch
 
   const defaultMode = (process.env.NEXT_PUBLIC_API_DEFAULT as ApiMode) || 'local';
-  return (
-    <DevPanel
-      defaultMode={defaultMode}
-      onModeChange={() => window.location.reload()}
-    />
-  );
+  return <DevPanel defaultMode={defaultMode} onModeChange={() => window.location.reload()} />;
 }

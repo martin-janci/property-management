@@ -1,5 +1,5 @@
 // frontend/packages/dev-panel/src/store.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getMode, setMode } from './store';
 
 describe('dev panel store', () => {

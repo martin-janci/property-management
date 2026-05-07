@@ -1,6 +1,7 @@
 // frontend/packages/dev-panel/src/DevPanel.tsx
-import React, { useState } from 'react';
-import { ApiMode, getMode, setMode } from './store';
+import type React from 'react';
+import { useState } from 'react';
+import { type ApiMode, getMode, setMode } from './store';
 
 export interface DevPanelProps {
   defaultMode: ApiMode;
@@ -46,12 +47,12 @@ export const DevPanel: React.FC<DevPanelProps> = ({
         </select>
       </div>
       {mode === 'mock' && onReseedMock && (
-        <button onClick={onReseedMock} style={{ marginTop: 4 }}>
+        <button type="button" onClick={onReseedMock} style={{ marginTop: 4 }}>
           Re-seed mock
         </button>
       )}
       {onSnapshotState && (
-        <button onClick={onSnapshotState} style={{ marginTop: 4 }}>
+        <button type="button" onClick={onSnapshotState} style={{ marginTop: 4 }}>
           Snapshot state
         </button>
       )}

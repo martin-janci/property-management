@@ -1,7 +1,7 @@
 import '@ppt/ui-kit/tokens.css'; // Design system tokens (colors, spacing, type, dark mode)
 import './index.css'; // Tailwind base + components + utilities + minimal app shell styles
 import { OpenAPI } from '@ppt/api-client';
-import { DevPanel, type ApiMode, getMode } from '@ppt/dev-panel';
+import { type ApiMode, DevPanel, getMode } from '@ppt/dev-panel';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -40,10 +40,7 @@ async function bootstrap() {
         </QueryClientProvider>
       </ErrorBoundary>
       {import.meta.env.DEV && (
-        <DevPanel
-          defaultMode={defaultMode}
-          onModeChange={() => window.location.reload()}
-        />
+        <DevPanel defaultMode={defaultMode} onModeChange={() => window.location.reload()} />
       )}
     </React.StrictMode>
   );

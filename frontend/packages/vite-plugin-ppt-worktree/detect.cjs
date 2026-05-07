@@ -15,7 +15,10 @@ function detectWorktree(cwd = process.cwd()) {
   try {
     const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd, encoding: 'utf8' }).trim();
     const sanitized = sanitize(branch);
-    const gitCommonDir = execSync('git rev-parse --git-common-dir', { cwd, encoding: 'utf8' }).trim();
+    const gitCommonDir = execSync('git rev-parse --git-common-dir', {
+      cwd,
+      encoding: 'utf8',
+    }).trim();
     const gitDir = execSync('git rev-parse --git-dir', { cwd, encoding: 'utf8' }).trim();
     const isWorktree = resolve(cwd, gitDir) !== resolve(cwd, gitCommonDir);
     return { name: sanitized, branch, isWorktree };
