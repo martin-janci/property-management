@@ -89,14 +89,12 @@ pub fn build(
 
     // Public routes — explicitly NOT behind auth middleware.
     // /health is a basic readiness probe; webhook uses HMAC signature verification instead of bearer auth.
-    let public = Router::new()
-        .route("/health", get(health::handler))
-        .merge(
-            Router::new()
-                .route("/api/webhook/github", post(webhook::handler))
-                .with_state((svc, webhook_cfg))
-                .layer(axum::extract::DefaultBodyLimit::max(64 * 1024)),
-        );
+    let public = Router::new().route("/health", get(health::handler)).merge(
+        Router::new()
+            .route("/api/webhook/github", post(webhook::handler))
+            .with_state((svc, webhook_cfg))
+            .layer(axum::extract::DefaultBodyLimit::max(64 * 1024)),
+    );
 
     Router::new().merge(authenticated).merge(public)
 }
