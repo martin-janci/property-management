@@ -224,7 +224,7 @@ All skills dispatch via the `/screens <subcommand>` slash command in `.claude/co
 
 **Purpose:** the human-driven Visual Review with a per-screen working page.
 
-**Args:** `--product=ppt|reality` (optional), `--filter=<frontmatter-query>` (optional, e.g. `redesignStatus:in-progress`).
+**Args:** `--product=ppt|reality` (optional), `--filter=<frontmatter-query>` (optional, e.g. `redesignStatus:in-progress`), `--preview=local|staging` (optional, default `local` if `pnpm dev` is running, else `staging`).
 
 **Flow:**
 
@@ -276,7 +276,9 @@ All skills dispatch via the `/screens <subcommand>` slash command in `.claude/co
 2. Load referenced sitemap entries, OpenAPI snippets for endpoints.
 3. Load source files for `BuildingDetailPage.tsx` and the mobile screen.
 4. Load referenced diagrams.
-5. Optionally invoke Playwright on `/buildings/:id` to take a screenshot if `pnpm dev` is running.
+5. Optionally invoke Playwright on `/buildings/:id` to take a screenshot. Preview source picks one of:
+   - **Local** — local `pnpm dev` on `localhost:5173` (default when running).
+   - **Staging** — deployed branch on `ppt.rlt.sk` / `www.rlt.sk` via the `rlt-deploy` skill. Use when local dev is impractical (auth-protected routes, deployed-only middleware, real API data, multi-tenant flows). Worktrees can be pushed and deployed independently.
 6. Return an agent-friendly summary.
 
 **Use case:** prefix any implementation task on a known screen with `/screens edit <id>` so the agent loads canonical context instead of fishing for it.
@@ -339,13 +341,13 @@ GET  /api/designs/:adapter/:frame-id   → image stream (proxied from DesignSour
 ├────────────────────────────────┬─────────────────────────────────┤
 │ LEFT (metadata + checklists)   │ RIGHT (preview)                 │
 │ Status: shipped, redesign:     │ ┌─────────────────────────────┐ │
-│   in-progress (mobile)         │ │ iframe localhost:5173/...   │ │
-│                                │ │                             │ │
+│   in-progress (mobile)         │ │ iframe: localhost:5173/...  │ │
+│                                │ │   OR ppt.rlt.sk/... (staging)│ │
 │ Functionality (per item):      │ │     [live ppt-web]          │ │
 │ ☑ View building info ──[ok]   │ └─────────────────────────────┘ │
 │   [add note...]                │                                 │
-│ ☑ List units ─────────[ok]    │ Toggle: [Live app] [Design ZIP]│
-│ ☐ Edit info → modal           │         [Side-by-side]          │
+│ ☑ List units ─────────[ok]    │ Toggle: [Local] [Staging]      │
+│ ☐ Edit info → modal           │         [Design ZIP] [Side-by-side]│
 │   ⚠ Note: "missing on mobile"│                                  │
 │                                │                                 │
 │ States: empty / loading / err │                                  │
@@ -357,7 +359,18 @@ GET  /api/designs/:adapter/:frame-id   → image stream (proxied from DesignSour
 └────────────────────────────────┴─────────────────────────────────┘
 ```
 
-### 6.4 Security & lifecycle
+### 6.4 Preview source
+
+`PreviewPane` resolves the iframe URL based on `--preview` flag and runtime detection:
+
+- `local` (default if `pnpm dev` reachable): iframe `http://localhost:5173/<route>` for `ppt-web` or `:3000/<route>` for `reality-web`.
+- `staging`: iframe the deployed app served from the `rlt-deploy` infrastructure — `https://ppt.rlt.sk/<route>` for `ppt-web`, `https://www.rlt.sk/<route>` for `reality-web`. Use this when (a) local dev is impractical, (b) the route is auth-protected and a real session exists on staging, (c) the feature requires real API data the user wants to verify against.
+- `design`: render the `DesignSource` frame instead of an iframe.
+- `side-by-side`: split pane (e.g. live vs. design).
+
+Worktree-scoped staging: a worktree branch can be deployed via the `rlt-deploy` skill so review session preview-points at *its own* branch, not main. Useful when reviewing in-progress redesign work before merge.
+
+### 6.5 Security & lifecycle
 
 - Bind to `127.0.0.1` only.
 - Random session token in URL; API rejects requests without matching token.
@@ -496,4 +509,4 @@ These can each become follow-up iterations once v1 is in active use.
 | 2 | Interactive grouping in `screen-map-init` is a slow human-in-the-loop step. | First run can take a session; subsequent updates use `screen-map-update` which is incremental. |
 | 3 | ZIP design import requires manifest convention; teams without it cannot use the adapter. | Document the manifest.json shape in `docs/screens/README.md`. Ship a small CLI to generate it from a Figma export if needed. |
 | 4 | Pre-commit hook may slow commits on large screen-map edits. | Validate only changed files in pre-commit; full validate runs in CI. |
-| 5 | Visual Review server iframe-ing live app may break on auth-protected routes. | Server can pre-fill a dev-mode session token / mock auth; documented in review README. |
+| 5 | Visual Review server iframe-ing live app may break on auth-protected routes. | Two paths: (a) local dev session token / mock auth documented in review README; (b) point preview at deployed staging via `rlt-deploy` skill (worktree-deployable), where a real session is established. Documented in Section 6.4. |
