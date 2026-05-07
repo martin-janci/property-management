@@ -283,6 +283,19 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = db::create_rls_safe_pool(&database_url).await?;
     tracing::info!("Connected to database with RLS-safe pool");
 
+    // Apply any pending migrations from `backend/crates/db/migrations/`. The
+    // sqlx migrator is idempotent and uses a Postgres advisory lock, so a
+    // concurrent `reality-server` startup against the same DB is safe — the
+    // second caller blocks until the first finishes, then sees zero pending.
+    // Critical on first deploy of a fresh target: `ppt_prod` / `ppt_staging`
+    // are empty databases (created from `ppt_dev_template` which is also
+    // empty); without this call the first request would fail with
+    // `relation "users" does not exist`.
+    db::run_migrations(&db_pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("DB migration failed: {e}"))?;
+    tracing::info!("Database migrations applied (or already current)");
+
     // Create email service (development mode by default)
     let email_enabled = std::env::var("EMAIL_ENABLED")
         .map(|v| v == "true" || v == "1")
