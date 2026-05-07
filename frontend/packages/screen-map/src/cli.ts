@@ -2,8 +2,14 @@
 import path from 'node:path';
 import { Command } from 'commander';
 import { buildValidationContext } from './context.js';
+import { createDesignSource } from './design-source/index.js';
 import { discoverScreenMaps } from './discover.js';
+import { loadScreenContext } from './edit-context.js';
+import { type GroupingDecision, mergeCandidates } from './grouping.js';
+import { bulkWriteScreenMaps } from './init-write.js';
 import { ScreenMapParseError, parseScreenMap } from './parse.js';
+import { startReviewServer } from './review-server/start.js';
+import { scanCandidates } from './scan.js';
 import { validateScreenMap } from './validate.js';
 
 const program = new Command();
@@ -54,6 +60,91 @@ program
     );
     if (opts.strict && totalErrors > 0) process.exit(1);
   });
+
+program
+  .command('init')
+  .description('scan + interactive grouping + bulk-write screen-maps for a product')
+  .requiredOption('--product <name>', 'ppt | reality')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--designs <zipPath>', 'DesignSource ZIP file')
+  .option('--add <names...>', 'user-added candidate names')
+  .option('--decisions <jsonPath>', 'JSON file with grouping decisions (skip interactive prompt)')
+  .option('--force', 'overwrite existing screen-maps', false)
+  .action(
+    async (opts: {
+      product: 'ppt' | 'reality';
+      root: string;
+      designs?: string;
+      add?: string[];
+      decisions?: string;
+      force: boolean;
+    }) => {
+      const repoRoot = path.resolve(opts.root);
+      const designSource = opts.designs
+        ? await createDesignSource({ adapter: 'zip', file: opts.designs }, { repoRoot })
+        : undefined;
+      const candidates = await scanCandidates({
+        product: opts.product,
+        repoRoot,
+        sources: {
+          sitemap: true,
+          useCases: true,
+          epics: true,
+          designSource,
+          userAdd: opts.add ?? [],
+        },
+      });
+      let decisions: GroupingDecision[] = [];
+      if (opts.decisions) {
+        const fs = await import('node:fs/promises');
+        decisions = JSON.parse(await fs.readFile(opts.decisions, 'utf8'));
+      }
+      const concepts = mergeCandidates(candidates, decisions);
+      const screensDir = path.join(repoRoot, 'docs/screens');
+      const written = await bulkWriteScreenMaps(concepts, screensDir, { force: opts.force });
+      process.stdout.write(`Wrote ${written.length} screen-maps under ${screensDir}\n`);
+      for (const file of written) process.stdout.write(`  + ${path.relative(repoRoot, file)}\n`);
+    }
+  );
+
+program
+  .command('edit <id>')
+  .description('print a markdown context summary for one screen')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--playwright', 'capture a screenshot via Playwright', false)
+  .action(async (id: string, opts: { root: string; playwright: boolean }) => {
+    const repoRoot = path.resolve(opts.root);
+    const summary = await loadScreenContext(id, {
+      repoRoot,
+      includePlaywright: opts.playwright,
+    });
+    process.stdout.write(`${summary}\n`);
+  });
+
+program
+  .command('review')
+  .description('spawn the Visual Review server and open the browser')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--product <name>', 'ppt | reality')
+  .option('--preview <mode>', 'local | staging | design', 'local')
+  .action(
+    async (opts: {
+      root: string;
+      product?: 'ppt' | 'reality';
+      preview: 'local' | 'staging' | 'design';
+    }) => {
+      const repoRoot = path.resolve(opts.root);
+      const result = await startReviewServer({
+        repoRoot,
+        product: opts.product,
+        preview: opts.preview,
+      });
+      process.stdout.write(`Review server running at ${result.url}\n`);
+      process.stdout.write('Press Ctrl-C to stop.\n');
+      // Keep the process alive — SIGINT handler in start.ts handles shutdown.
+      await new Promise(() => {});
+    }
+  );
 
 program.parseAsync().catch((err) => {
   process.stderr.write(`Unexpected error: ${(err as Error).message}\n`);
