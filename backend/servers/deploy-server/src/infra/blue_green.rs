@@ -93,21 +93,22 @@ impl BlueGreenDeployer {
         }
 
         // Decide next_color: the color that has FEWER (or no) live services.
-        // Tie-breaker (both 0 or equal): "blue" — first deploy goes blue.
+        // Tie-breaker: "blue" for first deploy AND for mixed state (split-recovery).
+        // We log the mixed-state path explicitly because it's an unusual recovery action.
         let next_color = if blue_count > green_count {
             "green"
         } else if green_count > blue_count {
             "blue"
-        } else if blue_count == 0 && green_count == 0 {
-            "blue" // first deploy
         } else {
-            // Tied with both running — partial mixed state. Pick "blue" to recover but log warning.
-            tracing::warn!(
-                target = %target_name,
-                blue_count,
-                green_count,
-                "blue/green target is in mixed state — both colors have running services; recovering by deploying blue"
-            );
+            // blue_count == green_count: either both 0 (cold start) or both > 0 (mixed state).
+            if blue_count > 0 {
+                tracing::warn!(
+                    target = %target_name,
+                    blue_count,
+                    green_count,
+                    "blue/green target is in mixed state — both colors have running services; recovering by deploying blue"
+                );
+            }
             "blue"
         };
         let prev_color = if next_color == "blue" {
