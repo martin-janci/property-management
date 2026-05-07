@@ -171,10 +171,28 @@ pub fn build_service_envs(
     // Shared baseline both backends need. Per-service additions are made
     // below where they differ (api-server has TOTP+INTEGRATION encryption
     // keys; reality-server has the PM OAuth client secret).
+    //
+    // Several URL-shaped vars (BASE_URL / APP_BASE_URL / API_BASE_URL) are
+    // read by individual modules with localhost defaults that break in
+    // prod (e.g. signed email links pointing at http://localhost:3000).
+    // We inject the right per-target apexes so those modules don't have
+    // to know about the deploy topology.
+    let app_base_url = format!("https://{}", target.ppt_apex);
+    let api_base_url = format!("https://api.{}", target.ppt_apex);
     let mut backend_env = vec![
         format!("DATABASE_URL={database_url}"),
         format!("JWT_SECRET={jwt_secret}"),
         format!("CORS_ALLOWED_ORIGINS={cors}"),
+        // `APP_BASE_URL` is consumed by api-server's EmailService for
+        // verification links; `BASE_URL` is read by routes/agencies and
+        // signatures::DEFAULT_BASE_URL falls back to localhost without it.
+        // Setting both to the PM UI's apex covers both code paths.
+        format!("APP_BASE_URL={app_base_url}"),
+        format!("BASE_URL={app_base_url}"),
+        // `API_BASE_URL` is used by integrations callbacks (e.g. webhook
+        // URLs we hand out to Adobe Sign / DocuSign) and must point at the
+        // public api.<ppt_apex> host the third party can reach.
+        format!("API_BASE_URL={api_base_url}"),
         "RUST_LOG=info".into(),
     ];
 
@@ -194,7 +212,17 @@ pub fn build_service_envs(
     // round-trip flows through Caddy, which already proxies to the active
     // blue/green color — simpler than threading the active-color name into
     // env config.
-    reality_env.push(format!("PM_API_URL=https://api.{}", target.ppt_apex));
+    reality_env.push(format!("PM_API_URL={api_base_url}"));
+    // `SSO_CALLBACK_URL` defaults to `http://localhost:8081/api/v1/sso/callback`
+    // — that endpoint is on reality-server itself, exposed publicly at
+    // `<reality_apex>/api/v1/sso/callback` so the user's browser can reach
+    // it after the OAuth redirect from api-server. Without overriding the
+    // default, the redirect from PM SSO would point at localhost in the
+    // user's browser → broken login.
+    reality_env.push(format!(
+        "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
+        target.reality_apex
+    ));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
