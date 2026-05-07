@@ -17,6 +17,14 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    // Vite 5+ rejects requests whose Host header doesn't match a small
+    // built-in allowlist (localhost variants only). Worktree dev runs reach
+    // the container via the deploy-server's Caddy reverse proxy at hosts like
+    // `wt-<name>.dev.ppt.rlt.sk` — without this they 403 with
+    // `Blocked request. This host (...) is not allowed`.
+    // `true` accepts any host header; only ever applied in `vite dev`,
+    // production builds don't run a server.
+    allowedHosts: true,
     // Proxy /api/* to the api-server in local dev so relative-path fetches
     // (OpenAPI.BASE = '' and VITE_API_BASE_URL = '') resolve correctly without
     // setting VITE_API_URL. In production VITE_API_URL must be set explicitly.

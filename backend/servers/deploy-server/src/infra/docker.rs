@@ -87,6 +87,35 @@ impl DockerClient {
         }
     }
 
+    /// Resolve a container's IPv4 address on the default `bridge` network.
+    ///
+    /// Used to construct Caddy reverse-proxy upstreams that point at the
+    /// container directly rather than at `127.0.0.1:<host_port>`. The latter
+    /// fails when Caddy itself runs in a container — its loopback is its own,
+    /// not the host's. The bridge network is shared with `ppt-caddy` so the
+    /// container IP is reachable from there.
+    ///
+    /// Caveat: bridge IPs are NOT stable across container restarts on the
+    /// default bridge network. For full stability, switch worktree+Caddy
+    /// containers to a user-defined network and use container *names* as
+    /// upstreams (Docker's embedded DNS resolves them); tracked as a
+    /// follow-up.
+    pub async fn bridge_ip(&self, name: &str) -> Result<String> {
+        let info = self.docker.inspect_container(name, None).await?;
+        info.network_settings
+            .and_then(|ns| {
+                ns.networks
+                    .and_then(|nets| nets.get("bridge").cloned())
+                    .and_then(|n| n.ip_address)
+            })
+            .filter(|s| !s.is_empty())
+            .ok_or_else(|| {
+                crate::DeployError::Internal(format!(
+                    "container {name} has no bridge network IP yet"
+                ))
+            })
+    }
+
     pub async fn run_frontend_dev(&self, spec: &FrontendDevSpec) -> Result<String> {
         // Idempotency: remove existing container with the same name first.
         let _ = self

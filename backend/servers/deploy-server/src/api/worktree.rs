@@ -139,13 +139,27 @@ pub async fn open_handler(
         .await?;
 
     // 4. Register frontend Caddy routes.
+    //
+    // Upstream MUST be the container's docker-bridge IP (not the host's
+    // `127.0.0.1:<host_port>`). Caddy itself runs in a container; its
+    // loopback is its own, not the host's. Pointing at the bridge IP works
+    // because Caddy and the worktree dev containers share the default bridge
+    // network. The container's *internal* port is also fixed by the
+    // `ppt-frontend-dev:local` Dockerfile (5173 for Vite/ppt-web, 3000 for
+    // Next/reality-web).
+    //
+    // Caveat: default-bridge IPs aren't stable across container restarts.
+    // Tracked as a follow-up to migrate to a user-defined network with
+    // container-name DNS, which would survive restarts.
+    let ppt_bridge_ip = svc.docker.bridge_ip(&ppt_container).await?;
+    let reality_bridge_ip = svc.docker.bridge_ip(&reality_container).await?;
     let host_ppt = format!("wt-{name}.{}", svc.domain_dev_ppt);
     let host_reality = format!("wt-{name}.{}", svc.domain_dev_reality);
     svc.caddy
-        .register_route(&host_ppt, &format!("127.0.0.1:{port_ppt}"))
+        .register_route(&host_ppt, &format!("{ppt_bridge_ip}:5173"))
         .await?;
     svc.caddy
-        .register_route(&host_reality, &format!("127.0.0.1:{port_reality}"))
+        .register_route(&host_reality, &format!("{reality_bridge_ip}:3000"))
         .await?;
 
     let mut containers = vec![ppt_container, reality_container];
@@ -288,10 +302,12 @@ pub async fn open_handler(
                 })
                 .await?;
 
-            // Caddy routes for backend
+            // Caddy routes for backend — same bridge-IP rationale as the
+            // frontend routes above. api container's internal port is 8080.
+            let api_bridge_ip = svc.docker.bridge_ip(&api_c).await?;
             let host_api = format!("api.wt-{name}.{}", svc.domain_dev_ppt);
             svc.caddy
-                .register_route(&host_api, &format!("127.0.0.1:{api_port}"))
+                .register_route(&host_api, &format!("{api_bridge_ip}:8080"))
                 .await?;
             api_url = Some(format!("https://{host_api}"));
 
