@@ -38,6 +38,9 @@ allow = [
     "BSD-2-Clause",
     "Zlib",
     "OpenSSL",
+    # 0BSD (BSD Zero Clause) is OSI-approved and effectively public-domain.
+    # Pulled in by `quoted_printable` (transitive of `lettre`).
+    "0BSD",
 ]
 confidence-threshold = 0.8
 
