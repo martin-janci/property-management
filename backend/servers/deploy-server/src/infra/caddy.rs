@@ -125,29 +125,110 @@ mod tests {
     use super::*;
     use httpmock::prelude::*;
 
+    /// Spin up a tiny in-process axum server that records the arrival order
+    /// of every request (method) and lets the caller program the DELETE
+    /// status sequence. Returns `(addr, log, server_task)`. Caller aborts
+    /// `server_task` after asserting on `log`.
+    ///
+    /// Why bespoke instead of httpmock: httpmock 0.7 doesn't expose request
+    /// arrival order or stateful response sequences, both of which we need
+    /// to assert that DELETE strictly precedes POST and that the DELETE
+    /// loop terminates exactly when 404 arrives.
+    async fn spawn_caddy_stub(
+        delete_status_sequence: Vec<u16>,
+    ) -> (
+        std::net::SocketAddr,
+        std::sync::Arc<std::sync::Mutex<Vec<&'static str>>>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::{Arc, Mutex};
+
+        let log: Arc<Mutex<Vec<&'static str>>> = Arc::new(Mutex::new(Vec::new()));
+        let delete_idx = Arc::new(AtomicUsize::new(0));
+        let delete_seq = Arc::new(delete_status_sequence);
+
+        let log_d = log.clone();
+        let log_p = log.clone();
+        let di = delete_idx.clone();
+        let ds = delete_seq.clone();
+
+        let app = axum::Router::new()
+            .route(
+                "/id/*tail",
+                axum::routing::delete(move || {
+                    let log = log_d.clone();
+                    let idx = di.clone();
+                    let seq = ds.clone();
+                    async move {
+                        log.lock().unwrap().push("DELETE");
+                        let n = idx.fetch_add(1, Ordering::SeqCst);
+                        let status = seq.get(n).copied().unwrap_or(404);
+                        axum::http::StatusCode::from_u16(status).unwrap()
+                    }
+                }),
+            )
+            .route(
+                "/config/apps/http/servers/srv0/routes/...",
+                axum::routing::post(move || {
+                    let log = log_p.clone();
+                    async move {
+                        log.lock().unwrap().push("POST");
+                        axum::http::StatusCode::OK
+                    }
+                }),
+            );
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server_task = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        (addr, log, server_task)
+    }
+
     #[tokio::test]
-    async fn register_route_does_delete_then_post() {
-        // Happy path: no stale routes exist, DELETE returns 404 immediately,
-        // POST appends the fresh route. Mirrors the typical first-deploy
-        // behaviour of a clean Caddy.
-        let server = MockServer::start();
-        let delete_mock = server.mock(|when, then| {
-            when.method(DELETE)
-                .path_contains("/id/ppt-deploy-wt-uc14-dev-ppt-rlt-sk");
-            then.status(404);
-        });
-        let post_mock = server.mock(|when, then| {
-            when.method(POST)
-                .path("/config/apps/http/servers/srv0/routes/...");
-            then.status(200);
-        });
-        let client = CaddyClient::new(server.base_url());
+    async fn register_route_does_delete_strictly_before_post() {
+        // Happy path: no stale routes. DELETE returns 404 immediately, then
+        // POST appends one fresh route. Asserts the EXACT arrival order
+        // (`["DELETE", "POST"]`) so a refactor that swapped the calls would
+        // fail loudly — not just hit counts that swapping would still pass.
+        let (addr, log, task) = spawn_caddy_stub(vec![404]).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
         client
             .register_route("wt-uc14.dev.ppt.rlt.sk", "127.0.0.1:51001")
             .await
             .unwrap();
-        delete_mock.assert();
-        post_mock.assert();
+
+        let final_log = log.lock().unwrap().clone();
+        assert_eq!(
+            final_log,
+            vec!["DELETE", "POST"],
+            "happy path must be DELETE then POST in that order"
+        );
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn register_route_sweeps_existing_duplicates_then_posts_once() {
+        // Caddy holds two stale duplicate routes for this `@id` (older
+        // deploy-server versions could leave them). The DELETE loop must
+        // run three times — 200, 200, 404 — before a single POST appends
+        // the fresh route. Order matters, so we assert the entire log.
+        let (addr, log, task) = spawn_caddy_stub(vec![200, 200, 404]).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
+        client
+            .register_route("dup.example.com", "127.0.0.1:9999")
+            .await
+            .unwrap();
+
+        let final_log = log.lock().unwrap().clone();
+        assert_eq!(
+            final_log,
+            vec!["DELETE", "DELETE", "DELETE", "POST"],
+            "loop must DELETE until 404, then POST once"
+        );
+        task.abort();
     }
 
     #[tokio::test]
