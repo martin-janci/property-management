@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security configuration for Reality Portal Android app.
+
+  - Production builds: cleartext HTTP is disabled globally.
+  - Development builds must opt in per-domain (e.g. 10.0.2.2 for the emulator)
+    via a separate debug-only override in src/debug/res/xml/.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

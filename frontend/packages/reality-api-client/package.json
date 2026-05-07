@@ -6,7 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "generate": "openapi-ts -i ../../docs/api/generated/openapi.yaml -o ./src/generated",
+    "generate": "openapi-ts -i ../../../docs/api/generated/openapi.yaml -o ./src/generated",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
@@ -21,5 +21,5 @@
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"
   },
-  "version": "0.2.355"
+  "version": "0.2.367"
 }

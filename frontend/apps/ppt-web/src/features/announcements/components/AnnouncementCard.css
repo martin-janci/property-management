@@ -1,0 +1,170 @@
+.announcement-card {
+  background: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-lg);
+  padding: var(--ppt-space-4);
+  box-shadow: var(--ppt-shadow-sm);
+  transition: box-shadow var(--ppt-transition-normal), border-color var(--ppt-transition-normal);
+}
+
+.announcement-card:hover {
+  box-shadow: var(--ppt-shadow-md);
+  border-color: var(--ppt-border-strong);
+}
+
+.announcement-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ppt-space-3);
+}
+
+.announcement-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--ppt-space-2);
+}
+
+.announcement-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+}
+
+.announcement-card__pin-icon {
+  color: var(--ppt-color-warning-hover);
+  flex-shrink: 0;
+}
+
+.announcement-card__title {
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary);
+  margin: 0;
+}
+
+.announcement-card__target {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted);
+}
+
+.announcement-card__flag {
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-medium);
+}
+
+.announcement-card__flag--ack {
+  color: var(--ppt-color-warning-hover);
+}
+
+.announcement-card__flag--comments {
+  color: var(--ppt-color-primary);
+}
+
+.announcement-card__date {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-subtle, #9ca3af);
+  margin: var(--ppt-space-1) 0 0;
+}
+
+/* status pill */
+.ann-status-pill {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: var(--ppt-radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ann-status-pill--draft {
+  background: var(--ppt-status-anno-draft-bg);
+  color: var(--ppt-status-anno-draft-ink);
+}
+.ann-status-pill--scheduled {
+  background: var(--ppt-status-anno-scheduled-bg);
+  color: var(--ppt-status-anno-scheduled-ink);
+}
+.ann-status-pill--published {
+  background: var(--ppt-status-anno-published-bg);
+  color: var(--ppt-status-anno-published-ink);
+}
+.ann-status-pill--archived {
+  background: var(--ppt-status-anno-archived-bg);
+  color: var(--ppt-status-anno-archived-ink);
+}
+
+/* actions row */
+.announcement-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  margin-top: var(--ppt-space-4);
+  padding-top: var(--ppt-space-3);
+  border-top: 1px solid var(--ppt-border-subtle);
+  flex-wrap: wrap;
+}
+
+.announcement-card__action {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--ppt-font-family);
+  transition: color var(--ppt-transition-fast);
+}
+
+.announcement-card__action:focus-visible {
+  outline: none;
+  border-radius: var(--ppt-radius-sm);
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.announcement-card__action--view {
+  color: var(--ppt-color-primary);
+}
+.announcement-card__action--view:hover {
+  color: var(--ppt-color-primary-hover);
+}
+
+.announcement-card__action--edit {
+  color: var(--ppt-fg-secondary);
+}
+.announcement-card__action--edit:hover {
+  color: var(--ppt-fg-primary);
+}
+
+.announcement-card__action--publish {
+  color: var(--ppt-status-fault-resolved-ink);
+}
+.announcement-card__action--publish:hover {
+  opacity: 0.8;
+}
+
+.announcement-card__action--archive {
+  color: var(--ppt-color-warning-hover);
+}
+.announcement-card__action--archive:hover {
+  color: var(--ppt-color-warning-dark);
+}
+
+.announcement-card__action--pin {
+  color: var(--ppt-color-warning-hover);
+}
+.announcement-card__action--pin:hover {
+  color: var(--ppt-color-warning-dark);
+}
+
+.announcement-card__action--delete {
+  color: var(--ppt-color-danger);
+  margin-left: auto;
+}
+.announcement-card__action--delete:hover {
+  color: var(--ppt-color-danger-hover, #b91c1c);
+}

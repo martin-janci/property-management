@@ -122,6 +122,26 @@ final class NavigationCoordinator {
 
         case .login, .register:
             accountPath.append(route)
+
+        case .savedSearches:
+            // Saved searches are personal — show inside the account tab
+            // so the navigation stack matches the rest of the user's
+            // saved data (favorites is its own tab; inquiries too).
+            selectedTab = .account
+            accountPath.append(route)
+
+        case .compareListings:
+            // Comparison is a cross-tab feature — opening it from
+            // favorites/search/listing-detail should preserve the
+            // user's current tab and stack onto it.
+            currentPath.append(route)
+
+        case .realtors, .agencies:
+            // Directory browsers belong to the search tab so the user
+            // can pivot between "search by listing" and "search by
+            // realtor/agency" without leaving the tab.
+            selectedTab = .search
+            searchPath.append(route)
         }
     }
 

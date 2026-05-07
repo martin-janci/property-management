@@ -40,7 +40,7 @@ export function DocumentDetailPage({ documentId }: DocumentDetailPageProps) {
         .document-detail-page {
           min-height: 100%;
           padding: 1.5rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
         }
 
         .page-header {
@@ -55,21 +55,21 @@ export function DocumentDetailPage({ documentId }: DocumentDetailPageProps) {
           font-size: 0.875rem;
           font-weight: 500;
           text-decoration: none;
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.375rem;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
           transition: all 0.15s;
         }
 
         .back-link:hover {
-          background: #f1f5f9;
-          border-color: #cbd5e1;
+          background: var(--ppt-bg-app);
+          border-color: var(--ppt-border-strong);
         }
 
         .page-content {
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.75rem;
           overflow: hidden;
         }

@@ -22,32 +22,32 @@ const styles: Record<string, CSSProperties> = {
   errorTitle: {
     fontSize: '1.5rem',
     fontWeight: 'bold',
-    color: '#dc2626',
+    color: 'var(--ppt-color-danger-hover)',
     marginBottom: '16px',
   },
   errorMessage: {
-    color: '#4b5563',
+    color: 'var(--ppt-neutral-600)',
     marginBottom: '24px',
   },
   button: {
     display: 'inline-block',
     padding: '8px 24px',
-    backgroundColor: '#2563eb',
-    color: '#fff',
+    backgroundColor: 'var(--ppt-color-primary)',
+    color: 'var(--ppt-fg-on-accent)',
     borderRadius: '8px',
     textDecoration: 'none',
   },
   spinner: {
     width: '48px',
     height: '48px',
-    border: '3px solid #e5e7eb',
-    borderTopColor: '#2563eb',
+    border: '3px solid var(--ppt-border-default)',
+    borderTopColor: 'var(--ppt-color-primary)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     margin: '0 auto 16px',
   },
   loadingText: {
-    color: '#4b5563',
+    color: 'var(--ppt-neutral-600)',
   },
 };
 
@@ -95,9 +95,17 @@ function SsoCallbackContent() {
     // Clear saved state
     sessionStorage.removeItem('sso_state');
 
-    // Redirect to home - session cookie should already be set by the server
-    const redirectUri = searchParams.get('redirect_uri') || '/';
-    router.replace(redirectUri);
+    // Redirect to home - session cookie should already be set by the server.
+    // Only accept same-origin relative paths to prevent open-redirect attacks:
+    //   - must start with "/" (path-only)
+    //   - must NOT start with "//" or "/\" (protocol-relative URL escape)
+    const rawRedirect = searchParams.get('redirect_uri');
+    const isSafeRedirect =
+      typeof rawRedirect === 'string' &&
+      rawRedirect.startsWith('/') &&
+      !rawRedirect.startsWith('//') &&
+      !rawRedirect.startsWith('/\\');
+    router.replace(isSafeRedirect ? rawRedirect : '/');
   }, [router, searchParams]);
 
   if (error) {

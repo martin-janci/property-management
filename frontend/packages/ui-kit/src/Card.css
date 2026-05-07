@@ -1,0 +1,116 @@
+/**
+ * Card component styles.
+ * Radius 12px, two elevations (rest → hover with translateY).
+ * No scale-press feedback — color/shadow only.
+ */
+
+.ppt-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ppt-bg-surface, var(--ppt-color-surface));
+  border-radius: var(--ppt-radius-lg);
+  overflow: hidden;
+}
+
+/* ─── Variants ──────────────────────────────────────────── */
+.ppt-card--elevated {
+  border: 1px solid var(--ppt-border-default, var(--ppt-color-border));
+  box-shadow: var(--ppt-shadow-md);
+}
+
+.ppt-card--outlined {
+  border: 1px solid var(--ppt-border-default, var(--ppt-color-border));
+}
+
+.ppt-card--flat {
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-surface-hover));
+}
+
+/* ─── Interactive ───────────────────────────────────────── */
+.ppt-card--interactive {
+  cursor: pointer;
+  transition: box-shadow var(--ppt-transition-normal), border-color var(--ppt-transition-normal),
+    transform var(--ppt-transition-normal);
+}
+
+.ppt-card--interactive:hover {
+  box-shadow: var(--ppt-shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--ppt-border-strong, var(--ppt-color-border-hover));
+}
+
+.ppt-card--interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+/* ─── Padding ───────────────────────────────────────────── */
+.ppt-card--padding-none .ppt-card__header,
+.ppt-card--padding-none .ppt-card__content,
+.ppt-card--padding-none .ppt-card__footer {
+  padding: 0;
+}
+
+.ppt-card--padding-sm .ppt-card__header,
+.ppt-card--padding-sm .ppt-card__content,
+.ppt-card--padding-sm .ppt-card__footer {
+  padding: var(--ppt-space-3);
+}
+
+.ppt-card--padding-md .ppt-card__header,
+.ppt-card--padding-md .ppt-card__content,
+.ppt-card--padding-md .ppt-card__footer {
+  padding: var(--ppt-space-4);
+}
+
+.ppt-card--padding-lg .ppt-card__header,
+.ppt-card--padding-lg .ppt-card__content,
+.ppt-card--padding-lg .ppt-card__footer {
+  padding: var(--ppt-space-6);
+}
+
+/* ─── Header ────────────────────────────────────────────── */
+.ppt-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ppt-space-4);
+}
+
+.ppt-card__header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ppt-card__title {
+  margin: 0;
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary, var(--ppt-color-text));
+  line-height: var(--ppt-line-height-tight);
+}
+
+.ppt-card__subtitle {
+  margin: var(--ppt-space-1) 0 0;
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-muted, var(--ppt-color-text-secondary));
+  line-height: var(--ppt-line-height-normal);
+}
+
+.ppt-card__header-action {
+  flex-shrink: 0;
+}
+
+/* ─── Content ───────────────────────────────────────────── */
+.ppt-card__content {
+  flex: 1;
+  color: var(--ppt-fg-secondary, var(--ppt-color-text));
+}
+
+/* ─── Footer ────────────────────────────────────────────── */
+.ppt-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+  border-top: 1px solid var(--ppt-border-subtle, var(--ppt-color-border));
+}

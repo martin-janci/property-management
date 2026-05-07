@@ -17,15 +17,15 @@
 .protected-route-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 3px solid #e5e7eb;
-  border-top-color: #2563eb;
+  border: 3px solid var(--ppt-border-default);
+  border-top-color: var(--ppt-color-primary);
   border-radius: 50%;
   animation: protected-route-spin 0.8s linear infinite;
 }
 
 .protected-route-loading-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--ppt-fg-muted);
 }
 
 @keyframes protected-route-spin {
@@ -47,12 +47,12 @@
 .protected-route-unauthorized h1 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--ppt-fg-primary);
   margin: 0 0 0.5rem;
 }
 
 .protected-route-unauthorized p {
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--ppt-fg-muted);
   margin: 0;
 }

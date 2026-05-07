@@ -27,45 +27,42 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Facility management (by building)
-        .route("/buildings/{building_id}/facilities", get(list_facilities))
-        .route("/buildings/{building_id}/facilities", post(create_facility))
+        .route("/buildings/:building_id/facilities", get(list_facilities))
+        .route("/buildings/:building_id/facilities", post(create_facility))
+        .route("/buildings/:building_id/facilities/:id", get(get_facility))
         .route(
-            "/buildings/{building_id}/facilities/{id}",
-            get(get_facility),
-        )
-        .route(
-            "/buildings/{building_id}/facilities/{id}",
+            "/buildings/:building_id/facilities/:id",
             put(update_facility),
         )
         .route(
-            "/buildings/{building_id}/facilities/{id}",
+            "/buildings/:building_id/facilities/:id",
             delete(delete_facility),
         )
         // Bookings
         .route(
-            "/buildings/{building_id}/facilities/{facility_id}/bookings",
+            "/buildings/:building_id/facilities/:facility_id/bookings",
             get(list_facility_bookings),
         )
         .route(
-            "/buildings/{building_id}/facilities/{facility_id}/bookings",
+            "/buildings/:building_id/facilities/:facility_id/bookings",
             post(create_booking),
         )
         .route(
-            "/buildings/{building_id}/facilities/{facility_id}/availability",
+            "/buildings/:building_id/facilities/:facility_id/availability",
             get(check_availability),
         )
         // Booking management
         .route("/bookings/my", get(list_my_bookings))
-        .route("/bookings/{id}", get(get_booking))
-        .route("/bookings/{id}", put(update_booking))
-        .route("/bookings/{id}/cancel", post(cancel_booking))
+        .route("/bookings/:id", get(get_booking))
+        .route("/bookings/:id", put(update_booking))
+        .route("/bookings/:id/cancel", post(cancel_booking))
         // Approval workflow
         .route(
-            "/buildings/{building_id}/bookings/pending",
+            "/buildings/:building_id/bookings/pending",
             get(list_pending_bookings),
         )
-        .route("/bookings/{id}/approve", post(approve_booking))
-        .route("/bookings/{id}/reject", post(reject_booking))
+        .route("/bookings/:id/approve", post(approve_booking))
+        .route("/bookings/:id/reject", post(reject_booking))
 }
 
 // ==================== Request/Response Types ====================

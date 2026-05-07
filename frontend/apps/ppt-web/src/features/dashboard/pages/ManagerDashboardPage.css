@@ -1,0 +1,95 @@
+.dashboard-page {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: var(--ppt-space-6) var(--ppt-space-4);
+}
+
+.dashboard-page__header {
+  margin-bottom: var(--ppt-space-8);
+}
+
+.dashboard-page__title {
+  font-size: var(--ppt-font-size-2xl);
+  font-weight: var(--ppt-font-weight-bold);
+  color: var(--ppt-fg-primary);
+  margin: 0 0 var(--ppt-space-2);
+}
+
+.dashboard-page__subtitle {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-muted);
+  margin: 0;
+}
+
+.dashboard-page__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ppt-space-4);
+  margin-bottom: var(--ppt-space-8);
+}
+
+@media (min-width: 768px) {
+  .dashboard-page__stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ─── Quick Stat card ─── */
+.quick-stat {
+  border-radius: var(--ppt-radius-lg);
+  border: 1px solid;
+  padding: var(--ppt-space-4);
+}
+
+.quick-stat__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-stat__value {
+  font-size: var(--ppt-font-size-3xl);
+  font-weight: var(--ppt-font-weight-bold);
+  line-height: 1;
+}
+
+.quick-stat__trend {
+  font-size: var(--ppt-font-size-lg);
+}
+
+.quick-stat__label {
+  font-size: var(--ppt-font-size-sm);
+  margin: var(--ppt-space-1) 0 0;
+  opacity: 0.85;
+}
+
+/* color variants */
+.quick-stat--red {
+  background: var(--ppt-status-fault-new-bg);
+  border-color: var(--ppt-status-fault-new-ink);
+  color: var(--ppt-status-fault-new-ink);
+}
+
+.quick-stat--orange {
+  background: var(--ppt-status-fault-waitparts-bg);
+  border-color: var(--ppt-status-fault-waitparts-ink);
+  color: var(--ppt-status-fault-waitparts-ink);
+}
+
+.quick-stat--blue {
+  background: var(--ppt-color-primary-soft-bg);
+  border-color: var(--ppt-color-primary);
+  color: var(--ppt-color-primary);
+}
+
+.quick-stat--green {
+  background: var(--ppt-status-fault-resolved-bg);
+  border-color: var(--ppt-status-fault-resolved-ink);
+  color: var(--ppt-status-fault-resolved-ink);
+}
+
+.quick-stat--gray {
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  border-color: var(--ppt-border-default);
+  color: var(--ppt-fg-secondary);
+}

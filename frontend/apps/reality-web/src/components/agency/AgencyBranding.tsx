@@ -312,33 +312,33 @@ export function AgencyBranding() {
 
         .back-link {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-decoration: none;
           display: inline-block;
           margin-bottom: 8px;
         }
 
         .back-link:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .title {
           font-size: 1.75rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .subtitle {
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
 
         .save-button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -353,7 +353,7 @@ export function AgencyBranding() {
         }
 
         .save-button:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .content-grid {
@@ -368,7 +368,7 @@ export function AgencyBranding() {
         }
 
         .section {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 24px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -381,13 +381,13 @@ export function AgencyBranding() {
         .section-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 8px;
         }
 
         .section-description {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 20px;
         }
 
@@ -400,8 +400,8 @@ export function AgencyBranding() {
         .logo-preview {
           width: 120px;
           height: 60px;
-          background: #f9fafb;
-          border: 2px dashed #e5e7eb;
+          background: var(--ppt-bg-app);
+          border: 2px dashed var(--ppt-border-default);
           border-radius: 8px;
           display: flex;
           align-items: center;
@@ -416,7 +416,7 @@ export function AgencyBranding() {
         }
 
         .logo-placeholder {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .upload-actions {
@@ -428,17 +428,17 @@ export function AgencyBranding() {
         .upload-button {
           display: inline-block;
           padding: 10px 16px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
           transition: background 0.2s;
         }
 
         .upload-button:hover {
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
         }
 
         .upload-button input {
@@ -447,7 +447,7 @@ export function AgencyBranding() {
 
         .upload-hint {
           font-size: 12px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .cover-upload {
@@ -459,8 +459,8 @@ export function AgencyBranding() {
         .cover-preview {
           width: 100%;
           height: 120px;
-          background: #f9fafb;
-          border: 2px dashed #e5e7eb;
+          background: var(--ppt-bg-app);
+          border: 2px dashed var(--ppt-border-default);
           border-radius: 8px;
           display: flex;
           align-items: center;
@@ -479,7 +479,7 @@ export function AgencyBranding() {
           flex-direction: column;
           align-items: center;
           gap: 8px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           font-size: 14px;
         }
 
@@ -498,7 +498,7 @@ export function AgencyBranding() {
           display: block;
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin-bottom: 8px;
         }
 
@@ -512,7 +512,7 @@ export function AgencyBranding() {
           width: 48px;
           height: 40px;
           padding: 2px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
           cursor: pointer;
         }
@@ -520,7 +520,7 @@ export function AgencyBranding() {
         .color-input-wrapper input[type='text'] {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
           font-size: 14px;
           font-family: monospace;
@@ -531,13 +531,13 @@ export function AgencyBranding() {
           border: 2px solid;
           border-radius: 12px;
           overflow: hidden;
-          background: #fff;
+          background: var(--ppt-bg-surface);
         }
 
         .preview-image {
           position: relative;
           height: 180px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
         }
 
         .preview-image img {
@@ -560,7 +560,7 @@ export function AgencyBranding() {
           border-radius: 4px;
           font-size: 12px;
           font-weight: 600;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .preview-content {
@@ -588,7 +588,7 @@ export function AgencyBranding() {
 
         .preview-header p {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
@@ -605,7 +605,7 @@ export function AgencyBranding() {
           border-radius: 6px;
           font-size: 14px;
           font-weight: 500;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
           cursor: pointer;
         }
       `}</style>
@@ -631,7 +631,7 @@ function BrandingSkeleton() {
         .skeleton-header {
           height: 48px;
           width: 250px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 8px;
           margin-bottom: 32px;
         }
@@ -646,7 +646,7 @@ function BrandingSkeleton() {
         }
         .skeleton-card {
           height: 200px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
         .skeleton-card.large {

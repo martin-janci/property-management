@@ -70,13 +70,13 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
             flex-direction: column;
             align-items: center;
             padding: 24px;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .spinner {
             width: 32px;
             height: 32px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #2563eb;
+            border: 3px solid var(--ppt-border-default);
+            border-top-color: var(--ppt-color-primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 12px;
@@ -97,12 +97,12 @@ export function ComparisonUrlHandler({ sharedIds }: ComparisonUrlHandlerProps) {
         <p>{error}</p>
         <style jsx>{`
           .error-message {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
+            background: var(--ppt-color-danger-light);
+            border: 1px solid var(--ppt-color-danger-light);
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 24px;
-            color: #dc2626;
+            color: var(--ppt-color-danger-hover);
           }
           p {
             margin: 0;

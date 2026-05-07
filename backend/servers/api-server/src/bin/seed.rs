@@ -168,13 +168,22 @@ async fn main() -> anyhow::Result<()> {
     if !cli.minimal {
         println!();
         println!("Sample data includes:");
-        println!("  • 1 organization (Demo Property Management)");
-        println!("  • 15 users covering all 12 role types");
+        println!("  • 1 organization (Demo správa nehnuteľností)");
+        println!("  • 15 PPT users covering all 12 role types");
         println!("  • 3 buildings with 19 units total");
         println!("  • Unit resident assignments");
+        println!("  • 6 faults in various states (new, triaged, in_progress, resolved, closed)");
+        println!("  • 2 votes (1 closed with results, 1 active)");
+        println!("  • 4 announcements (published, pinned, archived)");
+        println!("  • 6 listings (sale & rent, SK locale)");
+        println!("  • 4 Reality Portal users (3 buyers/renters, 1 realtor)");
+        println!("  • 3 inquiries with message threads");
+        println!("  • 3 portal favorites");
         println!();
-        println!("All sample users use password: DemoPass123");
-        println!("All sample emails end with: @demo-property.test");
+        println!("PPT sample users use password: DemoHeslo123");
+        println!("PPT sample emails end with:   @demo-property.test");
+        println!("Portal users use password:    PortalHeslo123");
+        println!("Portal emails end with:        @demo-reality.test");
     }
 
     // Confirmation
@@ -217,7 +226,11 @@ async fn main() -> anyhow::Result<()> {
                 println!("┌──────────────────────────────────────────────────────────┐");
                 println!("│ Cleanup (existing seed data removed)                     │");
                 println!("├──────────────────────────────────────────────────────────┤");
-                println!("│  Users deleted:         {:>30} │", stats.users_deleted);
+                println!("│  PPT Users deleted:     {:>30} │", stats.users_deleted);
+                println!(
+                    "│  Portal Users deleted:  {:>30} │",
+                    stats.portal_users_deleted
+                );
                 println!(
                     "│  Organizations deleted: {:>30} │",
                     stats.organizations_deleted
@@ -235,10 +248,18 @@ async fn main() -> anyhow::Result<()> {
             println!("║                    Seed Complete ✓                       ║");
             println!("╠══════════════════════════════════════════════════════════╣");
             println!("║  Organizations:  {:>38} ║", result.organizations_created);
-            println!("║  Users:          {:>38} ║", result.users_created);
+            println!("║  PPT Users:      {:>38} ║", result.users_created);
             println!("║  Buildings:      {:>38} ║", result.buildings_created);
             println!("║  Units:          {:>38} ║", result.units_created);
             println!("║  Residents:      {:>38} ║", result.residents_assigned);
+            println!("║  Faults:         {:>38} ║", result.faults_created);
+            println!("║  Votes:          {:>38} ║", result.votes_created);
+            println!("║  Announcements:  {:>38} ║", result.announcements_created);
+            println!("╠══════════════════════════════════════════════════════════╣");
+            println!("║  Listings:       {:>38} ║", result.listings_created);
+            println!("║  Portal Users:   {:>38} ║", result.portal_users_created);
+            println!("║  Inquiries:      {:>38} ║", result.inquiries_created);
+            println!("║  Favorites:      {:>38} ║", result.favorites_created);
             println!("╠══════════════════════════════════════════════════════════╣");
             println!("║  Admin User ID:  {} ║", result.admin_user_id);
             println!("║  Organization:   {} ║", result.organization_id);

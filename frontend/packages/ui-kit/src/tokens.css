@@ -1,0 +1,494 @@
+/**
+ * Design Tokens for @ppt/ui-kit
+ *
+ * CSS custom properties for consistent styling across all components.
+ * Light tokens are the default on :root.
+ * Dark tokens apply via [data-color-scheme="dark"].
+ *
+ * Naming:
+ *   --ppt-color-*        semantic color roles
+ *   --ppt-bg-*           background roles
+ *   --ppt-fg-*           foreground / text roles
+ *   --ppt-border-*       border roles
+ *   --ppt-status-*       8 state-machine status pill tokens (bg + ink pairs)
+ *   --ppt-badge-*        real-estate badge tokens (sale / rent / featured)
+ */
+
+:root {
+  /* ─── Brand blue scale ──────────────────────────────────── */
+  --ppt-brand-50: #eff6ff;
+  --ppt-brand-100: #dbeafe;
+  --ppt-brand-200: #bfdbfe;
+  --ppt-brand-300: #93c5fd;
+  --ppt-brand-400: #60a5fa;
+  --ppt-brand-500: #3b82f6; /* info / rent badge */
+  --ppt-brand-600: #2563eb; /* PRIMARY — CTAs, active tabs, logo */
+  --ppt-brand-700: #1d4ed8; /* primary-hover */
+  --ppt-brand-800: #1e40af; /* hero gradient start */
+  --ppt-brand-900: #1e3a8a;
+
+  /* ─── Colors — Primary (maps brand-600 as primary) ─────── */
+  --ppt-color-primary: #2563eb;
+  --ppt-color-primary-hover: #1d4ed8;
+  --ppt-color-primary-active: #1e40af;
+  --ppt-color-primary-light: #eff6ff;
+  --ppt-color-primary-dark: #1e40af;
+  --ppt-color-primary-soft-bg: #eff6ff;
+
+  /* ─── Colors — Secondary ────────────────────────────────── */
+  --ppt-color-secondary: #6b7280;
+  --ppt-color-secondary-hover: #4b5563;
+  --ppt-color-secondary-active: #374151;
+  --ppt-color-secondary-light: #f3f4f6;
+
+  /* ─── Colors — Semantic ─────────────────────────────────── */
+  --ppt-color-success: #10b981;
+  --ppt-color-success-hover: #059669;
+  --ppt-color-success-light: #d1fae5;
+  --ppt-color-success-dark: #065f46;
+
+  --ppt-color-warning: #f59e0b;
+  --ppt-color-warning-hover: #d97706;
+  --ppt-color-warning-light: #fef3c7;
+  --ppt-color-warning-dark: #92400e;
+
+  --ppt-color-danger: #ef4444;
+  --ppt-color-danger-hover: #dc2626;
+  --ppt-color-danger-light: #fee2e2;
+  --ppt-color-danger-dark: #991b1b;
+
+  --ppt-color-info: #3b82f6;
+  --ppt-color-info-light: #dbeafe;
+  --ppt-color-info-dark: #1e40af;
+
+  --ppt-color-violet: #8b5cf6;
+  --ppt-color-violet-light: #ede9fe;
+  --ppt-color-violet-dark: #5b21b6;
+
+  --ppt-color-orange: #f97316;
+  --ppt-color-orange-light: #ffedd5;
+  --ppt-color-orange-dark: #9a3412;
+
+  /* ─── Neutral scale ─────────────────────────────────────── */
+  --ppt-neutral-0: #ffffff;
+  --ppt-neutral-50: #f9fafb;
+  --ppt-neutral-100: #f3f4f6;
+  --ppt-neutral-200: #e5e7eb;
+  --ppt-neutral-300: #d1d5db;
+  --ppt-neutral-400: #9ca3af;
+  --ppt-neutral-500: #6b7280;
+  --ppt-neutral-600: #4b5563;
+  --ppt-neutral-700: #374151;
+  --ppt-neutral-800: #1f2937;
+  --ppt-neutral-900: #111827;
+
+  /* ─── Backgrounds ───────────────────────────────────────── */
+  --ppt-bg-app: #f9fafb;
+  --ppt-bg-surface: #ffffff;
+  --ppt-bg-elevated: #ffffff;
+  --ppt-bg-subtle: #f3f4f6;
+  --ppt-bg-hover: #f3f4f6;
+  --ppt-bg-input: #ffffff;
+  --ppt-bg-overlay: rgba(17, 24, 39, 0.5);
+
+  /* ─── Foreground / text ─────────────────────────────────── */
+  --ppt-fg-primary: #111827;
+  --ppt-fg-secondary: #374151;
+  --ppt-fg-muted: #6b7280;
+  --ppt-fg-subtle: #9ca3af;
+  --ppt-fg-on-accent: #ffffff;
+  --ppt-fg-link: #2563eb;
+
+  /* Legacy aliases kept for backward compatibility */
+  --ppt-color-background: var(--ppt-bg-app);
+  --ppt-color-surface: var(--ppt-bg-surface);
+  --ppt-color-surface-hover: var(--ppt-bg-hover);
+  --ppt-color-text: var(--ppt-fg-primary);
+  --ppt-color-text-secondary: var(--ppt-fg-secondary);
+  --ppt-color-text-muted: var(--ppt-fg-muted);
+  --ppt-color-text-inverse: var(--ppt-fg-on-accent);
+
+  /* ─── Borders ───────────────────────────────────────────── */
+  --ppt-border-subtle: #f3f4f6;
+  --ppt-border-default: #e5e7eb;
+  --ppt-border-strong: #d1d5db;
+  --ppt-border-focus: #2563eb;
+
+  /* Legacy aliases */
+  --ppt-color-border: var(--ppt-border-default);
+  --ppt-color-border-hover: var(--ppt-border-strong);
+
+  /* ─── Real-estate badges ────────────────────────────────── */
+  --ppt-badge-sale-bg: #10b981;
+  --ppt-badge-sale-ink: #ffffff;
+  --ppt-badge-rent-bg: #3b82f6;
+  --ppt-badge-rent-ink: #ffffff;
+  --ppt-badge-featured-bg: #fbbf24;
+  --ppt-badge-featured-ink: #78350f;
+
+  /* ─── Priority ink (faults) ─────────────────────────────── */
+  --ppt-priority-low-ink: #6b7280;
+  --ppt-priority-medium-ink: #3b82f6;
+  --ppt-priority-high-ink: #f97316;
+  --ppt-priority-urgent-ink: #dc2626;
+
+  /* ─── Status pills — 8 state machines ──────────────────────
+     bg  = pill background
+     ink = pill text / icon color
+     shape + color + icon pattern (colorblind-safe)          */
+
+  /* Fault: new → triaged → in_progress → waiting_parts → scheduled → resolved → closed → reopened */
+  --ppt-status-fault-new-bg: #fee2e2;
+  --ppt-status-fault-new-ink: #991b1b;
+  --ppt-status-fault-triaged-bg: #dbeafe;
+  --ppt-status-fault-triaged-ink: #1e40af;
+  --ppt-status-fault-inprogress-bg: #fef3c7;
+  --ppt-status-fault-inprogress-ink: #92400e;
+  --ppt-status-fault-waitparts-bg: #ffedd5;
+  --ppt-status-fault-waitparts-ink: #9a3412;
+  --ppt-status-fault-scheduled-bg: #ede9fe;
+  --ppt-status-fault-scheduled-ink: #5b21b6;
+  --ppt-status-fault-resolved-bg: #d1fae5;
+  --ppt-status-fault-resolved-ink: #065f46;
+  --ppt-status-fault-closed-bg: #f3f4f6;
+  --ppt-status-fault-closed-ink: #374151;
+  --ppt-status-fault-reopened-bg: #fee2e2;
+  --ppt-status-fault-reopened-ink: #991b1b;
+
+  /* Vote: draft → published → open → closed → archived */
+  --ppt-status-vote-draft-bg: #f3f4f6;
+  --ppt-status-vote-draft-ink: #374151;
+  --ppt-status-vote-published-bg: #dbeafe;
+  --ppt-status-vote-published-ink: #1e40af;
+  --ppt-status-vote-open-bg: #d1fae5;
+  --ppt-status-vote-open-ink: #065f46;
+  --ppt-status-vote-closed-bg: #f3f4f6;
+  --ppt-status-vote-closed-ink: #374151;
+  --ppt-status-vote-archived-bg: #fef3c7;
+  --ppt-status-vote-archived-ink: #92400e;
+
+  /* Announcement: draft → scheduled → published → archived */
+  --ppt-status-anno-draft-bg: #f3f4f6;
+  --ppt-status-anno-draft-ink: #374151;
+  --ppt-status-anno-scheduled-bg: #dbeafe;
+  --ppt-status-anno-scheduled-ink: #1e40af;
+  --ppt-status-anno-published-bg: #d1fae5;
+  --ppt-status-anno-published-ink: #065f46;
+  --ppt-status-anno-archived-bg: #fef3c7;
+  --ppt-status-anno-archived-ink: #92400e;
+
+  /* Reservation: requested → confirmed → checked-in → checked-out → cancelled */
+  --ppt-status-res-requested-bg: #fef3c7;
+  --ppt-status-res-requested-ink: #92400e;
+  --ppt-status-res-confirmed-bg: #dbeafe;
+  --ppt-status-res-confirmed-ink: #1e40af;
+  --ppt-status-res-checkedin-bg: #d1fae5;
+  --ppt-status-res-checkedin-ink: #065f46;
+  --ppt-status-res-checkedout-bg: #f3f4f6;
+  --ppt-status-res-checkedout-ink: #374151;
+  --ppt-status-res-cancelled-bg: #fee2e2;
+  --ppt-status-res-cancelled-ink: #991b1b;
+
+  /* Listing: draft → published → reserved → sold/rented → archived */
+  --ppt-status-list-draft-bg: #f3f4f6;
+  --ppt-status-list-draft-ink: #374151;
+  --ppt-status-list-published-bg: #d1fae5;
+  --ppt-status-list-published-ink: #065f46;
+  --ppt-status-list-reserved-bg: #fef3c7;
+  --ppt-status-list-reserved-ink: #92400e;
+  --ppt-status-list-sold-bg: #dbeafe;
+  --ppt-status-list-sold-ink: #1e40af;
+  --ppt-status-list-archived-bg: #f3f4f6;
+  --ppt-status-list-archived-ink: #374151;
+
+  /* Invoice: draft → issued → paid → overdue → cancelled */
+  --ppt-status-inv-draft-bg: #f3f4f6;
+  --ppt-status-inv-draft-ink: #374151;
+  --ppt-status-inv-issued-bg: #dbeafe;
+  --ppt-status-inv-issued-ink: #1e40af;
+  --ppt-status-inv-paid-bg: #d1fae5;
+  --ppt-status-inv-paid-ink: #065f46;
+  --ppt-status-inv-overdue-bg: #fee2e2;
+  --ppt-status-inv-overdue-ink: #991b1b;
+  --ppt-status-inv-cancelled-bg: #f3f4f6;
+  --ppt-status-inv-cancelled-ink: #374151;
+
+  /* Import job: queued → running → succeeded → failed */
+  --ppt-status-job-queued-bg: #f3f4f6;
+  --ppt-status-job-queued-ink: #374151;
+  --ppt-status-job-running-bg: #dbeafe;
+  --ppt-status-job-running-ink: #1e40af;
+  --ppt-status-job-success-bg: #d1fae5;
+  --ppt-status-job-success-ink: #065f46;
+  --ppt-status-job-failed-bg: #fee2e2;
+  --ppt-status-job-failed-ink: #991b1b;
+
+  /* ─── Spacing (4px base) ────────────────────────────────── */
+  --ppt-space-0: 0;
+  --ppt-space-1: 0.25rem; /*  4px */
+  --ppt-space-2: 0.5rem; /*  8px */
+  --ppt-space-3: 0.75rem; /* 12px */
+  --ppt-space-4: 1rem; /* 16px */
+  --ppt-space-5: 1.25rem; /* 20px */
+  --ppt-space-6: 1.5rem; /* 24px */
+  --ppt-space-8: 2rem; /* 32px */
+  --ppt-space-10: 2.5rem; /* 40px */
+  --ppt-space-12: 3rem; /* 48px */
+
+  /* ─── Typography ────────────────────────────────────────── */
+  --ppt-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --ppt-font-family-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono",
+    monospace;
+
+  --ppt-font-size-xs: 0.75rem; /* 12px — badges, captions */
+  --ppt-font-size-sm: 0.875rem; /* 14px — dominant body */
+  --ppt-font-size-base: 1rem; /* 16px */
+  --ppt-font-size-lg: 1.125rem; /* 18px — section headings */
+  --ppt-font-size-xl: 1.25rem; /* 20px — price */
+  --ppt-font-size-2xl: 1.5rem; /* 24px — page titles */
+
+  --ppt-font-weight-normal: 400;
+  --ppt-font-weight-medium: 500;
+  --ppt-font-weight-semibold: 600;
+  --ppt-font-weight-bold: 700;
+
+  --ppt-line-height-tight: 1.2;
+  --ppt-line-height-snug: 1.35;
+  --ppt-line-height-normal: 1.5;
+  --ppt-line-height-relaxed: 1.75;
+
+  /* Letter spacing */
+  --ppt-tracking-tight: -0.01em;
+  --ppt-tracking-normal: 0;
+  --ppt-tracking-wide: 0.04em;
+  --ppt-tracking-caps: 0.06em;
+
+  /* ─── Border radius ─────────────────────────────────────── */
+  --ppt-radius-none: 0;
+  --ppt-radius-sm: 0.25rem; /*  4px — inputs, badges */
+  --ppt-radius-md: 0.5rem; /*  8px — buttons, dropdowns */
+  --ppt-radius-lg: 0.75rem; /* 12px — cards */
+  --ppt-radius-xl: 1rem; /* 16px — modals, hero search */
+  --ppt-radius-2xl: 1.25rem; /* 20px — large panels */
+  --ppt-radius-full: 9999px; /* pills, chips, avatars */
+
+  /* ─── Shadows (two visible elevations) ─────────────────── */
+  --ppt-shadow-flat: none;
+  --ppt-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ppt-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1); /* card at rest */
+  --ppt-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15); /* card hover */
+  --ppt-shadow-xl: 0 10px 40px rgba(0, 0, 0, 0.15); /* modal / hero */
+  --ppt-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  /* ─── Transitions ───────────────────────────────────────── */
+  --ppt-transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ppt-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ppt-transition-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Focus ring (WCAG 2.2 AA — 3:1 on all surfaces) ──── */
+  --ppt-focus-ring-width: 2px;
+  --ppt-focus-ring-color: #2563eb;
+  --ppt-focus-ring-offset: 2px;
+  --ppt-focus-ring-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+
+  /* ─── Z-index ───────────────────────────────────────────── */
+  --ppt-z-dropdown: 1000;
+  --ppt-z-sticky: 1100;
+  --ppt-z-fixed: 1200;
+  --ppt-z-modal-backdrop: 1300;
+  --ppt-z-modal: 1400;
+  --ppt-z-tooltip: 1500;
+  --ppt-z-toast: 1600;
+
+  /* ─── Layout ────────────────────────────────────────────── */
+  --ppt-content-max: 1280px;
+  --ppt-sidebar-filters: 280px;
+}
+
+/* ─── Dark mode ─────────────────────────────────────────────
+   Paired semantics, never inverted.
+   Surface ladder: #0f1115 → #1a1d23 → #22262e             */
+[data-color-scheme="dark"] {
+  --ppt-bg-app: #0f1115;
+  --ppt-bg-surface: #1a1d23;
+  --ppt-bg-elevated: #22262e;
+  --ppt-bg-subtle: #22262e;
+  --ppt-bg-hover: #2a2f38;
+  --ppt-bg-input: #1a1d23;
+  --ppt-bg-overlay: rgba(0, 0, 0, 0.6);
+
+  --ppt-fg-primary: #f3f4f6;
+  --ppt-fg-secondary: #d1d5db;
+  --ppt-fg-muted: #9ca3af;
+  --ppt-fg-subtle: #6b7280;
+  --ppt-fg-link: #60a5fa;
+
+  --ppt-border-subtle: #22262e;
+  --ppt-border-default: #2a2f38;
+  --ppt-border-strong: #374151;
+  --ppt-border-focus: #60a5fa;
+
+  --ppt-color-primary: #3b82f6;
+  --ppt-color-primary-hover: #60a5fa;
+  --ppt-color-primary-light: rgba(59, 130, 246, 0.15);
+  --ppt-color-primary-soft-bg: rgba(59, 130, 246, 0.15);
+
+  --ppt-color-background: var(--ppt-bg-app);
+  --ppt-color-surface: var(--ppt-bg-surface);
+  --ppt-color-surface-hover: var(--ppt-bg-hover);
+  --ppt-color-border: var(--ppt-border-default);
+  --ppt-color-border-hover: var(--ppt-border-strong);
+  --ppt-color-text: var(--ppt-fg-primary);
+  --ppt-color-text-secondary: var(--ppt-fg-secondary);
+  --ppt-color-text-muted: var(--ppt-fg-muted);
+
+  --ppt-focus-ring-shadow: 0 0 0 3px rgba(96, 165, 250, 0.4);
+  --ppt-focus-ring-color: #60a5fa;
+
+  /* Status pills — softened bg, higher-contrast ink */
+  --ppt-status-fault-new-bg: rgba(239, 68, 68, 0.15);
+  --ppt-status-fault-new-ink: #fca5a5;
+  --ppt-status-fault-triaged-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-fault-triaged-ink: #93c5fd;
+  --ppt-status-fault-inprogress-bg: rgba(245, 158, 11, 0.15);
+  --ppt-status-fault-inprogress-ink: #fcd34d;
+  --ppt-status-fault-waitparts-bg: rgba(249, 115, 22, 0.15);
+  --ppt-status-fault-waitparts-ink: #fdba74;
+  --ppt-status-fault-scheduled-bg: rgba(139, 92, 246, 0.15);
+  --ppt-status-fault-scheduled-ink: #c4b5fd;
+  --ppt-status-fault-resolved-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-fault-resolved-ink: #6ee7b7;
+  --ppt-status-fault-closed-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-fault-closed-ink: #d1d5db;
+  --ppt-status-fault-reopened-bg: rgba(239, 68, 68, 0.15);
+  --ppt-status-fault-reopened-ink: #fca5a5;
+
+  --ppt-status-vote-draft-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-vote-draft-ink: #d1d5db;
+  --ppt-status-vote-published-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-vote-published-ink: #93c5fd;
+  --ppt-status-vote-open-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-vote-open-ink: #6ee7b7;
+  --ppt-status-vote-closed-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-vote-closed-ink: #d1d5db;
+  --ppt-status-vote-archived-bg: rgba(245, 158, 11, 0.15);
+  --ppt-status-vote-archived-ink: #fcd34d;
+
+  --ppt-status-anno-draft-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-anno-draft-ink: #d1d5db;
+  --ppt-status-anno-scheduled-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-anno-scheduled-ink: #93c5fd;
+  --ppt-status-anno-published-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-anno-published-ink: #6ee7b7;
+  --ppt-status-anno-archived-bg: rgba(245, 158, 11, 0.15);
+  --ppt-status-anno-archived-ink: #fcd34d;
+
+  --ppt-status-res-requested-bg: rgba(245, 158, 11, 0.15);
+  --ppt-status-res-requested-ink: #fcd34d;
+  --ppt-status-res-confirmed-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-res-confirmed-ink: #93c5fd;
+  --ppt-status-res-checkedin-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-res-checkedin-ink: #6ee7b7;
+  --ppt-status-res-checkedout-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-res-checkedout-ink: #d1d5db;
+  --ppt-status-res-cancelled-bg: rgba(239, 68, 68, 0.15);
+  --ppt-status-res-cancelled-ink: #fca5a5;
+
+  --ppt-status-list-draft-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-list-draft-ink: #d1d5db;
+  --ppt-status-list-published-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-list-published-ink: #6ee7b7;
+  --ppt-status-list-reserved-bg: rgba(245, 158, 11, 0.15);
+  --ppt-status-list-reserved-ink: #fcd34d;
+  --ppt-status-list-sold-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-list-sold-ink: #93c5fd;
+  --ppt-status-list-archived-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-list-archived-ink: #d1d5db;
+
+  --ppt-status-inv-draft-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-inv-draft-ink: #d1d5db;
+  --ppt-status-inv-issued-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-inv-issued-ink: #93c5fd;
+  --ppt-status-inv-paid-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-inv-paid-ink: #6ee7b7;
+  --ppt-status-inv-overdue-bg: rgba(239, 68, 68, 0.15);
+  --ppt-status-inv-overdue-ink: #fca5a5;
+  --ppt-status-inv-cancelled-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-inv-cancelled-ink: #d1d5db;
+
+  --ppt-status-job-queued-bg: rgba(156, 163, 175, 0.15);
+  --ppt-status-job-queued-ink: #d1d5db;
+  --ppt-status-job-running-bg: rgba(59, 130, 246, 0.15);
+  --ppt-status-job-running-ink: #93c5fd;
+  --ppt-status-job-success-bg: rgba(16, 185, 129, 0.15);
+  --ppt-status-job-success-ink: #6ee7b7;
+  --ppt-status-job-failed-bg: rgba(239, 68, 68, 0.15);
+  --ppt-status-job-failed-ink: #fca5a5;
+
+  --ppt-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --ppt-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --ppt-shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.7);
+  --ppt-shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── High contrast mode ────────────────────────────────────  */
+[data-color-scheme="high-contrast"] {
+  --ppt-color-primary: #0000ff;
+  --ppt-color-background: #ffffff;
+  --ppt-bg-app: #ffffff;
+  --ppt-color-surface: #ffffff;
+  --ppt-bg-surface: #ffffff;
+  --ppt-color-border: #000000;
+  --ppt-border-default: #000000;
+  --ppt-color-text: #000000;
+  --ppt-fg-primary: #000000;
+  --ppt-color-text-secondary: #000000;
+  --ppt-fg-secondary: #000000;
+  --ppt-focus-ring-width: 3px;
+  --ppt-focus-ring-color: #000000;
+  --ppt-focus-ring-shadow: 0 0 0 3px #0000ff;
+}
+
+/* ─── Reduced motion ────────────────────────────────────────  */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ppt-transition-fast: 0ms;
+    --ppt-transition-normal: 0ms;
+    --ppt-transition-slow: 0ms;
+  }
+}
+
+[data-reduce-motion="true"] {
+  --ppt-transition-fast: 0ms;
+  --ppt-transition-normal: 0ms;
+  --ppt-transition-slow: 0ms;
+}
+
+/* ─── Text size overrides ────────────────────────────────────  */
+[data-text-size="small"] {
+  --ppt-font-size-xs: 0.6875rem;
+  --ppt-font-size-sm: 0.75rem;
+  --ppt-font-size-base: 0.875rem;
+  --ppt-font-size-lg: 1rem;
+  --ppt-font-size-xl: 1.125rem;
+  --ppt-font-size-2xl: 1.25rem;
+}
+
+[data-text-size="large"] {
+  --ppt-font-size-xs: 0.875rem;
+  --ppt-font-size-sm: 1rem;
+  --ppt-font-size-base: 1.125rem;
+  --ppt-font-size-lg: 1.25rem;
+  --ppt-font-size-xl: 1.5rem;
+  --ppt-font-size-2xl: 1.75rem;
+}
+
+[data-text-size="extra-large"] {
+  --ppt-font-size-xs: 1rem;
+  --ppt-font-size-sm: 1.125rem;
+  --ppt-font-size-base: 1.25rem;
+  --ppt-font-size-lg: 1.5rem;
+  --ppt-font-size-xl: 1.75rem;
+  --ppt-font-size-2xl: 2rem;
+}

@@ -43,14 +43,14 @@ pub fn router() -> Router<AppState> {
         // Benchmarks
         .route("/benchmarks", get(list_benchmarks))
         .route("/benchmarks", post(create_benchmark))
-        .route("/benchmarks/{id}", get(get_benchmark))
-        .route("/benchmarks/{id}", put(update_benchmark))
-        .route("/benchmarks/{id}", delete(delete_benchmark))
+        .route("/benchmarks/:id", get(get_benchmark))
+        .route("/benchmarks/:id", put(update_benchmark))
+        .route("/benchmarks/:id", delete(delete_benchmark))
         // Property Metrics
         .route("/properties/metrics", get(list_property_metrics))
         .route("/properties/metrics", post(upsert_property_metrics))
         .route(
-            "/properties/{building_id}/metrics",
+            "/properties/:building_id/metrics",
             get(get_property_metrics),
         )
         // Portfolio Metrics
@@ -59,23 +59,23 @@ pub fn router() -> Router<AppState> {
         // Property Comparisons
         .route("/comparisons", get(list_comparisons))
         .route("/comparisons", post(create_comparison))
-        .route("/comparisons/{id}", get(get_comparison))
-        .route("/comparisons/{id}", delete(delete_comparison))
+        .route("/comparisons/:id", get(get_comparison))
+        .route("/comparisons/:id", delete(delete_comparison))
         // Trends
         .route("/trends", get(get_trends))
         .route("/trends", post(record_trend))
         // Alert Rules
         .route("/alerts/rules", get(list_alert_rules))
         .route("/alerts/rules", post(create_alert_rule))
-        .route("/alerts/rules/{id}", get(get_alert_rule))
-        .route("/alerts/rules/{id}", put(update_alert_rule))
-        .route("/alerts/rules/{id}", delete(delete_alert_rule))
+        .route("/alerts/rules/:id", get(get_alert_rule))
+        .route("/alerts/rules/:id", put(update_alert_rule))
+        .route("/alerts/rules/:id", delete(delete_alert_rule))
         // Alerts
         .route("/alerts", get(list_alerts))
         .route("/alerts/stats", get(get_alert_stats))
-        .route("/alerts/{id}", get(get_alert))
-        .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
-        .route("/alerts/{id}/resolve", post(resolve_alert))
+        .route("/alerts/:id", get(get_alert))
+        .route("/alerts/:id/acknowledge", post(acknowledge_alert))
+        .route("/alerts/:id/resolve", post(resolve_alert))
 }
 
 // =============================================================================

@@ -1,0 +1,165 @@
+/**
+ * Modal component styles.
+ */
+
+.ppt-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ppt-space-4);
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--ppt-z-modal-backdrop);
+  animation: ppt-modal-backdrop-fade-in var(--ppt-transition-normal);
+}
+
+@keyframes ppt-modal-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ppt-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--ppt-space-8));
+  background-color: var(--ppt-color-surface);
+  border-radius: var(--ppt-radius-xl);
+  box-shadow: var(--ppt-shadow-xl);
+  z-index: var(--ppt-z-modal);
+  animation: ppt-modal-slide-in var(--ppt-transition-normal);
+}
+
+.ppt-modal:focus {
+  outline: none;
+}
+
+@keyframes ppt-modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sizes */
+.ppt-modal--sm {
+  width: 100%;
+  max-width: 24rem; /* 384px */
+}
+
+.ppt-modal--md {
+  width: 100%;
+  max-width: 32rem; /* 512px */
+}
+
+.ppt-modal--lg {
+  width: 100%;
+  max-width: 48rem; /* 768px */
+}
+
+.ppt-modal--xl {
+  width: 100%;
+  max-width: 64rem; /* 1024px */
+}
+
+.ppt-modal--full {
+  width: 100%;
+  max-width: calc(100vw - var(--ppt-space-8));
+  max-height: calc(100vh - var(--ppt-space-8));
+}
+
+/* Header */
+.ppt-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ppt-space-4);
+  padding: var(--ppt-space-4) var(--ppt-space-6);
+  border-bottom: 1px solid var(--ppt-color-border);
+}
+
+.ppt-modal__title {
+  margin: 0;
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-color-text);
+  line-height: var(--ppt-line-height-tight);
+}
+
+.ppt-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--ppt-radius-md);
+  color: var(--ppt-color-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--ppt-transition-fast), color var(--ppt-transition-fast);
+  flex-shrink: 0;
+}
+
+.ppt-modal__close:hover {
+  background-color: var(--ppt-color-surface-hover);
+  color: var(--ppt-color-text);
+}
+
+.ppt-modal__close:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+}
+
+.ppt-modal__close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Content */
+.ppt-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--ppt-space-6);
+  color: var(--ppt-color-text);
+}
+
+/* Footer */
+.ppt-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ppt-space-3);
+  padding: var(--ppt-space-4) var(--ppt-space-6);
+  border-top: 1px solid var(--ppt-color-border);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .ppt-modal__backdrop {
+    padding: var(--ppt-space-2);
+    align-items: flex-end;
+  }
+
+  .ppt-modal {
+    max-height: calc(100vh - var(--ppt-space-4));
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .ppt-modal--sm,
+  .ppt-modal--md,
+  .ppt-modal--lg,
+  .ppt-modal--xl {
+    max-width: 100%;
+  }
+}

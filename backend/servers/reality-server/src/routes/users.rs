@@ -3,7 +3,9 @@
 //! Supports SSO with Property Management via OAuth 2.0.
 
 use crate::extractors::AuthenticatedUser;
-use crate::handlers::users::{RegistrationResult, UserHandler};
+use crate::handlers::users::{
+    PasswordResetConfirmResult, PasswordResetRequestResult, RegistrationResult, UserHandler,
+};
 use crate::state::AppState;
 use axum::{
     extract::State,
@@ -20,6 +22,8 @@ pub fn router() -> Router<AppState> {
         // Public routes
         .route("/register", post(register))
         .route("/login", post(login))
+        .route("/password-reset", post(request_password_reset))
+        .route("/password-reset/confirm", post(confirm_password_reset))
         // Authenticated routes
         .route("/logout", post(logout))
         .route("/me", get(get_me))
@@ -224,16 +228,36 @@ pub async fn login(
     )
 )]
 pub async fn logout(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     auth: AuthenticatedUser,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    // The session token is already validated by the AuthenticatedUser extractor
-    // We would need to get the actual token to invalidate it
-    // For now, we just log the logout
-    tracing::info!(user_id = %auth.user_id, "User logged out");
+    // Extract the token from Authorization header
+    let token = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|auth| auth.strip_prefix("Bearer "))
+        .or_else(|| {
+            // Fall back to cookie
+            headers
+                .get(axum::http::header::COOKIE)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|cookies| {
+                    cookies
+                        .split(';')
+                        .find(|c| c.trim().starts_with("portal_session="))
+                        .map(|c| c.trim().strip_prefix("portal_session=").unwrap())
+                })
+        });
 
-    // In a full implementation, we would invalidate the session token here
-    // state.session_service.invalidate_session(&token).await?;
+    if let Some(token) = token {
+        // Invalidate the session
+        if let Err(e) = state.session_service.invalidate_session(token).await {
+            tracing::warn!(user_id = %auth.user_id, error = %e, "Failed to invalidate session");
+        }
+    }
+
+    tracing::info!(user_id = %auth.user_id, "User logged out");
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -329,6 +353,156 @@ pub async fn update_me(
             Err((
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to update profile".to_string(),
+            ))
+        }
+    }
+}
+
+// ===========================================================================
+// Password reset (UC-44.3)
+// ===========================================================================
+
+/// Body for `POST /api/v1/users/password-reset`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PasswordResetRequestBody {
+    pub email: String,
+}
+
+/// Response for the request flow. The body always reads "ok" — the
+/// response is intentionally identical regardless of whether the email
+/// exists, to avoid letting attackers enumerate accounts.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PasswordResetRequestResponse {
+    pub message: String,
+}
+
+/// Body for `POST /api/v1/users/password-reset/confirm`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PasswordResetConfirmBody {
+    pub token: String,
+    pub new_password: String,
+}
+
+/// Response for the confirm flow.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PasswordResetConfirmResponse {
+    pub message: String,
+}
+
+/// Issue a password-reset token and (in production) email it to the user.
+///
+/// The endpoint always returns 200 with the same generic body so callers
+/// can't distinguish "user found" from "user not found" by status or
+/// timing alone. The plaintext token is logged at INFO in development
+/// builds so the dev flow remains testable without an email transport.
+#[utoipa::path(
+    post,
+    path = "/api/v1/users/password-reset",
+    tag = "Users",
+    request_body = PasswordResetRequestBody,
+    responses(
+        (status = 200, description = "Reset email queued (or user does not exist)",
+                       body = PasswordResetRequestResponse),
+        (status = 400, description = "Invalid email format")
+    )
+)]
+pub async fn request_password_reset(
+    State(state): State<AppState>,
+    Json(req): Json<PasswordResetRequestBody>,
+) -> Result<Json<PasswordResetRequestResponse>, (axum::http::StatusCode, String)> {
+    if !UserHandler::validate_email(&req.email) {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid email format".to_string(),
+        ));
+    }
+
+    let handler = UserHandler::new(state.portal_repo.clone());
+    match handler
+        .request_password_reset(&state.portal_password_reset_repo, &req.email)
+        .await
+    {
+        Ok(PasswordResetRequestResult::Sent { plaintext_token }) => {
+            // Email transport hasn't been wired yet for the reality
+            // server. Until it is, surface the token via the tracing
+            // pipeline at INFO so dev/test flows can grab it; production
+            // builds should not log this.
+            #[cfg(debug_assertions)]
+            tracing::info!(
+                email = %req.email,
+                token = %plaintext_token,
+                "Password reset token issued (dev: token logged for testing)"
+            );
+            #[cfg(not(debug_assertions))]
+            {
+                let _ = plaintext_token;
+                tracing::info!(email = %req.email, "Password reset token issued");
+            }
+        }
+        Ok(PasswordResetRequestResult::UserNotFound) => {
+            tracing::debug!(email = %req.email, "Password reset requested for unknown email");
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to issue password reset token");
+            // Still return 200 to avoid leaking the failure mode.
+        }
+    }
+
+    Ok(Json(PasswordResetRequestResponse {
+        message: "If an account exists for this email, a reset link has been sent.".to_string(),
+    }))
+}
+
+/// Verify a reset token and update the password.
+#[utoipa::path(
+    post,
+    path = "/api/v1/users/password-reset/confirm",
+    tag = "Users",
+    request_body = PasswordResetConfirmBody,
+    responses(
+        (status = 200, description = "Password updated", body = PasswordResetConfirmResponse),
+        (status = 400, description = "Invalid token, expired token, or weak password")
+    )
+)]
+pub async fn confirm_password_reset(
+    State(state): State<AppState>,
+    Json(req): Json<PasswordResetConfirmBody>,
+) -> Result<Json<PasswordResetConfirmResponse>, (axum::http::StatusCode, String)> {
+    if req.token.trim().is_empty() {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "token is required".to_string(),
+        ));
+    }
+
+    let handler = UserHandler::new(state.portal_repo.clone());
+    match handler
+        .confirm_password_reset(
+            &state.portal_password_reset_repo,
+            &req.token,
+            &req.new_password,
+        )
+        .await
+    {
+        Ok(PasswordResetConfirmResult::Success) => Ok(Json(PasswordResetConfirmResponse {
+            message: "Password updated successfully".to_string(),
+        })),
+        Ok(PasswordResetConfirmResult::InvalidToken) => Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Invalid or already-used reset token".to_string(),
+        )),
+        Ok(PasswordResetConfirmResult::Expired) => Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Reset token has expired — request a new one".to_string(),
+        )),
+        Ok(PasswordResetConfirmResult::PasswordTooWeak(issues)) => {
+            Err((axum::http::StatusCode::BAD_REQUEST, issues.join("; ")))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to confirm password reset");
+            Err((
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to reset password".to_string(),
             ))
         }
     }

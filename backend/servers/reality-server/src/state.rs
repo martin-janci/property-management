@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
 
 use db::{
-    repositories::{PortalRepository, RealityPortalRepository},
+    repositories::{PortalPasswordResetRepository, PortalRepository, RealityPortalRepository},
     DbPool,
 };
 
@@ -41,8 +41,10 @@ pub struct AppConfig {
 impl AppConfig {
     /// Load configuration from environment variables.
     pub fn from_env() -> Self {
-        let pm_api_base =
-            std::env::var("PM_API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+        let pm_api_base = std::env::var("PM_API_URL")
+            .unwrap_or_else(|_| "http://localhost:8080".to_string())
+            .trim_end_matches('/')
+            .to_string();
         Self {
             pm_oauth_authorize_url: std::env::var("PM_OAUTH_AUTHORIZE_URL")
                 .unwrap_or_else(|_| format!("{}/api/v1/oauth/authorize", pm_api_base)),
@@ -54,8 +56,24 @@ impl AppConfig {
                 .unwrap_or_else(|_| format!("{}/api/v1/oauth/introspect", pm_api_base)),
             pm_client_id: std::env::var("PM_CLIENT_ID")
                 .unwrap_or_else(|_| "reality-portal".to_string()),
-            pm_client_secret: std::env::var("PM_CLIENT_SECRET")
-                .unwrap_or_else(|_| "reality-portal-secret".to_string()),
+            pm_client_secret: {
+                // SECURITY: PM_CLIENT_SECRET must be set in production. Fallback is only
+                // permitted when RUST_ENV=development to support local development.
+                let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
+                std::env::var("PM_CLIENT_SECRET").unwrap_or_else(|_| {
+                    if is_development {
+                        tracing::warn!(
+                            "PM_CLIENT_SECRET not set, using development default (DEVELOPMENT MODE ONLY)"
+                        );
+                        "reality-portal-dev-secret-do-not-use-in-production".to_string()
+                    } else {
+                        panic!(
+                            "PM_CLIENT_SECRET environment variable is required in non-development environments. \
+                             Set RUST_ENV=development to use the dev default."
+                        );
+                    }
+                })
+            },
             sso_callback_url: std::env::var("SSO_CALLBACK_URL")
                 .unwrap_or_else(|_| "http://localhost:8081/api/v1/sso/callback".to_string()),
             jwt_secret: {
@@ -707,6 +725,8 @@ pub struct AppState {
     pub portal_repo: PortalRepository,
     /// Reality Portal Professional repository (agencies, realtors, inquiries)
     pub reality_portal_repo: RealityPortalRepository,
+    /// Portal password-reset token repository (UC-44.3)
+    pub portal_password_reset_repo: PortalPasswordResetRepository,
     /// Application configuration
     pub config: AppConfig,
     /// Pending SSO sessions (OAuth flow state)
@@ -730,6 +750,7 @@ impl AppState {
     pub fn new(db: DbPool) -> Self {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
+        let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
         let config = AppConfig::from_env();
         let jwt_secret = config.jwt_secret.clone();
 
@@ -750,6 +771,7 @@ impl AppState {
             db,
             portal_repo,
             reality_portal_repo,
+            portal_password_reset_repo,
             config,
             sso_sessions: Arc::new(Mutex::new(HashMap::new())),
             user_service,
@@ -759,6 +781,36 @@ impl AppState {
             health_cache,
             token_cache,
         }
+    }
+
+    /// Acquire a connection for public (non-tenant-scoped) queries such as
+    /// listing search/detail and inquiry create.
+    ///
+    /// On success, any stale RLS context from a previous request has been
+    /// cleared so the caller sees a fresh session. If clearing fails we do
+    /// NOT hand the connection back to the caller: we close it (to force
+    /// the pool to open a fresh one later) and surface the error, because
+    /// a silently-stale RLS context would be a tenant-isolation bypass.
+    ///
+    /// Callers must use the returned connection (`&mut *conn`) as the
+    /// executor instead of passing `&self.db` directly — the latter is
+    /// flagged by `scripts/check-rls-enforcement.sh` as an RLS violation.
+    pub async fn acquire_public_conn(
+        &self,
+    ) -> Result<sqlx::pool::PoolConnection<sqlx::Postgres>, sqlx::Error> {
+        let mut conn = self.db.acquire().await?;
+        if let Err(e) = db::clear_request_context(&mut *conn).await {
+            tracing::warn!(
+                error = %e,
+                "Failed to clear stale RLS context on public connection acquire; dropping connection"
+            );
+            // Drop the connection explicitly. It returns to the pool and is
+            // closed via the `after_release` hook configured on the pool
+            // (see db::create_rls_safe_pool).
+            drop(conn);
+            return Err(e);
+        }
+        Ok(conn)
     }
 }
 

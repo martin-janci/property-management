@@ -104,65 +104,65 @@ pub fn router() -> Router<AppState> {
         // Valuation Models
         .route("/models", get(list_models).post(create_model))
         .route(
-            "/models/{model_id}",
+            "/models/:model_id",
             get(get_model).put(update_model).delete(delete_model),
         )
         // Valuations
         .route("/", get(list_valuations).post(create_valuation))
         .route(
-            "/{valuation_id}",
+            "/:valuation_id",
             get(get_valuation)
                 .put(update_valuation)
                 .delete(delete_valuation),
         )
-        .route("/{valuation_id}/approve", put(approve_valuation))
+        .route("/:valuation_id/approve", put(approve_valuation))
         // Comparables
         .route(
-            "/{valuation_id}/comparables",
+            "/:valuation_id/comparables",
             get(list_comparables).post(create_comparable),
         )
         .route(
-            "/comparables/{comparable_id}",
+            "/comparables/:comparable_id",
             put(update_comparable).delete(delete_comparable),
         )
         // Adjustments
         .route(
-            "/comparables/{comparable_id}/adjustments",
+            "/comparables/:comparable_id/adjustments",
             get(list_adjustments).post(create_adjustment),
         )
-        .route("/adjustments/{adjustment_id}", delete(delete_adjustment))
+        .route("/adjustments/:adjustment_id", delete(delete_adjustment))
         // Market Data
         .route(
             "/market-data",
             get(get_market_data).post(create_market_data),
         )
-        .route("/market-data/{market_data_id}", put(update_market_data))
+        .route("/market-data/:market_data_id", put(update_market_data))
         // Value History
         .route(
-            "/properties/{property_id}/history",
+            "/properties/:property_id/history",
             get(get_value_history).post(create_value_history),
         )
         // Valuation Requests
         .route("/requests", get(list_requests).post(create_request))
         .route(
-            "/requests/{request_id}",
+            "/requests/:request_id",
             get(get_request).put(update_request),
         )
         // Property Features
         .route(
-            "/properties/{property_id}/features",
+            "/properties/:property_id/features",
             get(get_features).post(create_features),
         )
-        .route("/features/{feature_id}", put(update_features))
+        .route("/features/:feature_id", put(update_features))
         // Reports
         .route(
-            "/{valuation_id}/reports",
+            "/:valuation_id/reports",
             get(list_reports).post(create_report),
         )
-        .route("/reports/{report_id}", put(update_report))
-        .route("/reports/{report_id}/sign", put(sign_report))
+        .route("/reports/:report_id", put(update_report))
+        .route("/reports/:report_id/sign", put(sign_report))
         // Audit Logs
-        .route("/{valuation_id}/audit-logs", get(get_audit_logs))
+        .route("/:valuation_id/audit-logs", get(get_audit_logs))
 }
 
 // ============================================================================

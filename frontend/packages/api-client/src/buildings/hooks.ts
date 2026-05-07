@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { BuildingsApi } from './api';
+import { type BuildingsApi, getBuilding, listBuildings } from './api';
 import type {
   CreateBuildingRequest,
   CreateCommonAreaRequest,
@@ -15,6 +15,37 @@ import type {
   UpdateBuildingRequest,
   UploadDocumentRequest,
 } from './types';
+
+// ============================================
+// Direct Hooks (using token provider)
+// ============================================
+
+/**
+ * List buildings with optional filters.
+ */
+export function useBuildings(params?: ListBuildingsParams) {
+  return useQuery({
+    queryKey: buildingKeys.list(params),
+    queryFn: ({ signal }) => listBuildings(params, signal),
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Get building by ID.
+ */
+export function useBuilding(id: string) {
+  return useQuery({
+    queryKey: buildingKeys.detail(id),
+    queryFn: ({ signal }) => getBuilding(id, signal),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
+
+// ============================================
+// Query Key Factory
+// ============================================
 
 // Query keys factory for cache management
 export const buildingKeys = {

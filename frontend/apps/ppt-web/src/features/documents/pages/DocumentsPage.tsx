@@ -132,7 +132,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           margin: 0;
           font-size: 1.5rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .header-actions {
@@ -149,19 +149,19 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           font-size: 0.875rem;
           font-weight: 600;
           text-decoration: none;
-          background: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
           border-radius: 0.375rem;
           transition: background 0.15s;
         }
 
         .upload-link:hover {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .view-toggle {
           display: flex;
-          background: #f1f5f9;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
           padding: 0.25rem;
         }
@@ -176,18 +176,18 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           background: transparent;
           border: none;
           border-radius: 0.375rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.15s;
         }
 
         .toggle-btn:hover {
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .toggle-btn.active {
-          background: white;
-          color: #1e293b;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-primary);
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
@@ -211,8 +211,8 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
         .detail-panel {
           flex: 1;
           max-width: 50%;
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.5rem;
           overflow-y: auto;
         }
@@ -221,7 +221,7 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           display: flex;
           justify-content: flex-end;
           padding: 0.5rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .close-btn {
@@ -234,14 +234,14 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           background: transparent;
           border: none;
           border-radius: 0.25rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.15s;
         }
 
         .close-btn:hover {
-          background: #f1f5f9;
-          color: #1e293b;
+          background: var(--ppt-bg-app);
+          color: var(--ppt-fg-primary);
         }
 
         .browse-placeholder {
@@ -249,9 +249,9 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           align-items: center;
           justify-content: center;
           height: 200px;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         @media (max-width: 1024px) {

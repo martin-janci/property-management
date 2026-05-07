@@ -1,4 +1,5 @@
 import {
+  useBuildings,
   useCancelOutage,
   useCreateDispute,
   useCreateOutage,
@@ -11,6 +12,7 @@ import {
   useUpdateOutage,
 } from '@ppt/api-client';
 import type {
+  Building as ApiBuilding,
   Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
@@ -21,7 +23,7 @@ import type {
   OutageListQuery,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -29,13 +31,18 @@ import {
   ConnectionStatus,
   LanguageSwitcher,
   OfflineIndicator,
+  ProtectedRoute,
   ToastProvider,
   useToast,
 } from './components';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
-import { AuthProvider, WebSocketProvider, useAuth } from './contexts';
-import { CommandPaletteDialog, useNavigationCommands } from './features/command-palette';
+import { AuthProvider, OrganizationProvider, WebSocketProvider, useAuth } from './contexts';
+import {
+  CommandPaletteDialog,
+  CommandPaletteProvider,
+  useNavigationCommands,
+} from './features/command-palette';
 import { ManagerDashboardPage, ResidentDashboardPage } from './features/dashboard';
 import type {
   DisputeCategory,
@@ -47,19 +54,50 @@ import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
   AccessibilitySettingsPage,
+  AnnouncementsPage,
   ArticleDetailPage,
+  BudgetManagementPage,
+  ChangePasswordPage,
+  CreateAnnouncementPage,
+  CreateFaultPage,
+  CreateGroupPage,
   CreateOutagePage,
   DisputesPage,
   DocumentDetailPage,
   DocumentUploadPage,
   DocumentsPage,
+  EditAnnouncementPage,
+  EditFaultPage,
   EditOutagePage,
   EmergencyContactDirectoryPage,
+  EventsPage,
+  FaultDetailPage,
+  FaultsPage,
+  FeedPage,
   FileDisputePage,
+  FinancialDashboardPage,
+  ForbiddenPage,
+  ForgotPasswordPage,
+  GroupDetailPage,
+  GroupsPage,
+  InvoiceManagementPage,
   LoginPage,
+  MarketplacePage,
+  MessagesPage,
+  NewMessagePage,
   NewsListPage,
+  NotFoundPage,
   OutagesPage,
+  PaymentManagementPage,
   PrivacySettingsPage,
+  ProfileEditPage,
+  RegisterPage,
+  ResetPasswordPage,
+  ServerErrorPage,
+  SessionExpiredPage,
+  ThreadDetailPage,
+  TwoFactorAuthPage,
+  ViewAnnouncementPage,
   ViewOutagePage,
 } from './routes';
 
@@ -126,6 +164,25 @@ function mapUiStatusToApiStatus(status: UiDisputeStatus): ApiDisputeStatus | und
   return mapping[status];
 }
 
+/** Format API Building address to string for UI components */
+function formatBuildingAddress(building: ApiBuilding): string {
+  const { street, city, postalCode } = building.address;
+  return `${street}, ${postalCode} ${city}`;
+}
+
+/** Transform API Building to UI building format */
+function transformBuildingForUI(building: ApiBuilding): {
+  id: string;
+  name: string;
+  address: string;
+} {
+  return {
+    id: building.id,
+    name: building.name,
+    address: formatBuildingAddress(building),
+  };
+}
+
 /** Transform API Dispute to UI DisputeSummary */
 function transformDisputeToSummary(dispute: ApiDispute): DisputeSummary {
   return {
@@ -164,6 +221,7 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -174,9 +232,29 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
-      <ConnectionStatus />
-      <LanguageSwitcher />
+      <div className="ml-auto flex items-center gap-3">
+        {isAuthenticated && <ConnectionStatus />}
+        <LanguageSwitcher />
+      </div>
     </nav>
+  );
+}
+
+function RouteLoading() {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="flex items-center justify-center py-16"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+        aria-hidden="true"
+      />
+      <span className="sr-only">{t('common.loading')}</span>
+    </div>
   );
 }
 
@@ -198,55 +276,180 @@ function App() {
   return (
     <AccessibilityProvider>
       <AuthProvider>
-        <ToastProvider>
-          <AnnouncerProvider>
-            <WebSocketWrapper>
-              <BrowserRouter>
-                <CommandPaletteWrapper>
-                  <SkipNavigation mainContentId="main-content" />
-                  <OfflineIndicator />
-                  <div className="app">
-                    <AppNavigation />
-                    <main id="main-content">
-                      <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        {/* Dashboard routes (Epic 124) */}
-                        <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-                        <Route path="/dashboard/resident" element={<ResidentDashboardPage />} />
-                        {/* Document Intelligence routes (Epic 39) */}
-                        <Route path="/documents" element={<DocumentsPageRoute />} />
-                        <Route path="/documents/upload" element={<DocumentUploadPage />} />
-                        <Route path="/documents/:documentId" element={<DocumentDetailRoute />} />
-                        {/* News routes (Epic 59) */}
-                        <Route path="/news" element={<NewsListPage />} />
-                        <Route path="/news/:articleId" element={<ArticleDetailRoute />} />
-                        {/* Emergency contacts route (Epic 62) */}
-                        <Route path="/emergency" element={<EmergencyContactDirectoryPage />} />
-                        {/* Accessibility settings route (Epic 60) */}
-                        <Route
-                          path="/settings/accessibility"
-                          element={<AccessibilitySettingsPage />}
-                        />
-                        {/* Privacy settings route (Epic 63) */}
-                        <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
-                        {/* Dispute Resolution routes (Epic 77) */}
-                        <Route path="/disputes" element={<DisputesPageRoute />} />
-                        <Route path="/disputes/new" element={<FileDisputePageRoute />} />
-                        <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
-                        {/* Outages routes (UC-12) */}
-                        <Route path="/outages" element={<OutagesPageRoute />} />
-                        <Route path="/outages/new" element={<CreateOutagePageRoute />} />
-                        <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
-                        <Route path="/outages/:outageId/edit" element={<EditOutagePageRoute />} />
-                      </Routes>
-                    </main>
-                  </div>
-                </CommandPaletteWrapper>
-              </BrowserRouter>
-            </WebSocketWrapper>
-          </AnnouncerProvider>
-        </ToastProvider>
+        <OrganizationProvider>
+          <ToastProvider>
+            <AnnouncerProvider>
+              <WebSocketWrapper>
+                <BrowserRouter>
+                  <CommandPaletteProvider>
+                    <CommandPaletteWrapper>
+                      <SkipNavigation mainContentId="main-content" />
+                      <OfflineIndicator />
+                      <div className="app">
+                        <AppNavigation />
+                        <main id="main-content">
+                          <Suspense fallback={<RouteLoading />}>
+                            <Routes>
+                              <Route path="/" element={<Home />} />
+                              <Route path="/login" element={<LoginPage />} />
+                              <Route path="/register" element={<RegisterPage />} />
+                              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                              <Route path="/reset-password" element={<ResetPasswordPage />} />
+                              <Route path="/settings/password" element={<ChangePasswordPage />} />
+                              <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
+                              <Route path="/settings/profile" element={<ProfileEditPage />} />
+                              {/* Dashboard routes (Epic 124) */}
+                              <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
+                              <Route
+                                path="/dashboard/resident"
+                                element={<ResidentDashboardPage />}
+                              />
+                              {/* Document Intelligence routes (Epic 39) */}
+                              <Route
+                                path="/documents"
+                                element={
+                                  <ProtectedRoute>
+                                    <DocumentsPageRoute />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/documents/upload"
+                                element={
+                                  <ProtectedRoute>
+                                    <DocumentUploadPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/documents/:documentId"
+                                element={
+                                  <ProtectedRoute>
+                                    <DocumentDetailRoute />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* News routes (Epic 59) */}
+                              <Route
+                                path="/news"
+                                element={
+                                  <ProtectedRoute>
+                                    <NewsListPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/news/:articleId"
+                                element={
+                                  <ProtectedRoute>
+                                    <ArticleDetailRoute />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Emergency contacts route (Epic 62) */}
+                              <Route
+                                path="/emergency"
+                                element={
+                                  <ProtectedRoute>
+                                    <EmergencyContactDirectoryPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+                              {/* Accessibility settings route (Epic 60) */}
+                              <Route
+                                path="/settings/accessibility"
+                                element={<AccessibilitySettingsPage />}
+                              />
+                              {/* Privacy settings route (Epic 63) */}
+                              <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                              {/* Dispute Resolution routes (Epic 77) */}
+                              <Route path="/disputes" element={<DisputesPageRoute />} />
+                              <Route path="/disputes/new" element={<FileDisputePageRoute />} />
+                              <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
+                              {/* Outages routes (UC-12) */}
+                              <Route path="/outages" element={<OutagesPageRoute />} />
+                              <Route path="/outages/new" element={<CreateOutagePageRoute />} />
+                              <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
+                              <Route
+                                path="/outages/:outageId/edit"
+                                element={<EditOutagePageRoute />}
+                              />
+                              {/* Announcements routes (UC-06) */}
+                              <Route path="/announcements" element={<AnnouncementsPageRoute />} />
+                              <Route
+                                path="/announcements/new"
+                                element={<CreateAnnouncementPageRoute />}
+                              />
+                              <Route
+                                path="/announcements/:announcementId"
+                                element={<ViewAnnouncementPageRoute />}
+                              />
+                              <Route
+                                path="/announcements/:announcementId/edit"
+                                element={<EditAnnouncementPageRoute />}
+                              />
+                              {/* Messaging routes (UC-07) */}
+                              <Route path="/messages" element={<MessagesPageRoute />} />
+                              <Route path="/messages/new" element={<NewMessagePageRoute />} />
+                              <Route
+                                path="/messages/:threadId"
+                                element={<ThreadDetailPageRoute />}
+                              />
+                              {/* Faults routes (UC-03) */}
+                              <Route path="/faults" element={<FaultsPageRoute />} />
+                              <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+                              <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
+                              <Route
+                                path="/faults/:faultId/edit"
+                                element={<EditFaultPageRoute />}
+                              />
+                              {/* Community routes (Epic 42) */}
+                              <Route path="/community" element={<FeedPageRoute />} />
+                              <Route path="/community/groups" element={<GroupsPageRoute />} />
+                              <Route
+                                path="/community/groups/new"
+                                element={<CreateGroupPageRoute />}
+                              />
+                              <Route
+                                path="/community/groups/:groupId"
+                                element={<GroupDetailPageRoute />}
+                              />
+                              <Route path="/community/events" element={<EventsPageRoute />} />
+                              <Route
+                                path="/community/marketplace"
+                                element={<MarketplacePageRoute />}
+                              />
+                              {/* Financial routes (Epic 52) */}
+                              <Route path="/financial" element={<FinancialDashboardPageRoute />} />
+                              <Route
+                                path="/financial/invoices"
+                                element={<InvoiceManagementPageRoute />}
+                              />
+                              <Route
+                                path="/financial/payments"
+                                element={<PaymentManagementPageRoute />}
+                              />
+                              <Route
+                                path="/financial/budgets"
+                                element={<BudgetManagementPageRoute />}
+                              />
+
+                              {/* Error / state surfaces */}
+                              <Route path="/forbidden" element={<ForbiddenPage />} />
+                              <Route path="/server-error" element={<ServerErrorPage />} />
+                              <Route path="/session-expired" element={<SessionExpiredPage />} />
+                              <Route path="*" element={<NotFoundPage />} />
+                            </Routes>
+                          </Suspense>
+                        </main>
+                      </div>
+                    </CommandPaletteWrapper>
+                  </CommandPaletteProvider>
+                </BrowserRouter>
+              </WebSocketWrapper>
+            </AnnouncerProvider>
+          </ToastProvider>
+        </OrganizationProvider>
       </AuthProvider>
     </AccessibilityProvider>
   );
@@ -658,6 +861,9 @@ function CreateOutagePageRoute() {
   const { showToast } = useToast();
   const createOutage = useCreateOutage();
 
+  // Fetch buildings from API
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
   if (!user?.organizationId) {
     return (
       <div className="error-page">
@@ -668,8 +874,8 @@ function CreateOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  // Transform API buildings to UI format
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
 
   const handleSubmit = async (data: {
     title: string;
@@ -710,7 +916,7 @@ function CreateOutagePageRoute() {
   return (
     <CreateOutagePage
       buildings={buildings}
-      isLoading={createOutage.isPending}
+      isLoading={createOutage.isPending || isLoadingBuildings}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
     />
@@ -840,6 +1046,9 @@ function EditOutagePageRoute() {
   const { data: outageData, isLoading: isLoadingOutage } = useOutage(outageId ?? '');
   const updateOutage = useUpdateOutage();
 
+  // Fetch buildings from API
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
   if (!outageId) {
     return (
       <div className="error-page">
@@ -850,8 +1059,8 @@ function EditOutagePageRoute() {
     );
   }
 
-  // TODO: Fetch buildings from API when available
-  const [buildings] = useState<{ id: string; name: string; address: string }[]>([]);
+  // Transform API buildings to UI format
+  const buildings = (buildingsData?.items ?? []).map(transformBuildingForUI);
 
   const handleSubmit = async (data: {
     title: string;
@@ -892,7 +1101,7 @@ function EditOutagePageRoute() {
 
   const handleCancel = () => navigate(`/outages/${outageId}`);
 
-  if (isLoadingOutage || !outageData) {
+  if (isLoadingOutage || isLoadingBuildings || !outageData) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
@@ -934,12 +1143,602 @@ function EditOutagePageRoute() {
   );
 }
 
+// ============================================
+// Announcements Route Wrappers (UC-06)
+// ============================================
+
+function AnnouncementsPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  // Mock data for now - would use useAnnouncements hook with real API
+  const announcements: import('@ppt/api-client').AnnouncementSummary[] = [];
+  const isLoading = false;
+
+  return (
+    <AnnouncementsPage
+      announcements={announcements}
+      total={0}
+      isLoading={isLoading}
+      onNavigateToCreate={() => navigate('/announcements/new')}
+      onNavigateToView={(id) => navigate(`/announcements/${id}`)}
+      onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
+      onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
+      onPublish={(id) =>
+        showToast({ type: 'success', title: 'Published', message: `Published ${id}` })
+      }
+      onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
+      onPin={(id, pinned) =>
+        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })
+      }
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateAnnouncementPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateAnnouncementPage
+      buildings={[]}
+      units={[]}
+      roles={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Announcement created' });
+        navigate('/announcements');
+      }}
+      onCancel={() => navigate('/announcements')}
+    />
+  );
+}
+
+function ViewAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+
+  // Mock data - would use useAnnouncement hook
+  const mockAnnouncement: import('@ppt/api-client').AnnouncementWithDetails = {
+    id: announcementId,
+    organizationId: 'org-1',
+    authorId: 'user-1',
+    authorName: 'Admin User',
+    title: 'Sample Announcement',
+    content: 'This is a sample announcement content.',
+    status: 'published',
+    targetType: 'all',
+    targetIds: [],
+    pinned: false,
+    acknowledgmentRequired: false,
+    commentsEnabled: true,
+    readCount: 10,
+    acknowledgedCount: 5,
+    commentCount: 2,
+    attachmentCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <ViewAnnouncementPage
+      announcement={mockAnnouncement}
+      attachments={[]}
+      onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
+      onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
+      onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
+      onPin={(pinned) =>
+        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })
+      }
+      onDelete={() => navigate('/announcements')}
+      onBack={() => navigate('/announcements')}
+    />
+  );
+}
+
+function EditAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+
+  // Mock announcement data - would use useAnnouncement hook
+  const mockAnnouncement: import('@ppt/api-client').Announcement = {
+    id: announcementId,
+    organizationId: 'org-1',
+    authorId: 'user-1',
+    title: 'Sample Announcement',
+    content: 'This is a sample announcement content.',
+    status: 'draft',
+    targetType: 'all',
+    targetIds: [],
+    pinned: false,
+    acknowledgmentRequired: false,
+    commentsEnabled: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <EditAnnouncementPage
+      announcement={mockAnnouncement}
+      buildings={[]}
+      units={[]}
+      roles={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Updated', message: 'Announcement updated' });
+        navigate(`/announcements/${announcementId}`);
+      }}
+      onCancel={() => navigate(`/announcements/${announcementId}`)}
+    />
+  );
+}
+
+// ============================================
+// Messaging Route Wrappers (UC-07)
+// ============================================
+
+function MessagesPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <MessagesPage
+      threads={[]}
+      total={0}
+      unreadCount={0}
+      onNavigateToThread={(threadId) => navigate(`/messages/${threadId}`)}
+      onNavigateToCreate={() => navigate('/messages/new')}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function NewMessagePageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <NewMessagePage
+      recipients={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Sent', message: 'Message sent' });
+        navigate('/messages');
+      }}
+      onCancel={() => navigate('/messages')}
+    />
+  );
+}
+
+function ThreadDetailPageRoute() {
+  const { threadId } = useParams<{ threadId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  if (!threadId) {
+    return <div>Thread not found</div>;
+  }
+
+  // Mock thread data
+  const mockThread: import('./features/messaging').ThreadWithMessages = {
+    id: threadId,
+    subject: 'Sample Thread',
+    participants: [],
+    participantCount: 2,
+    messageCount: 0,
+    messages: [],
+    unreadCount: 0,
+    lastMessageAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <ThreadDetailPage
+      thread={mockThread}
+      currentUserId={user?.id ?? ''}
+      onSendMessage={() => {}}
+      onMarkAsRead={() => {}}
+      onBack={() => navigate('/messages')}
+    />
+  );
+}
+
+// ============================================
+// Faults Route Wrappers (UC-03)
+// ============================================
+
+function FaultsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <FaultsPage
+      faults={[]}
+      total={0}
+      onNavigateToCreate={() => navigate('/faults/new')}
+      onNavigateToView={(id) => navigate(`/faults/${id}`)}
+      onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
+      onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateFaultPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateFaultPage
+      buildings={[]}
+      units={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Fault reported' });
+        navigate('/faults');
+      }}
+      onCancel={() => navigate('/faults')}
+    />
+  );
+}
+
+function FaultDetailPageRoute() {
+  const { faultId } = useParams<{ faultId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!faultId) {
+    return <div>Fault not found</div>;
+  }
+
+  // Mock fault data
+  const mockFault: import('./features/faults').FaultDetail = {
+    id: faultId,
+    organizationId: 'org-1',
+    buildingId: 'bld-1',
+    reporterId: 'user-1',
+    title: 'Sample Fault',
+    description: 'This is a sample fault description.',
+    category: 'plumbing',
+    priority: 'medium',
+    status: 'new',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    reporterName: 'John Doe',
+    reporterEmail: 'john@example.com',
+    buildingName: 'Building A',
+    buildingAddress: '123 Main St',
+    attachmentCount: 0,
+    commentCount: 0,
+  };
+
+  return (
+    <FaultDetailPage
+      fault={mockFault}
+      timeline={[]}
+      attachments={[]}
+      onBack={() => navigate('/faults')}
+      onEdit={() => navigate(`/faults/${faultId}/edit`)}
+      onTriage={() => showToast({ type: 'success', title: 'Triaged', message: '' })}
+      onResolve={() => showToast({ type: 'success', title: 'Resolved', message: '' })}
+      onConfirm={() => showToast({ type: 'success', title: 'Confirmed', message: '' })}
+      onReopen={() => showToast({ type: 'info', title: 'Reopened', message: '' })}
+      onAddComment={() => {}}
+      onAddAttachment={() => {}}
+      onDeleteAttachment={() => {}}
+    />
+  );
+}
+
+function EditFaultPageRoute() {
+  const { faultId } = useParams<{ faultId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  if (!faultId) {
+    return <div>Fault not found</div>;
+  }
+
+  return (
+    <EditFaultPage
+      faultId={faultId}
+      initialData={{}}
+      buildings={[]}
+      units={[]}
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Updated', message: 'Fault updated' });
+        navigate(`/faults/${faultId}`);
+      }}
+      onCancel={() => navigate(`/faults/${faultId}`)}
+    />
+  );
+}
+
+// ============================================
+// Community Route Wrappers (Epic 42)
+// ============================================
+
+function FeedPageRoute() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  return (
+    <FeedPage
+      posts={[]}
+      total={0}
+      userName={user?.firstName ?? 'User'}
+      onCreatePost={() => {}}
+      onLikePost={() => {}}
+      onViewPost={(id) => navigate(`/community/posts/${id}`)}
+      onCommentPost={() => {}}
+      onSharePost={() => {}}
+      onEditPost={() => {}}
+      onDeletePost={() => {}}
+      onFilterChange={() => {}}
+      onLoadMore={() => {}}
+    />
+  );
+}
+
+function GroupsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <GroupsPage
+      groups={[]}
+      total={0}
+      onNavigateToGroup={(id) => navigate(`/community/groups/${id}`)}
+      onNavigateToCreate={() => navigate('/community/groups/new')}
+      onJoinGroup={() => {}}
+      onLeaveGroup={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function CreateGroupPageRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  return (
+    <CreateGroupPage
+      onSubmit={() => {
+        showToast({ type: 'success', title: 'Created', message: 'Group created' });
+        navigate('/community/groups');
+      }}
+      onCancel={() => navigate('/community/groups')}
+    />
+  );
+}
+
+function GroupDetailPageRoute() {
+  const { groupId } = useParams<{ groupId: string }>();
+  const navigate = useNavigate();
+
+  if (!groupId) {
+    return <div>Group not found</div>;
+  }
+
+  // Mock group data
+  const mockGroup: import('@ppt/api-client').CommunityGroup = {
+    id: groupId,
+    buildingId: 'bld-1',
+    name: 'Sample Group',
+    description: 'A sample community group',
+    category: 'general',
+    visibility: 'public',
+    memberCount: 10,
+    postCount: 0,
+    isOfficial: false,
+    createdBy: 'user-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return (
+    <GroupDetailPage
+      group={mockGroup}
+      members={[]}
+      onNavigateBack={() => navigate('/community/groups')}
+      onJoin={() => {}}
+      onLeave={() => {}}
+      onEdit={() => {}}
+      onDelete={() => navigate('/community/groups')}
+      onNavigateToSettings={() => {}}
+      onPromoteMember={() => {}}
+      onRemoveMember={() => {}}
+      onBanMember={() => {}}
+    />
+  );
+}
+
+function EventsPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <EventsPage
+      events={[]}
+      total={0}
+      onNavigateToEvent={(id) => navigate(`/community/events/${id}`)}
+      onNavigateToCreate={() => navigate('/community/events/new')}
+      onRsvp={() => {}}
+      onEditEvent={() => {}}
+      onDeleteEvent={() => {}}
+      onExportCalendar={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function MarketplacePageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <MarketplacePage
+      items={[]}
+      total={0}
+      onNavigateToItem={(id) => navigate(`/community/marketplace/${id}`)}
+      onNavigateToCreate={() => navigate('/community/marketplace/new')}
+      onContactSeller={() => {}}
+      onEditItem={() => {}}
+      onDeleteItem={() => {}}
+      onMarkSold={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+// ============================================
+// Financial Route Wrappers (Epic 52)
+// ============================================
+
+function FinancialDashboardPageRoute() {
+  const { user } = useAuth();
+
+  return (
+    <FinancialDashboardPage
+      organizationId={user?.organizationId ?? ''}
+      buildings={[]}
+      metrics={{ totalBalance: 0, totalOutstanding: 0, totalOverdue: 0, currency: 'EUR' }}
+      invoiceCounts={{ draft: 0, sent: 0, overdue: 0, paid: 0 }}
+      recentPayments={[]}
+      overdueInvoices={[]}
+      arReport={{
+        entries: [],
+        totals: { current: 0, days_30: 0, days_60: 0, days_90_plus: 0, total: 0 },
+      }}
+    />
+  );
+}
+
+function InvoiceManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <InvoiceManagementPage
+      invoices={[]}
+      total={0}
+      buildings={[]}
+      onNavigateToCreate={() => navigate('/financial/invoices/new')}
+      onNavigateToDetail={(id: string) => navigate(`/financial/invoices/${id}`)}
+      onSendInvoice={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function PaymentManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <PaymentManagementPage
+      payments={[]}
+      total={0}
+      buildings={[]}
+      unallocatedPayments={[]}
+      unpaidInvoices={[]}
+      metrics={{ totalReceived: 0, pendingReconciliation: 0, currency: 'EUR' }}
+      onNavigateToRecord={() => navigate('/financial/payments/new')}
+      onNavigateToDetail={(id: string) => navigate(`/financial/payments/${id}`)}
+      onMatch={() => {}}
+      onAutoMatch={() => {}}
+      onFilterChange={() => {}}
+    />
+  );
+}
+
+function BudgetManagementPageRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <BudgetManagementPage
+      budgets={[]}
+      currentYear={new Date().getFullYear()}
+      summary={{ totalBudget: 0, totalActual: 0, overallVariance: 0, currency: 'EUR' }}
+      buildings={[]}
+      onNavigateToCreate={() => navigate('/financial/budgets/new')}
+      onNavigateToDetail={(id: string) => navigate(`/financial/budgets/${id}`)}
+      onYearChange={() => {}}
+      onBuildingChange={() => {}}
+    />
+  );
+}
+
 function Home() {
   const { t } = useTranslation();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+
   return (
-    <div>
-      <h1>{t('home.title')}</h1>
-      <p>{t('home.welcome')}</p>
+    <div className="space-y-10">
+      <section className="text-center py-10">
+        <h1 className="text-3xl md:text-4xl font-bold mb-3">{t('home.title')}</h1>
+        <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-text-secondary)' }}>
+          {t('home.welcome')}
+        </p>
+        {!isAuthenticated && (
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
+            >
+              {t('auth.signIn')}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              className="btn-outline-token px-5 py-2.5 rounded-lg font-medium"
+            >
+              {t('auth.register', { defaultValue: 'Register' })}
+            </button>
+          </div>
+        )}
+        {isAuthenticated && (
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(user?.role === 'manager' ? '/dashboard/manager' : '/dashboard/resident')
+              }
+              className="btn-primary-token px-5 py-2.5 rounded-lg font-medium"
+            >
+              {t('nav.dashboard', { defaultValue: 'Open dashboard' })}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { to: '/documents', titleKey: 'nav.documents' },
+          { to: '/news', titleKey: 'nav.news' },
+          { to: '/disputes', titleKey: 'nav.disputes' },
+          { to: '/outages', titleKey: 'nav.outages' },
+          { to: '/emergency', titleKey: 'nav.emergency' },
+          { to: '/settings/accessibility', titleKey: 'nav.accessibility' },
+        ].map((card) => (
+          <Link
+            key={card.to}
+            to={card.to}
+            className="block p-5 rounded-xl"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+              {t(card.titleKey)}
+            </span>
+          </Link>
+        ))}
+      </section>
     </div>
   );
 }

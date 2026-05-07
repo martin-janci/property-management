@@ -4,6 +4,7 @@ import { QueryProvider } from '@/lib/query-provider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 import { DevPanelMount } from '../../components/DevPanelMount';
 import { ComparisonTray } from '../../components/comparison';
 import { type Locale, locales } from '../../i18n/config';
@@ -69,8 +70,29 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html
+      lang={locale}
+      // Apply system color scheme by default; JS in ColorSchemeScript can
+      // override with a stored user preference at runtime.
+      suppressHydrationWarning
+    >
+      <head>
+        {/*
+         * Runtime env config: the /env.js route handler (src/app/env.js/route.ts)
+         * serves window.__ENV__ dynamically at request time, so the same built
+         * image can be deployed to different environments without a rebuild.
+         * Loaded without async/defer so it executes synchronously before the
+         * React bundle, making window.__ENV__ available to all client modules.
+         * The locale layout itself remains statically renderable.
+         */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/env.js" />
+      </head>
       <body>
+        {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
+        <Script id="color-scheme-init" strategy="beforeInteractive">{`
+(function(){try{var s=localStorage.getItem('ppt-color-scheme');var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();
+        `}</Script>
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <AuthProvider>

@@ -143,9 +143,12 @@ impl TotpService {
         let cipher = Aes256Gcm::new_from_slice(&key)
             .map_err(|e| TotpError::EncryptionError(e.to_string()))?;
 
-        // Generate random 12-byte nonce
+        // Generate random 12-byte nonce from OS CSPRNG directly.
+        // SECURITY: AES-GCM nonce reuse breaks confidentiality; see crypto.rs
+        // for rationale.
+        use rand::RngCore;
         let mut nonce_bytes = [0u8; 12];
-        rand::thread_rng().fill(&mut nonce_bytes);
+        rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt the secret
@@ -291,9 +294,12 @@ impl TotpService {
     }
 
     /// Generate a random backup code.
+    ///
+    /// Uses OS CSPRNG directly; backup codes are shared secrets used to
+    /// recover a TOTP-protected account.
     fn generate_random_code(&self) -> String {
         const CHARSET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rngs::OsRng;
 
         (0..self.backup_code_length)
             .map(|_| {

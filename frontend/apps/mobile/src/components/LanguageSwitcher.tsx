@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { type Locale, localeFlags, localeNames, locales } from '../i18n';
+import { colors } from '../screens/shared/screenStyles';
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
@@ -66,12 +67,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
   },
   buttonText: {
     fontSize: 16,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   languageOptionActive: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.accentSoft,
   },
   languageFlag: {
     fontSize: 24,
@@ -108,27 +109,27 @@ const styles = StyleSheet.create({
   },
   languageName: {
     fontSize: 16,
-    color: '#374151',
+    color: colors.textSecondary,
     flex: 1,
   },
   languageNameActive: {
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '600',
   },
   checkmark: {
     fontSize: 18,
-    color: '#2563eb',
+    color: colors.accent,
   },
   closeButton: {
     marginTop: 8,
     padding: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 12,
     alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
 });

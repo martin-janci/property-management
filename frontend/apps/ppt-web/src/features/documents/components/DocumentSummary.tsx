@@ -239,7 +239,7 @@ const summaryStyles = `
     font-size: 0.625rem;
     font-weight: 700;
     background: #7c3aed;
-    color: white;
+    color: var(--ppt-fg-on-accent);
     border-radius: 0.25rem;
   }
 
@@ -253,7 +253,7 @@ const summaryStyles = `
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 500;
-    background: white;
+    background: var(--ppt-bg-surface);
     border: 1px solid #c4b5fd;
     border-radius: 0.25rem;
     color: #7c3aed;
@@ -358,7 +358,7 @@ const summaryStyles = `
     padding: 0.25rem 0.75rem;
     font-size: 0.75rem;
     font-weight: 500;
-    background: white;
+    background: var(--ppt-bg-surface);
     border: 1px solid #c4b5fd;
     border-radius: 9999px;
     color: #7c3aed;
@@ -373,7 +373,7 @@ const summaryStyles = `
   .style-button.active {
     background: #7c3aed;
     border-color: #7c3aed;
-    color: white;
+    color: var(--ppt-fg-on-accent);
   }
 
   .generate-button {
@@ -387,7 +387,7 @@ const summaryStyles = `
     background: #7c3aed;
     border: none;
     border-radius: 0.375rem;
-    color: white;
+    color: var(--ppt-fg-on-accent);
     cursor: pointer;
     transition: all 0.15s;
   }
@@ -405,7 +405,7 @@ const summaryStyles = `
     width: 16px;
     height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
+    border-top-color: var(--ppt-fg-on-accent);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
   }
@@ -424,20 +424,20 @@ const summaryStyles = `
   .error-message {
     margin-top: 0.75rem;
     padding: 0.5rem 0.75rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: var(--ppt-color-danger-light);
+    border: 1px solid var(--ppt-color-danger-light);
     border-radius: 0.375rem;
-    color: #dc2626;
+    color: var(--ppt-color-danger);
     font-size: 0.875rem;
   }
 
   .processing-message {
     margin-top: 0.75rem;
     padding: 0.5rem 0.75rem;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: var(--ppt-color-success-light);
+    border: 1px solid var(--ppt-color-success-light);
     border-radius: 0.375rem;
-    color: #166534;
+    color: var(--ppt-color-success-dark);
     font-size: 0.875rem;
   }
 `;
