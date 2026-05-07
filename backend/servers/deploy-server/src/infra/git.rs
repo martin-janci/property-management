@@ -122,8 +122,16 @@ pub fn sanitize(branch: &str) -> String {
 }
 
 /// Strict validator for inputs that flow into shell-out commands or SQL.
-/// Allows: alphanumeric, `-`, `_`, `.`, `/`. Rejects leading `-` (git option flag).
-/// Returns the input unchanged if valid; Err if not.
+///
+/// Allowed characters: alphanumeric, `-`, `_`, `.`, `/`.
+///
+/// Rejected:
+/// - Empty string (git fetch with no branch is meaningless and a likely bug).
+/// - Leading `-` (would be parsed as a git option flag — option injection).
+/// - Leading `.` (git refuses refs starting with `.`; rejecting here gives a
+///   clearer error than letting `git fetch` fail mid-flight).
+///
+/// Returns the input unchanged if valid; `BadRequest` if not.
 pub fn validate_branch_strict(branch: &str) -> crate::Result<&str> {
     if branch.is_empty() || branch.starts_with('-') || branch.starts_with('.') {
         return Err(crate::DeployError::BadRequest(format!(

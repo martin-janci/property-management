@@ -9,9 +9,25 @@ pub struct CaddyClient {
 
 impl CaddyClient {
     pub fn new(base: impl Into<String>) -> Self {
+        // Bounded timeouts on every Caddy admin call. These are reached
+        // synchronously from request handlers (open/close worktree, GC tick,
+        // promote/rollback) and the calling task usually holds a per-worktree
+        // lock — a wedged Caddy admin API would otherwise stall the whole
+        // operation indefinitely and starve other open/close calls for the
+        // same worktree.
+        //
+        // Connect timeout is short because `localhost:2019` is a unix-socket
+        // proxy or in-host TCP — a slow connect means Caddy is dead. Total
+        // timeout includes payload upload (route JSON is small) so a 5s budget
+        // is generous.
+        let http = reqwest::Client::builder()
+            .connect_timeout(std::time::Duration::from_secs(2))
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .expect("build Caddy HTTP client");
         Self {
             base: base.into(),
-            http: reqwest::Client::builder().build().unwrap(),
+            http,
         }
     }
 

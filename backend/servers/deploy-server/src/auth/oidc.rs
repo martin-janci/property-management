@@ -58,7 +58,19 @@ impl OidcValidator {
     }
 
     async fn fetch_jwks(&self) -> Result<Jwks> {
-        let resp = self.http.get(&self.cfg.jwks_url).send().await?;
+        // `error_for_status()` is critical here: without it, a 4xx/5xx from
+        // the JWKS endpoint (rate limit, outage, misconfig) can return a JSON
+        // error body that `serde_json` happily *parses* — but with empty
+        // `.keys[]`. The auth flow then fails later in `key_for(...)` with a
+        // confusing "unknown kid" message instead of the real HTTP error.
+        // Surfacing it here gives operators an actionable Unauthorized + the
+        // upstream status code.
+        let resp = self
+            .http
+            .get(&self.cfg.jwks_url)
+            .send()
+            .await?
+            .error_for_status()?;
         let jwks: Jwks = resp.json().await?;
         Ok(jwks)
     }
