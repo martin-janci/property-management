@@ -102,13 +102,24 @@ async fn main() -> anyhow::Result<()> {
         api_keys,
         oidc,
         std::env::var("PPT_FRONTEND_IMAGE").unwrap_or_else(|_| "ppt-frontend-dev:local".into()),
+        // Worktree dev hosts (`wt-<name>.dev.ppt.rlt.sk`, `wt-<name>.dev.rlt.sk`)
+        // mirror the staging apex with `staging.` swapped for `dev.`. Example:
+        // staging.ppt_apex="staging.ppt.rlt.sk" → "dev.ppt.rlt.sk".
+        // Future improvement: make these explicit fields on the staging
+        // target (or top-level config) instead of derived from staging.*.
         format!(
-            "dev.ppt.{}",
-            staging.domain_suffix.trim_start_matches("staging.")
+            "dev.{}",
+            staging
+                .ppt_apex
+                .strip_prefix("staging.")
+                .unwrap_or(&staging.ppt_apex)
         ),
         format!(
             "dev.{}",
-            staging.domain_suffix.trim_start_matches("staging.")
+            staging
+                .reality_apex
+                .strip_prefix("staging.")
+                .unwrap_or(&staging.reality_apex)
         ),
         webhook_cfg,
         cfg_arc,

@@ -86,7 +86,8 @@ pub async fn deploy_handler(
         reality_image: images["reality-server"].clone(),
         ppt_web_image: images["ppt-web"].clone(),
         reality_web_image: images["reality-web"].clone(),
-        domain_suffix: target_cfg.domain_suffix.clone(),
+        reality_apex: target_cfg.reality_apex.clone(),
+        ppt_apex: target_cfg.ppt_apex.clone(),
         target_name: target.as_str().into(),
     };
     let docker = svc
@@ -163,7 +164,7 @@ pub async fn wake_handler(
         .targets
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config("staging target missing".into()))?;
-    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), &target_cfg.domain_suffix)?;
+    let spec = BlueGreenSpec::from_release(&rel, target.as_str(), target_cfg)?;
     let docker = svc
         .docker_pool
         .get(target.as_str())

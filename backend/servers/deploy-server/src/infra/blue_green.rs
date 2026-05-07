@@ -28,7 +28,12 @@ pub struct BlueGreenSpec {
     pub reality_image: String,
     pub ppt_web_image: String,
     pub reality_web_image: String,
-    pub domain_suffix: String,
+    /// Reality Portal apex (e.g. `rlt.sk`, `staging.rlt.sk`). reality-web is
+    /// served at this exact host; reality-server at `api.<reality_apex>`.
+    pub reality_apex: String,
+    /// Property Management apex (e.g. `ppt.rlt.sk`, `staging.ppt.rlt.sk`).
+    /// ppt-web is served at this exact host; api-server at `api.<ppt_apex>`.
+    pub ppt_apex: String,
     pub target_name: String,
 }
 
@@ -40,7 +45,7 @@ impl BlueGreenSpec {
     pub fn from_release(
         rel: &crate::domain::Release,
         target_name: &str,
-        domain_suffix: &str,
+        target: &crate::config::Target,
     ) -> crate::Result<Self> {
         fn require(rel: &crate::domain::Release, key: &str) -> crate::Result<String> {
             rel.images.get(key).cloned().ok_or_else(|| {
@@ -57,7 +62,8 @@ impl BlueGreenSpec {
             reality_image: require(rel, "reality-server")?,
             ppt_web_image: require(rel, "ppt-web")?,
             reality_web_image: require(rel, "reality-web")?,
-            domain_suffix: domain_suffix.to_string(),
+            reality_apex: target.reality_apex.clone(),
+            ppt_apex: target.ppt_apex.clone(),
         })
     }
 }
@@ -162,28 +168,33 @@ impl BlueGreenDeployer {
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
 
-        let suffix = &spec.domain_suffix;
+        // Per-service Caddy routes use the dual-apex layout:
+        //   <reality_apex>           → reality-web   (Reality Portal UI, bare apex)
+        //   api.<reality_apex>       → reality-server (Reality public API)
+        //   <ppt_apex>               → ppt-web       (Property Management UI)
+        //   api.<ppt_apex>           → api-server    (PM API)
+        // For prod with reality_apex="rlt.sk" + ppt_apex="ppt.rlt.sk" this gives
+        // rlt.sk / api.rlt.sk / ppt.rlt.sk / api.ppt.rlt.sk respectively.
+        let reality_apex = &spec.reality_apex;
+        let ppt_apex = &spec.ppt_apex;
         self.caddy
             .register_route(
-                &format!("api.{suffix}"),
+                &format!("api.{ppt_apex}"),
                 &format!("{target_name}-api-{next_color}:8080"),
             )
             .await?;
         self.caddy
             .register_route(
-                &format!("reality-api.{suffix}"),
+                &format!("api.{reality_apex}"),
                 &format!("{target_name}-reality-{next_color}:8081"),
             )
             .await?;
         self.caddy
-            .register_route(
-                &format!("ppt.{suffix}"),
-                &format!("{target_name}-ppt-{next_color}:80"),
-            )
+            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:80"))
             .await?;
         self.caddy
             .register_route(
-                &format!("reality.{suffix}"),
+                reality_apex,
                 &format!("{target_name}-reality-web-{next_color}:3000"),
             )
             .await?;

@@ -59,7 +59,16 @@ pub struct TargetsConfig {
 pub struct Target {
     pub docker_socket: String,
     pub caddy_url: String,
-    pub domain_suffix: String,
+    /// Apex hostname for the Reality Portal subtree at this target. The Caddy
+    /// route for `reality-web` (Next.js UI) is registered at this exact host;
+    /// `reality-server` (the Reality API) at `api.<reality_apex>`.
+    /// Examples: "rlt.sk" (prod), "staging.rlt.sk" (staging).
+    pub reality_apex: String,
+    /// Apex hostname for the Property Management subtree at this target. The
+    /// Caddy route for `ppt-web` (Vite/React UI) is registered at this exact
+    /// host; `api-server` (the PM API) at `api.<ppt_apex>`.
+    /// Examples: "ppt.rlt.sk" (prod), "staging.ppt.rlt.sk" (staging).
+    pub ppt_apex: String,
     #[serde(default)]
     pub idle_timeout: Option<String>,
     #[serde(default)]
