@@ -171,10 +171,28 @@ pub fn build_service_envs(
     // Shared baseline both backends need. Per-service additions are made
     // below where they differ (api-server has TOTP+INTEGRATION encryption
     // keys; reality-server has the PM OAuth client secret).
+    //
+    // Several URL-shaped vars (BASE_URL / APP_BASE_URL / API_BASE_URL) are
+    // read by individual modules with localhost defaults that break in
+    // prod (e.g. signed email links pointing at http://localhost:3000).
+    // We inject the right per-target apexes so those modules don't have
+    // to know about the deploy topology.
+    let app_base_url = format!("https://{}", target.ppt_apex);
+    let api_base_url = format!("https://api.{}", target.ppt_apex);
     let mut backend_env = vec![
         format!("DATABASE_URL={database_url}"),
         format!("JWT_SECRET={jwt_secret}"),
         format!("CORS_ALLOWED_ORIGINS={cors}"),
+        // `APP_BASE_URL` is consumed by api-server's EmailService for
+        // verification links; `BASE_URL` is read by routes/agencies and
+        // signatures::DEFAULT_BASE_URL falls back to localhost without it.
+        // Setting both to the PM UI's apex covers both code paths.
+        format!("APP_BASE_URL={app_base_url}"),
+        format!("BASE_URL={app_base_url}"),
+        // `API_BASE_URL` is used by integrations callbacks (e.g. webhook
+        // URLs we hand out to Adobe Sign / DocuSign) and must point at the
+        // public api.<ppt_apex> host the third party can reach.
+        format!("API_BASE_URL={api_base_url}"),
         "RUST_LOG=info".into(),
     ];
 
@@ -194,7 +212,17 @@ pub fn build_service_envs(
     // round-trip flows through Caddy, which already proxies to the active
     // blue/green color — simpler than threading the active-color name into
     // env config.
-    reality_env.push(format!("PM_API_URL=https://api.{}", target.ppt_apex));
+    reality_env.push(format!("PM_API_URL={api_base_url}"));
+    // `SSO_CALLBACK_URL` defaults to `http://localhost:8081/api/v1/sso/callback`
+    // — that endpoint is on reality-server itself, exposed publicly at
+    // `<reality_apex>/api/v1/sso/callback` so the user's browser can reach
+    // it after the OAuth redirect from api-server. Without overriding the
+    // default, the redirect from PM SSO would point at localhost in the
+    // user's browser → broken login.
+    reality_env.push(format!(
+        "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
+        target.reality_apex
+    ));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
@@ -208,10 +236,14 @@ pub fn build_service_envs(
             format!("NEXT_PUBLIC_SITE_URL=https://{}", target.reality_apex),
         ],
     );
-    // ppt-web is a Vite-built static bundle: API URL was inlined at build
+    // ppt-web is a Vite-built static bundle: API URL is inlined at build
     // time as the relative path `/api` (see docker-frontend.yml build-args).
-    // No runtime env needed today; entry stays so the deployer's env-lookup
-    // is uniform across all four services.
+    // The cross-origin shim happens at request time inside the container's
+    // own nginx — `/api/` and `/ws/` are proxied to the matching color of
+    // api-server in the same network. The two BG_* vars that drive that
+    // proxy upstream are appended in `BlueGreenDeployer::deploy` because
+    // the color is only known after the next-color decision; this entry
+    // stays empty here.
     envs.insert("ppt".into(), vec![]);
     Ok(envs)
 }
@@ -278,10 +310,17 @@ impl BlueGreenDeployer {
         };
 
         // Per-service env: if the spec doesn't have an entry for a service
-        // we pass an empty Vec rather than panicking. ppt-web legitimately
-        // has no env today; missing api/reality entries would surface as
-        // crash-looping containers, which is recoverable but bad UX.
+        // we pass an empty Vec rather than panicking. Missing api/reality
+        // entries would surface as crash-looping containers (recoverable,
+        // but bad UX). ppt-web's `BG_TARGET` / `BG_COLOR` are appended
+        // here because the color is only known at this point — the
+        // ppt-web image's nginx renders /api and /ws proxy upstreams from
+        // them at startup so SPA fetches reach the same-color api-server
+        // in the same Docker network.
         let env_for = |s: &str| spec.service_envs.get(s).cloned().unwrap_or_default();
+        let mut ppt_env = env_for("ppt");
+        ppt_env.push(format!("BG_TARGET={target_name}"));
+        ppt_env.push(format!("BG_COLOR={next_color}"));
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
             &spec.api_image,
@@ -298,12 +337,19 @@ impl BlueGreenDeployer {
             env_for("reality"),
         )
         .await?;
+        // ppt-web's nginx listens on 8080 (see docker/frontend/ppt-web.Dockerfile —
+        // `EXPOSE 8080` matched by `listen 8080` in the rendered nginx
+        // config). Earlier code passed 80 here and in the Caddy upstream
+        // below, which would have refused the connection on the bridge
+        // network — caught when this PR's nginx changes were first wired
+        // up. Aligning to 8080 across run_service / wait_until_ready /
+        // register_route.
         self.run_service(
             &format!("{target_name}-ppt-{next_color}"),
             &spec.ppt_web_image,
-            80,
+            8080,
             target_name,
-            env_for("ppt"),
+            ppt_env,
         )
         .await?;
         self.run_service(
@@ -320,7 +366,7 @@ impl BlueGreenDeployer {
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-{next_color}"), 8081, 30)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 80, 30)
+        self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 8080, 30)
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
@@ -347,7 +393,7 @@ impl BlueGreenDeployer {
             )
             .await?;
         self.caddy
-            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:80"))
+            .register_route(ppt_apex, &format!("{target_name}-ppt-{next_color}:8080"))
             .await?;
         self.caddy
             .register_route(
