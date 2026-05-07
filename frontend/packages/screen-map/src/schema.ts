@@ -52,7 +52,7 @@ const IsoDateSchema = z.preprocess(
     }
     return value;
   },
-  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' }),
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' })
 );
 
 export const ScreenMapFrontmatterSchema = z
