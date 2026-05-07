@@ -116,12 +116,22 @@ jobs:
       - name: POST /api/deploy
         env:
           DEPLOY_URL: https://onyx.rlt.sk
-          FULL_SHA: ${{ github.sha }}
+          # We deploy by BRANCH tag (e.g. `main`, `dev`), not by short SHA.
+          # docker-build.yml and docker-frontend.yml are paths-filtered, so a
+          # backend-only push on main only updates `ppt-api-server:main` and
+          # `ppt-reality-server:main`; `ppt-web:<sha>` and `ppt-reality-web:<sha>`
+          # for the same SHA never exist, and a SHA-based deploy would 404 on
+          # those pulls. The branch tag is rewritten by every successful build
+          # of either workflow, so `:main` (or `:dev`) on each of the four
+          # service images always points at the most recent successful build of
+          # that service for that branch — independent of which workflow last
+          # ran. Side effect: per-commit precision is lost in the auto-deploy
+          # path; tag-based releases (release.yml → /api/release with vX.Y.Z)
+          # keep their commit-specific semantics.
+          BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
           TARGET: ${{ steps.target.outputs.name }}
         run: |
-          # Short SHA matches `type=sha,prefix=` default in metadata-action (7 chars).
-          SHORT_SHA="${FULL_SHA:0:7}"
           curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"$SHORT_SHA\", \"target\": \"$TARGET\"}"
+            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"

@@ -115,12 +115,16 @@ jobs:
       - name: POST /api/deploy
         env:
           DEPLOY_URL: https://onyx.rlt.sk
-          FULL_SHA: ${{ github.sha }}
+          # See docker-build.yml's mirror of this step for the rationale on
+          # using the branch tag instead of SHORT_SHA: paths-filtered builds
+          # mean only some service images get a fresh `:<sha>` per push, and
+          # the deploy-server pulls all four. The `:main` / `:dev` tag is
+          # rewritten by whichever workflow produced the most recent build of
+          # that service.
+          BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
           TARGET: ${{ steps.target.outputs.name }}
         run: |
-          # Short SHA matches `type=sha,prefix=` default in metadata-action (7 chars).
-          SHORT_SHA="${FULL_SHA:0:7}"
           curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
             -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
             -H "Content-Type: application/json" \
-            -d "{\"tag\": \"$SHORT_SHA\", \"target\": \"$TARGET\"}"
+            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"
