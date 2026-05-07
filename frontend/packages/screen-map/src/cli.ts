@@ -127,24 +127,54 @@ program
   .option('--root <path>', 'repo root', process.cwd())
   .option('--product <name>', 'ppt | reality')
   .option('--preview <mode>', 'local | staging | design', 'local')
+  .option('--filter <expr>', 'frontmatter filter, e.g. redesignStatus:in-progress')
   .action(
     async (opts: {
       root: string;
       product?: 'ppt' | 'reality';
       preview: 'local' | 'staging' | 'design';
+      filter?: string;
     }) => {
       const repoRoot = path.resolve(opts.root);
       const result = await startReviewServer({
         repoRoot,
         product: opts.product,
         preview: opts.preview,
+        filter: opts.filter ? parseFilter(opts.filter) : undefined,
       });
       process.stdout.write(`Review server running at ${result.url}\n`);
       process.stdout.write('Press Ctrl-C to stop.\n');
       // Keep the process alive — SIGINT handler in start.ts handles shutdown.
-      await new Promise(() => {});
+      // Also exit when the server's onFinish fires (POST /api/session/finish).
+      await result.shutdown();
+      process.exit(0);
     }
   );
+
+function parseFilter(
+  expr: string
+): (fm: { id: string; product: string; implementations: Record<string, unknown> }) => boolean {
+  // Simple `key:value` form. Comma-separated terms ANDed.
+  const terms = expr.split(',').map((t) => {
+    const [keyRaw, valueRaw] = t.split(':');
+    return { key: (keyRaw ?? '').trim(), value: (valueRaw ?? '').trim() };
+  });
+  return (fm) => {
+    return terms.every(({ key, value }) => {
+      // Support nested `implementations.<platform>.<field>:<value>`.
+      const path = key.split('.');
+      let cursor: unknown = fm;
+      for (const seg of path) {
+        if (cursor && typeof cursor === 'object' && seg in cursor) {
+          cursor = (cursor as Record<string, unknown>)[seg];
+        } else {
+          return false;
+        }
+      }
+      return String(cursor) === value;
+    });
+  };
+}
 
 program.parseAsync().catch((err) => {
   process.stderr.write(`Unexpected error: ${(err as Error).message}\n`);

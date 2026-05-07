@@ -2,18 +2,14 @@ import { exec } from 'node:child_process';
 import { serve } from '@hono/node-server';
 import { discoverScreenMaps } from '../discover.js';
 import { parseScreenMap } from '../parse.js';
-import type { Product } from '../types.js';
+import type { Product, ScreenMapFrontmatter } from '../types.js';
 import { buildServer } from './server.js';
 import { createSession } from './session.js';
 
 export interface StartOptions {
   repoRoot: string;
   product?: Product;
-  filter?: (frontmatter: {
-    id: string;
-    product: string;
-    implementations: Record<string, unknown>;
-  }) => boolean;
+  filter?: (frontmatter: ScreenMapFrontmatter) => boolean;
   preview?: 'local' | 'staging' | 'design';
   /** Starting port to try. Increments until a free port is found. */
   startPort?: number;
@@ -33,7 +29,7 @@ export async function startReviewServer(opts: StartOptions): Promise<StartResult
     screens = screens.filter((s) => s.frontmatter.product === opts.product);
   }
   if (opts.filter) {
-    screens = screens.filter((s) => opts.filter!(s.frontmatter as never));
+    screens = screens.filter((s) => opts.filter!(s.frontmatter));
   }
   const session = createSession({ screens, defaultPreview: opts.preview });
 

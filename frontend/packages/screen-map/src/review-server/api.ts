@@ -118,7 +118,11 @@ function appendAgentLog(body: string, line: string): string {
 function appendSpecificNote(body: string, date: string, note: string): string {
   const heading = '### Specific (recent)';
   const idx = body.indexOf(heading);
-  if (idx < 0) return body;
+  if (idx < 0) {
+    // Heading missing — append the section so the note is preserved.
+    const sep = body.endsWith('\n') ? '\n' : '\n\n';
+    return `${body}${sep}## Notes\n\n${heading}\n\n- ${date}: ${note}\n`;
+  }
   const before = body.slice(0, idx + heading.length);
   const after = body.slice(idx + heading.length);
   return `${before}\n\n- ${date}: ${note}${after}`;

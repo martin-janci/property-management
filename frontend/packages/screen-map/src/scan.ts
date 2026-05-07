@@ -25,8 +25,6 @@ export interface ScanOptions {
   useCasesFile?: string;
   /** Path to epic dir; defaults to `<repoRoot>/docs/epics`. */
   epicsDir?: string;
-  /** DesignSource instance to enumerate frames from (caller constructs it). */
-  designSource?: DesignSource;
   sources: {
     sitemap: boolean;
     useCases: boolean;

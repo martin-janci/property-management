@@ -76,4 +76,27 @@ describe('scanCandidates', () => {
     expect(candidates.every((c) => c.source === 'user')).toBe(true);
     expect(candidates[0].name).toBe('Faults assignment modal');
   });
+
+  it('extracts design frames from a DesignSource adapter', async () => {
+    const { ZipAdapter } = await import('../src/design-source/zip-adapter.js');
+    const fixturePath = path.join(fixturesDir, 'designs-2026-q2.zip');
+    const adapter = await ZipAdapter.fromFile(fixturePath, '/');
+    const candidates = await scanCandidates({
+      product: 'ppt',
+      repoRoot: '/',
+      sources: {
+        sitemap: false,
+        useCases: false,
+        epics: false,
+        designSource: adapter,
+        userAdd: [],
+      },
+    });
+    const designCandidates = candidates.filter((c) => c.source === 'design');
+    expect(designCandidates).toHaveLength(2);
+    expect(designCandidates.map((c) => c.frameId).sort()).toEqual([
+      'building-detail-v3-mobile',
+      'building-detail-v3-web',
+    ]);
+  });
 });
