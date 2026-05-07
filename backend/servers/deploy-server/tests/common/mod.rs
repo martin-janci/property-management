@@ -103,7 +103,14 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         let target = Target {
             docker_socket: "unix:///var/run/docker.sock".into(),
             caddy_url: caddy_mock.base_url(),
-            domain_suffix: format!("{name}.rlt.sk"),
+            // Test apexes mirror the conventions used on onyx:
+            //   staging → reality_apex="staging.rlt.sk", ppt_apex="staging.ppt.rlt.sk"
+            //   prod    → reality_apex="prod.rlt.sk",    ppt_apex="prod.ppt.rlt.sk"
+            // (prod uses a "prod." prefix in tests to keep target names
+            // distinguishable; real onyx prod target uses bare "rlt.sk" /
+            // "ppt.rlt.sk".)
+            reality_apex: format!("{name}.rlt.sk"),
+            ppt_apex: format!("{name}.ppt.rlt.sk"),
             idle_timeout: Some("8h".into()),
             promote_strategy: Some("blue-green".into()),
             rollback_mode: "manual".into(),

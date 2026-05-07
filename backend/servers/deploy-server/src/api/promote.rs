@@ -72,7 +72,7 @@ pub async fn promote_handler(
         }));
     }
 
-    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), &target_cfg.domain_suffix)?;
+    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), target_cfg)?;
     let docker = svc
         .release_svc
         .docker_pool
@@ -91,7 +91,12 @@ pub async fn promote_handler(
     let new_state = target.live_release_state();
     let health_grace_passed = if let Some(grace) = &target_cfg.health_grace {
         let secs = parse_duration_secs(grace).unwrap_or(60);
-        let url = format!("https://api.{}/health", target_cfg.domain_suffix);
+        // Probe api-server health (PM API). Reality-server health is at
+        // `api.<reality_apex>/health`; we pick PM API as the canonical signal
+        // because both backends share the same Postgres + secrets path, so a
+        // failure in one is highly correlated with the other. Cheap to probe
+        // both later if needed.
+        let url = format!("https://api.{}/health", target_cfg.ppt_apex);
         match svc.health.grace_check(&url, 5, secs).await {
             Ok(()) => true,
             Err(e) => {
@@ -99,11 +104,8 @@ pub async fn promote_handler(
                 tracing::warn!(error = %e, auto = auto, "health grace failed");
                 if auto {
                     if let Some(prev) = &prev_release {
-                        let prev_spec = BlueGreenSpec::from_release(
-                            prev,
-                            target.as_str(),
-                            &target_cfg.domain_suffix,
-                        )?;
+                        let prev_spec =
+                            BlueGreenSpec::from_release(prev, target.as_str(), target_cfg)?;
                         match deployer.deploy(&prev_spec).await {
                             Ok(_) => {
                                 tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
@@ -228,8 +230,7 @@ pub async fn rollback_handler(
         .current_release_for(target.as_str(), live_state)
         .await?;
 
-    let spec =
-        BlueGreenSpec::from_release(&target_release, target.as_str(), &target_cfg.domain_suffix)?;
+    let spec = BlueGreenSpec::from_release(&target_release, target.as_str(), target_cfg)?;
     let docker = svc
         .release_svc
         .docker_pool
