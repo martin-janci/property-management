@@ -76,18 +76,25 @@ function resolveDiagramRef(ref: string, repoRoot: string): boolean {
 function extractHeadingSlugs(markdown: string): Set<string> {
   const slugs = new Set<string>();
   const headingRe = /^#{1,6}\s+(.+?)\s*$/gm;
-  let m: RegExpExecArray | null = headingRe.exec(markdown);
-  while (m !== null) {
-    slugs.add(slugify(m[1]));
-    m = headingRe.exec(markdown);
+  for (let m = headingRe.exec(markdown); m !== null; m = headingRe.exec(markdown)) {
+    const text = m[1];
+    // ASCII slug (current behavior) AND a Unicode-preserving slug (lowercased,
+    // with spaces hyphenated but diacritics intact). Both forms resolve.
+    slugs.add(slugify(text));
+    slugs.add(text.toLowerCase().trim().replace(/\s+/g, '-'));
   }
   return slugs;
 }
 
 function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
+  return (
+    s
+      .toLowerCase()
+      .normalize('NFKD')
+      // Strip combining marks (Unicode "Mark, Nonspacing") — preserves base letter.
+      .replace(/\p{Mn}/gu, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+  );
 }
