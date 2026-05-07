@@ -3,7 +3,23 @@ targets = [{ triple = "x86_64-unknown-linux-gnu" }]
 
 [advisories]
 yanked = "deny"
-ignore = []
+ignore = [
+    # RUSTSEC-2024-0363 — sqlx 0.7.x Postgres binary-protocol misinterpretation
+    # (truncating cast on values > 4 GiB). Fixed in sqlx 0.8.1.
+    #
+    # Why this is acceptable for now:
+    # - Exploit requires encoding a single parameter > 4 GiB. All Axum routes
+    #   already cap request bodies (workspace default ~1 MiB via api-core
+    #   middleware), so the actual attack surface is empty.
+    # - sqlx 0.7 → 0.8 is a breaking-API bump (Encode/Decode trait churn,
+    #   `query_as!` macro changes) touching every repository in `crates/db`.
+    #   That migration is its own PR — out of scope for the deploy-server
+    #   work in PR #188.
+    #
+    # Follow-up: bump sqlx to 0.8.x and drop this ignore.
+    # Ref: https://rustsec.org/advisories/RUSTSEC-2024-0363
+    "RUSTSEC-2024-0363",
+]
 
 [bans]
 multiple-versions = "warn"
@@ -24,3 +40,11 @@ allow = [
     "OpenSSL",
 ]
 confidence-threshold = 0.8
+
+# All workspace members are private (`publish = false`) and inherit
+# `license = "MIT"` from `[workspace.package]`. cargo-deny normally
+# treats workspace crates the same as upstream deps; this block tells
+# it to skip them so we don't have to maintain a redundant per-crate
+# license header.
+[licenses.private]
+ignore = true
