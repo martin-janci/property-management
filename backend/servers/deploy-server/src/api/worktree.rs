@@ -155,9 +155,36 @@ pub async fn open_handler(
 
     // 5. Dedicated backend branch.
     if matches!(req.backend, BackendMode::Dedicated) {
+        // Resolve which Postgres DB to use. Three paths:
+        //   (a) Resuming a Closed worktree: `resume_db` is already restored above.
+        //   (b) Idempotent retry — a previous `open` for this name already
+        //       created/restored the DB but the GHA build wasn't ready, so we
+        //       returned `backend_status="building"` and persisted the row with
+        //       `db_name = Some(...)`. Calling `open` again must NOT
+        //       `CREATE DATABASE` again (it would fail with "already exists").
+        //       Instead reuse the stored db_name.
+        //   (c) First open: create from template.
         let db = if let Some(existing_db) = resume_db.clone() {
-            // Already restored above
             existing_db
+        } else if let Some(ref ex) = existing {
+            // Idempotent retry. The previous open landed but the dedicated
+            // build wasn't ready in the polling window — `db_name` is already
+            // set on the stored Worktree row. Reuse it.
+            if let Some(ref existing_db) = ex.db_name {
+                tracing::info!(
+                    name = %name,
+                    db = %existing_db,
+                    state = ?ex.state,
+                    "reusing existing dedicated DB on idempotent open (previous build was still in progress)"
+                );
+                existing_db.clone()
+            } else {
+                // Stored row exists but no db_name (e.g. previous attempt was Shared mode
+                // or crashed before the dedicated branch ran). Create fresh.
+                let db = format!("{}{}", svc.postgres.user_db_prefix, name);
+                svc.postgres.create_from_template(&db).await?;
+                db
+            }
         } else {
             let db = format!("{}{}", svc.postgres.user_db_prefix, name);
             svc.postgres.create_from_template(&db).await?;
@@ -166,6 +193,9 @@ pub async fn open_handler(
         db_name = Some(db.clone());
 
         // Dispatch GHA workflow (skip if resuming — images cached from previous open).
+        // Also skip if this is an idempotent retry against an existing row whose
+        // previous open already dispatched a build — re-dispatching is fine but
+        // wastes runner minutes. The polling logic still picks up the latest run.
         let completed = if resume_db.is_some() {
             true
         } else {
@@ -191,9 +221,19 @@ pub async fn open_handler(
             completed
         };
         if !completed {
+            // Build still in progress after the polling window. The Worktree row
+            // is persisted below with db_name set; the caller should re-invoke
+            // `open` once the build completes — that retry hits the idempotent
+            // branch above and reuses the existing DB instead of recreating it.
+            // (No background task: keeping the deploy-server stateless on this
+            // path is intentional. A future Phase 6+ improvement could spawn a
+            // best-effort follow-up that finishes the deploy when the build
+            // signals completion.)
             backend_status = "building".into();
-            // Don't fail — return URLs for frontend, backend will come online when build finishes.
-            // Operator can call status to check.
+            tracing::info!(
+                name = %name,
+                "dedicated backend build not yet ready; returning building. Caller should re-open after build completes."
+            );
         } else {
             // Run backend containers.
             // Image tag matches docker-build.yml's `type=ref,event=branch` which

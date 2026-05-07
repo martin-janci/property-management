@@ -115,8 +115,20 @@ async fn tail_iteration(
     Ok(())
 }
 
+/// Extract the worktree name from a Caddy access-log host header.
+///
+/// Recognizes both:
+/// - `wt-<name>.dev.ppt.rlt.sk` / `wt-<name>.dev.rlt.sk` — frontend hosts
+/// - `api.wt-<name>.dev.ppt.rlt.sk` — dedicated-backend API host (only
+///   present when the worktree was opened with `backend=dedicated`)
+///
+/// Without the `api.` case, dedicated-backend API traffic wouldn't update
+/// `last_traffic_at`, and GC would happily pause an actively-used worktree
+/// after the idle threshold even while its API was being hit.
 pub fn parse_worktree_from_host(host: &str) -> Option<String> {
-    host.strip_prefix("wt-")
+    let after_optional_api = host.strip_prefix("api.").unwrap_or(host);
+    after_optional_api
+        .strip_prefix("wt-")
         .and_then(|s| s.split('.').next())
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
@@ -140,5 +152,12 @@ mod tests {
         // Empty name (host like "wt-.dev...") rejected.
         assert_eq!(parse_worktree_from_host("wt-.dev.ppt.rlt.sk"), None);
         assert_eq!(parse_worktree_from_host("wt-"), None);
+        // Dedicated-backend API subdomain: `api.wt-<name>...`
+        assert_eq!(
+            parse_worktree_from_host("api.wt-feature-x.dev.ppt.rlt.sk"),
+            Some("feature-x".into())
+        );
+        // `api.` followed by something that's not a wt- subdomain → no match.
+        assert_eq!(parse_worktree_from_host("api.staging.rlt.sk"), None);
     }
 }

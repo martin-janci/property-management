@@ -49,56 +49,27 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
     });
 
     // Local bare git repo as fixture, with a `feature-x` branch pushed.
+    //
+    // Each git invocation goes through `run_git_assert` which captures stderr
+    // and panics with a helpful message if the command fails. Without that, a
+    // missing git binary, permission issue, or stale fixture state would let
+    // setup continue silently and trip downstream assertions later in the
+    // test with no breadcrumbs to the actual cause.
     let bare = tmp.path().join("origin.git");
     let work = tmp.path().join("seed");
     std::fs::create_dir_all(&bare).unwrap();
-    std::process::Command::new("git")
-        .args(["init", "--bare"])
-        .arg(&bare)
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["init"])
-        .arg(&work)
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "config", "user.email", "t@t"])
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "config", "user.name", "t"])
-        .status()
-        .unwrap();
+    let work_str = work.to_str().unwrap();
+    let bare_str = bare.to_str().unwrap();
+    run_git_assert(&["init", "--bare", bare_str]);
+    run_git_assert(&["init", work_str]);
+    run_git_assert(&["-C", work_str, "config", "user.email", "t@t"]);
+    run_git_assert(&["-C", work_str, "config", "user.name", "t"]);
     std::fs::write(work.join("README.md"), "hi").unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "add", "."])
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "commit", "-m", "init"])
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "branch", "-M", "feature-x"])
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args(["-C", work.to_str().unwrap(), "remote", "add", "origin"])
-        .arg(&bare)
-        .status()
-        .unwrap();
-    std::process::Command::new("git")
-        .args([
-            "-C",
-            work.to_str().unwrap(),
-            "push",
-            "-u",
-            "origin",
-            "feature-x",
-        ])
-        .status()
-        .unwrap();
+    run_git_assert(&["-C", work_str, "add", "."]);
+    run_git_assert(&["-C", work_str, "commit", "-m", "init"]);
+    run_git_assert(&["-C", work_str, "branch", "-M", "feature-x"]);
+    run_git_assert(&["-C", work_str, "remote", "add", "origin", bare_str]);
+    run_git_assert(&["-C", work_str, "push", "-u", "origin", "feature-x"]);
 
     let git = Arc::new(GitFetcher::new(
         bare.to_string_lossy().to_string(),
@@ -216,5 +187,27 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         token: api_key.into(),
         _tmp: tmp,
         _caddy: caddy_mock,
+    }
+}
+
+/// Run a `git` subcommand and panic with stdout+stderr if it fails.
+///
+/// Used by the test fixture's local-repo bootstrap. Previously each call was
+/// `Command::status().unwrap()` which only catches *spawn* failures (e.g. git
+/// not on PATH) — a non-zero exit (rejected commit, missing config, etc.) was
+/// silently ignored and the test continued with a broken fixture, surfacing
+/// later as an obscure clone failure deep inside `GitFetcher`.
+fn run_git_assert(args: &[&str]) {
+    let output = std::process::Command::new("git")
+        .args(args)
+        .output()
+        .unwrap_or_else(|e| panic!("failed to spawn git {args:?}: {e}"));
+    if !output.status.success() {
+        panic!(
+            "git {args:?} failed with status {:?}\n--- stdout ---\n{}\n--- stderr ---\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr),
+        );
     }
 }

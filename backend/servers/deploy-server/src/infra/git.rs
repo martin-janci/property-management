@@ -130,6 +130,10 @@ pub fn sanitize(branch: &str) -> String {
 /// - Leading `-` (would be parsed as a git option flag — option injection).
 /// - Leading `.` (git refuses refs starting with `.`; rejecting here gives a
 ///   clearer error than letting `git fetch` fail mid-flight).
+/// - Branches with no ASCII-alphanumeric characters (e.g. `__`, `///`,
+///   `_-_`). Such inputs sanitize to an empty string, which would make
+///   `worktree_dir.join(sanitize(branch))` collapse to the worktrees root
+///   and clone into the wrong place.
 ///
 /// Returns the input unchanged if valid; `BadRequest` if not.
 pub fn validate_branch_strict(branch: &str) -> crate::Result<&str> {
@@ -144,6 +148,16 @@ pub fn validate_branch_strict(branch: &str) -> crate::Result<&str> {
     {
         return Err(crate::DeployError::BadRequest(format!(
             "branch contains disallowed characters: {branch:?}"
+        )));
+    }
+    // Defense in depth: reject branches that sanitize to an empty string
+    // (i.e. contain no ASCII-alphanumeric characters at all). Without this,
+    // `worktree_dir.join(sanitize("__"))` becomes `worktree_dir.join("")` =
+    // `worktree_dir` itself, and the subsequent `git clone` would land in
+    // the worktrees root rather than a per-branch subdirectory.
+    if !branch.chars().any(|c| c.is_ascii_alphanumeric()) {
+        return Err(crate::DeployError::BadRequest(format!(
+            "branch must contain at least one alphanumeric character: {branch:?}"
         )));
     }
     Ok(branch)
@@ -189,60 +203,48 @@ mod tests {
         assert_eq!(sanitize("--leading-and-trailing--"), "leading-and-trailing");
     }
 
+    #[test]
+    fn validate_branch_rejects_empty_sanitized() {
+        // All-separator branches sanitize to an empty string. validate_branch_strict
+        // must reject them BEFORE GitFetcher::fetch_branch joins the empty alias
+        // onto worktree_dir and clones into the root directory.
+        assert!(validate_branch_strict("").is_err());
+        assert!(validate_branch_strict("__").is_err());
+        assert!(validate_branch_strict("///").is_err());
+        assert!(validate_branch_strict("_-_").is_err());
+        assert!(validate_branch_strict("...").is_err());
+        // Leading `-` and `.` are still rejected for the original reasons.
+        assert!(validate_branch_strict("-x").is_err());
+        assert!(validate_branch_strict(".x").is_err());
+        // Healthy branch names still pass.
+        assert!(validate_branch_strict("feature/UC-14").is_ok());
+        assert!(validate_branch_strict("main").is_ok());
+        assert!(validate_branch_strict("hotfix/critical_fix").is_ok());
+    }
+
     #[tokio::test]
     async fn fetch_with_local_repo_fixture() {
         // Create a tiny local bare repo + clone, simulating origin.
+        // Each git invocation is checked via `assert_git_ok`: a non-zero exit
+        // (rejected commit, missing config, etc.) panics with stderr instead
+        // of silently leaving a broken fixture for the actual test to trip
+        // over much later.
         let tmp = tempfile::tempdir().unwrap();
         let bare = tmp.path().join("origin.git");
         let work = tmp.path().join("seed");
         std::fs::create_dir_all(&bare).unwrap();
-        std::process::Command::new("git")
-            .args(["init", "--bare"])
-            .arg(&bare)
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["init"])
-            .arg(&work)
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "config", "user.email", "t@t"])
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "config", "user.name", "t"])
-            .status()
-            .unwrap();
+        let work_str = work.to_str().unwrap();
+        let bare_str = bare.to_str().unwrap();
+        assert_git_ok(&["init", "--bare", bare_str]);
+        assert_git_ok(&["init", work_str]);
+        assert_git_ok(&["-C", work_str, "config", "user.email", "t@t"]);
+        assert_git_ok(&["-C", work_str, "config", "user.name", "t"]);
         std::fs::write(work.join("README.md"), "hi").unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "add", "."])
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "commit", "-m", "init"])
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "branch", "-M", "feature-x"])
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args(["-C", work.to_str().unwrap(), "remote", "add", "origin"])
-            .arg(&bare)
-            .status()
-            .unwrap();
-        std::process::Command::new("git")
-            .args([
-                "-C",
-                work.to_str().unwrap(),
-                "push",
-                "-u",
-                "origin",
-                "feature-x",
-            ])
-            .status()
-            .unwrap();
+        assert_git_ok(&["-C", work_str, "add", "."]);
+        assert_git_ok(&["-C", work_str, "commit", "-m", "init"]);
+        assert_git_ok(&["-C", work_str, "branch", "-M", "feature-x"]);
+        assert_git_ok(&["-C", work_str, "remote", "add", "origin", bare_str]);
+        assert_git_ok(&["-C", work_str, "push", "-u", "origin", "feature-x"]);
 
         let dest_root = tmp.path().join("worktrees");
         let fetcher = GitFetcher::new(
@@ -252,6 +254,20 @@ mod tests {
         );
         let dest = fetcher.fetch_branch("feature-x").await.unwrap();
         assert!(dest.join("README.md").exists());
+    }
+
+    fn assert_git_ok(args: &[&str]) {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .output()
+            .unwrap_or_else(|e| panic!("failed to spawn git {args:?}: {e}"));
+        if !output.status.success() {
+            panic!(
+                "git {args:?} failed with status {:?}\n--- stderr ---\n{}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr),
+            );
+        }
     }
 }
 
