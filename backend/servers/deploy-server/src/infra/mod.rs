@@ -13,7 +13,8 @@ pub mod worktree_lock;
 
 pub use audit::{auth_and_audit, AuthState, CallerIdentity};
 pub use blue_green::{
-    BlueGreenDeployer, BlueGreenSpec, StagingDeploySpec, StagingDeployer, BG_SERVICES,
+    build_service_envs, BlueGreenDeployer, BlueGreenSpec, StagingDeploySpec, StagingDeployer,
+    BG_SERVICES,
 };
 pub use caddy::CaddyClient;
 pub use docker::{BackendDedicatedSpec, DockerClient, FrontendDevSpec};

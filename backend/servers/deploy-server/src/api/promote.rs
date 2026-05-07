@@ -2,7 +2,9 @@
 use crate::api::release::ReleaseService;
 use crate::config::TargetsConfig;
 use crate::domain::{ReleaseState, TargetKind};
-use crate::infra::{BlueGreenDeployer, BlueGreenSpec, CallerIdentity, HealthProbe};
+use crate::infra::{
+    build_service_envs, BlueGreenDeployer, BlueGreenSpec, CallerIdentity, HealthProbe,
+};
 use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::Json;
@@ -72,7 +74,17 @@ pub async fn promote_handler(
         }));
     }
 
-    let spec = BlueGreenSpec::from_release(&candidate, target.as_str(), target_cfg)?;
+    // Promote and rollback use the same env layout as a fresh deploy — both
+    // backends share `ppt-postgres` for the target's database, both UIs
+    // serve the target's apex hostnames. Compute once and reuse on the
+    // rollback path (where we re-deploy the previous Release).
+    let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    let spec = BlueGreenSpec::from_release(
+        &candidate,
+        target.as_str(),
+        target_cfg,
+        service_envs.clone(),
+    )?;
     let docker = svc
         .release_svc
         .docker_pool
@@ -104,8 +116,12 @@ pub async fn promote_handler(
                 tracing::warn!(error = %e, auto = auto, "health grace failed");
                 if auto {
                     if let Some(prev) = &prev_release {
-                        let prev_spec =
-                            BlueGreenSpec::from_release(prev, target.as_str(), target_cfg)?;
+                        let prev_spec = BlueGreenSpec::from_release(
+                            prev,
+                            target.as_str(),
+                            target_cfg,
+                            service_envs.clone(),
+                        )?;
                         match deployer.deploy(&prev_spec).await {
                             Ok(_) => {
                                 tracing::warn!(prev_tag = %prev.tag, "auto-rolled back after health grace failure");
@@ -230,7 +246,9 @@ pub async fn rollback_handler(
         .current_release_for(target.as_str(), live_state)
         .await?;
 
-    let spec = BlueGreenSpec::from_release(&target_release, target.as_str(), target_cfg)?;
+    let service_envs = build_service_envs(target.as_str(), target_cfg)?;
+    let spec =
+        BlueGreenSpec::from_release(&target_release, target.as_str(), target_cfg, service_envs)?;
     let docker = svc
         .release_svc
         .docker_pool
