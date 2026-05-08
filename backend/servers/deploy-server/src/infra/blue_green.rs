@@ -351,7 +351,10 @@ impl BlueGreenDeployer {
         // shortcut.
         let mut reality_env = env_for("reality");
         reality_env.push(format!(
-            "PM_API_HEALTH_URL=http://{target_name}-api-{next_color}:8080/health"
+            // Hits api-server's /readiness (deep dep check) — reality-server's
+            // OWN readiness wants the full picture for its dashboard, not just
+            // "is the process up". The Docker HEALTHCHECK still uses /health.
+            "PM_API_HEALTH_URL=http://{target_name}-api-{next_color}:8080/readiness"
         ));
         self.run_service(
             &format!("{target_name}-api-{next_color}"),
