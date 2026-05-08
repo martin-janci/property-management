@@ -32,4 +32,20 @@ describe('parseFilter', () => {
   it('returns false for missing nested path segments', () => {
     expect(parseFilter('implementations.mobile.buildStatus:shipped')(sample)).toBe(false);
   });
+
+  it('preserves colons in values (URL routes)', () => {
+    const fm = {
+      id: 'ppt/foo',
+      product: 'ppt',
+      implementations: {
+        'ppt-web': {
+          route: '/buildings/:id',
+          buildStatus: 'shipped',
+          redesignStatus: 'applied',
+          apiStatus: 'complete',
+        },
+      },
+    };
+    expect(parseFilter('implementations.ppt-web.route:/buildings/:id')(fm)).toBe(true);
+  });
 });

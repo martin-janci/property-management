@@ -163,7 +163,9 @@ export function parseFilter(
 ): (fm: { id: string; product: string; implementations: Record<string, unknown> }) => boolean {
   // Simple `key:value` form. Comma-separated terms ANDed.
   const terms = expr.split(',').map((t) => {
-    const [keyRaw, valueRaw] = t.split(':');
+    const colonIdx = t.indexOf(':');
+    const keyRaw = colonIdx >= 0 ? t.slice(0, colonIdx) : t;
+    const valueRaw = colonIdx >= 0 ? t.slice(colonIdx + 1) : '';
     return { key: (keyRaw ?? '').trim(), value: (valueRaw ?? '').trim() };
   });
   return (fm) => {
