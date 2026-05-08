@@ -121,3 +121,14 @@ openapi-generator generate \
 |----------|-------------|
 | Android | ktor-client-android |
 | iOS | ktor-client-darwin |
+
+## Screen-Map integration
+
+When implementing or modifying a screen in this KMP app:
+
+1. Identify the screen-map id under the `reality/` product (mobile-native screens share screen-maps with reality-web).
+2. **Before coding**: run `/screens edit reality/<id>` to load full context.
+3. **After coding**: update `implementations.mobile-native` block (`buildStatus` / `apiStatus` / `redesignStatus`).
+4. Add an Agent Log entry: `<date> — agent: <what changed>`.
+5. Run `/screens validate`.
+6. New screens: `/screens update` then `/screens init --add "<Screen Name>"`.
