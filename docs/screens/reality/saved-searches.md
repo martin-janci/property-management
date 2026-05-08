@@ -2,17 +2,20 @@
 id: reality/saved-searches
 name: Saved Searches
 product: reality
+sitemapRefs:
+  reality-web: reality-saved-searches
 implementations:
   reality-web:
+    component: SavedSearchesPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-saved-searches
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - saved_searches_list
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Saved search queries
 
 ### Specific (recent)
 

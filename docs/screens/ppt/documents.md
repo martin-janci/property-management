@@ -2,18 +2,30 @@
 id: ppt/documents
 name: Documents
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-documents
+  mobile: mobile-documents
 implementations:
   ppt-web:
+    component: DocumentsPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
+    component: DocumentsScreen
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-documents
-  mobile: mobile-documents
+endpoints:
+  - documents_list
+relatedScreens:
+  - id: ppt/document-detail
+    rel: child
+  - id: ppt/upload-document
+    rel: child
+epics:
+  - Epic-39
+  - Epic-7
 ---
 
 ## Functionality Checklist
@@ -30,6 +42,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Document management dashboard Building documents
 
 ### Specific (recent)
 

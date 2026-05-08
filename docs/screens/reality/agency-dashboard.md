@@ -2,17 +2,22 @@
 id: reality/agency-dashboard
 name: Agency Dashboard
 product: reality
+sitemapRefs:
+  reality-web: reality-agency
 implementations:
   reality-web:
+    component: AgencyPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-agency
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - agencies_get
+epics:
+  - Epic-32
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Agency management dashboard
 
 ### Specific (recent)
 

@@ -2,17 +2,20 @@
 id: ppt/dashboard
 name: Dashboard
 product: ppt
-implementations:
-  ppt-web:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-  mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
 sitemapRefs:
   mobile: mobile-dashboard
+implementations:
+  ppt-web:
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+  mobile:
+    component: DashboardScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: partial
+endpoints:
+  - dashboard_get
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Main dashboard with overview
 
 ### Specific (recent)
 

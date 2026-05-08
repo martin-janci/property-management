@@ -2,17 +2,20 @@
 id: ppt/accessibility-settings
 name: Accessibility Settings
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-settings-accessibility
 implementations:
   ppt-web:
+    component: AccessibilitySettingsPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-settings-accessibility
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+epics:
+  - Epic-60
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Accessibility preferences
 
 ### Specific (recent)
 

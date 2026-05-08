@@ -2,17 +2,25 @@
 id: ppt/article-detail
 name: Article Detail
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-news-detail
 implementations:
   ppt-web:
+    component: ArticleDetailPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-news-detail
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - news_get
+relatedScreens:
+  - id: ppt/news
+    rel: parent
+epics:
+  - Epic-59
 ---
 
 ## Functionality Checklist
@@ -29,6 +37,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+View news article details
 
 ### Specific (recent)
 

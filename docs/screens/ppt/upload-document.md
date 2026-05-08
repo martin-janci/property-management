@@ -2,17 +2,25 @@
 id: ppt/upload-document
 name: Upload Document
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-document-upload
 implementations:
   ppt-web:
+    component: DocumentUploadPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-document-upload
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - documents_upload
+relatedScreens:
+  - id: ppt/documents
+    rel: parent
+epics:
+  - Epic-39
 ---
 
 ## Functionality Checklist
@@ -29,6 +37,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Document upload page
 
 ### Specific (recent)
 

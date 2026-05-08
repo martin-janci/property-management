@@ -2,17 +2,18 @@
 id: reality/compare-properties
 name: Compare Properties
 product: reality
+sitemapRefs:
+  reality-web: reality-compare
 implementations:
   reality-web:
+    component: ComparePage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-compare
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
 ---
 
 ## Functionality Checklist
@@ -29,6 +30,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Property comparison tool
 
 ### Specific (recent)
 

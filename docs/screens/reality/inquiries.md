@@ -2,17 +2,20 @@
 id: reality/inquiries
 name: Inquiries
 product: reality
+sitemapRefs:
+  reality-web: reality-inquiries
 implementations:
   reality-web:
+    component: InquiriesPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-inquiries
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - inquiries_list
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Viewing and contact inquiries
 
 ### Specific (recent)
 

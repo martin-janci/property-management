@@ -2,17 +2,22 @@
 id: ppt/faults-list
 name: Faults List
 product: ppt
-implementations:
-  ppt-web:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-  mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
 sitemapRefs:
   mobile: mobile-faults-list
+implementations:
+  ppt-web:
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+  mobile:
+    component: FaultsListScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: partial
+endpoints:
+  - faults_list
+useCases:
+  - UC-03
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+List of reported faults
 
 ### Specific (recent)
 

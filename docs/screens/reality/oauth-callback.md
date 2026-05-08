@@ -2,17 +2,18 @@
 id: reality/oauth-callback
 name: OAuth Callback
 product: reality
+sitemapRefs:
+  reality-web: reality-auth-callback
 implementations:
   reality-web:
+    component: OAuthCallbackPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-auth-callback
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
 ---
 
 ## Functionality Checklist
@@ -29,6 +30,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+OAuth callback handler
 
 ### Specific (recent)
 

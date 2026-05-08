@@ -2,17 +2,18 @@
 id: reality/home
 name: Home
 product: reality
+sitemapRefs:
+  reality-web: reality-home
 implementations:
   reality-web:
+    component: HomePage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-home
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
 ---
 
 ## Functionality Checklist
@@ -29,6 +30,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Reality Portal homepage with hero search
 
 ### Specific (recent)
 

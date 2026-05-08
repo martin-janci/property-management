@@ -2,17 +2,25 @@
 id: ppt/news
 name: News
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-news
 implementations:
   ppt-web:
+    component: NewsListPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-news
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - news_list
+relatedScreens:
+  - id: ppt/article-detail
+    rel: child
+epics:
+  - Epic-59
 ---
 
 ## Functionality Checklist
@@ -29,6 +37,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+News and announcements list
 
 ### Specific (recent)
 

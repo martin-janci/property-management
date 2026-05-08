@@ -2,17 +2,22 @@
 id: ppt/report-fault
 name: Report Fault
 product: ppt
-implementations:
-  ppt-web:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-  mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
 sitemapRefs:
   mobile: mobile-report-fault
+implementations:
+  ppt-web:
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+  mobile:
+    component: ReportFaultScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: partial
+endpoints:
+  - faults_create
+useCases:
+  - UC-03
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Report a new fault
 
 ### Specific (recent)
 

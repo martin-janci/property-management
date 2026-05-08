@@ -2,17 +2,20 @@
 id: ppt/privacy-settings
 name: Privacy Settings
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-settings-privacy
 implementations:
   ppt-web:
+    component: PrivacySettingsPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-settings-privacy
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+epics:
+  - Epic-63
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Privacy preferences
 
 ### Specific (recent)
 

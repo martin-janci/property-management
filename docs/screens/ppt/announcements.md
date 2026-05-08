@@ -2,17 +2,22 @@
 id: ppt/announcements
 name: Announcements
 product: ppt
-implementations:
-  ppt-web:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-  mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
 sitemapRefs:
   mobile: mobile-announcements
+implementations:
+  ppt-web:
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+  mobile:
+    component: AnnouncementsScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: partial
+endpoints:
+  - announcements_list
+epics:
+  - Epic-6
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Building announcements and news
 
 ### Specific (recent)
 

@@ -2,17 +2,25 @@
 id: ppt/dispute-detail
 name: Dispute Detail
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-dispute-detail
 implementations:
   ppt-web:
+    component: DisputeDetailPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-dispute-detail
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - disputes_get
+relatedScreens:
+  - id: ppt/disputes
+    rel: parent
+epics:
+  - Epic-77
 ---
 
 ## Functionality Checklist
@@ -29,6 +37,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+View dispute details and status
 
 ### Specific (recent)
 

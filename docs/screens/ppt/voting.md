@@ -2,17 +2,22 @@
 id: ppt/voting
 name: Voting
 product: ppt
-implementations:
-  ppt-web:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-  mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
 sitemapRefs:
   mobile: mobile-voting
+implementations:
+  ppt-web:
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+  mobile:
+    component: VotingScreen
+    buildStatus: shipped
+    redesignStatus: not-started
+    apiStatus: partial
+endpoints:
+  - voting_list
+useCases:
+  - UC-04
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Building votes and polls
 
 ### Specific (recent)
 

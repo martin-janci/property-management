@@ -2,17 +2,22 @@
 id: ppt/login
 name: Login
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-login
 implementations:
   ppt-web:
+    component: LoginPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-login
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - auth_login
+useCases:
+  - UC-14
 ---
 
 ## Functionality Checklist
@@ -29,6 +34,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+User authentication page
 
 ### Specific (recent)
 

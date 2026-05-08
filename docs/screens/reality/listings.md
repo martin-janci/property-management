@@ -2,17 +2,23 @@
 id: reality/listings
 name: Listings
 product: reality
+sitemapRefs:
+  reality-web: reality-listings
 implementations:
   reality-web:
+    component: ListingsPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-listings
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - listings_search
+relatedScreens:
+  - id: reality/listing-detail
+    rel: child
 ---
 
 ## Functionality Checklist
@@ -29,6 +35,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Property search results with filters
 
 ### Specific (recent)
 

@@ -2,17 +2,25 @@
 id: ppt/file-dispute
 name: File Dispute
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-dispute-new
 implementations:
   ppt-web:
+    component: FileDisputePage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-dispute-new
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - disputes_create
+relatedScreens:
+  - id: ppt/disputes
+    rel: parent
+epics:
+  - Epic-77
 ---
 
 ## Functionality Checklist
@@ -29,6 +37,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+File a new dispute
 
 ### Specific (recent)
 

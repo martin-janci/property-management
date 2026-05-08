@@ -2,17 +2,20 @@
 id: reality/favorites
 name: Favorites
 product: reality
+sitemapRefs:
+  reality-web: reality-favorites
 implementations:
   reality-web:
+    component: FavoritesPage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile-native:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  reality-web: reality-favorites
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
+endpoints:
+  - favorites_list
 ---
 
 ## Functionality Checklist
@@ -29,6 +32,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+User's favorite listings
 
 ### Specific (recent)
 

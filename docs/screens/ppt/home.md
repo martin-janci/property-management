@@ -2,17 +2,18 @@
 id: ppt/home
 name: Home
 product: ppt
+sitemapRefs:
+  ppt-web: ppt-home
 implementations:
   ppt-web:
+    component: Home
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
   mobile:
-    buildStatus: shipped
-    redesignStatus: not-started
-    apiStatus: partial
-sitemapRefs:
-  ppt-web: ppt-home
+    buildStatus: n/a
+    redesignStatus: n/a
+    apiStatus: n/a
 ---
 
 ## Functionality Checklist
@@ -29,6 +30,8 @@ sitemapRefs:
 ## Notes
 
 ### Broader context
+
+Property Management System homepage
 
 ### Specific (recent)
 
