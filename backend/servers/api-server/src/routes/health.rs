@@ -1,6 +1,22 @@
-//! Health check endpoint (Epic 95.3 - Enhanced Health Checks).
+//! Health & readiness endpoints (Epic 95.3 - Enhanced Health Checks).
 //!
 //! Story 103.2: Added Redis health check.
+//!
+//! E8 (post-prod-launch): split shallow liveness from deep readiness so a
+//! degraded dependency on one service doesn't cascade-kill its consumers.
+//!
+//! - `GET /health` → liveness. No I/O. 200 as long as the process is alive
+//!   and the listener accepted the request. Used by Docker HEALTHCHECK and
+//!   the deploy-server's `wait_until_ready` so a transient DB blip doesn't
+//!   flip the container to UNHEALTHY and tear down a working blue/green
+//!   flip.
+//! - `GET /readiness` → deep check. DB + Redis + (reality) PM API. 503 on
+//!   unhealthy. Used by operator dashboards and any external monitor that
+//!   wants to know if the service is *useful*, not just *up*.
+//!
+//! Why both: the Docker docs are clear that HEALTHCHECK should be cheap and
+//! local; coupling it to upstream availability is the standard recipe for
+//! cascading outages.
 
 use axum::{extract::State, http::StatusCode, Json};
 use serde::Serialize;
@@ -9,6 +25,40 @@ use std::time::Instant;
 use utoipa::ToSchema;
 
 use crate::state::AppState;
+
+/// Minimal liveness probe. No I/O, no AppState. Returning at all means the
+/// tokio runtime is scheduling and the listener accepted us.
+#[derive(Serialize, ToSchema)]
+pub struct LivenessResponse {
+    /// Always `"ok"` — clients should match on the HTTP status code, not this
+    /// field, but it's here for human-readable curl output.
+    pub status: &'static str,
+    pub service: &'static str,
+    pub version: &'static str,
+}
+
+/// Liveness probe.
+///
+/// Distinct from `/readiness` (deep check). Docker HEALTHCHECK and the
+/// deploy-server's blue/green wait loop call this; if it ever 5xxs, the
+/// container is genuinely gone (panic, lock-up, OOM). DB or Redis being
+/// down does not flip this to failure — that's `/readiness`'s job.
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses((status = 200, description = "Process alive", body = LivenessResponse))
+)]
+pub async fn liveness() -> (StatusCode, Json<LivenessResponse>) {
+    (
+        StatusCode::OK,
+        Json(LivenessResponse {
+            status: "ok",
+            service: "api-server",
+            version: env!("CARGO_PKG_VERSION"),
+        }),
+    )
+}
 
 /// Health status enumeration.
 #[derive(Debug, Clone, Copy, Serialize, ToSchema, PartialEq)]
@@ -153,22 +203,25 @@ fn determine_overall_status(dependencies: &[DependencyHealth]) -> HealthStatus {
     }
 }
 
-/// Health check endpoint.
+/// Readiness probe (deep check).
 ///
-/// Returns overall system health status including dependency checks for:
-/// - Database connectivity
-/// - Redis (when available)
-/// - External services
+/// Reports whether the service is *useful*, not just *up*. Returns 503 if
+/// any critical dependency is unhealthy (DB), 200 with `degraded` body if a
+/// non-critical dep is unhealthy (Redis), 200 if everything is healthy.
+///
+/// Use this from operator dashboards and external monitoring. Do NOT wire
+/// this to Docker HEALTHCHECK — that's `/health` (liveness). See the module
+/// docstring for the rationale.
 #[utoipa::path(
     get,
-    path = "/health",
+    path = "/readiness",
     tag = "Health",
     responses(
-        (status = 200, description = "Service is healthy", body = HealthResponse),
+        (status = 200, description = "Service is ready", body = HealthResponse),
         (status = 503, description = "Service is unhealthy", body = HealthResponse)
     )
 )]
-pub async fn health(State(state): State<AppState>) -> (StatusCode, Json<HealthResponse>) {
+pub async fn readiness(State(state): State<AppState>) -> (StatusCode, Json<HealthResponse>) {
     let uptime_seconds = state.boot_time.elapsed().as_secs();
 
     // Check all dependencies

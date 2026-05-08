@@ -101,7 +101,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (url = "https://api.ppt.example.com", description = "Production")
     ),
     paths(
-        routes::health::health,
+        routes::health::liveness,
+        routes::health::readiness,
         routes::auth::login,
         routes::auth::register,
         routes::auth::logout,
@@ -141,6 +142,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
     ),
     components(schemas(
         routes::health::HealthResponse,
+        routes::health::LivenessResponse,
         routes::auth::LoginRequest,
         routes::auth::LoginResponse,
         routes::auth::RegisterRequest,
@@ -371,8 +373,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router
     let app = Router::new()
-        // Health check
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + Redis). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Prometheus metrics endpoint (Epic 95.4)
         .route("/metrics", get(metrics_endpoint))
         // Auth routes

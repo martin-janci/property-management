@@ -140,7 +140,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (url = "https://api.reality-portal.eu", description = "EU-wide")
     ),
     paths(
-        routes::health::health,
+        routes::health::liveness,
+        routes::health::readiness,
         routes::listings::search,
         routes::listings::get_listing,
         routes::listings::get_suggestions,
@@ -193,6 +194,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
     ),
     components(schemas(
         routes::health::HealthResponse,
+        routes::health::LivenessResponse,
         routes::health::CacheMetricsResponse,
         routes::health::CacheMetricsDetail,
         routes::listings::ListingSearchRequest,
@@ -319,8 +321,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router with state
     let app = Router::new()
-        // Health check (stateless)
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + PM API). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Prometheus metrics endpoint (Epic 95.4)
         .route("/metrics", get(metrics_endpoint))
         // Public listing routes

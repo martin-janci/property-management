@@ -102,8 +102,12 @@ impl AppConfig {
                 }
                 secret
             },
+            // Default points at api-server's deep readiness, not its
+            // shallow liveness. Reality-server's own readiness wants the
+            // full picture for the operator dashboard. Docker HEALTHCHECK
+            // is unaffected — it still uses `/health`.
             pm_api_health_url: std::env::var("PM_API_HEALTH_URL")
-                .unwrap_or_else(|_| format!("{}/health", pm_api_base)),
+                .unwrap_or_else(|_| format!("{}/readiness", pm_api_base)),
         }
     }
 }
