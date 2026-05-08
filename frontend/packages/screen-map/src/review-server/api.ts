@@ -110,12 +110,14 @@ function buildPreviewUrls(screen: ScreenMap): { local: string | null; staging: s
 function appendAgentLog(body: string, line: string): string {
   const idx = body.indexOf('## Agent Log');
   if (idx < 0) return `${body}\n## Agent Log\n\n${line}\n`;
-  // Insert under the heading + comment, before any other entries.
   const before = body.slice(0, idx);
   const after = body.slice(idx);
   const lines = after.split(/\r?\n/);
-  const insertIdx = lines.findIndex((l, i) => i > 0 && (l.startsWith('- ') || (l === '' && i > 2)));
-  const insertAt = insertIdx > 0 ? insertIdx : lines.length;
+  // Anchor on the first existing list-item line ('- ...') after the heading;
+  // insert the new entry directly above it. If no existing entries, append
+  // after the heading + comment block.
+  const firstListIdx = lines.findIndex((l, i) => i > 0 && l.startsWith('- '));
+  const insertAt = firstListIdx > 0 ? firstListIdx : lines.length;
   lines.splice(insertAt, 0, line);
   return before + lines.join('\n');
 }
