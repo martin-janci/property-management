@@ -17,3 +17,6 @@ export {
 } from './design-source/index.js';
 export { ZipAdapter } from './design-source/zip-adapter.js';
 export { ClaudeDesignAdapter } from './design-source/claude-design.js';
+export { scanDrift, type DriftIssue, type ScanDriftOptions } from './scan-drift.js';
+export { renderSiteGraph, renderEndpointMatrix, renderStatusDashboard } from './render.js';
+export { queryScreens, formatQueryResult, type QueryFormat } from './query.js';

@@ -190,6 +190,30 @@ program
   });
 
 program
+  .command('query [expr]')
+  .description(
+    'query screen-maps by frontmatter filter (e.g. "product:ppt,redesignStatus:in-progress")'
+  )
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--format <fmt>', 'table | json | md', 'table')
+  .action(async (expr: string | undefined, opts: { root: string; format: string }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    const { queryScreens, formatQueryResult } = await import('./query.js');
+    const filtered = queryScreens(screens, expr ?? '');
+    const fmt = (opts.format === 'json' || opts.format === 'md' ? opts.format : 'table') as
+      | 'table'
+      | 'json'
+      | 'md';
+    process.stdout.write(`${formatQueryResult(filtered, fmt)}\n`);
+    process.stdout.write(
+      `\n${filtered.length} screen-map${filtered.length === 1 ? '' : 's'} matched.\n`
+    );
+  });
+
+program
   .command('review')
   .description('spawn the Visual Review server and open the browser')
   .option('--root <path>', 'repo root', process.cwd())
