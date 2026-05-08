@@ -157,6 +157,39 @@ program
   });
 
 program
+  .command('render')
+  .description('generate mermaid diagrams (site graph, endpoint matrix, status dashboard)')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--scope <name>', 'product | all', 'all')
+  .option('--out <path>', 'output dir', 'docs/screens/_diagrams')
+  .action(async (opts: { root: string; scope: string; out: string }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    let screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    if (opts.scope !== 'all') {
+      screens = screens.filter((s) => s.frontmatter.product === opts.scope);
+    }
+    const { renderSiteGraph, renderEndpointMatrix, renderStatusDashboard } = await import(
+      './render.js'
+    );
+    const fs = await import('node:fs/promises');
+    const outDir = path.resolve(repoRoot, opts.out);
+    await fs.mkdir(outDir, { recursive: true });
+    const scopeName = opts.scope;
+    const writes: Array<[string, string]> = [
+      [`${scopeName}-site-graph.mmd`, renderSiteGraph(screens)],
+      [`${scopeName}-endpoint-matrix.md`, renderEndpointMatrix(screens)],
+      [`${scopeName}-status.mmd`, renderStatusDashboard(screens)],
+    ];
+    for (const [filename, content] of writes) {
+      const filepath = path.join(outDir, filename);
+      await fs.writeFile(filepath, `${content}\n`, 'utf8');
+      process.stdout.write(`  wrote ${path.relative(repoRoot, filepath)}\n`);
+    }
+  });
+
+program
   .command('review')
   .description('spawn the Visual Review server and open the browser')
   .option('--root <path>', 'repo root', process.cwd())
