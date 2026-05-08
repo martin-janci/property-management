@@ -1,4 +1,20 @@
 // @ts-nocheck — this file runs in the browser via esm.sh; not type-checked by tsc.
+
+// Supply-chain note: imports below are pinned to specific versions. Browser
+// ES module spec does not support SRI on `import` statements (only on `<script>`
+// tags), so we cannot enforce integrity at the language level. To upgrade:
+//   1. Bump the version pin below.
+//   2. Run the SRI hash generation script in
+//      docs/superpowers/plans/2026-05-08-screen-map-phase-3a.md Task 3 Step 1
+//      to compute new hashes.
+//   3. Update the `expected SRI` comment next to each import below.
+//   4. (Optional) Add the integrity tag to `index.html`'s <script> shell when esm.sh
+//      ships compatible bundle artifacts.
+//
+// Currently pinned:
+// - preact@10.24.3 — expected SRI: sha384-/pFbBxO2jKQVyiPGNHNeHzL8Q4alRjcIErmT6JlDV+yLFBlNWgBelAz7anPGMNc+
+// - preact@10.24.3/hooks — expected SRI: sha384-AYscPVYcC3uHOEqxBLdXyhBqOQu+DajjMpCRAKrSreyAXZj/DpB80GkmGcyVMdFN
+// - htm@3.1.1 — expected SRI: sha384-sSiaM0en9Bz57PyCPaF5zeh8OaFdFmSQRw0ynngAWx8Kz51qoisBTGbQRBTrDa6G
 import { h, render } from 'https://esm.sh/preact@10.24.3';
 import { useState, useEffect } from 'https://esm.sh/preact@10.24.3/hooks';
 import htm from 'https://esm.sh/htm@3.1.1';
