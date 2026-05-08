@@ -41,8 +41,10 @@ pub struct BootstrapService {
 #[derive(Debug, Serialize)]
 pub struct StepResult {
     pub step: &'static str,
-    /// `created`, `already-ok`, or `failed`. We don't fail the whole
-    /// bootstrap on `failed` — operator gets the full report and can act.
+    /// One of `created`, `already-ok`, or `failed`. Same vocabulary across
+    /// every step so callers can group/colorize uniformly. We don't fail
+    /// the whole bootstrap on `failed` — operator gets the full report and
+    /// can act on each line independently.
     pub status: &'static str,
     pub detail: String,
 }
@@ -60,6 +62,14 @@ pub async fn bootstrap_handler(
 ) -> Result<Json<BootstrapResult>> {
     // Same scope as deploy — anyone who can deploy a target can prepare it.
     caller.require_scope("release:deploy")?;
+
+    // Defense-in-depth: the target name flows into a Postgres identifier
+    // (`CREATE DATABASE "ppt_<name>" …`) and a Docker network name. We
+    // already trust `targets.yaml` (operator-controlled), but constraining
+    // to `[a-z0-9_-]+` rejects anything that could change SQL parsing or
+    // produce an invalid Docker resource — cheaper to check here than to
+    // chase a mojibake'd identifier through psql later.
+    validate_target_name(&target_name)?;
 
     if !svc.targets.targets.contains_key(&target_name) {
         return Err(DeployError::NotFound(format!(
@@ -183,14 +193,15 @@ async fn ensure_membership(
     label: &'static str,
 ) -> StepResult {
     match docker.ensure_network_membership(network, container).await {
-        Ok(()) => StepResult {
+        Ok(true) => StepResult {
             step: label,
-            // ensure_network_membership is idempotent — it returns Ok(()) for
-            // both "was already on" and "just connected"; Docker doesn't give
-            // us a distinguishing signal cheaply. We log the action either
-            // way and let `tracing` show the granular state.
-            status: "ok",
-            detail: format!("'{container}' on '{network}'"),
+            status: "created",
+            detail: format!("connected '{container}' to '{network}'"),
+        },
+        Ok(false) => StepResult {
+            step: label,
+            status: "already-ok",
+            detail: format!("'{container}' already on '{network}'"),
         },
         Err(e) => StepResult {
             step: label,
@@ -198,6 +209,33 @@ async fn ensure_membership(
             detail: format!("connect '{container}' to '{network}': {e}"),
         },
     }
+}
+
+/// Reject any target name that would be unsafe to interpolate into a
+/// Postgres identifier or Docker resource name. The set is intentionally
+/// narrow — `[a-z0-9_-]+`, no leading dash or underscore — to keep the
+/// generated names predictable across both surfaces.
+fn validate_target_name(name: &str) -> Result<()> {
+    if name.is_empty() || name.len() > 32 {
+        return Err(DeployError::BadRequest(format!(
+            "target name must be 1–32 characters (got {})",
+            name.len()
+        )));
+    }
+    if !name
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '_')
+    {
+        return Err(DeployError::BadRequest(format!(
+            "target name '{name}' must match [a-z0-9_-]+"
+        )));
+    }
+    if name.starts_with('-') || name.starts_with('_') {
+        return Err(DeployError::BadRequest(format!(
+            "target name '{name}' must not start with '-' or '_'"
+        )));
+    }
+    Ok(())
 }
 
 async fn db_exists(admin_url: &str, db_name: &str) -> std::result::Result<bool, String> {
@@ -216,4 +254,33 @@ async fn db_exists(admin_url: &str, db_name: &str) -> std::result::Result<bool, 
         ));
     }
     Ok(String::from_utf8_lossy(&out.stdout).trim() == "1")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validate_accepts_typical_names() {
+        for ok in ["staging", "prod", "dev-1", "wt_42", "a"] {
+            assert!(validate_target_name(ok).is_ok(), "{ok} should pass");
+        }
+    }
+
+    #[test]
+    fn validate_rejects_unsafe_names() {
+        for bad in [
+            "",
+            "Staging",       // uppercase
+            "prod;DROP",     // SQL meta
+            "prod\"",        // quote
+            "prod space",    // whitespace
+            "-prod",         // leading dash
+            "_prod",         // leading underscore
+            &"x".repeat(33), // too long
+            "🎉",            // non-ASCII
+        ] {
+            assert!(validate_target_name(bad).is_err(), "{bad:?} should fail");
+        }
+    }
 }
