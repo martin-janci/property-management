@@ -131,6 +131,32 @@ program
   });
 
 program
+  .command('update')
+  .description('detect drift between code and screen-maps; report issues')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--strict', 'exit non-zero on any drift', false)
+  .action(async (opts: { root: string; strict: boolean }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    const ctx = await buildValidationContext({ repoRoot });
+    const { scanDrift } = await import('./scan-drift.js');
+    const issues = scanDrift({ screens, context: ctx });
+    if (issues.length === 0) {
+      process.stdout.write('No drift detected.\n');
+      return;
+    }
+    process.stdout.write(
+      `Drift detected (${issues.length} issue${issues.length === 1 ? '' : 's'}):\n`
+    );
+    for (const issue of issues) {
+      process.stdout.write(`  ${formatDrift(issue)}\n`);
+    }
+    if (opts.strict) process.exit(1);
+  });
+
+program
   .command('review')
   .description('spawn the Visual Review server and open the browser')
   .option('--root <path>', 'repo root', process.cwd())
@@ -157,6 +183,23 @@ program
       process.exit(0);
     }
   );
+
+function formatDrift(issue: import('./scan-drift.js').DriftIssue): string {
+  switch (issue.kind) {
+    case 'unmapped-sitemap':
+      return `unmapped-sitemap :: ${issue.sitemapId} (no screen-map references it)`;
+    case 'unknown-endpoint':
+      return `unknown-endpoint :: ${issue.screenId} :: ${issue.endpointId}`;
+    case 'unknown-component':
+      return `unknown-component :: ${issue.screenId} :: ${issue.component}`;
+    case 'unknown-use-case':
+      return `unknown-use-case :: ${issue.screenId} :: ${issue.useCaseId}`;
+    case 'unknown-epic':
+      return `unknown-epic :: ${issue.screenId} :: ${issue.epicId}`;
+    case 'orphan-screen':
+      return `orphan-screen :: ${issue.screenId} :: sitemap "${issue.sitemapId}" not found`;
+  }
+}
 
 export function parseFilter(
   expr: string
