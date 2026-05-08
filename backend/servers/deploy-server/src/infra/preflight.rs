@@ -160,7 +160,12 @@ const REQUIRED_ENV: &[(&str, EnvCheck)] = &[
     ("PPT_JWT_SECRET", EnvCheck::MinLen(32)),
     ("PPT_TOTP_ENCRYPTION_KEY", EnvCheck::HexLen(64)),
     ("PPT_INTEGRATION_ENCRYPTION_KEY", EnvCheck::HexLen(64)),
-    ("PPT_PM_CLIENT_SECRET", EnvCheck::NonEmpty),
+    // Match `build_service_envs`: it rejects secrets shorter than 32 chars.
+    // Earlier we used `NonEmpty` which let preflight pass on a too-short
+    // value, only for the deploy itself to fail later with a config error
+    // — exactly the up-front-failure contract this validator exists to
+    // uphold.
+    ("PPT_PM_CLIENT_SECRET", EnvCheck::MinLen(32)),
 ];
 
 #[derive(Copy, Clone)]
@@ -293,22 +298,60 @@ async fn check_caddy_admin(caddy: &CaddyClient) -> Result<(), String> {
 mod tests {
     use super::*;
 
-    /// Save/restore env vars so parallel tests don't bleed into each other.
-    /// We can't use `temp_env` (extra dep), and `std::env` is process-global,
-    /// so we serialize env-mutating tests via a `Mutex`.
-    use std::sync::Mutex;
+    /// `std::env` is process-global, so env-mutating tests must be serialized.
+    /// Holding `ENV_LOCK` is necessary but not sufficient — a panic mid-test
+    /// would otherwise leave the process env permanently mangled (or worse:
+    /// any env var the test runner injected upstream would be silently
+    /// dropped). `EnvGuard` snapshots the required vars on construction and
+    /// restores their exact prior state on drop, so each test is hermetic
+    /// regardless of starting conditions or panic behaviour.
+    use std::sync::{Mutex, MutexGuard};
     static ENV_LOCK: Mutex<()> = Mutex::new(());
 
-    fn clear_required() {
-        for (name, _) in REQUIRED_ENV {
-            std::env::remove_var(name);
+    /// RAII snapshot/restore for the `REQUIRED_ENV` keys. The mutex guard
+    /// is held by this struct for the same lifetime, so two tests can't
+    /// race on the env even if one panics.
+    struct EnvGuard {
+        _lock: MutexGuard<'static, ()>,
+        snapshot: Vec<(&'static str, Option<String>)>,
+    }
+
+    impl EnvGuard {
+        fn new() -> Self {
+            // PoisonError on a previous-test panic doesn't poison the env
+            // itself — recover the guard and proceed; we'll still restore
+            // state on drop.
+            let lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+            let snapshot = REQUIRED_ENV
+                .iter()
+                .map(|(name, _)| (*name, std::env::var(*name).ok()))
+                .collect();
+            // Start each test from a clean slate — but the snapshot above
+            // remembers the originals so Drop puts them back.
+            for (name, _) in REQUIRED_ENV {
+                std::env::remove_var(name);
+            }
+            Self {
+                _lock: lock,
+                snapshot,
+            }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            for (name, prior) in &self.snapshot {
+                match prior {
+                    Some(v) => std::env::set_var(name, v),
+                    None => std::env::remove_var(name),
+                }
+            }
         }
     }
 
     #[test]
     fn env_check_reports_every_missing_var() {
-        let _g = ENV_LOCK.lock().unwrap();
-        clear_required();
+        let _g = EnvGuard::new();
         let errors = check_env_vars();
         assert_eq!(errors.len(), REQUIRED_ENV.len());
         for e in &errors {
@@ -319,61 +362,68 @@ mod tests {
 
     #[test]
     fn env_check_passes_with_valid_values() {
-        let _g = ENV_LOCK.lock().unwrap();
-        clear_required();
+        let _g = EnvGuard::new();
         std::env::set_var("POSTGRES_PASSWORD", "x");
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
-        std::env::set_var("PPT_PM_CLIENT_SECRET", "secret");
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert!(errors.is_empty(), "expected no errors, got {errors:?}");
-        clear_required();
     }
 
     #[test]
     fn env_check_rejects_short_jwt_secret() {
-        let _g = ENV_LOCK.lock().unwrap();
-        clear_required();
+        let _g = EnvGuard::new();
         std::env::set_var("POSTGRES_PASSWORD", "x");
         std::env::set_var("PPT_JWT_SECRET", "tooshort");
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
-        std::env::set_var("PPT_PM_CLIENT_SECRET", "secret");
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
         assert!(errors[0].detail.contains("PPT_JWT_SECRET"));
-        clear_required();
     }
 
     #[test]
     fn env_check_rejects_non_hex_encryption_key() {
-        let _g = ENV_LOCK.lock().unwrap();
-        clear_required();
+        let _g = EnvGuard::new();
         std::env::set_var("POSTGRES_PASSWORD", "x");
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         // 64 chars but not hex
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "z".repeat(64));
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
-        std::env::set_var("PPT_PM_CLIENT_SECRET", "secret");
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
         assert!(errors[0].detail.contains("PPT_TOTP_ENCRYPTION_KEY"));
-        clear_required();
     }
 
     #[test]
     fn env_check_rejects_wrong_length_encryption_key() {
-        let _g = ENV_LOCK.lock().unwrap();
-        clear_required();
+        let _g = EnvGuard::new();
         std::env::set_var("POSTGRES_PASSWORD", "x");
         std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
         std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(32)); // half the required length
         std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
-        std::env::set_var("PPT_PM_CLIENT_SECRET", "secret");
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "z".repeat(32));
         let errors = check_env_vars();
         assert_eq!(errors.len(), 1);
         assert!(errors[0].detail.contains("PPT_TOTP_ENCRYPTION_KEY"));
-        clear_required();
+    }
+
+    #[test]
+    fn env_check_rejects_short_pm_client_secret() {
+        // PPT_PM_CLIENT_SECRET upgraded from NonEmpty to MinLen(32) so the
+        // preflight contract matches `build_service_envs`. Pin it.
+        let _g = EnvGuard::new();
+        std::env::set_var("POSTGRES_PASSWORD", "x");
+        std::env::set_var("PPT_JWT_SECRET", "a".repeat(32));
+        std::env::set_var("PPT_TOTP_ENCRYPTION_KEY", "0".repeat(64));
+        std::env::set_var("PPT_INTEGRATION_ENCRYPTION_KEY", "f".repeat(64));
+        std::env::set_var("PPT_PM_CLIENT_SECRET", "tooshort");
+        let errors = check_env_vars();
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].detail.contains("PPT_PM_CLIENT_SECRET"));
     }
 }

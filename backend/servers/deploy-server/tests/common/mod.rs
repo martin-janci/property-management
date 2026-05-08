@@ -161,7 +161,12 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         caddy_pool: caddy_pool.clone(),
         targets: targets_cfg.clone(),
         image_prefix: "ghcr.io/test".into(),
-        postgres_admin_url: "postgres://ppt:test@localhost:5432/postgres".into(),
+        // Reuse cfg.postgres_admin_url so PostgresOps and the preflight DB
+        // check (read via release_svc.postgres_admin_url) agree on which DB
+        // they're talking to. A divergence here let prior fixtures pass while
+        // any test that exercised /api/deploy hit a different URL than the
+        // rest of the surface.
+        postgres_admin_url: cfg.postgres_admin_url.clone(),
     });
     let promote_svc = Arc::new(PromoteService {
         release_svc: release_svc.clone(),
