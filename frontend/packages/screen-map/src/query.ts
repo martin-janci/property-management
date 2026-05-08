@@ -1,35 +1,14 @@
+import { parseFilter } from './filter.js';
 import type { ScreenMap } from './types.js';
 
 export type QueryFormat = 'table' | 'json' | 'md';
 
 /**
  * Filter screens by a parseFilter expression. Empty expression returns all.
- * The matching logic mirrors `parseFilter` in cli.ts (kept duplicated here
- * to avoid a circular import; consolidating into a shared helper is a follow-up).
  */
 export function queryScreens(screens: ScreenMap[], expr: string): ScreenMap[] {
-  if (!expr.trim()) return [...screens];
-  const terms = expr.split(',').map((t) => {
-    const colonIdx = t.indexOf(':');
-    return {
-      key: (colonIdx >= 0 ? t.slice(0, colonIdx) : t).trim(),
-      value: (colonIdx >= 0 ? t.slice(colonIdx + 1) : '').trim(),
-    };
-  });
-  return screens.filter((s) => {
-    return terms.every(({ key, value }) => {
-      const path = key.split('.');
-      let cursor: unknown = s.frontmatter;
-      for (const seg of path) {
-        if (cursor && typeof cursor === 'object' && seg in cursor) {
-          cursor = (cursor as Record<string, unknown>)[seg];
-        } else {
-          return false;
-        }
-      }
-      return String(cursor) === value;
-    });
-  });
+  const predicate = parseFilter(expr);
+  return screens.filter((s) => predicate(s.frontmatter));
 }
 
 export function formatQueryResult(screens: ScreenMap[], format: QueryFormat): string {

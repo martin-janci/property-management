@@ -20,3 +20,4 @@ export { ClaudeDesignAdapter } from './design-source/claude-design.js';
 export { scanDrift, type DriftIssue, type ScanDriftOptions } from './scan-drift.js';
 export { renderSiteGraph, renderEndpointMatrix, renderStatusDashboard } from './render.js';
 export { queryScreens, formatQueryResult, type QueryFormat } from './query.js';
+export { parseFilter } from './filter.js';

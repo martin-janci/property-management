@@ -6,12 +6,17 @@ import { buildValidationContext } from './context.js';
 import { createDesignSource } from './design-source/index.js';
 import { discoverScreenMaps } from './discover.js';
 import { loadScreenContext } from './edit-context.js';
+import { parseFilter } from './filter.js';
 import { type GroupingDecision, mergeCandidates } from './grouping.js';
 import { bulkWriteScreenMaps } from './init-write.js';
 import { ScreenMapParseError, parseScreenMap } from './parse.js';
 import { startReviewServer } from './review-server/start.js';
 import { scanCandidates } from './scan.js';
 import { validateScreenMap } from './validate.js';
+
+// Re-export parseFilter to preserve backward compatibility for callers
+// (including existing unit tests) that import it from cli.ts.
+export { parseFilter };
 
 const program = new Command();
 program.name('screen-map').description('CLI for the @ppt/screen-map system').version('0.1.0');
@@ -142,6 +147,9 @@ program
     const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
     const ctx = await buildValidationContext({ repoRoot });
     const { scanDrift } = await import('./scan-drift.js');
+    // Phase 3a: only sitemap/endpoint/orphan drift wired here.
+    // UC/component/epic drift requires knownUseCases/knownComponents/knownEpics sets
+    // — those will be wired in Phase 3b alongside the bootstrap runs.
     const issues = scanDrift({ screens, context: ctx });
     if (issues.length === 0) {
       process.stdout.write('No drift detected.\n');
@@ -256,33 +264,6 @@ function formatDrift(issue: import('./scan-drift.js').DriftIssue): string {
     case 'orphan-screen':
       return `orphan-screen :: ${issue.screenId} :: sitemap "${issue.sitemapId}" not found`;
   }
-}
-
-export function parseFilter(
-  expr: string
-): (fm: { id: string; product: string; implementations: Record<string, unknown> }) => boolean {
-  // Simple `key:value` form. Comma-separated terms ANDed.
-  const terms = expr.split(',').map((t) => {
-    const colonIdx = t.indexOf(':');
-    const keyRaw = colonIdx >= 0 ? t.slice(0, colonIdx) : t;
-    const valueRaw = colonIdx >= 0 ? t.slice(colonIdx + 1) : '';
-    return { key: (keyRaw ?? '').trim(), value: (valueRaw ?? '').trim() };
-  });
-  return (fm) => {
-    return terms.every(({ key, value }) => {
-      // Support nested `implementations.<platform>.<field>:<value>`.
-      const path = key.split('.');
-      let cursor: unknown = fm;
-      for (const seg of path) {
-        if (cursor && typeof cursor === 'object' && seg in cursor) {
-          cursor = (cursor as Record<string, unknown>)[seg];
-        } else {
-          return false;
-        }
-      }
-      return String(cursor) === value;
-    });
-  };
 }
 
 // Only run the CLI when this module is the entry point — guards against
