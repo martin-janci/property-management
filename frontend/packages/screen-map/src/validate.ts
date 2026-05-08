@@ -22,6 +22,15 @@ export interface ValidationContext {
    * existence and (for `path#anchor`) the presence of the anchor.
    */
   resolveDiagramRef: (ref: string) => boolean;
+  /**
+   * Optional: known UC IDs (from docs/use-cases.md). Consumed by scanDrift's
+   * unknown-use-case category. If absent, that category is silently skipped.
+   */
+  knownUseCases?: Set<string>;
+  /** Optional: known Epic IDs (from docs/epics/EPIC-*.md). */
+  knownEpics?: Set<string>;
+  /** Optional: known component names (from ui-kit exports). */
+  knownComponents?: Set<string>;
 }
 
 export function validateScreenMap(screen: ScreenMap, ctx: ValidationContext): ValidationIssue[] {

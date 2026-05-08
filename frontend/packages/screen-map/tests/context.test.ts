@@ -40,4 +40,22 @@ describe('buildValidationContext', () => {
       expect(ctx.resolveDiagramRef('docs/x.md')).toBe(true);
     });
   });
+
+  it('exposes knownUseCases, knownEpics, knownComponents from extract-known', async () => {
+    await withTmpRepo(async (root) => {
+      await mkdir(path.join(root, 'docs'), { recursive: true });
+      await writeFile(path.join(root, 'docs/use-cases.md'), '## UC-12 Foo\n');
+      await mkdir(path.join(root, 'docs/epics'), { recursive: true });
+      await writeFile(path.join(root, 'docs/epics/EPIC-001-foo.md'), '');
+      await mkdir(path.join(root, 'frontend/packages/ui-kit/src'), { recursive: true });
+      await writeFile(
+        path.join(root, 'frontend/packages/ui-kit/src/index.ts'),
+        'export { BuildingHeader } from "./x.js";\n'
+      );
+      const ctx = await buildValidationContext({ repoRoot: root });
+      expect(ctx.knownUseCases?.has('UC-12')).toBe(true);
+      expect(ctx.knownEpics?.has('Epic-001')).toBe(true);
+      expect(ctx.knownComponents?.has('BuildingHeader')).toBe(true);
+    });
+  });
 });

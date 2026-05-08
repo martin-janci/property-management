@@ -8,6 +8,7 @@ import {
   realityWebRoutes,
 } from '@ppt/sitemap';
 import { discoverScreenMaps } from './discover.js';
+import { extractKnownContexts } from './extract-known.js';
 import { parseScreenMap } from './parse.js';
 import type { ValidationContext } from './validate.js';
 
@@ -49,11 +50,16 @@ export async function buildValidationContext(
     }
   }
 
+  const known = await extractKnownContexts(options.repoRoot);
+
   return {
     knownEndpointIds,
     knownSitemapIds,
     knownScreenIds,
     resolveDiagramRef: (ref) => resolveDiagramRef(ref, options.repoRoot),
+    knownUseCases: known.knownUseCases,
+    knownEpics: known.knownEpics,
+    knownComponents: known.knownComponents,
   };
 }
 
