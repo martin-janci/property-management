@@ -76,6 +76,13 @@ enum Cmd {
         #[arg(long)]
         to: Option<String>,
     },
+    /// One-shot bootstrap of a target's infrastructure prerequisites
+    /// (database, docker network, postgres+caddy network membership). Idempotent.
+    /// Run once before the first `pmctl deploy <target>`.
+    BootstrapTarget {
+        /// Target name from `targets.yaml` (e.g. `staging`, `prod`).
+        target: String,
+    },
 }
 
 #[derive(Serialize)]
@@ -244,6 +251,14 @@ async fn main() -> anyhow::Result<()> {
                 .post(format!("{}/api/rollback", cli.url))
                 .header("Authorization", &auth)
                 .json(&body)
+                .send()
+                .await?;
+            print_resp(resp, cli.json).await?;
+        }
+        Cmd::BootstrapTarget { target } => {
+            let resp = http
+                .post(format!("{}/api/targets/{target}/bootstrap", cli.url))
+                .header("Authorization", &auth)
                 .send()
                 .await?;
             print_resp(resp, cli.json).await?;

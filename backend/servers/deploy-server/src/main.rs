@@ -94,6 +94,16 @@ async fn main() -> anyhow::Result<()> {
         cfg.gh_repo.clone(),
     ));
 
+    // Bootstrap reuses release_svc.docker_pool/caddy_pool so deploy + bootstrap
+    // never disagree about which clients drive which target — bootstrap can't
+    // create a network on a different docker socket than the one the
+    // subsequent deploy will see.
+    let bootstrap_svc = Arc::new(deploy_server::api::bootstrap::BootstrapService {
+        targets: Arc::new(targets.clone()),
+        postgres: postgres.clone(),
+        release_svc: release_svc.clone(),
+    });
+
     let app = router::build(
         store,
         git,
@@ -129,6 +139,7 @@ async fn main() -> anyhow::Result<()> {
         cfg.backend_image_prefix.clone(),
         promote_svc,
         worktree_locks,
+        bootstrap_svc,
     );
 
     let mut fd = ListenFd::from_env();
