@@ -161,6 +161,7 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         caddy_pool: caddy_pool.clone(),
         targets: targets_cfg.clone(),
         image_prefix: "ghcr.io/test".into(),
+        postgres_admin_url: "postgres://ppt:test@localhost:5432/postgres".into(),
     });
     let promote_svc = Arc::new(PromoteService {
         release_svc: release_svc.clone(),

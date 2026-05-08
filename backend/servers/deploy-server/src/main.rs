@@ -69,6 +69,7 @@ async fn main() -> anyhow::Result<()> {
         targets: Arc::new(targets.clone()),
         image_prefix: std::env::var("PPT_IMAGE_PREFIX")
             .unwrap_or_else(|_| "ghcr.io/martin-janci".into()),
+        postgres_admin_url: cfg.postgres_admin_url.clone(),
     });
 
     let promote_svc = Arc::new(PromoteService {

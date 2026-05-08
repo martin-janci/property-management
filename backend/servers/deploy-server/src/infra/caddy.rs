@@ -112,6 +112,23 @@ impl CaddyClient {
             "caddy unregister: {host} still resolved after 16 DELETE iterations"
         )))
     }
+
+    /// Probe the Caddy admin API. Returns `Ok(())` when `/config/` responds
+    /// with any 2xx — empty config is fine, that's the cold-start state on
+    /// a freshly-bootstrapped target. Used by the preflight validator so a
+    /// dead-or-paused Caddy fails fast instead of letting `register_route`
+    /// hang on the first `connect_timeout`.
+    pub async fn ping(&self) -> Result<()> {
+        let url = format!("{}/config/", self.base);
+        let resp = self.http.get(&url).send().await?;
+        if !resp.status().is_success() {
+            return Err(crate::DeployError::Internal(format!(
+                "caddy ping: {}",
+                resp.status()
+            )));
+        }
+        Ok(())
+    }
 }
 
 fn sanitize_id(host: &str) -> String {

@@ -2,8 +2,8 @@
 use crate::config::TargetsConfig;
 use crate::domain::{Release, ReleaseState, TargetKind};
 use crate::infra::{
-    build_service_envs, BlueGreenDeployer, BlueGreenSpec, CaddyClient, CallerIdentity,
-    DockerClient, StagingDeploySpec, Store,
+    build_service_envs, validate_target, BlueGreenDeployer, BlueGreenSpec, CaddyClient,
+    CallerIdentity, DockerClient, PreflightContext, StagingDeploySpec, Store,
 };
 use crate::{DeployError, Result};
 use axum::extract::{Path, State};
@@ -20,6 +20,10 @@ pub struct ReleaseService {
     pub caddy_pool: Arc<HashMap<String, Arc<CaddyClient>>>,
     pub targets: Arc<TargetsConfig>,
     pub image_prefix: String,
+    /// Admin URL for the shared `ppt-postgres` instance, used by the
+    /// preflight validator to verify per-target databases exist before a
+    /// deploy starts. Same value as `Config::postgres_admin_url`.
+    pub postgres_admin_url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -79,6 +83,49 @@ pub async fn deploy_handler(
         .get(target.as_str())
         .ok_or_else(|| DeployError::Config(format!("unknown target {target}")))?;
 
+    let docker = svc
+        .docker_pool
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
+        .clone();
+    let caddy = svc
+        .caddy_pool
+        .get(target.as_str())
+        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
+        .clone();
+
+    // Preflight: every required dependency must already be in place. Reports
+    // *all* failures together — operators can fix everything in one pass and
+    // re-trigger, instead of playing whack-a-mole one error at a time.
+    let target_db = format!("ppt_{}", target.as_str());
+    let target_network = format!("ppt-{}", target.as_str());
+    let pf = validate_target(&PreflightContext {
+        target_name: target.as_str(),
+        target: target_cfg,
+        docker: &docker,
+        caddy: &caddy,
+        postgres_admin_url: &svc.postgres_admin_url,
+        target_db: &target_db,
+        postgres_container: "ppt-postgres",
+        caddy_container: "ppt-caddy",
+        target_network: &target_network,
+    })
+    .await;
+    if !pf.is_empty() {
+        let detail = pf
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+            .join("; ");
+        return Err(DeployError::BadRequest(format!(
+            "preflight failed for target '{}' ({} issue{}): {}",
+            target.as_str(),
+            pf.len(),
+            if pf.len() == 1 { "" } else { "s" },
+            detail
+        )));
+    }
+
     let images = build_staging_images(&svc.image_prefix, &req.tag);
     let service_envs = build_service_envs(target.as_str(), target_cfg)?;
 
@@ -93,16 +140,6 @@ pub async fn deploy_handler(
         target_name: target.as_str().into(),
         service_envs,
     };
-    let docker = svc
-        .docker_pool
-        .get(target.as_str())
-        .ok_or_else(|| DeployError::Config(format!("no docker for target {target}")))?
-        .clone();
-    let caddy = svc
-        .caddy_pool
-        .get(target.as_str())
-        .ok_or_else(|| DeployError::Config(format!("no caddy for target {target}")))?
-        .clone();
     let deployer = BlueGreenDeployer { docker, caddy };
     deployer.deploy(&spec).await?;
 
