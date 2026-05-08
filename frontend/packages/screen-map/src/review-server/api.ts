@@ -51,9 +51,14 @@ export function attachApi(
 
     // Mutate body: append Agent Log entry; optionally append general note.
     const today = new Date().toISOString().slice(0, 10);
-    const numOk = (body.decisions ?? []).filter((d) => d.ok).length;
-    const numNotes = (body.decisions ?? []).filter((d) => d.note).length;
-    const summary = `${today} — review: ${numOk} OK, ${numNotes} note${numNotes === 1 ? '' : 's'}`;
+    const decisions = body.decisions ?? [];
+    const numOk = decisions.filter((d) => d.ok).length;
+    const itemNotes = decisions.filter((d) => d.note);
+    const notesSummary =
+      itemNotes.length > 0
+        ? ` (${itemNotes.map((d) => `"${d.note}" on "${d.itemKey}"`).join(', ')})`
+        : '';
+    const summary = `${today} — review: ${numOk} OK, ${itemNotes.length} note${itemNotes.length === 1 ? '' : 's'}${notesSummary}`;
     const newBody = appendAgentLog(screen.body, `- ${summary}`);
     const finalBody = body.generalNote
       ? appendSpecificNote(newBody, today, body.generalNote)

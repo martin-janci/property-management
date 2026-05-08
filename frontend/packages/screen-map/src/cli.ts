@@ -1,5 +1,6 @@
 #!/usr/bin/env -S npx tsx
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { buildValidationContext } from './context.js';
 import { createDesignSource } from './design-source/index.js';
@@ -101,9 +102,17 @@ program
       }
       const concepts = mergeCandidates(candidates, decisions);
       const screensDir = path.join(repoRoot, 'docs/screens');
-      const written = await bulkWriteScreenMaps(concepts, screensDir, { force: opts.force });
-      process.stdout.write(`Wrote ${written.length} screen-maps under ${screensDir}\n`);
-      for (const file of written) process.stdout.write(`  + ${path.relative(repoRoot, file)}\n`);
+      const result = await bulkWriteScreenMaps(concepts, screensDir, { force: opts.force });
+      process.stdout.write(`Wrote ${result.written.length} screen-maps under ${screensDir}\n`);
+      for (const file of result.written)
+        process.stdout.write(`  + ${path.relative(repoRoot, file)}\n`);
+      if (result.skipped.length > 0) {
+        process.stdout.write(
+          `Skipped ${result.skipped.length} user-edited screen-maps (use a unique --add or rename to add a fresh entry):\n`
+        );
+        for (const file of result.skipped)
+          process.stdout.write(`  ~ ${path.relative(repoRoot, file)}\n`);
+      }
     }
   );
 
@@ -144,14 +153,12 @@ program
       });
       process.stdout.write(`Review server running at ${result.url}\n`);
       process.stdout.write('Press Ctrl-C to stop.\n');
-      // Keep the process alive — SIGINT handler in start.ts handles shutdown.
-      // Also exit when the server's onFinish fires (POST /api/session/finish).
-      await result.shutdown();
+      await result.finished;
       process.exit(0);
     }
   );
 
-function parseFilter(
+export function parseFilter(
   expr: string
 ): (fm: { id: string; product: string; implementations: Record<string, unknown> }) => boolean {
   // Simple `key:value` form. Comma-separated terms ANDed.
@@ -176,7 +183,19 @@ function parseFilter(
   };
 }
 
-program.parseAsync().catch((err) => {
-  process.stderr.write(`Unexpected error: ${(err as Error).message}\n`);
-  process.exit(2);
-});
+// Only run the CLI when this module is the entry point — guards against
+// `import { parseFilter } from './cli.js'` (used in unit tests) triggering
+// the commander parse loop and exiting the test process.
+const isMain = (() => {
+  try {
+    return process.argv[1] === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+})();
+if (isMain) {
+  program.parseAsync().catch((err) => {
+    process.stderr.write(`Unexpected error: ${(err as Error).message}\n`);
+    process.exit(2);
+  });
+}

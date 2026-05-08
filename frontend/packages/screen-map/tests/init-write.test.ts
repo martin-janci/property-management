@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -33,8 +33,9 @@ describe('bulkWriteScreenMaps', () => {
         sitemapRefs: { 'reality-web': 'reality-property-detail' },
       },
     ];
-    const written = await bulkWriteScreenMaps(concepts, tmpRoot);
-    expect(written).toHaveLength(2);
+    const result = await bulkWriteScreenMaps(concepts, tmpRoot);
+    expect(result.written).toHaveLength(2);
+    expect(result.skipped).toHaveLength(0);
 
     const ppt = path.join(tmpRoot, 'ppt/building-detail.md');
     const screen = await parseScreenMap(ppt);
@@ -71,8 +72,25 @@ describe('bulkWriteScreenMaps', () => {
     const c: CandidateScreen[] = [{ id: 'ppt/foo', name: 'Foo', product: 'ppt', source: 'user' }];
     await bulkWriteScreenMaps(c, tmpRoot);
     await expect(bulkWriteScreenMaps(c, tmpRoot)).rejects.toThrow(/already exists/);
-    // With force: succeed.
-    const written = await bulkWriteScreenMaps(c, tmpRoot, { force: true });
-    expect(written).toHaveLength(1);
+    // With force on a template-shaped file: overwrite succeeds.
+    const result = await bulkWriteScreenMaps(c, tmpRoot, { force: true });
+    expect(result.written).toHaveLength(1);
+    expect(result.skipped).toHaveLength(0);
+  });
+
+  it('preserves user-edited screen-maps even when force=true', async () => {
+    const c: CandidateScreen[] = [{ id: 'ppt/foo', name: 'Foo', product: 'ppt', source: 'user' }];
+    await bulkWriteScreenMaps(c, tmpRoot);
+    const file = path.join(tmpRoot, 'ppt/foo.md');
+    // Simulate a user editing the file: remove the `init: created from scan` marker.
+    const original = await readFile(file, 'utf8');
+    const edited = original.replace('— init: created from scan', '— manual: human-edited');
+    await writeFile(file, edited, 'utf8');
+    const result = await bulkWriteScreenMaps(c, tmpRoot, { force: true });
+    expect(result.written).toHaveLength(0);
+    expect(result.skipped).toEqual([file]);
+    // File should remain user-edited.
+    const after = await readFile(file, 'utf8');
+    expect(after).toContain('manual: human-edited');
   });
 });

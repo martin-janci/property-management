@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { CandidateScreen } from './scan.js';
 import type { Platform, Product, ScreenMapFrontmatter } from './types.js';
@@ -9,12 +9,19 @@ export interface BulkWriteOptions {
   force?: boolean;
 }
 
+export interface BulkWriteResult {
+  written: string[];
+  /** Files that already existed and contained user edits — preserved (not overwritten). */
+  skipped: string[];
+}
+
 export async function bulkWriteScreenMaps(
   concepts: CandidateScreen[],
   screensDir: string,
   options: BulkWriteOptions = {}
-): Promise<string[]> {
+): Promise<BulkWriteResult> {
   const written: string[] = [];
+  const skipped: string[] = [];
   for (const concept of concepts) {
     const slug = concept.id.split('/')[1];
     if (!slug) {
@@ -26,6 +33,16 @@ export async function bulkWriteScreenMaps(
     if (existsSync(file) && !options.force) {
       throw new Error(`${file} already exists; pass force=true to overwrite`);
     }
+    if (existsSync(file) && options.force) {
+      // Re-read the existing file. If it still has the "init: created from
+      // scan" marker, we treat it as template-shaped and overwrite. Otherwise
+      // a human has edited it and we preserve their work.
+      const existing = await readFile(file, 'utf8');
+      if (!existing.includes('— init: created from scan')) {
+        skipped.push(file);
+        continue;
+      }
+    }
     const screen = {
       filePath: file,
       frontmatter: buildFrontmatter(concept),
@@ -35,13 +52,17 @@ export async function bulkWriteScreenMaps(
     await writeFile(file, serialized, 'utf8');
     written.push(file);
   }
-  return written;
+  return { written, skipped };
 }
 
 function buildFrontmatter(c: CandidateScreen): ScreenMapFrontmatter {
   const isDesigned = c.source === 'design';
-  const buildStatus = isDesigned ? 'planned' : 'shipped';
-  const apiStatus = isDesigned ? 'stub' : 'partial';
+  // A design-sourced concept that ALSO has sitemapRefs means a shipped
+  // screen with a redesign queued. A pure-design concept (no sitemapRefs)
+  // is a new screen not yet built.
+  const hasSitemapRefs = c.sitemapRefs && Object.keys(c.sitemapRefs).length > 0;
+  const buildStatus = isDesigned && !hasSitemapRefs ? 'planned' : 'shipped';
+  const apiStatus = isDesigned && !hasSitemapRefs ? 'stub' : 'partial';
   const platforms = platformsForProduct(c.product);
   const implementations: ScreenMapFrontmatter['implementations'] = {};
   for (const p of platforms) {

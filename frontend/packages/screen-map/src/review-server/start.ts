@@ -18,6 +18,9 @@ export interface StartOptions {
 export interface StartResult {
   port: number;
   url: string;
+  /** Resolves when the server has been shut down (via SIGINT or POST /api/session/finish). */
+  finished: Promise<void>;
+  /** Imperatively trigger shutdown. */
   shutdown: () => Promise<void>;
 }
 
@@ -33,8 +36,15 @@ export async function startReviewServer(opts: StartOptions): Promise<StartResult
   }
   const session = createSession({ screens, defaultPreview: opts.preview });
 
+  let finishResolve!: () => void;
+  const finished = new Promise<void>((resolve) => {
+    finishResolve = resolve;
+  });
+
   let serverHandle: { close: (cb?: () => void) => void } | null = null;
-  const onFinish = () => serverHandle?.close();
+  const onFinish = () => {
+    serverHandle?.close(() => finishResolve());
+  };
   const app = await buildServer({ session, onFinish });
 
   const port = await findFreePort(opts.startPort ?? 5179);
@@ -43,17 +53,16 @@ export async function startReviewServer(opts: StartOptions): Promise<StartResult
   const url = `http://127.0.0.1:${port}/?session=${session.token}`;
   openBrowser(url);
 
-  const shutdown = (): Promise<void> =>
-    new Promise((resolve) => {
-      if (!serverHandle) return resolve();
-      serverHandle.close(() => resolve());
-    });
+  const shutdown = (): Promise<void> => {
+    onFinish();
+    return finished;
+  };
 
   process.once('SIGINT', () => {
-    shutdown().then(() => process.exit(0));
+    shutdown();
   });
 
-  return { port, url, shutdown };
+  return { port, url, finished, shutdown };
 }
 
 async function findFreePort(start: number): Promise<number> {

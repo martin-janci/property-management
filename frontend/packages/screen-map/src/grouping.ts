@@ -28,15 +28,20 @@ export function mergeCandidates(
       const fromSet = new Set(decision.from);
       const merged = working.filter((c) => fromSet.has(c.id));
       if (merged.length === 0) continue;
+      const hasFrame = merged.some((m) => m.frameId);
+      const frameId = merged.find((m) => m.frameId)?.frameId;
       const combined: CandidateScreen = {
         id: decision.into,
         name: decision.name ?? merged[0].name,
         product: merged[0].product,
-        source: merged[0].source,
+        // If any merged candidate brings a design frame, the merged concept
+        // is design-driven — buildStatus stays 'shipped' from sitemap parents,
+        // but redesignStatus becomes 'in-progress' via init-write's source check.
+        source: hasFrame ? 'design' : merged[0].source,
         sitemapRefs: mergeSitemapRefs(merged),
         useCases: dedupe(merged.flatMap((m) => m.useCases ?? [])),
         epics: dedupe(merged.flatMap((m) => m.epics ?? [])),
-        frameId: merged.find((m) => m.frameId)?.frameId,
+        frameId,
       };
       working = working.filter((c) => !fromSet.has(c.id));
       working.push(combined);
