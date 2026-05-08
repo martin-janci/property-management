@@ -1,5 +1,5 @@
 // backend/servers/deploy-server/src/api/router.rs
-use crate::api::{audit_query, gc, health, logs, promote, release, webhook, worktree};
+use crate::api::{audit_query, bootstrap, gc, health, logs, promote, release, webhook, worktree};
 use crate::auth::{ApiKeyValidator, OidcValidator};
 use crate::config::Config;
 use crate::infra::{
@@ -30,6 +30,7 @@ pub fn build(
     backend_image_prefix: String,
     promote_svc: Arc<promote::PromoteService>,
     worktree_locks: Arc<WorktreeLockRegistry>,
+    bootstrap_svc: Arc<bootstrap::BootstrapService>,
 ) -> Router {
     let svc = Arc::new(worktree::WorktreeService {
         store: store.clone(),
@@ -83,6 +84,14 @@ pub fn build(
                 .route("/api/promote", post(promote::promote_handler))
                 .route("/api/rollback", post(promote::rollback_handler))
                 .with_state(promote_svc),
+        )
+        .merge(
+            Router::new()
+                .route(
+                    "/api/targets/:target/bootstrap",
+                    post(bootstrap::bootstrap_handler),
+                )
+                .with_state(bootstrap_svc),
         )
         .layer(axum::extract::DefaultBodyLimit::max(1024 * 1024))
         .layer(from_fn_with_state(auth_state, audit::auth_and_audit));

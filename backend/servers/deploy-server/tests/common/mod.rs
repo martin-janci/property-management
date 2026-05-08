@@ -174,6 +174,11 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         targets: targets_cfg.clone(),
     });
     let worktree_locks = Arc::new(WorktreeLockRegistry::new());
+    let bootstrap_svc = Arc::new(deploy_server::api::bootstrap::BootstrapService {
+        targets: targets_cfg.clone(),
+        postgres: postgres.clone(),
+        release_svc: release_svc.clone(),
+    });
 
     let app = router::build(
         store,
@@ -193,6 +198,7 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         "ghcr.io/test".into(),
         promote_svc,
         worktree_locks,
+        bootstrap_svc,
     );
 
     TestApp {

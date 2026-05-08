@@ -153,7 +153,11 @@ impl DockerClient {
     /// Inspects the container first; no-ops if already on `network`. Real
     /// errors (container missing, network missing, daemon unreachable)
     /// propagate.
-    pub async fn ensure_network_membership(&self, network: &str, container: &str) -> Result<()> {
+    /// Returns `Ok(true)` if a connect was actually performed; `Ok(false)` if
+    /// `container` was already on `network`. Callers (notably the bootstrap
+    /// endpoint) report `created` vs `already-ok` to the operator based on
+    /// this signal — without it everything looks like a no-op.
+    pub async fn ensure_network_membership(&self, network: &str, container: &str) -> Result<bool> {
         let info = self.docker.inspect_container(container, None).await?;
         let already_connected = info
             .network_settings
@@ -162,7 +166,7 @@ impl DockerClient {
             .map(|nets| nets.contains_key(network))
             .unwrap_or(false);
         if already_connected {
-            return Ok(());
+            return Ok(false);
         }
 
         use bollard::network::ConnectNetworkOptions;
@@ -176,12 +180,16 @@ impl DockerClient {
             )
             .await
             .map_err(crate::DeployError::Docker)?;
+        // Generic message: this helper is called for both `ppt-caddy` and
+        // `ppt-postgres` (and any future shared service). The earlier
+        // hardcoded "connected ppt-caddy to per-target network" was wrong
+        // for postgres bootstraps and showed up as misleading log noise.
         tracing::info!(
             network = %network,
             container = %container,
-            "connected ppt-caddy to per-target network"
+            "connected container to per-target network"
         );
-        Ok(())
+        Ok(true)
     }
 
     pub async fn run_frontend_dev(&self, spec: &FrontendDevSpec) -> Result<String> {
