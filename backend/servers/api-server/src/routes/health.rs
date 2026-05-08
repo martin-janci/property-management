@@ -10,9 +10,12 @@
 //!   the deploy-server's `wait_until_ready` so a transient DB blip doesn't
 //!   flip the container to UNHEALTHY and tear down a working blue/green
 //!   flip.
-//! - `GET /readiness` → deep check. DB + Redis + (reality) PM API. 503 on
-//!   unhealthy. Used by operator dashboards and any external monitor that
-//!   wants to know if the service is *useful*, not just *up*.
+//! - `GET /readiness` → deep check. DB + Redis on api-server (DB + PM API
+//!   on reality-server). DB is the only critical dependency: a DB outage
+//!   returns 503. Redis failure is reported as `degraded` and stays 200 —
+//!   sessions degrade to short-lived in-memory state but the service still
+//!   serves requests. Used by operator dashboards and any external monitor
+//!   that wants to know if the service is *useful*, not just *up*.
 //!
 //! Why both: the Docker docs are clear that HEALTHCHECK should be cheap and
 //! local; coupling it to upstream availability is the standard recipe for
@@ -159,15 +162,20 @@ async fn check_redis(redis_client: &Option<integrations::RedisClient>) -> Depend
                     latency_ms: Some(latency_ms),
                     error: None,
                 },
+                // Redis failures map to `Degraded`, not `Unhealthy`:
+                // sessions and pub/sub fall back to in-memory state but
+                // the service still serves traffic. The module docstring
+                // pins this contract — only the DB is treated as a 503-
+                // worthy critical dependency.
                 Ok(false) => DependencyHealth {
                     name: "redis".to_string(),
-                    status: HealthStatus::Unhealthy,
+                    status: HealthStatus::Degraded,
                     latency_ms: Some(latency_ms),
                     error: Some("Redis PING returned unexpected response".to_string()),
                 },
                 Err(e) => DependencyHealth {
                     name: "redis".to_string(),
-                    status: HealthStatus::Unhealthy,
+                    status: HealthStatus::Degraded,
                     latency_ms: Some(latency_ms),
                     error: Some(format!("Redis connection failed: {}", e)),
                 },
