@@ -21,3 +21,4 @@ export { scanDrift, type DriftIssue, type ScanDriftOptions } from './scan-drift.
 export { renderSiteGraph, renderEndpointMatrix, renderStatusDashboard } from './render.js';
 export { queryScreens, formatQueryResult, type QueryFormat } from './query.js';
 export { parseFilter } from './filter.js';
+export { extractKnownContexts, type KnownContexts } from './extract-known.js';
