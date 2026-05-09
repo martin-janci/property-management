@@ -6,7 +6,6 @@ use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use sqlx::postgres::PgHasArrayType;
 use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -54,12 +53,6 @@ impl std::fmt::Display for SupportedCurrency {
             SupportedCurrency::DKK => write!(f, "DKK"),
             SupportedCurrency::NOK => write!(f, "NOK"),
         }
-    }
-}
-
-impl PgHasArrayType for SupportedCurrency {
-    fn array_type_info() -> sqlx::postgres::PgTypeInfo {
-        sqlx::postgres::PgTypeInfo::with_name("_supported_currency")
     }
 }
 
