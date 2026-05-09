@@ -193,9 +193,7 @@ declare module 'expo-notifications' {
   export function setNotificationHandler(handler: NotificationHandler | null): void;
   export function getPermissionsAsync(): Promise<PermissionResponse>;
   export function requestPermissionsAsync(): Promise<PermissionResponse>;
-  export function getExpoPushTokenAsync(options?: {
-    projectId?: string;
-  }): Promise<ExpoPushToken>;
+  export function getExpoPushTokenAsync(options?: { projectId?: string }): Promise<ExpoPushToken>;
   export function setNotificationChannelAsync(
     channelId: string,
     channel: NotificationChannelInput

@@ -7,5 +7,5 @@ export {
   type PendingSyncIndicatorProps,
   type SyncStatus,
 } from './PendingSyncIndicator';
-export { SyncStatusBadge, type SyncStatusBadgeProps } from './SyncStatusBadge';
 export { SyncProgressToast, type SyncProgressToastProps } from './SyncProgressToast';
+export { SyncStatusBadge, type SyncStatusBadgeProps } from './SyncStatusBadge';

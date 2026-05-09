@@ -1,12 +1,12 @@
+import { notFound } from 'next/navigation';
+import Script from 'next/script';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
 import { ComparisonProvider } from '@/lib/comparison-context';
 import { QueryProvider } from '@/lib/query-provider';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
-import { notFound } from 'next/navigation';
-import Script from 'next/script';
-import { DevPanelMount } from '../../components/DevPanelMount';
 import { ComparisonTray } from '../../components/comparison';
+import { DevPanelMount } from '../../components/DevPanelMount';
 import { type Locale, locales } from '../../i18n/config';
 
 type Props = {
@@ -18,11 +18,7 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
 
   const titles: Record<Locale, string> = {

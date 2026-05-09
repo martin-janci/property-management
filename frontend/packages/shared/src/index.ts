@@ -9,136 +9,132 @@
 // API Client Re-exports
 // ============================================
 export * from '@ppt/api-client';
-
 // ============================================
-// Formatting Utilities
+// Accessibility (existing)
 // ============================================
-export {
-  // Locale
-  getUserLocale,
-  // Currency
-  formatCurrency,
-  formatCompactCurrency,
-  type CurrencyFormatOptions,
-  // Date/Time
-  formatDate,
-  formatDetailedDate,
-  formatDateTime,
-  formatTime,
-  formatISODate,
-  formatRelativeTime,
-  type DateInput,
-  type DateFormatOptions,
-  // Numbers
-  formatNumber,
-  formatCompactNumber,
-  formatPercent,
-  type NumberFormatOptions,
-  // Phone & Address
-  formatPhone,
-  formatAddress,
-  type AddressComponents,
-  // File Size
-  formatFileSize,
-} from './formatting';
-
+export * from './accessibility';
 // ============================================
-// Validation Utilities
+// Authentication Utilities
 // ============================================
 export {
+  type BasicUserInfo,
+  // Auth Headers
+  createAuthHeader,
+  // Token Storage
+  createTokenStorage,
+  // JWT Utilities
+  decodeJwt,
+  extractTokenFromHeader,
+  getAndClearReturnUrl,
+  getTokenExpiration,
+  getTokenRemainingTime,
+  getUserFromToken,
+  hasAnyRole,
+  hasRolePermission,
+  isTokenExpired,
   // Types
-  type ValidationResult,
-  type Validator,
-  // Email
-  isValidEmail,
-  validateEmail,
-  // Phone
-  isValidPhone,
-  validatePhone,
-  // Password
-  validatePassword,
-  getPasswordStrength,
-  type PasswordRequirements,
-  // URL
-  isValidUrl,
-  validateUrl,
-  // Numbers
-  validateNumber,
-  type NumberRangeOptions,
-  // Strings
-  validateString,
-  validateRequired,
-  type StringLengthOptions,
-  // Dates
-  validateFutureDate,
-  validatePastDate,
-  validateDateRange,
-  // Composite
-  combineValidators,
-  // Specialized
-  isValidPostalCode,
-  isValidCompanyId,
-  isValidVatId,
-  isValidIban,
-} from './validation';
+  type JwtPayload,
+  // Roles
+  ROLES,
+  type Role,
+  // Session
+  setReturnUrl,
+  type TokenPair,
+} from './auth';
 
 // ============================================
 // Error Handling
 // ============================================
 export {
-  // Types
-  type ErrorResponse,
-  type ValidationDetail,
-  type ParsedApiError,
+  DEFAULT_ERROR,
   // Constants
   ERROR_MESSAGES,
-  DEFAULT_ERROR,
-  // Parsing
-  parseApiError,
-  // Type Guards
-  isNetworkError,
-  isErrorResponse,
-  isRetryableError,
+  // Types
+  type ErrorResponse,
+  formatFieldName,
   // Utilities
   formatValidationErrors,
-  formatFieldName,
-  getFieldError,
   getErrorMessage,
+  getFieldError,
+  isErrorResponse,
+  // Type Guards
+  isNetworkError,
+  isRetryableError,
+  type ParsedApiError,
+  // Parsing
+  parseApiError,
+  type ValidationDetail,
 } from './errors';
-
 // ============================================
-// Authentication Utilities
+// Formatting Utilities
 // ============================================
 export {
+  type AddressComponents,
+  type CurrencyFormatOptions,
+  type DateFormatOptions,
+  type DateInput,
+  formatAddress,
+  formatCompactCurrency,
+  formatCompactNumber,
+  // Currency
+  formatCurrency,
+  // Date/Time
+  formatDate,
+  formatDateTime,
+  formatDetailedDate,
+  // File Size
+  formatFileSize,
+  formatISODate,
+  // Numbers
+  formatNumber,
+  formatPercent,
+  // Phone & Address
+  formatPhone,
+  formatRelativeTime,
+  formatTime,
+  // Locale
+  getUserLocale,
+  type NumberFormatOptions,
+} from './formatting';
+// ============================================
+// Validation Utilities
+// ============================================
+export {
+  // Composite
+  combineValidators,
+  getPasswordStrength,
+  isValidCompanyId,
+  // Email
+  isValidEmail,
+  isValidIban,
+  // Phone
+  isValidPhone,
+  // Specialized
+  isValidPostalCode,
+  // URL
+  isValidUrl,
+  isValidVatId,
+  type NumberRangeOptions,
+  type PasswordRequirements,
+  type StringLengthOptions,
   // Types
-  type JwtPayload,
-  type TokenPair,
-  type BasicUserInfo,
-  type Role,
-  // JWT Utilities
-  decodeJwt,
-  isTokenExpired,
-  getTokenExpiration,
-  getTokenRemainingTime,
-  getUserFromToken,
-  // Token Storage
-  createTokenStorage,
-  // Auth Headers
-  createAuthHeader,
-  extractTokenFromHeader,
-  // Roles
-  ROLES,
-  hasRolePermission,
-  hasAnyRole,
-  // Session
-  setReturnUrl,
-  getAndClearReturnUrl,
-} from './auth';
-
-// ============================================
-// Accessibility (existing)
-// ============================================
-export * from './accessibility';
+  type ValidationResult,
+  type Validator,
+  validateDateRange,
+  validateEmail,
+  // Dates
+  validateFutureDate,
+  // Numbers
+  validateNumber,
+  // Password
+  validatePassword,
+  validatePastDate,
+  validatePhone,
+  validateRequired,
+  // Strings
+  validateString,
+  validateUrl,
+} from './validation';
 
 // ============================================
 // Shared Types

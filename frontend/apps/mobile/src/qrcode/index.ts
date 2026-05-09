@@ -3,7 +3,8 @@
  *
  * Epic 49 - Story 49.3: QR Code Scanning
  */
-export * from './QRCodeScanner';
-export * from './QRCodeGenerator';
+
 export * from './DeepLinkHandler';
+export * from './QRCodeGenerator';
+export * from './QRCodeScanner';
 export type * from './types';

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { seedBuildings } from '../seeds/data';
 
 export const buildingsHandlers = [

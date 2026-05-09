@@ -3,7 +3,9 @@
   border: 1px solid;
   padding: var(--ppt-space-4);
   cursor: pointer;
-  transition: box-shadow var(--ppt-transition-normal), opacity var(--ppt-transition-normal);
+  transition:
+    box-shadow var(--ppt-transition-normal),
+    opacity var(--ppt-transition-normal);
   outline: none;
 }
 
@@ -16,7 +18,9 @@
 }
 
 .action-item--selected {
-  box-shadow: 0 0 0 2px var(--ppt-color-primary), var(--ppt-shadow-lg);
+  box-shadow:
+    0 0 0 2px var(--ppt-color-primary),
+    var(--ppt-shadow-lg);
 }
 
 .action-item--highlighted {
@@ -166,8 +170,10 @@
   border: 1px solid transparent;
   cursor: pointer;
   font-family: var(--ppt-font-family);
-  transition: background var(--ppt-transition-fast), color var(--ppt-transition-fast), box-shadow
-    var(--ppt-transition-fast);
+  transition:
+    background var(--ppt-transition-fast),
+    color var(--ppt-transition-fast),
+    box-shadow var(--ppt-transition-fast);
 }
 
 .action-item__btn:focus-visible {

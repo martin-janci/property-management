@@ -1,3 +1,3 @@
-export { LeasesScreen } from './LeasesScreen';
 export { LeaseDetailScreen } from './LeaseDetailScreen';
-export type { Lease, LeaseStatus, LeaseRole } from './LeasesScreen';
+export type { Lease, LeaseRole, LeaseStatus } from './LeasesScreen';
+export { LeasesScreen } from './LeasesScreen';

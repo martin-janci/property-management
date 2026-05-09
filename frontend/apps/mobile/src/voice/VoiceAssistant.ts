@@ -4,8 +4,6 @@
  * Epic 49 - Story 49.2: Voice Assistant Integration
  */
 import { NativeModules, Platform, Vibration } from 'react-native';
-
-import { executeVoiceCommand, parseVoiceCommand } from './VoiceCommands';
 import type {
   AppAction,
   ParsedVoiceCommand,
@@ -15,6 +13,7 @@ import type {
   VoiceAssistantState,
   VoiceRecognitionResult,
 } from './types';
+import { executeVoiceCommand, parseVoiceCommand } from './VoiceCommands';
 
 // Native module interfaces
 interface NativeSpeechRecognition {

@@ -5,9 +5,9 @@
  * Calls reality-server `/api/v1/auth/password-reset` to email a reset link.
  */
 
-import { AuthApiError, requestPasswordReset } from '@/lib/auth-api';
 import Link from 'next/link';
 import { type FormEvent, useState } from 'react';
+import { AuthApiError, requestPasswordReset } from '@/lib/auth-api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

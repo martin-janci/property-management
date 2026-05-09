@@ -236,10 +236,11 @@
   --ppt-space-12: 3rem; /* 48px */
 
   /* ─── Typography ────────────────────────────────────────── */
-  --ppt-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  --ppt-font-family-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono",
-    monospace;
+  --ppt-font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+  --ppt-font-family-mono:
+    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
 
   --ppt-font-size-xs: 0.75rem; /* 12px — badges, captions */
   --ppt-font-size-sm: 0.875rem; /* 14px — dominant body */

@@ -19,7 +19,7 @@ import type { ChatMessage } from '../types';
 import { ChatInput } from './ChatInput';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { SessionList } from './SessionList';
-import { SuggestedQuestions, getDefaultSuggestedQuestions } from './SuggestedQuestions';
+import { getDefaultSuggestedQuestions, SuggestedQuestions } from './SuggestedQuestions';
 
 interface ChatInterfaceProps {
   initialSessionId?: string;

@@ -6,10 +6,10 @@
  * Displays headline performance metrics for the signed-in realtor.
  */
 
+import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
-import { type RealtorAnalytics, RealtorApiError, getMyRealtorAnalytics } from '@/lib/realtor-api';
-import { useEffect, useState } from 'react';
+import { getMyRealtorAnalytics, type RealtorAnalytics, RealtorApiError } from '@/lib/realtor-api';
 
 const PERIODS: ReadonlyArray<{ value: string; label: string }> = [
   { value: '7d', label: 'Last 7 days' },

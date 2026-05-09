@@ -179,13 +179,8 @@ export const createBuildingHooks = (api: BuildingsApi) => ({
   useCreateCommonArea: () => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: ({
-        buildingId,
-        data,
-      }: {
-        buildingId: string;
-        data: CreateCommonAreaRequest;
-      }) => api.createCommonArea(buildingId, data),
+      mutationFn: ({ buildingId, data }: { buildingId: string; data: CreateCommonAreaRequest }) =>
+        api.createCommonArea(buildingId, data),
       onSuccess: (_, { buildingId }) => {
         queryClient.invalidateQueries({ queryKey: buildingKeys.commonAreas(buildingId) });
       },

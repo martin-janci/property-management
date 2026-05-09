@@ -4,8 +4,8 @@
  * Allows users to configure accessibility preferences.
  */
 
-import { COLOR_SCHEME_OPTIONS, TEXT_SIZE_OPTIONS } from '@ppt/shared';
 import type { ColorScheme, TextSize } from '@ppt/shared';
+import { COLOR_SCHEME_OPTIONS, TEXT_SIZE_OPTIONS } from '@ppt/shared';
 import { useAccessibilityContext } from '@ppt/ui-kit';
 import type React from 'react';
 import '../styles/accessibility.css';

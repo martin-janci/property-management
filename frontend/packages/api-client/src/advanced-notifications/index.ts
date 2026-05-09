@@ -8,6 +8,6 @@
  * - Story 40.4: Smart notification grouping
  */
 
-export * from './types';
 export * from './api';
 export * from './hooks';
+export * from './types';

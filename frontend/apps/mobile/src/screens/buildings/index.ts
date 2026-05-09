@@ -1,2 +1,2 @@
-export { BuildingsScreen } from './BuildingsScreen';
 export type { Building } from './BuildingsScreen';
+export { BuildingsScreen } from './BuildingsScreen';

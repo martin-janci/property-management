@@ -6,20 +6,27 @@
 
 // API Client
 export {
+  type ApiClientConfig,
+  type ApiError,
+  type ApiErrorResponse,
   configureApiClient,
   getApiClient,
   getErrorMessage,
   isApiError,
   resetApiClient,
-  type ApiClientConfig,
-  type ApiError,
-  type ApiErrorResponse,
   type TokenGetter,
 } from './api';
-
+// Error Handler (Story 79.3)
+export {
+  type ErrorResponse,
+  formatValidationErrors,
+  getFieldError,
+  type ParsedApiError,
+  parseApiError,
+  type ValidationDetail,
+} from './errorHandler';
 // Query Keys
 export {
-  queryKeys,
   type AnnouncementFilters,
   type DocumentFilters,
   type DocumentSearchFilters,
@@ -30,27 +37,17 @@ export {
   type NeighborFilters,
   type PaginationParams,
   type QueryKeys,
+  queryKeys,
   type VoteFilters,
 } from './queryKeys';
-
 // WebSocket (Story 79.4)
 export {
-  WebSocketService,
-  createWebSocketService,
   type ConnectionState,
   type ConnectionStateHandler,
+  createWebSocketService,
   type MessageHandler,
   type WebSocketEventType,
   type WebSocketMessage,
+  WebSocketService,
   type WebSocketServiceConfig,
 } from './websocket';
-
-// Error Handler (Story 79.3)
-export {
-  parseApiError,
-  formatValidationErrors,
-  getFieldError,
-  type ErrorResponse,
-  type ValidationDetail,
-  type ParsedApiError,
-} from './errorHandler';

@@ -93,7 +93,9 @@
   background-color: var(--ppt-bg-surface);
   border: 1px solid var(--ppt-border-strong);
   border-radius: 6px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .login-input:focus {

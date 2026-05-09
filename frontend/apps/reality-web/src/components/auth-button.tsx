@@ -5,8 +5,8 @@
  * Shows login button when not authenticated, user menu when authenticated.
  */
 
-import { useAuth } from '@/lib/auth-context';
 import { type CSSProperties, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 const styles: Record<string, CSSProperties> = {
   skeleton: {

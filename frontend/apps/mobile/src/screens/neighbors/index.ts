@@ -1,2 +1,2 @@
-export { NeighborsScreen } from './NeighborsScreen';
 export type { Neighbor } from './NeighborsScreen';
+export { NeighborsScreen } from './NeighborsScreen';

@@ -5,10 +5,10 @@
  * Calls reality-server `POST /api/v1/users/register`.
  */
 
-import { AuthApiError, register } from '@/lib/auth-api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState } from 'react';
+import { AuthApiError, register } from '@/lib/auth-api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;

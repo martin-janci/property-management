@@ -8,7 +8,6 @@
  */
 
 import {
-  ROLES,
   createAuthHeader,
   createTokenStorage,
   decodeJwt,
@@ -20,6 +19,7 @@ import {
   hasAnyRole,
   hasRolePermission,
   isTokenExpired,
+  ROLES,
   setReturnUrl,
 } from '@ppt/shared';
 

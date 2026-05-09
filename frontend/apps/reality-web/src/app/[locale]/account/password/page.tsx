@@ -5,11 +5,11 @@
  * Calls reality-server `POST /api/v1/auth/me/password`.
  */
 
+import Link from 'next/link';
+import { type FormEvent, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { AuthApiError, changePassword } from '@/lib/auth-api';
-import Link from 'next/link';
-import { type FormEvent, useState } from 'react';
 
 const MIN_PASSWORD = 8;
 

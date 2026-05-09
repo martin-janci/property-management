@@ -4,12 +4,6 @@
  * Enhanced Data Residency Controls for regional compliance.
  */
 
-// Components
-export {
-  AuditLogCard,
-  ComplianceVerificationCard,
-  DataResidencyConfigCard,
-} from './components';
 export type {
   AuditChange,
   AuditLogEntry,
@@ -20,6 +14,12 @@ export type {
   DataRegionInfo,
   DataResidencyConfig,
   RegionAccessSummary,
+} from './components';
+// Components
+export {
+  AuditLogCard,
+  ComplianceVerificationCard,
+  DataResidencyConfigCard,
 } from './components';
 
 // Pages

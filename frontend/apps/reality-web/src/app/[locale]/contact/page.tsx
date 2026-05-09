@@ -1,7 +1,7 @@
 'use client';
 
-import { Footer, Header } from '@/components/ui';
 import { useTranslations } from 'next-intl';
+import { Footer, Header } from '@/components/ui';
 
 export default function ContactPage() {
   const t = useTranslations('pages.contact');

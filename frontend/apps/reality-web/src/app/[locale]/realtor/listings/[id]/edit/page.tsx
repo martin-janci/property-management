@@ -4,18 +4,18 @@
  * Edit listing page (UC-51.5).
  */
 
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { ListingForm } from '@/components/realtor/ListingForm';
 import { Footer, Header } from '@/components/ui';
 import {
+  getListing,
   type ListingDraft,
   type ListingResponse,
   RealtorApiError,
-  getListing,
   updateListing,
 } from '@/lib/realtor-api';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 function EditListingContent() {
   const params = useParams<{ id: string }>();

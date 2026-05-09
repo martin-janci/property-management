@@ -6,9 +6,9 @@
 
 'use client';
 
-import { CrmConnection, CsvImport, FeedImport } from '@/components/import';
 import Link from 'next/link';
 import { useState } from 'react';
+import { CrmConnection, CsvImport, FeedImport } from '@/components/import';
 
 type ImportTab = 'csv' | 'crm' | 'feed';
 
