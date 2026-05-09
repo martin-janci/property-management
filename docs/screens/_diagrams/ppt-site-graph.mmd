@@ -17,8 +17,15 @@ graph TD
   ppt__report-fault["ppt/report-fault<br/>Report Fault"]
   ppt__upload-document["ppt/upload-document<br/>Upload Document"]
   ppt__voting["ppt/voting<br/>Voting"]
+  ppt__announcements -- "ppt/announcements parent ppt/home" --> ppt__home
   ppt__article-detail -- "ppt/article-detail parent ppt/news" --> ppt__news
+  ppt__dashboard -- "ppt/dashboard child ppt/faults-list" --> ppt__faults-list
+  ppt__dashboard -- "ppt/dashboard child ppt/announcements" --> ppt__announcements
+  ppt__dashboard -- "ppt/dashboard child ppt/report-fault" --> ppt__report-fault
   ppt__dispute-detail -- "ppt/dispute-detail parent ppt/disputes" --> ppt__disputes
   ppt__disputes -- "ppt/disputes child ppt/file-dispute" --> ppt__file-dispute
   ppt__document-detail -- "ppt/document-detail parent ppt/documents" --> ppt__documents
   ppt__documents -- "ppt/documents child ppt/upload-document" --> ppt__upload-document
+  ppt__faults-list -- "ppt/faults-list parent ppt/home" --> ppt__home
+  ppt__faults-list -- "ppt/faults-list sibling ppt/report-fault" --> ppt__report-fault
+  ppt__home -- "ppt/home child ppt/voting" --> ppt__voting

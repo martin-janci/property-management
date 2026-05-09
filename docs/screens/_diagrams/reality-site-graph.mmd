@@ -8,4 +8,13 @@ graph TD
   reality__listings["reality/listings<br/>Listings"]
   reality__oauth-callback["reality/oauth-callback<br/>OAuth Callback"]
   reality__saved-searches["reality/saved-searches<br/>Saved Searches"]
+  reality__agency-dashboard -- "reality/agency-dashboard sibling reality/listings" --> reality__listings
+  reality__compare-properties -- "reality/compare-properties parent reality/favorites" --> reality__favorites
+  reality__compare-properties -- "reality/compare-properties sibling reality/listings" --> reality__listings
+  reality__compare-properties -- "reality/compare-properties sibling reality/listing-detail" --> reality__listing-detail
+  reality__favorites -- "reality/favorites sibling reality/listings" --> reality__listings
+  reality__favorites -- "reality/favorites child reality/listing-detail" --> reality__listing-detail
+  reality__favorites -- "reality/favorites sibling reality/saved-searches" --> reality__saved-searches
+  reality__inquiries -- "reality/inquiries parent reality/listing-detail" --> reality__listing-detail
   reality__listing-detail -- "reality/listing-detail parent reality/listings" --> reality__listings
+  reality__listings -- "reality/listings sibling reality/saved-searches" --> reality__saved-searches
