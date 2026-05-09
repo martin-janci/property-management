@@ -61,7 +61,12 @@ export const ScreenMapFrontmatterSchema = z
     name: z.string().min(1),
     product: ProductSchema,
     sitemapRefs: z.record(PlatformSchema, z.string()).optional(),
-    implementations: z.record(PlatformSchema, ImplementationSchema),
+    implementations: z
+      .record(PlatformSchema, ImplementationSchema)
+      .refine((impls) => Object.keys(impls).length >= 1, {
+        message:
+          'implementations must list at least one platform (use buildStatus/redesignStatus/apiStatus = "n/a" for out-of-scope platforms)',
+      }),
     endpoints: z.array(z.string()).optional(),
     relatedScreens: z.array(RelatedScreenSchema).optional(),
     sharedComponents: z.array(z.string()).optional(),
