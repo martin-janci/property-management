@@ -1,0 +1,60 @@
+name: Screen-Map
+
+on:
+  push:
+    paths:
+      - 'docs/screens/**'
+      - 'frontend/packages/screen-map/**'
+      - 'frontend/packages/sitemap/**'
+      - 'frontend/apps/ppt-web/src/App.tsx'
+      - 'frontend/apps/ppt-web/src/routes/**'
+      - 'frontend/apps/reality-web/src/app/**'
+      - 'frontend/apps/mobile/app/**'
+  pull_request:
+    paths:
+      - 'docs/screens/**'
+      - 'frontend/packages/screen-map/**'
+      - 'frontend/packages/sitemap/**'
+      - 'frontend/apps/ppt-web/src/App.tsx'
+      - 'frontend/apps/ppt-web/src/routes/**'
+      - 'frontend/apps/reality-web/src/app/**'
+      - 'frontend/apps/mobile/app/**'
+
+jobs:
+  validate:
+    name: Validate screen-maps
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Test screen-map package
+        run: cd frontend && pnpm --filter @ppt/screen-map test
+
+      - name: Validate (strict)
+        run: cd frontend && pnpm --filter @ppt/screen-map cli validate --root "${{ github.workspace }}" --strict

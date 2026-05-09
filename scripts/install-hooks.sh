@@ -5,8 +5,9 @@
 # This script installs the pre-commit hook that:
 #   1. Checks Rust formatting (cargo fmt)
 #   2. Checks Kotlin formatting (spotless)
-#   3. Checks TypeScript/JavaScript linting (Biome)
-#   4. Checks TypeScript types
+#   3. Checks TypeScript/JS linting (Biome)
+#   4. Checks TypeScript types (tsc --noEmit)
+#   5. Validates screen-maps (frontmatter + sitemap + relations)
 #
 # Version bumping happens automatically via CI after merge to main.
 #
@@ -52,10 +53,11 @@ echo ""
 echo -e "${CYAN}The following checks are now active:${NC}"
 echo ""
 echo "  Pre-commit hook runs:"
-echo "    1. Rust formatting check     (cargo fmt --check)"
-echo "    2. Kotlin formatting check   (spotless)"
-echo "    3. TypeScript/JS lint        (Biome)"
-echo "    4. TypeScript type checking  (tsc)"
+echo "    1. Rust formatting check        (cargo fmt --check)"
+echo "    2. Kotlin formatting check      (spotless)"
+echo "    3. TypeScript/JS lint           (Biome)"
+echo "    4. TypeScript type check        (tsc --noEmit)"
+echo "    5. Screen-map validation        (frontmatter + sitemap + relations)"
 echo ""
 echo -e "${CYAN}If a check fails, the hook will show:${NC}"
 echo "    - What failed"
