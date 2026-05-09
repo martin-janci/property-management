@@ -750,5 +750,5 @@ fn generate_audit_hash(entry: &AuditLogEntry, previous_hash: Option<&str>) -> St
         hasher.update(prev);
     }
 
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
