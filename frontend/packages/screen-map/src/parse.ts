@@ -26,7 +26,7 @@ export function parseScreenMapString(source: string, filePath: string): ScreenMa
   return {
     filePath,
     frontmatter: result.data,
-    body: parsed.content.replace(/^\n/, ''),
+    body: parsed.content.replace(/^\r?\n/, ''),
   };
 }
 

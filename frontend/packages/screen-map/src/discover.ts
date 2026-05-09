@@ -12,8 +12,11 @@ export async function discoverScreenMaps(rootDir: string): Promise<string[]> {
     let entries: string[];
     try {
       entries = await readdir(dir);
-    } catch {
-      continue;
+    } catch (err) {
+      // Missing product dir is fine (not every repo has both products yet);
+      // any other error (permission, IO, …) should surface, not be swallowed.
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw err;
     }
     for (const entry of entries) {
       if (IGNORED.has(entry)) continue;
