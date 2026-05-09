@@ -10,12 +10,19 @@ import {
 import { discoverScreenMaps } from './discover.js';
 import { extractKnownContexts } from './extract-known.js';
 import { parseScreenMap } from './parse.js';
+import type { ScreenMap } from './types.js';
 import type { ValidationContext } from './validate.js';
 
 export interface BuildContextOptions {
   repoRoot: string;
   /** Defaults to `<repoRoot>/docs/screens`. */
   screensDir?: string;
+  /**
+   * Pre-parsed screens (e.g. produced by the CLI's main pass). When supplied,
+   * `buildValidationContext` skips its own discover+parse to avoid doubling
+   * disk IO + parsing cost on larger trees.
+   */
+  parsedScreens?: ScreenMap[];
 }
 
 /**
@@ -39,14 +46,20 @@ export async function buildValidationContext(
     ...mobileScreens.map((s) => s.id),
   ]);
 
-  const screenFiles = await discoverScreenMaps(screensDir);
   const knownScreenIds = new Set<string>();
-  for (const file of screenFiles) {
-    try {
-      const screen = await parseScreenMap(file);
+  if (options.parsedScreens) {
+    for (const screen of options.parsedScreens) {
       knownScreenIds.add(screen.frontmatter.id);
-    } catch {
-      // ignore here — the CLI itself reports per-file errors below
+    }
+  } else {
+    const screenFiles = await discoverScreenMaps(screensDir);
+    for (const file of screenFiles) {
+      try {
+        const screen = await parseScreenMap(file);
+        knownScreenIds.add(screen.frontmatter.id);
+      } catch {
+        // ignore here — the CLI itself reports per-file errors below
+      }
     }
   }
 
