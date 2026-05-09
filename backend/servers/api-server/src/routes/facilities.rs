@@ -13,8 +13,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::facility::{
-    CreateFacility, CreateFacilityBooking, Facility, FacilityBooking, UpdateFacility,
-    UpdateFacilityBooking,
+    CreateFacility, CreateFacilityBooking, Facility, FacilityBooking, FacilitySummary,
+    UpdateFacility, UpdateFacilityBooking,
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};

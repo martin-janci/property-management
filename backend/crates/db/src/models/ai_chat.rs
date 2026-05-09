@@ -3,6 +3,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Chat session with AI assistant.
@@ -55,7 +56,7 @@ pub mod message_role {
 }
 
 /// Request to create a chat session.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateChatSession {
     pub organization_id: Uuid,
     pub user_id: Uuid,

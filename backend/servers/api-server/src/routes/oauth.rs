@@ -12,8 +12,9 @@ use axum::{
 use base64::Engine;
 use common::errors::ErrorResponse;
 use db::models::{
-    AuditAction, CreateAuditLog, OAuthClientSummary, OAuthError, RegisterClientRequest,
-    RevokeTokenRequest, TokenRequest, UpdateOAuthClient,
+    AuditAction, ConsentPageData, CreateAuditLog, IntrospectionResponse, OAuthClientSummary,
+    OAuthError, RegisterClientRequest, RegisterClientResponse, RevokeTokenRequest, TokenRequest,
+    TokenResponse, UpdateOAuthClient, UserGrantWithClient,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

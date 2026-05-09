@@ -15,7 +15,7 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::models::person_month::{
     person_month_source, BulkPersonMonthEntry, CreatePersonMonth, PersonMonth, PersonMonthWithUnit,
-    UpdatePersonMonth,
+    UpdatePersonMonth, YearlyPersonMonthSummary,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};

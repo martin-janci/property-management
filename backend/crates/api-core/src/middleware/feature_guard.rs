@@ -5,7 +5,6 @@
 //! requesting user's context (user, organization, or role overrides).
 
 use axum::{
-    async_trait,
     body::Body,
     extract::FromRequestParts,
     http::{request::Parts, Request, StatusCode},
@@ -165,7 +164,6 @@ impl FeatureContext {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for FeatureContext
 where
     S: Send + Sync,

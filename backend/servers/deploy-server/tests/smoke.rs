@@ -12,7 +12,7 @@ use common::{setup_app, TestApp};
 #[ignore] // requires docker daemon + ppt-frontend-dev:local image
 async fn open_status_close_flow() {
     let TestApp { app, token, .. } = setup_app(&["staging"]).await;
-    let server = axum_test::TestServer::new(app).unwrap();
+    let server = axum_test::TestServer::new(app);
     let auth = format!("Bearer {token}");
 
     let resp = server
@@ -70,7 +70,7 @@ async fn dedicated_open_close_with_dump() {
     // Marked #[ignore]'d. The intent is to ensure the path compiles + auth works.
 
     let TestApp { app, token, .. } = setup_app(&["staging"]).await;
-    let server = axum_test::TestServer::new(app).unwrap();
+    let server = axum_test::TestServer::new(app);
 
     let resp = server
         .post("/api/worktree")
@@ -89,7 +89,7 @@ async fn dedicated_open_close_with_dump() {
 #[ignore] // requires docker daemon to actually deploy; without it, tests the auth + parse paths.
 async fn promote_and_rollback_flow() {
     let TestApp { app, token, .. } = setup_app(&["prod", "staging"]).await;
-    let server = axum_test::TestServer::new(app).unwrap();
+    let server = axum_test::TestServer::new(app);
     let auth = format!("Bearer {token}");
 
     // 1. Register a prod-candidate

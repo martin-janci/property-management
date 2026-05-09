@@ -351,7 +351,7 @@ pub struct CurrentUsageResponse {
 }
 
 /// Create subscription request wrapper.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSubscriptionRequest {
     pub organization_id: Uuid,
     #[serde(flatten)]
@@ -359,7 +359,7 @@ pub struct CreateSubscriptionRequest {
 }
 
 /// Record usage request wrapper.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RecordUsageRequest {
     pub organization_id: Uuid,
     #[serde(flatten)]

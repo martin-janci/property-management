@@ -1735,6 +1735,7 @@ pub async fn send_esignature_reminder(
 #[utoipa::path(
     post,
     path = "/api/v1/integrations/esignatures/webhook",
+    request_body(content = String, description = "Provider-specific webhook payload"),
     responses(
         (status = 200, description = "Webhook processed"),
         (status = 400, description = "Invalid payload"),

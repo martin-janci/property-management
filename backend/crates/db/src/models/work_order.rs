@@ -37,6 +37,7 @@ pub struct WorkOrder {
     pub schedule_id: Option<Uuid>,
     pub attachments: Vec<Uuid>,
     pub tags: Vec<String>,
+    #[schema(value_type = serde_json::Value)]
     pub metadata: sqlx::types::Json<serde_json::Value>,
     pub created_by: Uuid,
     pub created_at: DateTime<Utc>,
@@ -132,7 +133,9 @@ pub struct MaintenanceSchedule {
     pub estimated_duration_hours: Option<Decimal>,
     pub estimated_cost: Option<Decimal>,
     pub is_active: bool,
+    #[schema(value_type = serde_json::Value)]
     pub checklist: sqlx::types::Json<serde_json::Value>,
+    #[schema(value_type = serde_json::Value)]
     pub metadata: sqlx::types::Json<serde_json::Value>,
     pub created_by: Uuid,
     pub created_at: DateTime<Utc>,

@@ -13,8 +13,8 @@ use axum::{
 };
 use common::errors::ErrorResponse;
 use db::models::{
-    Building, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo, UnitSummary,
-    UnitWithOwners, UpdateBuilding, UpdateUnit,
+    Building, BuildingStatistics, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo,
+    UnitSummary, UnitWithOwners, UpdateBuilding, UpdateUnit,
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
