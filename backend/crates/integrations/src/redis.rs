@@ -691,12 +691,10 @@ impl PubSubService {
         let client = RedisClientInner::open(url.as_str())
             .map_err(|e| CacheError::Connection(format!("Failed to create client: {}", e)))?;
 
-        let connection = client
-            .get_async_connection()
+        let mut pubsub = client
+            .get_async_pubsub()
             .await
             .map_err(|e| CacheError::Connection(format!("Failed to get connection: {}", e)))?;
-
-        let mut pubsub = connection.into_pubsub();
 
         pubsub
             .subscribe(&full_channel)
