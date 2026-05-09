@@ -22,7 +22,7 @@ rand = { workspace = true }
 hex = { workspace = true }
 uuid = { workspace = true }
 # Crypto for API signatures (used by Airbnb/Booking integrations)
-hmac = "0.12"
+hmac = "0.13"
 sha2 = "0.10"
 # Decimal for financial calculations
 rust_decimal = { workspace = true }
