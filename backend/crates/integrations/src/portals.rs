@@ -534,7 +534,7 @@ pub fn parse_webhook(portal_type: PortalType, body: &str) -> Result<ParsedInquir
 /// # Returns
 /// True if the signature is valid.
 pub fn verify_webhook_signature(secret: &str, body: &str, signature: &str) -> bool {
-    use hmac::{Hmac, Mac};
+    use hmac::{Hmac, KeyInit, Mac};
     use sha2::Sha256;
 
     type HmacSha256 = Hmac<Sha256>;
@@ -570,7 +570,7 @@ fn constant_time_compare(a: &str, b: &str) -> bool {
 /// # Returns
 /// Hex-encoded signature.
 pub fn compute_hmac_sha256(secret: &str, body: &str) -> String {
-    use hmac::{Hmac, Mac};
+    use hmac::{Hmac, KeyInit, Mac};
     use sha2::Sha256;
 
     type HmacSha256 = Hmac<Sha256>;

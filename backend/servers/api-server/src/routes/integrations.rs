@@ -25,7 +25,7 @@ use db::models::{
     UpdateWebhookSubscription, VideoConferenceConnection, VideoMeeting, WebhookDeliveryLog,
     WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use integrations::{
     // Epic 83: External Platform Integrations
     AirbnbClient,

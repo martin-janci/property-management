@@ -6,7 +6,7 @@ use crate::{DeployError, Result};
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::Json;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use serde::Deserialize;
 use sha2::Sha256;
 use std::sync::Arc;
