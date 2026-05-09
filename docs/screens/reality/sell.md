@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: SellWizard
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:
     component: MSell
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
 relatedScreens:

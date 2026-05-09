@@ -5,14 +5,14 @@ product: reality
 implementations:
   reality-web:
     component: ReportListingPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile-native:
     component: MReport
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
 relatedScreens:
   - id: reality/listing-detail
     rel: parent

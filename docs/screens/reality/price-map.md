@@ -5,14 +5,14 @@ product: reality
 implementations:
   reality-web:
     component: PriceMapPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile-native:
     component: MPriceMap
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
 relatedScreens:
   - id: reality/home
     rel: parent

@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: ForAgentsPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
   mobile-native:
     component: MAgents
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
 relatedScreens:

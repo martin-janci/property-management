@@ -5,7 +5,7 @@ product: reality
 implementations:
   reality-web:
     component: ListingEditWizard
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:

@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: SecurityPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
   mobile-native:
     component: MLegal[kind=security]
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
 relatedScreens:

@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: CareersPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
   mobile-native:
     component: MCareers
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
 relatedScreens:

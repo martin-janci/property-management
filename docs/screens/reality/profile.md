@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: ProfilePage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:
     component: KmpProfileScreen
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
 relatedScreens:

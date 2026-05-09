@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: CookiesPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
   mobile-native:
     component: MLegal[kind=cookies]
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: n/a
 relatedScreens:

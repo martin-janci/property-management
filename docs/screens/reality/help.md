@@ -5,12 +5,12 @@ product: reality
 implementations:
   reality-web:
     component: HelpPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:
     component: MHelp
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: stub
 relatedScreens:

@@ -5,9 +5,9 @@ product: reality
 implementations:
   reality-web:
     component: AgencyImportWizard
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile-native:
     buildStatus: n/a
     redesignStatus: n/a
