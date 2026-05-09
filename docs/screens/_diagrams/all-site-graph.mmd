@@ -26,6 +26,7 @@ graph TD
   reality__listings["reality/listings<br/>Listings"]
   reality__oauth-callback["reality/oauth-callback<br/>OAuth Callback"]
   reality__saved-searches["reality/saved-searches<br/>Saved Searches"]
+  ppt__accessibility-settings -- "ppt/accessibility-settings sibling ppt/privacy-settings" --> ppt__privacy-settings
   ppt__announcements -- "ppt/announcements parent ppt/home" --> ppt__home
   ppt__article-detail -- "ppt/article-detail parent ppt/news" --> ppt__news
   ppt__dashboard -- "ppt/dashboard child ppt/faults-list" --> ppt__faults-list
@@ -38,6 +39,7 @@ graph TD
   ppt__faults-list -- "ppt/faults-list parent ppt/home" --> ppt__home
   ppt__faults-list -- "ppt/faults-list sibling ppt/report-fault" --> ppt__report-fault
   ppt__home -- "ppt/home child ppt/voting" --> ppt__voting
+  ppt__login -- "ppt/login child ppt/home" --> ppt__home
   reality__agency-dashboard -- "reality/agency-dashboard sibling reality/listings" --> reality__listings
   reality__compare-properties -- "reality/compare-properties parent reality/favorites" --> reality__favorites
   reality__compare-properties -- "reality/compare-properties sibling reality/listings" --> reality__listings
