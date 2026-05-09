@@ -191,6 +191,31 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::imports::get_feed,
         routes::imports::update_feed,
         routes::imports::sync_feed,
+        // Compare (UC-48)
+        routes::compare::get_compare_list,
+        routes::compare::add_to_compare,
+        routes::compare::remove_from_compare,
+        // Reports (UC-23)
+        routes::reports::submit_report,
+        routes::reports::list_my_reports,
+        // Agent reviews (UC-49, UC-51)
+        routes::agent_reviews::list_reviews,
+        routes::agent_reviews::create_review,
+        // Agency branding (UC-49)
+        routes::agency_branding::get_branding,
+        routes::agency_branding::update_branding,
+        // Agency imports (UC-50)
+        routes::agency_imports::list_import_history,
+        routes::agency_imports::test_connection,
+        routes::agency_imports::run_import,
+        routes::agency_imports::get_import_job_status,
+        // Price map (UC-31)
+        routes::price_map::get_price_map,
+        // Articles / Journal (UC-13)
+        routes::articles::list_articles,
+        routes::articles::get_article,
+        routes::articles::list_comments,
+        routes::articles::create_comment,
     ),
     components(schemas(
         routes::health::HealthResponse,
@@ -255,6 +280,48 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         CreateFeedSubscription,
         UpdateFeedSubscription,
         RealityFeedSubscription,
+        // Compare (UC-48)
+        routes::compare::CompareEntry,
+        routes::compare::CompareListResponse,
+        routes::compare::AddCompareResponse,
+        // Reports (UC-23)
+        routes::reports::SubmitReportRequest,
+        routes::reports::ListingReport,
+        routes::reports::SubmitReportResponse,
+        routes::reports::MyReportsResponse,
+        routes::reports::ProblemType,
+        // Agent reviews (UC-49, UC-51)
+        routes::agent_reviews::RealtorReview,
+        routes::agent_reviews::CreateReviewRequest,
+        routes::agent_reviews::ReviewsResponse,
+        // Agency branding (UC-49)
+        routes::agency_branding::AgencyBranding,
+        routes::agency_branding::UpdateBrandingRequest,
+        routes::agency_branding::BrandingResponse,
+        routes::agency_branding::WatermarkPosition,
+        routes::agency_branding::WatermarkStyle,
+        // Agency imports (UC-50)
+        routes::agency_imports::ImportJobSummary,
+        routes::agency_imports::ImportHistoryResponse,
+        routes::agency_imports::TestConnectionRequest,
+        routes::agency_imports::TestConnectionResponse,
+        routes::agency_imports::RunImportRequest,
+        routes::agency_imports::RunImportResponse,
+        routes::agency_imports::ImportJobDetail,
+        routes::agency_imports::ImportJobDetailResponse,
+        routes::agency_imports::ImportProvider,
+        // Price map (UC-31)
+        routes::price_map::DistrictPriceData,
+        routes::price_map::PriceMapResponse,
+        // Articles / Journal (UC-13)
+        routes::articles::ArticleSummary,
+        routes::articles::ArticleDetail,
+        routes::articles::RelatedArticle,
+        routes::articles::ArticlesListResponse,
+        routes::articles::ArticleDetailResponse,
+        routes::articles::ArticleComment,
+        routes::articles::CommentsResponse,
+        routes::articles::CreateCommentRequest,
     )),
     tags(
         (name = "Health", description = "Health check endpoints"),
@@ -266,7 +333,14 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (name = "Inquiries", description = "Contact and viewing requests"),
         (name = "Agencies", description = "Real estate agency management (Epic 32)"),
         (name = "Realtors", description = "Realtor profiles and tools (Epic 33)"),
-        (name = "Imports", description = "Property import and feed management (Epic 34)")
+        (name = "Imports", description = "Property import and feed management (Epic 34)"),
+        (name = "compare", description = "Compare up to 4 listings side-by-side (UC-48)"),
+        (name = "reports", description = "Report problematic listings (UC-23)"),
+        (name = "agent_reviews", description = "Realtor reviews and ratings (UC-49, UC-51)"),
+        (name = "agency_branding", description = "Agency branding settings (UC-49)"),
+        (name = "agency_import", description = "Per-agency import management (UC-50)"),
+        (name = "price_map", description = "District price aggregations (UC-31)"),
+        (name = "articles", description = "Journal and news articles (UC-13)")
     )
 )]
 struct ApiDoc;
@@ -345,6 +419,20 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/realtors", routes::realtors::router())
         // Import routes (Epic 34)
         .nest("/api/v1/imports", routes::imports::router())
+        // Compare routes (UC-48)
+        .nest("/api/v1/compare", routes::compare::router())
+        // Reports routes (UC-23)
+        .nest("/api/v1/reports", routes::reports::router())
+        // Agent reviews — nested under realtors (UC-49, UC-51)
+        .nest("/api/v1/realtors/:id/reviews", routes::agent_reviews::router())
+        // Agency branding (UC-49)
+        .nest("/api/v1/agencies", routes::agency_branding::router())
+        // Agency imports (UC-50)
+        .nest("/api/v1/agencies/:id/imports", routes::agency_imports::router())
+        // Price map aggregations (UC-31)
+        .nest("/api/v1/price-map", routes::price_map::router())
+        // Journal / News articles (UC-13)
+        .nest("/api/v1/articles", routes::articles::router())
         // Swagger UI
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Add state
