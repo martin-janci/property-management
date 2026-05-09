@@ -362,7 +362,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/submissions", get(list_submissions))
         .route("/{id}/submissions/{submission_id}", get(get_submission))
         .route(
-            "/:id/submissions/:submission_id/review",
+            "/{id}/submissions/{submission_id}/review",
             post(review_submission),
         )
         // Download tracking

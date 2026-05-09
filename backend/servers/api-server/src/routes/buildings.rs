@@ -59,15 +59,15 @@ pub fn router() -> Router<AppState> {
             get(list_unit_owners),
         )
         .route(
-            "/:building_id/units/:unit_id/owners",
+            "/{building_id}/units/{unit_id}/owners",
             post(assign_unit_owner),
         )
         .route(
-            "/:building_id/units/:unit_id/owners/:user_id",
+            "/{building_id}/units/{unit_id}/owners/{user_id}",
             put(update_unit_owner),
         )
         .route(
-            "/:building_id/units/:unit_id/owners/:user_id",
+            "/{building_id}/units/{unit_id}/owners/{user_id}",
             delete(remove_unit_owner),
         )
         // Unit residents (Epic 3, Story 3.3)

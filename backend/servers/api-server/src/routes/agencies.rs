@@ -28,18 +28,18 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/members/{user_id}/role", put(update_member_role))
         .route("/{id}/members/{user_id}", delete(remove_member))
         .route(
-            "/:id/members/:user_id/reassign/:to_user_id",
+            "/{id}/members/{user_id}/reassign/{to_user_id}",
             post(reassign_listings),
         )
         // Invitations
         .route("/invitations/accept", post(accept_invitation))
         // Listings
         .route(
-            "/:id/listings/:listing_id/visibility",
+            "/{id}/listings/{listing_id}/visibility",
             put(update_visibility),
         )
         .route(
-            "/:id/listings/:listing_id/history",
+            "/{id}/listings/{listing_id}/history",
             get(get_listing_history),
         )
         // Import

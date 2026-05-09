@@ -266,7 +266,7 @@ pub fn router() -> Router<AppState> {
         // Article CRUD
         .route("/", get(list_articles).post(create_article))
         .route(
-            "/:id",
+            "/{id}",
             get(get_article).put(update_article).delete(delete_article),
         )
         .route("/{id}/publish", post(publish_article))
@@ -282,7 +282,7 @@ pub fn router() -> Router<AppState> {
         // Comments (Story 59.3)
         .route("/{id}/comments", get(list_comments).post(create_comment))
         .route(
-            "/:id/comments/:comment_id",
+            "/{id}/comments/{comment_id}",
             put(update_comment).delete(delete_comment),
         )
         .route(
@@ -290,7 +290,7 @@ pub fn router() -> Router<AppState> {
             post(moderate_comment),
         )
         .route(
-            "/:id/comments/:comment_id/replies",
+            "/{id}/comments/{comment_id}/replies",
             get(list_comment_replies),
         )
         // Analytics

@@ -33,13 +33,13 @@ pub fn router() -> Router<AppState> {
         .route("/{fund_id}/health", get(get_fund_health))
         // Contribution schedules
         .route(
-            "/:fund_id/schedules",
+            "/{fund_id}/schedules",
             get(list_schedules).post(create_schedule),
         )
         .route("/{fund_id}/schedules/{schedule_id}", put(update_schedule))
         // Transactions
         .route(
-            "/:fund_id/transactions",
+            "/{fund_id}/transactions",
             get(list_transactions).post(record_transaction),
         )
         .route("/transfers", post(transfer_funds))
@@ -56,12 +56,12 @@ pub fn router() -> Router<AppState> {
             get(get_current_projection),
         )
         .route(
-            "/:fund_id/projections/:projection_id/items",
+            "/{fund_id}/projections/{projection_id}/items",
             get(get_projection_items).post(add_projection_items),
         )
         // Components
         .route(
-            "/:fund_id/components",
+            "/{fund_id}/components",
             get(list_components).post(create_component),
         )
         .route(

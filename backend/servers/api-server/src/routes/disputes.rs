@@ -54,7 +54,7 @@ pub fn router() -> Router<AppState> {
             get(get_attendance),
         )
         .route(
-            "/:id/sessions/:session_id/attendance/:party_id",
+            "/{id}/sessions/{session_id}/attendance/{party_id}",
             patch(update_attendance),
         )
         .route("/{id}/sessions/{session_id}/notes", post(record_notes))
@@ -66,15 +66,15 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/resolutions", post(propose_resolution))
         .route("/{id}/resolutions/{resolution_id}", get(get_resolution))
         .route(
-            "/:id/resolutions/:resolution_id/vote",
+            "/{id}/resolutions/{resolution_id}/vote",
             post(vote_on_resolution),
         )
         .route(
-            "/:id/resolutions/:resolution_id/accept",
+            "/{id}/resolutions/{resolution_id}/accept",
             post(accept_resolution),
         )
         .route(
-            "/:id/resolutions/:resolution_id/implement",
+            "/{id}/resolutions/{resolution_id}/implement",
             post(implement_resolution),
         )
         // Enforcement (Story 77.4)
@@ -83,7 +83,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/actions/{action_id}", get(get_action_item))
         .route("/{id}/actions/{action_id}", patch(update_action_item))
         .route(
-            "/:id/actions/:action_id/complete",
+            "/{id}/actions/{action_id}/complete",
             post(complete_action_item),
         )
         .route(
@@ -93,7 +93,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/escalations", get(list_escalations))
         .route("/{id}/escalations", post(create_escalation))
         .route(
-            "/:id/escalations/:escalation_id/resolve",
+            "/{id}/escalations/{escalation_id}/resolve",
             post(resolve_escalation),
         )
         .route("/my-actions", get(get_my_actions))

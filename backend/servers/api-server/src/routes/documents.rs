@@ -405,11 +405,11 @@ pub fn router() -> Router<AppState> {
         // Story 28.3: Auto-classification
         .route("/{id}/classification", get(get_classification))
         .route(
-            "/:id/classification/feedback",
+            "/{id}/classification/feedback",
             post(submit_classification_feedback),
         )
         .route(
-            "/:id/classification/history",
+            "/{id}/classification/history",
             get(get_classification_history),
         )
         // Story 28.4: Summarization

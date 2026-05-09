@@ -47,7 +47,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/syndications", get(get_syndications))
         // Epic 105: Per-listing syndication status
         .route(
-            "/:id/syndication/status",
+            "/{id}/syndication/status",
             get(get_listing_syndication_status),
         )
 }
