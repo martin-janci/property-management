@@ -1,0 +1,66 @@
+/**
+ * StatusPill styles — generic colored pill with optional dot.
+ * Used for all 8 state-machine status badges.
+ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption, 0.75rem);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ─── Dot ──────────────────────────────────────────────────── */
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-circle);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ─── Variants ─────────────────────────────────────────────── */
+
+.success {
+  background: var(--success-100);
+  color: var(--success-800);
+}
+
+.warning {
+  background: var(--warning-100);
+  color: var(--warning-800);
+}
+
+.danger {
+  background: var(--danger-100);
+  color: var(--danger-800);
+}
+
+.info {
+  background: var(--brand-100);
+  color: var(--brand-800);
+}
+
+/* event = violet */
+.event {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.neutral {
+  background: var(--bg-subtle);
+  color: var(--fg-secondary);
+}
+
+.brand {
+  background: var(--accent-soft-bg);
+  color: var(--accent);
+}

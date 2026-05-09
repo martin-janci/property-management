@@ -1,0 +1,178 @@
+/**
+ * ListingCard styles — reference: reality-web/listings.html .lcard
+ */
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ─── Photo ──────────────────────────────────────────────── */
+
+.photo {
+  aspect-ratio: 4 / 3;
+  position: relative;
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  overflow: hidden;
+}
+
+.photoImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Badges ─────────────────────────────────────────────── */
+
+.badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.badge {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.badgeFeatured {
+  background: var(--featured-500);
+  color: var(--featured-ink);
+}
+
+.badgeSale {
+  background: var(--success-500);
+  color: #ffffff;
+}
+
+.badgeRent {
+  background: var(--brand-500);
+  color: #ffffff;
+}
+
+/* ─── Favourite button ───────────────────────────────────── */
+
+.fav {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  color: var(--fg-secondary);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard);
+  padding: 0;
+}
+
+.fav:hover {
+  color: var(--danger-500);
+}
+
+.fav:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.favActive {
+  color: var(--danger-500);
+}
+
+/* ─── Body ───────────────────────────────────────────────── */
+
+.body {
+  padding: 10px 12px 12px;
+}
+
+.price {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--fg-primary);
+  letter-spacing: -0.01em;
+}
+
+.pricePerSqm {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  margin-left: 2px;
+}
+
+.address {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+.title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-primary);
+  margin-top: 5px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 10.5px;
+  color: var(--fg-muted);
+  align-items: center;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+  .fav {
+    transition: none;
+  }
+}

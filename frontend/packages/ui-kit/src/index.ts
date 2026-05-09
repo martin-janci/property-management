@@ -3,12 +3,17 @@
  *
  * Shared components for ppt-web, reality-web, and mobile applications.
  * Import the tokens.css file in your app's entry point to enable CSS custom properties.
+ *
+ * CSS token files:
+ *   import '@ppt/ui-kit/src/tokens.css';          — legacy (existing)
+ *   import '@ppt/ui-kit/src/tokens/tokens.css';   — design-system tokens (new)
  */
 
 // ============================================
 // CSS Tokens (import in app entry point)
 // ============================================
 // import '@ppt/ui-kit/src/tokens.css';
+// import '@ppt/ui-kit/src/tokens/tokens.css';
 
 // ============================================
 // Version
@@ -63,7 +68,76 @@ export type {
 export { Table } from './Table';
 
 // ============================================
-// Design Tokens (JavaScript)
+// Design Tokens — new structured tokens (from tokens/ directory)
+// ============================================
+
+export type { Tokens } from './tokens/tokens';
+export {
+  accent,
+  bg,
+  border,
+  brand,
+  danger,
+  duration,
+  easing,
+  featured,
+  fg,
+  fontSize as tokenFontSize,
+  fontWeight as tokenFontWeight,
+  radius,
+  shadow,
+  success,
+  tokens,
+  warning,
+} from './tokens/tokens';
+export { pptPreset, tailwindPreset } from './tokens';
+
+// ============================================
+// New shared components
+// ============================================
+
+// ListingCard
+export type { ListingCardListing, ListingCardProps } from './components/ListingCard';
+export { ListingCard } from './components/ListingCard';
+
+// HeroSearch
+export type { HeroSearchProps, HeroSearchTab, HeroSearchTab_Config, HeroSearchValues } from './components/HeroSearch';
+export { HeroSearch } from './components/HeroSearch';
+
+// StatusPill
+export type { StatusPillProps, StatusPillVariant } from './components/StatusPill';
+export { StatusPill } from './components/StatusPill';
+
+// FilterSidebar
+export type { FilterGroup, FilterItem, FilterSidebarProps } from './components/FilterSidebar';
+export { FilterSidebar } from './components/FilterSidebar';
+
+// ChipGroup
+export type { Chip, ChipGroupMode, ChipGroupProps } from './components/ChipGroup';
+export { ChipGroup } from './components/ChipGroup';
+
+// SegmentedControl
+export type { SegmentedControlProps, SegmentOption } from './components/SegmentedControl';
+export { SegmentedControl } from './components/SegmentedControl';
+
+// RadioCards
+export type { RadioCardOption, RadioCardsProps } from './components/RadioCards';
+export { RadioCards } from './components/RadioCards';
+
+// FileUpload
+export type { FileStatus, FileUploadProps, UploadFile } from './components/FileUpload';
+export { FileUpload } from './components/FileUpload';
+
+// ModalDrawer
+export type { ModalDrawerMode, ModalDrawerProps } from './components/ModalDrawer';
+export { ModalDrawer } from './components/ModalDrawer';
+
+// Stepper
+export type { StepperProps } from './components/Stepper';
+export { Stepper } from './components/Stepper';
+
+// ============================================
+// Design Tokens (JavaScript) — legacy flat export
 // ============================================
 
 /**
