@@ -1,0 +1,30 @@
+{
+  "name": "@ppt/vite-plugin-worktree",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./detect": {
+      "require": "./detect.cjs",
+      "default": "./detect.cjs"
+    }
+  },
+  "peerDependencies": {
+    "vite": "^5.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}

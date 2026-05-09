@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ppt-deploy dashboard</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+  th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; font-size: 13px; }
+  th { background: #f4f4f4; }
+  h2 { margin-top: 2rem; }
+  code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <h1>ppt-deploy</h1>
+  <p><small id="lastrefresh"></small></p>
+
+  <h2>Worktrees</h2>
+  <table id="worktrees"><thead><tr>
+    <th>Name</th><th>Branch</th><th>State</th><th>Backend</th><th>URLs</th><th>Created</th>
+  </tr></thead><tbody></tbody></table>
+
+  <h2>Audit log (last 100)</h2>
+  <table id="audit"><thead><tr>
+    <th>Time</th><th>Caller</th><th>Endpoint</th><th>Result</th><th>Duration</th>
+  </tr></thead><tbody></tbody></table>
+
+  <script src="app.js"></script>
+</body>
+</html>

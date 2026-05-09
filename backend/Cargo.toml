@@ -7,6 +7,7 @@ members = [
     "crates/integrations",
     "servers/api-server",
     "servers/reality-server",
+    "servers/deploy-server",
 ]
 
 [workspace.package]
@@ -38,7 +39,7 @@ utoipa-swagger-ui = { version = "6.0", features = ["axum"] }
 validator = { version = "0.16", features = ["derive"] }
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
 rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
 
@@ -104,3 +105,17 @@ common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
+
+# Phase 1: deploy-server
+bollard = "0.16"
+listenfd = "1.0"
+tokio-util = { version = "0.7", features = ["io"] }
+futures-util = "0.3"
+async-trait = "0.1"
+tempfile = "3.10"
+which = "6.0"
+
+[profile.release]
+strip = "symbols"
+lto = "thin"
+codegen-units = 1

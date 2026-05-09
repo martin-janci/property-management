@@ -315,7 +315,7 @@ export function ListingFilters({
 
       <style jsx>{`
         .filters {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 20px;
           height: fit-content;
@@ -327,7 +327,7 @@ export function ListingFilters({
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 100;
+          z-index: var(--ppt-z-modal);
           border-radius: 0;
           overflow-y: auto;
           padding-bottom: 80px;
@@ -339,13 +339,13 @@ export function ListingFilters({
           align-items: center;
           margin-bottom: 20px;
           padding-bottom: 12px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .filters-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
@@ -358,7 +358,7 @@ export function ListingFilters({
         .clear-button {
           padding: 4px 8px;
           font-size: 13px;
-          color: #2563eb;
+          color: var(--ppt-color-primary);
           background: transparent;
           border: none;
           cursor: pointer;
@@ -373,11 +373,11 @@ export function ListingFilters({
           background: transparent;
           border: none;
           cursor: pointer;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .filter-section {
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-border-default);
           padding-bottom: 16px;
           margin-bottom: 16px;
         }
@@ -398,7 +398,7 @@ export function ListingFilters({
           cursor: pointer;
           font-size: 14px;
           font-weight: 600;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           margin-bottom: 12px;
         }
 
@@ -422,7 +422,7 @@ export function ListingFilters({
           align-items: center;
           gap: 8px;
           font-size: 14px;
-          color: #4b5563;
+          color: var(--ppt-neutral-600);
           cursor: pointer;
         }
 
@@ -430,7 +430,7 @@ export function ListingFilters({
         .radio {
           width: 16px;
           height: 16px;
-          accent-color: #2563eb;
+          accent-color: var(--ppt-color-primary);
         }
 
         .rooms-grid {
@@ -441,23 +441,23 @@ export function ListingFilters({
 
         .room-button {
           padding: 8px;
-          border: 1px solid #e5e7eb;
-          background: #fff;
+          border: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-surface);
           border-radius: 6px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .room-button:hover {
-          border-color: #2563eb;
+          border-color: var(--ppt-color-primary);
         }
 
         .room-button.active {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          border-color: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
         }
 
         .mobile-footer {
@@ -466,15 +466,15 @@ export function ListingFilters({
           left: 0;
           right: 0;
           padding: 16px;
-          background: #fff;
-          border-top: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         .apply-button {
           width: 100%;
           padding: 12px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 16px;
@@ -483,7 +483,7 @@ export function ListingFilters({
         }
 
         .apply-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
       `}</style>
     </aside>

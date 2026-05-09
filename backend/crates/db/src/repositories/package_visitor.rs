@@ -10,7 +10,6 @@ use crate::models::{
     UpdateVisitor, Visitor, VisitorQuery, VisitorStatistics, VisitorSummary, VisitorWithDetails,
 };
 use chrono::{DateTime, Duration, Utc};
-use rand::Rng;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -336,9 +335,12 @@ impl PackageVisitorRepository {
     // ========================================================================
 
     /// Generates a random access code.
+    ///
+    /// Uses OS CSPRNG directly; visitor codes are short-lived shared secrets.
     fn generate_access_code(length: usize) -> String {
+        use rand::Rng;
         const CHARS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rngs::OsRng;
         (0..length)
             .map(|_| {
                 let idx = rng.gen_range(0..CHARS.len());

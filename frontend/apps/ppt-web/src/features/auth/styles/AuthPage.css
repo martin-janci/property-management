@@ -1,0 +1,216 @@
+/**
+ * Shared styles for auth feature pages (Epic 79: UC-14 Auth flow).
+ * Mirrors the LoginPage design language.
+ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--ppt-bg-app);
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--ppt-bg-surface);
+  border-radius: 8px;
+  box-shadow: var(--ppt-shadow-md);
+  padding: 2rem;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ppt-fg-primary);
+  margin: 0 0 0.5rem;
+}
+
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--ppt-fg-muted);
+  margin: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-error-banner,
+.auth-success-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.auth-error-banner {
+  background-color: var(--ppt-color-danger-light);
+  border: 1px solid var(--ppt-color-danger);
+  color: var(--ppt-color-danger-hover);
+}
+
+.auth-success-banner {
+  background-color: var(--ppt-color-success-light);
+  border: 1px solid var(--ppt-color-success);
+  color: var(--ppt-color-success-dark);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.auth-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.auth-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ppt-fg-secondary);
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ppt-fg-primary);
+  background-color: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: 6px;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.auth-input:focus-visible {
+  outline: none;
+  border-color: var(--ppt-border-focus);
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.auth-input:disabled {
+  background-color: var(--ppt-bg-subtle);
+  cursor: not-allowed;
+}
+
+.auth-input--error {
+  border-color: var(--ppt-color-danger);
+}
+
+.auth-input--error:focus-visible {
+  border-color: var(--ppt-color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.auth-field-error {
+  font-size: 0.75rem;
+  color: var(--ppt-color-danger);
+}
+
+.auth-help {
+  font-size: 0.75rem;
+  color: var(--ppt-fg-muted);
+}
+
+.auth-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ppt-fg-on-accent);
+  background-color: var(--ppt-color-primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+  margin-top: 0.5rem;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background-color: var(--ppt-color-primary-hover);
+}
+
+.auth-submit:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+}
+
+.auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-secondary {
+  background-color: transparent;
+  color: var(--ppt-color-primary);
+  border: 1px solid var(--ppt-color-primary);
+}
+
+.auth-secondary:hover:not(:disabled) {
+  background-color: var(--ppt-color-primary-soft-bg);
+}
+
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--ppt-neutral-600);
+}
+
+.auth-link {
+  color: var(--ppt-color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--ppt-fg-on-accent);
+  border-radius: 50%;
+  animation: auth-spin 0.8s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 1.5rem;
+  }
+  .auth-field-row {
+    grid-template-columns: 1fr;
+  }
+}

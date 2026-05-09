@@ -238,7 +238,7 @@ private struct FavoriteListingCard: View {
 
                 Button(action: onRemove) {
                     Image(systemName: "heart.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.pptDanger)
                 }
             }
             .padding()

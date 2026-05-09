@@ -1,3 +1,3 @@
-export { NewsArticleCard } from './NewsArticleCard';
-export { ArticleReactions } from './ArticleReactions';
 export { ArticleComments } from './ArticleComments';
+export { ArticleReactions } from './ArticleReactions';
+export { NewsArticleCard } from './NewsArticleCard';

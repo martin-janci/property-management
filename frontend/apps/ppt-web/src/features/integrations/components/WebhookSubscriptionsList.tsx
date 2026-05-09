@@ -210,13 +210,7 @@ export function WebhookSubscriptionsList({
   );
 }
 
-function WebhookStatsDialog({
-  webhookId,
-  onClose,
-}: {
-  webhookId: string;
-  onClose: () => void;
-}) {
+function WebhookStatsDialog({ webhookId, onClose }: { webhookId: string; onClose: () => void }) {
   const { data: stats, isLoading } = useWebhookStatistics(webhookId);
 
   return (

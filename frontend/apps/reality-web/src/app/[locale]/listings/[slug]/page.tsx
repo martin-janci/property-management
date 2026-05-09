@@ -4,9 +4,9 @@
  * Property detail page with SSR (Epic 44, Story 44.3).
  */
 
-import { ListingDetailContent, ListingNotFound } from '@/components/listings';
 import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
+import { ListingDetailContent, ListingNotFound } from '@/components/listings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 

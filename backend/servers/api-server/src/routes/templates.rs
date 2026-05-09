@@ -1,7 +1,7 @@
 //! Document template routes (Epic 7B: Story 7B.2 - Document Templates & Generation).
 
 use crate::state::AppState;
-use api_core::{AuthUser, TenantExtractor};
+use api_core::{AuthUser, RlsConnection, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -102,10 +102,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_template))
         .route("/", get(list_templates))
-        .route("/{id}", get(get_template))
-        .route("/{id}", put(update_template))
-        .route("/{id}", delete(delete_template))
-        .route("/{id}/generate", post(generate_document))
+        .route("/:id", get(get_template))
+        .route("/:id", put(update_template))
+        .route("/:id", delete(delete_template))
+        .route("/:id/generate", post(generate_document))
 }
 
 // ============================================================================
@@ -560,6 +560,7 @@ async fn generate_document(
     State(state): State<AppState>,
     auth: AuthUser,
     tenant: TenantExtractor,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<GenerateDocumentRequest>,
 ) -> Result<(StatusCode, Json<GenerateDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
@@ -570,13 +571,15 @@ async fn generate_document(
     let template = match state.document_template_repo.find_by_id(id).await {
         Ok(Some(t)) => t,
         Ok(None) => {
+            rls.release().await;
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Template not found")),
-            ))
+            ));
         }
         Err(e) => {
             tracing::error!("Failed to find template: {}", e);
+            rls.release().await;
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -589,6 +592,7 @@ async fn generate_document(
 
     // Validate required placeholders
     if let Err(missing) = template.validate_values(&req.values) {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -603,6 +607,7 @@ async fn generate_document(
 
     // Validate category
     if !document_category::ALL.contains(&req.category.as_str()) {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new("BAD_REQUEST", "Invalid category")),
@@ -636,14 +641,13 @@ async fn generate_document(
         created_by: user_id,
     };
 
-    // TODO: Migrate to create_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let create_result = state.document_repo.create(create_doc).await;
+    let create_result = state
+        .document_repo
+        .create_rls(&mut **rls.conn(), create_doc)
+        .await;
     match create_result {
         Ok(document) => {
-            // Update document with template reference
-            // Note: This would need a separate update or the create should accept template_id
-            // For now, we'll just return the document ID
+            rls.release().await;
             Ok((
                 StatusCode::CREATED,
                 Json(GenerateDocumentResponse {
@@ -654,6 +658,7 @@ async fn generate_document(
         }
         Err(e) => {
             tracing::error!("Failed to create generated document: {}", e);
+            rls.release().await;
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(

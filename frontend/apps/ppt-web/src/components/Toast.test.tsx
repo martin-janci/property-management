@@ -18,7 +18,11 @@ function TestToastTrigger({
   type,
   title,
   message,
-}: { type: 'success' | 'error' | 'info' | 'warning'; title: string; message?: string }) {
+}: {
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message?: string;
+}) {
   const { showToast } = useToast();
   return (
     <button type="button" onClick={() => showToast({ type, title, message })}>

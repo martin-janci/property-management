@@ -152,13 +152,8 @@ export function useDeleteEvidence(disputeId: string) {
 export function useAssignMediator() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      disputeId,
-      data,
-    }: {
-      disputeId: string;
-      data: AssignMediatorRequest;
-    }) => api.assignMediator(disputeId, data),
+    mutationFn: ({ disputeId, data }: { disputeId: string; data: AssignMediatorRequest }) =>
+      api.assignMediator(disputeId, data),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: disputeKeys.detail(disputeId),
@@ -176,13 +171,8 @@ export function useAssignMediator() {
 export function useUpdateDisputeStatus(organizationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      disputeId,
-      data,
-    }: {
-      disputeId: string;
-      data: UpdateDisputeStatusRequest;
-    }) => api.updateDisputeStatus(disputeId, data),
+    mutationFn: ({ disputeId, data }: { disputeId: string; data: UpdateDisputeStatusRequest }) =>
+      api.updateDisputeStatus(disputeId, data),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: disputeKeys.detail(disputeId),
@@ -203,13 +193,8 @@ export function useUpdateDisputeStatus(organizationId: string) {
 export function useResolveDispute(organizationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      disputeId,
-      data,
-    }: {
-      disputeId: string;
-      data: ResolveDisputeRequest;
-    }) => api.resolveDispute(disputeId, data),
+    mutationFn: ({ disputeId, data }: { disputeId: string; data: ResolveDisputeRequest }) =>
+      api.resolveDispute(disputeId, data),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: disputeKeys.detail(disputeId),
@@ -230,13 +215,8 @@ export function useResolveDispute(organizationId: string) {
 export function useEscalateDispute(organizationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      disputeId,
-      data,
-    }: {
-      disputeId: string;
-      data: EscalateDisputeRequest;
-    }) => api.escalateDispute(disputeId, data),
+    mutationFn: ({ disputeId, data }: { disputeId: string; data: EscalateDisputeRequest }) =>
+      api.escalateDispute(disputeId, data),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: disputeKeys.detail(disputeId),

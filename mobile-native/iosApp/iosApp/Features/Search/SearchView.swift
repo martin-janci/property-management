@@ -507,7 +507,7 @@ private struct FilterSheet: View {
                     Button(String(localized: "reset_filters")) {
                         filters.reset()
                     }
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.pptDanger)
                 }
             }
             .navigationTitle(String(localized: "filters"))

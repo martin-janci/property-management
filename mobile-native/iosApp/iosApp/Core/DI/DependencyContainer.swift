@@ -44,6 +44,24 @@ final class DependencyContainer {
         )
     }()
 
+    /// Agency directory repository.
+    lazy var agencyRepository: AgencyRepository = {
+        AgencyRepository(
+            baseUrl: configuration.apiBaseUrl,
+            sessionToken: nil,
+            client: HttpClientProvider.shared.client
+        )
+    }()
+
+    /// Realtor directory repository.
+    lazy var realtorRepository: RealtorRepository = {
+        RealtorRepository(
+            baseUrl: configuration.apiBaseUrl,
+            sessionToken: nil,
+            client: HttpClientProvider.shared.client
+        )
+    }()
+
     /// SSO service for authentication.
     lazy var ssoService: SsoService = {
         SsoService()
@@ -97,6 +115,24 @@ final class DependencyContainer {
     /// Create an authenticated inquiry repository with the given session token.
     func makeAuthenticatedInquiryRepository(sessionToken: String?) -> InquiryRepository {
         InquiryRepository(
+            baseUrl: configuration.apiBaseUrl,
+            sessionToken: sessionToken,
+            client: HttpClientProvider.shared.client
+        )
+    }
+
+    /// Create an authenticated agency repository with the given session token.
+    func makeAuthenticatedAgencyRepository(sessionToken: String?) -> AgencyRepository {
+        AgencyRepository(
+            baseUrl: configuration.apiBaseUrl,
+            sessionToken: sessionToken,
+            client: HttpClientProvider.shared.client
+        )
+    }
+
+    /// Create an authenticated realtor repository with the given session token.
+    func makeAuthenticatedRealtorRepository(sessionToken: String?) -> RealtorRepository {
+        RealtorRepository(
             baseUrl: configuration.apiBaseUrl,
             sessionToken: sessionToken,
             client: HttpClientProvider.shared.client

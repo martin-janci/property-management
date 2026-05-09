@@ -8,6 +8,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
+import { colors } from '../shared/screenStyles';
 
 export type AnnouncementCategory = 'general' | 'urgent' | 'maintenance' | 'event' | 'financial';
 
@@ -31,106 +33,81 @@ export interface Announcement {
   commentsCount: number;
 }
 
-// Mock data
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Annual Building Meeting - January 15th',
-    content:
-      'Dear residents,\n\nWe would like to invite you to our annual building meeting scheduled for January 15th, 2025 at 6:00 PM in the community room.\n\nAgenda:\n1. 2024 Financial Report\n2. Planned renovations for 2025\n3. Election of new board members\n4. Open discussion\n\nPlease confirm your attendance by January 10th.',
-    category: 'event',
-    createdAt: '2025-12-23T14:00:00Z',
-    author: 'Building Management',
-    isRead: false,
-    isPinned: true,
-    attachments: [{ id: 'a1', name: 'Agenda.pdf', url: '#', type: 'pdf' }],
-    commentsCount: 5,
-  },
-  {
-    id: '2',
-    title: 'URGENT: Water Shutdown Tomorrow',
-    content:
-      'Due to emergency pipe repairs, water will be shut off tomorrow (December 25th) from 9:00 AM to 3:00 PM.\n\nPlease store water for essential needs. We apologize for the inconvenience.',
-    category: 'urgent',
-    createdAt: '2025-12-24T10:00:00Z',
-    author: 'Maintenance Team',
-    isRead: false,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 12,
-  },
-  {
-    id: '3',
-    title: 'New Recycling Guidelines',
-    content:
-      'Starting January 1st, 2025, we will be implementing new recycling guidelines in accordance with city regulations.\n\nKey changes:\n- Plastic types 1-7 now accepted\n- Glass must be separated by color\n- New textile recycling bin available\n\nPlease see the attached guide for details.',
+/** API shape returned by `GET /api/v1/announcements`. The response holds
+ *  the full Announcement model, but only some fields map onto our UI; the
+ *  rest are filled with sensible defaults. */
+interface ApiAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  status: string;
+  pinned: boolean;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ApiAnnouncementListResponse {
+  announcements: ApiAnnouncement[];
+  total?: number;
+}
+
+/** Coerce the api-server response into the UI's Announcement shape. The
+ *  server doesn't (yet) expose category/author/attachments/comment-count
+ *  on the list endpoint, so we default them. `isRead` defaults to false so
+ *  newly-loaded announcements visibly distinguish themselves until the user
+ *  opens them — the screen's local `readIds` set then layers a read flag on
+ *  top of this default. */
+function toUiAnnouncement(a: ApiAnnouncement): Announcement {
+  return {
+    id: a.id,
+    title: a.title,
+    content: a.content,
     category: 'general',
-    createdAt: '2025-12-22T09:00:00Z',
+    createdAt: a.published_at ?? a.created_at,
     author: 'Building Management',
-    isRead: true,
-    isPinned: false,
-    attachments: [
-      { id: 'a2', name: 'Recycling Guide.pdf', url: '#', type: 'pdf' },
-      { id: 'a3', name: 'Bin Locations.jpg', url: '#', type: 'image' },
-    ],
-    commentsCount: 3,
-  },
-  {
-    id: '4',
-    title: 'Monthly Fees Payment Reminder',
-    content:
-      'This is a friendly reminder that monthly building fees for January 2025 are due by January 5th.\n\nPayment can be made via:\n- Bank transfer\n- Direct debit (if enrolled)\n- Online portal\n\nContact us if you have any questions.',
-    category: 'financial',
-    createdAt: '2025-12-20T08:00:00Z',
-    author: 'Financial Department',
-    isRead: true,
-    isPinned: false,
+    isRead: false,
+    isPinned: a.pinned,
     attachments: [],
     commentsCount: 0,
-  },
-  {
-    id: '5',
-    title: 'Elevator Maintenance Schedule',
-    content:
-      'The main elevator will undergo scheduled maintenance on the following dates:\n\n- January 8th: 10:00 AM - 2:00 PM\n- January 22nd: 10:00 AM - 2:00 PM\n\nThe service elevator will remain operational during these times.',
-    category: 'maintenance',
-    createdAt: '2025-12-18T11:00:00Z',
-    author: 'Maintenance Team',
-    isRead: true,
-    isPinned: false,
-    attachments: [],
-    commentsCount: 2,
-  },
-];
+  };
+}
 
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
   const [filter, setFilter] = useState<'all' | AnnouncementCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiAnnouncementListResponse>(
+    ['announcements', 'list'],
+    '/api/v1/announcements?status=published',
+    { staleTime: 60_000 }
+  );
+
+  const announcements: Announcement[] = (data?.announcements ?? [])
+    .map(toUiAnnouncement)
+    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const getCategoryColor = (category: AnnouncementCategory): string => {
     switch (category) {
       case 'urgent':
-        return '#ef4444';
+        return colors.danger;
       case 'maintenance':
-        return '#f59e0b';
+        return colors.warning;
       case 'event':
-        return '#8b5cf6';
+        return colors.eventCategoryInk;
       case 'financial':
-        return '#10b981';
+        return colors.success;
       default:
-        return '#6b7280';
+        return colors.textMuted;
     }
   };
 
@@ -167,7 +144,12 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   };
 
   const markAsRead = (id: string) => {
-    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, isRead: true } : a)));
+    setReadIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   };
 
   const filteredAnnouncements = announcements
@@ -229,10 +211,20 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {filteredAnnouncements.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Loading…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>Couldn't load announcements</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredAnnouncements.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📭</Text>
             <Text style={styles.emptyTitle}>No announcements</Text>
@@ -298,41 +290,41 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
   },
   unreadBadge: {
     fontSize: 13,
-    color: '#2563eb',
+    color: colors.accent,
     marginTop: 4,
   },
   searchContainer: {
     padding: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
   },
   filtersContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   filters: {
     flexDirection: 'row',
@@ -345,22 +337,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     gap: 4,
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   filterIcon: {
     fontSize: 14,
   },
   filterText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   filterTextActive: {
-    color: '#fff',
+    color: colors.surface,
   },
   scrollView: {
     flex: 1,
@@ -378,19 +370,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   announcementCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -399,14 +391,14 @@ const styles = StyleSheet.create({
   },
   unreadCard: {
     borderLeftWidth: 3,
-    borderLeftColor: '#2563eb',
+    borderLeftColor: colors.accent,
   },
   pinnedBadge: {
     marginBottom: 8,
   },
   pinnedText: {
     fontSize: 12,
-    color: '#f59e0b',
+    color: colors.warning,
     fontWeight: '600',
   },
   announcementHeader: {
@@ -429,22 +421,22 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.surface,
     textTransform: 'uppercase',
   },
   announcementDate: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 6,
   },
   announcementPreview: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -454,11 +446,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
   },
   authorText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   footerRight: {
     flexDirection: 'row',
@@ -466,11 +458,11 @@ const styles = StyleSheet.create({
   },
   attachmentBadge: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   commentsBadge: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   unreadDot: {
     position: 'absolute',
@@ -479,7 +471,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   bottomSpacer: {
     height: 100,

@@ -10,13 +10,18 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-# Copy all workspace package.json files
+# Copy all workspace package.json files. Every workspace package referenced
+# via `workspace:*` in any consumed package.json must have its manifest
+# copied here; otherwise `pnpm install` fails with "in the dependencies
+# field, no project of name X found".
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 COPY frontend/packages/shared/package.json ./packages/shared/
 COPY frontend/packages/ui-kit/package.json ./packages/ui-kit/
 COPY frontend/packages/api-client/package.json ./packages/api-client/
 COPY frontend/packages/reality-api-client/package.json ./packages/reality-api-client/
 COPY frontend/packages/sitemap/package.json ./packages/sitemap/
+COPY frontend/packages/dev-panel/package.json ./packages/dev-panel/
+COPY frontend/packages/vite-plugin-ppt-worktree/package.json ./packages/vite-plugin-ppt-worktree/
 COPY frontend/apps/ppt-web/package.json ./apps/ppt-web/
 
 RUN pnpm install
@@ -49,12 +54,26 @@ RUN pnpm --filter @ppt/web build
 # =============================================================================
 FROM nginx:alpine AS production
 
-COPY docker/nginx/ppt-web.nginx.conf /etc/nginx/conf.d/default.conf
+# `gettext` brings `envsubst`, used by /docker-entrypoint.d/10-render-template.sh
+# at container startup to substitute `${BG_TARGET}` and `${BG_COLOR}` into the
+# /api and /ws proxy upstreams, so this ppt-web instance proxies to the same
+# blue/green color of api-server in the same Docker network as itself.
+RUN apk add --no-cache gettext
+
+# Ship the template (not the final config) — rendered at startup.
+COPY docker/nginx/ppt-web.nginx.conf.template /etc/nginx/conf.d/default.conf.template
+
+# nginx:alpine's stock entrypoint runs every script in /docker-entrypoint.d/*.sh
+# before exec'ing nginx, so dropping the renderer here gives us templating
+# without a custom ENTRYPOINT line.
+COPY docker/nginx/render-template.sh /docker-entrypoint.d/10-render-template.sh
+RUN chmod +x /docker-entrypoint.d/10-render-template.sh
+
 COPY --from=builder /app/apps/ppt-web/dist /usr/share/nginx/html
 
 RUN addgroup -g 1001 -S ppt && \
     adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G ppt -g ppt ppt && \
-    chown -R ppt:ppt /var/cache/nginx /var/run /run /var/log/nginx /usr/share/nginx/html
+    chown -R ppt:ppt /var/cache/nginx /var/run /run /var/log/nginx /usr/share/nginx/html /etc/nginx/conf.d
 
 USER ppt
 EXPOSE 8080

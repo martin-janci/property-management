@@ -69,9 +69,10 @@ export const createAnnouncementsApi = (config: ApiConfig) => {
     /**
      * List published announcements (all users)
      */
-    listPublished: async (params?: { page?: number; pageSize?: number }): Promise<
-      PaginatedResponse<AnnouncementSummary>
-    > => {
+    listPublished: async (params?: {
+      page?: number;
+      pageSize?: number;
+    }): Promise<PaginatedResponse<AnnouncementSummary>> => {
       const searchParams = new URLSearchParams();
       if (params?.page) searchParams.set('page', params.page.toString());
       if (params?.pageSize) searchParams.set('pageSize', params.pageSize.toString());

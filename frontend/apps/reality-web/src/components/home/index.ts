@@ -4,6 +4,6 @@
  * Homepage components for Reality Portal.
  */
 
-export { HeroSearch } from './HeroSearch';
-export { FeaturedListings } from './FeaturedListings';
 export { CategoryCards } from './CategoryCards';
+export { FeaturedListings } from './FeaturedListings';
+export { HeroSearch } from './HeroSearch';

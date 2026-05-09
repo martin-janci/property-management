@@ -7,8 +7,8 @@
 'use client';
 
 import { useSearchSuggestions } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface SearchBarProps {
@@ -205,14 +205,14 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
           display: flex;
           align-items: center;
           gap: 12px;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           padding: 4px 4px 4px 16px;
         }
 
         .search-icon {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           flex-shrink: 0;
         }
 
@@ -227,7 +227,7 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
         }
 
         .search-input::placeholder {
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .clear-button {
@@ -235,20 +235,20 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
           background: transparent;
           border: none;
           cursor: pointer;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
         .clear-button:hover {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .search-button {
           padding: 12px 20px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -258,7 +258,7 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
         }
 
         .search-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .suggestions {
@@ -266,8 +266,8 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           z-index: 50;
@@ -287,11 +287,11 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
         }
 
         .suggestion-item:hover {
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .suggestion-icon {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           flex-shrink: 0;
         }
 
@@ -303,12 +303,12 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
 
         .suggestion-label {
           font-size: 14px;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .suggestion-count {
           font-size: 12px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </div>

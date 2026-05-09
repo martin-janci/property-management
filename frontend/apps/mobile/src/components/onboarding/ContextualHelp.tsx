@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { helpCenter, tourManager } from '../../onboarding';
+import { colors } from '../../screens/shared/screenStyles';
 
 interface ContextualHelpProps {
   screenId: string;
@@ -149,11 +150,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   panel: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '70%',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#d1d5db',
+    backgroundColor: colors.borderStrong,
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 12,
@@ -175,54 +176,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   content: {
     padding: 20,
   },
   description: {
     fontSize: 16,
-    color: '#4b5563',
+    color: colors.textMuted,
     lineHeight: 24,
     marginBottom: 12,
   },
   showMoreText: {
     fontSize: 16,
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '500',
   },
   fullContent: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
     marginTop: 12,
   },
   fullContentText: {
     fontSize: 15,
-    color: '#4b5563',
+    color: colors.textMuted,
     lineHeight: 22,
     marginBottom: 12,
   },
   showLessText: {
     fontSize: 14,
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '500',
   },
   section: {
@@ -231,7 +232,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#9ca3af',
+    color: colors.textSubtle,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
   faqItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
@@ -247,17 +248,17 @@ const styles = StyleSheet.create({
   faqQuestion: {
     flex: 1,
     fontSize: 15,
-    color: '#111827',
+    color: colors.text,
   },
   chevron: {
     fontSize: 20,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginLeft: 8,
   },
   tutorialItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -266,13 +267,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   playText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
   },
   tutorialInfo: {
@@ -281,12 +282,12 @@ const styles = StyleSheet.create({
   tutorialTitle: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 2,
   },
   tutorialDuration: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   footer: {
     flexDirection: 'row',
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
     paddingBottom: 32,
   },
   dismissButton: {
@@ -303,10 +304,10 @@ const styles = StyleSheet.create({
   },
   dismissText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   helpCenterButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -314,6 +315,6 @@ const styles = StyleSheet.create({
   helpCenterText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.white,
   },
 });

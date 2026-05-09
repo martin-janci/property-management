@@ -58,8 +58,10 @@ export interface ApiClientConfig {
 // Constants
 // ============================================================================
 
-/** Default API base URL from environment or fallback */
-const DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+/** Default API base URL from environment or fallback.
+ * The '/api/v1' relative fallback is handled by Vite's dev-server proxy
+ * (see vite.config.ts). In production VITE_API_URL must be set. */
+const DEFAULT_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 /** Default request timeout in milliseconds (30 seconds) */
 const DEFAULT_TIMEOUT = 30000;

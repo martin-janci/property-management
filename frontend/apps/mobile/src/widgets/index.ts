@@ -3,6 +3,7 @@
  *
  * Epic 49 - Story 49.1: Home Screen Widgets
  */
-export * from './WidgetDataProvider';
-export * from './WidgetBridge';
+
 export type * from './types';
+export * from './WidgetBridge';
+export * from './WidgetDataProvider';

@@ -27,6 +27,8 @@ import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.inquiry.*
 import three.two.bit.ppt.reality.listing.ListingRepository
+import three.two.bit.ppt.reality.ui.theme.InquiryStatusColors
+import three.two.bit.ppt.reality.ui.theme.ViewingStatusColors
 
 private const val TAG = "InquiriesScreen"
 
@@ -41,7 +43,7 @@ fun InquiriesScreen(
     repository: ListingRepository,
     ssoService: SsoService,
     onListingClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
@@ -70,7 +72,7 @@ fun InquiriesScreen(
                 .getInquiries()
                 .fold(
                     onSuccess = { response -> inquiries = response.inquiries },
-                    onFailure = { error -> errorMessage = error.message }
+                    onFailure = { error -> errorMessage = error.message },
                 )
 
             // Load viewings
@@ -81,7 +83,7 @@ fun InquiriesScreen(
                     onFailure = { error ->
                         Log.e(TAG, "Failed to load viewings", error)
                         // Don't overwrite error message if inquiries already failed
-                    }
+                    },
                 )
 
             isLoading = false
@@ -98,12 +100,12 @@ fun InquiriesScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         when (authState) {
             is AuthState.Unauthenticated,
@@ -113,7 +115,7 @@ fun InquiriesScreen(
             is AuthState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -136,7 +138,7 @@ fun InquiriesScreen(
                                     }
                                 }
                             },
-                            icon = { Icon(Icons.Default.Email, contentDescription = null) }
+                            icon = { Icon(Icons.Default.Email, contentDescription = null) },
                         )
                         Tab(
                             selected = selectedTab == 1,
@@ -152,7 +154,7 @@ fun InquiriesScreen(
                                     }
                                 }
                             },
-                            icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) }
+                            icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
                         )
                     }
 
@@ -161,7 +163,7 @@ fun InquiriesScreen(
                         isLoading -> {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator()
                             }
@@ -181,17 +183,17 @@ fun InquiriesScreen(
                                                 },
                                                 onFailure = { error ->
                                                     errorMessage = error.message
-                                                }
+                                                },
                                             )
                                         isLoading = false
                                     }
-                                }
+                                },
                             )
                         }
                         selectedTab == 0 -> {
                             InquiriesList(
                                 inquiries = inquiries,
-                                onInquiryClick = { inquiry -> onListingClick(inquiry.listingId) }
+                                onInquiryClick = { inquiry -> onListingClick(inquiry.listingId) },
                             )
                         }
                         selectedTab == 1 -> {
@@ -210,10 +212,10 @@ fun InquiriesScreen(
                                                 onFailure = { error ->
                                                     Log.e(TAG, "Failed to cancel viewing", error)
                                                     errorMessage = error.message
-                                                }
+                                                },
                                             )
                                     }
-                                }
+                                },
                             )
                         }
                     }
@@ -228,25 +230,25 @@ private fun NotSignedInContent(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.Email,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.inquiries_sign_in_title),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.inquiries_sign_in_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -258,7 +260,7 @@ private fun InquiriesList(inquiries: List<Inquiry>, onInquiryClick: (Inquiry) ->
     } else {
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(inquiries, key = { it.id }) { inquiry ->
                 InquiryCard(inquiry = inquiry, onClick = { onInquiryClick(inquiry) })
@@ -280,7 +282,7 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
                         .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp))
+                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)),
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -293,7 +295,7 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
                     Text(
                         text = formatDate(inquiry.createdAt),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
@@ -305,7 +307,7 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -317,7 +319,7 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 // Response count
@@ -327,10 +329,10 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
                         text =
                             stringResource(
                                 R.string.inquiry_responses_count,
-                                inquiry.responses.size
+                                inquiry.responses.size,
                             ),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -340,21 +342,34 @@ private fun InquiryCard(inquiry: Inquiry, onClick: () -> Unit) {
 
 @Composable
 private fun StatusBadge(status: InquiryStatus) {
-    val (color, textRes) =
+    val (bg, ink, textRes) =
         when (status) {
             InquiryStatus.PENDING ->
-                Pair(MaterialTheme.colorScheme.tertiary, R.string.status_pending)
+                Triple(
+                    InquiryStatusColors.pendingBg,
+                    InquiryStatusColors.pendingInk,
+                    R.string.status_pending,
+                )
             InquiryStatus.RESPONDED ->
-                Pair(MaterialTheme.colorScheme.primary, R.string.status_responded)
-            InquiryStatus.CLOSED -> Pair(MaterialTheme.colorScheme.outline, R.string.status_closed)
+                Triple(
+                    InquiryStatusColors.respondedBg,
+                    InquiryStatusColors.respondedInk,
+                    R.string.status_responded,
+                )
+            InquiryStatus.CLOSED ->
+                Triple(
+                    InquiryStatusColors.closedBg,
+                    InquiryStatusColors.closedInk,
+                    R.string.status_closed,
+                )
         }
 
-    Surface(shape = RoundedCornerShape(4.dp), color = color.copy(alpha = 0.12f)) {
+    Surface(shape = RoundedCornerShape(4.dp), color = bg) {
         Text(
             text = stringResource(textRes),
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = color
+            color = ink,
         )
     }
 }
@@ -364,25 +379,25 @@ private fun EmptyInquiries() {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.MarkEmailRead,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.inquiries_empty_title),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.inquiries_empty_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -391,20 +406,20 @@ private fun EmptyInquiries() {
 private fun ViewingsList(
     viewings: List<ViewingRequest>,
     onViewingClick: (ViewingRequest) -> Unit,
-    onCancelViewing: (String) -> Unit
+    onCancelViewing: (String) -> Unit,
 ) {
     if (viewings.isEmpty()) {
         EmptyViewings()
     } else {
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(viewings, key = { it.id }) { viewing ->
                 ViewingCard(
                     viewing = viewing,
                     onClick = { onViewingClick(viewing) },
-                    onCancel = { onCancelViewing(viewing.id) }
+                    onCancel = { onCancelViewing(viewing.id) },
                 )
             }
         }
@@ -429,7 +444,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                         Icon(
                             Icons.Default.Cancel,
                             contentDescription = stringResource(R.string.cancel),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
@@ -441,7 +456,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
             Text(
                 text = viewing.listing?.title ?: stringResource(R.string.property_viewing),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -452,7 +467,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                     Icons.Default.CalendarToday,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.width(4.dp))
 
@@ -461,7 +476,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
 
                 Text(
                     text = "$displayDate at $displayTime",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
 
                 if (viewing.confirmedDate != null) {
@@ -469,7 +484,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                     Text(
                         text = stringResource(R.string.viewing_confirmed_label),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -482,7 +497,7 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -501,8 +516,8 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                 ) {
                     Text(stringResource(R.string.viewing_cancel_confirm))
                 }
@@ -511,52 +526,68 @@ private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: 
                 TextButton(onClick = { showCancelDialog = false }) {
                     Text(stringResource(R.string.viewing_cancel_keep))
                 }
-            }
+            },
         )
     }
 }
 
 @Composable
 private fun ViewingStatusBadge(status: ViewingStatus) {
-    val (color, textRes, icon) =
+    data class BadgeAttrs(
+        val bg: androidx.compose.ui.graphics.Color,
+        val ink: androidx.compose.ui.graphics.Color,
+        val textRes: Int,
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    )
+
+    val attrs =
         when (status) {
             ViewingStatus.PENDING ->
-                Triple(
-                    MaterialTheme.colorScheme.tertiary,
+                BadgeAttrs(
+                    ViewingStatusColors.pendingBg,
+                    ViewingStatusColors.pendingInk,
                     R.string.status_pending,
-                    Icons.Default.Schedule
+                    Icons.Default.Schedule,
                 )
             ViewingStatus.CONFIRMED ->
-                Triple(
-                    MaterialTheme.colorScheme.primary,
+                BadgeAttrs(
+                    ViewingStatusColors.confirmedBg,
+                    ViewingStatusColors.confirmedInk,
                     R.string.status_confirmed,
-                    Icons.Default.CheckCircle
+                    Icons.Default.CheckCircle,
                 )
             ViewingStatus.COMPLETED ->
-                Triple(
-                    MaterialTheme.colorScheme.outline,
+                BadgeAttrs(
+                    ViewingStatusColors.completedBg,
+                    ViewingStatusColors.completedInk,
                     R.string.status_completed,
-                    Icons.Default.Done
+                    Icons.Default.Done,
                 )
             ViewingStatus.CANCELLED ->
-                Triple(
-                    MaterialTheme.colorScheme.error,
+                BadgeAttrs(
+                    ViewingStatusColors.cancelledBg,
+                    ViewingStatusColors.cancelledInk,
                     R.string.status_cancelled,
-                    Icons.Default.Cancel
+                    Icons.Default.Cancel,
                 )
         }
 
-    Surface(shape = RoundedCornerShape(4.dp), color = color.copy(alpha = 0.12f)) {
+    Surface(shape = RoundedCornerShape(4.dp), color = attrs.bg) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = color)
+            Icon(
+                attrs.icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = attrs.ink,
+            )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = stringResource(textRes),
+                text = stringResource(attrs.textRes),
                 style = MaterialTheme.typography.labelSmall,
-                color = color
+                color = attrs.ink,
             )
         }
     }
@@ -567,25 +598,25 @@ private fun EmptyViewings() {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.CalendarMonth,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.viewings_empty_title),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.viewings_empty_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -595,19 +626,19 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.Error,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }

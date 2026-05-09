@@ -3,5 +3,5 @@
  */
 
 export { MessagesPage } from './MessagesPage';
-export { ThreadDetailPage } from './ThreadDetailPage';
 export { NewMessagePage } from './NewMessagePage';
+export { ThreadDetailPage } from './ThreadDetailPage';

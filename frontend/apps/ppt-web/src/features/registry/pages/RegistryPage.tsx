@@ -5,14 +5,14 @@
  * Wired to the registry API for CRUD operations.
  */
 
-import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import type { RegistryStatus } from '@ppt/api-client';
+import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { PetRegistrationList } from '../components/PetRegistrationList';
 import { VehicleRegistrationList } from '../components/VehicleRegistrationList';
 
 // API base URL - prefer environment configuration for different environments (dev/staging/prod)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 // Create API instance - in production, this would come from a context with auth tokens
 const registryApi = createRegistryApi({

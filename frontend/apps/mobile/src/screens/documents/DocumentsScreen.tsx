@@ -11,6 +11,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
+import { colors } from '../shared/screenStyles';
 
 export type DocumentType = 'folder' | 'pdf' | 'image' | 'document' | 'spreadsheet';
 
@@ -26,147 +28,69 @@ export interface Document {
   children?: Document[];
 }
 
-// Mock data - hierarchical document structure
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    name: 'Building Rules',
-    type: 'folder',
-    createdAt: '2025-01-01T00:00:00Z',
-    updatedAt: '2025-12-20T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '1-1',
-        name: 'House Rules 2025.pdf',
-        type: 'pdf',
-        size: 245000,
-        createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-01T00:00:00Z',
-        parentId: '1',
-        downloadUrl: '#',
-      },
-      {
-        id: '1-2',
-        name: 'Parking Regulations.pdf',
-        type: 'pdf',
-        size: 128000,
-        createdAt: '2025-03-15T00:00:00Z',
-        updatedAt: '2025-03-15T00:00:00Z',
-        parentId: '1',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Financial Reports',
-    type: 'folder',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2025-12-15T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '2-1',
-        name: 'Annual Report 2024.pdf',
-        type: 'pdf',
-        size: 1250000,
-        createdAt: '2025-01-15T00:00:00Z',
-        updatedAt: '2025-01-15T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-      {
-        id: '2-2',
-        name: 'Budget 2025.xlsx',
-        type: 'spreadsheet',
-        size: 85000,
-        createdAt: '2024-12-01T00:00:00Z',
-        updatedAt: '2024-12-01T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-      {
-        id: '2-3',
-        name: 'Q4 2024 Statement.pdf',
-        type: 'pdf',
-        size: 320000,
-        createdAt: '2025-01-05T00:00:00Z',
-        updatedAt: '2025-01-05T00:00:00Z',
-        parentId: '2',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Meeting Minutes',
-    type: 'folder',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2025-11-20T00:00:00Z',
-    parentId: null,
-    children: [
-      {
-        id: '3-1',
-        name: 'November 2025 Meeting.pdf',
-        type: 'pdf',
-        size: 180000,
-        createdAt: '2025-11-20T00:00:00Z',
-        updatedAt: '2025-11-20T00:00:00Z',
-        parentId: '3',
-        downloadUrl: '#',
-      },
-      {
-        id: '3-2',
-        name: 'October 2025 Meeting.pdf',
-        type: 'pdf',
-        size: 165000,
-        createdAt: '2025-10-18T00:00:00Z',
-        updatedAt: '2025-10-18T00:00:00Z',
-        parentId: '3',
-        downloadUrl: '#',
-      },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Maintenance Manual.pdf',
-    type: 'pdf',
-    size: 3500000,
-    createdAt: '2024-06-01T00:00:00Z',
-    updatedAt: '2024-06-01T00:00:00Z',
-    parentId: null,
-    downloadUrl: '#',
-  },
-  {
-    id: '5',
-    name: 'Contact List.pdf',
-    type: 'pdf',
-    size: 45000,
-    createdAt: '2025-12-01T00:00:00Z',
-    updatedAt: '2025-12-01T00:00:00Z',
-    parentId: null,
-    downloadUrl: '#',
-  },
-];
-
 interface DocumentsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
+/** Subset of `Document` returned by `GET /api/v1/documents`. */
+interface ApiDocument {
+  id: string;
+  name: string;
+  file_path?: string | null;
+  size_bytes?: number | null;
+  content_type?: string | null;
+  uploaded_at?: string | null;
+  created_at: string;
+}
+
+interface ApiDocumentListResponse {
+  documents: ApiDocument[];
+  total?: number;
+}
+
+function pickDocumentType(d: ApiDocument): DocumentType {
+  const ct = (d.content_type ?? '').toLowerCase();
+  const name = d.name.toLowerCase();
+  if (ct.includes('pdf') || name.endsWith('.pdf')) return 'pdf';
+  if (ct.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/.test(name)) return 'image';
+  if (ct.includes('spreadsheet') || ct.includes('excel') || /\.(xlsx?|csv)$/.test(name))
+    return 'spreadsheet';
+  return 'document';
+}
+
+function toUiDocument(d: ApiDocument): Document {
+  return {
+    id: d.id,
+    name: d.name,
+    type: pickDocumentType(d),
+    size: d.size_bytes ?? undefined,
+    createdAt: d.created_at,
+    updatedAt: d.uploaded_at ?? d.created_at,
+    parentId: null,
+    downloadUrl: d.file_path ?? undefined,
+    children: undefined,
+  };
+}
+
 export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProps) {
   const { t } = useTranslation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [documents] = useState<Document[]>(mockDocuments);
   const [currentPath, setCurrentPath] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiDocumentListResponse>(
+    ['documents', 'list'],
+    '/api/v1/documents',
+    { staleTime: 60_000 }
+  );
+
+  // The api-server returns a flat list; the screen still supports a
+  // folder breadcrumb but at this layer all documents live at the root.
+  const documents: Document[] = (data?.documents ?? []).map(toUiDocument);
+
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   const getCurrentDocuments = (): Document[] => {
     if (currentPath.length === 0) {
@@ -305,10 +229,20 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
-        {filteredDocuments.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>{t('common.loading') ?? 'Loading…'}</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>⚠️</Text>
+            <Text style={styles.emptyTitle}>{t('documents.loadError') ?? "Couldn't load"}</Text>
+            <Text style={styles.emptyText}>{error.message}</Text>
+          </View>
+        ) : filteredDocuments.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📂</Text>
             <Text style={styles.emptyTitle}>{t('documents.emptyTitle')}</Text>
@@ -369,14 +303,14 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -388,12 +322,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: '#2563eb',
+    color: colors.accent,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
     flex: 1,
   },
   breadcrumb: {
@@ -401,9 +335,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
     flexWrap: 'wrap',
   },
   breadcrumbItem: {
@@ -412,24 +346,24 @@ const styles = StyleSheet.create({
   },
   breadcrumbLink: {
     fontSize: 13,
-    color: '#2563eb',
+    color: colors.accent,
   },
   breadcrumbSeparator: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: colors.textSubtle,
     marginHorizontal: 6,
   },
   breadcrumbCurrent: {
     fontSize: 13,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   searchContainer: {
     padding: 16,
     paddingBottom: 8,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -449,24 +383,24 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   documentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.surfaceMuted,
   },
   documentDownloading: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
   },
   fileIcon: {
     fontSize: 28,
@@ -478,7 +412,7 @@ const styles = StyleSheet.create({
   documentName: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text,
     marginBottom: 2,
   },
   documentMeta: {
@@ -486,11 +420,11 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   arrowIcon: {
     fontSize: 24,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   downloadIcon: {
     fontSize: 18,
@@ -501,7 +435,7 @@ const styles = StyleSheet.create({
   },
   downloadingText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   bottomSpacer: {
     height: 100,

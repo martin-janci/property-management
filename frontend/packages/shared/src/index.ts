@@ -1,20 +1,157 @@
 /**
- * Shared utilities and hooks for Property Management apps.
+ * @ppt/shared - Shared utilities for Property Management apps.
+ *
+ * This package provides common utilities, types, and helpers used across
+ * ppt-web, reality-web, and mobile applications.
  */
 
-// Re-export API client
+// ============================================
+// API Client Re-exports
+// ============================================
 export * from '@ppt/api-client';
-
-// Accessibility
+// ============================================
+// Accessibility (existing)
+// ============================================
 export * from './accessibility';
+// ============================================
+// Authentication Utilities
+// ============================================
+export {
+  type BasicUserInfo,
+  // Auth Headers
+  createAuthHeader,
+  // Token Storage
+  createTokenStorage,
+  // JWT Utilities
+  decodeJwt,
+  extractTokenFromHeader,
+  getAndClearReturnUrl,
+  getTokenExpiration,
+  getTokenRemainingTime,
+  getUserFromToken,
+  hasAnyRole,
+  hasRolePermission,
+  isTokenExpired,
+  // Types
+  type JwtPayload,
+  // Roles
+  ROLES,
+  type Role,
+  // Session
+  setReturnUrl,
+  type TokenPair,
+} from './auth';
 
-// Shared types
+// ============================================
+// Error Handling
+// ============================================
+export {
+  DEFAULT_ERROR,
+  // Constants
+  ERROR_MESSAGES,
+  // Types
+  type ErrorResponse,
+  formatFieldName,
+  // Utilities
+  formatValidationErrors,
+  getErrorMessage,
+  getFieldError,
+  isErrorResponse,
+  // Type Guards
+  isNetworkError,
+  isRetryableError,
+  type ParsedApiError,
+  // Parsing
+  parseApiError,
+  type ValidationDetail,
+} from './errors';
+// ============================================
+// Formatting Utilities
+// ============================================
+export {
+  type AddressComponents,
+  type CurrencyFormatOptions,
+  type DateFormatOptions,
+  type DateInput,
+  formatAddress,
+  formatCompactCurrency,
+  formatCompactNumber,
+  // Currency
+  formatCurrency,
+  // Date/Time
+  formatDate,
+  formatDateTime,
+  formatDetailedDate,
+  // File Size
+  formatFileSize,
+  formatISODate,
+  // Numbers
+  formatNumber,
+  formatPercent,
+  // Phone & Address
+  formatPhone,
+  formatRelativeTime,
+  formatTime,
+  // Locale
+  getUserLocale,
+  type NumberFormatOptions,
+} from './formatting';
+// ============================================
+// Validation Utilities
+// ============================================
+export {
+  // Composite
+  combineValidators,
+  getPasswordStrength,
+  isValidCompanyId,
+  // Email
+  isValidEmail,
+  isValidIban,
+  // Phone
+  isValidPhone,
+  // Specialized
+  isValidPostalCode,
+  // URL
+  isValidUrl,
+  isValidVatId,
+  type NumberRangeOptions,
+  type PasswordRequirements,
+  type StringLengthOptions,
+  // Types
+  type ValidationResult,
+  type Validator,
+  validateDateRange,
+  validateEmail,
+  // Dates
+  validateFutureDate,
+  // Numbers
+  validateNumber,
+  // Password
+  validatePassword,
+  validatePastDate,
+  validatePhone,
+  validateRequired,
+  // Strings
+  validateString,
+  validateUrl,
+} from './validation';
+
+// ============================================
+// Shared Types
+// ============================================
+
+/**
+ * Tenant context for multi-tenant operations.
+ */
 export interface TenantContext {
   tenantId: string;
   tenantName: string;
   role: string;
 }
 
+/**
+ * Basic user type for UI display.
+ */
 export interface User {
   id: string;
   email: string;
@@ -22,21 +159,12 @@ export interface User {
   avatarUrl?: string;
 }
 
-// Shared constants
+// ============================================
+// Shared Constants
+// ============================================
+
+/** Current API version */
 export const API_VERSION = 'v1';
 
-// Shared utilities
-export function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  }).format(amount / 100);
-}
-
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(date));
-}
+/** Package version */
+export const VERSION = '0.2.355';

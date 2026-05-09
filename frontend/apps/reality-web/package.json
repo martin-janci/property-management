@@ -23,6 +23,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@ppt/dev-panel": "workspace:*",
+    "@ppt/vite-plugin-worktree": "workspace:*",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
@@ -32,6 +34,7 @@
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/coverage-v8": "^2.1.8",
     "jsdom": "^25.0.1",
+    "msw": "^2.3.0",
     "typescript": "^5.3.0",
     "vitest": "^2.1.8"
   },

@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
  */
 import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export interface SyncProgressToastProps {
   /** Whether the toast is visible */
@@ -90,9 +91,9 @@ export function SyncProgressToast({
   };
 
   const getStatusColor = () => {
-    if (!isComplete) return '#2563eb';
-    if (failed > 0) return '#dc2626';
-    return '#16a34a';
+    if (!isComplete) return colors.accent;
+    if (failed > 0) return colors.dangerDark;
+    return colors.success;
   };
 
   const getMessage = () => {
@@ -144,9 +145,9 @@ const styles = StyleSheet.create({
     bottom: 100,
     left: 16,
     right: 16,
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.text,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -166,31 +167,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   message: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 14,
     fontWeight: '500',
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#374151',
+    backgroundColor: colors.textSecondary,
     borderRadius: 2,
     marginTop: 8,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 2,
   },
   retryButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#dc2626',
+    backgroundColor: colors.dangerDark,
     borderRadius: 6,
     marginLeft: 8,
   },
   retryText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dismissText: {
-    color: '#9ca3af',
+    color: colors.textSubtle,
     fontSize: 16,
   },
 });

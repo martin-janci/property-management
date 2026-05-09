@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
+import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
+import { getApiBaseUrl } from '../config/api';
 
 // Storage keys
 const CACHE_PREFIX = 'ppt_cache_';
 const QUEUE_KEY = 'ppt_offline_queue';
 const LAST_SYNC_KEY = 'ppt_last_sync';
+const ACCESS_TOKEN_KEY = 'ppt_access_token';
 
 export interface CacheOptions {
   expiresIn?: number; // milliseconds
@@ -23,6 +26,25 @@ export interface QueuedAction {
   timestamp: number;
   retries: number;
   syncStatus?: SyncItemStatus;
+}
+
+/**
+ * Decode a JWT payload (no signature verification — that happens server-side)
+ * and pull the `tenant_id` claim. Used so replayed offline actions can send
+ * the X-Tenant-ID header that tenant-scoped routes require.
+ */
+function extractTenantIdFromJwt(token: string): string | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padding = '='.repeat((4 - (padded.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded + padding)) as Record<string, unknown>;
+    const value = claims.tenant_id;
+    return typeof value === 'string' ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface SyncProgress {
@@ -234,16 +256,15 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         for (let i = 0; i < queue.length; i++) {
           const action = queue[i];
           try {
-            // Execute the queued action
-            // In a real app, this would make the actual API call
             await executeQueuedAction(action);
             success++;
-          } catch (_error) {
-            // Increment retry count
+          } catch (error) {
+            // 4xx responses are marked `permanent` by executeQueuedAction
+            // and dropped immediately — replaying them won't help.
+            // Everything else (5xx, network) goes through the retry budget.
+            const isPermanent = (error as { permanent?: boolean })?.permanent === true;
             action.retries++;
-
-            // Keep in queue if under max retries
-            if (action.retries < 3) {
+            if (!isPermanent && action.retries < 3) {
               remainingActions.push(action);
             } else {
               failed++;
@@ -287,12 +308,54 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
     [isConnected, isInternetReachable, getQueuedActions]
   );
 
-  // Execute a single queued action
+  // Execute a single queued action against the real backend.
+  //
+  // The queue stores `endpoint` as either an absolute URL or a path
+  // beginning with `/`. For relative paths we prefix the configured API
+  // base URL. The bearer token (if available) is read from SecureStore
+  // at dispatch time so token rotations between enqueue and replay are
+  // honored.
   const executeQueuedAction = async (action: QueuedAction): Promise<void> => {
-    // This would make the actual API call
-    // For now, simulate success
-    console.log('Executing queued action:', action);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    const url = action.endpoint.startsWith('http')
+      ? action.endpoint
+      : `${getApiBaseUrl()}${action.endpoint}`;
+
+    const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+      // Tenant-scoped api-server routes (RlsConnection extractor on
+      // /faults, /voting, /buildings, …) reject requests without
+      // X-Tenant-ID. The tenant id lives in the JWT's `tenant_id`
+      // claim — extract it so replayed offline actions hit the same
+      // tenant the user was signed into when they enqueued.
+      const tenantId = extractTenantIdFromJwt(accessToken);
+      if (tenantId) {
+        headers['X-Tenant-ID'] = tenantId;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: action.method,
+      headers,
+      body: action.body !== undefined ? JSON.stringify(action.body) : undefined,
+    });
+
+    if (!response.ok) {
+      // Treat 4xx as terminal (the request will never succeed even on
+      // retry — bad payload, gone, unauthorized, …) so the queue drops
+      // the action without burning the retry budget on hopeless replays.
+      // 5xx and network failures bubble up as a normal error so the
+      // outer retry loop handles them.
+      const error = new Error(`HTTP ${response.status} on ${action.method} ${action.endpoint}`);
+      if (response.status >= 400 && response.status < 500) {
+        // Mark the error so processQueue can decide to drop instead of retry.
+        (error as Error & { permanent?: boolean }).permanent = true;
+      }
+      throw error;
+    }
   };
 
   // Clear the offline queue
@@ -315,16 +378,10 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
       setIsSyncing(true);
 
       try {
-        // Process offline queue first
+        // Process offline queue first. Per-domain prefetching (announcements,
+        // faults, votes) is intentionally left to each screen's own
+        // useQuery + cacheData call so this hook stays endpoint-agnostic.
         await processQueue(onProgress);
-
-        // Then fetch fresh data and cache it
-        // This would call your API endpoints and cache the responses
-        // await cacheData('announcements', await api.getAnnouncements(), 5 * 60 * 1000);
-        // await cacheData('faults', await api.getFaults(), 5 * 60 * 1000);
-        // await cacheData('votes', await api.getVotes(), 5 * 60 * 1000);
-
-        console.log('Data sync completed');
       } catch (error) {
         console.error('Failed to sync data:', error);
       } finally {

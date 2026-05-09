@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { PendingSyncIndicator, type SyncStatus } from '../../components/sync';
 import { useOfflineSupport } from '../../hooks';
+import { colors } from '../shared/screenStyles';
 
 export interface MeterReadingScreenProps {
   onSuccess?: () => void;
@@ -222,7 +223,7 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
               onChangeText={setReading}
               keyboardType="decimal-pad"
               placeholder={t('meters.readingPlaceholder')}
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textSubtle}
             />
             <Text style={styles.unitLabel}>{selectedMeterConfig.unit}</Text>
           </View>
@@ -294,7 +295,7 @@ export function MeterReadingScreen({ onSuccess, onCancel }: MeterReadingScreenPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -312,19 +313,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: colors.text,
   },
   cancelButton: {
     padding: 8,
   },
   cancelText: {
     fontSize: 16,
-    color: '#2563eb',
+    color: colors.accent,
   },
   offlineNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.warningBg,
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   },
   offlineText: {
     fontSize: 14,
-    color: '#92400e',
+    color: colors.warningDark,
     flex: 1,
   },
   section: {
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 12,
   },
   meterTypes: {
@@ -355,16 +356,16 @@ const styles = StyleSheet.create({
   meterTypeButton: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
   },
   meterTypeSelected: {
-    borderColor: '#2563eb',
-    backgroundColor: '#eff6ff',
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
   },
   meterTypeIcon: {
     fontSize: 32,
@@ -372,18 +373,18 @@ const styles = StyleSheet.create({
   },
   meterTypeLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   meterTypeLabelSelected: {
-    color: '#2563eb',
+    color: colors.accent,
   },
   readingInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -392,11 +393,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     padding: 16,
-    color: '#1f2937',
+    color: colors.text,
   },
   unitLabel: {
     fontSize: 18,
-    color: '#6b7280',
+    color: colors.textMuted,
     paddingRight: 16,
     fontWeight: '500',
   },
@@ -406,9 +407,9 @@ const styles = StyleSheet.create({
   },
   photoButton: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.borderStrong,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   },
   photoButtonLabel: {
     fontSize: 14,
-    color: '#4b5563',
+    color: colors.textMuted,
   },
   photoPreview: {
     position: 'relative',
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: colors.bgOverlay,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -443,27 +444,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   removePhotoText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: 'bold',
   },
   submitButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginBottom: 24,
   },
   submitButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: colors.accentDisabled,
   },
   submitButtonText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
   pendingItem: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
@@ -482,6 +483,6 @@ const styles = StyleSheet.create({
   pendingItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text,
   },
 });

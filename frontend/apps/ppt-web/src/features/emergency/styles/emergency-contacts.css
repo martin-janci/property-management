@@ -101,7 +101,7 @@
   padding: 0.75rem 1.5rem;
   font-size: var(--font-size-base, 16px);
   font-weight: 600;
-  color: white;
+  color: var(--ppt-fg-on-accent);
   background-color: var(--color-primary, #3b82f6);
   border: none;
   border-radius: 4px;
@@ -113,9 +113,9 @@
   background-color: var(--color-primary-hover, #2563eb);
 }
 
-.emergency-contact-directory-add-button:focus {
-  outline: 2px solid var(--color-focus, #f59e0b);
-  outline-offset: 2px;
+.emergency-contact-directory-add-button:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 /* ============================================
@@ -125,10 +125,10 @@
 .emergency-contact-directory-error {
   padding: 1rem;
   margin-bottom: 1.5rem;
-  background-color: #fee;
-  border: 1px solid #f88;
+  background-color: var(--ppt-color-danger-light);
+  border: 1px solid var(--ppt-color-danger);
   border-radius: 4px;
-  color: #c00;
+  color: var(--ppt-color-danger-dark);
 }
 
 .emergency-contact-directory-loading {
@@ -220,8 +220,8 @@
 
 .emergency-contact-card-badge {
   padding: 0.25rem 0.75rem;
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--ppt-status-fault-inprogress-bg);
+  color: var(--ppt-status-fault-inprogress-ink);
   border-radius: 12px;
   font-size: var(--font-size-sm, 14px);
   font-weight: 600;
@@ -282,18 +282,18 @@
   background-color: var(--color-surface-hover, #f3f4f6);
 }
 
-.emergency-contact-card-button:focus {
-  outline: 2px solid var(--color-focus, #f59e0b);
-  outline-offset: 2px;
+.emergency-contact-card-button:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 .emergency-contact-card-button.delete {
-  color: #dc2626;
-  border-color: #dc2626;
+  color: var(--ppt-color-danger-hover);
+  border-color: var(--ppt-color-danger-hover);
 }
 
 .emergency-contact-card-button.delete:hover {
-  background-color: #fef2f2;
+  background-color: var(--ppt-color-danger-light);
 }
 
 /* ============================================
@@ -327,7 +327,7 @@
 
 .emergency-contact-form-label.required::after {
   content: " *";
-  color: #dc2626;
+  color: var(--ppt-color-danger-hover);
 }
 
 .emergency-contact-form-input,
@@ -342,18 +342,18 @@
   color: var(--color-text, #1f2937);
 }
 
-.emergency-contact-form-input:focus,
-.emergency-contact-form-select:focus,
-.emergency-contact-form-textarea:focus {
-  outline: 2px solid var(--color-focus, #f59e0b);
-  outline-offset: 2px;
+.emergency-contact-form-input:focus-visible,
+.emergency-contact-form-select:focus-visible,
+.emergency-contact-form-textarea:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
   border-color: var(--color-primary, #3b82f6);
 }
 
 .emergency-contact-form-input.error,
 .emergency-contact-form-select.error,
 .emergency-contact-form-textarea.error {
-  border-color: #dc2626;
+  border-color: var(--ppt-color-danger);
 }
 
 .emergency-contact-form-textarea {
@@ -371,17 +371,17 @@
   display: block;
   margin-top: 0.25rem;
   font-size: var(--font-size-sm, 14px);
-  color: #dc2626;
+  color: var(--ppt-color-danger);
 }
 
 .emergency-contact-form-error-banner {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--ppt-color-danger-light);
+  border: 1px solid var(--ppt-color-danger);
   border-radius: 4px;
   font-size: var(--font-size-sm, 14px);
-  color: #dc2626;
+  color: var(--ppt-color-danger-hover);
 }
 
 .emergency-contact-form-actions {
@@ -414,16 +414,16 @@
 
 .emergency-contact-form-button.submit {
   background-color: var(--color-primary, #3b82f6);
-  color: white;
+  color: var(--ppt-fg-on-accent);
 }
 
 .emergency-contact-form-button.submit:hover {
   background-color: var(--color-primary-hover, #2563eb);
 }
 
-.emergency-contact-form-button:focus {
-  outline: 2px solid var(--color-focus, #f59e0b);
-  outline-offset: 2px;
+.emergency-contact-form-button:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
 }
 
 .emergency-contact-form-button:disabled {

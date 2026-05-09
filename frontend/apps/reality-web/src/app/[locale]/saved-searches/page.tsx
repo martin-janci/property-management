@@ -6,8 +6,6 @@
 
 'use client';
 
-import { ProtectedRoute } from '@/components/auth';
-import { Footer, Header } from '@/components/ui';
 import type { SavedSearch } from '@ppt/reality-api-client';
 import {
   useDeleteSavedSearch,
@@ -16,6 +14,8 @@ import {
 } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth';
+import { Footer, Header } from '@/components/ui';
 
 function SavedSearchCard({ search }: { search: SavedSearch }) {
   const deleteSearch = useDeleteSavedSearch();
@@ -134,7 +134,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
 
       <style jsx>{`
         .search-card {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           padding: 20px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -151,20 +151,20 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         .card-title {
           font-size: 1rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .card-summary {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
         .view-button {
           padding: 6px 16px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           text-decoration: none;
           border-radius: 6px;
           font-size: 14px;
@@ -173,7 +173,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         }
 
         .view-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .card-footer {
@@ -181,7 +181,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
           justify-content: space-between;
           align-items: center;
           padding-top: 16px;
-          border-top: 1px solid #f3f4f6;
+          border-top: 1px solid var(--ppt-bg-subtle);
         }
 
         .alert-toggle {
@@ -200,12 +200,12 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         .toggle-checkbox {
           width: 16px;
           height: 16px;
-          accent-color: #2563eb;
+          accent-color: var(--ppt-color-primary);
         }
 
         .toggle-text {
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .frequency-badge {
@@ -226,8 +226,8 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
 
         .new-badge {
           padding: 2px 8px;
-          background: #dcfce7;
-          color: #16a34a;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success);
           border-radius: 4px;
           font-size: 12px;
           font-weight: 500;
@@ -237,14 +237,14 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
           padding: 6px;
           background: transparent;
           border: none;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
           cursor: pointer;
           border-radius: 4px;
         }
 
         .delete-button:hover {
-          color: #dc2626;
-          background: #fef2f2;
+          color: var(--ppt-color-danger-hover);
+          background: var(--ppt-color-danger-light);
         }
 
         .delete-confirm {
@@ -252,7 +252,7 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
           align-items: center;
           gap: 8px;
           font-size: 14px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .confirm-yes,
@@ -265,13 +265,13 @@ function SavedSearchCard({ search }: { search: SavedSearch }) {
         }
 
         .confirm-yes {
-          background: #dc2626;
-          color: #fff;
+          background: var(--ppt-color-danger-hover);
+          color: var(--ppt-fg-on-accent);
         }
 
         .confirm-no {
-          background: #e5e7eb;
-          color: #374151;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
         }
       `}</style>
     </div>
@@ -295,7 +295,7 @@ function SavedSearchesContent() {
           }
           .skeleton-card {
             height: 120px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
@@ -316,7 +316,7 @@ function SavedSearchesContent() {
           .error-state {
             padding: 64px 24px;
             text-align: center;
-            color: #dc2626;
+            color: var(--ppt-color-danger-hover);
           }
         `}</style>
       </div>
@@ -355,12 +355,12 @@ function SavedSearchesContent() {
             justify-content: center;
             padding: 64px 24px;
             text-align: center;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .empty-title {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 24px 0 8px;
           }
           .empty-text {
@@ -369,14 +369,14 @@ function SavedSearchesContent() {
           }
           .browse-link {
             padding: 12px 24px;
-            background: #2563eb;
-            color: #fff;
+            background: var(--ppt-color-primary);
+            color: var(--ppt-fg-on-accent);
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
           }
           .browse-link:hover {
-            background: #1d4ed8;
+            background: var(--ppt-color-primary-hover);
           }
         `}</style>
       </div>
@@ -422,7 +422,7 @@ export default function SavedSearchesPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
         .main {
           flex: 1;
@@ -436,11 +436,11 @@ export default function SavedSearchesPage() {
         .page-title {
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 8px;
         }
         .page-subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 32px;
         }
       `}</style>

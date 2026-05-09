@@ -3,7 +3,7 @@
 use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{get, post, put},
     Json, Router,
 };
@@ -22,6 +22,7 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_agency))
+        .route("/", get(list_agencies))
         .route("/:id", get(get_agency))
         .route("/:id", put(update_agency))
         .route("/:id/branding", put(update_branding))
@@ -35,6 +36,24 @@ pub fn router() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AgencyResponse {
     pub agency: RealityAgency,
+}
+
+/// Public directory list response. Returned by `GET /api/v1/agencies` and
+/// consumed by the reality-web public agency directory plus the KMP
+/// `AgencyRepository.listAgencies()` on Android/iOS.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct AgencyListResponse {
+    pub agencies: Vec<RealityAgency>,
+    pub total: i64,
+}
+
+/// Pagination query for the public directory.
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct ListAgenciesQuery {
+    /// Page size (default 50, capped at 200).
+    pub limit: Option<i64>,
+    /// Offset into the result set (default 0).
+    pub offset: Option<i64>,
 }
 
 /// Members list response.
@@ -81,6 +100,37 @@ pub async fn create_agency(
         })?;
 
     Ok(Json(AgencyResponse { agency }))
+}
+
+/// List public (verified) agencies for the directory surface.
+#[utoipa::path(
+    get,
+    path = "/api/v1/agencies",
+    tag = "Agencies",
+    params(ListAgenciesQuery),
+    responses(
+        (status = 200, description = "Paginated list of verified agencies", body = AgencyListResponse),
+    )
+)]
+pub async fn list_agencies(
+    State(state): State<AppState>,
+    Query(query): Query<ListAgenciesQuery>,
+) -> Result<Json<AgencyListResponse>, (axum::http::StatusCode, String)> {
+    let limit = query.limit.unwrap_or(50).clamp(1, 200);
+    let offset = query.offset.unwrap_or(0).max(0);
+
+    let (agencies, total) = state
+        .reality_portal_repo
+        .list_public_agencies(limit, offset)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to list agencies: {}", e),
+            )
+        })?;
+
+    Ok(Json(AgencyListResponse { agencies, total }))
 }
 
 /// Get agency by ID.

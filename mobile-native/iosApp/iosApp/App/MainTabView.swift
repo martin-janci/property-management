@@ -152,6 +152,18 @@ struct MainTabView: View {
             // Registration view
             Text("Register")
                 .navigationTitle("Create Account")
+
+        case .savedSearches:
+            SavedSearchesView()
+
+        case .compareListings(let ids):
+            CompareListingsView(listingIds: ids)
+
+        case .realtors:
+            RealtorsView()
+
+        case .agencies:
+            AgenciesView()
         }
     }
 

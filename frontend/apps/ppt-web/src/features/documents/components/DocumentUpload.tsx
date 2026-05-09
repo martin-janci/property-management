@@ -483,20 +483,20 @@ export function DocumentUpload({
           margin: 0 0 0.5rem;
           font-size: 1.5rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .upload-subtitle {
           margin: 0;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .drop-zone {
           position: relative;
           padding: 2rem;
-          border: 2px dashed #cbd5e1;
+          border: 2px dashed var(--ppt-border-strong);
           border-radius: 0.75rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           text-align: center;
           cursor: pointer;
           transition: all 0.2s;
@@ -504,13 +504,13 @@ export function DocumentUpload({
 
         .drop-zone:hover,
         .drop-zone:focus-within {
-          border-color: #3b82f6;
-          background: #eff6ff;
+          border-color: var(--ppt-brand-500);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         .drop-zone.drag-over {
-          border-color: #3b82f6;
-          background: #dbeafe;
+          border-color: var(--ppt-brand-500);
+          background: var(--ppt-color-primary-soft-bg);
           transform: scale(1.02);
         }
 
@@ -522,12 +522,12 @@ export function DocumentUpload({
         }
 
         .drop-icon {
-          color: #94a3b8;
+          color: var(--ppt-fg-subtle);
         }
 
         .drop-zone:hover .drop-icon,
         .drop-zone.drag-over .drop-icon {
-          color: #3b82f6;
+          color: var(--ppt-brand-500);
         }
 
         .drop-text {
@@ -537,17 +537,17 @@ export function DocumentUpload({
 
         .drop-primary {
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .drop-secondary {
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .drop-hint {
           margin: 0;
           font-size: 0.875rem;
-          color: #94a3b8;
+          color: var(--ppt-fg-subtle);
         }
 
         .file-input {
@@ -560,7 +560,7 @@ export function DocumentUpload({
         }
 
         .file-list {
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.5rem;
           overflow: hidden;
         }
@@ -570,9 +570,9 @@ export function DocumentUpload({
           padding: 0.75rem 1rem;
           font-size: 0.875rem;
           font-weight: 600;
-          background: #f8fafc;
-          color: #1e293b;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--ppt-bg-app);
+          color: var(--ppt-fg-primary);
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .files {
@@ -586,7 +586,7 @@ export function DocumentUpload({
           align-items: center;
           gap: 0.75rem;
           padding: 0.75rem 1rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .file-item:last-child {
@@ -594,11 +594,11 @@ export function DocumentUpload({
         }
 
         .file-item.error {
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
         }
 
         .file-item.completed {
-          background: #f0fdf4;
+          background: var(--ppt-color-success-light);
         }
 
         .file-icon {
@@ -609,8 +609,8 @@ export function DocumentUpload({
           height: 40px;
           font-size: 0.625rem;
           font-weight: 700;
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
           border-radius: 0.375rem;
         }
 
@@ -623,7 +623,7 @@ export function DocumentUpload({
           display: block;
           font-size: 0.875rem;
           font-weight: 500;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -631,39 +631,39 @@ export function DocumentUpload({
 
         .file-size {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .file-error {
           display: block;
           font-size: 0.75rem;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .progress-bar {
           margin-top: 0.5rem;
           height: 4px;
-          background: #e2e8f0;
+          background: var(--ppt-border-default);
           border-radius: 2px;
           overflow: hidden;
         }
 
         .progress-fill {
           height: 100%;
-          background: #3b82f6;
+          background: var(--ppt-brand-500);
           transition: width 0.3s;
         }
 
         .processing-text {
           display: block;
           font-size: 0.75rem;
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .completed-text {
           display: block;
           font-size: 0.75rem;
-          color: #16a34a;
+          color: var(--ppt-color-success);
         }
 
         .file-actions {
@@ -678,17 +678,17 @@ export function DocumentUpload({
           height: 24px;
           font-size: 1rem;
           background: transparent;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.25rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.15s;
         }
 
         .remove-btn:hover {
-          background: #fee2e2;
-          border-color: #fecaca;
-          color: #dc2626;
+          background: var(--ppt-color-danger-light);
+          border-color: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger);
         }
 
         .success-icon {
@@ -699,14 +699,14 @@ export function DocumentUpload({
           height: 24px;
           font-size: 0.625rem;
           font-weight: 700;
-          background: #dcfce7;
-          color: #16a34a;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success);
           border-radius: 0.25rem;
         }
 
         .metadata-form {
           padding: 1.5rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
         }
 
@@ -714,7 +714,7 @@ export function DocumentUpload({
           margin: 0 0 1rem;
           font-size: 1rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .form-field {
@@ -730,11 +730,11 @@ export function DocumentUpload({
           margin-bottom: 0.375rem;
           font-size: 0.875rem;
           font-weight: 500;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
         }
 
         .required {
-          color: #dc2626;
+          color: var(--ppt-color-danger);
         }
 
         .text-input,
@@ -743,9 +743,9 @@ export function DocumentUpload({
           width: 100%;
           padding: 0.5rem 0.75rem;
           font-size: 0.875rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.375rem;
-          background: white;
+          background: var(--ppt-bg-surface);
           transition: border-color 0.15s;
         }
 
@@ -753,7 +753,7 @@ export function DocumentUpload({
         .textarea-input:focus,
         .select-input:focus {
           outline: none;
-          border-color: #3b82f6;
+          border-color: var(--ppt-brand-500);
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
@@ -765,7 +765,7 @@ export function DocumentUpload({
         .field-hint {
           margin: 0.375rem 0 0;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .ocr-info {
@@ -789,7 +789,7 @@ export function DocumentUpload({
           font-size: 0.625rem;
           font-weight: 700;
           background: #7c3aed;
-          color: white;
+          color: var(--ppt-fg-on-accent);
           border-radius: 0.25rem;
         }
 
@@ -838,28 +838,28 @@ export function DocumentUpload({
         }
 
         .btn-primary {
-          background: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .btn-secondary {
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
         }
 
         .btn-secondary:hover:not(:disabled) {
-          background: #cbd5e1;
+          background: var(--ppt-border-strong);
         }
 
         .spinner {
           width: 16px;
           height: 16px;
           border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
+          border-top-color: var(--ppt-fg-on-accent);
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
