@@ -156,10 +156,39 @@ pub async fn send_contact_message(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    // For now, we need to find the realtor for this listing
-    // In a full implementation, this would query the listing to get the realtor
-    // For simplicity, we'll use a placeholder realtor ID
-    let realtor_id = Uuid::nil(); // This would be fetched from the listing
+    // Public endpoint: acquire a connection and clear any stale RLS context
+    // before looking up the listing's realtor. Detailed errors are logged
+    // server-side; clients only see a generic 500 message.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to acquire db connection");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+    let listing = sqlx::query_as::<_, (Uuid,)>(
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
+    )
+    .bind(listing_id)
+    .fetch_optional(&mut *conn)
+    .await
+    .map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to query listing");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+
+    let realtor_id = match listing {
+        Some((created_by,)) => created_by,
+        None => {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
+            ));
+        }
+    };
 
     let inquiry_data = CreateListingInquiry {
         name: req.name,
@@ -254,7 +283,39 @@ pub async fn request_viewing(
         return Err((axum::http::StatusCode::BAD_REQUEST, errors.join(", ")));
     }
 
-    let realtor_id = Uuid::nil(); // This would be fetched from the listing
+    // Public endpoint: acquire a connection and clear any stale RLS context
+    // before looking up the listing's realtor. Detailed errors are logged
+    // server-side; clients only see a generic 500 message.
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to acquire db connection");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+    let listing = sqlx::query_as::<_, (Uuid,)>(
+        "SELECT created_by FROM listings WHERE id = $1 AND status = 'active'",
+    )
+    .bind(listing_id)
+    .fetch_optional(&mut *conn)
+    .await
+    .map_err(|e| {
+        tracing::error!(%listing_id, error = %e, "Failed to query listing");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+
+    let realtor_id = match listing {
+        Some((created_by,)) => created_by,
+        None => {
+            return Err((
+                axum::http::StatusCode::NOT_FOUND,
+                "Listing not found".to_string(),
+            ));
+        }
+    };
 
     let inquiry_data = CreateListingInquiry {
         name: req.name,

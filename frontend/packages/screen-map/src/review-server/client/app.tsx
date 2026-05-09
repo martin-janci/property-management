@@ -1,7 +1,8 @@
 // @ts-nocheck — this file runs in the browser via esm.sh; not type-checked by tsc.
-import { h, render } from 'https://esm.sh/preact@10.24.3';
-import { useState, useEffect } from 'https://esm.sh/preact@10.24.3/hooks';
+
 import htm from 'https://esm.sh/htm@3.1.1';
+import { h, render } from 'https://esm.sh/preact@10.24.3';
+import { useEffect, useState } from 'https://esm.sh/preact@10.24.3/hooks';
 
 const html = htm.bind(h);
 const TOKEN = window.__SESSION_TOKEN__;
@@ -62,9 +63,11 @@ function ScreenView({ sessionToken, screenId, total, onNext }) {
     }
   }
   const previewSrc =
-    previewMode === 'local' ? screen.previewUrls.local
-    : previewMode === 'staging' ? screen.previewUrls.staging
-    : null;
+    previewMode === 'local'
+      ? screen.previewUrls.local
+      : previewMode === 'staging'
+        ? screen.previewUrls.staging
+        : null;
   return html`
     <div class="topbar">
       <span class="progress">${screen.frontmatter.id} (${screen.frontmatter.product})</span>
@@ -114,7 +117,10 @@ function parseChecklist(body) {
     const match = line.match(/^- \[([ x])\] (.+)$/);
     if (match) {
       const label = match[2];
-      const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const key = label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
       items.push({ key, label });
     }
     if (line.startsWith('## ') && !line.startsWith('## Functionality')) break;

@@ -6,9 +6,9 @@
 
 'use client';
 
-import { Footer, Header } from '@/components/ui';
 import type { ListingDetail, ListingFeatures } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
+import { Footer, Header } from '@/components/ui';
 import { ContactForm } from './ContactForm';
 import { PhotoGallery } from './PhotoGallery';
 
@@ -58,15 +58,15 @@ export function ListingNotFound() {
         }
         .not-found h1 {
           font-size: 2rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 16px;
         }
         .not-found p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         .back-link {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
           text-decoration: none;
         }
         .back-link:hover {
@@ -337,7 +337,7 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: #f9fafb;
+          background: var(--ppt-bg-app);
         }
 
         .main {
@@ -353,17 +353,17 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
 
         .breadcrumb {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin-bottom: 24px;
         }
 
         .breadcrumb a {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           text-decoration: none;
         }
 
         .breadcrumb a:hover {
-          color: #2563eb;
+          color: var(--ppt-color-primary);
         }
 
         .separator {
@@ -371,7 +371,7 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
         }
 
         .current {
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .content-grid {
@@ -408,24 +408,24 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
         }
 
         .badge.sale {
-          background: #10b981;
-          color: #fff;
+          background: var(--ppt-color-success);
+          color: var(--ppt-fg-on-accent);
         }
 
         .badge.rent {
-          background: #3b82f6;
-          color: #fff;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .badge.type {
-          background: #f3f4f6;
-          color: #374151;
+          background: var(--ppt-bg-subtle);
+          color: var(--ppt-fg-secondary);
         }
 
         .title {
           font-size: 1.75rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 12px;
         }
 
@@ -434,7 +434,7 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           align-items: center;
           gap: 8px;
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 16px;
         }
 
@@ -447,17 +447,17 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
         .price {
           font-size: 2rem;
           font-weight: bold;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .price-suffix {
           font-size: 1rem;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .price-per-sqm {
           font-size: 14px;
-          color: #9ca3af;
+          color: var(--ppt-fg-subtle);
         }
 
         .key-details {
@@ -465,7 +465,7 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
           gap: 16px;
           padding: 24px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           margin-top: 24px;
         }
@@ -478,17 +478,17 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           display: block;
           font-size: 1.5rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .detail-label {
           font-size: 14px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .section {
           padding: 24px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 12px;
           margin-top: 24px;
         }
@@ -496,12 +496,12 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
         .section-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 16px;
         }
 
         .description {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           line-height: 1.7;
           white-space: pre-line;
           margin: 0;
@@ -517,11 +517,11 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .feature-item svg {
-          color: #10b981;
+          color: var(--ppt-color-success);
         }
 
         .info-grid {
@@ -534,16 +534,16 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           display: flex;
           justify-content: space-between;
           padding: 12px 0;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-bg-subtle);
         }
 
         .info-label {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .info-value {
           font-weight: 500;
-          color: #111827;
+          color: var(--ppt-fg-primary);
         }
 
         .resources {
@@ -557,16 +557,16 @@ export function ListingDetailContent({ listing, jsonLd }: ListingDetailContentPr
           align-items: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #f3f4f6;
+          background: var(--ppt-bg-subtle);
           border-radius: 8px;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
           text-decoration: none;
           font-weight: 500;
           transition: background 0.2s;
         }
 
         .resource-link:hover {
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
         }
 
         .sidebar {

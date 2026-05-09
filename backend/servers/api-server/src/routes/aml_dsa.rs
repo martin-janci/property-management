@@ -15,12 +15,13 @@ use axum::{
 };
 use chrono::{DateTime, Duration, Utc};
 use common::TenantRole;
+use db::models::compliance::{
+    AmlAssessmentStatus, AmlRiskLevel, CreateAmlRiskAssessment, CreateEnhancedDueDiligence,
+    CreateModerationCase, DsaReportStatus, EddStatus, ModeratedContentType, ModerationActionType,
+    ModerationStatus, TakeModerationAction, ViolationType,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-// Import compliance types from db crate
-// Note: These would be imported from db::models::compliance in a real implementation
-// For now, we define the response types inline to avoid module conflicts
 
 /// Create the AML/DSA compliance router.
 pub fn router() -> Router<AppState> {
@@ -94,28 +95,6 @@ fn require_moderator_role(user: &AuthUser) -> Result<(), (StatusCode, String)> {
 // STORY 67.1: AML RISK ASSESSMENT
 // ============================================================================
 
-/// AML risk level.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AmlRiskLevel {
-    Low,
-    Medium,
-    High,
-    Critical,
-}
-
-/// AML assessment status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AmlAssessmentStatus {
-    Pending,
-    InProgress,
-    Completed,
-    RequiresReview,
-    Approved,
-    Rejected,
-}
-
 /// Request to create AML assessment.
 #[derive(Debug, Deserialize)]
 pub struct CreateAmlAssessmentRequest {
@@ -134,7 +113,7 @@ pub struct CreateAmlAssessmentRequest {
 }
 
 /// Risk factor in assessment.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RiskFactor {
     pub factor_type: String,
     pub description: String,
@@ -172,186 +151,206 @@ pub struct AmlAssessmentResponse {
 
 /// Create a new AML risk assessment.
 async fn create_aml_assessment(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(req): Json<CreateAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
-    // Any authenticated user can trigger assessment, but only for their org
     let org_id = user.tenant_id.ok_or((
         StatusCode::BAD_REQUEST,
         "Organization context required".to_string(),
     ))?;
 
-    // Calculate risk score based on various factors
-    let mut risk_score = 0i32;
-    let mut risk_factors = Vec::new();
-
-    // Factor 1: Transaction amount (if above threshold)
-    let aml_threshold = 1_000_000i64; // 10,000 EUR in cents
-    if let Some(amount) = req.transaction_amount_cents {
-        if amount >= aml_threshold {
-            risk_score += 30;
-            risk_factors.push(RiskFactor {
-                factor_type: "high_value_transaction".to_string(),
-                description: format!(
-                    "Transaction amount ({} cents) exceeds AML threshold",
-                    amount
-                ),
-                weight: 30,
-                mitigated: false,
-            });
-        }
-    }
-
-    // Factor 2: Country risk (simulated)
-    let country_risk = match req.country_code.as_deref() {
-        Some("RU") | Some("BY") | Some("IR") | Some("KP") => {
-            risk_score += 40;
-            risk_factors.push(RiskFactor {
-                factor_type: "high_risk_country".to_string(),
-                description: "Party is from a high-risk or sanctioned jurisdiction".to_string(),
-                weight: 40,
-                mitigated: false,
-            });
-            Some("high".to_string())
-        }
-        Some("AE") | Some("PA") | Some("BS") => {
-            risk_score += 20;
-            risk_factors.push(RiskFactor {
-                factor_type: "medium_risk_country".to_string(),
-                description: "Party is from a medium-risk jurisdiction".to_string(),
-                weight: 20,
-                mitigated: false,
-            });
-            Some("medium".to_string())
-        }
-        _ => Some("low".to_string()),
+    let create_req = CreateAmlRiskAssessment {
+        organization_id: org_id,
+        transaction_id: req.transaction_id,
+        party_id: req.party_id,
+        party_type: req.party_type.clone(),
+        transaction_amount_cents: req.transaction_amount_cents,
+        currency: req.currency.clone(),
+        country_code: req.country_code.clone(),
     };
 
-    // Factor 3: Party type
-    if req.party_type == "company" {
-        risk_score += 10;
-        risk_factors.push(RiskFactor {
-            factor_type: "corporate_party".to_string(),
-            description: "Corporate entities require additional due diligence".to_string(),
-            weight: 10,
-            mitigated: false,
-        });
-    }
+    let assessment = state
+        .edd_repo
+        .create_aml_assessment(create_req)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create AML assessment: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create AML assessment".to_string(),
+            )
+        })?;
 
-    // Determine risk level
-    let risk_level = match risk_score {
-        0..=25 => AmlRiskLevel::Low,
-        26..=50 => AmlRiskLevel::Medium,
-        51..=75 => AmlRiskLevel::High,
-        _ => AmlRiskLevel::Critical,
-    };
+    // Parse risk factors from JSON
+    let risk_factors: Vec<RiskFactor> = assessment
+        .risk_factors
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
 
-    // Determine if flagged for review
-    let flagged_for_review =
-        risk_level == AmlRiskLevel::High || risk_level == AmlRiskLevel::Critical;
-
-    // Generate recommendations
+    // Generate recommendations based on risk level
     let mut recommendations = Vec::new();
-    if flagged_for_review {
+    if assessment.flagged_for_review {
         recommendations.push("Initiate Enhanced Due Diligence (EDD) process".to_string());
         recommendations.push("Verify source of funds documentation".to_string());
     }
-    if matches!(risk_level, AmlRiskLevel::High | AmlRiskLevel::Critical) {
+    if matches!(
+        assessment.risk_level,
+        AmlRiskLevel::High | AmlRiskLevel::Critical
+    ) {
         recommendations.push("Request additional identification documents".to_string());
         recommendations.push("Conduct PEP screening".to_string());
     }
 
-    let status = if flagged_for_review {
-        AmlAssessmentStatus::RequiresReview
-    } else {
-        AmlAssessmentStatus::Completed
-    };
-
-    let assessment_id = Uuid::new_v4();
-    let now = Utc::now();
-
-    // In production, this would be persisted to the database
-    tracing::info!(
-        assessment_id = %assessment_id,
-        org_id = %org_id,
-        party_id = %req.party_id,
-        risk_score = risk_score,
-        risk_level = ?risk_level,
-        "AML risk assessment created"
-    );
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
 
     Ok(Json(AmlAssessmentResponse {
-        id: assessment_id,
-        party_id: req.party_id,
-        party_type: req.party_type,
-        transaction_id: req.transaction_id,
-        transaction_amount_cents: req.transaction_amount_cents,
-        currency: req.currency,
-        risk_score,
-        risk_level,
-        status,
+        id: assessment.id,
+        party_id: assessment.party_id,
+        party_type: assessment.party_type,
+        transaction_id: assessment.transaction_id,
+        transaction_amount_cents: assessment.transaction_amount_cents,
+        currency: assessment.currency,
+        risk_score: assessment.risk_score,
+        risk_level: assessment.risk_level,
+        status: assessment.status,
         risk_factors,
-        country_code: req.country_code,
-        country_risk,
-        id_verified: false,
-        source_of_funds_documented: false,
-        pep_check_completed: false,
-        is_pep: None,
-        sanctions_check_completed: false,
-        sanctions_match: None,
-        flagged_for_review,
-        review_reason: if flagged_for_review {
-            Some("Risk score exceeds threshold".to_string())
-        } else {
-            None
-        },
+        country_code: assessment.country_code,
+        country_risk: country_risk_str,
+        id_verified: assessment.id_verified,
+        source_of_funds_documented: assessment.source_of_funds_documented,
+        pep_check_completed: assessment.pep_check_completed,
+        is_pep: assessment.is_pep,
+        sanctions_check_completed: assessment.sanctions_check_completed,
+        sanctions_match: assessment.sanctions_match,
+        flagged_for_review: assessment.flagged_for_review,
+        review_reason: assessment.review_reason,
         recommendations,
-        created_at: now,
-        assessed_at: Some(now),
+        created_at: assessment.created_at,
+        assessed_at: assessment.assessed_at,
     }))
 }
 
 /// Query parameters for listing assessments.
 #[derive(Debug, Deserialize)]
 pub struct ListAmlAssessmentsQuery {
-    pub status: Option<String>,
-    pub risk_level: Option<String>,
+    pub status: Option<AmlAssessmentStatus>,
+    pub risk_level: Option<AmlRiskLevel>,
     pub flagged_only: Option<bool>,
-    pub from_date: Option<DateTime<Utc>>,
-    pub to_date: Option<DateTime<Utc>>,
     pub limit: Option<i64>,
     pub offset: Option<i64>,
 }
 
 /// List AML assessments.
 async fn list_aml_assessments(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Query(params): Query<ListAmlAssessmentsQuery>,
-) -> Result<Json<Vec<AmlAssessmentResponse>>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    // In production, this would query the database with filters
-    let _params = params;
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
 
-    // Return empty list for now (would be populated from database)
-    Ok(Json(vec![]))
+    let limit = params.limit.unwrap_or(50);
+    let offset = params.offset.unwrap_or(0);
+    let flagged_only = params.flagged_only.unwrap_or(false);
+
+    let (assessments, total) = state
+        .edd_repo
+        .list_aml_assessments(
+            org_id,
+            params.status,
+            params.risk_level,
+            flagged_only,
+            limit,
+            offset,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list AML assessments: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to list assessments".to_string(),
+            )
+        })?;
+
+    Ok(Json(serde_json::json!({
+        "assessments": assessments,
+        "total": total,
+        "limit": limit,
+        "offset": offset
+    })))
 }
 
 /// Get a specific AML assessment.
 async fn get_aml_assessment(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    // In production, this would fetch from database
-    Err((
-        StatusCode::NOT_FOUND,
-        format!("Assessment {} not found", id),
-    ))
+    let assessment = state
+        .edd_repo
+        .get_aml_assessment(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get AML assessment: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get assessment".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("Assessment {} not found", id),
+        ))?;
+
+    let risk_factors: Vec<RiskFactor> = assessment
+        .risk_factors
+        .clone()
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
+
+    let mut recommendations = Vec::new();
+    if assessment.flagged_for_review {
+        recommendations.push("Initiate Enhanced Due Diligence (EDD) process".to_string());
+    }
+
+    Ok(Json(AmlAssessmentResponse {
+        id: assessment.id,
+        party_id: assessment.party_id,
+        party_type: assessment.party_type,
+        transaction_id: assessment.transaction_id,
+        transaction_amount_cents: assessment.transaction_amount_cents,
+        currency: assessment.currency,
+        risk_score: assessment.risk_score,
+        risk_level: assessment.risk_level,
+        status: assessment.status,
+        risk_factors,
+        country_code: assessment.country_code,
+        country_risk: country_risk_str,
+        id_verified: assessment.id_verified,
+        source_of_funds_documented: assessment.source_of_funds_documented,
+        pep_check_completed: assessment.pep_check_completed,
+        is_pep: assessment.is_pep,
+        sanctions_check_completed: assessment.sanctions_check_completed,
+        sanctions_match: assessment.sanctions_match,
+        flagged_for_review: assessment.flagged_for_review,
+        review_reason: assessment.review_reason,
+        recommendations,
+        created_at: assessment.created_at,
+        assessed_at: assessment.assessed_at,
+    }))
 }
 
 /// Request to review an assessment.
@@ -363,25 +362,71 @@ pub struct ReviewAmlAssessmentRequest {
 
 /// Review an AML assessment.
 async fn review_aml_assessment(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<ReviewAmlAssessmentRequest>,
 ) -> Result<Json<AmlAssessmentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    tracing::info!(
-        assessment_id = %id,
-        reviewer = %user.user_id,
-        decision = %req.decision,
-        "AML assessment reviewed"
-    );
+    let decision = match req.decision.to_lowercase().as_str() {
+        "approved" => AmlAssessmentStatus::Approved,
+        "rejected" => AmlAssessmentStatus::Rejected,
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Decision must be 'approved' or 'rejected'".to_string(),
+            ))
+        }
+    };
 
-    // In production, this would update the database
-    Err((
-        StatusCode::NOT_FOUND,
-        format!("Assessment {} not found", id),
-    ))
+    let assessment = state
+        .edd_repo
+        .review_aml_assessment(id, user.user_id, decision, req.notes.as_deref())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to review AML assessment: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to review assessment".to_string(),
+            )
+        })?;
+
+    let risk_factors: Vec<RiskFactor> = assessment
+        .risk_factors
+        .clone()
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    let country_risk_str = assessment
+        .country_risk
+        .map(|r| format!("{:?}", r).to_lowercase());
+
+    Ok(Json(AmlAssessmentResponse {
+        id: assessment.id,
+        party_id: assessment.party_id,
+        party_type: assessment.party_type,
+        transaction_id: assessment.transaction_id,
+        transaction_amount_cents: assessment.transaction_amount_cents,
+        currency: assessment.currency,
+        risk_score: assessment.risk_score,
+        risk_level: assessment.risk_level,
+        status: assessment.status,
+        risk_factors,
+        country_code: assessment.country_code,
+        country_risk: country_risk_str,
+        id_verified: assessment.id_verified,
+        source_of_funds_documented: assessment.source_of_funds_documented,
+        pep_check_completed: assessment.pep_check_completed,
+        is_pep: assessment.is_pep,
+        sanctions_check_completed: assessment.sanctions_check_completed,
+        sanctions_match: assessment.sanctions_match,
+        flagged_for_review: assessment.flagged_for_review,
+        review_reason: assessment.review_reason,
+        recommendations: vec![],
+        created_at: assessment.created_at,
+        assessed_at: assessment.assessed_at,
+    }))
 }
 
 /// Country risk entry.
@@ -396,42 +441,31 @@ pub struct CountryRiskEntry {
 
 /// Get country risk database.
 async fn get_country_risks(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<Vec<CountryRiskEntry>>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    // Return sample country risk data
-    Ok(Json(vec![
-        CountryRiskEntry {
-            country_code: "SK".to_string(),
-            country_name: "Slovakia".to_string(),
-            risk_rating: "low".to_string(),
-            is_sanctioned: false,
-            fatf_status: None,
-        },
-        CountryRiskEntry {
-            country_code: "CZ".to_string(),
-            country_name: "Czech Republic".to_string(),
-            risk_rating: "low".to_string(),
-            is_sanctioned: false,
-            fatf_status: None,
-        },
-        CountryRiskEntry {
-            country_code: "RU".to_string(),
-            country_name: "Russia".to_string(),
-            risk_rating: "high".to_string(),
-            is_sanctioned: true,
-            fatf_status: Some("FATF Blacklist".to_string()),
-        },
-        CountryRiskEntry {
-            country_code: "IR".to_string(),
-            country_name: "Iran".to_string(),
-            risk_rating: "high".to_string(),
-            is_sanctioned: true,
-            fatf_status: Some("FATF Blacklist".to_string()),
-        },
-    ]))
+    let risks = state.edd_repo.list_country_risks().await.map_err(|e| {
+        tracing::error!("Failed to get country risks: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get country risks".to_string(),
+        )
+    })?;
+
+    let entries: Vec<CountryRiskEntry> = risks
+        .into_iter()
+        .map(|r| CountryRiskEntry {
+            country_code: r.country_code,
+            country_name: r.country_name,
+            risk_rating: format!("{:?}", r.risk_rating).to_lowercase(),
+            is_sanctioned: r.is_sanctioned,
+            fatf_status: r.fatf_status,
+        })
+        .collect();
+
+    Ok(Json(entries))
 }
 
 /// AML thresholds response.
@@ -461,18 +495,6 @@ async fn get_aml_thresholds(
 // ============================================================================
 // STORY 67.2: ENHANCED DUE DILIGENCE
 // ============================================================================
-
-/// EDD status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EddStatus {
-    Required,
-    InProgress,
-    PendingDocuments,
-    UnderReview,
-    Completed,
-    Expired,
-}
 
 /// Request to initiate EDD.
 #[derive(Debug, Deserialize)]
@@ -524,53 +546,142 @@ pub struct ComplianceNoteResponse {
 
 /// Initiate Enhanced Due Diligence.
 async fn initiate_edd(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(req): Json<InitiateEddRequest>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    let edd_id = Uuid::new_v4();
-    let now = Utc::now();
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
 
-    tracing::info!(
-        edd_id = %edd_id,
-        aml_assessment_id = %req.aml_assessment_id,
-        party_id = %req.party_id,
-        initiated_by = %user.user_id,
-        "EDD initiated"
-    );
+    let create_req = CreateEnhancedDueDiligence {
+        aml_assessment_id: req.aml_assessment_id,
+        organization_id: org_id,
+        party_id: req.party_id,
+        initiated_by: user.user_id,
+        documents_requested: Some(req.documents_requested.clone()),
+    };
+
+    let edd = state.edd_repo.create_edd(create_req).await.map_err(|e| {
+        tracing::error!("Failed to create EDD: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to initiate EDD".to_string(),
+        )
+    })?;
+
+    let documents_requested: Vec<String> = edd
+        .documents_requested
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
 
     Ok(Json(EddRecordResponse {
-        id: edd_id,
-        aml_assessment_id: req.aml_assessment_id,
-        party_id: req.party_id,
-        status: EddStatus::InProgress,
-        source_of_wealth: None,
-        source_of_funds: None,
-        beneficial_ownership: None,
-        documents_requested: req.documents_requested,
+        id: edd.id,
+        aml_assessment_id: edd.aml_assessment_id,
+        party_id: edd.party_id,
+        status: edd.status,
+        source_of_wealth: edd.source_of_wealth,
+        source_of_funds: edd.source_of_funds,
+        beneficial_ownership: edd.beneficial_ownership,
+        documents_requested,
         documents_received: vec![],
         compliance_notes: vec![],
-        initiated_at: now,
-        initiated_by: user.user_id,
-        completed_at: None,
-        next_review_date: Some(now + Duration::days(365)),
+        initiated_at: edd.initiated_at,
+        initiated_by: edd.initiated_by,
+        completed_at: edd.completed_at,
+        next_review_date: edd.next_review_date,
     }))
 }
 
 /// Get EDD record by ID.
 async fn get_edd_record(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    Err((
-        StatusCode::NOT_FOUND,
-        format!("EDD record {} not found", id),
-    ))
+    let edd = state
+        .edd_repo
+        .get_edd(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get EDD record".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", id),
+        ))?;
+
+    // Get documents
+    let docs = state.edd_repo.list_edd_documents(id).await.map_err(|e| {
+        tracing::error!("Failed to list EDD documents: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get EDD documents".to_string(),
+        )
+    })?;
+
+    let documents_received: Vec<EddDocumentResponse> = docs
+        .into_iter()
+        .map(|d| EddDocumentResponse {
+            id: d.id,
+            document_type: d.document_type,
+            original_filename: d.original_filename,
+            verification_status: format!("{:?}", d.verification_status).to_lowercase(),
+            verified_at: d.verified_at,
+            expiry_date: d.expiry_date,
+            uploaded_at: d.uploaded_at,
+        })
+        .collect();
+
+    // Get compliance notes
+    let notes = state.edd_repo.get_compliance_notes(id).await.map_err(|e| {
+        tracing::error!("Failed to get compliance notes: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get compliance notes".to_string(),
+        )
+    })?;
+
+    let compliance_notes: Vec<ComplianceNoteResponse> = notes
+        .into_iter()
+        .map(|n| ComplianceNoteResponse {
+            id: n.id,
+            content: n.content,
+            added_by_name: n.added_by_name,
+            added_at: n.added_at,
+        })
+        .collect();
+
+    let documents_requested: Vec<String> = edd
+        .documents_requested
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    Ok(Json(EddRecordResponse {
+        id: edd.id,
+        aml_assessment_id: edd.aml_assessment_id,
+        party_id: edd.party_id,
+        status: edd.status,
+        source_of_wealth: edd.source_of_wealth,
+        source_of_funds: edd.source_of_funds,
+        beneficial_ownership: edd.beneficial_ownership,
+        documents_requested,
+        documents_received,
+        compliance_notes,
+        initiated_at: edd.initiated_at,
+        initiated_by: edd.initiated_by,
+        completed_at: edd.completed_at,
+        next_review_date: edd.next_review_date,
+    }))
 }
 
 /// Upload EDD document request (metadata only, actual file via multipart).
@@ -586,71 +697,61 @@ pub struct UploadEddDocumentRequest {
 
 /// Upload a document for EDD.
 async fn upload_edd_document(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(edd_id): Path<Uuid>,
     Json(req): Json<UploadEddDocumentRequest>,
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
-    // Require compliance role to upload EDD documents
     require_compliance_role(&user)?;
 
-    // Verify that the user has permission to upload documents for this specific EDD record
-    // In production, this would query the database to verify:
-    // 1. The EDD record exists
-    // 2. The user has permission to access the organization associated with the EDD
-    // 3. The EDD is in a state that allows document uploads (not completed/expired)
-    //
-    // For now, we log the authorization check
-    tracing::debug!(
-        edd_id = %edd_id,
-        user_id = %user.user_id,
-        org_id = ?user.tenant_id,
-        "Verifying user permission to upload document for EDD record"
-    );
+    // Verify the EDD record exists
+    let _edd = state
+        .edd_repo
+        .get_edd(edd_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify EDD record".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", edd_id),
+        ))?;
 
-    // TODO: Implement database check once EDD repository is available
-    // Example implementation:
-    // let edd_record = state.edd_repo.get_edd_record(edd_id).await
-    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    //     .ok_or((StatusCode::NOT_FOUND, format!("EDD record {} not found", edd_id)))?;
-    //
-    // // Verify organization access
-    // if let Some(tenant_id) = user.tenant_id {
-    //     if edd_record.organization_id != tenant_id {
-    //         return Err((
-    //             StatusCode::FORBIDDEN,
-    //             "You do not have permission to upload documents for this EDD record".to_string()
-    //         ));
-    //     }
-    // }
-    //
-    // // Verify EDD is in uploadable state
-    // if matches!(edd_record.status, EddStatus::Completed | EddStatus::Expired) {
-    //     return Err((
-    //         StatusCode::BAD_REQUEST,
-    //         "Cannot upload documents to a completed or expired EDD record".to_string()
-    //     ));
-    // }
+    let create_doc = db::models::compliance::CreateEddDocument {
+        edd_id,
+        document_type: req.document_type.clone(),
+        file_path: req.file_path,
+        original_filename: req.original_filename.clone(),
+        file_size_bytes: req.file_size_bytes,
+        mime_type: req.mime_type,
+        uploaded_by: user.user_id,
+        expiry_date: req.expiry_date,
+    };
 
-    let doc_id = Uuid::new_v4();
-    let now = Utc::now();
-
-    tracing::info!(
-        doc_id = %doc_id,
-        edd_id = %edd_id,
-        document_type = %req.document_type,
-        uploaded_by = %user.user_id,
-        "EDD document uploaded"
-    );
+    let doc = state
+        .edd_repo
+        .upload_edd_document(create_doc)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to upload EDD document: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to upload document".to_string(),
+            )
+        })?;
 
     Ok(Json(EddDocumentResponse {
-        id: doc_id,
-        document_type: req.document_type,
-        original_filename: req.original_filename,
-        verification_status: "pending".to_string(),
-        verified_at: None,
-        expiry_date: req.expiry_date,
-        uploaded_at: now,
+        id: doc.id,
+        document_type: doc.document_type,
+        original_filename: doc.original_filename,
+        verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
+        verified_at: doc.verified_at,
+        expiry_date: doc.expiry_date,
+        uploaded_at: doc.uploaded_at,
     }))
 }
 
@@ -663,25 +764,67 @@ pub struct VerifyDocumentRequest {
 
 /// Verify an EDD document.
 async fn verify_edd_document(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path((edd_id, doc_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<VerifyDocumentRequest>,
 ) -> Result<Json<EddDocumentResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    tracing::info!(
-        edd_id = %edd_id,
-        doc_id = %doc_id,
-        status = %req.status,
-        verified_by = %user.user_id,
-        "EDD document verification"
-    );
+    // Verify the EDD record exists
+    let _edd = state
+        .edd_repo
+        .get_edd(edd_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify EDD record".to_string(),
+            )
+        })?
+        .ok_or((
+            StatusCode::NOT_FOUND,
+            format!("EDD record {} not found", edd_id),
+        ))?;
 
-    Err((
-        StatusCode::NOT_FOUND,
-        format!("Document {} not found", doc_id),
-    ))
+    let status = match req.status.to_lowercase().as_str() {
+        "verified" => db::models::compliance::DocumentVerificationStatus::Verified,
+        "rejected" => db::models::compliance::DocumentVerificationStatus::Rejected,
+        _ => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "Status must be 'verified' or 'rejected'".to_string(),
+            ))
+        }
+    };
+
+    let doc = state
+        .edd_repo
+        .verify_edd_document(
+            doc_id,
+            user.user_id,
+            status,
+            req.rejection_reason.as_deref(),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to verify EDD document: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to verify document".to_string(),
+            )
+        })?;
+
+    Ok(Json(EddDocumentResponse {
+        id: doc.id,
+        document_type: doc.document_type,
+        original_filename: doc.original_filename,
+        verification_status: format!("{:?}", doc.verification_status).to_lowercase(),
+        verified_at: doc.verified_at,
+        expiry_date: doc.expiry_date,
+        uploaded_at: doc.uploaded_at,
+    }))
 }
 
 /// Add compliance note request.
@@ -692,74 +835,150 @@ pub struct AddComplianceNoteRequest {
 
 /// Add a compliance note to EDD record.
 async fn add_edd_note(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(edd_id): Path<Uuid>,
     Json(req): Json<AddComplianceNoteRequest>,
 ) -> Result<Json<ComplianceNoteResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    let note_id = Uuid::new_v4();
-    let now = Utc::now();
+    // Get user name for the note
+    let user_info = state
+        .user_repo
+        .find_by_id(user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get user: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get user info".to_string(),
+            )
+        })?;
 
-    tracing::info!(
-        note_id = %note_id,
-        edd_id = %edd_id,
-        added_by = %user.user_id,
-        "Compliance note added"
-    );
+    let user_name = user_info
+        .map(|u| u.name.clone())
+        .unwrap_or_else(|| "Unknown User".to_string());
+
+    let note_req = db::models::compliance::AddComplianceNote {
+        content: req.content,
+    };
+
+    let note = state
+        .edd_repo
+        .add_compliance_note(edd_id, note_req, user.user_id, &user_name)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to add compliance note: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to add note".to_string(),
+            )
+        })?;
 
     Ok(Json(ComplianceNoteResponse {
-        id: note_id,
-        content: req.content,
-        added_by_name: "Compliance Officer".to_string(), // Would fetch from user
-        added_at: now,
+        id: note.id,
+        content: note.content,
+        added_by_name: note.added_by_name,
+        added_at: note.added_at,
     }))
 }
 
 /// Complete EDD process.
 async fn complete_edd(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(edd_id): Path<Uuid>,
 ) -> Result<Json<EddRecordResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    tracing::info!(
-        edd_id = %edd_id,
-        completed_by = %user.user_id,
-        "EDD completed"
-    );
+    let edd = state
+        .edd_repo
+        .complete_edd(edd_id, user.user_id, None)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to complete EDD: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to complete EDD".to_string(),
+            )
+        })?;
 
-    Err((
-        StatusCode::NOT_FOUND,
-        format!("EDD record {} not found", edd_id),
-    ))
+    let documents_requested: Vec<String> = edd
+        .documents_requested
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
+
+    Ok(Json(EddRecordResponse {
+        id: edd.id,
+        aml_assessment_id: edd.aml_assessment_id,
+        party_id: edd.party_id,
+        status: edd.status,
+        source_of_wealth: edd.source_of_wealth,
+        source_of_funds: edd.source_of_funds,
+        beneficial_ownership: edd.beneficial_ownership,
+        documents_requested,
+        documents_received: vec![],
+        compliance_notes: vec![],
+        initiated_at: edd.initiated_at,
+        initiated_by: edd.initiated_by,
+        completed_at: edd.completed_at,
+        next_review_date: edd.next_review_date,
+    }))
 }
 
 /// List pending EDD records.
 async fn list_pending_edd(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<Vec<EddRecordResponse>>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    Ok(Json(vec![]))
+    let org_id = user.tenant_id.ok_or((
+        StatusCode::BAD_REQUEST,
+        "Organization context required".to_string(),
+    ))?;
+
+    let edds = state.edd_repo.list_pending_edd(org_id).await.map_err(|e| {
+        tracing::error!("Failed to list pending EDD: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to list pending EDD".to_string(),
+        )
+    })?;
+
+    let responses: Vec<EddRecordResponse> = edds
+        .into_iter()
+        .map(|edd| {
+            let documents_requested: Vec<String> = edd
+                .documents_requested
+                .and_then(|v| serde_json::from_value(v).ok())
+                .unwrap_or_default();
+
+            EddRecordResponse {
+                id: edd.id,
+                aml_assessment_id: edd.aml_assessment_id,
+                party_id: edd.party_id,
+                status: edd.status,
+                source_of_wealth: edd.source_of_wealth,
+                source_of_funds: edd.source_of_funds,
+                beneficial_ownership: edd.beneficial_ownership,
+                documents_requested,
+                documents_received: vec![],
+                compliance_notes: vec![],
+                initiated_at: edd.initiated_at,
+                initiated_by: edd.initiated_by,
+                completed_at: edd.completed_at,
+                next_review_date: edd.next_review_date,
+            }
+        })
+        .collect();
+
+    Ok(Json(responses))
 }
 
 // ============================================================================
 // STORY 67.3: DSA TRANSPARENCY REPORTS
 // ============================================================================
-
-/// DSA report status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum DsaReportStatus {
-    Draft,
-    Generated,
-    Published,
-    Archived,
-}
 
 /// DSA report summary statistics.
 #[derive(Debug, Serialize)]
@@ -787,7 +1006,7 @@ pub struct ContentTypeCount {
 
 /// Violation type count.
 #[derive(Debug, Serialize)]
-pub struct ViolationTypeCount {
+pub struct ViolationTypeCountResponse {
     pub violation_type: String,
     pub count: i64,
 }
@@ -801,7 +1020,7 @@ pub struct DsaTransparencyReportResponse {
     pub status: DsaReportStatus,
     pub summary: DsaReportSummary,
     pub content_type_breakdown: Vec<ContentTypeCount>,
-    pub violation_type_breakdown: Vec<ViolationTypeCount>,
+    pub violation_type_breakdown: Vec<ViolationTypeCountResponse>,
     pub download_url: Option<String>,
     pub generated_at: Option<DateTime<Utc>>,
     pub published_at: Option<DateTime<Utc>>,
@@ -816,98 +1035,227 @@ pub struct GenerateDsaReportRequest {
 
 /// List DSA transparency reports.
 async fn list_dsa_reports(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<Vec<DsaTransparencyReportResponse>>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    Ok(Json(vec![]))
+    let reports = state
+        .compliance_repo
+        .list_dsa_reports(None, 50, 0)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list DSA reports: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to list reports".to_string(),
+            )
+        })?;
+
+    let responses: Vec<DsaTransparencyReportResponse> = reports
+        .into_iter()
+        .map(|r| DsaTransparencyReportResponse {
+            id: r.id,
+            period_start: r.period_start,
+            period_end: r.period_end,
+            status: r.status,
+            summary: DsaReportSummary {
+                total_moderation_actions: r.total_moderation_actions,
+                content_removed: r.content_removed_count,
+                content_restricted: r.content_restricted_count,
+                warnings_issued: r.warnings_issued_count,
+                user_reports_received: r.user_reports_received,
+                user_reports_resolved: r.user_reports_resolved,
+                avg_resolution_time_hours: r.avg_resolution_time_hours,
+                automated_decisions: r.automated_decisions_count,
+                automated_decisions_overturned: r.automated_decisions_overturned,
+                appeals_received: r.appeals_received,
+                appeals_upheld: r.appeals_upheld,
+                appeals_rejected: r.appeals_rejected,
+            },
+            content_type_breakdown: vec![],
+            violation_type_breakdown: vec![],
+            download_url: r.report_file_path,
+            generated_at: r.generated_at,
+            published_at: r.published_at,
+        })
+        .collect();
+
+    Ok(Json(responses))
 }
 
 /// Generate a new DSA transparency report.
 async fn generate_dsa_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(req): Json<GenerateDsaReportRequest>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    let report_id = Uuid::new_v4();
-    let now = Utc::now();
+    let report = state
+        .compliance_repo
+        .create_dsa_report(req.period_start, req.period_end, user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to generate DSA report: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to generate report".to_string(),
+            )
+        })?;
 
-    tracing::info!(
-        report_id = %report_id,
-        period_start = %req.period_start,
-        period_end = %req.period_end,
-        generated_by = %user.user_id,
-        "DSA transparency report generated"
-    );
-
-    // In production, this would aggregate data from moderation logs
     Ok(Json(DsaTransparencyReportResponse {
-        id: report_id,
-        period_start: req.period_start,
-        period_end: req.period_end,
-        status: DsaReportStatus::Generated,
+        id: report.id,
+        period_start: report.period_start,
+        period_end: report.period_end,
+        status: report.status,
         summary: DsaReportSummary {
-            total_moderation_actions: 0,
-            content_removed: 0,
-            content_restricted: 0,
-            warnings_issued: 0,
-            user_reports_received: 0,
-            user_reports_resolved: 0,
-            avg_resolution_time_hours: None,
-            automated_decisions: 0,
-            automated_decisions_overturned: 0,
-            appeals_received: 0,
-            appeals_upheld: 0,
-            appeals_rejected: 0,
+            total_moderation_actions: report.total_moderation_actions,
+            content_removed: report.content_removed_count,
+            content_restricted: report.content_restricted_count,
+            warnings_issued: report.warnings_issued_count,
+            user_reports_received: report.user_reports_received,
+            user_reports_resolved: report.user_reports_resolved,
+            avg_resolution_time_hours: report.avg_resolution_time_hours,
+            automated_decisions: report.automated_decisions_count,
+            automated_decisions_overturned: report.automated_decisions_overturned,
+            appeals_received: report.appeals_received,
+            appeals_upheld: report.appeals_upheld,
+            appeals_rejected: report.appeals_rejected,
         },
         content_type_breakdown: vec![],
         violation_type_breakdown: vec![],
-        download_url: None,
-        generated_at: Some(now),
-        published_at: None,
+        download_url: report.report_file_path,
+        generated_at: report.generated_at,
+        published_at: report.published_at,
     }))
 }
 
 /// Get a specific DSA report.
 async fn get_dsa_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    Err((StatusCode::NOT_FOUND, format!("Report {} not found", id)))
+    let report = state
+        .compliance_repo
+        .get_dsa_report(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get DSA report: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get report".to_string(),
+            )
+        })?
+        .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
+
+    Ok(Json(DsaTransparencyReportResponse {
+        id: report.id,
+        period_start: report.period_start,
+        period_end: report.period_end,
+        status: report.status,
+        summary: DsaReportSummary {
+            total_moderation_actions: report.total_moderation_actions,
+            content_removed: report.content_removed_count,
+            content_restricted: report.content_restricted_count,
+            warnings_issued: report.warnings_issued_count,
+            user_reports_received: report.user_reports_received,
+            user_reports_resolved: report.user_reports_resolved,
+            avg_resolution_time_hours: report.avg_resolution_time_hours,
+            automated_decisions: report.automated_decisions_count,
+            automated_decisions_overturned: report.automated_decisions_overturned,
+            appeals_received: report.appeals_received,
+            appeals_upheld: report.appeals_upheld,
+            appeals_rejected: report.appeals_rejected,
+        },
+        content_type_breakdown: vec![],
+        violation_type_breakdown: vec![],
+        download_url: report.report_file_path,
+        generated_at: report.generated_at,
+        published_at: report.published_at,
+    }))
 }
 
 /// Publish a DSA report.
 async fn publish_dsa_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<DsaTransparencyReportResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    tracing::info!(
-        report_id = %id,
-        published_by = %user.user_id,
-        "DSA report published"
-    );
+    let report = state
+        .compliance_repo
+        .publish_dsa_report(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to publish DSA report: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to publish report".to_string(),
+            )
+        })?;
 
-    Err((StatusCode::NOT_FOUND, format!("Report {} not found", id)))
+    Ok(Json(DsaTransparencyReportResponse {
+        id: report.id,
+        period_start: report.period_start,
+        period_end: report.period_end,
+        status: report.status,
+        summary: DsaReportSummary {
+            total_moderation_actions: report.total_moderation_actions,
+            content_removed: report.content_removed_count,
+            content_restricted: report.content_restricted_count,
+            warnings_issued: report.warnings_issued_count,
+            user_reports_received: report.user_reports_received,
+            user_reports_resolved: report.user_reports_resolved,
+            avg_resolution_time_hours: report.avg_resolution_time_hours,
+            automated_decisions: report.automated_decisions_count,
+            automated_decisions_overturned: report.automated_decisions_overturned,
+            appeals_received: report.appeals_received,
+            appeals_upheld: report.appeals_upheld,
+            appeals_rejected: report.appeals_rejected,
+        },
+        content_type_breakdown: vec![],
+        violation_type_breakdown: vec![],
+        download_url: report.report_file_path,
+        generated_at: report.generated_at,
+        published_at: report.published_at,
+    }))
 }
 
 /// Download DSA report as PDF.
 async fn download_dsa_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
-    Err((StatusCode::NOT_FOUND, format!("Report {} not found", id)))
+    let report = state
+        .compliance_repo
+        .get_dsa_report(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get DSA report: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get report".to_string(),
+            )
+        })?
+        .ok_or((StatusCode::NOT_FOUND, format!("Report {} not found", id)))?;
+
+    match report.report_file_path {
+        Some(path) => Ok(Json(serde_json::json!({
+            "download_url": path
+        }))),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            "Report file not yet generated".to_string(),
+        )),
+    }
 }
 
 /// DSA metrics for current period.
@@ -923,86 +1271,47 @@ pub struct DsaMetricsResponse {
 
 /// Get current DSA metrics.
 async fn get_dsa_metrics(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<DsaMetricsResponse>, (StatusCode, String)> {
     require_compliance_role(&user)?;
 
+    let stats = state
+        .compliance_repo
+        .get_moderation_queue_stats()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get DSA metrics: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get metrics".to_string(),
+            )
+        })?;
+
     let now = Utc::now();
     let period_start = now - Duration::days(30);
+
+    // SLA compliance: percentage of cases resolved within 24 hours
+    let total_cases = stats.pending_count + stats.under_review_count;
+    let sla_compliance_rate = if total_cases > 0 {
+        ((total_cases - stats.overdue_count) as f64 / total_cases as f64) * 100.0
+    } else {
+        100.0
+    };
 
     Ok(Json(DsaMetricsResponse {
         current_period_start: period_start,
         current_period_end: now,
-        moderation_actions_this_period: 0,
-        pending_cases: 0,
-        avg_resolution_time_hours: 0.0,
-        sla_compliance_rate: 100.0,
+        moderation_actions_this_period: stats.pending_count + stats.under_review_count,
+        pending_cases: stats.pending_count,
+        avg_resolution_time_hours: stats.avg_resolution_time_hours,
+        sla_compliance_rate,
     }))
 }
 
 // ============================================================================
 // STORY 67.4: CONTENT MODERATION DASHBOARD
 // ============================================================================
-
-/// Moderation status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ModerationStatus {
-    Pending,
-    UnderReview,
-    Approved,
-    Removed,
-    Restricted,
-    Warned,
-    Appealed,
-    AppealApproved,
-    AppealRejected,
-}
-
-/// Content type being moderated.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ModeratedContentType {
-    Listing,
-    ListingPhoto,
-    UserProfile,
-    Review,
-    Comment,
-    Message,
-    Announcement,
-    Document,
-    CommunityPost,
-}
-
-/// Violation type.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ViolationType {
-    Spam,
-    Harassment,
-    HateSpeech,
-    Violence,
-    IllegalContent,
-    Misinformation,
-    Fraud,
-    Privacy,
-    IntellectualProperty,
-    InappropriateContent,
-    Other,
-}
-
-/// Moderation action type.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ModerationActionType {
-    Remove,
-    Restrict,
-    Warn,
-    Approve,
-    Ignore,
-    Escalate,
-}
 
 /// Content owner info.
 #[derive(Debug, Serialize)]
@@ -1037,9 +1346,9 @@ pub struct ModerationCaseResponse {
 /// Moderation queue query parameters.
 #[derive(Debug, Deserialize)]
 pub struct ModerationQueueQuery {
-    pub status: Option<String>,
-    pub content_type: Option<String>,
-    pub violation_type: Option<String>,
+    pub status: Option<ModerationStatus>,
+    pub content_type: Option<ModeratedContentType>,
+    pub violation_type: Option<ViolationType>,
     pub priority: Option<i32>,
     pub assigned_to: Option<Uuid>,
     pub unassigned_only: Option<bool>,
@@ -1051,13 +1360,76 @@ pub struct ModerationQueueQuery {
 
 /// Get moderation queue.
 async fn get_moderation_queue(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
-    Query(_params): Query<ModerationQueueQuery>,
-) -> Result<Json<Vec<ModerationCaseResponse>>, (StatusCode, String)> {
+    Query(params): Query<ModerationQueueQuery>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    Ok(Json(vec![]))
+    let limit = params.limit.unwrap_or(50);
+    let offset = params.offset.unwrap_or(0);
+    let unassigned_only = params.unassigned_only.unwrap_or(false);
+
+    let (cases, total) = state
+        .compliance_repo
+        .list_moderation_cases(
+            params.status,
+            params.content_type,
+            params.violation_type,
+            params.priority,
+            params.assigned_to,
+            unassigned_only,
+            params.sort_by.as_deref(),
+            params.sort_order.as_deref(),
+            limit,
+            offset,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list moderation cases: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to list cases".to_string(),
+            )
+        })?;
+
+    let now = Utc::now();
+    let responses: Vec<ModerationCaseResponse> = cases
+        .into_iter()
+        .map(|c| {
+            let age_hours = (now - c.created_at).num_minutes() as f64 / 60.0;
+            ModerationCaseResponse {
+                id: c.id,
+                content_type: c.content_type,
+                content_id: c.content_id,
+                content_preview: c.content_preview,
+                content_owner: ContentOwnerInfo {
+                    user_id: c.content_owner_id,
+                    name: "User".to_string(), // Would fetch from user repo
+                    previous_violations: 0,   // Would calculate from repo
+                },
+                report_source: format!("{:?}", c.report_source).to_lowercase(),
+                violation_type: c.violation_type,
+                report_reason: c.report_reason,
+                status: c.status,
+                priority: c.priority,
+                assigned_to_name: None, // Would fetch from user repo
+                decision: c.decision,
+                decision_rationale: c.decision_rationale,
+                appeal_filed: c.appeal_filed,
+                appeal_reason: c.appeal_reason,
+                created_at: c.created_at,
+                age_hours,
+            }
+        })
+        .collect();
+
+    Ok(Json(serde_json::json!({
+        "cases": responses,
+        "total": total,
+        "limit": limit,
+        "offset": offset
+    })))
 }
 
 /// Priority count.
@@ -1069,54 +1441,112 @@ pub struct PriorityCount {
 
 /// Moderation queue statistics.
 #[derive(Debug, Serialize)]
-pub struct ModerationQueueStats {
+pub struct ModerationQueueStatsResponse {
     pub pending_count: i64,
     pub under_review_count: i64,
     pub by_priority: Vec<PriorityCount>,
-    pub by_violation_type: Vec<ViolationTypeCount>,
+    pub by_violation_type: Vec<ViolationTypeCountResponse>,
     pub avg_resolution_time_hours: f64,
     pub overdue_count: i64,
 }
 
 /// Get moderation queue statistics.
 async fn get_moderation_stats(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
-) -> Result<Json<ModerationQueueStats>, (StatusCode, String)> {
+) -> Result<Json<ModerationQueueStatsResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    Ok(Json(ModerationQueueStats {
-        pending_count: 0,
-        under_review_count: 0,
-        by_priority: vec![
-            PriorityCount {
-                priority: 1,
-                count: 0,
-            },
-            PriorityCount {
-                priority: 2,
-                count: 0,
-            },
-            PriorityCount {
-                priority: 3,
-                count: 0,
-            },
-        ],
-        by_violation_type: vec![],
-        avg_resolution_time_hours: 0.0,
-        overdue_count: 0,
+    let stats = state
+        .compliance_repo
+        .get_moderation_queue_stats()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get moderation stats: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get stats".to_string(),
+            )
+        })?;
+
+    Ok(Json(ModerationQueueStatsResponse {
+        pending_count: stats.pending_count,
+        under_review_count: stats.under_review_count,
+        by_priority: stats
+            .by_priority
+            .into_iter()
+            .map(|p| PriorityCount {
+                priority: p.priority,
+                count: p.count,
+            })
+            .collect(),
+        by_violation_type: stats
+            .by_violation_type
+            .into_iter()
+            .map(|v| ViolationTypeCountResponse {
+                violation_type: v.violation_type,
+                count: v.count,
+            })
+            .collect(),
+        avg_resolution_time_hours: stats.avg_resolution_time_hours,
+        overdue_count: stats.overdue_count,
     }))
 }
 
 /// Get a specific moderation case.
 async fn get_moderation_case(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    Err((StatusCode::NOT_FOUND, format!("Case {} not found", id)))
+    let case = state
+        .compliance_repo
+        .get_moderation_case(id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get case".to_string(),
+            )
+        })?
+        .ok_or((StatusCode::NOT_FOUND, format!("Case {} not found", id)))?;
+
+    // Get violation count for content owner
+    let violation_count = state
+        .compliance_repo
+        .get_user_violation_count(case.content_owner_id)
+        .await
+        .unwrap_or(0);
+
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
+        content_owner: ContentOwnerInfo {
+            user_id: case.content_owner_id,
+            name: "User".to_string(),
+            previous_violations: violation_count,
+        },
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
+        assigned_to_name: None,
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
+    }))
 }
 
 /// Assign case request.
@@ -1127,7 +1557,7 @@ pub struct AssignCaseRequest {
 
 /// Assign a moderation case.
 async fn assign_moderation_case(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<AssignCaseRequest>,
@@ -1136,14 +1566,44 @@ async fn assign_moderation_case(
 
     let assignee = req.moderator_id.unwrap_or(user.user_id);
 
-    tracing::info!(
-        case_id = %id,
-        assigned_to = %assignee,
-        assigned_by = %user.user_id,
-        "Moderation case assigned"
-    );
+    let case = state
+        .compliance_repo
+        .assign_moderation_case(id, assignee)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to assign moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to assign case".to_string(),
+            )
+        })?;
 
-    Err((StatusCode::NOT_FOUND, format!("Case {} not found", id)))
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
+        content_owner: ContentOwnerInfo {
+            user_id: case.content_owner_id,
+            name: "User".to_string(),
+            previous_violations: 0,
+        },
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
+        assigned_to_name: Some("Assigned".to_string()),
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
+    }))
 }
 
 /// Take moderation action request.
@@ -1156,21 +1616,57 @@ pub struct TakeModerationActionRequest {
 
 /// Take action on a moderation case.
 async fn take_moderation_action(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<TakeModerationActionRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    tracing::info!(
-        case_id = %id,
-        action = ?req.action,
-        decided_by = %user.user_id,
-        "Moderation action taken"
-    );
+    let action = TakeModerationAction {
+        action: req.action,
+        rationale: req.rationale,
+        template_id: req.template_id,
+    };
 
-    Err((StatusCode::NOT_FOUND, format!("Case {} not found", id)))
+    let case = state
+        .compliance_repo
+        .take_moderation_action(id, action, user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to take moderation action: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to take action".to_string(),
+            )
+        })?;
+
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
+        content_owner: ContentOwnerInfo {
+            user_id: case.content_owner_id,
+            name: "User".to_string(),
+            previous_violations: 0,
+        },
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
+        assigned_to_name: None,
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
+    }))
 }
 
 /// File appeal request.
@@ -1181,21 +1677,57 @@ pub struct FileAppealRequest {
 
 /// File an appeal against moderation decision.
 async fn file_appeal(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<FileAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     // Any authenticated user can file appeal for their content
 
+    let case = state
+        .compliance_repo
+        .file_appeal(id, &req.reason)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to file appeal: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to file appeal".to_string(),
+            )
+        })?;
+
     tracing::info!(
         case_id = %id,
         appealed_by = %user.user_id,
-        reason = %req.reason,
         "Appeal filed"
     );
 
-    Err((StatusCode::NOT_FOUND, format!("Case {} not found", id)))
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
+        content_owner: ContentOwnerInfo {
+            user_id: case.content_owner_id,
+            name: "User".to_string(),
+            previous_violations: 0,
+        },
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
+        assigned_to_name: None,
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
+    }))
 }
 
 /// Decide appeal request.
@@ -1207,21 +1739,51 @@ pub struct DecideAppealRequest {
 
 /// Decide on an appeal.
 async fn decide_appeal(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<DecideAppealRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    tracing::info!(
-        case_id = %id,
-        decision = %req.decision,
-        decided_by = %user.user_id,
-        "Appeal decided"
-    );
+    let case = state
+        .compliance_repo
+        .decide_appeal(id, &req.decision, &req.rationale, user.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to decide appeal: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to decide appeal".to_string(),
+            )
+        })?;
 
-    Err((StatusCode::NOT_FOUND, format!("Case {} not found", id)))
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
+        content_owner: ContentOwnerInfo {
+            user_id: case.content_owner_id,
+            name: "User".to_string(),
+            previous_violations: 0,
+        },
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
+        assigned_to_name: None,
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
+    }))
 }
 
 /// Report content request.
@@ -1235,44 +1797,59 @@ pub struct ReportContentRequest {
 
 /// Report content for moderation.
 async fn report_content(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
     Json(req): Json<ReportContentRequest>,
 ) -> Result<Json<ModerationCaseResponse>, (StatusCode, String)> {
     // Any authenticated user can report content
-    let case_id = Uuid::new_v4();
-    let now = Utc::now();
 
-    tracing::info!(
-        case_id = %case_id,
-        content_type = ?req.content_type,
-        content_id = %req.content_id,
-        reported_by = %user.user_id,
-        "Content reported"
-    );
-
-    Ok(Json(ModerationCaseResponse {
-        id: case_id,
+    let create_req = CreateModerationCase {
         content_type: req.content_type,
         content_id: req.content_id,
-        content_preview: None,
+        violation_type: req.violation_type,
+        report_reason: req.reason,
+    };
+
+    // For now, use a placeholder for content_owner_id - in production this would be looked up
+    let content_owner_id = Uuid::new_v4();
+
+    let case = state
+        .compliance_repo
+        .create_moderation_case(create_req, user.user_id, content_owner_id, user.tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to create moderation case: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to report content".to_string(),
+            )
+        })?;
+
+    let now = Utc::now();
+    let age_hours = (now - case.created_at).num_minutes() as f64 / 60.0;
+
+    Ok(Json(ModerationCaseResponse {
+        id: case.id,
+        content_type: case.content_type,
+        content_id: case.content_id,
+        content_preview: case.content_preview,
         content_owner: ContentOwnerInfo {
-            user_id: Uuid::new_v4(), // Would be fetched from content
+            user_id: case.content_owner_id,
             name: "Unknown".to_string(),
             previous_violations: 0,
         },
-        report_source: "user".to_string(),
-        violation_type: req.violation_type,
-        report_reason: req.reason,
-        status: ModerationStatus::Pending,
-        priority: 3,
+        report_source: format!("{:?}", case.report_source).to_lowercase(),
+        violation_type: case.violation_type,
+        report_reason: case.report_reason,
+        status: case.status,
+        priority: case.priority,
         assigned_to_name: None,
-        decision: None,
-        decision_rationale: None,
-        appeal_filed: false,
-        appeal_reason: None,
-        created_at: now,
-        age_hours: 0.0,
+        decision: case.decision,
+        decision_rationale: case.decision_rationale,
+        appeal_filed: case.appeal_filed,
+        appeal_reason: case.appeal_reason,
+        created_at: case.created_at,
+        age_hours,
     }))
 }
 
@@ -1289,35 +1866,34 @@ pub struct ActionTemplateResponse {
 
 /// Get available action templates.
 async fn get_action_templates(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     user: AuthUser,
 ) -> Result<Json<Vec<ActionTemplateResponse>>, (StatusCode, String)> {
     require_moderator_role(&user)?;
 
-    Ok(Json(vec![
-        ActionTemplateResponse {
-            id: Uuid::new_v4(),
-            name: "Remove Spam".to_string(),
-            violation_type: ViolationType::Spam,
-            action_type: ModerationActionType::Remove,
-            rationale_template: "Content removed as it violates our spam policy.".to_string(),
-            notify_owner: true,
-        },
-        ActionTemplateResponse {
-            id: Uuid::new_v4(),
-            name: "Warn for Inappropriate Language".to_string(),
-            violation_type: ViolationType::InappropriateContent,
-            action_type: ModerationActionType::Warn,
-            rationale_template: "Warning issued for use of inappropriate language.".to_string(),
-            notify_owner: true,
-        },
-        ActionTemplateResponse {
-            id: Uuid::new_v4(),
-            name: "Remove Fraud Listing".to_string(),
-            violation_type: ViolationType::Fraud,
-            action_type: ModerationActionType::Remove,
-            rationale_template: "Listing removed due to suspected fraudulent activity.".to_string(),
-            notify_owner: true,
-        },
-    ]))
+    let templates = state
+        .compliance_repo
+        .list_action_templates()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list action templates: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to get templates".to_string(),
+            )
+        })?;
+
+    let responses: Vec<ActionTemplateResponse> = templates
+        .into_iter()
+        .map(|t| ActionTemplateResponse {
+            id: t.id,
+            name: t.name,
+            violation_type: t.violation_type,
+            action_type: t.action_type,
+            rationale_template: t.rationale_template,
+            notify_owner: t.notify_owner,
+        })
+        .collect();
+
+    Ok(Json(responses))
 }

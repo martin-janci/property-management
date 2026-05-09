@@ -1,0 +1,79 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+
+# Serialize runs so rapid merges to main don't race each other.
+# cancel-in-progress: false means later runs queue instead of being dropped.
+concurrency:
+  group: version-bump-main
+  cancel-in-progress: false
+
+jobs:
+  bump-version:
+    name: Bump Patch Version
+    runs-on: ubuntu-latest
+    # Skip if the commit was made by this workflow (avoid infinite loop)
+    if: "!startsWith(github.event.head_commit.message, 'chore(version):')"
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # GITHUB_TOKEN push does not re-trigger push-based workflows (GitHub
+          # prevents workflow recursion). That is intentional here — the version
+          # bump commit does not need to kick off CI again. If downstream
+          # workflows ever need to react to it, switch to a PAT/GitHub App token
+          # or trigger them via workflow_run instead.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node (for package.json sync)
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Bump patch version
+        run: ./scripts/bump-version.sh patch
+
+      - name: Create PR with version bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          git add VERSION
+          git add backend/Cargo.toml 2>/dev/null || true
+          git add frontend/package.json 2>/dev/null || true
+          git add "frontend/apps/*/package.json" 2>/dev/null || true
+          git add "frontend/packages/*/package.json" 2>/dev/null || true
+          git add mobile-native/gradle.properties 2>/dev/null || true
+          git add docs/api/typespec/main.tsp 2>/dev/null || true
+          git diff --cached --quiet && echo "No version files changed" && exit 0
+
+          BRANCH="chore/version-${VERSION}"
+          git checkout -b "$BRANCH"
+          git commit -m "chore(version): bump to $VERSION"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "chore(version): bump to $VERSION" \
+            --body "Automated patch version bump triggered by merge to \`main\`." \
+            --base main \
+            --head "$BRANCH")
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+          echo "Created PR #$PR_NUMBER: $PR_URL"
+
+          # Enable auto-merge — merges automatically once approval conditions are met
+          gh pr merge "$PR_NUMBER" --auto --squash \
+            && echo "Auto-merge enabled on PR #$PR_NUMBER" \
+            || echo "Note: auto-merge not available in repo settings — PR #$PR_NUMBER needs manual merge"

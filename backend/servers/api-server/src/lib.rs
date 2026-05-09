@@ -13,7 +13,7 @@ pub mod state;
 
 use axum::{http, routing::get, Router};
 use http::HeaderValue;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::state::AppState;
@@ -41,8 +41,10 @@ fn parse_default_origins() -> Vec<HeaderValue> {
 /// This function is exposed for integration testing.
 pub fn create_router(state: AppState) -> Router {
     Router::new()
-        // Health check
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + Redis). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Auth routes
         .nest("/api/v1/auth", routes::auth::router())
         // Admin routes
@@ -264,6 +266,10 @@ pub fn create_router(state: AppState) -> Router {
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration
+        // NOTE: `allow_headers` MUST be an explicit list when paired with
+        // `allow_credentials(true)`. Per the CORS spec, browsers reject the
+        // wildcard with credentials, and tower-http panics at layer
+        // construction if the two are combined.
         .layer(
             CorsLayer::new()
                 .allow_origin(parse_default_origins())
@@ -275,7 +281,15 @@ pub fn create_router(state: AppState) -> Router {
                     http::Method::DELETE,
                     http::Method::OPTIONS,
                 ])
-                .allow_headers(Any)
+                .allow_headers([
+                    http::header::AUTHORIZATION,
+                    http::header::CONTENT_TYPE,
+                    http::header::ACCEPT,
+                    http::header::ORIGIN,
+                    http::HeaderName::from_static("x-requested-with"),
+                    http::HeaderName::from_static("x-tenant-id"),
+                    http::HeaderName::from_static("x-tenant-context"),
+                ])
                 .allow_credentials(true)
                 .max_age(std::time::Duration::from_secs(3600)),
         )

@@ -1,4 +1,4 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { mobileScreens, pptWebRoutes, realityWebRoutes } from '@ppt/sitemap';
 import type { DesignSource } from './design-source/index.js';

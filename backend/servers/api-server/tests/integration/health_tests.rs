@@ -1,10 +1,16 @@
-//! Health check integration tests (Epic 99, Story 99.4).
+//! Health & readiness integration tests (Epic 99, Story 99.4; E8 split).
 //!
-//! Tests health check endpoints:
-//! - Database connectivity verification
-//! - Uptime tracking
-//! - Degraded status reporting
-//! - Response format compliance
+//! Two endpoints under test:
+//!   - `/health`   — shallow liveness; returns 200 with a small payload.
+//!   - `/readiness` — deep dep check (DB + Redis); 200 healthy/degraded,
+//!     503 unhealthy. Carries the rich payload (status/version/uptime
+//!     /dependencies).
+//!
+//! Tests are split per endpoint so an assertion failure points at the
+//! right contract — pre-split, the DB-connectivity tests hit `/health`
+//! but quietly skipped their deep assertions when the response lacked
+//! `checks`, which let regressions slide. Now `/readiness` tests
+//! assert on dependency fields explicitly.
 //!
 //! Uses sqlx::test for test database isolation.
 
@@ -113,70 +119,119 @@ mod basic_health {
 }
 
 // =============================================================================
-// Database Connectivity Tests
+// Readiness — Deep Dependency Check (DB + Redis)
 // =============================================================================
+//
+// Post-E8 split: the deep-check assertions live here against `/readiness`,
+// not `/health`. `/health` is shallow liveness and intentionally has no
+// `dependencies` field — asserting on it from `/health` would be looking
+// in the wrong place.
 
 #[cfg(test)]
-mod database_health {
+mod readiness {
     use super::*;
 
-    #[sqlx::test]
-    async fn test_health_verifies_database_connectivity(pool: PgPool) {
-        let app = TestApp::new(pool).await;
-
-        // If we can create the app, database is connected
-        let request = Request::builder()
-            .method(Method::GET)
-            .uri("/health")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = app.execute(request).await;
-
-        // Should be OK since we have a valid pool
-        response.assert_status(StatusCode::OK);
-
-        let json = response.json_value();
-
-        // Database status might be in checks or root level
-        if let Some(checks) = json.get("checks") {
-            if let Some(db_check) = checks.get("database") {
-                let db_status = db_check.get("status").and_then(|s| s.as_str());
-                assert!(
-                    db_status == Some("healthy") || db_status == Some("ok"),
-                    "Database should be healthy when connected"
-                );
-            }
-        }
+    /// Find a dependency by name in the readiness response. Returns the
+    /// dependency object so callers can assert on `status`/`latency_ms`/etc.
+    fn find_dep<'a>(
+        json: &'a serde_json::Value,
+        name: &str,
+    ) -> Option<&'a serde_json::Value> {
+        json.get("dependencies")?
+            .as_array()?
+            .iter()
+            .find(|d| d.get("name").and_then(|n| n.as_str()) == Some(name))
     }
 
     #[sqlx::test]
-    async fn test_health_reports_database_latency(pool: PgPool) {
+    async fn readiness_returns_ok_with_working_db(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let request = Request::builder()
             .method(Method::GET)
-            .uri("/health")
+            .uri("/readiness")
             .body(Body::empty())
             .unwrap();
 
         let response = app.execute(request).await;
 
+        // Healthy DB + (degraded-not-configured) Redis ⇒ overall 200.
+        response.assert_status(StatusCode::OK);
+    }
+
+    #[sqlx::test]
+    async fn readiness_reports_database_dependency(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let request = Request::builder()
+            .method(Method::GET)
+            .uri("/readiness")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = app.execute(request).await;
         response.assert_status(StatusCode::OK);
 
         let json = response.json_value();
+        let db = find_dep(&json, "database").expect("readiness must report a `database` dependency");
+        let status = db
+            .get("status")
+            .and_then(|s| s.as_str())
+            .expect("database dep must carry `status`");
+        assert!(
+            status == "healthy" || status == "degraded",
+            "DB should be healthy or degraded with a working pool, got: {status}"
+        );
+    }
 
-        // Check for latency in response
-        if let Some(checks) = json.get("checks") {
-            if let Some(db_check) = checks.get("database") {
-                if let Some(latency) = db_check.get("latency_ms") {
-                    assert!(
-                        latency.is_number(),
-                        "Database latency should be a number"
-                    );
-                }
-            }
-        }
+    #[sqlx::test]
+    async fn readiness_reports_database_latency(pool: PgPool) {
+        let app = TestApp::new(pool).await;
+
+        let request = Request::builder()
+            .method(Method::GET)
+            .uri("/readiness")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = app.execute(request).await;
+        response.assert_status(StatusCode::OK);
+
+        let json = response.json_value();
+        let db = find_dep(&json, "database").expect("expected database dep");
+        let latency = db
+            .get("latency_ms")
+            .expect("database dep must carry latency_ms");
+        assert!(latency.is_number(), "latency_ms should be numeric");
+    }
+
+    #[sqlx::test]
+    async fn readiness_redis_failure_stays_200_degraded(pool: PgPool) {
+        // Per the module docstring, Redis is non-critical: any Redis-related
+        // status (including unconfigured/unhealthy) must NOT 503. The test
+        // app doesn't configure Redis, so this simultaneously pins the
+        // unconfigured branch of `check_redis`.
+        let app = TestApp::new(pool).await;
+
+        let request = Request::builder()
+            .method(Method::GET)
+            .uri("/readiness")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = app.execute(request).await;
+        response.assert_status(StatusCode::OK);
+
+        let json = response.json_value();
+        let redis = find_dep(&json, "redis").expect("expected redis dep entry");
+        let status = redis
+            .get("status")
+            .and_then(|s| s.as_str())
+            .expect("redis dep must carry `status`");
+        assert_ne!(
+            status, "unhealthy",
+            "Redis is non-critical — unhealthy must be downgraded to degraded"
+        );
     }
 }
 

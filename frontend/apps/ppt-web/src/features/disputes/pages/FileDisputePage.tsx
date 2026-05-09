@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { type DisputeCategory, categoryLabels } from '../components/DisputeCard';
+import { categoryLabels, type DisputeCategory } from '../components/DisputeCard';
 
 /** Form data for creating a dispute */
 export interface DisputeFormData {

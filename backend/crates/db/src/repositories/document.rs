@@ -2612,10 +2612,12 @@ fn build_folder_tree(nodes: Vec<FolderTreeNode>) -> Vec<FolderTreeNode> {
 }
 
 /// Generate a secure random share token.
+///
+/// Uses OS CSPRNG directly rather than `thread_rng`.
 fn generate_share_token() -> String {
     use rand::Rng;
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rngs::OsRng;
     (0..32)
         .map(|_| {
             let idx = rng.gen_range(0..CHARSET.len());

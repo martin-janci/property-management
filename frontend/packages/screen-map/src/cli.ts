@@ -8,7 +8,7 @@ import { discoverScreenMaps } from './discover.js';
 import { loadScreenContext } from './edit-context.js';
 import { type GroupingDecision, mergeCandidates } from './grouping.js';
 import { bulkWriteScreenMaps } from './init-write.js';
-import { ScreenMapParseError, parseScreenMap } from './parse.js';
+import { parseScreenMap, ScreenMapParseError } from './parse.js';
 import { startReviewServer } from './review-server/start.js';
 import { scanCandidates } from './scan.js';
 import { validateScreenMap } from './validate.js';

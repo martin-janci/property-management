@@ -3,15 +3,14 @@
  * UC-12: Utility Outages
  */
 
-export { OutageCard } from './OutageCard';
 export type {
-  OutageSummary,
-  OutageStatus,
   OutageCommodity,
   OutageSeverity,
+  OutageStatus,
+  OutageSummary,
 } from './OutageCard';
-
-export { OutageList } from './OutageList';
+export { OutageCard } from './OutageCard';
+export type { OutageFormData } from './OutageForm';
 
 export { OutageForm } from './OutageForm';
-export type { OutageFormData } from './OutageForm';
+export { OutageList } from './OutageList';

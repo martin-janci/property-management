@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useApiQuery } from '../../hooks/useApi';
+import { colors } from '../shared/screenStyles';
 
 // Dashboard card types
 interface DashboardStats {
@@ -26,41 +28,31 @@ interface PendingAction {
   dueDate?: string;
 }
 
-// Mock data - would come from API
-const mockStats: DashboardStats = {
-  pendingFaults: 2,
-  unreadAnnouncements: 3,
-  activeVotes: 1,
-  unreadMessages: 5,
-  upcomingPayments: 1,
-};
+interface ApiAnnouncement {
+  id: string;
+  title: string;
+  status: string;
+  pinned: boolean;
+  published_at?: string | null;
+  created_at: string;
+}
 
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Water shutdown scheduled for maintenance',
-    createdAt: '2025-12-24T10:00:00Z',
-    category: 'maintenance',
-  },
-  {
-    id: '2',
-    title: 'Annual building meeting on January 15th',
-    createdAt: '2025-12-23T14:00:00Z',
-    category: 'event',
-  },
-  {
-    id: '3',
-    title: 'New recycling guidelines',
-    createdAt: '2025-12-22T09:00:00Z',
-    category: 'general',
-  },
-];
+interface ApiAnnouncementListResponse {
+  announcements: ApiAnnouncement[];
+}
 
-const mockPendingActions: PendingAction[] = [
-  { id: '1', type: 'vote', title: 'Vote on elevator renovation', dueDate: '2025-12-30' },
-  { id: '2', type: 'payment', title: 'Monthly fees due', dueDate: '2025-01-05' },
-  { id: '3', type: 'reading', title: 'Submit water meter reading', dueDate: '2025-01-01' },
-];
+interface ApiFaultStatistics {
+  statistics?: { open_count?: number | null; in_progress_count?: number | null };
+}
+
+interface ApiVoteListResponse {
+  votes?: Array<{ id: string; title: string; status: string; end_at: string }>;
+}
+
+interface ApiUnreadMessages {
+  unread_count?: number;
+  count?: number;
+}
 
 interface DashboardScreenProps {
   onNavigate?: (screen: string) => void;
@@ -69,17 +61,79 @@ interface DashboardScreenProps {
 export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const [refreshing, setRefreshing] = useState(false);
-  const [stats] = useState<DashboardStats>(mockStats);
-  const [announcements] = useState<Announcement[]>(mockAnnouncements);
-  const [pendingActions] = useState<PendingAction[]>(mockPendingActions);
+
+  // Each card pulls its own count so a single slow/down endpoint doesn't
+  // stall the whole dashboard. `staleTime` is short here because the
+  // counts are user-facing badges that should feel fresh.
+  const announcementsQuery = useApiQuery<ApiAnnouncementListResponse>(
+    ['dashboard', 'announcements'],
+    '/api/v1/announcements?status=published&limit=3',
+    { staleTime: 60_000 }
+  );
+  const faultsStatsQuery = useApiQuery<ApiFaultStatistics>(
+    ['dashboard', 'faults-stats'],
+    '/api/v1/faults/statistics',
+    { staleTime: 60_000 }
+  );
+  const votesQuery = useApiQuery<ApiVoteListResponse>(['dashboard', 'votes'], '/api/v1/voting', {
+    staleTime: 60_000,
+  });
+  const unreadMessagesQuery = useApiQuery<ApiUnreadMessages>(
+    ['dashboard', 'unread-messages'],
+    '/api/v1/messages/unread-count',
+    { staleTime: 30_000 }
+  );
+
+  const announcements: Announcement[] = (announcementsQuery.data?.announcements ?? [])
+    .slice(0, 3)
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      createdAt: a.published_at ?? a.created_at,
+      // The list endpoint doesn't expose category yet — default to general
+      // so the card colour stays neutral.
+      category: 'general',
+    }));
+
+  const stats: DashboardStats = {
+    pendingFaults:
+      (faultsStatsQuery.data?.statistics?.open_count ?? 0) +
+      (faultsStatsQuery.data?.statistics?.in_progress_count ?? 0),
+    unreadAnnouncements: announcements.length,
+    activeVotes: (votesQuery.data?.votes ?? []).filter((v) => v.status === 'active').length,
+    unreadMessages: unreadMessagesQuery.data?.unread_count ?? unreadMessagesQuery.data?.count ?? 0,
+    upcomingPayments: 0,
+  };
+
+  // The api-server has no aggregate "pending resident actions" endpoint
+  // yet. Once it exists (one feed combining vote eligibility, due
+  // payments, scheduled meter reading windows, …) this card will read
+  // from there. For now show whatever signals we already have so the
+  // card isn't silently empty.
+  const pendingActions: PendingAction[] = (votesQuery.data?.votes ?? [])
+    .filter((v) => v.status === 'active')
+    .slice(0, 3)
+    .map((v) => ({
+      id: v.id,
+      type: 'vote',
+      title: v.title,
+      dueDate: v.end_at,
+    }));
+
+  const isFetching =
+    announcementsQuery.isFetching ||
+    faultsStatsQuery.isFetching ||
+    votesQuery.isFetching ||
+    unreadMessagesQuery.isFetching;
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    // Simulate API refresh
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  }, []);
+    await Promise.all([
+      announcementsQuery.refetch(),
+      faultsStatsQuery.refetch(),
+      votesQuery.refetch(),
+      unreadMessagesQuery.refetch(),
+    ]);
+  }, [announcementsQuery, faultsStatsQuery, votesQuery, unreadMessagesQuery]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -89,13 +143,13 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const getCategoryColor = (category: Announcement['category']): string => {
     switch (category) {
       case 'urgent':
-        return '#ef4444';
+        return colors.danger;
       case 'maintenance':
-        return '#f59e0b';
+        return colors.warning;
       case 'event':
-        return '#8b5cf6';
+        return colors.eventCategoryInk;
       default:
-        return '#6b7280';
+        return colors.textMuted;
     }
   };
 
@@ -132,7 +186,7 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {/* Stats Grid */}
@@ -237,130 +291,69 @@ export function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
-  greeting: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  logoutButton: {
-    padding: 8,
-  },
-  logoutText: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    gap: 12,
-  },
+  greeting: { fontSize: 14, color: 'rgba(255, 255, 255, 0.8)' },
+  userName: { fontSize: 20, fontWeight: '600', color: colors.surface },
+  logoutButton: { padding: 8 },
+  logoutText: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 14 },
+  scrollView: { flex: 1 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12 },
   statCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2563eb',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  section: {
-    padding: 16,
-  },
+  statNumber: { fontSize: 28, fontWeight: 'bold', color: colors.accent },
+  statLabel: { fontSize: 12, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
+  section: { padding: 16 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  seeAllText: {
-    color: '#2563eb',
-    fontSize: 14,
-  },
-  actionsList: {
-    gap: 8,
-  },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  seeAllText: { color: colors.accent, fontSize: 14 },
+  actionsList: { gap: 8 },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  actionIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  actionDue: {
-    fontSize: 13,
-    color: '#f59e0b',
-    marginTop: 2,
-  },
-  actionArrow: {
-    fontSize: 24,
-    color: '#9ca3af',
-  },
-  announcementsList: {
-    gap: 8,
-  },
+  actionIcon: { fontSize: 24, marginRight: 12 },
+  actionContent: { flex: 1 },
+  actionTitle: { fontSize: 15, fontWeight: '500', color: colors.text },
+  actionDue: { fontSize: 13, color: colors.warning, marginTop: 2 },
+  actionArrow: { fontSize: 24, color: colors.textSubtle },
+  announcementsList: { gap: 8 },
   announcementCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -372,54 +365,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
+  categoryBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
   categoryText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.surface,
     textTransform: 'uppercase',
   },
-  announcementDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  announcementTitle: {
-    fontSize: 15,
-    color: '#1f2937',
-    lineHeight: 20,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
+  announcementDate: { fontSize: 12, color: colors.textSubtle },
+  announcementTitle: { fontSize: 15, color: colors.text, lineHeight: 20 },
+  quickActionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   quickAction: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  quickActionIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  quickActionLabel: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  bottomSpacer: {
-    height: 100,
-  },
+  quickActionIcon: { fontSize: 32, marginBottom: 8 },
+  quickActionLabel: { fontSize: 13, color: colors.textSecondary, fontWeight: '500' },
+  bottomSpacer: { height: 100 },
 });

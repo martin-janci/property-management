@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { createDeepLink } from '../qrcode/DeepLinkHandler';
+import { colors } from '../screens/shared/screenStyles';
 
 // Configure notification handling
 Notifications.setNotificationHandler({
@@ -151,7 +152,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
           name: 'Default',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#2563eb',
+          lightColor: colors.accent,
         });
 
         await Notifications.setNotificationChannelAsync('announcements', {
@@ -188,17 +189,22 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   };
 
-  const sendTokenToBackend = async (token: string): Promise<void> => {
-    // This would call your API to register the device token
-    console.log('Sending push token to backend:', token);
-    // await api.registerPushToken(token, Platform.OS);
+  const sendTokenToBackend = async (_token: string): Promise<void> => {
+    // This would call your API to register the device token.
+    // NOTE: never log the token itself — it grants push-send authority for this device.
+    if (__DEV__) {
+      console.log('[push] registering device token with backend');
+    }
+    // await api.registerPushToken(_token, Platform.OS);
   };
 
   const unregisterPushNotifications = async (): Promise<void> => {
     try {
       if (expoPushToken) {
         // Remove token from backend
-        console.log('Removing push token from backend');
+        if (__DEV__) {
+          console.log('[push] unregistering device token with backend');
+        }
         // await api.unregisterPushToken(expoPushToken);
       }
 

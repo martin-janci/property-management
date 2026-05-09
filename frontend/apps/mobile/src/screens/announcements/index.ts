@@ -1,6 +1,6 @@
-export { AnnouncementsScreen } from './AnnouncementsScreen';
 export type {
   Announcement,
-  AnnouncementCategory,
   AnnouncementAttachment,
+  AnnouncementCategory,
 } from './AnnouncementsScreen';
+export { AnnouncementsScreen } from './AnnouncementsScreen';

@@ -1,9 +1,9 @@
 import type {
   AnnouncementStatus,
+  AnnouncementSummary,
   AnnouncementTargetType,
   ListAnnouncementsParams,
 } from '@ppt/api-client';
-import type { AnnouncementSummary } from '@ppt/api-client';
 import { useState } from 'react';
 import { AnnouncementList } from '../components/AnnouncementList';
 

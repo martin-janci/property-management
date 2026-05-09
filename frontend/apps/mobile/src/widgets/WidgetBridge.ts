@@ -7,9 +7,8 @@
  * app and native home screen widgets (iOS WidgetKit / Android App Widgets).
  */
 import { NativeModules, Platform } from 'react-native';
-
-import { WidgetDataProvider } from './WidgetDataProvider';
 import type { WidgetConfig, WidgetData, WidgetDeepLink, WidgetType } from './types';
+import { WidgetDataProvider } from './WidgetDataProvider';
 
 // Native module interface (implemented in native code)
 interface NativeWidgetModule {

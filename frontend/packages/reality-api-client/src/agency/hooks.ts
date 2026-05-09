@@ -5,6 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getApiBase } from '../config';
 import type {
   Agency,
   AgencyBranding,
@@ -20,10 +21,8 @@ import type {
   UpdateRealtorRequest,
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
-
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${getApiBase()}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -208,7 +207,7 @@ export function useUpdateBranding() {
       if (data.accentColor) formData.append('accentColor', data.accentColor);
       if (data.fontFamily) formData.append('fontFamily', data.fontFamily);
 
-      const response = await fetch(`${API_BASE}/api/v1/agencies/${agencyId}/branding`, {
+      const response = await fetch(`${getApiBase()}/api/v1/agencies/${agencyId}/branding`, {
         method: 'PUT',
         body: formData,
         credentials: 'include',

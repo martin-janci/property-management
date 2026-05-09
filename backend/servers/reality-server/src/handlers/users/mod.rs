@@ -3,9 +3,37 @@
 //! Implements user registration, OAuth 2.0 SSO with Property Management,
 //! and account linking functionality.
 
-use db::models::{CreatePortalUser, PortalUser, UpdatePortalUser};
-use db::repositories::PortalRepository;
+use chrono::{Duration, Utc};
+use db::models::{CreatePortalPasswordResetToken, CreatePortalUser, PortalUser, UpdatePortalUser};
+use db::repositories::{PortalPasswordResetRepository, PortalRepository};
+use rand::RngCore;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
+
+/// How long a freshly-issued reset token is valid before it must be rotated.
+const PASSWORD_RESET_TTL_MINUTES: i64 = 30;
+
+/// Outcome of a password-reset request. We deliberately collapse the
+/// "user not found" case into Sent (with an empty token) to avoid
+/// account-existence enumeration.
+#[derive(Debug)]
+pub enum PasswordResetRequestResult {
+    /// A reset token was generated. The plaintext token is returned so the
+    /// caller can dispatch the email; it is NOT persisted in plaintext.
+    Sent { plaintext_token: String },
+    /// No such user exists. Returned to the handler so it can log internally
+    /// while still returning HTTP 200 to the client.
+    UserNotFound,
+}
+
+/// Outcome of a confirm-reset request.
+#[derive(Debug)]
+pub enum PasswordResetConfirmResult {
+    Success,
+    InvalidToken,
+    Expired,
+    PasswordTooWeak(Vec<String>),
+}
 
 /// User registration result.
 #[derive(Debug)]
@@ -305,4 +333,104 @@ impl UserHandler {
             .await
             .map_err(|e| e.to_string())
     }
+
+    /// Issue a password reset token for the user with this email.
+    ///
+    /// Returns the plaintext token to the caller (so it can put it in an
+    /// email link). Only the SHA-256 hash is persisted — the
+    /// reset-confirm endpoint will hash the incoming token and compare.
+    /// Existing unused tokens for the same user are invalidated so a
+    /// stale link from an earlier request can no longer be used.
+    pub async fn request_password_reset(
+        &self,
+        reset_repo: &PortalPasswordResetRepository,
+        email: &str,
+    ) -> Result<PasswordResetRequestResult, String> {
+        let user = self
+            .repo
+            .find_user_by_email(email)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let user = match user {
+            Some(u) => u,
+            None => return Ok(PasswordResetRequestResult::UserNotFound),
+        };
+
+        // Burn any existing tokens before issuing a new one.
+        reset_repo
+            .invalidate_user_tokens(user.id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // 32 cryptographically-random bytes → URL-safe base64 → ~43 char
+        // token that we surface to the user via email.
+        let mut bytes = [0u8; 32];
+        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        let plaintext_token =
+            base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
+        let token_hash = sha256_hex(&plaintext_token);
+        let expires_at = Utc::now() + Duration::minutes(PASSWORD_RESET_TTL_MINUTES);
+
+        reset_repo
+            .create(CreatePortalPasswordResetToken {
+                portal_user_id: user.id,
+                token_hash,
+                expires_at,
+            })
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(PasswordResetRequestResult::Sent { plaintext_token })
+    }
+
+    /// Verify a reset token and replace the user's password hash.
+    pub async fn confirm_password_reset(
+        &self,
+        reset_repo: &PortalPasswordResetRepository,
+        plaintext_token: &str,
+        new_password: &str,
+    ) -> Result<PasswordResetConfirmResult, String> {
+        if let Err(issues) = Self::validate_password(new_password) {
+            return Ok(PasswordResetConfirmResult::PasswordTooWeak(issues));
+        }
+
+        let token_hash = sha256_hex(plaintext_token);
+        let token = reset_repo
+            .find_by_token_hash(&token_hash)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let token = match token {
+            Some(t) if t.is_valid() => t,
+            Some(_) => return Ok(PasswordResetConfirmResult::Expired),
+            None => return Ok(PasswordResetConfirmResult::InvalidToken),
+        };
+
+        let new_hash = Self::hash_password(new_password).map_err(|e| e.to_string())?;
+        self.repo
+            .update_password_hash(token.portal_user_id, &new_hash)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Single-use: mark the token consumed and invalidate any other
+        // outstanding tokens for the same user (a stolen-but-unused token
+        // can't be used after a password change).
+        reset_repo
+            .mark_used(token.id)
+            .await
+            .map_err(|e| e.to_string())?;
+        reset_repo
+            .invalidate_user_tokens(token.portal_user_id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(PasswordResetConfirmResult::Success)
+    }
+}
+
+fn sha256_hex(input: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    hex::encode(hasher.finalize())
 }

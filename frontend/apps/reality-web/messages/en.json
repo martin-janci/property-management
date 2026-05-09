@@ -193,6 +193,46 @@
     "branding": "Branding",
     "inviteRealtor": "Invite Realtor"
   },
+  "listings": {
+    "propertiesForSale": "Properties for Sale",
+    "propertiesForRent": "Properties for Rent",
+    "allProperties": "All Properties",
+    "tabAll": "All",
+    "tabForSale": "For Sale",
+    "tabForRent": "For Rent",
+    "resultsCount": "{count} listings found",
+    "filters": "Filters",
+    "sortNewest": "Newest First",
+    "sortOldest": "Oldest First",
+    "sortPriceLow": "Price: Low to High",
+    "sortPriceHigh": "Price: High to Low",
+    "sortSizeLarge": "Size: Large to Small",
+    "sortSizeSmall": "Size: Small to Large",
+    "gridView": "Grid view",
+    "listView": "List view",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "pageOf": "Page {page} of {total}"
+  },
+  "pages": {
+    "about": {
+      "title": "About Reality Portal",
+      "description": "Reality Portal is the leading property listing platform across Slovakia, Czech Republic, and beyond."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "For support or business inquiries, please reach out to us at",
+      "email": "info@rlt.sk"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "We are committed to protecting your personal data in accordance with GDPR and applicable laws. Full privacy policy details will be published here."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "By using Reality Portal, you agree to our terms and conditions. Full terms of service will be published here."
+    }
+  },
   "footer": {
     "about": "About",
     "terms": "Terms of Service",

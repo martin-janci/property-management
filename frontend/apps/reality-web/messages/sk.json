@@ -193,6 +193,46 @@
     "branding": "Branding",
     "inviteRealtor": "Pozvať makléra"
   },
+  "listings": {
+    "propertiesForSale": "Nehnuteľnosti na predaj",
+    "propertiesForRent": "Nehnuteľnosti na prenájom",
+    "allProperties": "Všetky nehnuteľnosti",
+    "tabAll": "Všetky",
+    "tabForSale": "Na predaj",
+    "tabForRent": "Na prenájom",
+    "resultsCount": "Nájdených {count} ponúk",
+    "filters": "Filtre",
+    "sortNewest": "Najnovšie",
+    "sortOldest": "Najstaršie",
+    "sortPriceLow": "Cena: od najnižšej",
+    "sortPriceHigh": "Cena: od najvyššej",
+    "sortSizeLarge": "Plocha: od najväčšej",
+    "sortSizeSmall": "Plocha: od najmenšej",
+    "gridView": "Zobrazenie mriežky",
+    "listView": "Zobrazenie zoznamu",
+    "prevPage": "Predchádzajúca strana",
+    "nextPage": "Ďalšia strana",
+    "pageOf": "Strana {page} z {total}"
+  },
+  "pages": {
+    "about": {
+      "title": "O Reality Portáli",
+      "description": "Reality Portál je popredná platforma pre inzeráty nehnuteľností na Slovensku, v Českej republike a ďalej."
+    },
+    "contact": {
+      "title": "Kontaktujte nás",
+      "description": "Pre podporu alebo obchodné otázky nás kontaktujte na",
+      "email": "info@rlt.sk"
+    },
+    "privacy": {
+      "title": "Ochrana súkromia",
+      "description": "Zaviazali sme sa chrániť vaše osobné údaje v súlade s GDPR a platnými zákonmi. Úplné podmienky ochrany súkromia budú zverejnené tu."
+    },
+    "terms": {
+      "title": "Podmienky používania",
+      "description": "Používaním Reality Portálu súhlasíte s našimi podmienkami a ustanoveniami. Úplné podmienky používania budú zverejnené tu."
+    }
+  },
   "footer": {
     "about": "O nás",
     "terms": "Obchodné podmienky",

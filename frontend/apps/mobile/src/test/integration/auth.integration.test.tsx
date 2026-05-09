@@ -1,0 +1,395 @@
+/**
+ * AuthContext integration tests.
+ *
+ * These tests drive the real `AuthProvider` lifecycle end-to-end with the
+ * Expo SecureStore / LocalAuthentication / global fetch APIs replaced by
+ * Jest mocks. They cover:
+ *
+ * - Boot from empty SecureStore (unauthenticated).
+ * - Boot from existing tokens (auto-authenticated).
+ * - login() — POST /api/v1/auth/login, persistence, state transition.
+ * - login() failure — error propagated, state restored.
+ * - logout() — clears SecureStore and resets state.
+ * - refreshToken() — uses stored refresh token, handles failure by logging out.
+ * - Biometric enable / disable / authenticateWithBiometric flows.
+ *
+ * The AuthProvider talks to a real (mocked) global `fetch`, so the test
+ * verifies the wiring between the provider, the storage layer, and the API
+ * payload contract.
+ */
+
+import { act, renderHook, waitFor } from '@testing-library/react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import * as SecureStore from 'expo-secure-store';
+import type { ReactNode } from 'react';
+import { AuthProvider, useAuth } from '../../contexts/AuthContext';
+
+const API_BASE = 'http://test.local';
+
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <AuthProvider apiBaseUrl={API_BASE}>{children}</AuthProvider>
+);
+
+const mockedSecureStore = SecureStore as jest.Mocked<typeof SecureStore>;
+const mockedLocalAuth = LocalAuthentication as unknown as {
+  hasHardwareAsync: jest.Mock;
+  isEnrolledAsync: jest.Mock;
+  authenticateAsync: jest.Mock;
+};
+
+jest.mock('expo-local-authentication', () => ({
+  hasHardwareAsync: jest.fn(),
+  isEnrolledAsync: jest.fn(),
+  authenticateAsync: jest.fn(),
+}));
+
+const sampleUser = {
+  id: 'u-1',
+  email: 'jane@example.com',
+  firstName: 'Jane',
+  lastName: 'Doe',
+  role: 'owner' as const,
+};
+
+/** Build a synthetic SecureStore where keys can be primed and updated. */
+function primeSecureStore(initial: Record<string, string | null> = {}) {
+  const store = new Map<string, string>();
+  for (const [k, v] of Object.entries(initial)) {
+    if (v !== null) store.set(k, v);
+  }
+
+  mockedSecureStore.getItemAsync.mockImplementation(async (key) => store.get(key) ?? null);
+  mockedSecureStore.setItemAsync.mockImplementation(async (key, value) => {
+    store.set(key, value);
+  });
+  mockedSecureStore.deleteItemAsync.mockImplementation(async (key) => {
+    store.delete(key);
+  });
+
+  return store;
+}
+
+function mockFetchOnce(body: unknown, status = 200) {
+  (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  });
+}
+
+describe('AuthContext integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    globalThis.fetch = jest.fn() as jest.Mock;
+    primeSecureStore();
+    mockedLocalAuth.hasHardwareAsync.mockResolvedValue(true);
+    mockedLocalAuth.isEnrolledAsync.mockResolvedValue(true);
+  });
+
+  describe('initialization', () => {
+    it('boots into the unauthenticated state when no tokens are stored', async () => {
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      expect(result.current.biometricAvailable).toBe(true);
+    });
+
+    it('restores the session when SecureStore already holds tokens', async () => {
+      primeSecureStore({
+        ppt_access_token: 'stored-access',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+      expect(result.current.accessToken).toBe('stored-access');
+      expect(result.current.user).toEqual(sampleUser);
+      expect(result.current.biometricEnabled).toBe(true);
+    });
+
+    it('reports biometricAvailable=false when hardware is missing', async () => {
+      mockedLocalAuth.hasHardwareAsync.mockResolvedValue(false);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.biometricAvailable).toBe(false);
+    });
+  });
+
+  describe('login', () => {
+    it('persists tokens and flips into the authenticated state on success', async () => {
+      const store = primeSecureStore();
+      // The api-server returns snake_case JSON keys; keep the test aligned
+      // with the real contract so AuthContext's mapping is exercised.
+      mockFetchOnce({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+        user: sampleUser,
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(async () => {
+        await result.current.login('jane@example.com', 'pw');
+      });
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${API_BASE}/api/v1/auth/login`,
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const [, init] = (globalThis.fetch as jest.Mock).mock.calls[0];
+      expect(JSON.parse(init.body)).toEqual({
+        email: 'jane@example.com',
+        password: 'pw',
+      });
+
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.accessToken).toBe('new-access');
+      expect(result.current.user).toEqual(sampleUser);
+
+      // Tokens must be persisted to SecureStore.
+      expect(store.get('ppt_access_token')).toBe('new-access');
+      expect(store.get('ppt_refresh_token')).toBe('new-refresh');
+      expect(JSON.parse(store.get('ppt_user') ?? '{}')).toEqual(sampleUser);
+    });
+
+    it('throws on bad credentials and leaves the state unauthenticated', async () => {
+      primeSecureStore();
+      mockFetchOnce({ message: 'Invalid credentials' }, 401);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await expect(
+        act(async () => {
+          await result.current.login('jane@example.com', 'wrong');
+        })
+      ).rejects.toThrow('Invalid credentials');
+
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.accessToken).toBeNull();
+      // No tokens were written.
+      expect(mockedSecureStore.setItemAsync).not.toHaveBeenCalledWith(
+        'ppt_access_token',
+        expect.anything()
+      );
+    });
+  });
+
+  describe('logout', () => {
+    it('clears all auth keys from SecureStore and resets state', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: 'access',
+        ppt_refresh_token: 'refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await act(async () => {
+        await result.current.logout();
+      });
+
+      expect(result.current.isAuthenticated).toBe(false);
+      expect(result.current.user).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      expect(store.has('ppt_access_token')).toBe(false);
+      expect(store.has('ppt_refresh_token')).toBe(false);
+      expect(store.has('ppt_user')).toBe(false);
+    });
+  });
+
+  describe('refreshToken', () => {
+    it('exchanges the stored refresh token for a new access token', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: 'old-access',
+        ppt_refresh_token: 'old-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      mockFetchOnce({
+        access_token: 'rotated-access',
+        refresh_token: 'rotated-refresh',
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await act(async () => {
+        await result.current.refreshToken();
+      });
+
+      const [url, init] = (globalThis.fetch as jest.Mock).mock.calls.at(-1) ?? [];
+      expect(url).toBe(`${API_BASE}/api/v1/auth/refresh`);
+      // Backend's RefreshTokenRequest uses snake_case.
+      expect(JSON.parse(init.body)).toEqual({ refresh_token: 'old-refresh' });
+
+      expect(result.current.accessToken).toBe('rotated-access');
+      expect(store.get('ppt_access_token')).toBe('rotated-access');
+      expect(store.get('ppt_refresh_token')).toBe('rotated-refresh');
+    });
+
+    it('logs out when the server rejects the refresh', async () => {
+      const store = primeSecureStore({
+        ppt_access_token: 'old-access',
+        ppt_refresh_token: 'old-refresh',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      mockFetchOnce({}, 401);
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      let caught: unknown;
+      await act(async () => {
+        try {
+          await result.current.refreshToken();
+        } catch (e) {
+          caught = e;
+        }
+      });
+
+      // The refresh threw and the inner logout() ran.
+      expect(caught).toBeInstanceOf(Error);
+      // SecureStore was cleared by the cascading logout.
+      expect(store.has('ppt_access_token')).toBe(false);
+      expect(store.has('ppt_refresh_token')).toBe(false);
+      // Reactive state may need one more tick after the inner logout's setState.
+      await waitFor(() => expect(result.current.accessToken).toBeNull());
+      expect(result.current.isAuthenticated).toBe(false);
+    });
+
+    it('rejects when no refresh token is stored', async () => {
+      primeSecureStore({
+        ppt_access_token: 'access',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await expect(
+        act(async () => {
+          await result.current.refreshToken();
+        })
+      ).rejects.toThrow(/refresh token/i);
+    });
+  });
+
+  describe('biometric flow', () => {
+    it('enableBiometric stores the flag when biometric prompt succeeds', async () => {
+      const store = primeSecureStore();
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let enabled: boolean | undefined;
+      await act(async () => {
+        enabled = await result.current.enableBiometric();
+      });
+
+      expect(enabled).toBe(true);
+      expect(result.current.biometricEnabled).toBe(true);
+      expect(store.get('ppt_biometric_enabled')).toBe('true');
+    });
+
+    it('enableBiometric returns false when prompt is cancelled', async () => {
+      primeSecureStore();
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: false });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let enabled: boolean | undefined;
+      await act(async () => {
+        enabled = await result.current.enableBiometric();
+      });
+
+      expect(enabled).toBe(false);
+      expect(result.current.biometricEnabled).toBe(false);
+    });
+
+    it('disableBiometric removes the stored flag', async () => {
+      const store = primeSecureStore({
+        ppt_biometric_enabled: 'true',
+        ppt_access_token: 'a',
+        ppt_user: JSON.stringify(sampleUser),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      await act(async () => {
+        await result.current.disableBiometric();
+      });
+
+      expect(result.current.biometricEnabled).toBe(false);
+      expect(store.has('ppt_biometric_enabled')).toBe(false);
+    });
+
+    it('authenticateWithBiometric restores stored credentials on success', async () => {
+      primeSecureStore({
+        ppt_access_token: 'stored',
+        ppt_user: JSON.stringify(sampleUser),
+        ppt_biometric_enabled: 'true',
+      });
+      mockedLocalAuth.authenticateAsync.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      // Already authenticated from the stored tokens.
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+
+      // Synthetically log out (simulate the account screen flow), then
+      // re-auth via biometric.
+      await act(async () => {
+        await result.current.logout();
+      });
+      // logout cleared SecureStore - we need to re-prime to test biometric
+      // restoration of stored credentials. Re-add them as if a previous
+      // session had persisted them across the lock screen.
+      mockedSecureStore.getItemAsync.mockImplementation(async (key) => {
+        if (key === 'ppt_access_token') return 'stored';
+        if (key === 'ppt_user') return JSON.stringify(sampleUser);
+        return null;
+      });
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(true);
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.user).toEqual(sampleUser);
+    });
+
+    it('authenticateWithBiometric is a no-op when biometric is not enabled', async () => {
+      primeSecureStore();
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.authenticateWithBiometric();
+      });
+
+      expect(ok).toBe(false);
+      expect(mockedLocalAuth.authenticateAsync).not.toHaveBeenCalled();
+    });
+  });
+});

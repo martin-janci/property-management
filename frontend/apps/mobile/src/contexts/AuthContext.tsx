@@ -127,7 +127,11 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         }
 
         const data = await response.json();
-        const { accessToken, refreshToken, user } = data;
+        // The api-server returns snake_case fields; map them to the camelCase
+        // names we use throughout the app state.
+        const accessToken = data.access_token;
+        const refreshToken = data.refresh_token;
+        const user = data.user;
 
         // Store tokens securely
         await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -181,7 +185,7 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken: storedRefreshToken }),
+        body: JSON.stringify({ refresh_token: storedRefreshToken }),
       });
 
       if (!response.ok) {
@@ -189,7 +193,8 @@ export function AuthProvider({ children, apiBaseUrl }: AuthProviderProps) {
       }
 
       const data = await response.json();
-      const { accessToken, refreshToken: newRefreshToken } = data;
+      const accessToken = data.access_token;
+      const newRefreshToken = data.refresh_token;
 
       // Store new tokens
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);

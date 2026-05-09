@@ -14,11 +14,7 @@ interface BillingPageProps {
   onViewInvoice?: (invoiceId: string) => void;
   onDownloadInvoice?: (invoiceId: string) => void;
   onPayInvoice?: (invoiceId: string) => void;
-  onFilterChange?: (params: {
-    page: number;
-    pageSize: number;
-    status?: InvoiceStatus;
-  }) => void;
+  onFilterChange?: (params: { page: number; pageSize: number; status?: InvoiceStatus }) => void;
   onBack?: () => void;
 }
 

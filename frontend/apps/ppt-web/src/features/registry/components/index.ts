@@ -4,9 +4,9 @@
  * Exports for building registries components (Epic 57).
  */
 
-export * from './PetRegistrationList';
-export * from './VehicleRegistrationList';
 export * from './PetRegistrationForm';
-export * from './VehicleRegistrationForm';
+export * from './PetRegistrationList';
 export * from './RegistryRulesForm';
 export * from './ReviewRegistrationModal';
+export * from './VehicleRegistrationForm';
+export * from './VehicleRegistrationList';

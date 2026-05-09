@@ -177,4 +177,4 @@ export function DisputeCard({ dispute, onView, onManage }: DisputeCardProps) {
   );
 }
 
-export { statusLabels, priorityLabels, categoryLabels, categoryIcons };
+export { categoryIcons, categoryLabels, priorityLabels, statusLabels };

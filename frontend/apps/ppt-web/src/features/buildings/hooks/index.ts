@@ -3,10 +3,10 @@
  */
 
 export {
-  useBuildingsApi,
-  useBuildings,
   useBuilding,
-  useBuildingFloors,
   useBuildingCommonAreas,
+  useBuildingFloors,
   useBuildingMutations,
+  useBuildings,
+  useBuildingsApi,
 } from './useBuildings';

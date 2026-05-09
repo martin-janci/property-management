@@ -111,12 +111,12 @@ export function CrmConnection() {
 
         h2 {
           font-size: 1.5rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0 0 4px;
         }
 
         .subtitle {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0;
         }
 
@@ -125,8 +125,8 @@ export function CrmConnection() {
           align-items: center;
           gap: 8px;
           padding: 12px 20px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -135,7 +135,7 @@ export function CrmConnection() {
         }
 
         .add-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover);
         }
 
         .connections-grid {
@@ -151,7 +151,10 @@ export function CrmConnection() {
 function ConnectionCard({
   connection,
   agencyId,
-}: { connection: CrmConnectionType; agencyId: string }) {
+}: {
+  connection: CrmConnectionType;
+  agencyId: string;
+}) {
   const deleteMutation = useDeleteCrmConnection(agencyId);
   const syncMutation = useSyncCrmConnection(agencyId, connection.id);
 
@@ -225,8 +228,8 @@ function ConnectionCard({
 
       <style jsx>{`
         .connection-card {
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
           overflow: hidden;
         }
@@ -236,7 +239,7 @@ function ConnectionCard({
           justify-content: space-between;
           align-items: center;
           padding: 20px;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--ppt-bg-subtle);
         }
 
         .provider-info {
@@ -251,13 +254,13 @@ function ConnectionCard({
 
         h3 {
           font-size: 1rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
         .provider-name {
           font-size: 13px;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .status-badge {
@@ -283,19 +286,19 @@ function ConnectionCard({
         }
 
         .sync-info .label {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .sync-info .value {
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .card-actions {
           display: flex;
           gap: 8px;
           padding: 16px 20px;
-          background: #f9fafb;
-          border-top: 1px solid #f3f4f6;
+          background: var(--ppt-bg-app);
+          border-top: 1px solid var(--ppt-bg-subtle);
         }
 
         .action-button {
@@ -308,8 +311,8 @@ function ConnectionCard({
         }
 
         .action-button.sync {
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
         }
 
@@ -318,19 +321,19 @@ function ConnectionCard({
         }
 
         .action-button.settings {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .action-button.delete {
-          background: #fff;
-          border: 1px solid #fecaca;
-          color: #dc2626;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger);
         }
 
         .action-button.delete:hover {
-          background: #fef2f2;
+          background: var(--ppt-color-danger-light);
         }
       `}</style>
     </div>
@@ -558,7 +561,7 @@ function AddConnectionModal({
         }
 
         .modal-content {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           border-radius: 16px;
           width: 90%;
           max-width: 560px;
@@ -571,12 +574,12 @@ function AddConnectionModal({
           justify-content: space-between;
           align-items: center;
           padding: 20px 24px;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--ppt-border-default);
         }
 
         .modal-header h2 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 0;
         }
 
@@ -585,7 +588,7 @@ function AddConnectionModal({
           border: none;
           padding: 4px;
           cursor: pointer;
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
         }
 
         .modal-body {
@@ -604,20 +607,20 @@ function AddConnectionModal({
           align-items: center;
           gap: 8px;
           padding: 24px;
-          border: 2px solid #e5e7eb;
+          border: 2px solid var(--ppt-border-default);
           border-radius: 12px;
-          background: #fff;
+          background: var(--ppt-bg-surface);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .provider-card:hover {
-          border-color: #2563eb;
+          border-color: var(--ppt-color-primary);
         }
 
         .provider-card.selected {
-          border-color: #2563eb;
-          background: #eff6ff;
+          border-color: var(--ppt-color-primary);
+          background: var(--ppt-color-primary-soft-bg);
         }
 
         .provider-card .provider-logo {
@@ -627,7 +630,7 @@ function AddConnectionModal({
         .provider-card .provider-name {
           font-size: 14px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .configure-form,
@@ -646,20 +649,20 @@ function AddConnectionModal({
         .form-group label {
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .form-group input {
           padding: 10px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 8px;
           font-size: 14px;
         }
 
-        .form-group input:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        .form-group input:focus-visible {
+          outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+          outline-offset: var(--ppt-focus-ring-offset);
+          border-color: var(--ppt-color-primary);
         }
 
         .test-result {
@@ -669,17 +672,17 @@ function AddConnectionModal({
         }
 
         .test-result.success {
-          background: #d1fae5;
-          color: #047857;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-dark);
         }
 
         .test-result.error {
-          background: #fee2e2;
-          color: #b91c1c;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .mapping-hint {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 8px;
           font-size: 14px;
         }
@@ -694,13 +697,13 @@ function AddConnectionModal({
           width: 120px;
           font-size: 13px;
           font-weight: 500;
-          color: #374151;
+          color: var(--ppt-fg-secondary);
         }
 
         .mapping-row input {
           flex: 1;
           padding: 8px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid var(--ppt-border-strong);
           border-radius: 6px;
           font-size: 13px;
         }
@@ -710,8 +713,8 @@ function AddConnectionModal({
           justify-content: flex-end;
           gap: 12px;
           padding: 16px 24px;
-          border-top: 1px solid #e5e7eb;
-          background: #f9fafb;
+          border-top: 1px solid var(--ppt-border-default);
+          background: var(--ppt-bg-app);
         }
 
         .modal-footer button {
@@ -723,15 +726,15 @@ function AddConnectionModal({
         }
 
         .secondary {
-          background: #fff;
-          border: 1px solid #d1d5db;
-          color: #374151;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-strong);
+          color: var(--ppt-fg-secondary);
         }
 
         .primary {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
           border: none;
-          color: #fff;
+          color: var(--ppt-fg-on-accent);
         }
 
         .primary:disabled {
@@ -757,7 +760,7 @@ function ConnectionsSkeleton() {
         }
         .skeleton-card {
           height: 200px;
-          background: #e5e7eb;
+          background: var(--ppt-border-default);
           border-radius: 12px;
         }
       `}</style>
@@ -773,7 +776,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         height="64"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#9ca3af"
+        stroke="var(--ppt-fg-subtle)"
         strokeWidth="1.5"
         aria-hidden="true"
       >
@@ -792,23 +795,23 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           align-items: center;
           padding: 64px 24px;
           text-align: center;
-          background: #fff;
-          border: 1px solid #e5e7eb;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
           border-radius: 12px;
         }
         h3 {
           font-size: 1.25rem;
-          color: #111827;
+          color: var(--ppt-fg-primary);
           margin: 24px 0 8px;
         }
         p {
-          color: #6b7280;
+          color: var(--ppt-fg-muted);
           margin: 0 0 24px;
         }
         button {
           padding: 12px 24px;
-          background: #2563eb;
-          color: #fff;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
           border: none;
           border-radius: 8px;
           font-weight: 500;
@@ -821,10 +824,26 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 function getStatusConfig(status: CrmConnectionType['status']) {
   const configs = {
-    connected: { label: 'Connected', color: '#059669', bg: '#d1fae5' },
-    disconnected: { label: 'Disconnected', color: '#6b7280', bg: '#e5e7eb' },
-    error: { label: 'Error', color: '#dc2626', bg: '#fee2e2' },
-    syncing: { label: 'Syncing', color: '#2563eb', bg: '#dbeafe' },
+    connected: {
+      label: 'Connected',
+      color: 'var(--ppt-color-success-hover)',
+      bg: 'var(--ppt-color-success-light)',
+    },
+    disconnected: {
+      label: 'Disconnected',
+      color: 'var(--ppt-fg-muted)',
+      bg: 'var(--ppt-border-default)',
+    },
+    error: {
+      label: 'Error',
+      color: 'var(--ppt-color-danger)',
+      bg: 'var(--ppt-color-danger-light)',
+    },
+    syncing: {
+      label: 'Syncing',
+      color: 'var(--ppt-color-primary)',
+      bg: 'var(--ppt-color-primary-soft-bg)',
+    },
   };
   return configs[status];
 }

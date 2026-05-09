@@ -5,12 +5,12 @@
 
 import { useState } from 'react';
 import {
+  categoryLabels,
   DisputeCard,
   type DisputeCategory,
   type DisputePriority,
   type DisputeStatus,
   type DisputeSummary,
-  categoryLabels,
   priorityLabels,
   statusLabels,
 } from './DisputeCard';

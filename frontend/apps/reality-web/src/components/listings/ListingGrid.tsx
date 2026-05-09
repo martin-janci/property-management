@@ -41,7 +41,7 @@ export function ListingGrid({
           }
           .skeleton-card {
             height: 320px;
-            background: #e5e7eb;
+            background: var(--ppt-border-default);
             border-radius: 12px;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
@@ -85,12 +85,12 @@ export function ListingGrid({
             justify-content: center;
             padding: 64px 24px;
             text-align: center;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .empty-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #374151;
+            color: var(--ppt-fg-secondary);
             margin: 16px 0 8px;
           }
           .empty-text {

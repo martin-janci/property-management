@@ -32,36 +32,30 @@ pub fn router() -> Router<AppState> {
         // Equipment registry (Story 134.1)
         .route("/equipment", post(create_equipment))
         .route("/equipment", get(list_equipment))
-        .route("/equipment/{id}", get(get_equipment))
-        .route("/equipment/{id}", put(update_equipment))
-        .route("/equipment/{id}", delete(delete_equipment))
-        .route("/equipment/{id}/documents", post(add_equipment_document))
-        .route("/equipment/{id}/documents", get(list_equipment_documents))
+        .route("/equipment/:id", get(get_equipment))
+        .route("/equipment/:id", put(update_equipment))
+        .route("/equipment/:id", delete(delete_equipment))
+        .route("/equipment/:id/documents", post(add_equipment_document))
+        .route("/equipment/:id/documents", get(list_equipment_documents))
         // Maintenance logs (Story 134.2)
         .route("/maintenance-logs", post(create_maintenance_log))
-        .route("/maintenance-logs/{id}", get(get_maintenance_log))
-        .route("/maintenance-logs/{id}", put(update_maintenance_log))
+        .route("/maintenance-logs/:id", get(get_maintenance_log))
+        .route("/maintenance-logs/:id", put(update_maintenance_log))
         .route(
-            "/equipment/{id}/maintenance-logs",
+            "/equipment/:id/maintenance-logs",
             get(list_equipment_maintenance_logs),
         )
-        .route("/maintenance-logs/{id}/photos", post(add_maintenance_photo))
-        .route(
-            "/maintenance-logs/{id}/photos",
-            get(list_maintenance_photos),
-        )
+        .route("/maintenance-logs/:id/photos", post(add_maintenance_photo))
+        .route("/maintenance-logs/:id/photos", get(list_maintenance_photos))
         // Predictions (Story 134.3)
         .route("/predictions/run", post(run_prediction))
         .route("/predictions/batch", post(run_batch_predictions))
-        .route(
-            "/equipment/{id}/predictions",
-            get(get_equipment_predictions),
-        )
+        .route("/equipment/:id/predictions", get(get_equipment_predictions))
         // Alerts
         .route("/alerts", get(list_alerts))
-        .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
-        .route("/alerts/{id}/resolve", post(resolve_alert))
-        .route("/alerts/{id}/dismiss", post(dismiss_alert))
+        .route("/alerts/:id/acknowledge", post(acknowledge_alert))
+        .route("/alerts/:id/resolve", post(resolve_alert))
+        .route("/alerts/:id/dismiss", post(dismiss_alert))
         // Health thresholds
         .route("/thresholds", get(list_health_thresholds))
         .route("/thresholds", post(set_health_threshold))

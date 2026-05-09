@@ -1,0 +1,1 @@
+export { PersonMonthsScreen } from './PersonMonthsScreen';

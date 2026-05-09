@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -31,13 +31,13 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
             align-items: center;
             justify-content: center;
             min-height: 400px;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #e5e7eb;
-            border-top-color: #2563eb;
+            border: 3px solid var(--ppt-border-default);
+            border-top-color: var(--ppt-color-primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 16px;
@@ -85,12 +85,12 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
             min-height: 400px;
             text-align: center;
             padding: 32px;
-            color: #6b7280;
+            color: var(--ppt-fg-muted);
           }
           .title {
             font-size: 1.5rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--ppt-fg-primary);
             margin: 24px 0 8px;
           }
           .text {
@@ -98,8 +98,8 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
           }
           .sign-in-button {
             padding: 12px 32px;
-            background: #2563eb;
-            color: #fff;
+            background: var(--ppt-color-primary);
+            color: var(--ppt-fg-on-accent);
             border: none;
             border-radius: 8px;
             font-size: 16px;
@@ -107,7 +107,11 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
             cursor: pointer;
           }
           .sign-in-button:hover {
-            background: #1d4ed8;
+            background: var(--ppt-color-primary-hover);
+          }
+          .sign-in-button:focus-visible {
+            outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+            outline-offset: var(--ppt-focus-ring-offset);
           }
         `}</style>
       </div>

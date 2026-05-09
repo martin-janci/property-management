@@ -325,8 +325,35 @@ export function ArticleDetailPage({ articleId }: ArticleDetailPageProps) {
 
       <div
         className="article-content"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized with DOMPurify as defense-in-depth
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized with an explicit allowlist (defense-in-depth)
+        dangerouslySetInnerHTML={{
+          __html: DOMPurify.sanitize(article.content, {
+            ALLOWED_TAGS: [
+              'a',
+              'b',
+              'blockquote',
+              'br',
+              'code',
+              'em',
+              'figure',
+              'figcaption',
+              'h2',
+              'h3',
+              'h4',
+              'hr',
+              'i',
+              'img',
+              'li',
+              'ol',
+              'p',
+              'pre',
+              'strong',
+              'ul',
+            ],
+            ALLOWED_ATTR: ['href', 'title', 'alt', 'src'],
+            ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+          }),
+        }}
       />
 
       {article.reactionsEnabled && reactionCounts && (

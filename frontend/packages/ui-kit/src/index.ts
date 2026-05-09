@@ -1,51 +1,163 @@
 /**
- * UI Kit - Design system for Property Management apps.
+ * @ppt/ui-kit - Design system for Property Management apps.
  *
- * Shared components between web and mobile.
+ * Shared components for ppt-web, reality-web, and mobile applications.
+ * Import the tokens.css file in your app's entry point to enable CSS custom properties.
  */
 
-// Placeholder - components will be added during implementation
-export const VERSION = '0.1.0';
+// ============================================
+// CSS Tokens (import in app entry point)
+// ============================================
+// import '@ppt/ui-kit/src/tokens.css';
 
-// Accessibility components
-export { SkipNavigation } from './SkipNavigation';
-export type { SkipNavigationProps } from './SkipNavigation';
-export { AccessibilityProvider, useAccessibilityContext } from './AccessibilityProvider';
+// ============================================
+// Version
+// ============================================
+export const VERSION = '0.2.356';
+
 export type { AccessibilityProviderProps } from './AccessibilityProvider';
+export { AccessibilityProvider, useAccessibilityContext } from './AccessibilityProvider';
+export type { SkipNavigationProps } from './SkipNavigation';
+// ============================================
+// Accessibility
+// ============================================
+export { SkipNavigation } from './SkipNavigation';
 
-// Example component types (to be implemented)
-export interface ButtonProps {
-  variant: 'primary' | 'secondary' | 'danger';
-  size: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-}
+// ============================================
+// Core Components
+// ============================================
 
-export interface InputProps {
-  type: 'text' | 'email' | 'password' | 'number';
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  disabled?: boolean;
-}
+export type { AlertProps, AlertVariant } from './Alert';
+// Alert
+export { Alert } from './Alert';
+export type { BadgeProps, BadgeSize, BadgeVariant } from './Badge';
+// Badge
+export { Badge } from './Badge';
+export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
+// Button
+export { Button } from './Button';
+export type { CardContentProps, CardFooterProps, CardHeaderProps, CardProps } from './Card';
+// Card
+export { Card } from './Card';
+export type { InputProps, InputSize, InputType } from './Input';
+// Input
+export { Input } from './Input';
+export type { ModalProps, ModalSize } from './Modal';
+// Modal
+export { Modal } from './Modal';
+export type { PaginationProps } from './Pagination';
+// Pagination
+export { Pagination } from './Pagination';
+export type { SpinnerOverlayProps, SpinnerProps, SpinnerSize } from './Spinner';
+// Spinner
+export { Spinner, SpinnerOverlay } from './Spinner';
+export type {
+  TableBodyProps,
+  TableCellProps,
+  TableHeaderCellProps,
+  TableHeadProps,
+  TableProps,
+  TableRowProps,
+} from './Table';
+// Table
+export { Table } from './Table';
 
-// Design tokens
+// ============================================
+// Design Tokens (JavaScript)
+// ============================================
+
+/**
+ * Color tokens for programmatic access.
+ * For CSS usage, import tokens.css and use CSS custom properties.
+ */
 export const colors = {
   primary: '#3B82F6',
-  secondary: '#6B7280',
-  success: '#10B981',
-  warning: '#F59E0B',
-  danger: '#EF4444',
-  background: '#FFFFFF',
-  text: '#1F2937',
-};
+  primaryHover: '#2563EB',
+  primaryActive: '#1D4ED8',
+  primaryLight: '#DBEAFE',
+  primaryDark: '#1E40AF',
 
+  secondary: '#6B7280',
+  secondaryHover: '#4B5563',
+  secondaryLight: '#F3F4F6',
+
+  success: '#10B981',
+  successHover: '#059669',
+  successLight: '#D1FAE5',
+  successDark: '#047857',
+
+  warning: '#F59E0B',
+  warningHover: '#D97706',
+  warningLight: '#FEF3C7',
+  warningDark: '#B45309',
+
+  danger: '#EF4444',
+  dangerHover: '#DC2626',
+  dangerLight: '#FEE2E2',
+  dangerDark: '#B91C1C',
+
+  info: '#3B82F6',
+  infoLight: '#DBEAFE',
+
+  background: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceHover: '#F9FAFB',
+  border: '#E5E7EB',
+  borderHover: '#D1D5DB',
+
+  text: '#1F2937',
+  textSecondary: '#6B7280',
+  textMuted: '#9CA3AF',
+  textInverse: '#FFFFFF',
+} as const;
+
+/**
+ * Spacing tokens in pixels.
+ */
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-};
+  0: 0,
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
+  5: 20,
+  6: 24,
+  8: 32,
+  10: 40,
+  12: 48,
+} as const;
+
+/**
+ * Font size tokens in rem.
+ */
+export const fontSize = {
+  xs: '0.75rem',
+  sm: '0.875rem',
+  base: '1rem',
+  lg: '1.125rem',
+  xl: '1.25rem',
+  '2xl': '1.5rem',
+} as const;
+
+/**
+ * Border radius tokens in rem.
+ */
+export const borderRadius = {
+  none: '0',
+  sm: '0.125rem',
+  md: '0.375rem',
+  lg: '0.5rem',
+  xl: '0.75rem',
+  '2xl': '1rem',
+  full: '9999px',
+} as const;
+
+/**
+ * Shadow tokens.
+ */
+export const shadows = {
+  sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+} as const;

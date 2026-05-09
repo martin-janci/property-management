@@ -140,7 +140,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (url = "https://api.reality-portal.eu", description = "EU-wide")
     ),
     paths(
-        routes::health::health,
+        routes::health::liveness,
+        routes::health::readiness,
         routes::listings::search,
         routes::listings::get_listing,
         routes::listings::get_suggestions,
@@ -193,6 +194,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
     ),
     components(schemas(
         routes::health::HealthResponse,
+        routes::health::LivenessResponse,
         routes::health::CacheMetricsResponse,
         routes::health::CacheMetricsDetail,
         routes::listings::ListingSearchRequest,
@@ -298,13 +300,31 @@ async fn main() -> anyhow::Result<()> {
     let db = db::create_rls_safe_pool(&database_url).await?;
     tracing::info!("Connected to database with RLS-safe pool");
 
+    // Apply any pending migrations. Same migration set as api-server (both
+    // share the per-target Postgres database). Concurrency-safe via sqlx's
+    // advisory lock — if api-server happens to be migrating in parallel
+    // (typical blue/green spin-up), this call blocks then sees zero pending.
+    // Required on first deploy of a fresh target where the database was
+    // created empty from `ppt_dev_template`.
+    // `.context()` preserves the underlying `MigrateError` as the source
+    // for anyhow's chained-error rendering — `map_err(|e| anyhow!("{e}"))`
+    // would have flattened the cause into a single string and lost the
+    // backtrace.
+    use anyhow::Context;
+    db::run_migrations(&db)
+        .await
+        .context("DB migration failed")?;
+    tracing::info!("Database migrations applied (or already current)");
+
     // Create application state
     let state = AppState::new(db);
 
     // Build router with state
     let app = Router::new()
-        // Health check (stateless)
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + PM API). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Prometheus metrics endpoint (Epic 95.4)
         .route("/metrics", get(metrics_endpoint))
         // Public listing routes
