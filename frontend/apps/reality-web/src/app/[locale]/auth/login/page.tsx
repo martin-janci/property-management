@@ -7,10 +7,10 @@
  * callback flow remains intact for federated sign-ins.
  */
 
-import { AuthApiError, login } from '@/lib/auth-api';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, Suspense, useState } from 'react';
+import { AuthApiError, login } from '@/lib/auth-api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

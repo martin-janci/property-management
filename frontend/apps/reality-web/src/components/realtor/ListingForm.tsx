@@ -7,8 +7,8 @@
  * the submit handler and any post-submit navigation.
  */
 
-import type { ListingDraft } from '@/lib/realtor-api';
 import { type FormEvent, useState } from 'react';
+import type { ListingDraft } from '@/lib/realtor-api';
 
 interface ListingFormProps {
   initialValue?: Partial<ListingDraft>;

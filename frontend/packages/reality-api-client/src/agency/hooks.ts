@@ -5,6 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getApiBase } from '../config';
 import type {
   Agency,
   AgencyBranding,
@@ -19,8 +20,6 @@ import type {
   UpdateBrandingRequest,
   UpdateRealtorRequest,
 } from './types';
-
-import { getApiBase } from '../config';
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${getApiBase()}${endpoint}`, {

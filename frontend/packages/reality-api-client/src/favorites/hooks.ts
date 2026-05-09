@@ -192,13 +192,7 @@ export function useToggleSearchAlert() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      enabled,
-    }: {
-      id: string;
-      enabled: boolean;
-    }): Promise<void> => {
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }): Promise<void> => {
       const response = await fetch(`${getApiBase()}/api/v1/saved-searches/${id}/alerts`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

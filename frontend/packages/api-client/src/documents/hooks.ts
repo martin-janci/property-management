@@ -106,13 +106,8 @@ export function useSubmitClassificationFeedback() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      feedback,
-    }: {
-      id: string;
-      feedback: ClassificationFeedback;
-    }) => api.submitClassificationFeedback(id, feedback),
+    mutationFn: ({ id, feedback }: { id: string; feedback: ClassificationFeedback }) =>
+      api.submitClassificationFeedback(id, feedback),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: documentKeys.classification(id) });
       queryClient.invalidateQueries({
@@ -128,13 +123,8 @@ export function useRequestSummarization() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      options,
-    }: {
-      id: string;
-      options?: GenerateSummaryRequest;
-    }) => api.requestSummarization(id, options),
+    mutationFn: ({ id, options }: { id: string; options?: GenerateSummaryRequest }) =>
+      api.requestSummarization(id, options),
     onSuccess: (_, { id }) => {
       // The actual summary will be available after async processing
       // Invalidate after a delay to pick up the result

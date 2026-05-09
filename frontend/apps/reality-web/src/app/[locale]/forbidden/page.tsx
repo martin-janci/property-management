@@ -6,9 +6,9 @@
  * inline styles instead of styled-jsx (which is client-only).
  */
 
-import { StateView } from '@/components/states';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { StateView } from '@/components/states';
 
 const linkStyle: CSSProperties = {
   padding: '10px 20px',

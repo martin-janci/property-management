@@ -4,15 +4,15 @@
  * Realtor profile editor (UC-51.1).
  */
 
+import { type FormEvent, useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import {
+  getMyRealtorProfile,
   RealtorApiError,
   type RealtorProfile,
-  getMyRealtorProfile,
   updateMyRealtorProfile,
 } from '@/lib/realtor-api';
-import { type FormEvent, useEffect, useState } from 'react';
 
 function ProfileFormContent() {
   const [profile, setProfile] = useState<RealtorProfile | null>(null);

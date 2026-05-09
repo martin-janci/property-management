@@ -30,9 +30,9 @@ import {
   useState,
 } from 'react';
 
+export type { AuthErrorCode, AuthUser };
 // Re-export types from api-client for convenience
 export { AuthError };
-export type { AuthUser, AuthErrorCode };
 
 // ============================================================================
 // Types

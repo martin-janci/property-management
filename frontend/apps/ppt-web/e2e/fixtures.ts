@@ -5,7 +5,7 @@
  * Custom fixtures for E2E tests including authentication helpers.
  */
 
-import { type Page, test as base } from '@playwright/test';
+import { test as base, type Page } from '@playwright/test';
 
 /** Test user credentials for E2E testing */
 export const testUsers = {

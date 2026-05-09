@@ -2,7 +2,10 @@
   "name": "ppt-frontend",
   "private": true,
   "description": "PPT Frontend Monorepo",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev:ppt": "pnpm --filter @ppt/web dev",
     "dev:reality": "pnpm --filter @ppt/reality-web dev",

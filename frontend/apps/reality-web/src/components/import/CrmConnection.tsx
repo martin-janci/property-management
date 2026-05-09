@@ -151,7 +151,10 @@ export function CrmConnection() {
 function ConnectionCard({
   connection,
   agencyId,
-}: { connection: CrmConnectionType; agencyId: string }) {
+}: {
+  connection: CrmConnectionType;
+  agencyId: string;
+}) {
   const deleteMutation = useDeleteCrmConnection(agencyId);
   const syncMutation = useSyncCrmConnection(agencyId, connection.id);
 

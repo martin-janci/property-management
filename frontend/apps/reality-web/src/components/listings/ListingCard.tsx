@@ -7,8 +7,8 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface ListingCardProps {
   listing: ListingSummary;

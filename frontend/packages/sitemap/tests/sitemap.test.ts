@@ -8,7 +8,7 @@ import {
   getScreen,
   sitemap,
 } from '../src';
-import { SitemapTestHelper, buildUrl } from '../src/utils';
+import { buildUrl, SitemapTestHelper } from '../src/utils';
 
 describe('Sitemap Data', () => {
   describe('Routes', () => {

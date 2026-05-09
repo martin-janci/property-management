@@ -8,8 +8,8 @@
  * deployments should wire it to their telemetry pipeline.
  */
 
-import { StateView } from '@/components/states';
 import { useEffect } from 'react';
+import { StateView } from '@/components/states';
 
 interface ErrorPageProps {
   error: Error & { digest?: string };

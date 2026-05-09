@@ -42,7 +42,9 @@
   background-color: var(--ppt-bg-input, var(--ppt-color-surface));
   border: 1px solid var(--ppt-border-default, var(--ppt-color-border));
   border-radius: var(--ppt-radius-md);
-  transition: border-color var(--ppt-transition-fast), box-shadow var(--ppt-transition-fast);
+  transition:
+    border-color var(--ppt-transition-fast),
+    box-shadow var(--ppt-transition-fast);
   -webkit-font-smoothing: antialiased;
 }
 

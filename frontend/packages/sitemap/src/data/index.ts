@@ -87,10 +87,10 @@ export function getPublicRoutes(app: 'ppt-web' | 'reality-web'): FrontendRoute[]
   return sitemap.routes[app].filter((r) => !r.auth.required);
 }
 
+export { apiServerEndpoints } from './api-server';
+export { allFlows } from './flows';
+export { mobileScreens } from './mobile';
 // Re-export individual data arrays
 export { pptWebRoutes } from './ppt-web';
-export { realityWebRoutes } from './reality-web';
-export { mobileScreens } from './mobile';
-export { apiServerEndpoints } from './api-server';
 export { realityServerEndpoints } from './reality-server';
-export { allFlows } from './flows';
+export { realityWebRoutes } from './reality-web';

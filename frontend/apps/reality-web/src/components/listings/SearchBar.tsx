@@ -7,8 +7,8 @@
 'use client';
 
 import { useSearchSuggestions } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface SearchBarProps {

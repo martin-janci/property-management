@@ -4,7 +4,7 @@
  */
 
 export { CreateDisputePage } from './CreateDisputePage';
-export { DisputesPage } from './DisputesPage';
 export { DisputeDetailPage } from './DisputeDetailPage';
+export { DisputesPage } from './DisputesPage';
 export { FileDisputePage } from './FileDisputePage';
 export { MediationPage } from './MediationPage';

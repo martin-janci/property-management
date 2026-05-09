@@ -13,8 +13,8 @@ import {
   useMyAgency,
   useRealtors,
 } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 type PeriodType = '7d' | '30d' | '90d' | '12m';

@@ -29,8 +29,9 @@
   background-color: var(--ppt-color-success-light);
   border-bottom: 1px solid var(--ppt-color-success);
   color: var(--ppt-color-success-dark);
-  animation: offline-indicator-slide-in 0.3s ease-out, offline-indicator-fade-out 0.5s ease-in 4.5s
-    forwards;
+  animation:
+    offline-indicator-slide-in 0.3s ease-out,
+    offline-indicator-fade-out 0.5s ease-in 4.5s forwards;
 }
 
 .offline-indicator__content {

@@ -3,9 +3,9 @@
  * Insurance Management Feature
  */
 
-export * from './PolicyCard';
 export * from './ClaimCard';
-export * from './PolicyForm';
 export * from './ClaimForm';
+export * from './PolicyCard';
+export * from './PolicyForm';
 export * from './QuoteComparisonCard';
 export * from './QuoteRequestForm';
