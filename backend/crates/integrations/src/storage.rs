@@ -840,9 +840,11 @@ pub fn generate_storage_key(org_id: uuid::Uuid, filename: &str) -> String {
 /// Uses OS CSPRNG directly; callback tokens authenticate the uploader to the
 /// completion endpoint.
 pub fn generate_callback_token() -> String {
-    use rand::RngCore;
+    use rand::TryRng;
     let mut bytes = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    rand::rngs::SysRng
+        .try_fill_bytes(&mut bytes)
+        .expect("OS rng failed");
     hex::encode(bytes)
 }
 

@@ -8,7 +8,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use rand::Rng;
+use rand::RngExt;
 use thiserror::Error;
 use totp_rs::{Algorithm, Secret, TOTP};
 
@@ -146,9 +146,11 @@ impl TotpService {
         // Generate random 12-byte nonce from OS CSPRNG directly.
         // SECURITY: AES-GCM nonce reuse breaks confidentiality; see crypto.rs
         // for rationale.
-        use rand::RngCore;
+        use rand::TryRng;
         let mut nonce_bytes = [0u8; 12];
-        rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut nonce_bytes)
+            .expect("OS rng failed");
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt the secret
@@ -299,11 +301,11 @@ impl TotpService {
     /// recover a TOTP-protected account.
     fn generate_random_code(&self) -> String {
         const CHARSET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rand::rand_core::UnwrapErr(rand::rngs::SysRng);
 
         (0..self.backup_code_length)
             .map(|_| {
-                let idx = rng.gen_range(0..CHARSET.len());
+                let idx = rng.random_range(0..CHARSET.len());
                 CHARSET[idx] as char
             })
             .collect()
