@@ -54,7 +54,10 @@ pub fn router() -> Router<AppState> {
         .route("/{building_id}/units/{unit_id}", delete(archive_unit))
         .route("/{building_id}/units/{unit_id}/restore", post(restore_unit))
         // Unit owner management (UC-15.6)
-        .route("/{building_id}/units/{unit_id}/owners", get(list_unit_owners))
+        .route(
+            "/{building_id}/units/{unit_id}/owners",
+            get(list_unit_owners),
+        )
         .route(
             "/:building_id/units/:unit_id/owners",
             post(assign_unit_owner),

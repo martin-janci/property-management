@@ -55,8 +55,14 @@ pub fn router() -> Router<AppState> {
         .route("/moderation/queue", get(get_moderation_queue))
         .route("/moderation/queue/stats", get(get_moderation_stats))
         .route("/moderation/cases/{id}", get(get_moderation_case))
-        .route("/moderation/cases/{id}/assign", post(assign_moderation_case))
-        .route("/moderation/cases/{id}/action", post(take_moderation_action))
+        .route(
+            "/moderation/cases/{id}/assign",
+            post(assign_moderation_case),
+        )
+        .route(
+            "/moderation/cases/{id}/action",
+            post(take_moderation_action),
+        )
         .route("/moderation/cases/{id}/appeal", post(file_appeal))
         .route("/moderation/cases/{id}/appeal/decide", post(decide_appeal))
         .route("/moderation/report", post(report_content))

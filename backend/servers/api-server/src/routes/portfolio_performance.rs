@@ -69,7 +69,10 @@ pub fn router() -> Router<AppState> {
         // Portfolio properties
         .route("/portfolios/{id}/properties", post(add_property))
         .route("/portfolios/{id}/properties", get(list_properties))
-        .route("/portfolios/{id}/properties/{property_id}", get(get_property))
+        .route(
+            "/portfolios/{id}/properties/{property_id}",
+            get(get_property),
+        )
         .route(
             "/portfolios/:id/properties/:property_id",
             put(update_property),
@@ -97,7 +100,10 @@ pub fn router() -> Router<AppState> {
         .route("/portfolios/{id}/cash-flows", post(upsert_cash_flow))
         .route("/portfolios/{id}/cash-flows", get(get_cash_flows))
         // Metrics
-        .route("/portfolios/{id}/metrics/calculate", post(calculate_metrics))
+        .route(
+            "/portfolios/{id}/metrics/calculate",
+            post(calculate_metrics),
+        )
         .route("/portfolios/{id}/metrics/latest", get(get_latest_metrics))
         .route("/portfolios/{id}/metrics/summary", get(get_metrics_summary))
         // Benchmarks

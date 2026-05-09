@@ -275,7 +275,10 @@ pub fn router() -> Router<AppState> {
         // Attachments
         .route("/{id}/attachments", get(list_attachments))
         .route("/{id}/attachments", post(add_attachment))
-        .route("/{id}/attachments/{attachment_id}", delete(delete_attachment))
+        .route(
+            "/{id}/attachments/{attachment_id}",
+            delete(delete_attachment),
+        )
         // Read/Acknowledge (Story 6.2)
         .route("/{id}/read", post(mark_read))
         .route("/{id}/acknowledge", post(acknowledge))

@@ -1033,7 +1033,10 @@ pub fn equipment_router() -> Router<AppState> {
         .route("/{id}/maintenance", post(create_maintenance))
         .route("/maintenance/{id}", put(update_maintenance))
         .route("/predictions", get(list_predictions))
-        .route("/predictions/{id}/acknowledge", post(acknowledge_prediction))
+        .route(
+            "/predictions/{id}/acknowledge",
+            post(acknowledge_prediction),
+        )
         .route("/needing-maintenance", get(list_needing_maintenance))
 }
 

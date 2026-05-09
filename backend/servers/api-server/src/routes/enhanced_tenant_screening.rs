@@ -22,7 +22,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // AI Risk Scoring Models
         .route("/models", get(list_risk_models).post(create_risk_model))
-        .route("/models/{id}", get(get_risk_model).delete(delete_risk_model))
+        .route(
+            "/models/{id}",
+            get(get_risk_model).delete(delete_risk_model),
+        )
         .route("/models/{id}/activate", post(activate_risk_model))
         // Provider Configs
         .route(

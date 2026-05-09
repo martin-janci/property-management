@@ -37,7 +37,10 @@ pub fn router() -> Router<AppState> {
                 .put(update_investor)
                 .delete(delete_investor),
         )
-        .route("/investors/{investor_id}/summary", get(get_investor_summary))
+        .route(
+            "/investors/{investor_id}/summary",
+            get(get_investor_summary),
+        )
         // Portfolios
         .route("/portfolios", get(list_portfolios).post(create_portfolio))
         .route(

@@ -57,7 +57,10 @@ pub fn router() -> Router<AppState> {
             delete(delete_tour_hotspot),
         )
         // Dynamic Pricing (Story 70.2)
-        .route("/listings/{listing_id}/pricing", get(get_pricing_suggestion))
+        .route(
+            "/listings/{listing_id}/pricing",
+            get(get_pricing_suggestion),
+        )
         .route(
             "/listings/:listing_id/pricing/analyze",
             post(analyze_pricing),

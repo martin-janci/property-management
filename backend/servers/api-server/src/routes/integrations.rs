@@ -168,7 +168,10 @@ pub fn router() -> Router<AppState> {
             post(connect_booking),
         )
         .route("/organizations/{org_id}/booking/sync", post(sync_booking))
-        .route("/organizations/{org_id}/booking", delete(disconnect_booking))
+        .route(
+            "/organizations/{org_id}/booking",
+            delete(disconnect_booking),
+        )
         .route("/booking/push", post(booking_push_notification))
         // Portal Webhooks (Story 83.3)
         .route(

@@ -29,7 +29,10 @@ pub fn router() -> Router<AppState> {
         // Facility management (by building)
         .route("/buildings/{building_id}/facilities", get(list_facilities))
         .route("/buildings/{building_id}/facilities", post(create_facility))
-        .route("/buildings/{building_id}/facilities/{id}", get(get_facility))
+        .route(
+            "/buildings/{building_id}/facilities/{id}",
+            get(get_facility),
+        )
         .route(
             "/buildings/:building_id/facilities/:id",
             put(update_facility),

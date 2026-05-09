@@ -46,11 +46,17 @@ pub fn router() -> Router<AppState> {
             get(list_equipment_maintenance_logs),
         )
         .route("/maintenance-logs/{id}/photos", post(add_maintenance_photo))
-        .route("/maintenance-logs/{id}/photos", get(list_maintenance_photos))
+        .route(
+            "/maintenance-logs/{id}/photos",
+            get(list_maintenance_photos),
+        )
         // Predictions (Story 134.3)
         .route("/predictions/run", post(run_prediction))
         .route("/predictions/batch", post(run_batch_predictions))
-        .route("/equipment/{id}/predictions", get(get_equipment_predictions))
+        .route(
+            "/equipment/{id}/predictions",
+            get(get_equipment_predictions),
+        )
         // Alerts
         .route("/alerts", get(list_alerts))
         .route("/alerts/{id}/acknowledge", post(acknowledge_alert))

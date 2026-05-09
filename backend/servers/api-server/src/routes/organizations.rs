@@ -34,7 +34,10 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/members", get(list_organization_members))
         .route("/{id}/members", post(add_organization_member))
         .route("/{id}/members/{user_id}", put(update_organization_member))
-        .route("/{id}/members/{user_id}", delete(remove_organization_member))
+        .route(
+            "/{id}/members/{user_id}",
+            delete(remove_organization_member),
+        )
         .route("/{id}/roles", get(list_organization_roles))
         .route("/{id}/roles", post(create_organization_role))
         .route("/{id}/roles/{role_id}", get(get_organization_role))

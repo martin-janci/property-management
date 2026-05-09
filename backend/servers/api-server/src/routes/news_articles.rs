@@ -285,7 +285,10 @@ pub fn router() -> Router<AppState> {
             "/:id/comments/:comment_id",
             put(update_comment).delete(delete_comment),
         )
-        .route("/{id}/comments/{comment_id}/moderate", post(moderate_comment))
+        .route(
+            "/{id}/comments/{comment_id}/moderate",
+            post(moderate_comment),
+        )
         .route(
             "/:id/comments/:comment_id/replies",
             get(list_comment_replies),

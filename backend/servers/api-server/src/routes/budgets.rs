@@ -247,7 +247,10 @@ pub fn router() -> Router<AppState> {
             "/reserve-funds/:id/transactions",
             get(list_reserve_transactions),
         )
-        .route("/reserve-funds/{id}/projection", get(get_reserve_projection))
+        .route(
+            "/reserve-funds/{id}/projection",
+            get(get_reserve_projection),
+        )
         // Forecasts
         .route("/forecasts", post(create_forecast))
         .route("/forecasts", get(list_forecasts))
