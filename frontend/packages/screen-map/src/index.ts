@@ -9,6 +9,7 @@ export {
 export { ZipAdapter } from './design-source/zip-adapter.js';
 export { discoverScreenMaps } from './discover.js';
 export { type LoadScreenContextOptions, loadScreenContext } from './edit-context.js';
+export { extractKnownContexts, type KnownContexts } from './extract-known.js';
 export { parseFilter } from './filter.js';
 export { type GroupingDecision, mergeCandidates } from './grouping.js';
 export { type BulkWriteOptions, bulkWriteScreenMaps } from './init-write.js';

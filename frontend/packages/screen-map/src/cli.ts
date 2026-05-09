@@ -175,10 +175,15 @@ program
     const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
     const ctx = await buildValidationContext({ repoRoot });
     const { scanDrift } = await import('./scan-drift.js');
-    // Phase 3a: only sitemap/endpoint/orphan drift wired here.
-    // UC/component/epic drift requires knownUseCases/knownComponents/knownEpics sets
-    // — those will be wired in Phase 3b alongside the bootstrap runs.
-    const issues = scanDrift({ screens, context: ctx });
+    // Phase 3b: passes knownUseCases / knownEpics / knownComponents from
+    // buildValidationContext, so all 5 drift categories fire.
+    const issues = scanDrift({
+      screens,
+      context: ctx,
+      knownUseCases: ctx.knownUseCases,
+      knownEpics: ctx.knownEpics,
+      knownComponents: ctx.knownComponents,
+    });
     if (issues.length === 0) {
       process.stdout.write('No drift detected.\n');
       return;

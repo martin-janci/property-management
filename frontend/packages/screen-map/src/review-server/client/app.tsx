@@ -40,14 +40,13 @@ function App() {
   if (!session) return html`<div class="topbar"><span>loading…</span></div>`;
   if (!currentId) return html`<div class="topbar"><span>review complete</span></div>`;
   return html`<${ScreenView}
-    sessionToken=${TOKEN}
     screenId=${currentId}
     total=${session.screens.length}
     onNext=${(nextId) => setCurrentId(nextId)}
   />`;
 }
 
-function ScreenView({ sessionToken, screenId, total, onNext }) {
+function ScreenView({ screenId, total, onNext }) {
   const [screen, setScreen] = useState(null);
   const [decisions, setDecisions] = useState({});
   const [generalNote, setGeneralNote] = useState('');
