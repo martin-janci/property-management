@@ -58,6 +58,71 @@ data class SsoError(
     @SerialName("error_description") val errorDescription: String? = null
 )
 
+/** Email/password login request (UC-47.2). */
+@Serializable data class AuthLoginRequest(val email: String, val password: String)
+
+/**
+ * Login response from reality-server `POST /api/v1/users/login`.
+ *
+ * The reality-server returns a session token, expiry timestamp and user info. Fields with
+ * snake_case names are mapped via `@SerialName`.
+ */
+@Serializable
+data class AuthLoginResponse(
+    val token: String,
+    @SerialName("expires_at") val expiresAt: String,
+    val user: PortalUser,
+)
+
+/** User info returned by reality-server in login + `/users/me` responses. */
+@Serializable
+data class PortalUser(
+    val id: String,
+    val email: String,
+    val name: String,
+    @SerialName("profile_image_url") val profileImageUrl: String? = null,
+    @SerialName("is_linked_to_pm") val isLinkedToPm: Boolean = false,
+)
+
+/** Registration request (UC-47.1). Matches `POST /api/v1/users/register`. */
+@Serializable
+data class AuthRegisterRequest(
+    val email: String,
+    val password: String,
+    val name: String,
+)
+
+/** Registration response — only contains a success message and the new user id. */
+@Serializable
+data class AuthRegisterResponse(
+    val message: String,
+    @SerialName("user_id") val userId: String,
+)
+
+/** Body for `POST /api/v1/users/password-reset` (UC-44.3 step 1). */
+@Serializable data class PasswordResetRequest(val email: String)
+
+/** Generic acknowledgement returned by both reset endpoints. */
+@Serializable data class PasswordResetMessageResponse(val message: String)
+
+/** Body for `POST /api/v1/users/password-reset/confirm` (UC-44.3 step 2). */
+@Serializable
+data class PasswordResetConfirm(
+    val token: String,
+    @SerialName("new_password") val newPassword: String,
+)
+
+/**
+ * Profile update payload (UC-47.7). Matches `PUT /api/v1/users/me` — reality-server accepts any of
+ * `name`, `profile_image_url` and `locale`.
+ */
+@Serializable
+data class ProfileUpdateRequest(
+    val name: String? = null,
+    @SerialName("profile_image_url") val profileImageUrl: String? = null,
+    val locale: String? = null,
+)
+
 /** Authentication state for the app. */
 sealed class AuthState {
     /** Not authenticated. */

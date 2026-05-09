@@ -125,6 +125,30 @@ impl PortalRepository {
         Ok(user)
     }
 
+    /// Replace a portal user's password hash. Used by the
+    /// `confirm_password_reset` flow after a token is verified.
+    pub async fn update_password_hash(
+        &self,
+        id: Uuid,
+        password_hash: &str,
+    ) -> Result<PortalUser, SqlxError> {
+        let user = sqlx::query_as::<_, PortalUser>(
+            r#"
+            UPDATE portal_users SET
+                password_hash = $2,
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(password_hash)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
+
     // ========================================================================
     // Public Listing Search (Story 16.1)
     // ========================================================================

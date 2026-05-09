@@ -3,9 +3,9 @@
  * Meters feature: Self-readings and consumption tracking.
  */
 
-export * from './MetersPage';
-export * from './MeterDetailPage';
-export * from './SubmitReadingPage';
 export * from './EditReadingPage';
+export * from './MeterDetailPage';
+export * from './MetersPage';
 export * from './PendingValidationsPage';
 export * from './ReadingComparisonPage';
+export * from './SubmitReadingPage';

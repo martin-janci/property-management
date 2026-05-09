@@ -15,9 +15,9 @@
 // - preact@10.24.3 — expected SRI: sha384-/pFbBxO2jKQVyiPGNHNeHzL8Q4alRjcIErmT6JlDV+yLFBlNWgBelAz7anPGMNc+
 // - preact@10.24.3/hooks — expected SRI: sha384-AYscPVYcC3uHOEqxBLdXyhBqOQu+DajjMpCRAKrSreyAXZj/DpB80GkmGcyVMdFN
 // - htm@3.1.1 — expected SRI: sha384-sSiaM0en9Bz57PyCPaF5zeh8OaFdFmSQRw0ynngAWx8Kz51qoisBTGbQRBTrDa6G
-import { h, render } from 'https://esm.sh/preact@10.24.3';
-import { useState, useEffect } from 'https://esm.sh/preact@10.24.3/hooks';
 import htm from 'https://esm.sh/htm@3.1.1';
+import { h, render } from 'https://esm.sh/preact@10.24.3';
+import { useEffect, useState } from 'https://esm.sh/preact@10.24.3/hooks';
 
 const html = htm.bind(h);
 const TOKEN = window.__SESSION_TOKEN__;
@@ -78,9 +78,11 @@ function ScreenView({ sessionToken, screenId, total, onNext }) {
     }
   }
   const previewSrc =
-    previewMode === 'local' ? screen.previewUrls.local
-    : previewMode === 'staging' ? screen.previewUrls.staging
-    : null;
+    previewMode === 'local'
+      ? screen.previewUrls.local
+      : previewMode === 'staging'
+        ? screen.previewUrls.staging
+        : null;
   return html`
     <div class="topbar">
       <span class="progress">${screen.frontmatter.id} (${screen.frontmatter.product})</span>
@@ -130,7 +132,10 @@ function parseChecklist(body) {
     const match = line.match(/^- \[([ x])\] (.+)$/);
     if (match) {
       const label = match[2];
-      const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const key = label
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
       items.push({ key, label });
     }
     if (line.startsWith('## ') && !line.startsWith('## Functionality')) break;

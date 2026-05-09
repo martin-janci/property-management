@@ -5,39 +5,37 @@
  * Run `pnpm generate` to regenerate after API changes.
  */
 
-// Export generated types and client
-// These will be populated after running `pnpm generate`
-export * from './generated';
-
-// Export auth token provider for secure token management
-export * from './auth';
-
 // Export domain-specific modules
 export * from './advanced-notifications';
 export * from './announcements';
+// Export auth token provider for secure token management
+export * from './auth';
 export * from './buildings';
-export * from './critical-notifications';
-export * from './documents';
-export * from './government-portal';
-export * from './messaging';
-export * from './neighbors';
-export * from './notification-preferences';
 export * from './community';
+export * from './compliance';
+export * from './critical-notifications';
+export * from './disputes';
+export * from './documents';
+export * from './emergency';
+export * from './facilities';
+export * from './faults';
 export * from './financial';
 export * from './forms';
-export * from './workflow-automation';
-export * from './reports';
-export * from './facilities';
-export * from './registry';
-export * from './packages';
-export * from './emergency';
-export * from './news';
+// Export generated types and client
+// These will be populated after running `pnpm generate`
+export * from './generated';
+export * from './government-portal';
 export * from './integrations';
-export * from './disputes';
-export * from './faults';
+export * from './messaging';
 export * from './migration';
-export * from './compliance';
+export * from './neighbors';
+export * from './news';
+export * from './notification-preferences';
 export * from './outages';
+export * from './packages';
+export * from './registry';
+export * from './reports';
+export * from './workflow-automation';
 
 // API client configuration
 export interface ApiConfig {

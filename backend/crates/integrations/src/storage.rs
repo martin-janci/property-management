@@ -836,10 +836,13 @@ pub fn generate_storage_key(org_id: uuid::Uuid, filename: &str) -> String {
 }
 
 /// Generate a callback token for upload completion verification.
+///
+/// Uses OS CSPRNG directly; callback tokens authenticate the uploader to the
+/// completion endpoint.
 pub fn generate_callback_token() -> String {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    let bytes: [u8; 32] = rng.gen();
+    use rand::RngCore;
+    let mut bytes = [0u8; 32];
+    rand::rngs::OsRng.fill_bytes(&mut bytes);
     hex::encode(bytes)
 }
 

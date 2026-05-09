@@ -227,8 +227,11 @@ export const createFormHooks = (api: FormsApi) => ({
         formId,
         fieldId,
         data,
-      }: { formId: string; fieldId: string; data: UpdateFormField }) =>
-        api.updateField(formId, fieldId, data),
+      }: {
+        formId: string;
+        fieldId: string;
+        data: UpdateFormField;
+      }) => api.updateField(formId, fieldId, data),
       onSuccess: (_, { formId }) => {
         queryClient.invalidateQueries({ queryKey: formKeys.fields(formId) });
         queryClient.invalidateQueries({ queryKey: formKeys.detail(formId) });

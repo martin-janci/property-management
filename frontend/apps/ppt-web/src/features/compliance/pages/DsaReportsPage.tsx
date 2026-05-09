@@ -14,8 +14,8 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { DsaTransparencyReportCard } from '../components/DsaTransparencyReportCard';
 import type { DsaTransparencyReport } from '../components/DsaTransparencyReportCard';
+import { DsaTransparencyReportCard } from '../components/DsaTransparencyReportCard';
 
 interface DsaMetricsDisplay {
   current_period_start: string;

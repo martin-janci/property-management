@@ -4,6 +4,7 @@
  * API functions for managing buildings (UC-15).
  */
 
+import { getToken } from '../auth';
 import type { ApiConfig } from '../index';
 import type {
   Building,
@@ -19,6 +20,74 @@ import type {
   UpdateBuildingRequest,
   UploadDocumentRequest,
 } from './types';
+
+// ============================================
+// Direct API Functions (using token provider)
+// ============================================
+
+// Use configurable base URL from environment, falling back to relative path
+const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
+const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/buildings`;
+
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `HTTP error ${response.status}`);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json();
+}
+
+function buildQueryString(params: object): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  }
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+/**
+ * List buildings with optional filters.
+ */
+export async function listBuildings(
+  params?: ListBuildingsParams,
+  signal?: AbortSignal
+): Promise<BuildingsPaginatedResponse<Building>> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<BuildingsPaginatedResponse<Building>>(`${API_BASE}${qs}`, { signal });
+}
+
+/**
+ * Get building by ID.
+ */
+export async function getBuilding(id: string, signal?: AbortSignal): Promise<Building> {
+  return apiRequest<Building>(`${API_BASE}/${id}`, { signal });
+}
+
+// ============================================
+// Factory-based API Client (legacy pattern)
+// ============================================
 
 const buildHeaders = (config: ApiConfig): HeadersInit => ({
   'Content-Type': 'application/json',

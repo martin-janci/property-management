@@ -20,17 +20,18 @@
 }
 
 .offline-indicator--offline {
-  background-color: #fef2f2;
-  border-bottom: 1px solid #fecaca;
-  color: #991b1b;
+  background-color: var(--ppt-color-danger-light);
+  border-bottom: 1px solid var(--ppt-color-danger);
+  color: var(--ppt-color-danger-dark);
 }
 
 .offline-indicator--reconnected {
-  background-color: #ecfdf5;
-  border-bottom: 1px solid #a7f3d0;
-  color: #065f46;
-  animation: offline-indicator-slide-in 0.3s ease-out, offline-indicator-fade-out 0.5s ease-in 4.5s
-    forwards;
+  background-color: var(--ppt-color-success-light);
+  border-bottom: 1px solid var(--ppt-color-success);
+  color: var(--ppt-color-success-dark);
+  animation:
+    offline-indicator-slide-in 0.3s ease-out,
+    offline-indicator-fade-out 0.5s ease-in 4.5s forwards;
 }
 
 .offline-indicator__content {
@@ -45,11 +46,11 @@
 }
 
 .offline-indicator--offline .offline-indicator__icon {
-  stroke: #dc2626;
+  stroke: var(--ppt-color-danger-hover);
 }
 
 .offline-indicator--reconnected .offline-indicator__icon {
-  stroke: #059669;
+  stroke: var(--ppt-color-success-hover);
 }
 
 .offline-indicator__text {

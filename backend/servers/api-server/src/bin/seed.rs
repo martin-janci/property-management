@@ -20,9 +20,74 @@
 //! cargo run -p api-server --bin ppt-seed -- --minimal
 //! ```
 
+use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
+use argon2::Argon2;
 use clap::Parser;
 use db::seed::{SeedConfig, SeedError, SeedRunner};
 use dialoguer::{Confirm, Input, Password};
+
+/// Default reality-portal OAuth redirect URIs covering the standard prod +
+/// staging Reality Portal apexes. Operators with custom apex hostnames can
+/// override via repeated `--reality-portal-redirect-uri` flags.
+const DEFAULT_REALITY_PORTAL_REDIRECT_URIS: &[&str] = &[
+    "https://rlt.sk/api/v1/sso/callback",
+    "https://staging.rlt.sk/api/v1/sso/callback",
+];
+
+/// UPSERT the `reality-portal` row in `oauth_clients` with the given secret.
+/// Idempotent: subsequent runs with the same secret rewrite the hash (Argon2
+/// salts are random so the column changes byte-for-byte but verifies against
+/// the same plaintext). Used on first prod/staging deploy to bootstrap the
+/// SSO handshake between reality-server and api-server.
+async fn upsert_reality_portal_client(
+    pool: &sqlx::PgPool,
+    secret: &str,
+    redirect_uris: &[String],
+) -> anyhow::Result<()> {
+    if secret.len() < 32 {
+        return Err(anyhow::anyhow!(
+            "--reality-portal-secret must be at least 32 characters \
+             (matches the validation in deploy-server's `build_service_envs`)"
+        ));
+    }
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let hash = argon2
+        .hash_password(secret.as_bytes(), &salt)
+        .map_err(|e| anyhow::anyhow!("argon2 hash failed: {e}"))?
+        .to_string();
+
+    // Store as JSONB array. The schema's `redirect_uris` column is JSONB,
+    // and the OAuth handler validates the requested redirect_uri against
+    // exact entries in this array on every authorize/token call.
+    let redirect_uris_json = serde_json::to_value(redirect_uris)?;
+    let scopes_json = serde_json::json!(["profile", "openid"]);
+
+    sqlx::query(
+        r#"
+        INSERT INTO oauth_clients (
+            client_id, client_secret_hash, name, description,
+            redirect_uris, scopes, is_confidential, rotate_refresh_tokens, is_active
+        ) VALUES (
+            'reality-portal', $1, 'Reality Portal',
+            'SSO bridge from reality-server to api-server (seeded by ppt-seed --reality-portal-secret)',
+            $2::jsonb, $3::jsonb, true, true, true
+        )
+        ON CONFLICT (client_id) DO UPDATE SET
+            client_secret_hash = EXCLUDED.client_secret_hash,
+            redirect_uris      = EXCLUDED.redirect_uris,
+            scopes             = EXCLUDED.scopes,
+            is_active          = true,
+            updated_at         = NOW();
+        "#,
+    )
+    .bind(&hash)
+    .bind(&redirect_uris_json)
+    .bind(&scopes_json)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
 
 #[derive(Parser)]
 #[command(name = "ppt-seed")]
@@ -56,6 +121,24 @@ struct Cli {
     /// Skip confirmation prompts
     #[arg(long, short = 'y')]
     yes: bool,
+
+    /// Plaintext OAuth client secret for the `reality-portal` client. When
+    /// provided, the seeder UPSERTs a row into `oauth_clients` with
+    /// `client_id="reality-portal"` and `client_secret_hash` = Argon2id of
+    /// this value. Reality-server reads its matching plaintext from
+    /// `PM_CLIENT_SECRET` (set by the deploy-server from
+    /// `/etc/ppt-deploy/secrets.env::PPT_PM_CLIENT_SECRET`) — both sides
+    /// must agree, so on first prod deploy run this with the same value:
+    ///
+    ///     ppt-seed --reality-portal-secret "$PPT_PM_CLIENT_SECRET"
+    #[arg(long, env = "PPT_PM_CLIENT_SECRET")]
+    reality_portal_secret: Option<String>,
+
+    /// Allowed OAuth redirect URI for the reality-portal client (repeatable).
+    /// If none specified, defaults to the prod + staging Reality Portal SSO
+    /// callback URLs.
+    #[arg(long = "reality-portal-redirect-uri")]
+    reality_portal_redirect_uris: Vec<String>,
 }
 
 fn validate_password(password: &str) -> Result<(), Vec<String>> {
@@ -168,13 +251,22 @@ async fn main() -> anyhow::Result<()> {
     if !cli.minimal {
         println!();
         println!("Sample data includes:");
-        println!("  • 1 organization (Demo Property Management)");
-        println!("  • 15 users covering all 12 role types");
+        println!("  • 1 organization (Demo správa nehnuteľností)");
+        println!("  • 15 PPT users covering all 12 role types");
         println!("  • 3 buildings with 19 units total");
         println!("  • Unit resident assignments");
+        println!("  • 6 faults in various states (new, triaged, in_progress, resolved, closed)");
+        println!("  • 2 votes (1 closed with results, 1 active)");
+        println!("  • 4 announcements (published, pinned, archived)");
+        println!("  • 6 listings (sale & rent, SK locale)");
+        println!("  • 4 Reality Portal users (3 buyers/renters, 1 realtor)");
+        println!("  • 3 inquiries with message threads");
+        println!("  • 3 portal favorites");
         println!();
-        println!("All sample users use password: DemoPass123");
-        println!("All sample emails end with: @demo-property.test");
+        println!("PPT sample users use password: DemoHeslo123");
+        println!("PPT sample emails end with:   @demo-property.test");
+        println!("Portal users use password:    PortalHeslo123");
+        println!("Portal emails end with:        @demo-reality.test");
     }
 
     // Confirmation
@@ -217,7 +309,11 @@ async fn main() -> anyhow::Result<()> {
                 println!("┌──────────────────────────────────────────────────────────┐");
                 println!("│ Cleanup (existing seed data removed)                     │");
                 println!("├──────────────────────────────────────────────────────────┤");
-                println!("│  Users deleted:         {:>30} │", stats.users_deleted);
+                println!("│  PPT Users deleted:     {:>30} │", stats.users_deleted);
+                println!(
+                    "│  Portal Users deleted:  {:>30} │",
+                    stats.portal_users_deleted
+                );
                 println!(
                     "│  Organizations deleted: {:>30} │",
                     stats.organizations_deleted
@@ -235,10 +331,18 @@ async fn main() -> anyhow::Result<()> {
             println!("║                    Seed Complete ✓                       ║");
             println!("╠══════════════════════════════════════════════════════════╣");
             println!("║  Organizations:  {:>38} ║", result.organizations_created);
-            println!("║  Users:          {:>38} ║", result.users_created);
+            println!("║  PPT Users:      {:>38} ║", result.users_created);
             println!("║  Buildings:      {:>38} ║", result.buildings_created);
             println!("║  Units:          {:>38} ║", result.units_created);
             println!("║  Residents:      {:>38} ║", result.residents_assigned);
+            println!("║  Faults:         {:>38} ║", result.faults_created);
+            println!("║  Votes:          {:>38} ║", result.votes_created);
+            println!("║  Announcements:  {:>38} ║", result.announcements_created);
+            println!("╠══════════════════════════════════════════════════════════╣");
+            println!("║  Listings:       {:>38} ║", result.listings_created);
+            println!("║  Portal Users:   {:>38} ║", result.portal_users_created);
+            println!("║  Inquiries:      {:>38} ║", result.inquiries_created);
+            println!("║  Favorites:      {:>38} ║", result.favorites_created);
             println!("╠══════════════════════════════════════════════════════════╣");
             println!("║  Admin User ID:  {} ║", result.admin_user_id);
             println!("║  Organization:   {} ║", result.organization_id);
@@ -248,6 +352,28 @@ async fn main() -> anyhow::Result<()> {
             println!("  Email: {}", admin_email);
             println!("  Password: <the password you provided>");
             println!();
+
+            // Optional: bootstrap the reality-portal OAuth client so the
+            // reality-server ↔ api-server SSO/OAuth handshake works on
+            // first deploy. Without this, every login attempt through
+            // reality-server hits "invalid_client" because no row exists in
+            // `oauth_clients` for `client_id="reality-portal"`. Idempotent
+            // — re-runs UPSERT.
+            if let Some(secret) = &cli.reality_portal_secret {
+                let redirect_uris: Vec<String> = if cli.reality_portal_redirect_uris.is_empty() {
+                    DEFAULT_REALITY_PORTAL_REDIRECT_URIS
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                } else {
+                    cli.reality_portal_redirect_uris.clone()
+                };
+                println!("Seeding `reality-portal` OAuth client...");
+                println!("  redirect_uris: {:?}", redirect_uris);
+                upsert_reality_portal_client(runner.pool(), secret, &redirect_uris).await?;
+                println!("  ✓ reality-portal client UPSERT complete");
+                println!();
+            }
 
             Ok(())
         }

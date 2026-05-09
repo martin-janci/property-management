@@ -8,6 +8,7 @@ import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from '
 
 import { tourManager } from '../../onboarding';
 import type { OnboardingState, TourConfig, TourStep } from '../../onboarding/types';
+import { colors } from '../../screens/shared/screenStyles';
 
 interface TourOverlayProps {
   visible: boolean;
@@ -200,10 +201,10 @@ const styles = StyleSheet.create({
   },
   tooltip: {
     position: 'absolute',
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   },
   stepIndicator: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   skipButton: {
@@ -225,40 +226,40 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 8,
   },
   content: {
     fontSize: 16,
-    color: '#4b5563',
+    color: colors.textMuted,
     lineHeight: 24,
     marginBottom: 16,
   },
   actionHint: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.warningBg,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   actionHintText: {
     fontSize: 14,
-    color: '#92400e',
+    color: colors.statusInProgressInk,
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.border,
     borderRadius: 2,
     marginBottom: 16,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     borderRadius: 2,
   },
   navigation: {
@@ -273,10 +274,10 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   nextButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -284,12 +285,12 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.white,
   },
   highlight: {
     position: 'absolute',
     borderWidth: 3,
-    borderColor: '#fbbf24',
+    borderColor: colors.warning,
     borderRadius: 8,
     backgroundColor: 'rgba(251, 191, 36, 0.1)',
   },

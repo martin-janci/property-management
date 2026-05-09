@@ -129,13 +129,8 @@ export function useCreateWebhook() {
 export function useUpdateWebhook() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: UpdateWebhookSubscription;
-    }) => api.updateWebhook(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateWebhookSubscription }) =>
+      api.updateWebhook(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['developer', 'webhooks'] });
     },

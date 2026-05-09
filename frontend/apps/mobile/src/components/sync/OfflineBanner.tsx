@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
  */
 import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../screens/shared/screenStyles';
 
 export interface OfflineBannerProps {
   /** Whether the device is currently online */
@@ -92,13 +93,13 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   offlineBanner: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.dangerBg,
   },
   syncingBanner: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.accentSoft,
   },
   pendingBanner: {
-    backgroundColor: '#fefce8',
+    backgroundColor: colors.warningBg,
   },
   content: {
     flexDirection: 'row',
@@ -112,10 +113,10 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text,
   },
   badge: {
-    backgroundColor: '#dc2626',
+    backgroundColor: colors.dangerDark,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 12,
     fontWeight: 'bold',
   },

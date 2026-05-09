@@ -116,33 +116,33 @@ export function OcrStatusBadge({
         }
 
         .status-completed {
-          background: #dcfce7;
-          color: #166534;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-dark);
         }
 
         .status-processing {
-          background: #dbeafe;
-          color: #1e40af;
+          background: var(--ppt-color-primary-soft-bg);
+          color: var(--ppt-color-primary-hover);
         }
 
         .status-pending {
-          background: #fef9c3;
-          color: #854d0e;
+          background: var(--ppt-color-warning-light);
+          color: var(--ppt-color-warning-dark);
         }
 
         .status-failed {
-          background: #fecaca;
-          color: #991b1b;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .status-na {
-          background: #f1f5f9;
-          color: #64748b;
+          background: var(--ppt-bg-app);
+          color: var(--ppt-fg-muted);
         }
 
         .status-unknown {
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
         }
 
         .reprocess-button {
@@ -150,7 +150,7 @@ export function OcrStatusBadge({
           padding: 0.125rem 0.375rem;
           font-size: 0.6875rem;
           font-weight: 600;
-          background: white;
+          background: var(--ppt-bg-surface);
           border: 1px solid currentColor;
           border-radius: 0.25rem;
           color: inherit;
@@ -159,7 +159,7 @@ export function OcrStatusBadge({
         }
 
         .reprocess-button:hover {
-          background: #fecaca;
+          background: var(--ppt-color-danger-light);
         }
       `}</style>
     </div>
@@ -229,7 +229,7 @@ export function OcrProcessingStatus({
       <style>{`
         .ocr-processing-status {
           padding: 1rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
         }
 
@@ -244,7 +244,7 @@ export function OcrProcessingStatus({
           margin: 0;
           font-size: 0.875rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .processing-animation {
@@ -253,7 +253,7 @@ export function OcrProcessingStatus({
 
         .progress-bar {
           height: 4px;
-          background: #e2e8f0;
+          background: var(--ppt-border-default);
           border-radius: 2px;
           overflow: hidden;
         }
@@ -261,7 +261,7 @@ export function OcrProcessingStatus({
         .progress-bar-fill {
           height: 100%;
           width: 30%;
-          background: #3b82f6;
+          background: var(--ppt-brand-500);
           border-radius: 2px;
           animation: progress 1.5s ease-in-out infinite;
         }
@@ -277,11 +277,11 @@ export function OcrProcessingStatus({
         .pending-text {
           margin: 0.5rem 0 0;
           font-size: 0.875rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .error-text {
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
       `}</style>
     </div>

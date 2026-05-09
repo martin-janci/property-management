@@ -26,6 +26,7 @@ pub mod organization_member;
 pub mod password_reset;
 pub mod person_month;
 pub mod platform_admin;
+pub mod portal_password_reset;
 pub mod role;
 pub mod session;
 pub mod signature_request;
@@ -100,6 +101,7 @@ pub use platform_admin::{
     PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportUserInfo,
     SupportUserMembership, SupportUserSession,
 };
+pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
 pub use session::SessionRepository;
 pub use signature_request::SignatureRequestRepository;
@@ -254,6 +256,13 @@ pub mod edd;
 
 pub use edd::{EddRepository, EddStatistics};
 
+// Epic 67: DSA Compliance & Content Moderation
+pub mod compliance;
+
+pub use compliance::{
+    ComplianceRepository, ModerationQueueStats, PriorityCount, ViolationTypeCount,
+};
+
 // Epic 108: Feature Packages & Bundles
 pub mod feature_package;
 
@@ -343,3 +352,8 @@ pub use multi_currency::MultiCurrencyRepository;
 pub mod api_ecosystem;
 
 pub use api_ecosystem::ApiEcosystemRepository;
+
+// Epic 68: Service Provider Marketplace
+pub mod marketplace;
+
+pub use marketplace::MarketplaceRepository;

@@ -27,7 +27,9 @@
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   animation: toast-slide-in 0.2s ease-out;
   pointer-events: auto;
 }
@@ -79,7 +81,9 @@
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.15s, background-color 0.15s;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
 }
 
 .toast-action-btn:hover {
@@ -121,63 +125,63 @@
 
 /* Toast variants */
 .toast--success {
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
+  background-color: var(--ppt-color-success-light);
+  border: 1px solid var(--ppt-color-success);
+  color: var(--ppt-color-success-dark);
 }
 
 .toast--success .toast-icon svg {
-  stroke: #059669;
+  stroke: var(--ppt-color-success-hover);
 }
 
 .toast--success .toast-action-btn {
-  background-color: #059669;
-  color: #ffffff;
+  background-color: var(--ppt-color-success-hover);
+  color: var(--ppt-fg-on-accent);
 }
 
 .toast--error {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background-color: var(--ppt-color-danger-light);
+  border: 1px solid var(--ppt-color-danger);
+  color: var(--ppt-color-danger-dark);
 }
 
 .toast--error .toast-icon svg {
-  stroke: #dc2626;
+  stroke: var(--ppt-color-danger-hover);
 }
 
 .toast--error .toast-action-btn {
-  background-color: #dc2626;
-  color: #ffffff;
+  background-color: var(--ppt-color-danger-hover);
+  color: var(--ppt-fg-on-accent);
 }
 
 .toast--warning {
-  background-color: #fffbeb;
-  border: 1px solid #fcd34d;
-  color: #92400e;
+  background-color: var(--ppt-color-warning-light);
+  border: 1px solid var(--ppt-color-warning);
+  color: var(--ppt-color-warning-dark);
 }
 
 .toast--warning .toast-icon svg {
-  stroke: #d97706;
+  stroke: var(--ppt-color-warning-hover);
 }
 
 .toast--warning .toast-action-btn {
-  background-color: #d97706;
-  color: #ffffff;
+  background-color: var(--ppt-color-warning-hover);
+  color: var(--ppt-fg-on-accent);
 }
 
 .toast--info {
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+  background-color: var(--ppt-color-primary-soft-bg);
+  border: 1px solid var(--ppt-color-primary);
+  color: var(--ppt-color-primary-active);
 }
 
 .toast--info .toast-icon svg {
-  stroke: #2563eb;
+  stroke: var(--ppt-color-primary);
 }
 
 .toast--info .toast-action-btn {
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
 }
 
 @keyframes toast-slide-in {

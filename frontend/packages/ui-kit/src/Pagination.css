@@ -1,0 +1,106 @@
+/**
+ * Pagination component styles.
+ */
+
+.ppt-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ppt-pagination__list {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppt-pagination__item {
+  display: flex;
+}
+
+.ppt-pagination__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 var(--ppt-space-2);
+  background-color: var(--ppt-color-surface);
+  border: 1px solid var(--ppt-color-border);
+  border-radius: var(--ppt-radius-md);
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-color-text);
+  cursor: pointer;
+  transition: all var(--ppt-transition-fast);
+}
+
+.ppt-pagination__button:hover:not(:disabled) {
+  background-color: var(--ppt-color-surface-hover);
+  border-color: var(--ppt-color-border-hover);
+}
+
+.ppt-pagination__button:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
+}
+
+.ppt-pagination__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Active page */
+.ppt-pagination__button--active {
+  background-color: var(--ppt-color-primary);
+  border-color: var(--ppt-color-primary);
+  color: var(--ppt-color-text-inverse);
+}
+
+.ppt-pagination__button--active:hover:not(:disabled) {
+  background-color: var(--ppt-color-primary-hover);
+  border-color: var(--ppt-color-primary-hover);
+}
+
+/* Navigation buttons */
+.ppt-pagination__button--nav {
+  padding: 0;
+}
+
+.ppt-pagination__button--nav svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Ellipsis */
+.ppt-pagination__ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  color: var(--ppt-color-text-muted);
+  font-size: var(--ppt-font-size-sm);
+}
+
+/* Disabled state */
+.ppt-pagination--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .ppt-pagination__button {
+    min-width: 2rem;
+    height: 2rem;
+  }
+
+  .ppt-pagination__ellipsis {
+    min-width: 1.5rem;
+  }
+}

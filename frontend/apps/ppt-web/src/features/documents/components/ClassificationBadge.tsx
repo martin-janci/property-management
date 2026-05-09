@@ -65,35 +65,35 @@ export function ClassificationBadge({
           font-size: 0.625rem;
           font-weight: 700;
           background: currentColor;
-          color: white;
+          color: var(--ppt-fg-on-accent);
           border-radius: 0.125rem;
         }
 
         .confidence-high {
-          background: #dcfce7;
-          color: #166534;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-dark);
         }
 
         .confidence-high .ai-icon {
-          background: #166534;
+          background: var(--ppt-color-success-dark);
         }
 
         .confidence-medium {
-          background: #fef9c3;
-          color: #854d0e;
+          background: var(--ppt-color-warning-light);
+          color: var(--ppt-color-warning-dark);
         }
 
         .confidence-medium .ai-icon {
-          background: #854d0e;
+          background: var(--ppt-color-warning-dark);
         }
 
         .confidence-low {
-          background: #fee2e2;
-          color: #991b1b;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .confidence-low .ai-icon {
-          background: #991b1b;
+          background: var(--ppt-color-danger-dark);
         }
 
         .confidence-value {
@@ -191,7 +191,7 @@ export function ClassificationUI({
         <style>{`
           .classification-ui {
             padding: 1rem;
-            background: #f8fafc;
+            background: var(--ppt-bg-app);
             border-radius: 0.5rem;
           }
 
@@ -205,15 +205,15 @@ export function ClassificationUI({
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
             font-weight: 700;
-            background: #94a3b8;
-            color: white;
+            background: var(--ppt-fg-subtle);
+            color: var(--ppt-fg-on-accent);
             border-radius: 0.25rem;
           }
 
           .no-classification p {
             margin: 0;
             font-size: 0.875rem;
-            color: #64748b;
+            color: var(--ppt-fg-muted);
           }
         `}</style>
       </div>
@@ -323,7 +323,7 @@ export function ClassificationUI({
       <style>{`
         .classification-ui {
           padding: 1rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
         }
 
@@ -338,12 +338,12 @@ export function ClassificationUI({
           margin: 0;
           font-size: 0.875rem;
           font-weight: 600;
-          color: #1e293b;
+          color: var(--ppt-fg-primary);
         }
 
         .classified-date {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
 
         .classification-result {
@@ -357,13 +357,13 @@ export function ClassificationUI({
         }
 
         .feedback-status.accepted {
-          background: #dcfce7;
-          color: #166534;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-dark);
         }
 
         .feedback-status.rejected {
-          background: #fef9c3;
-          color: #854d0e;
+          background: var(--ppt-color-warning-light);
+          color: var(--ppt-color-warning-dark);
         }
 
         .feedback-status p {
@@ -373,14 +373,14 @@ export function ClassificationUI({
         .feedback-actions {
           margin-top: 1rem;
           padding-top: 1rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--ppt-border-default);
         }
 
         .feedback-prompt {
           margin: 0 0 0.75rem;
           font-size: 0.875rem;
           font-weight: 500;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
         }
 
         .feedback-buttons {
@@ -404,21 +404,21 @@ export function ClassificationUI({
         }
 
         .btn-accept {
-          background: #dcfce7;
-          color: #166534;
+          background: var(--ppt-color-success-light);
+          color: var(--ppt-color-success-dark);
         }
 
         .btn-accept:hover:not(:disabled) {
-          background: #bbf7d0;
+          background: var(--ppt-color-success-light);
         }
 
         .btn-reject {
-          background: #fee2e2;
-          color: #991b1b;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
         }
 
         .btn-reject:hover:not(:disabled) {
-          background: #fecaca;
+          background: var(--ppt-color-danger-light);
         }
 
         .correction-form {
@@ -430,15 +430,15 @@ export function ClassificationUI({
         .correction-label {
           font-size: 0.875rem;
           font-weight: 500;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
         }
 
         .category-select {
           padding: 0.5rem 0.75rem;
           font-size: 0.875rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.375rem;
-          background: white;
+          background: var(--ppt-bg-surface);
         }
 
         .correction-buttons {
@@ -447,30 +447,30 @@ export function ClassificationUI({
         }
 
         .btn-submit {
-          background: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .btn-submit:hover:not(:disabled) {
-          background: #2563eb;
+          background: var(--ppt-color-primary);
         }
 
         .btn-cancel {
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--ppt-border-default);
+          color: var(--ppt-fg-secondary);
         }
 
         .btn-cancel:hover:not(:disabled) {
-          background: #cbd5e1;
+          background: var(--ppt-border-strong);
         }
 
         .error-message {
           margin-top: 0.75rem;
           padding: 0.5rem 0.75rem;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
+          background: var(--ppt-color-danger-light);
+          border: 1px solid var(--ppt-color-danger-light);
           border-radius: 0.375rem;
-          color: #dc2626;
+          color: var(--ppt-color-danger);
           font-size: 0.875rem;
         }
       `}</style>

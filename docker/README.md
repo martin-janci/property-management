@@ -55,7 +55,14 @@ docker/
 │   ├── ppt-web.Dockerfile      # Property Management SPA
 │   └── reality-web.Dockerfile  # Reality Portal SSR
 ├── nginx/
-│   └── ppt-web.nginx.conf      # Nginx config for SPA
+│   ├── ppt-web.nginx.conf.template  # Nginx config template for SPA
+│   │                                # (rendered at container startup —
+│   │                                # /api and /ws proxy upstreams are
+│   │                                # filled from BG_TARGET + BG_COLOR
+│   │                                # so the SPA fetches reach the
+│   │                                # api-server container in the same
+│   │                                # blue/green color)
+│   └── render-template.sh           # envsubst entrypoint hook
 └── scripts/
     ├── docker-build.sh         # Multi-arch build script
     └── synology-setup.sh       # Synology setup helper

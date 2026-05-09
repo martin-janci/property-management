@@ -1,15 +1,15 @@
 // Pages
-export { ManagerDashboardPage, ResidentDashboardPage } from './pages';
 
 // Components
-export { ActionQueue, ActionItem, ActionFilters, InlineActions } from './components';
+export { ActionFilters, ActionItem, ActionQueue, InlineActions } from './components';
+export type {
+  ActionButton,
+  ActionItem as ActionItemType,
+  ActionPriority,
+  ActionQueueFilters,
+  ActionType,
+} from './hooks';
 
 // Hooks
 export { useActionQueue } from './hooks';
-export type {
-  ActionType,
-  ActionPriority,
-  ActionItem as ActionItemType,
-  ActionButton,
-  ActionQueueFilters,
-} from './hooks';
+export { ManagerDashboardPage, ResidentDashboardPage } from './pages';

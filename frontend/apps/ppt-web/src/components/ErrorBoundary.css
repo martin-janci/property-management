@@ -20,7 +20,9 @@
   text-align: center;
   background-color: var(--color-surface, #ffffff);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .error-boundary-icon {
@@ -96,7 +98,7 @@
 }
 
 .error-boundary-button--primary {
-  color: #ffffff;
+  color: var(--ppt-fg-on-accent);
   background-color: var(--color-primary, #2563eb);
   border: 1px solid transparent;
 }

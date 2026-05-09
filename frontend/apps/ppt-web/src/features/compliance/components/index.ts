@@ -2,53 +2,49 @@
  * Compliance feature component exports (Epic 67).
  */
 
+export type {
+  AmlAssessmentStatus,
+  AmlRiskAssessment,
+  AmlRiskAssessmentCardProps,
+  AmlRiskLevel,
+  RiskFactor,
+} from './AmlRiskAssessmentCard';
 // Story 67.1: AML Risk Assessment
 export { AmlRiskAssessmentCard } from './AmlRiskAssessmentCard';
 export type {
-  AmlRiskAssessmentCardProps,
-  AmlRiskAssessment,
-  AmlRiskLevel,
-  AmlAssessmentStatus,
-  RiskFactor,
-} from './AmlRiskAssessmentCard';
-
-// Story 67.2: Enhanced Due Diligence
-export { EddRecordCard } from './EddRecordCard';
-export type {
-  EddRecordCardProps,
-  EddRecord,
-  EddStatus,
-  EddDocument,
-  DocumentVerificationStatus,
-  ComplianceNote,
-} from './EddRecordCard';
-
+  ContentTypeCount,
+  DsaReportStatus,
+  DsaReportSummary,
+  DsaTransparencyReport,
+  DsaTransparencyReportCardProps,
+  ViolationTypeCount,
+} from './DsaTransparencyReportCard';
 // Story 67.3: DSA Transparency Reports
 export { DsaTransparencyReportCard } from './DsaTransparencyReportCard';
 export type {
-  DsaTransparencyReportCardProps,
-  DsaTransparencyReport,
-  DsaReportStatus,
-  DsaReportSummary,
-  ContentTypeCount,
-  ViolationTypeCount,
-} from './DsaTransparencyReportCard';
-
+  ComplianceNote,
+  DocumentVerificationStatus,
+  EddDocument,
+  EddRecord,
+  EddRecordCardProps,
+  EddStatus,
+} from './EddRecordCard';
+// Story 67.2: Enhanced Due Diligence
+export { EddRecordCard } from './EddRecordCard';
+export type {
+  ContentOwnerInfo,
+  ModeratedContentType,
+  ModerationActionType,
+  ModerationCase,
+  ModerationCaseCardProps,
+  ModerationStatus,
+  ViolationType,
+} from './ModerationCaseCard';
 // Story 67.4: Content Moderation Dashboard
 export { ModerationCaseCard } from './ModerationCaseCard';
 export type {
-  ModerationCaseCardProps,
-  ModerationCase,
-  ModerationStatus,
-  ModeratedContentType,
-  ViolationType,
-  ModerationActionType,
-  ContentOwnerInfo,
-} from './ModerationCaseCard';
-
-export { ModerationQueueStats } from './ModerationQueueStats';
-export type {
-  ModerationQueueStatsProps,
   ModerationQueueStatsData,
+  ModerationQueueStatsProps,
   PriorityCount,
 } from './ModerationQueueStats';
+export { ModerationQueueStats } from './ModerationQueueStats';

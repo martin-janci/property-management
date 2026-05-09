@@ -1,0 +1,11 @@
+# backend/servers/deploy-server/systemd/ppt-deploy-gc.timer
+[Unit]
+Description=ppt-deploy GC tick
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=ppt-deploy-gc.service
+
+[Install]
+WantedBy=timers.target

@@ -234,7 +234,7 @@ export function DocumentSearch({
         .search-header {
           position: sticky;
           top: 0;
-          background: white;
+          background: var(--ppt-bg-surface);
           z-index: 10;
           padding: 0.5rem 0;
         }
@@ -244,18 +244,18 @@ export function DocumentSearch({
           align-items: center;
           gap: 0.5rem;
           padding: 0.75rem 1rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.5rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
         }
 
         .search-input-container:focus-within {
-          border-color: #3b82f6;
+          border-color: var(--ppt-brand-500);
           box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .search-icon {
-          color: #94a3b8;
+          color: var(--ppt-fg-subtle);
           flex-shrink: 0;
         }
 
@@ -270,8 +270,8 @@ export function DocumentSearch({
         .loading-spinner {
           width: 20px;
           height: 20px;
-          border: 2px solid #e2e8f0;
-          border-top-color: #3b82f6;
+          border: 2px solid var(--ppt-border-default);
+          border-top-color: var(--ppt-brand-500);
           border-radius: 50%;
           animation: spin 0.6s linear infinite;
         }
@@ -285,7 +285,7 @@ export function DocumentSearch({
           flex-wrap: wrap;
           gap: 1rem;
           padding: 1rem;
-          background: #f8fafc;
+          background: var(--ppt-bg-app);
           border-radius: 0.5rem;
         }
 
@@ -301,7 +301,7 @@ export function DocumentSearch({
         .filter-label {
           font-size: 0.875rem;
           font-weight: 500;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
           padding: 0;
         }
 
@@ -314,23 +314,23 @@ export function DocumentSearch({
         .filter-chip {
           padding: 0.25rem 0.75rem;
           font-size: 0.75rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 9999px;
-          background: white;
-          color: #64748b;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-muted);
           cursor: pointer;
           transition: all 0.15s;
         }
 
         .filter-chip:hover {
-          border-color: #3b82f6;
-          color: #3b82f6;
+          border-color: var(--ppt-brand-500);
+          color: var(--ppt-brand-500);
         }
 
         .filter-chip.active {
-          background: #3b82f6;
-          border-color: #3b82f6;
-          color: white;
+          background: var(--ppt-brand-500);
+          border-color: var(--ppt-brand-500);
+          color: var(--ppt-fg-on-accent);
         }
 
         .date-inputs {
@@ -341,7 +341,7 @@ export function DocumentSearch({
 
         .date-input {
           padding: 0.25rem 0.5rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--ppt-border-default);
           border-radius: 0.25rem;
           font-size: 0.875rem;
         }
@@ -351,7 +351,7 @@ export function DocumentSearch({
           align-items: center;
           gap: 0.5rem;
           font-size: 0.875rem;
-          color: #475569;
+          color: var(--ppt-fg-secondary);
           cursor: pointer;
         }
 
@@ -363,23 +363,23 @@ export function DocumentSearch({
 
         .results-header {
           font-size: 0.875rem;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
           padding: 0.5rem 0;
         }
 
         .error-message {
           padding: 1rem;
-          background: #fef2f2;
-          border: 1px solid #fecaca;
+          background: var(--ppt-color-danger-light);
+          border: 1px solid var(--ppt-color-danger-light);
           border-radius: 0.5rem;
-          color: #dc2626;
+          color: var(--ppt-color-danger-hover);
         }
 
         .no-results,
         .search-hint {
           padding: 2rem;
           text-align: center;
-          color: #64748b;
+          color: var(--ppt-fg-muted);
         }
       `}</style>
     </div>

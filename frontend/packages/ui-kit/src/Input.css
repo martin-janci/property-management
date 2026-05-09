@@ -1,0 +1,145 @@
+/**
+ * Input component styles.
+ * Focus ring as box-shadow (3px rgba blue, WCAG 2.2 AA).
+ * Error state uses danger ring.
+ */
+
+.ppt-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ppt-space-1);
+}
+
+.ppt-input-wrapper--full-width {
+  width: 100%;
+}
+
+.ppt-input__label {
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-muted, var(--ppt-color-text-secondary));
+  text-transform: uppercase;
+  letter-spacing: var(--ppt-tracking-caps, 0.06em);
+}
+
+.ppt-input__required {
+  color: var(--ppt-color-danger);
+  margin-left: var(--ppt-space-1);
+}
+
+.ppt-input__container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ppt-input {
+  width: 100%;
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-primary, var(--ppt-color-text));
+  background-color: var(--ppt-bg-input, var(--ppt-color-surface));
+  border: 1px solid var(--ppt-border-default, var(--ppt-color-border));
+  border-radius: var(--ppt-radius-md);
+  transition:
+    border-color var(--ppt-transition-fast),
+    box-shadow var(--ppt-transition-fast);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ppt-input::placeholder {
+  color: var(--ppt-fg-muted, var(--ppt-color-text-muted));
+  font-weight: var(--ppt-font-weight-normal);
+}
+
+.ppt-input:hover:not(:disabled) {
+  border-color: var(--ppt-border-strong, var(--ppt-color-border-hover));
+}
+
+.ppt-input:focus {
+  outline: none;
+  border-color: var(--ppt-border-focus, var(--ppt-color-primary));
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.ppt-input:disabled {
+  background-color: var(--ppt-bg-subtle, var(--ppt-color-secondary-light));
+  color: var(--ppt-fg-muted, var(--ppt-color-text-muted));
+  cursor: not-allowed;
+}
+
+/* ─── Sizes ─────────────────────────────────────────────── */
+.ppt-input-wrapper--sm .ppt-input {
+  padding: var(--ppt-space-1) var(--ppt-space-2);
+  font-size: var(--ppt-font-size-xs);
+  min-height: 2rem;
+}
+
+.ppt-input-wrapper--md .ppt-input {
+  padding: 10px var(--ppt-space-3);
+  font-size: var(--ppt-font-size-sm);
+  min-height: 2.5rem;
+}
+
+.ppt-input-wrapper--lg .ppt-input {
+  padding: var(--ppt-space-3) var(--ppt-space-4);
+  font-size: var(--ppt-font-size-base);
+  min-height: 3rem;
+}
+
+/* ─── Icons ─────────────────────────────────────────────── */
+.ppt-input__icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ppt-fg-muted, var(--ppt-color-text-muted));
+  pointer-events: none;
+}
+
+.ppt-input__icon svg {
+  width: 1.125em;
+  height: 1.125em;
+}
+
+.ppt-input__icon--start {
+  left: var(--ppt-space-3);
+}
+.ppt-input__icon--end {
+  right: var(--ppt-space-3);
+}
+
+.ppt-input--has-start-icon {
+  padding-left: 2.5rem;
+}
+.ppt-input--has-end-icon {
+  padding-right: 2.5rem;
+}
+
+/* ─── Error state ───────────────────────────────────────── */
+.ppt-input-wrapper--error .ppt-input {
+  border-color: var(--ppt-color-danger);
+}
+
+.ppt-input-wrapper--error .ppt-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.ppt-input__error {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-color-danger);
+  font-weight: var(--ppt-font-weight-medium);
+  margin: 0;
+}
+
+.ppt-input__helper {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted, var(--ppt-color-text-secondary));
+  margin: 0;
+}
+
+/* ─── Disabled ──────────────────────────────────────────── */
+.ppt-input-wrapper--disabled .ppt-input__label {
+  color: var(--ppt-fg-muted, var(--ppt-color-text-muted));
+}

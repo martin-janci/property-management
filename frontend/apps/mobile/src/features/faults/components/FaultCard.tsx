@@ -5,6 +5,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { colors } from '../../../screens/shared/screenStyles';
 
 export type FaultStatus =
   | 'new'
@@ -47,21 +48,21 @@ interface FaultCardProps {
 }
 
 const statusColors: Record<FaultStatus, { bg: string; text: string }> = {
-  new: { bg: '#FEE2E2', text: '#991B1B' },
-  triaged: { bg: '#DBEAFE', text: '#1E40AF' },
-  in_progress: { bg: '#FEF3C7', text: '#92400E' },
-  waiting_parts: { bg: '#FFEDD5', text: '#9A3412' },
-  scheduled: { bg: '#E9D5FF', text: '#7C3AED' },
-  resolved: { bg: '#D1FAE5', text: '#065F46' },
-  closed: { bg: '#F3F4F6', text: '#374151' },
-  reopened: { bg: '#FEE2E2', text: '#991B1B' },
+  new: { bg: colors.dangerBg, text: colors.statusNewInk },
+  triaged: { bg: colors.statusTriagedBg, text: colors.statusTriagedInk },
+  in_progress: { bg: colors.warningBg, text: colors.statusInProgressInk },
+  waiting_parts: { bg: colors.statusWaitPartsBg, text: colors.statusWaitPartsInk },
+  scheduled: { bg: colors.statusScheduledBg, text: colors.statusScheduledInk },
+  resolved: { bg: colors.successBg, text: colors.successDark },
+  closed: { bg: colors.surfaceMuted, text: colors.textSecondary },
+  reopened: { bg: colors.dangerBg, text: colors.statusNewInk },
 };
 
 const priorityColors: Record<FaultPriority, string> = {
-  low: '#6B7280',
-  medium: '#3B82F6',
-  high: '#F97316',
-  urgent: '#DC2626',
+  low: colors.textMuted,
+  medium: colors.accent,
+  high: colors.priorityHighInk,
+  urgent: colors.dangerDark,
 };
 
 export function FaultCard({ fault, onPress }: FaultCardProps) {
@@ -98,12 +99,12 @@ export function FaultCard({ fault, onPress }: FaultCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     flex: 1,
     marginRight: 8,
   },
@@ -146,11 +147,11 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.textMuted,
   },
   date: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.textSubtle,
     marginTop: 8,
   },
 });

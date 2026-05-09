@@ -1,4 +1,13 @@
-//! Health check endpoint (Epic 95.3 - Enhanced Health Checks, Epic 104.1 - PM API Health).
+//! Health & readiness endpoints (Epic 95.3, Epic 104.1).
+//!
+//! E8 (post-prod-launch): split shallow liveness from deep readiness.
+//! Reality-server's `check_pm_api` reaches out to api-server for SSO health,
+//! and the cascade was real — when api-server's `/health` flapped on a
+//! Redis blip, reality-server's `/health` flapped too, which made
+//! reality-web's HEALTHCHECK flap, which made the deploy-server's
+//! `wait_until_ready` bail and tear down a fine blue/green flip. Splitting
+//! the probes breaks the chain: `/health` is local-only, `/readiness` keeps
+//! the deep check for dashboards.
 
 use axum::{extract::State, http::StatusCode, Json};
 use serde::Serialize;
@@ -7,6 +16,32 @@ use std::time::Instant;
 use utoipa::ToSchema;
 
 use crate::state::{AppState, CacheMetrics};
+
+/// Minimal liveness probe response.
+#[derive(Serialize, ToSchema)]
+pub struct LivenessResponse {
+    pub status: &'static str,
+    pub service: &'static str,
+    pub version: &'static str,
+}
+
+/// Liveness probe. No I/O. See module docstring for the cascade story.
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses((status = 200, description = "Process alive", body = LivenessResponse))
+)]
+pub async fn liveness() -> (StatusCode, Json<LivenessResponse>) {
+    (
+        StatusCode::OK,
+        Json(LivenessResponse {
+            status: "ok",
+            service: "reality-server",
+            version: env!("CARGO_PKG_VERSION"),
+        }),
+    )
+}
 
 /// Health status enumeration.
 #[derive(Debug, Clone, Copy, Serialize, ToSchema, PartialEq)]
@@ -207,23 +242,20 @@ fn determine_overall_status(dependencies: &[DependencyHealth]) -> HealthStatus {
     }
 }
 
-/// Health check endpoint.
+/// Readiness probe (deep check).
 ///
-/// Returns overall system health status including dependency checks for:
-/// - Database connectivity
-/// - PM API connectivity (for SSO) - Epic 104.1
-///
-/// Also includes cache metrics for monitoring (Epic 104).
+/// DB + PM API check. Used by operator dashboards. NOT wired to Docker
+/// HEALTHCHECK — see module docstring for why.
 #[utoipa::path(
     get,
-    path = "/health",
+    path = "/readiness",
     tag = "Health",
     responses(
-        (status = 200, description = "Service is healthy", body = HealthResponse),
+        (status = 200, description = "Service is ready", body = HealthResponse),
         (status = 503, description = "Service is unhealthy", body = HealthResponse)
     )
 )]
-pub async fn health(State(state): State<AppState>) -> (StatusCode, Json<HealthResponse>) {
+pub async fn readiness(State(state): State<AppState>) -> (StatusCode, Json<HealthResponse>) {
     let region = std::env::var("REGION").unwrap_or_else(|_| "local".to_string());
 
     // Check all dependencies in parallel

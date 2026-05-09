@@ -1,2 +1,3 @@
+export { VoteDetailScreen } from './VoteDetailScreen';
+export type { Vote, VoteOption, VoteStatus, VoteType } from './VotingScreen';
 export { VotingScreen } from './VotingScreen';
-export type { Vote, VoteStatus, VoteType, VoteOption } from './VotingScreen';

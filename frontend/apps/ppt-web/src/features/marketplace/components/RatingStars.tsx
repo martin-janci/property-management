@@ -53,7 +53,7 @@ export function RatingStars({ rating, size = 'md', showValue = false }: RatingSt
                 <defs>
                   <linearGradient id={`half-gradient-${i}`}>
                     <stop offset="50%" stopColor="currentColor" />
-                    <stop offset="50%" stopColor="#D1D5DB" />
+                    <stop offset="50%" stopColor="var(--ppt-border-strong)" />
                   </linearGradient>
                 </defs>
                 <path

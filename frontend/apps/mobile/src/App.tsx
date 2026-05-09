@@ -7,15 +7,33 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { OfflineBanner, SyncProgressToast, SyncStatusBadge } from './components/sync';
 import { AuthProvider, useAuth } from './contexts';
 import { useOfflineSupport } from './hooks';
+import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
   AnnouncementsScreen,
+  AuthFlow,
+  BuildingsScreen,
   DashboardScreen,
+  DocumentDetailScreen,
   DocumentsScreen,
   FaultsListScreen,
-  LoginScreen,
+  FormsScreen,
+  LeaseDetailScreen,
+  LeasesScreen,
+  MessagesScreen,
+  MeterDetailScreen,
   MeterReadingScreen,
+  MetersScreen,
+  NeighborsScreen,
+  NewsScreen,
+  NotificationsScreen,
+  OutagesScreen,
+  PersonMonthsScreen,
+  ProfileScreen,
   ReportFaultScreen,
+  ThreadDetailScreen,
+  TwoFactorScreen,
+  VoteDetailScreen,
   VotingScreen,
 } from './screens';
 
@@ -37,10 +55,27 @@ type Screen =
   | 'ReportFault'
   | 'Announcements'
   | 'Voting'
+  | 'VoteDetail'
   | 'Documents'
+  | 'DocumentDetail'
   | 'Messages'
+  | 'ThreadDetail'
   | 'Settings'
-  | 'MeterReading';
+  | 'MeterReading'
+  | 'Meters'
+  | 'MeterDetail'
+  | 'Profile'
+  | 'TwoFactor'
+  | 'Neighbors'
+  | 'Notifications'
+  | 'PersonMonths'
+  | 'Outages'
+  | 'News'
+  | 'Forms'
+  | 'Buildings'
+  | 'Leases'
+  | 'LeaseDetail'
+  | 'More';
 
 function MainApp() {
   const { t } = useTranslation();
@@ -57,9 +92,11 @@ function MainApp() {
   // Show toast when sync is in progress
   const isSyncingWithProgress = isSyncing && syncProgress !== null;
   const [currentScreen, setCurrentScreen] = useState<Screen>('Dashboard');
+  const [screenParams, setScreenParams] = useState<Record<string, unknown> | undefined>(undefined);
 
-  const handleNavigate = useCallback((screen: string) => {
+  const handleNavigate = useCallback((screen: string, params?: Record<string, unknown>) => {
     setCurrentScreen(screen as Screen);
+    setScreenParams(params);
   }, []);
 
   if (isLoading) {
@@ -71,7 +108,7 @@ function MainApp() {
   }
 
   if (!isAuthenticated) {
-    return <LoginScreen />;
+    return <AuthFlow />;
   }
 
   const renderScreen = () => {
@@ -91,15 +128,60 @@ function MainApp() {
         return <AnnouncementsScreen onNavigate={handleNavigate} />;
       case 'Voting':
         return <VotingScreen onNavigate={handleNavigate} />;
+      case 'VoteDetail':
+        return (
+          <VoteDetailScreen
+            voteId={screenParams?.voteId as string | undefined}
+            onBack={() => handleNavigate('Voting')}
+          />
+        );
       case 'Documents':
         return <DocumentsScreen onNavigate={handleNavigate} />;
+      case 'DocumentDetail':
+        return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
       case 'MeterReading':
         return (
           <MeterReadingScreen
-            onSuccess={() => handleNavigate('Dashboard')}
-            onCancel={() => handleNavigate('Dashboard')}
+            onSuccess={() => handleNavigate('Meters')}
+            onCancel={() => handleNavigate('Meters')}
           />
         );
+      case 'Meters':
+        return <MetersScreen onNavigate={handleNavigate} />;
+      case 'MeterDetail':
+        return (
+          <MeterDetailScreen onBack={() => handleNavigate('Meters')} onNavigate={handleNavigate} />
+        );
+      case 'Profile':
+        return <ProfileScreen onTwoFactorPress={() => handleNavigate('TwoFactor')} />;
+      case 'TwoFactor':
+        return <TwoFactorScreen onDonePress={() => handleNavigate('Profile')} />;
+      case 'Messages':
+        return <MessagesScreen onNavigate={handleNavigate} />;
+      case 'ThreadDetail':
+        return <ThreadDetailScreen onBack={() => handleNavigate('Messages')} />;
+      case 'Neighbors':
+        return <NeighborsScreen onNavigate={handleNavigate} />;
+      case 'Notifications':
+        return <NotificationsScreen onNavigate={handleNavigate} />;
+      case 'PersonMonths':
+        return <PersonMonthsScreen onNavigate={handleNavigate} />;
+      case 'Outages':
+        return <OutagesScreen onNavigate={handleNavigate} />;
+      case 'News':
+        return <NewsScreen onNavigate={handleNavigate} />;
+      case 'Forms':
+        return <FormsScreen onNavigate={handleNavigate} />;
+      case 'Buildings':
+        return <BuildingsScreen onNavigate={handleNavigate} />;
+      case 'Leases':
+        return <LeasesScreen onNavigate={handleNavigate} />;
+      case 'LeaseDetail':
+        return (
+          <LeaseDetailScreen onBack={() => handleNavigate('Leases')} onNavigate={handleNavigate} />
+        );
+      case 'More':
+        return <MoreMenu onNavigate={handleNavigate} />;
       default:
         return <DashboardScreen onNavigate={handleNavigate} />;
     }
@@ -145,14 +227,37 @@ function MainApp() {
         <NavButton
           icon="🗳️"
           label={t('tabs.vote')}
-          isActive={currentScreen === 'Voting'}
+          isActive={currentScreen === 'Voting' || currentScreen === 'VoteDetail'}
           onPress={() => handleNavigate('Voting')}
         />
         <NavButton
           icon="📄"
           label={t('tabs.docs')}
-          isActive={currentScreen === 'Documents'}
+          isActive={currentScreen === 'Documents' || currentScreen === 'DocumentDetail'}
           onPress={() => handleNavigate('Documents')}
+        />
+        <NavButton
+          icon="⋯"
+          label="More"
+          isActive={
+            currentScreen === 'More' ||
+            currentScreen === 'Messages' ||
+            currentScreen === 'ThreadDetail' ||
+            currentScreen === 'Neighbors' ||
+            currentScreen === 'Notifications' ||
+            currentScreen === 'PersonMonths' ||
+            currentScreen === 'Outages' ||
+            currentScreen === 'News' ||
+            currentScreen === 'Forms' ||
+            currentScreen === 'Buildings' ||
+            currentScreen === 'Leases' ||
+            currentScreen === 'LeaseDetail' ||
+            currentScreen === 'Meters' ||
+            currentScreen === 'MeterDetail' ||
+            currentScreen === 'Profile' ||
+            currentScreen === 'TwoFactor'
+          }
+          onPress={() => handleNavigate('More')}
         />
       </View>
 
@@ -176,6 +281,67 @@ function MainApp() {
     </View>
   );
 }
+
+interface MoreMenuProps {
+  onNavigate: (screen: string) => void;
+}
+
+const MORE_ITEMS: ReadonlyArray<{ icon: string; label: string; screen: string }> = [
+  { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
+  { icon: '💬', label: 'Messages', screen: 'Messages' },
+  { icon: '🏘️', label: 'Neighbours', screen: 'Neighbors' },
+  { icon: '📏', label: 'Meters', screen: 'Meters' },
+  { icon: '👥', label: 'Person-months', screen: 'PersonMonths' },
+  { icon: '⚡', label: 'Outages', screen: 'Outages' },
+  { icon: '📰', label: 'News', screen: 'News' },
+  { icon: '📝', label: 'Forms', screen: 'Forms' },
+  { icon: '🏢', label: 'Buildings', screen: 'Buildings' },
+  { icon: '📑', label: 'Leases', screen: 'Leases' },
+  { icon: '👤', label: 'Profile', screen: 'Profile' },
+];
+
+function MoreMenu({ onNavigate }: MoreMenuProps) {
+  return (
+    <View style={moreStyles.container}>
+      <View style={moreStyles.header}>
+        <Text style={moreStyles.title}>More</Text>
+        <Text style={moreStyles.subtitle}>Everything else available in the app.</Text>
+      </View>
+      {MORE_ITEMS.map((item) => (
+        <Pressable key={item.screen} style={moreStyles.row} onPress={() => onNavigate(item.screen)}>
+          <Text style={moreStyles.rowIcon}>{item.icon}</Text>
+          <Text style={moreStyles.rowLabel}>{item.label}</Text>
+          <Text style={moreStyles.rowChevron}>›</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+const moreStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surfaceMuted },
+  header: {
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  title: { fontSize: 24, fontWeight: 'bold', color: colors.text },
+  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceMuted,
+  },
+  rowIcon: { fontSize: 20, width: 32 },
+  rowLabel: { flex: 1, fontSize: 16, color: colors.text },
+  rowChevron: { fontSize: 20, color: colors.textSubtle },
+});
 
 interface NavButtonProps {
   icon: string;
@@ -216,26 +382,26 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surfaceMuted,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   content: {
     flex: 1,
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.border,
     paddingBottom: 24,
     paddingTop: 8,
   },
@@ -255,7 +421,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: '#ef4444',
+    backgroundColor: colors.danger,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -264,17 +430,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 10,
     fontWeight: 'bold',
   },
   navLabel: {
     fontSize: 11,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginTop: 4,
   },
   navLabelActive: {
-    color: '#2563eb',
+    color: colors.accent,
     fontWeight: '600',
   },
   syncBadgeContainer: {

@@ -1,0 +1,11 @@
+# backend/servers/deploy-server/systemd/ppt-deploy.socket
+[Unit]
+Description=ppt-deploy listening socket
+
+[Socket]
+ListenStream=127.0.0.1:8443
+NoDelay=true
+Accept=false
+
+[Install]
+WantedBy=sockets.target
