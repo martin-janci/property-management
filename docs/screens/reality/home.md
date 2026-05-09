@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: KmpHomeScreen
+    buildStatus: planned
+    redesignStatus: in-progress
+    apiStatus: stub
 sharedComponents:
   - listing-card
   - hero-search
@@ -22,6 +23,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/reality-web/home.html
     frame: reality-portal-home
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx
+    frame: KmpHomeScreen
 useCases:
   - UC-31
   - UC-44

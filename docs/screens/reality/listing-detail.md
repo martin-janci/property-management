@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: KmpListingDetailScreen
+    buildStatus: planned
+    redesignStatus: in-progress
+    apiStatus: stub
 endpoints:
   - listings_get
 relatedScreens:
@@ -35,6 +36,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/reality-web/listing-detail.html
     frame: listing-detail
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx
+    frame: KmpListingDetailScreen
 useCases:
   - UC-31
   - UC-44

@@ -29,12 +29,14 @@ sharedComponents:
   - search-bar
 designSources:
   - adapter: claude-design
+    file: guest-registration-v2-design-system/project/pages/ppt-announcements.html
+    frame: loaded-2-selected-1-pinned / empty / loading-8-skel / error-503
+  - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/ppt-web/announcement-detail.html
-    frame: announcement-detail (single — list design pending)
-    note: Bundle covers DETAIL surface only; list-view design pending. Pattern established for the list (status pill, pinned indicator, audience badge, ack-rate) extracted from this detail view.
+    frame: announcement-detail
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/mobile/screens.jsx
-    frame: mobile-announcements
+    frame: MobAnnouncementsScreen + MobAnnouncementDetailScreen
 useCases:
   - UC-02
 ---
@@ -46,10 +48,14 @@ useCases:
 ### Header (web — pattern from detail view)
 - [ ] [w] PPT manager header (60px, sticky), Announcements tab active
 
-### List view (web — design TBD; spec inferred from detail patterns)
-- [ ] [w] Toolbar: search input + segmented filter (All / Published / Draft / Archived / Mine) + "+ New announcement" primary
-- [ ] [w] Sidebar: Category (Maintenance / Outage / Vote / Community / General), Audience (All residents / By unit / By role), Status (Draft / Scheduled / Published / Archived)
-- [ ] [w] Table or card list with columns: Title (+ pinned indicator) / Status pill / Audience pill / Published / Read rate / Actions (Edit / Pin / Archive)
+### List view (web — directly designed)
+- [ ] [w] Page header: H1 "Oznamy" + count chip "32 publikovaných · 4 koncepty · 2 plánované"
+- [ ] [w] Right toolbar: "Exportovať PDF" secondary + "+ Nový oznam" primary
+- [ ] [w] **Filter sidebar** (220px) — Stav 5-state machine (Koncept / Plánované / Publikované / Archivované / Pripnuté) + Kategória + Publikum + Čítaná miera (range-slider 0–100% per `forms/range-slider.html`)
+- [ ] [w] Toolbar: search + segmented category chips + sort dropdown (Najnovšie / Najmenej prečítané / Pripnuté najskôr / Plánované najskôr)
+- [ ] [w] Card list (NOT table — denser): pin glyph left + H3 title + 2-line excerpt + meta row (status + audience + category + author + relative time) + read-rate progress bar + "<n>/<total> potvrdili (NN%)" muted right + 3-dot menu
+- [ ] [w] Bulk-action bar (≥1 selected): Pripnúť · Zrušiť pripnutie · Archivovať · Plánovať na… · Exportovať vybrané PDF
+- [ ] [w] Pagination footer per `forms/pagination.html`
 
 ### Detail view (web — directly designed)
 - [ ] [w] Breadcrumb "Announcements / <Title>" + H1 + meta line (Published pill, Pinned indicator, posted-by + relative time, "Delivered to N residents")
@@ -76,10 +82,11 @@ useCases:
 
 ## States
 
-- **Empty (list)**: per project voice → "No announcements yet" + "Post one to keep your residents informed." + primary "New announcement"
-- **Loading (list)**: skeleton rows or cards (TBD with list design)
-- **Error (list)**: "Unable to load announcements. Try again."
-- **Detail**: as designed — published with delivery + ack stats; loading / error states for detail not depicted, recommend placeholder skeleton + blunt error banner.
+- **Empty (list)**: megaphone-icon tile + "Žiadne oznamy" + body + primary "+ Nový oznam" + secondary "Importovať z Faults" link
+- **Loading (list)**: 8 skeleton cards (pin skel + 2 line skels + meta skels + progress-bar skel)
+- **Error 503 (list)**: danger tile + retry; toolbar + sidebar interactive
+- **Loaded (list)**: 8 cards covering 5 states; 2 selected with bulk bar; 1 pinned at top
+- **Detail (existing)**: as designed — published with delivery + ack stats
 
 ## Notes
 
@@ -89,8 +96,9 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 
 ### Specific (recent)
 
-- **Drift note**: Like faults, sitemap doesn't include a `ppt-announcements` route, but design + state machine exist. Bumped `ppt-web.buildStatus` from `n/a` → `planned`.
-- **Bundle gap**: Only the **detail** view is designed. List-view patterns are inferred from the detail's chrome (header, status pill colors, side-rail style); a list-view artboard is needed before implementation. Surface this as a design ask at next sync.
+- **Drift note**: Sitemap doesn't include a `ppt-announcements` route; bumped `ppt-web.buildStatus` from `n/a` → `planned` to track. Add route at implementation.
+- **List view now designed** (Batch D delivery): full filter sidebar + card list + bulk-action bar pattern matches `ppt-documents.html`. List pattern uses cards (not table) because of the read-rate progress bar — denser visual.
+- **Read-rate filter** (range-slider 0–100%) is unique to this surface — useful for finding low-engagement announcements.
 - Pinned indicator uses Unicode 📌 emoji in the design — per SKILL.md, must migrate to Lucide `pin` (or inline SVG with the same stroke). Don't ship 📌.
 - Callout block styling uses `--warning-50` and `--warning-500` (with fallbacks `#fffbeb` / `#f59e0b`) — token-driven; ink `#78350f` is hard-coded; surface a `--warning-ink-strong` token for this.
 - Read-rate progress bar uses `--success-500` fill — only because high read-rate is good. If read-rate is low, no design treatment for that — flag at implementation: should we color-shift below a threshold (e.g. <50% gets warning bg)?
@@ -103,5 +111,6 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 
 <!-- newest entries on top -->
 
+- 2026-05-09 (later) — agent: integrated Batch D (pages/ppt-announcements.html — list now designed: 4 artboards loaded-2-selected-1-pinned/empty/loading-8/error); replaced design list-as-TBD with real list specs; updated states; attached new pages/ppt-announcements.html as primary designSource; mobile reference updated to MobAnnouncementsScreen + MobAnnouncementDetailScreen
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/announcement-detail.html — DETAIL only; list pending + ui_kits/mobile/screens.jsx for mobile list); flipped ppt-web from n/a → planned + redesignStatus in-progress (drift: route not in sitemap); flipped mobile redesignStatus → in-progress; attached 2 designSources (with note on detail-only coverage); populated functionality checklist (5 sections + 5-state pill set), states, design-specific notes; declared 4 sharedComponents; added 1 relatedScreen
 - 2026-05-08 — init: created from scan (source: sitemap)

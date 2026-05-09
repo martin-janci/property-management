@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: KmpInquiriesScreen+KmpInquiryThreadScreen
+    buildStatus: planned
+    redesignStatus: in-progress
+    apiStatus: stub
 endpoints:
   - inquiries_list
 relatedScreens:
@@ -32,6 +33,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/pages/inquiries.html
     frame: inquiries-2col-list+thread (4 list states × 4 thread states)
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx
+    frame: KmpInquiriesScreen + KmpInquiryThreadScreen
 useCases:
   - UC-46
 ---

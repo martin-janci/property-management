@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: KmpFavoritesScreen
+    buildStatus: planned
+    redesignStatus: in-progress
+    apiStatus: stub
 endpoints:
   - favorites_list
 relatedScreens:
@@ -33,6 +34,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/pages/favorites.html
     frame: favorites-loaded+loading+empty+error
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx
+    frame: KmpFavoritesScreen
 useCases:
   - UC-44
 ---

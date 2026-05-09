@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: DocumentDetailScreen
+    buildStatus: planned
+    redesignStatus: in-progress
+    apiStatus: stub
 endpoints:
   - documents_get
   - documents_get_versions
@@ -35,6 +36,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/pages/ppt-document-detail.html
     frame: loaded-v3-published
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile/screens.jsx
+    frame: MobDocumentDetailScreen
 useCases:
   - UC-08
 ---

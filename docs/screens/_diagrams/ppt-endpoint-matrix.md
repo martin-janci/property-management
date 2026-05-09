@@ -17,4 +17,6 @@
 | ppt/privacy-settings |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | ppt/report-fault |  |  |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |
 | ppt/upload-document |  |  |  |  |  |  |  |  |  | ✓ |  |  |  |  |  |  |
+| ppt/vote-create |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ppt/vote-detail |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | ppt/voting |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ✓ |

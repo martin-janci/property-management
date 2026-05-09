@@ -14,7 +14,7 @@ implementations:
   mobile:
     component: DocumentsScreen
     buildStatus: shipped
-    redesignStatus: not-started
+    redesignStatus: in-progress
     apiStatus: partial
 endpoints:
   - documents_list
@@ -38,6 +38,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/pages/ppt-documents.html
     frame: loaded-12-3-selected / empty / error / loading
+  - adapter: claude-design
+    file: guest-registration-v2-design-system/project/ui_kits/mobile/screens.jsx
+    frame: MobDocumentsScreen
 useCases:
   - UC-08
 ---
