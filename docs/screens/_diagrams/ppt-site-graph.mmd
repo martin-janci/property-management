@@ -26,6 +26,7 @@ graph TD
   ppt__dispute-detail -- "ppt/dispute-detail parent ppt/disputes" --> ppt__disputes
   ppt__disputes -- "ppt/disputes child ppt/file-dispute" --> ppt__file-dispute
   ppt__document-detail -- "ppt/document-detail parent ppt/documents" --> ppt__documents
+  ppt__document-detail -- "ppt/document-detail sibling ppt/upload-document" --> ppt__upload-document
   ppt__documents -- "ppt/documents child ppt/upload-document" --> ppt__upload-document
   ppt__faults-list -- "ppt/faults-list parent ppt/home" --> ppt__home
   ppt__faults-list -- "ppt/faults-list sibling ppt/report-fault" --> ppt__report-fault
