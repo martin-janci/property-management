@@ -72,7 +72,13 @@ describe('ScreenMapFrontmatterSchema', () => {
       id: 'ppt/x',
       name: 'X',
       product: 'ppt',
-      implementations: {},
+      implementations: {
+        'ppt-web': {
+          buildStatus: 'shipped',
+          redesignStatus: 'not-started',
+          apiStatus: 'complete',
+        },
+      },
       lastReview: new Date('2026-05-07T00:00:00.000Z'),
     });
     expect(result.success).toBe(true);
