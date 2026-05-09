@@ -66,4 +66,22 @@ describe('ScreenMapFrontmatterSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('accepts lastReview as a JS Date object (gray-matter coerces unquoted ISO dates)', () => {
+    const result = ScreenMapFrontmatterSchema.safeParse({
+      id: 'ppt/x',
+      name: 'X',
+      product: 'ppt',
+      implementations: {
+        'ppt-web': {
+          buildStatus: 'shipped',
+          redesignStatus: 'not-started',
+          apiStatus: 'complete',
+        },
+      },
+      lastReview: new Date('2026-05-07T00:00:00.000Z'),
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.lastReview).toBe('2026-05-07');
+  });
 });

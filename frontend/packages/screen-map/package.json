@@ -23,9 +23,12 @@
     "cli": "tsx src/cli.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.0",
     "@ppt/sitemap": "workspace:*",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3",
+    "hono": "^4.6.0",
+    "yauzl-promise": "^4.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

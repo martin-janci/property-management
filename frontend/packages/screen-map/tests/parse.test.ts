@@ -31,4 +31,25 @@ describe('parseScreenMapString', () => {
     expect(screen.frontmatter.id).toBe('ppt/building-detail');
     expect(screen.filePath).toBe('<inline>');
   });
+
+  it('strips a single leading CRLF as well as LF (Windows authoring)', () => {
+    const sample = [
+      '---',
+      'id: ppt/x',
+      'name: X',
+      'product: ppt',
+      'implementations:',
+      '  ppt-web:',
+      '    buildStatus: shipped',
+      '    redesignStatus: not-started',
+      '    apiStatus: complete',
+      '---',
+      '',
+      '## Heading',
+      'body',
+      '',
+    ].join('\r\n');
+    const screen = parseScreenMapString(sample, '<inline>');
+    expect(screen.body.startsWith('## Heading')).toBe(true);
+  });
 });

@@ -44,11 +44,14 @@ const IdSchema = z.string().regex(/^(ppt|reality)\/[a-z0-9-]+$/, {
   message: 'id must match <product>/<slug> using kebab-case',
 });
 
-// gray-matter (via js-yaml) auto-coerces unquoted ISO dates (e.g. `lastReview: 2026-05-04`)
-// into JS Date objects. Coerce back to YYYY-MM-DD before regex-validating so both
-// `2026-05-04` and `"2026-05-04"` in YAML work identically.
 const IsoDateSchema = z.preprocess(
-  (v) => (v instanceof Date ? v.toISOString().slice(0, 10) : v),
+  (value) => {
+    if (value instanceof Date) {
+      // gray-matter (via js-yaml) auto-coerces unquoted ISO dates into Date.
+      return value.toISOString().slice(0, 10);
+    }
+    return value;
+  },
   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'must be YYYY-MM-DD' })
 );
 

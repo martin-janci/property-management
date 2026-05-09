@@ -1,6 +1,13 @@
 import type { ScreenMap } from './types.js';
 
 export interface ValidationIssue {
+  /**
+   * `'warning'` is reserved for non-blocking advisories (e.g. dead links,
+   * missing-but-not-required fields). No current rule produces a warning;
+   * the lane exists so future rules can be added without an interface
+   * change. CLI prints `warn ` for warnings; pre-commit hook only fails
+   * on errors.
+   */
   severity: 'error' | 'warning';
   path: string;
   message: string;
