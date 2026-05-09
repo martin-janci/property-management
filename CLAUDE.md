@@ -213,3 +213,32 @@ cd mobile-native && ./gradlew build
 | `docs/use-cases.md` | 508 use cases catalog |
 | `docs/project-structure.md` | Full directory structure |
 | `docs/api/README.md` | API specification index |
+
+## Screen-Map Self-Management Protocol
+
+The repo includes a screen-map system at `docs/screens/<product>/<id>.md`. Agents working on UI/route code should integrate with it. See [the design spec](docs/superpowers/specs/2026-05-07-screen-map-system-design.md) Section 9.
+
+### Rules for agents
+
+**A. On screen-related code changes (before committing):**
+
+1. `screen-edit <id>` to load context for the screen you're modifying.
+2. Update frontmatter (`buildStatus`, `apiStatus`) if outcomes changed.
+3. Add Agent Log entry: `<date> — agent: <terse summary>`.
+4. Update `Notes > Specific (recent)` if the change is relevant for future agents.
+5. Run `/screens validate`.
+
+**B. On new route / mobile screen added:**
+
+1. `/screens update` detects drift.
+2. Create or attach the new route to a screen-map via `/screens init --add` or by editing an existing one.
+
+**C. On redesign milestone (Figma frame ready):**
+
+1. `/screens review --filter=redesignStatus:not-started` to walk the candidates.
+2. After implementation: `screen-edit <id>` to flip `redesignStatus: in-progress → applied`.
+
+**D. Periodically (manual cadence):**
+
+- `/screens query "buildStatus:shipped,redesignStatus:not-started"` — find redesign roadmap candidates.
+- `/screens render --scope=ppt` — refresh status dashboard.

@@ -136,6 +136,57 @@ describe('review-server', () => {
     expect(res.status).toBe(403);
   });
 
+  it('inserts new agent log entries directly above the first existing entry, not at the wrong empty line', async () => {
+    const customScreen = {
+      filePath: path.join(tmpRoot, 'docs/screens/ppt/anchor-test.md'),
+      frontmatter: {
+        id: 'ppt/anchor-test',
+        name: 'Anchor Test',
+        product: 'ppt' as const,
+        implementations: {
+          'ppt-web': {
+            buildStatus: 'shipped' as const,
+            redesignStatus: 'not-started' as const,
+            apiStatus: 'partial' as const,
+          },
+        },
+      },
+      body: [
+        '## Functionality Checklist',
+        '',
+        '- [ ] foo',
+        '',
+        '## Agent Log',
+        '',
+        '<!-- newest entries on top -->',
+        '',
+        '- 2026-05-01 — agent: earlier entry',
+        '',
+      ].join('\n'),
+    };
+    await writeFile(
+      customScreen.filePath,
+      `---\nid: ppt/anchor-test\nname: Anchor Test\nproduct: ppt\nimplementations:\n  ppt-web: { buildStatus: shipped, redesignStatus: not-started, apiStatus: partial }\n---\n\n${customScreen.body}`
+    );
+    const session = createSession({ screens: [customScreen] });
+    const app = await buildServer({ session, onFinish: () => {} });
+    const res = await app.request(`/api/screens/ppt/anchor-test/review?session=${session.token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decisions: [], generalNote: '' }),
+    });
+    expect(res.status).toBe(200);
+    const updated = await readFile(customScreen.filePath, 'utf8');
+    // The new entry should appear directly above '- 2026-05-01' with no spurious blank line.
+    const agentLogIdx = updated.indexOf('## Agent Log');
+    const after = updated.slice(agentLogIdx).split(/\r?\n/);
+    // Expected order: heading / '' / comment / '' / new entry / '- 2026-05-01 — ...'
+    const newEntryIdx = after.findIndex((l) => l.match(/^- \d{4}-\d{2}-\d{2} — review:/));
+    expect(newEntryIdx).toBeGreaterThan(0);
+    // The line right after the new entry must be the older entry, not a blank.
+    expect(after[newEntryIdx + 1]).toMatch(/^- 2026-05-01 — agent:/);
+  });
+
   it('serves design frame bytes via /api/designs/:adapter/:frameId', async () => {
     const { ZipAdapter } = await import('../../src/design-source/zip-adapter.js');
     const { fileURLToPath } = await import('node:url');
