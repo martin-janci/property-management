@@ -7,6 +7,7 @@ import { buildValidationContext } from './context.js';
 import { createDesignSource } from './design-source/index.js';
 import { discoverScreenMaps } from './discover.js';
 import { loadScreenContext } from './edit-context.js';
+import { parseFilter } from './filter.js';
 import { type GroupingDecision, mergeCandidates } from './grouping.js';
 import { bulkWriteScreenMaps } from './init-write.js';
 import { parseScreenMap, ScreenMapParseError } from './parse.js';
@@ -14,6 +15,10 @@ import { startReviewServer } from './review-server/start.js';
 import { scanCandidates } from './scan.js';
 import type { ScreenMap } from './types.js';
 import { validateScreenMap } from './validate.js';
+
+// Re-export parseFilter to preserve backward compatibility for callers
+// (including existing unit tests) that import it from cli.ts.
+export { parseFilter };
 
 // Read version from package.json so `screen-map --version` always reflects
 // the actual published version (the repo treats VERSION/package.json as the
@@ -159,6 +164,97 @@ program
   });
 
 program
+  .command('update')
+  .description('detect drift between code and screen-maps; report issues')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--strict', 'exit non-zero on any drift', false)
+  .action(async (opts: { root: string; strict: boolean }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    const ctx = await buildValidationContext({ repoRoot });
+    const { scanDrift } = await import('./scan-drift.js');
+    // Phase 3b: passes knownUseCases / knownEpics / knownComponents from
+    // buildValidationContext, so all 5 drift categories fire.
+    const issues = scanDrift({
+      screens,
+      context: ctx,
+      knownUseCases: ctx.knownUseCases,
+      knownEpics: ctx.knownEpics,
+      knownComponents: ctx.knownComponents,
+    });
+    if (issues.length === 0) {
+      process.stdout.write('No drift detected.\n');
+      return;
+    }
+    process.stdout.write(
+      `Drift detected (${issues.length} issue${issues.length === 1 ? '' : 's'}):\n`
+    );
+    for (const issue of issues) {
+      process.stdout.write(`  ${formatDrift(issue)}\n`);
+    }
+    if (opts.strict) process.exit(1);
+  });
+
+program
+  .command('render')
+  .description('generate mermaid diagrams (site graph, endpoint matrix, status dashboard)')
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--scope <name>', 'product | all', 'all')
+  .option('--out <path>', 'output dir', 'docs/screens/_diagrams')
+  .action(async (opts: { root: string; scope: string; out: string }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    let screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    if (opts.scope !== 'all') {
+      screens = screens.filter((s) => s.frontmatter.product === opts.scope);
+    }
+    const { renderSiteGraph, renderEndpointMatrix, renderStatusDashboard } = await import(
+      './render.js'
+    );
+    const fs = await import('node:fs/promises');
+    const outDir = path.resolve(repoRoot, opts.out);
+    await fs.mkdir(outDir, { recursive: true });
+    const scopeName = opts.scope;
+    const writes: Array<[string, string]> = [
+      [`${scopeName}-site-graph.mmd`, renderSiteGraph(screens)],
+      [`${scopeName}-endpoint-matrix.md`, renderEndpointMatrix(screens)],
+      [`${scopeName}-status.mmd`, renderStatusDashboard(screens)],
+    ];
+    for (const [filename, content] of writes) {
+      const filepath = path.join(outDir, filename);
+      await fs.writeFile(filepath, `${content}\n`, 'utf8');
+      process.stdout.write(`  wrote ${path.relative(repoRoot, filepath)}\n`);
+    }
+  });
+
+program
+  .command('query [expr]')
+  .description(
+    'query screen-maps by frontmatter filter (e.g. "product:ppt,redesignStatus:in-progress")'
+  )
+  .option('--root <path>', 'repo root', process.cwd())
+  .option('--format <fmt>', 'table | json | md', 'table')
+  .action(async (expr: string | undefined, opts: { root: string; format: string }) => {
+    const repoRoot = path.resolve(opts.root);
+    const screensDir = path.join(repoRoot, 'docs/screens');
+    const files = await discoverScreenMaps(screensDir);
+    const screens = await Promise.all(files.map((f) => parseScreenMap(f)));
+    const { queryScreens, formatQueryResult } = await import('./query.js');
+    const filtered = queryScreens(screens, expr ?? '');
+    const fmt = (opts.format === 'json' || opts.format === 'md' ? opts.format : 'table') as
+      | 'table'
+      | 'json'
+      | 'md';
+    process.stdout.write(`${formatQueryResult(filtered, fmt)}\n`);
+    process.stdout.write(
+      `\n${filtered.length} screen-map${filtered.length === 1 ? '' : 's'} matched.\n`
+    );
+  });
+
+program
   .command('review')
   .description('spawn the Visual Review server and open the browser')
   .option('--root <path>', 'repo root', process.cwd())
@@ -186,29 +282,21 @@ program
     }
   );
 
-export function parseFilter(
-  expr: string
-): (fm: { id: string; product: string; implementations: Record<string, unknown> }) => boolean {
-  // Simple `key:value` form. Comma-separated terms ANDed.
-  const terms = expr.split(',').map((t) => {
-    const [keyRaw, valueRaw] = t.split(':');
-    return { key: (keyRaw ?? '').trim(), value: (valueRaw ?? '').trim() };
-  });
-  return (fm) => {
-    return terms.every(({ key, value }) => {
-      // Support nested `implementations.<platform>.<field>:<value>`.
-      const path = key.split('.');
-      let cursor: unknown = fm;
-      for (const seg of path) {
-        if (cursor && typeof cursor === 'object' && seg in cursor) {
-          cursor = (cursor as Record<string, unknown>)[seg];
-        } else {
-          return false;
-        }
-      }
-      return String(cursor) === value;
-    });
-  };
+function formatDrift(issue: import('./scan-drift.js').DriftIssue): string {
+  switch (issue.kind) {
+    case 'unmapped-sitemap':
+      return `unmapped-sitemap :: ${issue.sitemapId} (no screen-map references it)`;
+    case 'unknown-endpoint':
+      return `unknown-endpoint :: ${issue.screenId} :: ${issue.endpointId}`;
+    case 'unknown-component':
+      return `unknown-component :: ${issue.screenId} :: ${issue.component}`;
+    case 'unknown-use-case':
+      return `unknown-use-case :: ${issue.screenId} :: ${issue.useCaseId}`;
+    case 'unknown-epic':
+      return `unknown-epic :: ${issue.screenId} :: ${issue.epicId}`;
+    case 'orphan-screen':
+      return `orphan-screen :: ${issue.screenId} :: sitemap "${issue.sitemapId}" not found`;
+  }
 }
 
 // Only run the CLI when this module is the entry point — guards against

@@ -338,8 +338,10 @@ impl DelegationRepository {
 /// Uses OS CSPRNG directly — the token is a shared secret between inviter and
 /// invitee, so entropy must not depend on thread-local state initialization.
 fn generate_token() -> String {
-    use rand::RngCore;
+    use rand::TryRng;
     let mut bytes = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    rand::rngs::SysRng
+        .try_fill_bytes(&mut bytes)
+        .expect("OS rng failed");
     hex::encode(bytes)
 }

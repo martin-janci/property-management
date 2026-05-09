@@ -1,0 +1,34 @@
+graph TD
+  ppt__accessibility-settings["ppt/accessibility-settings<br/>Accessibility Settings"]
+  ppt__announcements["ppt/announcements<br/>Announcements"]
+  ppt__article-detail["ppt/article-detail<br/>Article Detail"]
+  ppt__dashboard["ppt/dashboard<br/>Dashboard"]
+  ppt__dispute-detail["ppt/dispute-detail<br/>Dispute Detail"]
+  ppt__disputes["ppt/disputes<br/>Disputes"]
+  ppt__document-detail["ppt/document-detail<br/>Document Detail"]
+  ppt__documents["ppt/documents<br/>Documents"]
+  ppt__emergency-contacts["ppt/emergency-contacts<br/>Emergency Contacts"]
+  ppt__faults-list["ppt/faults-list<br/>Faults List"]
+  ppt__file-dispute["ppt/file-dispute<br/>File Dispute"]
+  ppt__home["ppt/home<br/>Home"]
+  ppt__login["ppt/login<br/>Login"]
+  ppt__news["ppt/news<br/>News"]
+  ppt__privacy-settings["ppt/privacy-settings<br/>Privacy Settings"]
+  ppt__report-fault["ppt/report-fault<br/>Report Fault"]
+  ppt__upload-document["ppt/upload-document<br/>Upload Document"]
+  ppt__voting["ppt/voting<br/>Voting"]
+  reality__agency-dashboard["reality/agency-dashboard<br/>Agency Dashboard"]
+  reality__compare-properties["reality/compare-properties<br/>Compare Properties"]
+  reality__favorites["reality/favorites<br/>Favorites"]
+  reality__home["reality/home<br/>Home"]
+  reality__inquiries["reality/inquiries<br/>Inquiries"]
+  reality__listing-detail["reality/listing-detail<br/>Listing Detail"]
+  reality__listings["reality/listings<br/>Listings"]
+  reality__oauth-callback["reality/oauth-callback<br/>OAuth Callback"]
+  reality__saved-searches["reality/saved-searches<br/>Saved Searches"]
+  ppt__article-detail -- "ppt/article-detail parent ppt/news" --> ppt__news
+  ppt__dispute-detail -- "ppt/dispute-detail parent ppt/disputes" --> ppt__disputes
+  ppt__disputes -- "ppt/disputes child ppt/file-dispute" --> ppt__file-dispute
+  ppt__document-detail -- "ppt/document-detail parent ppt/documents" --> ppt__documents
+  ppt__documents -- "ppt/documents child ppt/upload-document" --> ppt__upload-document
+  reality__listing-detail -- "reality/listing-detail parent reality/listings" --> reality__listings

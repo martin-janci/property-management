@@ -4,9 +4,11 @@
 //! units, assignments, faults, votes, and announcements in the database.
 
 use crate::DbPool;
-use argon2::{password_hash::SaltString, Argon2, PasswordHasher};
+use argon2::{
+    password_hash::{rand_core::OsRng, SaltString},
+    Argon2, PasswordHasher,
+};
 use chrono::{Datelike, Duration, NaiveDate, Utc};
-use rand::rngs::OsRng;
 use rust_decimal::Decimal;
 use sqlx::Row;
 use uuid::Uuid;
