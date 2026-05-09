@@ -23,8 +23,8 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_notification))
         .route("/", get(list_notifications))
         .route("/unacknowledged", get(get_unacknowledged))
-        .route("/:notification_id/acknowledge", post(acknowledge))
-        .route("/:notification_id/stats", get(get_stats))
+        .route("/{notification_id}/acknowledge", post(acknowledge))
+        .route("/{notification_id}/stats", get(get_stats))
 }
 
 // ==================== Create Notification (Story 8A.2, AC-1) ====================

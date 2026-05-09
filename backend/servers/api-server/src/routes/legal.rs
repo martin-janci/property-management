@@ -32,13 +32,13 @@ pub fn router() -> Router<AppState> {
         .route("/documents", post(create_document))
         .route("/documents", get(list_documents))
         .route("/documents/summary", get(list_documents_summary))
-        .route("/documents/:id", get(get_document))
-        .route("/documents/:id", patch(update_document))
-        .route("/documents/:id", delete(delete_document))
+        .route("/documents/{id}", get(get_document))
+        .route("/documents/{id}", patch(update_document))
+        .route("/documents/{id}", delete(delete_document))
         // Document Versions
-        .route("/documents/:id/versions", post(add_version))
-        .route("/documents/:id/versions", get(list_versions))
-        .route("/documents/:id/versions/:version", get(get_version))
+        .route("/documents/{id}/versions", post(add_version))
+        .route("/documents/{id}/versions", get(list_versions))
+        .route("/documents/{id}/versions/{version}", get(get_version))
         // Compliance Requirements
         .route("/requirements", post(create_requirement))
         .route("/requirements", get(list_requirements))
@@ -47,12 +47,12 @@ pub fn router() -> Router<AppState> {
             get(list_requirements_with_details),
         )
         .route("/requirements/statistics", get(get_compliance_statistics))
-        .route("/requirements/:id", get(get_requirement))
-        .route("/requirements/:id", patch(update_requirement))
-        .route("/requirements/:id", delete(delete_requirement))
+        .route("/requirements/{id}", get(get_requirement))
+        .route("/requirements/{id}", patch(update_requirement))
+        .route("/requirements/{id}", delete(delete_requirement))
         // Compliance Verifications
-        .route("/requirements/:id/verify", post(create_verification))
-        .route("/requirements/:id/verifications", get(list_verifications))
+        .route("/requirements/{id}/verify", post(create_verification))
+        .route("/requirements/{id}/verifications", get(list_verifications))
         // Legal Notices
         .route("/notices", post(create_notice))
         .route("/notices", get(list_notices))
@@ -61,12 +61,12 @@ pub fn router() -> Router<AppState> {
             get(list_notices_with_recipients),
         )
         .route("/notices/statistics", get(get_notice_statistics))
-        .route("/notices/:id", get(get_notice))
-        .route("/notices/:id", patch(update_notice))
-        .route("/notices/:id", delete(delete_notice))
-        .route("/notices/:id/send", post(send_notice))
+        .route("/notices/{id}", get(get_notice))
+        .route("/notices/{id}", patch(update_notice))
+        .route("/notices/{id}", delete(delete_notice))
+        .route("/notices/{id}/send", post(send_notice))
         // Notice Recipients
-        .route("/notices/:id/recipients", get(list_recipients))
+        .route("/notices/{id}/recipients", get(list_recipients))
         .route(
             "/notices/:notice_id/acknowledge/:recipient_id",
             post(acknowledge_notice),
@@ -74,9 +74,9 @@ pub fn router() -> Router<AppState> {
         // Compliance Templates
         .route("/templates", post(create_template))
         .route("/templates", get(list_templates))
-        .route("/templates/:id", get(get_template))
-        .route("/templates/:id", patch(update_template))
-        .route("/templates/:id", delete(delete_template))
+        .route("/templates/{id}", get(get_template))
+        .route("/templates/{id}", patch(update_template))
+        .route("/templates/{id}", delete(delete_template))
         .route("/templates/apply", post(apply_template))
         // Audit Trail
         .route("/audit-trail", get(list_audit_trail))

@@ -27,9 +27,9 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Facility management (by building)
-        .route("/buildings/:building_id/facilities", get(list_facilities))
-        .route("/buildings/:building_id/facilities", post(create_facility))
-        .route("/buildings/:building_id/facilities/:id", get(get_facility))
+        .route("/buildings/{building_id}/facilities", get(list_facilities))
+        .route("/buildings/{building_id}/facilities", post(create_facility))
+        .route("/buildings/{building_id}/facilities/{id}", get(get_facility))
         .route(
             "/buildings/:building_id/facilities/:id",
             put(update_facility),
@@ -53,16 +53,16 @@ pub fn router() -> Router<AppState> {
         )
         // Booking management
         .route("/bookings/my", get(list_my_bookings))
-        .route("/bookings/:id", get(get_booking))
-        .route("/bookings/:id", put(update_booking))
-        .route("/bookings/:id/cancel", post(cancel_booking))
+        .route("/bookings/{id}", get(get_booking))
+        .route("/bookings/{id}", put(update_booking))
+        .route("/bookings/{id}/cancel", post(cancel_booking))
         // Approval workflow
         .route(
             "/buildings/:building_id/bookings/pending",
             get(list_pending_bookings),
         )
-        .route("/bookings/:id/approve", post(approve_booking))
-        .route("/bookings/:id/reject", post(reject_booking))
+        .route("/bookings/{id}/approve", post(approve_booking))
+        .route("/bookings/{id}/reject", post(reject_booking))
 }
 
 // ==================== Request/Response Types ====================

@@ -35,8 +35,8 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // Organization management (Story 10B.1)
         .route("/organizations", get(list_organizations))
-        .route("/organizations/:id", get(get_organization))
-        .route("/organizations/:id/suspend", post(suspend_organization))
+        .route("/organizations/{id}", get(get_organization))
+        .route("/organizations/{id}/suspend", post(suspend_organization))
         .route(
             "/organizations/:id/reactivate",
             post(reactivate_organization),
@@ -45,10 +45,10 @@ pub fn router() -> Router<AppState> {
         // Feature flag management (Story 10B.2)
         .route("/feature-flags", get(list_feature_flags))
         .route("/feature-flags", post(create_feature_flag))
-        .route("/feature-flags/:id", get(get_feature_flag))
-        .route("/feature-flags/:id", put(update_feature_flag))
-        .route("/feature-flags/:id", delete(delete_feature_flag))
-        .route("/feature-flags/:id/toggle", post(toggle_feature_flag))
+        .route("/feature-flags/{id}", get(get_feature_flag))
+        .route("/feature-flags/{id}", put(update_feature_flag))
+        .route("/feature-flags/{id}", delete(delete_feature_flag))
+        .route("/feature-flags/{id}/toggle", post(toggle_feature_flag))
         .route(
             "/feature-flags/:id/overrides",
             post(create_feature_flag_override),
@@ -59,37 +59,37 @@ pub fn router() -> Router<AppState> {
         )
         // Health monitoring (Story 10B.3)
         .route("/health/dashboard", get(get_health_dashboard))
-        .route("/health/metrics/:name/history", get(get_metric_history))
+        .route("/health/metrics/{name}/history", get(get_metric_history))
         .route("/health/alerts", get(get_health_alerts))
-        .route("/health/alerts/:id/acknowledge", post(acknowledge_alert))
+        .route("/health/alerts/{id}/acknowledge", post(acknowledge_alert))
         .route("/health/thresholds", get(get_thresholds))
-        .route("/health/thresholds/:name", put(update_threshold))
+        .route("/health/thresholds/{name}", put(update_threshold))
         // System announcements (Story 10B.4)
         .route("/announcements", get(list_system_announcements))
         .route("/announcements", post(create_system_announcement))
-        .route("/announcements/:id", get(get_system_announcement))
-        .route("/announcements/:id", put(update_system_announcement))
-        .route("/announcements/:id", delete(delete_system_announcement))
+        .route("/announcements/{id}", get(get_system_announcement))
+        .route("/announcements/{id}", put(update_system_announcement))
+        .route("/announcements/{id}", delete(delete_system_announcement))
         .route("/maintenance", post(schedule_maintenance))
         .route("/maintenance", get(get_upcoming_maintenance_admin))
-        .route("/maintenance/:id", delete(delete_scheduled_maintenance))
+        .route("/maintenance/{id}", delete(delete_scheduled_maintenance))
         // Support data access (Story 10B.5)
         .route("/support/users", get(search_users_for_support))
-        .route("/support/users/:id", get(get_user_for_support))
-        .route("/support/users/:id/memberships", get(get_user_memberships))
-        .route("/support/users/:id/sessions", get(get_user_sessions))
+        .route("/support/users/{id}", get(get_user_for_support))
+        .route("/support/users/{id}/memberships", get(get_user_memberships))
+        .route("/support/users/{id}/sessions", get(get_user_sessions))
         .route(
             "/support/users/:id/sessions/revoke",
             post(revoke_user_sessions),
         )
-        .route("/support/users/:id/activity", get(get_user_activity))
+        .route("/support/users/{id}/activity", get(get_user_activity))
 }
 
 /// Create public announcements router (for regular users).
 pub fn public_announcements_router() -> Router<AppState> {
     Router::new()
         .route("/active", get(get_active_announcements))
-        .route("/:id/acknowledge", post(acknowledge_announcement))
+        .route("/{id}/acknowledge", post(acknowledge_announcement))
 }
 
 /// Create public maintenance router (for regular users).

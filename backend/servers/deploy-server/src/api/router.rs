@@ -62,9 +62,9 @@ pub fn build(
     let authenticated = Router::new()
         .route("/api/worktree", post(worktree::open_handler))
         .route("/api/worktrees", get(worktree::list_handler))
-        .route("/api/worktree/:name", get(worktree::get_handler))
-        .route("/api/worktree/:name/close", post(worktree::close_handler))
-        .route("/api/logs/:name", get(logs::handler))
+        .route("/api/worktree/{name}", get(worktree::get_handler))
+        .route("/api/worktree/{name}/close", post(worktree::close_handler))
+        .route("/api/logs/{name}", get(logs::handler))
         .route("/api/audit", get(audit_query::list_handler))
         .with_state(svc.clone())
         .merge(
@@ -75,7 +75,7 @@ pub fn build(
         .merge(
             Router::new()
                 .route("/api/deploy", post(release::deploy_handler))
-                .route("/api/wake/:target", post(release::wake_handler))
+                .route("/api/wake/{target}", post(release::wake_handler))
                 .route("/api/release", post(release::register_candidate_handler))
                 .with_state(release_svc),
         )

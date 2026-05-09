@@ -50,7 +50,7 @@ pub fn router() -> Router<AppState> {
             post(nehnutelnosti_inquiry_webhook),
         )
         // Generic webhook endpoint (portal specified in path)
-        .route("/:portal/events", post(generic_portal_webhook))
+        .route("/{portal}/events", post(generic_portal_webhook))
 }
 
 // ============================================================================

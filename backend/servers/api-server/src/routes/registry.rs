@@ -1066,26 +1066,26 @@ pub fn router() -> Router<AppState> {
         // Pet registrations
         .route("/pets", post(create_pet_registration))
         .route("/pets", get(list_pet_registrations))
-        .route("/pets/:id", get(get_pet_registration))
-        .route("/pets/:id", put(update_pet_registration))
-        .route("/pets/:id", delete(delete_pet_registration))
-        .route("/pets/:id/review", post(review_pet_registration))
+        .route("/pets/{id}", get(get_pet_registration))
+        .route("/pets/{id}", put(update_pet_registration))
+        .route("/pets/{id}", delete(delete_pet_registration))
+        .route("/pets/{id}/review", post(review_pet_registration))
         // Vehicle registrations
         .route("/vehicles", post(create_vehicle_registration))
         .route("/vehicles", get(list_vehicle_registrations))
-        .route("/vehicles/:id", get(get_vehicle_registration))
-        .route("/vehicles/:id", put(update_vehicle_registration))
-        .route("/vehicles/:id", delete(delete_vehicle_registration))
-        .route("/vehicles/:id/review", post(review_vehicle_registration))
+        .route("/vehicles/{id}", get(get_vehicle_registration))
+        .route("/vehicles/{id}", put(update_vehicle_registration))
+        .route("/vehicles/{id}", delete(delete_vehicle_registration))
+        .route("/vehicles/{id}/review", post(review_vehicle_registration))
         // Parking spots
         .route("/parking-spots", post(create_parking_spot))
         .route("/parking-spots", get(list_parking_spots))
-        .route("/parking-spots/:id", get(get_parking_spot))
-        .route("/parking-spots/:id", put(update_parking_spot))
-        .route("/parking-spots/:id", delete(delete_parking_spot))
+        .route("/parking-spots/{id}", get(get_parking_spot))
+        .route("/parking-spots/{id}", put(update_parking_spot))
+        .route("/parking-spots/{id}", delete(delete_parking_spot))
         // Building registry rules and statistics
-        .route("/buildings/:building_id/rules", get(get_registry_rules))
-        .route("/buildings/:building_id/rules", put(update_registry_rules))
+        .route("/buildings/{building_id}/rules", get(get_registry_rules))
+        .route("/buildings/{building_id}/rules", put(update_registry_rules))
         .route(
             "/buildings/:building_id/statistics",
             get(get_registry_statistics),

@@ -30,19 +30,19 @@ pub fn router() -> Router<AppState> {
             "/articles/context/:context_key",
             get(list_articles_by_context),
         )
-        .route("/articles/:slug", get(get_article))
-        .route("/articles/:slug/feedback", post(submit_article_feedback))
+        .route("/articles/{slug}", get(get_article))
+        .route("/articles/{slug}/feedback", post(submit_article_feedback))
         // Categories
         .route("/categories", get(list_categories))
-        .route("/categories/:slug", get(get_category))
+        .route("/categories/{slug}", get(get_category))
         // FAQ
         .route("/faq", get(list_faq))
         .route("/faq/search", get(search_faq))
-        .route("/faq/category/:category", get(list_faq_by_category))
+        .route("/faq/category/{category}", get(list_faq_by_category))
         // Tooltips
         .route("/tooltips", get(list_tooltips))
-        .route("/tooltips/:key", get(get_tooltip))
-        .route("/tooltips/prefix/:prefix", get(list_tooltips_by_prefix))
+        .route("/tooltips/{key}", get(get_tooltip))
+        .route("/tooltips/prefix/{prefix}", get(list_tooltips_by_prefix))
 }
 
 // ==================== Types ====================

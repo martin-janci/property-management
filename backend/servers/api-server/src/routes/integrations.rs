@@ -53,7 +53,7 @@ type HmacSha256 = Hmac<Sha256>;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Statistics
-        .route("/organizations/:org_id/stats", get(get_integration_stats))
+        .route("/organizations/{org_id}/stats", get(get_integration_stats))
         // Calendar routes (Story 61.1)
         .route(
             "/organizations/:org_id/calendars",
@@ -63,12 +63,12 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/calendars",
             post(create_calendar_connection),
         )
-        .route("/calendars/:id", get(get_calendar_connection))
-        .route("/calendars/:id", put(update_calendar_connection))
-        .route("/calendars/:id", delete(delete_calendar_connection))
-        .route("/calendars/:id/sync", post(sync_calendar))
-        .route("/calendars/:id/events", get(list_calendar_events))
-        .route("/calendars/:id/events", post(create_calendar_event))
+        .route("/calendars/{id}", get(get_calendar_connection))
+        .route("/calendars/{id}", put(update_calendar_connection))
+        .route("/calendars/{id}", delete(delete_calendar_connection))
+        .route("/calendars/{id}/sync", post(sync_calendar))
+        .route("/calendars/{id}/events", get(list_calendar_events))
+        .route("/calendars/{id}/events", post(create_calendar_event))
         // Accounting routes (Story 61.2)
         .route(
             "/organizations/:org_id/accounting/exports",
@@ -78,7 +78,7 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/accounting/exports",
             post(create_accounting_export),
         )
-        .route("/accounting/exports/:id", get(get_accounting_export))
+        .route("/accounting/exports/{id}", get(get_accounting_export))
         .route(
             "/accounting/exports/:id/download",
             get(download_accounting_export),
@@ -100,10 +100,10 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/esignatures",
             post(create_esignature_workflow),
         )
-        .route("/esignatures/:id", get(get_esignature_workflow))
-        .route("/esignatures/:id/send", post(send_esignature_workflow))
-        .route("/esignatures/:id/void", post(void_esignature_workflow))
-        .route("/esignatures/:id/remind", post(send_esignature_reminder))
+        .route("/esignatures/{id}", get(get_esignature_workflow))
+        .route("/esignatures/{id}/send", post(send_esignature_workflow))
+        .route("/esignatures/{id}/void", post(void_esignature_workflow))
+        .route("/esignatures/{id}/remind", post(send_esignature_reminder))
         .route("/esignatures/webhook", post(esignature_webhook))
         // Video Conferencing routes (Story 61.4)
         .route(
@@ -114,7 +114,7 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/video/connections",
             post(create_video_connection),
         )
-        .route("/video/connections/:id", delete(delete_video_connection))
+        .route("/video/connections/{id}", delete(delete_video_connection))
         .route(
             "/organizations/:org_id/video/meetings",
             get(list_video_meetings),
@@ -123,10 +123,10 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/video/meetings",
             post(create_video_meeting),
         )
-        .route("/video/meetings/:id", get(get_video_meeting))
-        .route("/video/meetings/:id", put(update_video_meeting))
-        .route("/video/meetings/:id", delete(delete_video_meeting))
-        .route("/video/meetings/:id/start", post(start_video_meeting))
+        .route("/video/meetings/{id}", get(get_video_meeting))
+        .route("/video/meetings/{id}", put(update_video_meeting))
+        .route("/video/meetings/{id}", delete(delete_video_meeting))
+        .route("/video/meetings/{id}/start", post(start_video_meeting))
         // Webhook routes (Story 61.5)
         .route(
             "/organizations/:org_id/webhooks",
@@ -136,12 +136,12 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/webhooks",
             post(create_webhook_subscription),
         )
-        .route("/webhooks/:id", get(get_webhook_subscription))
-        .route("/webhooks/:id", put(update_webhook_subscription))
-        .route("/webhooks/:id", delete(delete_webhook_subscription))
-        .route("/webhooks/:id/test", post(test_webhook))
-        .route("/webhooks/:id/logs", get(list_webhook_logs))
-        .route("/webhooks/:id/stats", get(get_webhook_stats))
+        .route("/webhooks/{id}", get(get_webhook_subscription))
+        .route("/webhooks/{id}", put(update_webhook_subscription))
+        .route("/webhooks/{id}", delete(delete_webhook_subscription))
+        .route("/webhooks/{id}/test", post(test_webhook))
+        .route("/webhooks/{id}/logs", get(list_webhook_logs))
+        .route("/webhooks/{id}/stats", get(get_webhook_stats))
         // ==================== Epic 83: External Platform Integrations ====================
         // Airbnb Integration (Story 83.1)
         .route(
@@ -156,8 +156,8 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/airbnb/callback",
             get(airbnb_oauth_callback),
         )
-        .route("/organizations/:org_id/airbnb/sync", post(sync_airbnb))
-        .route("/organizations/:org_id/airbnb", delete(disconnect_airbnb))
+        .route("/organizations/{org_id}/airbnb/sync", post(sync_airbnb))
+        .route("/organizations/{org_id}/airbnb", delete(disconnect_airbnb))
         // Booking.com Integration (Story 83.2)
         .route(
             "/organizations/:org_id/booking/status",
@@ -167,8 +167,8 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/booking/connect",
             post(connect_booking),
         )
-        .route("/organizations/:org_id/booking/sync", post(sync_booking))
-        .route("/organizations/:org_id/booking", delete(disconnect_booking))
+        .route("/organizations/{org_id}/booking/sync", post(sync_booking))
+        .route("/organizations/{org_id}/booking", delete(disconnect_booking))
         .route("/booking/push", post(booking_push_notification))
         // Portal Webhooks (Story 83.3)
         .route(
@@ -179,15 +179,15 @@ pub fn router() -> Router<AppState> {
             "/organizations/:org_id/portals",
             post(create_portal_connection),
         )
-        .route("/portals/:id", get(get_portal_connection))
-        .route("/portals/:id", delete(delete_portal_connection))
+        .route("/portals/{id}", get(get_portal_connection))
+        .route("/portals/{id}", delete(delete_portal_connection))
         .route(
             "/organizations/:org_id/portal-inquiries",
             get(list_portal_inquiries),
         )
-        .route("/portal-inquiries/:id", get(get_portal_inquiry))
-        .route("/portal-inquiries/:id/read", post(mark_inquiry_read))
-        .route("/portal-inquiries/:id/archive", post(archive_inquiry))
+        .route("/portal-inquiries/{id}", get(get_portal_inquiry))
+        .route("/portal-inquiries/{id}/read", post(mark_inquiry_read))
+        .route("/portal-inquiries/{id}/archive", post(archive_inquiry))
         // Portal webhook endpoint (public, no auth)
         .route(
             "/webhooks/portal/:connection_id",

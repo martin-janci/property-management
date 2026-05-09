@@ -47,8 +47,8 @@ pub fn router() -> Router<AppState> {
         )
         // Violations
         .route("/", get(list_violations).post(create_violation))
-        .route("/:violation_id", get(get_violation).put(update_violation))
-        .route("/:violation_id/assign", post(assign_violation))
+        .route("/{violation_id}", get(get_violation).put(update_violation))
+        .route("/{violation_id}/assign", post(assign_violation))
         // Evidence
         .route(
             "/:violation_id/evidence",
@@ -76,10 +76,10 @@ pub fn router() -> Router<AppState> {
             get(list_payments).post(record_payment),
         )
         // Appeals
-        .route("/:violation_id/appeals", post(create_appeal))
+        .route("/{violation_id}/appeals", post(create_appeal))
         .route("/appeals", get(list_appeals))
-        .route("/appeals/:appeal_id", get(get_appeal).put(update_appeal))
-        .route("/appeals/:appeal_id/decide", post(decide_appeal))
+        .route("/appeals/{appeal_id}", get(get_appeal).put(update_appeal))
+        .route("/appeals/{appeal_id}/decide", post(decide_appeal))
         // Comments
         .route(
             "/:violation_id/comments",

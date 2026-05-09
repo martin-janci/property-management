@@ -49,7 +49,7 @@ pub fn router() -> Router<AppState> {
             get(get_certification_with_credits),
         )
         // Credits
-        .route("/:cert_id/credits", get(list_credits).post(create_credit))
+        .route("/{cert_id}/credits", get(list_credits).post(create_credit))
         .route(
             "/:cert_id/credits/:credit_id",
             get(get_credit).put(update_credit).delete(delete_credit),
@@ -59,7 +59,7 @@ pub fn router() -> Router<AppState> {
             "/:cert_id/documents",
             get(list_documents).post(create_document),
         )
-        .route("/:cert_id/documents/:doc_id", delete(delete_document))
+        .route("/{cert_id}/documents/{doc_id}", delete(delete_document))
         // Milestones
         .route(
             "/:cert_id/milestones",
@@ -75,15 +75,15 @@ pub fn router() -> Router<AppState> {
             get(list_benchmarks).post(create_benchmark),
         )
         // Costs
-        .route("/:cert_id/costs", get(list_costs).post(create_cost))
-        .route("/:cert_id/costs/total", get(get_total_costs))
+        .route("/{cert_id}/costs", get(list_costs).post(create_cost))
+        .route("/{cert_id}/costs/total", get(get_total_costs))
         // Reminders
         .route(
             "/:cert_id/reminders",
             get(list_reminders).post(create_reminder),
         )
         // Audit Logs
-        .route("/:cert_id/audit-logs", get(list_audit_logs))
+        .route("/{cert_id}/audit-logs", get(list_audit_logs))
 }
 
 // ==================== Query Parameters ====================

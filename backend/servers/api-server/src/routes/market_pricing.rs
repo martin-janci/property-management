@@ -47,43 +47,43 @@ pub fn router() -> Router<AppState> {
         // Market Regions
         .route("/regions", get(list_regions))
         .route("/regions", post(create_region))
-        .route("/regions/:id", get(get_region))
-        .route("/regions/:id", put(update_region))
-        .route("/regions/:id", delete(delete_region))
+        .route("/regions/{id}", get(get_region))
+        .route("/regions/{id}", put(update_region))
+        .route("/regions/{id}", delete(delete_region))
         // Market Data Points
         .route("/data", get(list_data_points))
         .route("/data", post(add_data_point))
         // Market Statistics
-        .route("/statistics/:region_id", get(get_statistics))
+        .route("/statistics/{region_id}", get(get_statistics))
         .route("/statistics/generate", post(generate_statistics))
         // Pricing Recommendations
         .route("/recommendations", get(list_recommendations))
         .route("/recommendations/request", post(request_recommendation))
-        .route("/recommendations/:id", get(get_recommendation))
+        .route("/recommendations/{id}", get(get_recommendation))
         .route(
             "/recommendations/:id/details",
             get(get_recommendation_details),
         )
-        .route("/recommendations/:id/accept", post(accept_recommendation))
-        .route("/recommendations/:id/reject", post(reject_recommendation))
+        .route("/recommendations/{id}/accept", post(accept_recommendation))
+        .route("/recommendations/{id}/reject", post(reject_recommendation))
         // Unit Pricing History
-        .route("/units/:unit_id/history", get(get_pricing_history))
-        .route("/units/:unit_id/price", post(record_price_change))
-        .route("/units/:unit_id/current-rent", get(get_current_rent))
+        .route("/units/{unit_id}/history", get(get_pricing_history))
+        .route("/units/{unit_id}/price", post(record_price_change))
+        .route("/units/{unit_id}/current-rent", get(get_current_rent))
         // Comparative Market Analysis
         .route("/cma", get(list_cmas))
         .route("/cma", post(create_cma))
-        .route("/cma/:id", get(get_cma))
-        .route("/cma/:id", put(update_cma))
-        .route("/cma/:id", delete(delete_cma))
-        .route("/cma/:id/details", get(get_cma_details))
-        .route("/cma/:id/properties", get(get_cma_properties))
-        .route("/cma/:id/properties", post(add_cma_property))
+        .route("/cma/{id}", get(get_cma))
+        .route("/cma/{id}", put(update_cma))
+        .route("/cma/{id}", delete(delete_cma))
+        .route("/cma/{id}/details", get(get_cma_details))
+        .route("/cma/{id}/properties", get(get_cma_properties))
+        .route("/cma/{id}/properties", post(add_cma_property))
         .route(
             "/cma/:cma_id/properties/:property_id",
             delete(remove_cma_property),
         )
-        .route("/cma/:id/recalculate", post(recalculate_cma))
+        .route("/cma/{id}/recalculate", post(recalculate_cma))
         // Comparables lookup
         .route("/comparables", get(get_comparables))
         // Dashboard (Story 132.3)

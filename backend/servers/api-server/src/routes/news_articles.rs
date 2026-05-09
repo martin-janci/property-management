@@ -269,29 +269,29 @@ pub fn router() -> Router<AppState> {
             "/:id",
             get(get_article).put(update_article).delete(delete_article),
         )
-        .route("/:id/publish", post(publish_article))
-        .route("/:id/archive", post(archive_article))
-        .route("/:id/restore", post(restore_article))
-        .route("/:id/pin", post(pin_article))
+        .route("/{id}/publish", post(publish_article))
+        .route("/{id}/archive", post(archive_article))
+        .route("/{id}/restore", post(restore_article))
+        .route("/{id}/pin", post(pin_article))
         // Media
-        .route("/:id/media", get(list_media).post(add_media))
-        .route("/:id/media/:media_id", delete(delete_media))
+        .route("/{id}/media", get(list_media).post(add_media))
+        .route("/{id}/media/{media_id}", delete(delete_media))
         // Reactions (Story 59.2)
-        .route("/:id/reactions", post(toggle_reaction))
-        .route("/:id/reactions/counts", get(get_reaction_counts))
+        .route("/{id}/reactions", post(toggle_reaction))
+        .route("/{id}/reactions/counts", get(get_reaction_counts))
         // Comments (Story 59.3)
-        .route("/:id/comments", get(list_comments).post(create_comment))
+        .route("/{id}/comments", get(list_comments).post(create_comment))
         .route(
             "/:id/comments/:comment_id",
             put(update_comment).delete(delete_comment),
         )
-        .route("/:id/comments/:comment_id/moderate", post(moderate_comment))
+        .route("/{id}/comments/{comment_id}/moderate", post(moderate_comment))
         .route(
             "/:id/comments/:comment_id/replies",
             get(list_comment_replies),
         )
         // Analytics
-        .route("/:id/view", post(record_view))
+        .route("/{id}/view", post(record_view))
         .route("/statistics", get(get_statistics))
 }
 

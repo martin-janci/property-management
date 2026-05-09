@@ -37,7 +37,7 @@ pub fn router() -> Router<AppState> {
                 .put(update_investor)
                 .delete(delete_investor),
         )
-        .route("/investors/:investor_id/summary", get(get_investor_summary))
+        .route("/investors/{investor_id}/summary", get(get_investor_summary))
         // Portfolios
         .route("/portfolios", get(list_portfolios).post(create_portfolio))
         .route(
@@ -64,30 +64,30 @@ pub fn router() -> Router<AppState> {
             "/roi",
             get(list_roi_calculations).post(create_roi_calculation),
         )
-        .route("/portfolios/:portfolio_id/roi/latest", get(get_latest_roi))
+        .route("/portfolios/{portfolio_id}/roi/latest", get(get_latest_roi))
         // Distributions
         .route("/distributions", post(create_distribution))
         .route(
             "/investors/:investor_id/distributions",
             get(list_investor_distributions),
         )
-        .route("/distributions/:distribution_id", put(update_distribution))
+        .route("/distributions/{distribution_id}", put(update_distribution))
         // Reports
         .route("/reports", post(create_report))
         .route(
             "/investors/:investor_id/reports",
             get(list_investor_reports),
         )
-        .route("/reports/:report_id", get(get_report))
+        .route("/reports/{report_id}", get(get_report))
         // Capital calls
         .route("/capital-calls", post(create_capital_call))
         .route(
             "/investors/:investor_id/capital-calls",
             get(list_investor_capital_calls),
         )
-        .route("/capital-calls/:call_id", put(update_capital_call))
+        .route("/capital-calls/{call_id}", put(update_capital_call))
         // Dashboard
-        .route("/dashboard/:investor_id", get(get_investor_dashboard))
+        .route("/dashboard/{investor_id}", get(get_investor_dashboard))
         .route(
             "/dashboard/:investor_id/metrics",
             post(upsert_dashboard_metrics),

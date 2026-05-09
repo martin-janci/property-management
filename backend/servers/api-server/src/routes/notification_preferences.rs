@@ -21,7 +21,7 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_preferences))
-        .route("/:channel", patch(update_preference))
+        .route("/{channel}", patch(update_preference))
 }
 
 // ==================== Get Preferences (Story 8A.1, AC-1) ====================

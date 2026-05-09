@@ -26,8 +26,8 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Virtual Tours (Story 70.1)
-        .route("/listings/:listing_id/tours", get(list_virtual_tours))
-        .route("/listings/:listing_id/tours", post(create_virtual_tour))
+        .route("/listings/{listing_id}/tours", get(list_virtual_tours))
+        .route("/listings/{listing_id}/tours", post(create_virtual_tour))
         .route(
             "/listings/:listing_id/tours/reorder",
             post(reorder_virtual_tours),
@@ -57,7 +57,7 @@ pub fn router() -> Router<AppState> {
             delete(delete_tour_hotspot),
         )
         // Dynamic Pricing (Story 70.2)
-        .route("/listings/:listing_id/pricing", get(get_pricing_suggestion))
+        .route("/listings/{listing_id}/pricing", get(get_pricing_suggestion))
         .route(
             "/listings/:listing_id/pricing/analyze",
             post(analyze_pricing),
@@ -80,7 +80,7 @@ pub fn router() -> Router<AppState> {
             get(get_nearby_amenities),
         )
         // Comparables (Story 70.4)
-        .route("/listings/:listing_id/comparables", get(get_comparables))
+        .route("/listings/{listing_id}/comparables", get(get_comparables))
         .route(
             "/listings/:listing_id/comparables/refresh",
             post(refresh_comparables),

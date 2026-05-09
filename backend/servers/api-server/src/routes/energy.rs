@@ -35,16 +35,16 @@ type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Energy Performance Certificates (Story 65.1)
-        .route("/units/:unit_id/epc", get(get_unit_epc))
-        .route("/units/:unit_id/epc", post(create_unit_epc))
-        .route("/units/:unit_id/epc", put(update_unit_epc))
-        .route("/buildings/:building_id/epcs", get(list_building_epcs))
-        .route("/epc/:id", get(get_epc))
-        .route("/epc/:id", delete(delete_epc))
+        .route("/units/{unit_id}/epc", get(get_unit_epc))
+        .route("/units/{unit_id}/epc", post(create_unit_epc))
+        .route("/units/{unit_id}/epc", put(update_unit_epc))
+        .route("/buildings/{building_id}/epcs", get(list_building_epcs))
+        .route("/epc/{id}", get(get_epc))
+        .route("/epc/{id}", delete(delete_epc))
         // Carbon Footprint (Story 65.2)
-        .route("/buildings/:building_id/carbon", get(get_carbon_dashboard))
-        .route("/buildings/:building_id/emissions", post(record_emission))
-        .route("/buildings/:building_id/emissions", get(list_emissions))
+        .route("/buildings/{building_id}/carbon", get(get_carbon_dashboard))
+        .route("/buildings/{building_id}/emissions", post(record_emission))
+        .route("/buildings/{building_id}/emissions", get(list_emissions))
         .route(
             "/buildings/:building_id/carbon/target",
             post(set_carbon_target),

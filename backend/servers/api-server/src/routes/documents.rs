@@ -372,38 +372,38 @@ pub fn router() -> Router<AppState> {
         // Document CRUD
         .route("/", post(create_document))
         .route("/", get(list_documents))
-        .route("/:id", get(get_document))
-        .route("/:id", put(update_document))
-        .route("/:id", delete(delete_document))
+        .route("/{id}", get(get_document))
+        .route("/{id}", put(update_document))
+        .route("/{id}", delete(delete_document))
         // Document actions
-        .route("/:id/move", post(move_document))
-        .route("/:id/access", put(update_document_access))
+        .route("/{id}/move", post(move_document))
+        .route("/{id}/access", put(update_document_access))
         // Download/Preview (Story 7A.4)
-        .route("/:id/download", get(get_download_url))
-        .route("/:id/preview", get(get_preview_url))
+        .route("/{id}/download", get(get_download_url))
+        .route("/{id}/preview", get(get_preview_url))
         // Versioning (Story 7B.1)
-        .route("/:id/versions", get(get_version_history))
-        .route("/:id/versions", post(create_version))
-        .route("/:id/versions/:version_id", get(get_version))
-        .route("/:id/versions/:version_id/restore", post(restore_version))
+        .route("/{id}/versions", get(get_version_history))
+        .route("/{id}/versions", post(create_version))
+        .route("/{id}/versions/{version_id}", get(get_version))
+        .route("/{id}/versions/{version_id}/restore", post(restore_version))
         // Shares (Story 7A.5)
-        .route("/:id/shares", get(list_shares))
-        .route("/:id/shares", post(create_share))
-        .route("/:id/shares/:share_id", delete(revoke_share))
+        .route("/{id}/shares", get(list_shares))
+        .route("/{id}/shares", post(create_share))
+        .route("/{id}/shares/{share_id}", delete(revoke_share))
         // Folders (Story 7A.2)
         .route("/folders", get(list_folders))
         .route("/folders", post(create_folder))
         .route("/folders/tree", get(get_folder_tree))
-        .route("/folders/:id", get(get_folder))
-        .route("/folders/:id", put(update_folder))
-        .route("/folders/:id", delete(delete_folder))
+        .route("/folders/{id}", get(get_folder))
+        .route("/folders/{id}", put(update_folder))
+        .route("/folders/{id}", delete(delete_folder))
         // Document Intelligence (Epic 28)
         // Story 28.1: OCR
-        .route("/:id/ocr/reprocess", post(reprocess_ocr))
+        .route("/{id}/ocr/reprocess", post(reprocess_ocr))
         // Story 28.2: Full-text search
         .route("/search", post(search_documents))
         // Story 28.3: Auto-classification
-        .route("/:id/classification", get(get_classification))
+        .route("/{id}/classification", get(get_classification))
         .route(
             "/:id/classification/feedback",
             post(submit_classification_feedback),
@@ -413,21 +413,21 @@ pub fn router() -> Router<AppState> {
             get(get_classification_history),
         )
         // Story 28.4: Summarization
-        .route("/:id/summarize", post(request_summarization))
+        .route("/{id}/summarize", post(request_summarization))
         // Story 92.3: LLM-powered summarization (sync)
-        .route("/:id/ai-summarize", post(ai_summarize_document))
+        .route("/{id}/ai-summarize", post(ai_summarize_document))
         // Intelligence stats
         .route("/intelligence/stats", get(get_intelligence_stats))
     // Public shared document access (no auth required - separate route in main.rs)
-    // .route("/shared/:token", get(access_shared_document))
-    // .route("/shared/:token/access", post(access_protected_share))
+    // .route("/shared/{token}", get(access_shared_document))
+    // .route("/shared/{token}/access", post(access_protected_share))
 }
 
 /// Create public routes for shared documents (no auth required).
 pub fn public_router() -> Router<AppState> {
     Router::new()
-        .route("/shared/:token", get(access_shared_document))
-        .route("/shared/:token/access", post(access_protected_share))
+        .route("/shared/{token}", get(access_shared_document))
+        .route("/shared/{token}/access", post(access_protected_share))
 }
 
 // ============================================================================

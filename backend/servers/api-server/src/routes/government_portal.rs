@@ -38,10 +38,10 @@ pub fn router() -> Router<AppState> {
                 .put(update_connection)
                 .delete(delete_connection),
         )
-        .route("/connections/:id/test", post(test_connection))
+        .route("/connections/{id}/test", post(test_connection))
         // Report Templates
         .route("/templates", get(list_templates))
-        .route("/templates/:id", get(get_template))
+        .route("/templates/{id}", get(get_template))
         // Regulatory Submissions
         .route(
             "/submissions",
@@ -51,10 +51,10 @@ pub fn router() -> Router<AppState> {
             "/submissions/:id",
             get(get_submission).put(update_submission),
         )
-        .route("/submissions/:id/validate", post(validate_submission))
-        .route("/submissions/:id/submit", post(submit_submission))
-        .route("/submissions/:id/cancel", post(cancel_submission))
-        .route("/submissions/:id/audit", get(get_submission_audit))
+        .route("/submissions/{id}/validate", post(validate_submission))
+        .route("/submissions/{id}/submit", post(submit_submission))
+        .route("/submissions/{id}/cancel", post(cancel_submission))
+        .route("/submissions/{id}/audit", get(get_submission_audit))
         // Submission Attachments
         .route(
             "/submissions/:id/attachments",

@@ -226,10 +226,10 @@ pub fn router() -> Router<AppState> {
             "/claims/:claim_id",
             get(get_claim).put(update_claim).delete(delete_claim),
         )
-        .route("/claims/:claim_id/submit", post(submit_claim))
-        .route("/claims/:claim_id/review", post(review_claim))
-        .route("/claims/:claim_id/payment", post(record_claim_payment))
-        .route("/claims/:claim_id/history", get(get_claim_history))
+        .route("/claims/{claim_id}/submit", post(submit_claim))
+        .route("/claims/{claim_id}/review", post(review_claim))
+        .route("/claims/{claim_id}/payment", post(record_claim_payment))
+        .route("/claims/{claim_id}/history", get(get_claim_history))
         // Claim document routes
         .route(
             "/claims/:claim_id/documents",

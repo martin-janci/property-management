@@ -115,7 +115,7 @@ pub fn router() -> Router<AppState> {
                 .put(update_valuation)
                 .delete(delete_valuation),
         )
-        .route("/:valuation_id/approve", put(approve_valuation))
+        .route("/{valuation_id}/approve", put(approve_valuation))
         // Comparables
         .route(
             "/:valuation_id/comparables",
@@ -130,13 +130,13 @@ pub fn router() -> Router<AppState> {
             "/comparables/:comparable_id/adjustments",
             get(list_adjustments).post(create_adjustment),
         )
-        .route("/adjustments/:adjustment_id", delete(delete_adjustment))
+        .route("/adjustments/{adjustment_id}", delete(delete_adjustment))
         // Market Data
         .route(
             "/market-data",
             get(get_market_data).post(create_market_data),
         )
-        .route("/market-data/:market_data_id", put(update_market_data))
+        .route("/market-data/{market_data_id}", put(update_market_data))
         // Value History
         .route(
             "/properties/:property_id/history",
@@ -153,16 +153,16 @@ pub fn router() -> Router<AppState> {
             "/properties/:property_id/features",
             get(get_features).post(create_features),
         )
-        .route("/features/:feature_id", put(update_features))
+        .route("/features/{feature_id}", put(update_features))
         // Reports
         .route(
             "/:valuation_id/reports",
             get(list_reports).post(create_report),
         )
-        .route("/reports/:report_id", put(update_report))
-        .route("/reports/:report_id/sign", put(sign_report))
+        .route("/reports/{report_id}", put(update_report))
+        .route("/reports/{report_id}/sign", put(sign_report))
         // Audit Logs
-        .route("/:valuation_id/audit-logs", get(get_audit_logs))
+        .route("/{valuation_id}/audit-logs", get(get_audit_logs))
 }
 
 // ============================================================================

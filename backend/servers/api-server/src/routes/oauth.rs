@@ -44,9 +44,9 @@ pub fn admin_router() -> Router<AppState> {
     Router::new()
         .route("/clients", post(register_client))
         .route("/clients", get(list_clients))
-        .route("/clients/:id", get(get_client))
-        .route("/clients/:id", axum::routing::patch(update_client))
-        .route("/clients/:id", axum::routing::delete(revoke_client))
+        .route("/clients/{id}", get(get_client))
+        .route("/clients/{id}", axum::routing::patch(update_client))
+        .route("/clients/{id}", axum::routing::delete(revoke_client))
         .route(
             "/clients/:id/regenerate-secret",
             post(regenerate_client_secret),
