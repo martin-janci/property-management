@@ -231,6 +231,88 @@
     "terms": {
       "title": "Podmienky používania",
       "description": "Používaním Reality Portálu súhlasíte s našimi podmienkami a ustanoveniami. Úplné podmienky používania budú zverejnené tu."
+    },
+    "careers": {
+      "title": "Kariéra",
+      "hero": {
+        "title": "Stavajme realitný trh, ktorý dáva zmysel.",
+        "subtitle": "Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a prenajímajú nehnuteľnosti.",
+        "cta": "Zobraziť voľné pozície"
+      }
+    },
+    "cookies": {
+      "title": "Zásady používania cookies",
+      "reopen": "Znova otvoriť nastavenia cookies"
+    },
+    "security": {
+      "title": "Bezpečnosť",
+      "subtitle": "Vaša bezpečnosť je naša priorita",
+      "reportCta": "Nahlásiť ponuku"
+    },
+    "help": {
+      "title": "Centrum pomoci",
+      "searchPlaceholder": "Hľadajte v centre pomoci...",
+      "categories": "Kategórie",
+      "faq": "Často kladené otázky"
+    },
+    "journal": {
+      "title": "Reality Žurnál",
+      "subtitle": "Analýzy, tipy a správy zo sveta nehnuteľností.",
+      "featured": "Titulný príbeh",
+      "latest": "Najnovšie články",
+      "newsletter": "Odber noviniek",
+      "editorsPicks": "Výber redakcie",
+      "mostRead": "Najviac čítané"
+    },
+    "forAgents": {
+      "title": "Pre maklérov & agentúry",
+      "subtitle": "Predávajte viac s Reality Portálom",
+      "features": "Čo získate",
+      "pricing": "Cenové plány"
+    },
+    "profile": {
+      "title": "Môj profil",
+      "tabs": {
+        "listings": "Moje inzeráty",
+        "activity": "Aktivita",
+        "reviews": "Hodnotenia",
+        "settings": "Nastavenia"
+      }
+    },
+    "sell": {
+      "title": "Pridať inzerát",
+      "submit": "Zverejniť inzerát",
+      "steps": {
+        "typeLocation": "Typ a poloha",
+        "details": "Detaily",
+        "photos": "Fotografie",
+        "price": "Cena",
+        "summary": "Kontakt & súhrn"
+      }
+    },
+    "priceMap": {
+      "title": "Mapa cien",
+      "subtitle": "Bratislava – Prehľad",
+      "clickHint": "Kliknite na mestskú štvrť pre detailné štatistiky."
+    },
+    "report": {
+      "title": "Nahlásiť inzerát",
+      "subtitle": "Pomôžte nám udržiavať portál bezpečným.",
+      "submit": "Odoslať nahlásenie",
+      "success": "Nahlásenie bolo odoslané"
+    },
+    "agentProfile": {
+      "verified": "Overený maklér",
+      "contact": "Kontaktovať",
+      "specializations": "Špecializácia",
+      "languages": "Jazyky",
+      "activeListings": "Aktívne ponuky",
+      "reviews": "Hodnotenia"
+    },
+    "listingEdit": {
+      "title": "Upraviť inzerát",
+      "save": "Uložiť zmeny",
+      "success": "Inzerát bol uložený!"
     }
   },
   "footer": {
