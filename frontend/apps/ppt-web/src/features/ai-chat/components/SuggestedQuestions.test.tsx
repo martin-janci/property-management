@@ -7,7 +7,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { SuggestedQuestion } from '../types';
-import { SuggestedQuestions, getDefaultSuggestedQuestions } from './SuggestedQuestions';
+import { getDefaultSuggestedQuestions, SuggestedQuestions } from './SuggestedQuestions';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

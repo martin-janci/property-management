@@ -39,51 +39,51 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_certifications).post(create_certification))
         .route("/expiring", get(get_expiring_certifications))
         .route(
-            "/{cert_id}",
+            "/:cert_id",
             get(get_certification)
                 .put(update_certification)
                 .delete(delete_certification),
         )
         .route(
-            "/{cert_id}/with-credits",
+            "/:cert_id/with-credits",
             get(get_certification_with_credits),
         )
         // Credits
-        .route("/{cert_id}/credits", get(list_credits).post(create_credit))
+        .route("/:cert_id/credits", get(list_credits).post(create_credit))
         .route(
-            "/{cert_id}/credits/{credit_id}",
+            "/:cert_id/credits/:credit_id",
             get(get_credit).put(update_credit).delete(delete_credit),
         )
         // Documents
         .route(
-            "/{cert_id}/documents",
+            "/:cert_id/documents",
             get(list_documents).post(create_document),
         )
-        .route("/{cert_id}/documents/{doc_id}", delete(delete_document))
+        .route("/:cert_id/documents/:doc_id", delete(delete_document))
         // Milestones
         .route(
-            "/{cert_id}/milestones",
+            "/:cert_id/milestones",
             get(list_milestones).post(create_milestone),
         )
         .route(
-            "/{cert_id}/milestones/{milestone_id}",
+            "/:cert_id/milestones/:milestone_id",
             put(update_milestone).delete(delete_milestone),
         )
         // Benchmarks
         .route(
-            "/{cert_id}/benchmarks",
+            "/:cert_id/benchmarks",
             get(list_benchmarks).post(create_benchmark),
         )
         // Costs
-        .route("/{cert_id}/costs", get(list_costs).post(create_cost))
-        .route("/{cert_id}/costs/total", get(get_total_costs))
+        .route("/:cert_id/costs", get(list_costs).post(create_cost))
+        .route("/:cert_id/costs/total", get(get_total_costs))
         // Reminders
         .route(
-            "/{cert_id}/reminders",
+            "/:cert_id/reminders",
             get(list_reminders).post(create_reminder),
         )
         // Audit Logs
-        .route("/{cert_id}/audit-logs", get(list_audit_logs))
+        .route("/:cert_id/audit-logs", get(list_audit_logs))
 }
 
 // ==================== Query Parameters ====================

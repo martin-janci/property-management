@@ -334,6 +334,34 @@ impl RealityPortalRepository {
             .await
     }
 
+    /// List public agencies (verified status only). Used by the public
+    /// directory surface in `reality-web` and the KMP mobile clients.
+    pub async fn list_public_agencies(
+        &self,
+        limit: i64,
+        offset: i64,
+    ) -> Result<(Vec<RealityAgency>, i64), SqlxError> {
+        let agencies = sqlx::query_as::<_, RealityAgency>(
+            r#"
+            SELECT * FROM reality_agencies
+            WHERE status = 'verified'
+            ORDER BY name ASC
+            LIMIT $1 OFFSET $2
+            "#,
+        )
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let total: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM reality_agencies WHERE status = 'verified'")
+                .fetch_one(&self.pool)
+                .await?;
+
+        Ok((agencies, total))
+    }
+
     /// Get agency by slug.
     pub async fn get_agency_by_slug(&self, slug: &str) -> Result<Option<RealityAgency>, SqlxError> {
         sqlx::query_as::<_, RealityAgency>("SELECT * FROM reality_agencies WHERE slug = $1")

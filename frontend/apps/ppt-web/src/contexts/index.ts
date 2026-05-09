@@ -4,7 +4,6 @@
  * Barrel exports for all context providers and hooks.
  */
 
-export { AuthProvider, useAuth, AuthError } from './AuthContext';
 export type {
   AuthContextValue,
   AuthErrorCode,
@@ -12,10 +11,12 @@ export type {
   AuthUser,
   LoginCredentials,
 } from './AuthContext';
+export { AuthError, AuthProvider, useAuth } from './AuthContext';
 
-export { WebSocketProvider, useWebSocketContext, eventToQueryKeys } from './WebSocketContext';
+export { OrganizationProvider } from './OrganizationProvider';
 export type {
-  WebSocketProviderProps,
-  WebSocketContextValue,
   AuthContextForWebSocket,
+  WebSocketContextValue,
+  WebSocketProviderProps,
 } from './WebSocketContext';
+export { eventToQueryKeys, useWebSocketContext, WebSocketProvider } from './WebSocketContext';

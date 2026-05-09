@@ -55,6 +55,27 @@ pub use rls_pool::{PublicConnection, RlsGuard, RlsPool};
 // Re-export repositories for direct import
 pub use repositories::FormRepository;
 
+/// Run all pending SQL migrations against the given pool.
+///
+/// Applies the 100+ migrations under `backend/crates/db/migrations/` in
+/// numeric order. The migrator embeds every file in the binary at compile
+/// time via `sqlx::migrate!`, so the running container doesn't need disk
+/// access to `crates/db/migrations`.
+///
+/// Idempotent and concurrency-safe: sqlx tracks applied versions in a
+/// `_sqlx_migrations` table and uses a Postgres advisory lock around the
+/// run, so two backends starting at the same time (api-server +
+/// reality-server in the same blue/green color) won't race — the second
+/// caller waits and then sees zero pending migrations.
+///
+/// Call this once on each server's startup, after creating the pool and
+/// before serving traffic. The first deploy of a target turns its empty
+/// `ppt_<target>` database into the full schema; subsequent deploys
+/// no-op as long as no new migrations are added.
+pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::migrate::MigrateError> {
+    sqlx::migrate!("./migrations").run(pool).await
+}
+
 /// Create database connection pool.
 ///
 /// This creates a standard pool without RLS cleanup hooks.

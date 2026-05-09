@@ -3,27 +3,24 @@
  * UC-12: Utility Outages
  */
 
+export type {
+  OutageCommodity,
+  OutageFormData,
+  OutageSeverity,
+  OutageStatus,
+  OutageSummary,
+} from './components';
 // Components
 export {
   OutageCard,
-  OutageList,
   OutageForm,
+  OutageList,
 } from './components';
-
-export type {
-  OutageSummary,
-  OutageStatus,
-  OutageCommodity,
-  OutageSeverity,
-  OutageFormData,
-} from './components';
-
+export type { ListOutagesParams, OutageDetail } from './pages';
 // Pages
 export {
-  OutagesPage,
-  ViewOutagePage,
   CreateOutagePage,
   EditOutagePage,
+  OutagesPage,
+  ViewOutagePage,
 } from './pages';
-
-export type { ListOutagesParams, OutageDetail } from './pages';

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { buildValidationContext } from './context.js';
 import { discoverScreenMaps } from './discover.js';
-import { ScreenMapParseError, parseScreenMap } from './parse.js';
+import { parseScreenMap, ScreenMapParseError } from './parse.js';
 import { validateScreenMap } from './validate.js';
 
 const program = new Command();

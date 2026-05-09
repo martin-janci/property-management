@@ -1,0 +1,146 @@
+/**
+ * Table component styles.
+ */
+
+.ppt-table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ppt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-color-text);
+}
+
+/* Head */
+.ppt-table__head {
+  background-color: var(--ppt-color-surface-hover);
+}
+
+.ppt-table__header-cell {
+  padding: var(--ppt-space-3) var(--ppt-space-4);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-color-text);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--ppt-color-border);
+}
+
+.ppt-table__header-cell--center {
+  text-align: center;
+}
+
+.ppt-table__header-cell--right {
+  text-align: right;
+}
+
+/* Sortable header */
+.ppt-table__header-cell--sortable {
+  padding: 0;
+}
+
+.ppt-table__sort-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ppt-space-2);
+  width: 100%;
+  padding: var(--ppt-space-3) var(--ppt-space-4);
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-weight: var(--ppt-font-weight-semibold);
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.ppt-table__sort-button:hover {
+  background-color: var(--ppt-color-secondary-light);
+}
+
+.ppt-table__sort-button:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: calc(-1 * var(--ppt-focus-ring-width));
+}
+
+.ppt-table__sort-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ppt-table__sort-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ppt-table__sort-icon--inactive {
+  opacity: 0.3;
+}
+
+/* Body */
+.ppt-table__body .ppt-table__row {
+  border-bottom: 1px solid var(--ppt-color-border);
+}
+
+.ppt-table__body .ppt-table__row:last-child {
+  border-bottom: none;
+}
+
+/* Cell */
+.ppt-table__cell {
+  padding: var(--ppt-space-3) var(--ppt-space-4);
+  vertical-align: middle;
+}
+
+.ppt-table__cell--center {
+  text-align: center;
+}
+
+.ppt-table__cell--right {
+  text-align: right;
+}
+
+/* Variants */
+.ppt-table--striped .ppt-table__body .ppt-table__row:nth-child(even) {
+  background-color: var(--ppt-color-surface-hover);
+}
+
+.ppt-table--bordered {
+  border: 1px solid var(--ppt-color-border);
+}
+
+.ppt-table--bordered .ppt-table__header-cell,
+.ppt-table--bordered .ppt-table__cell {
+  border: 1px solid var(--ppt-color-border);
+}
+
+/* Hoverable */
+.ppt-table--hoverable .ppt-table__body .ppt-table__row:hover {
+  background-color: var(--ppt-color-surface-hover);
+}
+
+/* Selected row */
+.ppt-table__row--selected {
+  background-color: var(--ppt-color-primary-light) !important;
+}
+
+/* Compact */
+.ppt-table--compact .ppt-table__header-cell,
+.ppt-table--compact .ppt-table__cell,
+.ppt-table--compact .ppt-table__sort-button {
+  padding: var(--ppt-space-2) var(--ppt-space-3);
+}
+
+/* Empty state */
+.ppt-table__empty {
+  padding: var(--ppt-space-8);
+  text-align: center;
+  color: var(--ppt-color-text-secondary);
+}

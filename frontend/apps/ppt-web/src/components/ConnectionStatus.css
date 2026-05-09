@@ -14,9 +14,9 @@
   cursor: pointer;
 }
 
-.connection-status[tabindex="0"]:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+.connection-status[tabindex="0"]:focus-visible {
+  outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color);
+  outline-offset: var(--ppt-focus-ring-offset);
   border-radius: 0.25rem;
 }
 
@@ -29,27 +29,27 @@
 
 /* Connected - Green */
 .connection-status__dot--connected {
-  background-color: #22c55e;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+  background-color: var(--ppt-color-success);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* Connecting - Yellow with pulse animation */
 .connection-status__dot--connecting {
-  background-color: #eab308;
-  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+  background-color: var(--ppt-color-warning);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
   animation: connection-pulse 1.5s ease-in-out infinite;
 }
 
 /* Disconnected/Error - Red */
 .connection-status__dot--disconnected {
-  background-color: #ef4444;
+  background-color: var(--ppt-color-danger);
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
 .connection-status__label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--ppt-fg-muted);
   white-space: nowrap;
 }
 
@@ -62,10 +62,10 @@
   z-index: 50;
   min-width: 12rem;
   padding: 0.75rem;
-  background-color: #1f2937;
-  color: #f9fafb;
+  background-color: var(--ppt-neutral-800);
+  color: var(--ppt-fg-on-accent);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--ppt-shadow-lg);
   pointer-events: none;
 }
 
@@ -76,7 +76,7 @@
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: #1f2937;
+  border-top-color: var(--ppt-neutral-800);
 }
 
 .connection-status__tooltip-header {
@@ -87,16 +87,16 @@
 
 .connection-status__tooltip-description {
   font-size: 0.75rem;
-  color: #d1d5db;
+  color: var(--ppt-border-strong);
   line-height: 1.4;
 }
 
 .connection-status__tooltip-action {
   font-size: 0.75rem;
-  color: #60a5fa;
+  color: var(--ppt-brand-400);
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #374151;
+  border-top: 1px solid var(--ppt-neutral-700);
 }
 
 /* Pulse animation for connecting state */
@@ -114,12 +114,5 @@
 @media (prefers-reduced-motion: reduce) {
   .connection-status__dot--connecting {
     animation: none;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .connection-status__label {
-    color: #9ca3af;
   }
 }

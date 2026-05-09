@@ -4,7 +4,7 @@
  * Property import functionality for Reality Portal (Epic 46).
  */
 
-export { CsvImport } from './CsvImport';
 export { CrmConnection } from './CrmConnection';
-export { SyncSchedule } from './SyncSchedule';
+export { CsvImport } from './CsvImport';
 export { FeedImport } from './FeedImport';
+export { SyncSchedule } from './SyncSchedule';

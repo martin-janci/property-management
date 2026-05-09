@@ -4,8 +4,8 @@
  * Form for creating and editing emergency contacts.
  */
 
-import { CONTACT_TYPES, CONTACT_TYPE_LABELS } from '@ppt/api-client';
 import type { CreateEmergencyContact, EmergencyContact } from '@ppt/api-client';
+import { CONTACT_TYPE_LABELS, CONTACT_TYPES } from '@ppt/api-client';
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

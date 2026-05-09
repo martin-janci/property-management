@@ -9,10 +9,6 @@ export const metadata: Metadata = {
     'real estate, property, apartments, houses, for sale, for rent, Slovakia, Czech Republic',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

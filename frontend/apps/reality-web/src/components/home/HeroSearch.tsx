@@ -7,8 +7,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useRouter } from '../../i18n/routing';
 
 export function HeroSearch() {
   const router = useRouter();
@@ -109,139 +109,175 @@ export function HeroSearch() {
 
       <style jsx>{`
         .hero {
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-          padding: 80px 16px;
-          text-align: center;
+          /* The one gradient in the system: brand-800 → brand-500 */
+          background: linear-gradient(135deg, var(--ppt-brand-800, #1e40af) 0%, var(--ppt-brand-500, #3b82f6) 100%);
+          padding: 72px 32px 96px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .hero::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 15% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+            radial-gradient(circle at 85% 80%, rgba(255,255,255,0.06) 0%, transparent 45%);
+          pointer-events: none;
         }
 
         .hero-content {
-          max-width: 800px;
+          max-width: 960px;
           margin: 0 auto;
+          position: relative;
+          z-index: 1;
         }
 
         .hero-title {
-          font-size: 2.5rem;
-          font-weight: bold;
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 800;
           color: #fff;
-          margin: 0 0 16px;
-        }
-
-        @media (min-width: 768px) {
-          .hero-title {
-            font-size: 3rem;
-          }
+          margin: 0 0 14px;
+          letter-spacing: -0.02em;
+          line-height: 1.1;
+          max-width: 740px;
         }
 
         .hero-subtitle {
-          font-size: 1.125rem;
-          color: #bfdbfe;
-          margin: 0 0 32px;
+          font-size: 17px;
+          color: rgba(255, 255, 255, 0.85);
+          margin: 0 0 28px;
+          max-width: 560px;
+          line-height: 1.55;
         }
 
         .search-form {
-          background: #fff;
-          border-radius: 16px;
-          padding: 24px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+          background: var(--ppt-bg-surface, #fff);
+          border-radius: var(--ppt-radius-xl, 16px);
+          padding: 8px;
+          box-shadow: 0 20px 50px -20px rgba(0,0,0,0.4), 0 8px 20px -8px rgba(0,0,0,0.2);
+          max-width: 860px;
         }
 
         .toggle-container {
           display: inline-flex;
-          background: #f3f4f6;
-          border-radius: 8px;
-          padding: 4px;
-          margin-bottom: 16px;
+          background: var(--ppt-bg-subtle, #f3f4f6);
+          border-radius: var(--ppt-radius-md, 8px);
+          padding: 3px;
+          margin-bottom: 8px;
         }
 
         .toggle-button {
-          padding: 8px 24px;
+          padding: 7px 18px;
           border: none;
           background: transparent;
           border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-          color: #6b7280;
+          font-size: var(--ppt-font-size-sm, 14px);
+          font-weight: var(--ppt-font-weight-medium, 500);
+          color: var(--ppt-fg-muted, #6b7280);
           cursor: pointer;
-          transition: all 0.2s;
+          font-family: var(--ppt-font-family);
+          transition: all var(--ppt-transition-fast);
         }
 
         .toggle-button.active {
-          background: #fff;
-          color: #2563eb;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          background: var(--ppt-bg-surface, #fff);
+          color: var(--ppt-color-primary, #2563eb);
+          font-weight: var(--ppt-font-weight-semibold, 600);
+          box-shadow: 0 1px 2px rgba(0,0,0,0.08);
         }
 
         .search-input-container {
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          padding: 4px 4px 4px 16px;
+          gap: 0;
+          background: var(--ppt-bg-surface, #fff);
+          border: 1px solid var(--ppt-border-default, #e5e7eb);
+          border-radius: var(--ppt-radius-lg, 12px);
+          padding: 4px 6px 4px 0;
+          overflow: hidden;
         }
 
         .search-icon {
-          color: #9ca3af;
+          color: var(--ppt-fg-muted, #9ca3af);
           flex-shrink: 0;
+          padding: 0 12px;
         }
 
         .search-input {
           flex: 1;
           border: none;
           background: transparent;
-          font-size: 16px;
+          font-size: var(--ppt-font-size-sm, 14px);
+          font-weight: var(--ppt-font-weight-medium, 500);
           padding: 12px 0;
           outline: none;
+          color: var(--ppt-fg-primary, #111827);
+          font-family: var(--ppt-font-family);
         }
 
         .search-input::placeholder {
-          color: #9ca3af;
+          color: var(--ppt-fg-muted, #9ca3af);
+          font-weight: var(--ppt-font-weight-normal, 400);
         }
 
         .search-button {
-          padding: 12px 24px;
-          background: #2563eb;
+          padding: 11px 24px;
+          background: var(--ppt-color-primary, #2563eb);
           color: #fff;
           border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
+          border-radius: var(--ppt-radius-md, 10px);
+          font-size: var(--ppt-font-size-sm, 14px);
+          font-weight: var(--ppt-font-weight-semibold, 600);
           cursor: pointer;
-          transition: background 0.2s;
+          font-family: var(--ppt-font-family);
+          transition: background var(--ppt-transition-fast);
+          white-space: nowrap;
         }
 
         .search-button:hover {
-          background: #1d4ed8;
+          background: var(--ppt-color-primary-hover, #1d4ed8);
+        }
+
+        .search-button:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
         }
 
         .quick-links {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 12px;
+          gap: 10px;
           margin-top: 24px;
           flex-wrap: wrap;
         }
 
         .quick-links-label {
-          color: #bfdbfe;
-          font-size: 14px;
+          color: rgba(255, 255, 255, 0.75);
+          font-size: var(--ppt-font-size-sm, 14px);
+          font-weight: var(--ppt-font-weight-medium, 500);
         }
 
         .quick-link {
-          padding: 6px 12px;
-          background: rgba(255, 255, 255, 0.1);
+          padding: 7px 16px;
+          background: rgba(255, 255, 255, 0.12);
           border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 20px;
+          border-radius: var(--ppt-radius-full, 9999px);
           color: #fff;
-          font-size: 14px;
+          font-size: var(--ppt-font-size-sm, 14px);
+          font-weight: var(--ppt-font-weight-medium, 500);
           cursor: pointer;
-          transition: all 0.2s;
+          font-family: var(--ppt-font-family);
+          transition: background var(--ppt-transition-fast);
         }
 
         .quick-link:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.22);
+        }
+
+        .quick-link:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.4);
         }
       `}</style>
     </section>

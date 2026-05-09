@@ -403,6 +403,214 @@ impl UnitRepository {
         Ok((units, total))
     }
 
+    /// Check if designation exists in building with RLS context.
+    pub async fn designation_exists_rls<'e, E>(
+        &self,
+        executor: E,
+        building_id: Uuid,
+        designation: &str,
+        exclude_unit_id: Option<Uuid>,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let count: i64 = if let Some(exclude_id) = exclude_unit_id {
+            sqlx::query_scalar(
+                r#"
+                SELECT COUNT(*) FROM units
+                WHERE building_id = $1 AND LOWER(designation) = LOWER($2) AND id != $3
+                "#,
+            )
+            .bind(building_id)
+            .bind(designation)
+            .bind(exclude_id)
+            .fetch_one(executor)
+            .await?
+        } else {
+            sqlx::query_scalar(
+                r#"
+                SELECT COUNT(*) FROM units
+                WHERE building_id = $1 AND LOWER(designation) = LOWER($2)
+                "#,
+            )
+            .bind(building_id)
+            .bind(designation)
+            .fetch_one(executor)
+            .await?
+        };
+
+        Ok(count > 0)
+    }
+
+    /// Check if unit belongs to building with RLS context.
+    pub async fn belongs_to_building_rls<'e, E>(
+        &self,
+        executor: E,
+        unit_id: Uuid,
+        building_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM units
+            WHERE id = $1 AND building_id = $2
+            "#,
+        )
+        .bind(unit_id)
+        .bind(building_id)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(count > 0)
+    }
+
+    /// Get total ownership percentage for a unit with RLS context.
+    pub async fn get_total_ownership_rls<'e, E>(
+        &self,
+        executor: E,
+        unit_id: Uuid,
+    ) -> Result<Decimal, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let total: Option<Decimal> = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(ownership_percentage), 0)
+            FROM unit_owners
+            WHERE unit_id = $1
+              AND status = 'active'
+              AND (valid_until IS NULL OR valid_until > CURRENT_DATE)
+            "#,
+        )
+        .bind(unit_id)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(total.unwrap_or_default())
+    }
+
+    /// Assign owner to unit with RLS context (UC-15.6).
+    pub async fn assign_owner_rls<'e, E>(
+        &self,
+        executor: E,
+        data: AssignUnitOwner,
+    ) -> Result<UnitOwner, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let valid_from = data
+            .valid_from
+            .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+
+        let owner = sqlx::query_as::<_, UnitOwner>(
+            r#"
+            INSERT INTO unit_owners (unit_id, user_id, ownership_percentage, is_primary, valid_from)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            "#,
+        )
+        .bind(data.unit_id)
+        .bind(data.user_id)
+        .bind(data.ownership_percentage)
+        .bind(data.is_primary)
+        .bind(valid_from)
+        .fetch_one(executor)
+        .await?;
+
+        Ok(owner)
+    }
+
+    /// Update owner assignment with RLS context.
+    pub async fn update_owner_rls<'e, E>(
+        &self,
+        executor: E,
+        unit_id: Uuid,
+        user_id: Uuid,
+        ownership_percentage: Option<Decimal>,
+        is_primary: Option<bool>,
+    ) -> Result<Option<UnitOwner>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let mut updates = vec!["updated_at = NOW()".to_string()];
+        let mut param_idx = 2;
+
+        if ownership_percentage.is_some() {
+            param_idx += 1;
+            updates.push(format!("ownership_percentage = ${}", param_idx));
+        }
+        if is_primary.is_some() {
+            param_idx += 1;
+            updates.push(format!("is_primary = ${}", param_idx));
+        }
+
+        let query = format!(
+            "UPDATE unit_owners SET {} WHERE unit_id = $1 AND user_id = $2 AND status = 'active' RETURNING *",
+            updates.join(", ")
+        );
+
+        let mut q = sqlx::query_as::<_, UnitOwner>(&query)
+            .bind(unit_id)
+            .bind(user_id);
+
+        if let Some(pct) = ownership_percentage {
+            q = q.bind(pct);
+        }
+        if let Some(primary) = is_primary {
+            q = q.bind(primary);
+        }
+
+        let owner = q.fetch_optional(executor).await?;
+        Ok(owner)
+    }
+
+    /// Remove owner from unit with RLS context.
+    pub async fn remove_owner_rls<'e, E>(
+        &self,
+        executor: E,
+        unit_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let result = sqlx::query(
+            r#"
+            UPDATE unit_owners
+            SET status = 'inactive', valid_until = CURRENT_DATE, updated_at = NOW()
+            WHERE unit_id = $1 AND user_id = $2 AND status = 'active'
+            "#,
+        )
+        .bind(unit_id)
+        .bind(user_id)
+        .execute(executor)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Restore archived unit with RLS context.
+    pub async fn restore_rls<'e, E>(&self, executor: E, id: Uuid) -> Result<Option<Unit>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let unit = sqlx::query_as::<_, Unit>(
+            r#"
+            UPDATE units
+            SET status = 'active', updated_at = NOW()
+            WHERE id = $1 AND status = 'archived'
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(unit)
+    }
+
     // ========================================================================
     // Legacy methods (use pool directly - migrate to RLS versions)
     // ========================================================================

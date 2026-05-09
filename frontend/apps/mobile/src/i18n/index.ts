@@ -2,8 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { defaultLocale, locales } from './config';
-
 // Import translation files
 import cs from '../locales/cs.json';
 import de from '../locales/de.json';
@@ -11,6 +9,7 @@ import en from '../locales/en.json';
 import hu from '../locales/hu.json';
 import pl from '../locales/pl.json';
 import sk from '../locales/sk.json';
+import { defaultLocale, locales } from './config';
 
 const LANGUAGE_STORAGE_KEY = 'ppt-language';
 
@@ -81,4 +80,4 @@ i18n
   });
 
 export default i18n;
-export { defaultLocale, localeFlags, localeNames, locales, type Locale } from './config';
+export { defaultLocale, type Locale, localeFlags, localeNames, locales } from './config';

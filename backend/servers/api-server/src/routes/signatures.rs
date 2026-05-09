@@ -4,7 +4,7 @@
 
 use std::sync::LazyLock;
 
-use api_core::AuthUser;
+use api_core::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -48,11 +48,13 @@ pub fn router() -> Router<AppState> {
 pub async fn create_signature_request(
     State(state): State<AppState>,
     auth: AuthUser,
+    mut rls: RlsConnection,
     Path(document_id): Path<Uuid>,
     Json(request): Json<CreateSignatureRequest>,
 ) -> Result<(StatusCode, Json<CreateSignatureRequestResponse>), (StatusCode, Json<ErrorResponse>)> {
     // Validate request
     if request.signers.is_empty() {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -63,36 +65,43 @@ pub async fn create_signature_request(
     }
 
     // Get the document to verify it exists and get organization_id
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let document = state
+    let document = match state
         .document_repo
-        .find_by_id(document_id)
+        .find_by_id_rls(&mut **rls.conn(), document_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(doc)) => doc,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            ));
+        }
+    };
 
     // Check if document already has pending signature request
-    let existing = state
+    let existing = match state
         .signature_request_repo
         .find_by_document(document_id)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(reqs) => reqs,
+        Err(e) => {
+            rls.release().await;
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+            ));
+        }
+    };
 
     if existing.iter().any(|r| {
         matches!(
@@ -101,6 +110,7 @@ pub async fn create_signature_request(
                 | db::models::SignatureRequestStatus::InProgress
         )
     }) {
+        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -112,16 +122,22 @@ pub async fn create_signature_request(
 
     let created_by = auth.user_id;
 
-    let signature_request = state
+    let signature_request = match state
         .signature_request_repo
         .create(document_id, document.organization_id, created_by, &request)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(req) => req,
+        Err(e) => {
+            rls.release().await;
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+            ));
+        }
+    };
+
+    rls.release().await;
 
     info!(
         signature_request_id = %signature_request.id,
@@ -181,41 +197,50 @@ pub async fn create_signature_request(
 /// List signature requests for a document.
 pub async fn list_signature_requests(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(document_id): Path<Uuid>,
 ) -> Result<Json<ListSignatureRequestsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify document exists
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let _document = state
+    let _document = match state
         .document_repo
-        .find_by_id(document_id)
+        .find_by_id_rls(&mut **rls.conn(), document_id)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?
-        .ok_or_else(|| {
-            (
+    {
+        Ok(Some(doc)) => doc,
+        Ok(None) => {
+            rls.release().await;
+            return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
-            )
-        })?;
+            ));
+        }
+        Err(e) => {
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            ));
+        }
+    };
 
-    let requests = state
+    let requests = match state
         .signature_request_repo
         .find_by_document(document_id)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(reqs) => reqs,
+        Err(e) => {
+            rls.release().await;
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-            )
-        })?;
+            ));
+        }
+    };
 
     let total = requests.len() as i64;
 
+    rls.release().await;
     Ok(Json(ListSignatureRequestsResponse {
         signature_requests: requests,
         total,
@@ -560,12 +585,27 @@ async fn store_signed_document(
     signature_request: &db::models::SignatureRequest,
     signed_url: &str,
 ) -> Result<Uuid, String> {
-    // Get the original document
-    // TODO: Migrate to find_by_id_rls when RlsConnection is available in webhook context
-    #[allow(deprecated)]
+    // Acquire a connection and set RLS context for webhook processing
+    // Webhooks don't have user auth, so we use the signature request's org/user context
+    let mut conn = state
+        .db
+        .acquire()
+        .await
+        .map_err(|e| format!("Failed to acquire database connection: {}", e))?;
+
+    db::tenant_context::set_request_context(
+        &mut *conn,
+        Some(signature_request.organization_id),
+        Some(signature_request.created_by),
+        false, // Not a super admin context
+    )
+    .await
+    .map_err(|e| format!("Failed to set RLS context: {}", e))?;
+
+    // Get the original document using RLS-aware method
     let original_doc = state
         .document_repo
-        .find_by_id(signature_request.document_id)
+        .find_by_id_rls(&mut *conn, signature_request.document_id)
         .await
         .map_err(|e| format!("Failed to find original document: {}", e))?
         .ok_or("Original document not found")?;
@@ -643,11 +683,10 @@ async fn store_signed_document(
         created_by: signature_request.created_by,
     };
 
-    // TODO: Migrate to create_rls when RlsConnection is available in webhook context
-    #[allow(deprecated)]
+    // Create signed document using RLS-aware method
     let signed_doc = state
         .document_repo
-        .create(create_doc)
+        .create_rls(&mut *conn, create_doc)
         .await
         .map_err(|e| format!("Failed to create signed document record: {}", e))?;
 
@@ -666,6 +705,11 @@ async fn store_signed_document(
         "Created signed document record linked to original"
     );
 
+    // Clear RLS context before returning connection to pool
+    if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await {
+        warn!(error = %e, "Failed to clear RLS context after storing signed document");
+    }
+
     Ok(signed_doc.id)
 }
 
@@ -681,16 +725,18 @@ pub fn document_signature_router() -> Router<AppState> {
 pub async fn create_signature_request_for_doc(
     State(state): State<AppState>,
     auth: AuthUser,
+    rls: RlsConnection,
     Path(document_id): Path<Uuid>,
     Json(request): Json<CreateSignatureRequest>,
 ) -> Result<(StatusCode, Json<CreateSignatureRequestResponse>), (StatusCode, Json<ErrorResponse>)> {
-    create_signature_request(State(state), auth, Path(document_id), Json(request)).await
+    create_signature_request(State(state), auth, rls, Path(document_id), Json(request)).await
 }
 
 /// List signature requests for a specific document (nested route version).
 pub async fn list_signature_requests_for_doc(
     State(state): State<AppState>,
+    rls: RlsConnection,
     Path(document_id): Path<Uuid>,
 ) -> Result<Json<ListSignatureRequestsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    list_signature_requests(State(state), Path(document_id)).await
+    list_signature_requests(State(state), rls, Path(document_id)).await
 }

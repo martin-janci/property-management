@@ -22,7 +22,6 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
-use rand::Rng;
 use thiserror::Error;
 
 /// Encryption key length (256 bits = 32 bytes).
@@ -115,9 +114,15 @@ impl IntegrationCrypto {
     ///
     /// Returns a base64-encoded string containing nonce + ciphertext.
     pub fn encrypt(&self, plaintext: &str) -> Result<String, CryptoError> {
-        // Generate random nonce
+        // Generate random nonce directly from OS CSPRNG.
+        //
+        // SECURITY: AES-GCM nonce reuse catastrophically breaks confidentiality
+        // (same nonce+key reveals plaintext XORs). Using OsRng directly avoids
+        // any risk from a thread-local CSPRNG being seeded from a low-entropy
+        // or predictable source at process start.
+        use rand::RngCore;
         let mut nonce_bytes = [0u8; NONCE_LENGTH];
-        rand::thread_rng().fill(&mut nonce_bytes);
+        rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt

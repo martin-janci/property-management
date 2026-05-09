@@ -9,4 +9,7 @@
  */
 
 export * from './components';
+export { BudgetManagementPage } from './pages/BudgetManagementPage';
 export { FinancialDashboardPage } from './pages/FinancialDashboardPage';
+export { InvoiceManagementPage } from './pages/InvoiceManagementPage';
+export { PaymentManagementPage } from './pages/PaymentManagementPage';

@@ -17,6 +17,7 @@ import { useActionQueue } from '../hooks/useActionQueue';
 import { ActionFilters } from './ActionFilters';
 import { ActionItem } from './ActionItem';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
+import './ActionQueue.css';
 
 interface ActionQueueProps {
   userRole: 'manager' | 'resident';
@@ -163,18 +164,12 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
 
   if (isError) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <h3 className="text-lg font-semibold text-red-800 mb-2">
-          {t('dashboard.errorLoadingQueue')}
-        </h3>
-        <p className="text-red-600 mb-4">
+      <div className="action-queue__error">
+        <h3 className="action-queue__error-title">{t('dashboard.errorLoadingQueue')}</h3>
+        <p className="action-queue__error-message">
           {error instanceof Error ? error.message : t('errors.unknown')}
         </p>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-        >
+        <button type="button" onClick={() => refetch()} className="action-queue__retry-btn">
           {t('common.tryAgain')}
         </button>
       </div>
@@ -182,67 +177,52 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
   }
 
   return (
-    <div ref={containerRef} className="space-y-4" tabIndex={-1}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div ref={containerRef} className="action-queue" tabIndex={-1}>
+      <div className="action-queue__header">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            {t(`dashboard.${userRole}ActionQueue`)}
-          </h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="action-queue__heading">{t(`dashboard.${userRole}ActionQueue`)}</h2>
+          <p className="action-queue__subheading">
             {t('dashboard.itemsNeedingAttention', { count: stats.total })}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Quick stats */}
-          <div className="hidden md:flex items-center gap-2">
+        <div className="action-queue__controls">
+          <div className="action-queue__priority-stats">
             {stats.urgent > 0 && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+              <span className="action-queue__stat-badge action-queue__stat-badge--urgent">
                 {stats.urgent} {t('dashboard.priority.urgent')}
               </span>
             )}
             {stats.high > 0 && (
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+              <span className="action-queue__stat-badge action-queue__stat-badge--high">
                 {stats.high} {t('dashboard.priority.high')}
               </span>
             )}
           </div>
 
-          {/* Filter toggle */}
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className={`
-              px-3 py-2 text-sm font-medium rounded-md border
-              transition-colors duration-150
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              ${
-                showFilters
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }
-            `}
+            className={`action-queue__btn${showFilters ? ' action-queue__btn--active' : ''}`}
             aria-expanded={showFilters}
           >
-            <span className="mr-1">🔍</span>
-            {t('dashboard.filters')}
+            <span aria-hidden="true">🔍</span> {t('dashboard.filters')}
           </button>
 
-          {/* Refresh button */}
           <button
             type="button"
             onClick={() => refetch()}
             disabled={isLoading}
-            className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="action-queue__btn"
             aria-label={t('common.refresh')}
           >
-            <span className={isLoading ? 'animate-spin inline-block' : ''}>🔄</span>
+            <span className={isLoading ? 'action-queue__spin' : ''} aria-hidden="true">
+              🔄
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Filters */}
       {showFilters && (
         <ActionFilters
           filters={filters}
@@ -252,29 +232,24 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
         />
       )}
 
-      {/* Loading state */}
       {isLoading && items.length === 0 && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="action-queue__spinner">
+          <div className="action-queue__spinner-ring" aria-label={t('common.loading')} />
         </div>
       )}
 
-      {/* Empty state */}
       {!isLoading && items.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
-          <span className="text-4xl mb-4 block" aria-hidden="true">
+        <div className="action-queue__empty">
+          <span className="action-queue__empty-icon" aria-hidden="true">
             ✅
           </span>
-          <h3 className="text-lg font-semibold text-green-800 mb-2">
-            {t('dashboard.allCaughtUp')}
-          </h3>
-          <p className="text-green-600">{t('dashboard.noItemsNeedingAttention')}</p>
+          <h3 className="action-queue__empty-title">{t('dashboard.allCaughtUp')}</h3>
+          <p className="action-queue__empty-subtitle">{t('dashboard.noItemsNeedingAttention')}</p>
         </div>
       )}
 
-      {/* Action items */}
       {items.length > 0 && (
-        <div className="space-y-3" role="list" aria-label={t('dashboard.actionQueue')}>
+        <div className="action-queue__list" role="list" aria-label={t('dashboard.actionQueue')}>
           {items.map((item, index) => (
             <ActionItem
               key={item.id}
@@ -296,30 +271,13 @@ export function ActionQueue({ userRole, onItemAction }: ActionQueueProps) {
         </div>
       )}
 
-      {/* Keyboard shortcuts hint */}
-      <div className="text-center text-xs text-gray-400 mt-4">
-        <span className="hidden md:inline">
-          {t('dashboard.keyboardHint')}{' '}
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">
-            j
-          </kbd>
-          /
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">
-            k
-          </kbd>{' '}
-          {t('dashboard.toNavigate')},{' '}
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">
-            Enter
-          </kbd>{' '}
-          {t('dashboard.toOpen')},{' '}
-          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">
-            ?
-          </kbd>{' '}
-          {t('dashboard.forHelp')}
-        </span>
-      </div>
+      <p className="action-queue__kbd-hint">
+        {t('dashboard.keyboardHint')} <kbd className="action-queue__kbd">j</kbd>/
+        <kbd className="action-queue__kbd">k</kbd> {t('dashboard.toNavigate')},{' '}
+        <kbd className="action-queue__kbd">Enter</kbd> {t('dashboard.toOpen')},{' '}
+        <kbd className="action-queue__kbd">?</kbd> {t('dashboard.forHelp')}
+      </p>
 
-      {/* Keyboard shortcuts help modal */}
       <KeyboardShortcutsHelp
         isOpen={showShortcutsHelp}
         onClose={() => setShowShortcutsHelp(false)}

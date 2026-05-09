@@ -9,6 +9,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import { helpCenter } from '../../onboarding';
 import type { FAQCategory, FAQItem, Tutorial } from '../../onboarding/types';
+import { colors } from '../shared/screenStyles';
 
 interface HelpCenterScreenProps {
   onNavigate: (screen: string, params?: Record<string, unknown>) => void;
@@ -151,7 +152,7 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
           placeholder={t('help.searchPlaceholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textSubtle}
         />
       </View>
 
@@ -252,48 +253,48 @@ export function HelpCenterScreen({ onNavigate }: HelpCenterScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   backButton: {
     marginBottom: 8,
   },
   backButtonText: {
-    color: '#2563eb',
+    color: colors.accent,
     fontSize: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: colors.text,
   },
   searchContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   searchInput: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
@@ -303,21 +304,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#2563eb',
+    borderBottomColor: colors.accent,
   },
   tabText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   tabTextActive: {
-    color: '#2563eb',
+    color: colors.accent,
   },
   categoriesContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     maxHeight: 56,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border,
   },
   categoriesContent: {
     paddingHorizontal: 12,
@@ -327,26 +328,26 @@ const styles = StyleSheet.create({
   categoryChip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 20,
     marginRight: 8,
   },
   categoryChipActive: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
   },
   categoryChipText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   categoryChipTextActive: {
-    color: '#fff',
+    color: colors.surface,
   },
   content: {
     flex: 1,
     padding: 16,
   },
   faqItem: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -360,22 +361,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#111827',
+    color: colors.text,
   },
   expandIcon: {
     fontSize: 20,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginLeft: 12,
   },
   faqAnswer: {
     padding: 16,
     paddingTop: 0,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
   },
   faqAnswerText: {
     fontSize: 15,
-    color: '#4b5563',
+    color: colors.textMuted,
     lineHeight: 22,
   },
   faqFeedback: {
@@ -384,11 +385,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: colors.surfaceMuted,
   },
   feedbackLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginRight: 12,
   },
   feedbackButtons: {
@@ -399,21 +400,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.surfaceMuted,
   },
   feedbackActive: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.accentSoft,
   },
   feedbackButtonText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
   },
   feedbackActiveText: {
-    color: '#2563eb',
+    color: colors.accent,
   },
   tutorialItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
@@ -421,13 +422,13 @@ const styles = StyleSheet.create({
   tutorialThumbnail: {
     width: 100,
     height: 80,
-    backgroundColor: '#1f2937',
+    backgroundColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
   },
   playIcon: {
     fontSize: 24,
-    color: '#fff',
+    color: colors.surface,
   },
   tutorialInfo: {
     flex: 1,
@@ -436,17 +437,17 @@ const styles = StyleSheet.create({
   tutorialTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 4,
   },
   tutorialDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     marginBottom: 8,
   },
   tutorialDuration: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.textSubtle,
   },
   emptyState: {
     alignItems: 'center',
@@ -459,30 +460,30 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.text,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   feedbackFab: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.accent,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 28,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
   },
   feedbackFabText: {
-    color: '#fff',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },

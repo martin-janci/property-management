@@ -101,7 +101,8 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (url = "https://api.ppt.example.com", description = "Production")
     ),
     paths(
-        routes::health::health,
+        routes::health::liveness,
+        routes::health::readiness,
         routes::auth::login,
         routes::auth::register,
         routes::auth::logout,
@@ -141,6 +142,7 @@ fn parse_default_origins() -> Vec<HeaderValue> {
     ),
     components(schemas(
         routes::health::HealthResponse,
+        routes::health::LivenessResponse,
         routes::auth::LoginRequest,
         routes::auth::LoginResponse,
         routes::auth::RegisterRequest,
@@ -259,10 +261,22 @@ async fn main() -> anyhow::Result<()> {
         env!("CARGO_PKG_VERSION")
     );
 
-    // Get database URL from environment
+    // Get database URL from environment. A hardcoded fallback to a local dev
+    // database is only permitted when RUST_ENV=development to support local
+    // development; production/staging must set DATABASE_URL explicitly.
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        tracing::warn!("DATABASE_URL not set, using default");
-        "postgres://postgres:postgres@localhost:5432/ppt".to_string()
+        let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
+        if is_development {
+            tracing::warn!(
+                "DATABASE_URL not set, using development default (DEVELOPMENT MODE ONLY)"
+            );
+            "postgres://postgres:postgres@localhost:5432/ppt".to_string()
+        } else {
+            panic!(
+                "DATABASE_URL environment variable is required in non-development environments. \
+                 Set RUST_ENV=development to use the dev default."
+            );
+        }
     });
 
     // Create RLS-safe database pool with automatic context cleanup
@@ -270,6 +284,25 @@ async fn main() -> anyhow::Result<()> {
     // are returned to the pool, providing defense-in-depth against context bleeding
     let db_pool = db::create_rls_safe_pool(&database_url).await?;
     tracing::info!("Connected to database with RLS-safe pool");
+
+    // Apply any pending migrations from `backend/crates/db/migrations/`. The
+    // sqlx migrator is idempotent and uses a Postgres advisory lock, so a
+    // concurrent `reality-server` startup against the same DB is safe — the
+    // second caller blocks until the first finishes, then sees zero pending.
+    // Critical on first deploy of a fresh target: `ppt_prod` / `ppt_staging`
+    // are empty databases (created from `ppt_dev_template` which is also
+    // empty); without this call the first request would fail with
+    // `relation "users" does not exist`.
+    // `.context()` keeps the original `MigrateError` as the source so a
+    // failure surfaces with both the human-readable context and the
+    // chained underlying cause (e.g. `permission denied for relation X`)
+    // when anyhow renders the error chain — `map_err(|e| anyhow!("{e}"))`
+    // would have flattened that into a single string.
+    use anyhow::Context;
+    db::run_migrations(&db_pool)
+        .await
+        .context("DB migration failed")?;
+    tracing::info!("Database migrations applied (or already current)");
 
     // Create email service (development mode by default)
     let email_enabled = std::env::var("EMAIL_ENABLED")
@@ -340,8 +373,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router
     let app = Router::new()
-        // Health check
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + Redis). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Prometheus metrics endpoint (Epic 95.4)
         .route("/metrics", get(metrics_endpoint))
         // Auth routes

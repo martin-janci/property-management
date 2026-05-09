@@ -22,6 +22,7 @@ pub mod organization_member;
 pub mod password_reset;
 pub mod person_month;
 pub mod platform_admin;
+pub mod portal_password_reset;
 pub mod refresh_token;
 pub mod role;
 pub mod signature_request;
@@ -218,6 +219,7 @@ pub use platform_admin::{
     SystemAnnouncement, SystemAnnouncementAcknowledgment, UpdateFeatureCategoryRequest,
     UpsertFeatureDescriptorRequest, UserFeaturePreference, UserOnboardingProgress,
 };
+pub use portal_password_reset::{CreatePortalPasswordResetToken, PortalPasswordResetToken};
 pub use refresh_token::{CreateRefreshToken, LoginAttempt, RateLimitStatus, RefreshToken};
 pub use role::{permissions, system_roles, CreateRole, PermissionDefinition, Role, UpdateRole};
 pub use signature_request::{

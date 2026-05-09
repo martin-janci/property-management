@@ -220,10 +220,10 @@ export function TrendChart({
                       cy={`${y}%`}
                       r="6"
                       fill="none"
-                      stroke="#ef4444"
+                      stroke="var(--ppt-color-danger)"
                       strokeWidth="2"
                     />
-                    <circle cx={`${x}%`} cy={`${y}%`} r="3" fill="#ef4444">
+                    <circle cx={`${x}%`} cy={`${y}%`} r="3" fill="var(--ppt-color-danger)">
                       <title>Anomaly: {anomaly.date}</title>
                     </circle>
                   </g>

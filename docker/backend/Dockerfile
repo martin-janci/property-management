@@ -34,7 +34,11 @@ ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
+    mold \
+    clang \
     && rm -rf /var/lib/apt/lists/*
+
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
 
 # Install cargo-chef
 RUN cargo install cargo-chef --locked
@@ -45,6 +49,8 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     gcc-aarch64-linux-gnu \
     libc6-dev-arm64-cross \
     libssl-dev:arm64 \
+    mold \
+    clang \
     && rm -rf /var/lib/apt/lists/* \
     && rustup target add aarch64-unknown-linux-gnu; \
     fi
@@ -79,21 +85,31 @@ COPY backend/servers ./servers
 COPY frontend/packages/sitemap/src/json/sitemap.json /frontend/packages/sitemap/src/json/sitemap.json
 
 # Build the applications
+# Build server binaries plus the api-server-side helper bins (`ppt-seed`
+# bootstraps OAuth clients + admin user; `ppt-features` toggles feature
+# flags) in a single cargo invocation so the matrix workflow can share a
+# single GHA cache scope (see .github/workflows/docker-build.yml). The
+# helper bins are needed at runtime — operators run them via
+# `docker exec <api-container> ppt-seed ...` post-deploy — so they must
+# ship in the api-server image, not just exist in the build stage.
 ENV SQLX_OFFLINE=true
 RUN RUST_TARGET=$(cat /tmp/rust-target) && \
     if [ "$TARGETARCH" = "arm64" ]; then \
     export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
     export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu && \
-    cargo build --release --target $RUST_TARGET -p api-server -p reality-server && \
+    cargo build --release --target $RUST_TARGET \
+        --bin api-server --bin reality-server \
+        --bin ppt-seed --bin ppt-features && \
     mkdir -p target/release && \
     cp target/$RUST_TARGET/release/api-server target/release/api-server && \
-    cp target/$RUST_TARGET/release/reality-server target/release/reality-server; \
+    cp target/$RUST_TARGET/release/reality-server target/release/reality-server && \
+    cp target/$RUST_TARGET/release/ppt-seed target/release/ppt-seed && \
+    cp target/$RUST_TARGET/release/ppt-features target/release/ppt-features; \
     else \
-    cargo build --release -p api-server -p reality-server; \
+    cargo build --release \
+        --bin api-server --bin reality-server \
+        --bin ppt-seed --bin ppt-features; \
     fi
-
-# Strip debug symbols for smaller binaries
-RUN strip target/release/api-server target/release/reality-server || true
 
 # =============================================================================
 # Stage 4: Runtime Base - Minimal production image base
@@ -118,6 +134,13 @@ WORKDIR /app
 FROM runtime-base AS api-server
 
 COPY --from=builder /app/target/release/api-server /app/api-server
+# Helper bins shipped alongside `api-server` so operators can run them via
+# `docker exec <container> ppt-seed --reality-portal-secret "$SECRET"`
+# (bootstraps OAuth clients + admin) and `ppt-features` (toggles feature
+# flags). They share the same image so they read the same DATABASE_URL +
+# secrets the running api-server has.
+COPY --from=builder /app/target/release/ppt-seed /usr/local/bin/ppt-seed
+COPY --from=builder /app/target/release/ppt-features /usr/local/bin/ppt-features
 RUN chown -R ppt:ppt /app
 USER ppt
 

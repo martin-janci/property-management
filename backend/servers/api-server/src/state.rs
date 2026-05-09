@@ -9,17 +9,18 @@ use db::{
         AgencyRepository, AiChatRepository, AnnouncementRepository, ApiEcosystemRepository,
         AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
         BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
-        CriticalNotificationRepository, DataExportRepository, DelegationRepository,
-        DisputeRepository, DocumentRepository, DocumentTemplateRepository, EmergencyRepository,
-        EnergyRepository, EnhancedTenantScreeningRepository, EquipmentRepository,
-        EsgReportingRepository, FacilityRepository, FaultRepository, FeatureAnalyticsRepository,
-        FeatureFlagRepository, FeaturePackageRepository, FinancialRepository, FormRepository,
-        GovernmentPortalRepository, GranularNotificationRepository, HealthMonitoringRepository,
-        HelpRepository, InfrastructureRepository, InsuranceRepository, IntegrationRepository,
+        ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
+        DelegationRepository, DisputeRepository, DocumentRepository, DocumentTemplateRepository,
+        EddRepository, EmergencyRepository, EnergyRepository, EnhancedTenantScreeningRepository,
+        EquipmentRepository, EsgReportingRepository, FacilityRepository, FaultRepository,
+        FeatureAnalyticsRepository, FeatureFlagRepository, FeaturePackageRepository,
+        FinancialRepository, FormRepository, GovernmentPortalRepository,
+        GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
+        InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
-        ListingRepository, LlmDocumentRepository, MarketPricingRepository, MeterRepository,
-        MultiCurrencyRepository, NotificationPreferenceRepository, OAuthRepository,
-        OnboardingRepository, OperationsRepository, OrganizationMemberRepository,
+        ListingRepository, LlmDocumentRepository, MarketPricingRepository, MarketplaceRepository,
+        MeterRepository, MultiCurrencyRepository, NotificationPreferenceRepository,
+        OAuthRepository, OnboardingRepository, OperationsRepository, OrganizationMemberRepository,
         OrganizationRepository, OutageRepository, OwnerAnalyticsRepository,
         PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
         PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
@@ -138,6 +139,7 @@ pub struct AppState {
     pub outage_repo: OutageRepository,
     // Epic 132: Dynamic Rent Pricing & Market Analytics
     pub market_pricing_repo: MarketPricingRepository,
+    pub marketplace_repo: MarketplaceRepository,
     // Epic 133: AI Lease Abstraction & Document Intelligence
     pub lease_abstraction_repo: LeaseAbstractionRepository,
     // Epic 134: Predictive Maintenance & Equipment Intelligence
@@ -166,6 +168,9 @@ pub struct AppState {
     pub multi_currency_repo: MultiCurrencyRepository,
     // Epic 150: API Ecosystem Expansion
     pub api_ecosystem_repo: ApiEcosystemRepository,
+    // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
+    pub edd_repo: EddRepository,
+    pub compliance_repo: ComplianceRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -282,6 +287,7 @@ impl AppState {
         let outage_repo = OutageRepository::new(db.clone());
         // Epic 132: Dynamic Rent Pricing & Market Analytics
         let market_pricing_repo = MarketPricingRepository::new(db.clone());
+        let marketplace_repo = MarketplaceRepository::new(db.clone());
         // Epic 133: AI Lease Abstraction & Document Intelligence
         let lease_abstraction_repo = LeaseAbstractionRepository::new(db.clone());
         // Epic 134: Predictive Maintenance & Equipment Intelligence
@@ -310,6 +316,9 @@ impl AppState {
         let multi_currency_repo = MultiCurrencyRepository::new(db.clone());
         // Epic 150: API Ecosystem Expansion
         let api_ecosystem_repo = ApiEcosystemRepository::new(db.clone());
+        // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
+        let edd_repo = EddRepository::new(db.clone());
+        let compliance_repo = ComplianceRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -386,6 +395,7 @@ impl AppState {
             feature_analytics_repo,
             outage_repo,
             market_pricing_repo,
+            marketplace_repo,
             lease_abstraction_repo,
             predictive_maintenance_repo,
             enhanced_tenant_screening_repo,
@@ -400,6 +410,8 @@ impl AppState {
             portfolio_performance_repo,
             multi_currency_repo,
             api_ecosystem_repo,
+            edd_repo,
+            compliance_repo,
             llm_client,
             auth_service,
             email_service,

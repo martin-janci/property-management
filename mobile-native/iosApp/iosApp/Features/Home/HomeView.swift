@@ -171,7 +171,7 @@ struct HomeView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.largeTitle)
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.pptWarning)
             Text(message)
                 .foregroundStyle(.secondary)
             Button(String(localized: "retry")) {

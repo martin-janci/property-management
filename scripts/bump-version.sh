@@ -3,7 +3,7 @@
 # bump-version.sh - Bump version number
 #
 # Usage:
-#   ./scripts/bump-version.sh patch   # 0.1.0 -> 0.1.1 (auto on pre-commit)
+#   ./scripts/bump-version.sh patch   # 0.1.0 -> 0.1.1 (auto on merge to main via CI)
 #   ./scripts/bump-version.sh minor   # 0.1.1 -> 0.2.0 (manual)
 #   ./scripts/bump-version.sh major   # 0.2.0 -> 1.0.0 (manual)
 #

@@ -2,6 +2,7 @@ package three.two.bit.ppt.reality.auth
 
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -137,6 +138,170 @@ class SsoService {
     fun logout() {
         sessionToken = null
         _authState.value = AuthState.Unauthenticated
+    }
+
+    /**
+     * Sign in with email and password (UC-47.2).
+     *
+     * Calls reality-server `POST /api/v1/users/login` and updates `authState` on success. The
+     * backend returns a session token + user info; both are fed into `AuthState.Authenticated` so
+     * downstream consumers (HomeScreen, FavoritesScreen, etc.) react automatically.
+     */
+    suspend fun loginWithPassword(email: String, password: String): Result<AuthLoginResponse> {
+        _authState.value = AuthState.Loading
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/login") {
+                    setBody(AuthLoginRequest(email, password))
+                }
+            if (response.status.isSuccess()) {
+                val payload: AuthLoginResponse = response.body()
+                sessionToken = payload.token
+                _authState.value =
+                    AuthState.Authenticated(
+                        user =
+                            SsoUserInfo(
+                                userId = payload.user.id,
+                                email = payload.user.email,
+                                name = payload.user.name,
+                                avatarUrl = payload.user.profileImageUrl,
+                            ),
+                        sessionToken = payload.token,
+                    )
+                Result.success(payload)
+            } else {
+                val message =
+                    runCatching { response.body<SsoError>() }
+                        .map { it.errorDescription ?: it.error }
+                        .getOrElse { "Sign in failed (HTTP ${response.status.value})" }
+                _authState.value = AuthState.Error(message)
+                Result.failure(SsoException("login_failed", message))
+            }
+        } catch (e: Exception) {
+            _authState.value = AuthState.Error(e.message ?: "Unknown error")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Register a new account (UC-47.1).
+     *
+     * Calls reality-server `POST /api/v1/users/register`. The server does not issue a session here
+     * — the caller should send the user through the login flow after success.
+     */
+    suspend fun register(email: String, password: String, name: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/register") {
+                    setBody(AuthRegisterRequest(email, password, name))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                val message =
+                    runCatching { response.body<SsoError>() }
+                        .map { it.errorDescription ?: it.error }
+                        .getOrElse { "Registration failed (HTTP ${response.status.value})" }
+                Result.failure(SsoException("register_failed", message))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Request a password reset email (UC-44.3 step 1).
+     *
+     * Calls reality-server `POST /api/v1/users/password-reset`. The server always returns 200 with
+     * a generic message regardless of whether the email is registered (intentional — it would
+     * otherwise leak account existence), so we treat any 2xx response as success.
+     */
+    suspend fun requestPasswordReset(email: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/password-reset") {
+                    setBody(PasswordResetRequest(email = email))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    SsoException(
+                        "password_reset_failed",
+                        "Server rejected the password reset request: ${response.status}",
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Confirm a password reset using the emailed token (UC-44.3 step 2).
+     *
+     * Calls reality-server `POST /api/v1/users/password-reset/confirm`. The server returns 400 with
+     * a human-readable message for invalid / expired tokens or weak passwords; we surface those
+     * verbatim so the UI can display them.
+     */
+    suspend fun confirmPasswordReset(token: String, newPassword: String): Result<Unit> {
+        return try {
+            val response =
+                client.post("$baseUrl/api/v1/users/password-reset/confirm") {
+                    setBody(PasswordResetConfirm(token = token, newPassword = newPassword))
+                }
+            if (response.status.isSuccess()) {
+                Result.success(Unit)
+            } else {
+                val message =
+                    runCatching { response.bodyAsText() }
+                        .getOrDefault("Reset failed: ${response.status}")
+                Result.failure(SsoException("password_reset_failed", message))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update the signed-in user's profile (UC-47.7).
+     *
+     * Calls reality-server `PUT /api/v1/users/me`. On success the updated user is pushed back into
+     * `authState`.
+     */
+    suspend fun updateProfile(name: String): Result<SsoUserInfo> {
+        val token =
+            sessionToken ?: return Result.failure(SsoException("no_session", "Not authenticated"))
+        return try {
+            val response =
+                client.put("$baseUrl/api/v1/users/me") {
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(ProfileUpdateRequest(name = name))
+                }
+            if (response.status.isSuccess()) {
+                val updated: PortalUser = response.body()
+                val ssoUser =
+                    SsoUserInfo(
+                        userId = updated.id,
+                        email = updated.email,
+                        name = updated.name,
+                        avatarUrl = updated.profileImageUrl,
+                    )
+                val current = _authState.value
+                if (current is AuthState.Authenticated) {
+                    _authState.value = current.copy(user = ssoUser)
+                }
+                Result.success(ssoUser)
+            } else {
+                val message =
+                    runCatching { response.body<SsoError>() }
+                        .map { it.errorDescription ?: it.error }
+                        .getOrElse { "Profile update failed (HTTP ${response.status.value})" }
+                Result.failure(SsoException("update_failed", message))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     /** Check if user is authenticated. */

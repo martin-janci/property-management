@@ -14,8 +14,8 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { AmlRiskAssessmentCard } from '../components/AmlRiskAssessmentCard';
 import type { AmlRiskAssessment } from '../components/AmlRiskAssessmentCard';
+import { AmlRiskAssessmentCard } from '../components/AmlRiskAssessmentCard';
 
 interface AmlThresholdsDisplay {
   transaction_threshold_eur: number;
