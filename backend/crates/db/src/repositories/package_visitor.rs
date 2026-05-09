@@ -338,12 +338,12 @@ impl PackageVisitorRepository {
     ///
     /// Uses OS CSPRNG directly; visitor codes are short-lived shared secrets.
     fn generate_access_code(length: usize) -> String {
-        use rand::Rng;
+        use rand::RngExt;
         const CHARS: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rand::rand_core::UnwrapErr(rand::rngs::SysRng);
         (0..length)
             .map(|_| {
-                let idx = rng.gen_range(0..CHARS.len());
+                let idx = rng.random_range(0..CHARS.len());
                 CHARS[idx] as char
             })
             .collect()
