@@ -8,9 +8,10 @@
 
 import { useCategoryCounts } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
+import type { ReactElement } from 'react';
 import { Link } from '../../i18n/routing';
 
-const categoryIcons: Record<string, JSX.Element> = {
+const categoryIcons: Record<string, ReactElement> = {
   apartment: (
     <svg
       width="32"

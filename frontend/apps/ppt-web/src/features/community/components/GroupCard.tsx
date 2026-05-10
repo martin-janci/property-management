@@ -16,7 +16,7 @@ interface GroupCardProps {
   isLeaving?: boolean;
 }
 
-const visibilityIcons: Record<GroupVisibility, JSX.Element> = {
+const visibilityIcons: Record<GroupVisibility, React.JSX.Element> = {
   public: (
     <svg
       className="w-4 h-4"

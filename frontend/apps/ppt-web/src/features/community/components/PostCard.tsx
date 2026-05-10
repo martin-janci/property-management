@@ -19,7 +19,7 @@ interface PostCardProps {
   isLiking?: boolean;
 }
 
-const postTypeIcons: Record<PostType, JSX.Element> = {
+const postTypeIcons: Record<PostType, React.JSX.Element> = {
   text: (
     <svg
       className="w-4 h-4"
