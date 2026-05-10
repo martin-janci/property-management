@@ -1,0 +1,55 @@
+/**
+ * SegmentedControl styles — pill-shaped segmented selector.
+ */
+
+.control {
+  display: inline-flex;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  gap: 2px;
+}
+
+.option {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-body-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--fg-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+  font-family: inherit;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.option:hover {
+  color: var(--fg-secondary);
+}
+
+.option:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.optionActive {
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+}
+
+.optionActive:hover {
+  color: var(--fg-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}

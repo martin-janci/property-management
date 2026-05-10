@@ -1,0 +1,186 @@
+/**
+ * FilterSidebar styles — reference: ppt-documents.html .fbar
+ */
+
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  position: sticky;
+  top: 18px;
+  overflow: hidden;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 8px;
+}
+
+.headTitle {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--fg-primary);
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.clearBtn {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.clearBtn:hover {
+  color: var(--accent-hover);
+}
+
+.clearBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 2px;
+}
+
+/* ─── Group / section ────────────────────────────────────── */
+
+.group {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.group:last-child {
+  border-bottom: none;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  gap: 4px;
+}
+
+.groupHeader:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.groupTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0;
+  flex: 1;
+}
+
+.chevron {
+  color: var(--fg-muted);
+  transition: transform var(--dur-fast) var(--ease-standard);
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.groupItems {
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ─── Item (checkbox row) ────────────────────────────────── */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.item:hover {
+  background: var(--bg-hover);
+}
+
+.itemCheck {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--bg-input);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+.itemCheck:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.itemCheck:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.itemCheck:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.itemLabel {
+  font-size: 12.5px;
+  color: var(--fg-secondary);
+  flex: 1;
+  cursor: pointer;
+}
+
+.itemCount {
+  font-size: 11px;
+  color: var(--fg-muted);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-pill);
+  padding: 1px 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron,
+  .clearBtn,
+  .itemCheck {
+    transition: none;
+  }
+}

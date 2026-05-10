@@ -1,6 +1,6 @@
 //! Favorites routes - save and manage favorite listings (Story 16.2).
 
-use crate::extractors::AuthenticatedUser;
+use crate::extractors::{AuthenticatedUser, OptionalAuth};
 use crate::state::AppState;
 use axum::{
     extract::{Path, State},
@@ -16,6 +16,9 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_favorites))
+        // Static `/ids` declared before `/{listing_id}` so axum's matcher
+        // prefers the literal segment over the UUID capture.
+        .route("/ids", get(list_favorite_ids))
         .route("/{listing_id}", post(add_favorite))
         .route("/{listing_id}", delete(remove_favorite))
         .route("/{listing_id}/check", get(check_favorite))
@@ -170,4 +173,42 @@ pub async fn check_favorite(
     let is_favorited = favorites.iter().any(|f| f.listing_id == listing_id);
 
     Ok(Json(CheckFavoriteResponse { is_favorited }))
+}
+
+/// List the listing IDs that the current user has favorited.
+///
+/// GET `/api/v1/favorites/ids`. Returns a flat array of listing UUIDs so the
+/// reality-web client can hydrate `isFavorite` flags on cards in O(1) without
+/// fetching the full favorite payload. Returns an empty array when the user
+/// is unauthenticated rather than 401, since this endpoint is also called
+/// from anonymous SSR pages and shouldn't surface auth errors there.
+#[utoipa::path(
+    get,
+    path = "/api/v1/favorites/ids",
+    tag = "Favorites",
+    responses(
+        (status = 200, description = "List of favorited listing IDs", body = [Uuid])
+    )
+)]
+pub async fn list_favorite_ids(
+    State(state): State<AppState>,
+    OptionalAuth(auth): OptionalAuth,
+) -> Result<Json<Vec<Uuid>>, (axum::http::StatusCode, String)> {
+    let Some(auth) = auth else {
+        return Ok(Json(Vec::new()));
+    };
+
+    let favorites = state
+        .reality_portal_repo
+        .get_favorites_with_listings(auth.user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(user_id = %auth.user_id, error = %e, "Failed to list favorite IDs");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            )
+        })?;
+
+    Ok(Json(favorites.into_iter().map(|f| f.listing_id).collect()))
 }

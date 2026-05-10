@@ -124,6 +124,38 @@ pub async fn open_handler(
     let ppt_container = format!("wt-{name}-ppt");
     let reality_container = format!("wt-{name}-reality");
 
+    // Construct reality-web env vars. The dev container's `pnpm dev` reads
+    // `process.env.NEXT_PUBLIC_API_URL` for SSR and serves it via the /env.js
+    // route to the client. Without this, the bundle's localhost fallback is
+    // used and every API call ERR_CONNECTION_REFUSEDs in the user's browser.
+    //
+    // - Shared mode  → api.<reality_apex> (the prod reality-server). Derived
+    //   by stripping the conventional "dev." prefix from `domain_dev_reality`.
+    // - Dedicated    → api.wt-<name>.<domain_dev_reality> — the dedicated
+    //   reality-API container's public Caddy route registered below.
+    let host_ppt_for_env = format!("wt-{name}.{}", svc.domain_dev_ppt);
+    let host_reality_for_env = format!("wt-{name}.{}", svc.domain_dev_reality);
+    let reality_api_url = match req.backend {
+        BackendMode::Shared => format!(
+            "https://api.{}",
+            svc.domain_dev_reality
+                .strip_prefix("dev.")
+                .unwrap_or(&svc.domain_dev_reality)
+        ),
+        BackendMode::Dedicated => {
+            format!("https://api.wt-{name}.{}", svc.domain_dev_reality)
+        }
+    };
+    let reality_extra_env = vec![
+        format!("NEXT_PUBLIC_API_URL={reality_api_url}"),
+        format!("NEXT_PUBLIC_SITE_URL=https://{host_reality_for_env}"),
+    ];
+    // ppt-web is Vite/SPA — env is build-time-baked into the bundle, so
+    // runtime container env has no effect on client code. Leaving extra_env
+    // empty here matches the existing blue-green prod path (which also sets
+    // no extra env for the ppt entry; a comment in blue_green.rs explains).
+    let _ = host_ppt_for_env; // currently unused; reserved for future ppt-web wiring
+
     svc.docker
         .run_frontend_dev(&FrontendDevSpec {
             container_name: ppt_container.clone(),
@@ -132,6 +164,7 @@ pub async fn open_handler(
             host_port: port_ppt,
             pnpm_volume: pnpm_volume.clone(),
             image: svc.frontend_image.clone(),
+            extra_env: vec![],
         })
         .await?;
     svc.docker
@@ -142,6 +175,7 @@ pub async fn open_handler(
             host_port: port_reality,
             pnpm_volume,
             image: svc.frontend_image.clone(),
+            extra_env: reality_extra_env,
         })
         .await?;
 
@@ -323,6 +357,13 @@ pub async fn open_handler(
             // unregister the api route. Keeps the worktree row from being
             // persisted with orphan side effects on disk.
             let host_api = format!("api.wt-{name}.{}", svc.domain_dev_ppt);
+            // Reality-API gets its own subdomain on the reality apex so the
+            // frontend (running on `wt-{name}.{domain_dev_reality}`) can hit
+            // it without a CORS preflight by going through a same-origin
+            // Next.js rewrite. Without this route, the dedicated reality
+            // container is reachable only on the bridge network — fine for
+            // SSR, broken for any client-side fetch from the browser.
+            let host_reality_api = format!("api.wt-{name}.{}", svc.domain_dev_reality);
             let backend_result: Result<()> = async {
                 svc.docker
                     .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
@@ -346,13 +387,21 @@ pub async fn open_handler(
                     .await?;
 
                 // Caddy routes for backend — same bridge-IP rationale as the
-                // frontend routes above. api container's internal port is 8080.
+                // frontend routes above. api container's internal port is 8080;
+                // reality-api's internal port is 8081.
                 let api_bridge_ip = svc
                     .docker
                     .bridge_ip_with_retry(&api_c, BRIDGE_IP_TIMEOUT)
                     .await?;
                 svc.caddy
                     .register_route(&host_api, &format!("{api_bridge_ip}:8080"))
+                    .await?;
+                let reality_bridge_ip = svc
+                    .docker
+                    .bridge_ip_with_retry(&reality_c, BRIDGE_IP_TIMEOUT)
+                    .await?;
+                svc.caddy
+                    .register_route(&host_reality_api, &format!("{reality_bridge_ip}:8081"))
                     .await?;
                 Ok(())
             }
@@ -370,6 +419,7 @@ pub async fn open_handler(
                 let _ = svc.caddy.unregister_route(&host_ppt).await;
                 let _ = svc.caddy.unregister_route(&host_reality).await;
                 let _ = svc.caddy.unregister_route(&host_api).await;
+                let _ = svc.caddy.unregister_route(&host_reality_api).await;
                 return Err(e);
             }
             api_url = Some(format!("https://{host_api}"));
@@ -471,6 +521,15 @@ pub async fn close_handler(
         if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
             let _ = svc.caddy.unregister_route(host).await;
         }
+    }
+    // Dedicated mode also has a reality-API route at
+    // `api.wt-{name}.{domain_dev_reality}` (registered alongside api-server
+    // in open_handler). Not stored in `wt.urls` to avoid a serde-compat
+    // change, so derive it here from the same constants. No-op in shared
+    // mode — the route doesn't exist, unregister is a 404.
+    if matches!(wt.backend_mode, BackendMode::Dedicated) {
+        let host_reality_api = format!("api.wt-{}.{}", wt.name, svc.domain_dev_reality);
+        let _ = svc.caddy.unregister_route(&host_reality_api).await;
     }
 
     // Dedicated backend: dump → drop the per-worktree Postgres DB so resume-from-dump

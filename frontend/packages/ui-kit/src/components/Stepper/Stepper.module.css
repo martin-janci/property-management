@@ -1,0 +1,106 @@
+/**
+ * Stepper styles — horizontal numbered wizard progress indicator.
+ */
+
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Connector line between steps */
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 14px; /* vertically centres on the circle */
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  height: 2px;
+  background: var(--border-default);
+  z-index: 0;
+}
+
+.step:not(:last-child).stepDone::after {
+  background: var(--accent);
+}
+
+/* ─── Step circle ────────────────────────────────────────── */
+
+.circle {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-muted);
+  position: relative;
+  z-index: 1;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.circleActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px var(--accent-soft-bg);
+}
+
+.circleDone {
+  background: var(--success-500);
+  border-color: var(--success-500);
+  color: #ffffff;
+}
+
+/* ─── Step label ─────────────────────────────────────────── */
+
+.label {
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  text-align: center;
+  line-height: 1.3;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labelActive {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.labelDone {
+  color: var(--fg-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circle {
+    transition: none;
+  }
+}
+
+/* Compact variant for narrow spaces */
+@media (max-width: 480px) {
+  .label {
+    display: none;
+  }
+}

@@ -11,8 +11,16 @@ const isDev = process.env.NODE_ENV !== 'production';
 // localhost / emulator host) in connect-src so the browser can actually reach
 // the reality-server.
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL;
+// Hardcoded reality-server origins. Includes the real prod/staging hosts
+// (api.rlt.sk family) and the legacy multi-region hosts (api.reality-portal.*).
+// Worktree dev URLs at *.dev.rlt.sk fall back to api.rlt.sk via host inference
+// in lib/env.ts and app/env.js/route.ts when NEXT_PUBLIC_API_URL isn't set;
+// this list ensures CSP `connect-src` permits those connections even when the
+// dynamic apiOrigin block below adds nothing (process.env unset).
 const connectSrcOrigins = new Set([
   "'self'",
+  'https://api.rlt.sk',
+  'https://api.staging.rlt.sk',
   'https://api.reality-portal.sk',
   'https://api.reality-portal.cz',
   'https://api.reality-portal.eu',
@@ -96,7 +104,13 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    domains: ['api.reality-portal.sk', 'api.reality-portal.cz', 'api.reality-portal.eu'],
+    domains: [
+      'api.rlt.sk',
+      'api.staging.rlt.sk',
+      'api.reality-portal.sk',
+      'api.reality-portal.cz',
+      'api.reality-portal.eu',
+    ],
   },
 
   // Environment variables
@@ -112,6 +126,47 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: securityHeaders,
+      },
+    ];
+  },
+
+  // Rewrite /api/* to the prod reality-server when running on a *.dev.rlt.sk
+  // worktree host. Shared-backend mode means the worktree's reality-web is
+  // backed by api.rlt.sk, but the prod CORS allowlist doesn't include the
+  // worktree subdomain, so direct cross-origin fetch fails. The dev server
+  // proxies the call, turning it into a same-origin request from the
+  // browser's perspective — CORS is bypassed.
+  //
+  // Gated on the request `host` header so localhost dev keeps talking to
+  // localhost:8081 directly, prod (rlt.sk) goes straight to api.rlt.sk
+  // (which is in its CORS allowlist), and only worktree subdomains take
+  // the rewrite path.
+  //
+  // Caveat: this proxies authenticated calls but does NOT rewrite the
+  // Set-Cookie domain. Login on shared-backend worktrees still requires a
+  // session cookie on the worktree's domain — open with backend: dedicated
+  // for full SSO functionality.
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://api.rlt.sk/api/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wt-.+\\.dev\\.rlt\\.sk',
+          },
+        ],
+      },
+      {
+        source: '/api/:path*',
+        destination: 'https://api.staging.rlt.sk/api/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wt-.+\\.staging\\.rlt\\.sk',
+          },
+        ],
       },
     ];
   },

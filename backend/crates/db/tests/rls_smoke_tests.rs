@@ -168,19 +168,25 @@ async fn smoke_test_cross_tenant_isolation() {
         .expect("Failed to create user B");
 
     // Add users to their respective orgs
-    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
-        .bind(org_a)
-        .bind(user_a)
-        .execute(&db.pool)
-        .await
-        .expect("Failed to add user A to org A");
+    sqlx::query(
+        "INSERT INTO organization_members (organization_id, user_id, role_id) \
+         VALUES ($1, $2, (SELECT id FROM roles WHERE organization_id = $1 AND name = 'Manager'))",
+    )
+    .bind(org_a)
+    .bind(user_a)
+    .execute(&db.pool)
+    .await
+    .expect("Failed to add user A to org A");
 
-    sqlx::query("INSERT INTO organization_members (organization_id, user_id, role_type) VALUES ($1, $2, 'manager')")
-        .bind(org_b)
-        .bind(user_b)
-        .execute(&db.pool)
-        .await
-        .expect("Failed to add user B to org B");
+    sqlx::query(
+        "INSERT INTO organization_members (organization_id, user_id, role_id) \
+         VALUES ($1, $2, (SELECT id FROM roles WHERE organization_id = $1 AND name = 'Manager'))",
+    )
+    .bind(org_b)
+    .bind(user_b)
+    .execute(&db.pool)
+    .await
+    .expect("Failed to add user B to org B");
 
     // Create a building for each org (bypassing RLS with super admin)
     db.set_request_context(Some(org_a), Some(user_a), true)

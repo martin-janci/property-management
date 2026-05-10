@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# playwright-cli-win — run Windows-side `playwright-cli …` (the @playwright/cli
+# agent CLI, not the Playwright Test runner).
+#
+# Resolution + safety identical to pw-win.
+
+set -euo pipefail
+
+CMD_EXE="/mnt/c/Windows/System32/cmd.exe"
+[[ -x "$CMD_EXE" ]] || { echo "playwright-cli-win: $CMD_EXE not found — not a WSL+C: setup" >&2; exit 1; }
+
+if [[ -n "${WIN_PROJECT_DIR:-}" ]]; then
+  win_dir="$WIN_PROJECT_DIR"
+else
+  case "$PWD" in
+    /mnt/c/*)
+      rel="${PWD#/mnt/c/}"
+      win_dir="C:\\${rel//\//\\}"
+      ;;
+    *)
+      echo "playwright-cli-win: \$PWD is '$PWD' — not under /mnt/c/. Set WIN_PROJECT_DIR or cd into a Windows-side project." >&2
+      exit 2
+      ;;
+  esac
+fi
+
+# If Node was installed after WSL session start, its dir may not be on the
+# inherited PATH yet. Try common locations and prepend.
+path_prefix=""
+if ! "$CMD_EXE" /c "node -v >NUL 2>&1"; then
+  for cand in \
+      "/mnt/c/Program Files/nodejs/node.exe" \
+      "/mnt/c/Program Files (x86)/nodejs/node.exe"; do
+    if [[ -x "$cand" ]]; then
+      win_node_dir=$(dirname "$cand" | sed 's|^/mnt/c|C:|; s|/|\\|g')
+      path_prefix="set PATH=${win_node_dir};%APPDATA%\\npm;%PATH%&"
+      break
+    fi
+  done
+fi
+
+# Verify playwright-cli is installed globally on Windows
+if ! "$CMD_EXE" /c "${path_prefix}where playwright-cli >NUL 2>&1"; then
+  echo "playwright-cli-win: 'playwright-cli' not found on Windows PATH." >&2
+  echo "Install with (PowerShell):  npm install -g @playwright/cli@latest" >&2
+  exit 3
+fi
+
+args="$*"
+"$CMD_EXE" /c "${path_prefix}cd /d \"${win_dir}\"&playwright-cli ${args}"

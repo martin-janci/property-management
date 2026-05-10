@@ -45,7 +45,7 @@
     "contact_agent": "Contact Agent",
     "schedule_viewing": "Schedule Viewing",
     "perMonth": "/month",
-    "sqm": "m\u00b2",
+    "sqm": "m²",
     "bedroom": "Bedroom",
     "bedrooms": "Bedrooms",
     "bathroom": "Bathroom",
@@ -132,7 +132,7 @@
     "propertyType": "Property Type",
     "priceRange": "Price Range",
     "anyPrice": "Any price",
-    "area": "Area (m\u00b2)",
+    "area": "Area (m²)",
     "anySize": "Any size",
     "minimumRooms": "Minimum Rooms",
     "showResults": "Show Results",
@@ -149,11 +149,11 @@
     "price100kTo200k": "{currency}100,000 - {currency}200,000",
     "price200kTo500k": "{currency}200,000 - {currency}500,000",
     "price500kPlus": "{currency}500,000+",
-    "areaUnder50": "Under 50 m\u00b2",
-    "area50To100": "50 - 100 m\u00b2",
-    "area100To150": "100 - 150 m\u00b2",
-    "area150To200": "150 - 200 m\u00b2",
-    "area200Plus": "200+ m\u00b2"
+    "areaUnder50": "Under 50 m²",
+    "area50To100": "50 - 100 m²",
+    "area100To150": "100 - 150 m²",
+    "area150To200": "150 - 200 m²",
+    "area200Plus": "200+ m²"
   },
   "contact": {
     "name": "Your Name",
@@ -231,6 +231,88 @@
     "terms": {
       "title": "Terms of Service",
       "description": "By using Reality Portal, you agree to our terms and conditions. Full terms of service will be published here."
+    },
+    "careers": {
+      "title": "Careers",
+      "hero": {
+        "title": "Let's build a real estate market that makes sense.",
+        "subtitle": "Join our team and help us change the way people buy, sell and rent properties.",
+        "cta": "View open positions"
+      }
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "reopen": "Re-open cookie settings"
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "Your safety is our priority",
+      "reportCta": "Report a listing"
+    },
+    "help": {
+      "title": "Help Centre",
+      "searchPlaceholder": "Search the help centre...",
+      "categories": "Categories",
+      "faq": "Frequently Asked Questions"
+    },
+    "journal": {
+      "title": "Reality Journal",
+      "subtitle": "Analysis, tips and news from the world of real estate.",
+      "featured": "Featured story",
+      "latest": "Latest articles",
+      "newsletter": "Newsletter",
+      "editorsPicks": "Editor's picks",
+      "mostRead": "Most read"
+    },
+    "forAgents": {
+      "title": "For agents & agencies",
+      "subtitle": "Sell more with Reality Portal",
+      "features": "What you get",
+      "pricing": "Pricing plans"
+    },
+    "profile": {
+      "title": "My profile",
+      "tabs": {
+        "listings": "My listings",
+        "activity": "Activity",
+        "reviews": "Reviews",
+        "settings": "Settings"
+      }
+    },
+    "sell": {
+      "title": "Add listing",
+      "submit": "Publish listing",
+      "steps": {
+        "typeLocation": "Type & location",
+        "details": "Details",
+        "photos": "Photos",
+        "price": "Price",
+        "summary": "Contact & summary"
+      }
+    },
+    "priceMap": {
+      "title": "Price map",
+      "subtitle": "Bratislava – Overview",
+      "clickHint": "Click on a district for detailed statistics."
+    },
+    "report": {
+      "title": "Report a listing",
+      "subtitle": "Help us keep the portal safe.",
+      "submit": "Submit report",
+      "success": "Report submitted"
+    },
+    "agentProfile": {
+      "verified": "Verified agent",
+      "contact": "Contact",
+      "specializations": "Specializations",
+      "languages": "Languages",
+      "activeListings": "Active listings",
+      "reviews": "Reviews"
+    },
+    "listingEdit": {
+      "title": "Edit listing",
+      "save": "Save changes",
+      "success": "Listing saved!"
     }
   },
   "footer": {
@@ -238,7 +320,7 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "help": "Help",
-    "copyright": "\u00a9 {year} Reality Portal. All rights reserved.",
+    "copyright": "© {year} Reality Portal. All rights reserved.",
     "description": "Find your perfect property across Slovakia, Czech Republic, and beyond.",
     "quickLinks": "Quick Links",
     "propertyTypes": "Property Types",

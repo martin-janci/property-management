@@ -231,6 +231,88 @@
     "terms": {
       "title": "Nutzungsbedingungen",
       "description": "Durch die Nutzung von Reality Portal stimmen Sie unseren Nutzungsbedingungen zu. Die vollständigen Nutzungsbedingungen werden hier veröffentlicht."
+    },
+    "careers": {
+      "title": "Karriere",
+      "hero": {
+        "title": "Bauen wir einen Immobilienmarkt, der Sinn macht.",
+        "subtitle": "Werden Sie Teil unseres Teams.",
+        "cta": "Offene Stellen anzeigen"
+      }
+    },
+    "cookies": {
+      "title": "Cookie-Richtlinie",
+      "reopen": "Cookie-Einstellungen erneut öffnen"
+    },
+    "security": {
+      "title": "Sicherheit",
+      "subtitle": "Ihre Sicherheit hat oberste Priorität",
+      "reportCta": "Inserat melden"
+    },
+    "help": {
+      "title": "Hilfe-Center",
+      "searchPlaceholder": "Im Hilfe-Center suchen...",
+      "categories": "Kategorien",
+      "faq": "Häufig gestellte Fragen"
+    },
+    "journal": {
+      "title": "Reality Journal",
+      "subtitle": "Analysen, Tipps und Neuigkeiten aus der Immobilienwelt.",
+      "featured": "Titelgeschichte",
+      "latest": "Neueste Artikel",
+      "newsletter": "Newsletter",
+      "editorsPicks": "Redaktionsauswahl",
+      "mostRead": "Meistgelesen"
+    },
+    "forAgents": {
+      "title": "Für Makler & Agenturen",
+      "subtitle": "Verkaufen Sie mehr mit Reality Portal",
+      "features": "Was Sie erhalten",
+      "pricing": "Preispläne"
+    },
+    "profile": {
+      "title": "Mein Profil",
+      "tabs": {
+        "listings": "Meine Inserate",
+        "activity": "Aktivität",
+        "reviews": "Bewertungen",
+        "settings": "Einstellungen"
+      }
+    },
+    "sell": {
+      "title": "Inserat aufgeben",
+      "submit": "Inserat veröffentlichen",
+      "steps": {
+        "typeLocation": "Typ & Lage",
+        "details": "Details",
+        "photos": "Fotos",
+        "price": "Preis",
+        "summary": "Kontakt & Zusammenfassung"
+      }
+    },
+    "priceMap": {
+      "title": "Preiskarte",
+      "subtitle": "Bratislava – Übersicht",
+      "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken."
+    },
+    "report": {
+      "title": "Inserat melden",
+      "subtitle": "Helfen Sie uns, das Portal sicher zu halten.",
+      "submit": "Meldung absenden",
+      "success": "Meldung wurde gesendet"
+    },
+    "agentProfile": {
+      "verified": "Verifizierter Makler",
+      "contact": "Kontaktieren",
+      "specializations": "Spezialisierungen",
+      "languages": "Sprachen",
+      "activeListings": "Aktive Inserate",
+      "reviews": "Bewertungen"
+    },
+    "listingEdit": {
+      "title": "Inserat bearbeiten",
+      "save": "Änderungen speichern",
+      "success": "Inserat gespeichert!"
     }
   },
   "footer": {
