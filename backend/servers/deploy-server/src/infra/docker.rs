@@ -39,6 +39,7 @@ pub struct BackendDedicatedSpec {
     pub container_port: u16, // 8080 (api) or 8081 (reality)
     pub db_url: String,
     pub jwt_secret: String,
+    pub extra_env: Vec<String>,
 }
 
 impl DockerClient {
@@ -296,6 +297,23 @@ impl DockerClient {
         Ok(create.id)
     }
 
+
+    /// Attach an existing container to a Docker network. No-op if already attached.
+    pub async fn connect_to_network(&self, network: &str, container: &str) -> Result<()> {
+        let cfg = bollard::network::ConnectNetworkOptions {
+            container,
+            ..Default::default()
+        };
+        match self.docker.connect_network(network, cfg).await {
+            Ok(()) => Ok(()),
+            Err(bollard::errors::Error::DockerResponseServerError {
+                status_code: 403,
+                message,
+            }) if message.contains("already") => Ok(()),
+            Err(e) => Err(crate::DeployError::Docker(e)),
+        }
+    }
+
     pub async fn run_backend_dedicated(&self, spec: &BackendDedicatedSpec) -> Result<String> {
         let _ = self
             .docker
@@ -308,11 +326,21 @@ impl DockerClient {
             )
             .await;
 
-        let env = vec![
-            format!("DATABASE_URL={}", spec.db_url),
+        // Container needs to reach Postgres via Docker DNS, not host loopback.
+        let container_db_url = spec
+            .db_url
+            .replace("127.0.0.1", "ppt-postgres")
+            .replace("localhost", "ppt-postgres");
+        let mut env = vec![
+            format!("DATABASE_URL={}", container_db_url),
             format!("JWT_SECRET={}", spec.jwt_secret),
             "RUST_LOG=info".to_string(),
+            // Dev mode disables strict env-var checks (PM_CLIENT_SECRET,
+            // TOTP_ENCRYPTION_KEY, INTEGRATION_ENCRYPTION_KEY) that prod
+            // demands but worktree dev doesn't need.
+            "RUST_ENV=development".to_string(),
         ];
+        env.extend(spec.extra_env.iter().cloned());
 
         let port_str = format!("{}/tcp", spec.container_port);
         let mut port_bindings = HashMap::new();
@@ -358,6 +386,19 @@ impl DockerClient {
         self.docker
             .start_container(&create.id, None::<StartContainerOptions<String>>)
             .await?;
+
+        // Attach to the network where ppt-postgres lives so DATABASE_URL using
+        // `ppt-postgres:5432` actually resolves. Idempotent across re-opens.
+        if let Err(e) = self
+            .connect_to_network("ppt-prod", &spec.container_name)
+            .await
+        {
+            tracing::warn!(
+                error = %e,
+                container = %spec.container_name,
+                "failed to attach backend container to ppt-prod network — DB connection will fail"
+            );
+        }
         Ok(create.id)
     }
 
