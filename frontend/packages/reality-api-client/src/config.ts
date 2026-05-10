@@ -18,11 +18,18 @@ const WORKTREE_HOST_RE = /^wt-.+\.(dev|staging)\.rlt\.sk$/;
 
 function getRuntimeApiUrl(): string | undefined {
   if (typeof window === 'undefined') return undefined;
+  // 1) Explicit /env.js injection wins (dedicated worktrees point at their own
+  //    api.wt-<name>.* host, not api.rlt.sk).
+  const env = (window as { __ENV__?: Record<string, string> }).__ENV__;
+  if (env?.NEXT_PUBLIC_API_URL) {
+    return env.NEXT_PUBLIC_API_URL;
+  }
+  // 2) Shared-mode worktrees with no env injection: relative URL hits the
+  //    next.config.js rewrite to api.rlt.sk (avoids CORS).
   if (WORKTREE_HOST_RE.test(window.location.hostname)) {
     return '';
   }
-  const env = (window as { __ENV__?: Record<string, string> }).__ENV__;
-  return env?.NEXT_PUBLIC_API_URL;
+  return undefined;
 }
 
 export function getApiBase(): string {
