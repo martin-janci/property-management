@@ -22,6 +22,13 @@ pub struct FrontendDevSpec {
     pub host_port: u16,
     pub pnpm_volume: String,
     pub image: String,
+    /// Additional `KEY=value` env vars to set on the dev container in addition
+    /// to APP/PORT/PNPM_HOME. Used to inject `NEXT_PUBLIC_API_URL` and
+    /// `NEXT_PUBLIC_SITE_URL` for reality-web so its `/env.js` route emits
+    /// the right values at runtime — without these the dev container's
+    /// process.env has no API URL and the client falls back to
+    /// `http://localhost:8081`, which is unreachable from a real browser.
+    pub extra_env: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -205,7 +212,7 @@ impl DockerClient {
             )
             .await;
 
-        let env = vec![
+        let mut env = vec![
             format!("APP={}", spec.app),
             format!(
                 "PORT={}",
@@ -217,6 +224,7 @@ impl DockerClient {
             ),
             "PNPM_HOME=/pnpm".to_string(),
         ];
+        env.extend(spec.extra_env.iter().cloned());
 
         let container_port = if spec.app == "reality-web" {
             "3000/tcp"
@@ -523,6 +531,7 @@ mod tests {
             host_port: 51999,
             pnpm_volume: "ppt-deploy-test-pnpm".into(),
             image: "ppt-frontend-dev:local".into(),
+            extra_env: vec![],
         };
         client.run_frontend_dev(&spec).await.unwrap();
         client.stop_container(&spec.container_name).await.unwrap();

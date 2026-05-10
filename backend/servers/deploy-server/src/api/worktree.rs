@@ -124,6 +124,35 @@ pub async fn open_handler(
     let ppt_container = format!("wt-{name}-ppt");
     let reality_container = format!("wt-{name}-reality");
 
+    // Construct reality-web env vars. The dev container's `pnpm dev` reads
+    // `process.env.NEXT_PUBLIC_API_URL` for SSR and serves it via the /env.js
+    // route to the client. Without this, the bundle's localhost fallback is
+    // used and every API call ERR_CONNECTION_REFUSEDs in the user's browser.
+    //
+    // Derivation: `domain_dev_reality` is `dev.<reality_apex>` by convention
+    // (e.g. "dev.rlt.sk" → reality_apex "rlt.sk"); the prod reality-server is
+    // exposed at `api.<reality_apex>`. If domain_dev_reality ever stops
+    // following that pattern, set `PPT_SHARED_REALITY_API_URL` env on the
+    // deploy-server to override. This isn't read here yet — added when the
+    // pattern actually breaks.
+    let host_ppt_for_env = format!("wt-{name}.{}", svc.domain_dev_ppt);
+    let host_reality_for_env = format!("wt-{name}.{}", svc.domain_dev_reality);
+    let shared_reality_api_url = format!(
+        "https://api.{}",
+        svc.domain_dev_reality
+            .strip_prefix("dev.")
+            .unwrap_or(&svc.domain_dev_reality)
+    );
+    let reality_extra_env = vec![
+        format!("NEXT_PUBLIC_API_URL={shared_reality_api_url}"),
+        format!("NEXT_PUBLIC_SITE_URL=https://{host_reality_for_env}"),
+    ];
+    // ppt-web is Vite/SPA — env is build-time-baked into the bundle, so
+    // runtime container env has no effect on client code. Leaving extra_env
+    // empty here matches the existing blue-green prod path (which also sets
+    // no extra env for the ppt entry; a comment in blue_green.rs explains).
+    let _ = host_ppt_for_env; // currently unused; reserved for future ppt-web wiring
+
     svc.docker
         .run_frontend_dev(&FrontendDevSpec {
             container_name: ppt_container.clone(),
@@ -132,6 +161,7 @@ pub async fn open_handler(
             host_port: port_ppt,
             pnpm_volume: pnpm_volume.clone(),
             image: svc.frontend_image.clone(),
+            extra_env: vec![],
         })
         .await?;
     svc.docker
@@ -142,6 +172,7 @@ pub async fn open_handler(
             host_port: port_reality,
             pnpm_volume,
             image: svc.frontend_image.clone(),
+            extra_env: reality_extra_env,
         })
         .await?;
 
