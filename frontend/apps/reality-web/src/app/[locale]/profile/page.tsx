@@ -3,9 +3,16 @@
 /**
  * Public user / realtor profile page — Reality Portal.
  * Screen-map: docs/screens/reality/profile.md
+ *
+ * Wrapped in ProtectedRoute so anonymous visitors hit the SSO login flow
+ * instead of seeing the placeholder MOCK_PROFILE (anonymous users were
+ * being shown a fabricated "Tomáš Novotný" + listings, which read like
+ * a security/UX bug). Once /users/me + /listings/by-owner endpoints
+ * land, replace MOCK_* with live data via the SDK.
  */
 
 import { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_ACTIVITY, MOCK_LISTINGS, MOCK_PROFILE, MOCK_REVIEWS, type ProfileTab } from './_mock';
 
@@ -46,6 +53,14 @@ const TABS: { id: ProfileTab; label: string }[] = [
 ];
 
 export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfilePageContent />
+    </ProtectedRoute>
+  );
+}
+
+function ProfilePageContent() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('listings');
   const profile = MOCK_PROFILE;
 
