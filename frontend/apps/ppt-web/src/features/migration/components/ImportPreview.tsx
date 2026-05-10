@@ -4,6 +4,7 @@
  * Displays validation results and preview before committing an import.
  */
 
+import type * as React from 'react';
 import { useState } from 'react';
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
@@ -59,7 +60,7 @@ const SEVERITY_COLORS: Record<ValidationSeverity, string> = {
   info: 'bg-blue-100 text-blue-800 border-blue-200',
 };
 
-const SEVERITY_ICONS: Record<ValidationSeverity, JSX.Element> = {
+const SEVERITY_ICONS: Record<ValidationSeverity, React.JSX.Element> = {
   error: (
     <svg className="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
       <path

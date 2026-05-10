@@ -6,6 +6,7 @@
  */
 
 import type { CreatePostRequest, PostType, PostVisibility } from '@ppt/api-client';
+import type * as React from 'react';
 import { useState } from 'react';
 
 interface CreatePostFormProps {
@@ -17,7 +18,7 @@ interface CreatePostFormProps {
   onCancel?: () => void;
 }
 
-const postTypes: { value: PostType; label: string; icon: JSX.Element }[] = [
+const postTypes: { value: PostType; label: string; icon: React.JSX.Element }[] = [
   {
     value: 'text',
     label: 'Text',
