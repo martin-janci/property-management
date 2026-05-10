@@ -19,9 +19,9 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_articles))
-        .route("/:slug", get(get_article))
-        .route("/:slug/comments", get(list_comments))
-        .route("/:slug/comments", post(create_comment))
+        .route("/{slug}", get(get_article))
+        .route("/{slug}/comments", get(list_comments))
+        .route("/{slug}/comments", post(create_comment))
 }
 
 /// Article summary (for list view).

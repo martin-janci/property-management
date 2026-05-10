@@ -21,8 +21,8 @@ pub const MAX_COMPARE_LISTINGS: i64 = 4;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_compare_list))
-        .route("/:listing_id", post(add_to_compare))
-        .route("/:listing_id", delete(remove_from_compare))
+        .route("/{listing_id}", post(add_to_compare))
+        .route("/{listing_id}", delete(remove_from_compare))
 }
 
 /// A single entry in the compare list with denormalised listing fields.

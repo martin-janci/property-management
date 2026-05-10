@@ -22,7 +22,7 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_import_history))
         .route("/test-connection", post(test_connection))
         .route("/run", post(run_import))
-        .route("/:job_id", get(get_import_job_status))
+        .route("/{job_id}", get(get_import_job_status))
 }
 
 /// Supported import providers.
