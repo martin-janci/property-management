@@ -14,6 +14,8 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { clearStoredSession } from './auth-api';
+import { getAuthHeader, getSession } from './auth-token';
 import { getApiBase } from './env';
 
 /** User information from SSO. */
@@ -57,10 +59,39 @@ interface AuthProviderProps {
 
 /** Auth provider component. */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<SsoUser | null>(null);
+  // Hydrate optimistically from localStorage so the header doesn't
+  // momentarily render the "Sign in" button between mount and the first
+  // /sso/session fetch. The async checkSession below corrects this if
+  // the stored token has been revoked server-side.
+  const [user, setUser] = useState<SsoUser | null>(() => {
+    const s = getSession();
+    return s ? { user_id: s.user.id, email: s.user.email, name: s.user.name } : null;
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const checkSession = useCallback(async () => {
+    // Bearer-token path (form-login): /users/me requires Authorization
+    // header which getAuthHeader() reads from localStorage.
+    const stored = getSession();
+    if (stored) {
+      try {
+        const meResp = await fetch(`${getApiBase()}/api/v1/users/me`, {
+          credentials: 'include',
+          headers: { ...getAuthHeader() },
+        });
+        if (meResp.ok) {
+          const me: { id: string; email: string; name: string } = await meResp.json();
+          setUser({ user_id: me.id, email: me.email, name: me.name });
+          setIsLoading(false);
+          return;
+        }
+        // Token rejected — wipe localStorage; fall through to cookie path.
+        clearStoredSession();
+      } catch {
+        // Network blip — keep optimistic user; cookie path may still work.
+      }
+    }
+
     try {
       const response = await fetch(`${getApiBase()}/api/v1/sso/session`, {
         credentials: 'include',
@@ -102,14 +133,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Best-effort: tell the server (covers both bearer + cookie sessions).
     try {
       await fetch(`${getApiBase()}/api/v1/sso/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers: { ...getAuthHeader() },
       });
-    } finally {
-      setUser(null);
+    } catch {
+      // Ignore — local cleanup must still happen.
     }
+    // Always clear local state regardless of network outcome.
+    clearStoredSession();
+    setUser(null);
   }, []);
 
   const refreshSession = useCallback(async () => {
