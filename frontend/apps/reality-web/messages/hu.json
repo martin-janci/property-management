@@ -289,6 +289,88 @@
     "terms": {
       "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
       "title": "Felhasználási feltételek"
+    },
+    "agentProfile": {
+      "activeListings": "Aktív hirdetések",
+      "contact": "Kapcsolat",
+      "languages": "Nyelvek",
+      "reviews": "Értékelések",
+      "specializations": "Szakterületek",
+      "verified": "Igazolt ügynök"
+    },
+    "careers": {
+      "hero": {
+        "cta": "Nyitott pozíciók",
+        "subtitle": "Csatlakozz a csapatunkhoz és segíts megváltoztatni az ingatlanvásárlás, -eladás és -bérlés módját.",
+        "title": "Építsünk együtt értelmes ingatlanpiacot."
+      },
+      "title": "Karrier"
+    },
+    "cookies": {
+      "reopen": "Cookie beállítások újranyitása",
+      "title": "Sütik kezelése"
+    },
+    "forAgents": {
+      "features": "Amit kapsz",
+      "pricing": "Csomagok",
+      "subtitle": "Adj el többet a Reality Portállal",
+      "title": "Ügynököknek és irodáknak"
+    },
+    "help": {
+      "categories": "Kategóriák",
+      "faq": "Gyakori kérdések",
+      "searchPlaceholder": "Keress a súgóban...",
+      "title": "Súgóközpont"
+    },
+    "journal": {
+      "editorsPicks": "Szerkesztői ajánlás",
+      "featured": "Kiemelt cikk",
+      "latest": "Legújabb cikkek",
+      "mostRead": "Legolvasottabb",
+      "newsletter": "Hírlevél",
+      "subtitle": "Elemzések, tippek és hírek az ingatlanvilágból.",
+      "title": "Reality magazin"
+    },
+    "listingEdit": {
+      "save": "Mentés",
+      "success": "Hirdetés mentve!",
+      "title": "Hirdetés szerkesztése"
+    },
+    "priceMap": {
+      "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
+      "subtitle": "Pozsony – áttekintés",
+      "title": "Ártérkép"
+    },
+    "profile": {
+      "tabs": {
+        "activity": "Aktivitás",
+        "listings": "Hirdetéseim",
+        "reviews": "Értékelések",
+        "settings": "Beállítások"
+      },
+      "title": "Profilom"
+    },
+    "report": {
+      "submit": "Bejelentés elküldése",
+      "subtitle": "Segíts megőrizni a portál biztonságát.",
+      "success": "Bejelentés elküldve",
+      "title": "Hirdetés bejelentése"
+    },
+    "security": {
+      "reportCta": "Hirdetés bejelentése",
+      "subtitle": "A biztonságod a legfontosabb",
+      "title": "Biztonság"
+    },
+    "sell": {
+      "steps": {
+        "details": "Részletek",
+        "photos": "Fotók",
+        "price": "Ár",
+        "summary": "Kapcsolat és összegzés",
+        "typeLocation": "Típus és helyszín"
+      },
+      "submit": "Hirdetés közzététele",
+      "title": "Hirdetés feladása"
     }
   },
   "search": {

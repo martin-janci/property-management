@@ -335,6 +335,33 @@
   --ppt-color-primary-light: rgba(59, 130, 246, 0.15);
   --ppt-color-primary-soft-bg: rgba(59, 130, 246, 0.15);
 
+  /*
+   * Semantic `*-light` and `*-dark` tokens in dark mode.
+   *
+   * Light theme uses solid pastel fills (#d1fae5, #dbeafe, …) and saturated
+   * darker text (#065f46, #92400e, …). In dark theme those same fills are
+   * far too bright (they're the dominant source of "white pockets" on
+   * dark surfaces) and the dark text becomes near-invisible.
+   *
+   * Per the design-system rule (README.md → "Dark mode is paired, never
+   * inverted"): badges drop to `rgba(accent, 0.15)` fill paired with a
+   * brightened text shade. Mirrors the `--ppt-status-*` pair structure
+   * already defined below.
+   */
+  --ppt-color-success-light: rgba(16, 185, 129, 0.18);
+  --ppt-color-success-dark: #6ee7b7; /* used as ink on success-light bg */
+  --ppt-color-warning-light: rgba(245, 158, 11, 0.18);
+  --ppt-color-warning-dark: #fcd34d;
+  --ppt-color-danger-light: rgba(239, 68, 68, 0.18);
+  --ppt-color-danger-dark: #fca5a5;
+  --ppt-color-info-light: rgba(59, 130, 246, 0.18);
+  --ppt-color-info-dark: #93c5fd;
+  --ppt-color-violet-light: rgba(139, 92, 246, 0.2);
+  --ppt-color-violet-dark: #c4b5fd;
+  --ppt-color-orange-light: rgba(249, 115, 22, 0.2);
+  --ppt-color-orange-dark: #fdba74;
+  --ppt-color-secondary-light: rgba(107, 114, 128, 0.2);
+
   --ppt-color-background: var(--ppt-bg-app);
   --ppt-color-surface: var(--ppt-bg-surface);
   --ppt-color-surface-hover: var(--ppt-bg-hover);

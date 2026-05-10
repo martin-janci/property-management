@@ -61,6 +61,11 @@ export const DevPanel: React.FC<DevPanelProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
+        // colorScheme: 'dark' tells the browser to render native form
+        // controls (incl. <select> and its dropdown panel) with a dark
+        // user-agent stylesheet, so the dev panel looks consistent in
+        // both site themes.
+        colorScheme: 'dark',
       }}
     >
       <div>

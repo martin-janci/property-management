@@ -69,6 +69,11 @@ export const FieldInput = forwardRef<HTMLInputElement, FieldInputProps>(
              trick that drives the floating-label animation. Don't set a
              real placeholder — the label IS the placeholder. */
           placeholder=" "
+          /* Chrome 120+ injects caret-color into the inline style of any
+             input it suspects is being autofilled, which races with the
+             SSR-rendered style and triggers a hydration warning. Suppress
+             it so the console stays clean — the DOM rebuilds correctly. */
+          suppressHydrationWarning
           aria-invalid={Boolean(error) || undefined}
           aria-describedby={error || helperText ? helperId : undefined}
           {...rest}

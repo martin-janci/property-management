@@ -140,6 +140,13 @@ export function SearchBar({ initialQuery = '', onSearch }: SearchBarProps) {
           className="search-input"
           placeholder={t('placeholder')}
           value={query}
+          // Browsers (Chrome 120+) inject `caret-color: transparent` into
+          // the inline style of any input they think is being autofilled,
+          // which races with React's SSR-rendered style attribute and
+          // triggers a hydration warning. The DOM rebuilds correctly on
+          // hydration; suppressing the warning here keeps the console
+          // clean without papering over real mismatches.
+          suppressHydrationWarning
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setShowSuggestions(true)}
         />
