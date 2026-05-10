@@ -280,10 +280,14 @@ pub async fn open_handler(
         };
         db_name = Some(db.clone());
 
-        // Dispatch GHA workflow (skip if resuming — images cached from previous open).
-        // Also skip if this is an idempotent retry against an existing row whose
-        // previous open already dispatched a build — re-dispatching is fine but
-        // wastes runner minutes. The polling logic still picks up the latest run.
+        // Dispatch the docker-build.yml workflow (skip if resuming — images
+        // cached from previous open). The handler is intentionally non-blocking:
+        // the fast-path below short-circuits to `completed=true` if a green run
+        // already exists for the branch; otherwise we dispatch and immediately
+        // return `backend_status="building"` so the operator (or pmctl) can
+        // re-invoke `open` once GHA finishes pushing images. We never poll the
+        // workflow ourselves — that keeps the deploy-server's request path bounded
+        // and the runner-minute usage symmetrical with normal commit-push CI.
         let completed = if resume_db.is_some() {
             true
         } else {
@@ -323,14 +327,14 @@ pub async fn open_handler(
             }
         };
         if !completed {
-            // Build still in progress after the polling window. The Worktree row
-            // is persisted below with db_name set; the caller should re-invoke
-            // `open` once the build completes — that retry hits the idempotent
-            // branch above and reuses the existing DB instead of recreating it.
-            // (No background task: keeping the deploy-server stateless on this
-            // path is intentional. A future Phase 6+ improvement could spawn a
-            // best-effort follow-up that finishes the deploy when the build
-            // signals completion.)
+            // Build still running. The Worktree row is persisted below with
+            // db_name set; the caller should re-invoke `open` once the GHA
+            // workflow finishes — that retry hits the idempotent branch above
+            // and reuses the existing DB instead of recreating it.
+            // (No background task and no polling: keeping the deploy-server
+            // stateless on this path is intentional. A future Phase 6+
+            // improvement could spawn a best-effort follow-up that finishes
+            // the deploy when the build signals completion.)
             backend_status = "building".into();
             tracing::info!(
                 name = %name,

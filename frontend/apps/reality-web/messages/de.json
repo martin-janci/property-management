@@ -157,7 +157,11 @@
     "subtitle": "Durchsuchen Sie tausende Angebote",
     "title": "Finden Sie Ihr perfektes Zuhause",
     "viewAll": "Alle anzeigen",
-    "viewAllProperties": "Alle Immobilien anzeigen"
+    "viewAllProperties": "Alle Immobilien anzeigen",
+    "emptyTitle": "Derzeit haben wir keine empfohlenen Angebote",
+    "emptyBody": "Täglich kommen neue Inserate hinzu. Sehen Sie sich alle aktuellen Angebote an oder fügen Sie Ihr eigenes Inserat kostenlos hinzu.",
+    "emptyBrowseAll": "Alle Angebote durchsuchen",
+    "emptyAddListing": "Eigenes Inserat aufgeben"
   },
   "listing": {
     "additionalInfo": "Zusätzliche Informationen",

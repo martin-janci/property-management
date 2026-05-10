@@ -157,7 +157,11 @@
     "subtitle": "Keressen több ezer hirdetés között",
     "title": "Találja meg tökéletes ingatlanát",
     "viewAll": "Összes megtekintése",
-    "viewAllProperties": "Összes ingatlan megtekintése"
+    "viewAllProperties": "Összes ingatlan megtekintése",
+    "emptyTitle": "Jelenleg nincsenek kiemelt hirdetéseink",
+    "emptyBody": "Naponta új ajánlatok érkeznek. Tekintse meg az összes aktuális hirdetést, vagy adja fel saját hirdetését ingyen.",
+    "emptyBrowseAll": "Összes hirdetés böngészése",
+    "emptyAddListing": "Saját hirdetés feladása"
   },
   "listing": {
     "additionalInfo": "További információk",

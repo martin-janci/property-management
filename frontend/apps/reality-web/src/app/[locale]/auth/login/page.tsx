@@ -3,17 +3,20 @@
 /**
  * Email/password login page (UC-47.2).
  *
- * Calls reality-server `/api/v1/auth/login` directly. The existing SSO
- * callback flow remains intact for federated sign-ins.
+ * Calls reality-server `/api/v1/users/login` via auth-api.login(). The
+ * existing SSO callback flow remains intact for federated sign-ins.
  *
  * All user-visible strings come from `messages/<locale>.json -> auth.login`.
  * If you add a new string, add it to all 6 locale files (sk/cs/de/en/hu/pl).
+ *
+ * Internal links use the locale-aware `Link` from `src/i18n/routing` so
+ * non-default locales (cs/de/en/hu/pl) keep their `/[locale]/...` prefix.
  */
 
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
+import { Link } from '@/i18n/routing';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
 

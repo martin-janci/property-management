@@ -157,7 +157,11 @@
     "subtitle": "Search thousands of listings",
     "title": "Find Your Perfect Property",
     "viewAll": "View All",
-    "viewAllProperties": "View All Properties"
+    "viewAllProperties": "View All Properties",
+    "emptyTitle": "We don't have any featured listings right now",
+    "emptyBody": "New listings are added every day. Browse all current properties or post your own listing for free.",
+    "emptyBrowseAll": "Browse all listings",
+    "emptyAddListing": "Post a listing"
   },
   "listing": {
     "additionalInfo": "Additional Information",

@@ -8,8 +8,8 @@
 
 import type { ListingSummary } from '@ppt/reality-api-client';
 import { useFeaturedListings, useToggleFavorite } from '@ppt/reality-api-client';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { Link } from '../../i18n/routing';
 import { ListingCard } from '../listings/ListingCard';
 
 export function FeaturedListings() {
@@ -128,17 +128,14 @@ export function FeaturedListings() {
             <div className="empty-icon" aria-hidden="true">
               🔍
             </div>
-            <h2 className="empty-title">Práve teraz nemáme odporúčané ponuky</h2>
-            <p className="empty-body">
-              Naše inzeráty sa pridávajú každý deň. Prejdite na všetky aktuálne ponuky alebo
-              pridajte vlastný inzerát zadarmo.
-            </p>
+            <h2 className="empty-title">{t('emptyTitle')}</h2>
+            <p className="empty-body">{t('emptyBody')}</p>
             <div className="empty-actions">
               <Link href="/listings" className="empty-cta-primary">
-                Prehliadnuť všetky ponuky
+                {t('emptyBrowseAll')}
               </Link>
               <Link href="/sell" className="empty-cta-secondary">
-                Pridať vlastný inzerát
+                {t('emptyAddListing')}
               </Link>
             </div>
           </div>

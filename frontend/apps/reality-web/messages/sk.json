@@ -157,7 +157,11 @@
     "subtitle": "Prehľadajte tisíce ponúk",
     "title": "Nájdite svoj ideálny domov",
     "viewAll": "Zobraziť všetko",
-    "viewAllProperties": "Zobraziť všetky nehnuteľnosti"
+    "viewAllProperties": "Zobraziť všetky nehnuteľnosti",
+    "emptyTitle": "Práve teraz nemáme odporúčané ponuky",
+    "emptyBody": "Naše inzeráty sa pridávajú každý deň. Prejdite na všetky aktuálne ponuky alebo pridajte vlastný inzerát zadarmo.",
+    "emptyBrowseAll": "Prehliadnuť všetky ponuky",
+    "emptyAddListing": "Pridať vlastný inzerát"
   },
   "listing": {
     "additionalInfo": "Ďalšie informácie",

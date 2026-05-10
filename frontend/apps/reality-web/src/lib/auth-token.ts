@@ -53,7 +53,10 @@ export function getSession(): StoredSession | null {
     const expiresAt = window.localStorage.getItem(EXPIRES_KEY);
     if (!token || !userRaw || !expiresAt) return null;
     // Cheap client-side expiry check — server still validates on each request.
-    if (new Date(expiresAt).getTime() <= Date.now()) {
+    // Treat unparseable timestamps as corrupted state (NaN comparison would
+    // silently keep the stored token alive forever); wipe and force re-login.
+    const parsedMs = new Date(expiresAt).getTime();
+    if (!Number.isFinite(parsedMs) || parsedMs <= Date.now()) {
       clearSession();
       return null;
     }

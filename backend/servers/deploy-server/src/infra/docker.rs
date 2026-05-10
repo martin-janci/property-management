@@ -297,22 +297,6 @@ impl DockerClient {
         Ok(create.id)
     }
 
-    /// Attach an existing container to a Docker network. No-op if already attached.
-    pub async fn connect_to_network(&self, network: &str, container: &str) -> Result<()> {
-        let cfg = bollard::network::ConnectNetworkOptions {
-            container,
-            ..Default::default()
-        };
-        match self.docker.connect_network(network, cfg).await {
-            Ok(()) => Ok(()),
-            Err(bollard::errors::Error::DockerResponseServerError {
-                status_code: 403,
-                message,
-            }) if message.contains("already") => Ok(()),
-            Err(e) => Err(crate::DeployError::Docker(e)),
-        }
-    }
-
     pub async fn run_backend_dedicated(&self, spec: &BackendDedicatedSpec) -> Result<String> {
         let _ = self
             .docker
@@ -387,9 +371,11 @@ impl DockerClient {
             .await?;
 
         // Attach to the network where ppt-postgres lives so DATABASE_URL using
-        // `ppt-postgres:5432` actually resolves. Idempotent across re-opens.
+        // `ppt-postgres:5432` actually resolves. Idempotent across re-opens —
+        // ensure_network_membership inspects the container first and only
+        // connects when needed (no error-string matching).
         if let Err(e) = self
-            .connect_to_network("ppt-prod", &spec.container_name)
+            .ensure_network_membership("ppt-prod", &spec.container_name)
             .await
         {
             tracing::warn!(

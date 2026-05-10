@@ -67,10 +67,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const s = getSession();
     return s ? { user_id: s.user.id, email: s.user.email, name: s.user.name } : null;
   });
-  // Start `false` so consumers don't paint a skeleton on mount: the optimistic
-  // user above is already correct in 99% of cases. The async checkSession()
-  // below corrects state in the background if the server rejects the token.
-  const [isLoading, setIsLoading] = useState(false);
+  // Start `true` only when there's no stored bearer session — that's the
+  // case where consumers (e.g. ProtectedRoute) need to wait for the cookie
+  // /sso/session check before they decide between rendering "Sign in
+  // required" and the gated content. With a stored session we already
+  // have an optimistic user, so loading is effectively done. The
+  // checkSession() below flips this to `false` in its finally.
+  const [isLoading, setIsLoading] = useState(() => getSession() === null);
 
   const checkSession = useCallback(async () => {
     // Bearer-token path (form-login): /users/me requires Authorization
@@ -178,8 +181,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser({ user_id: me.id, email: me.email, name: me.name });
           return;
         }
+        // Definitive auth failure — drop the stale token so we don't keep
+        // sending it on subsequent fetches. Any other status (5xx, etc.)
+        // is treated as transient: leave optimistic state intact and try
+        // the cookie path below.
+        if (meResp.status === 401 || meResp.status === 403) {
+          clearStoredSession();
+          setUser(null);
+        }
       } catch {
-        // Fall through to cookie path.
+        // Network blip — fall through to cookie path; keep optimistic state.
       }
     }
 

@@ -157,7 +157,11 @@
     "subtitle": "Przeszukaj tysiące ofert",
     "title": "Znajdź swoją idealną nieruchomość",
     "viewAll": "Zobacz wszystkie",
-    "viewAllProperties": "Zobacz wszystkie nieruchomości"
+    "viewAllProperties": "Zobacz wszystkie nieruchomości",
+    "emptyTitle": "W tej chwili nie mamy polecanych ofert",
+    "emptyBody": "Nowe ogłoszenia pojawiają się codziennie. Przejrzyj wszystkie aktualne oferty lub dodaj własne ogłoszenie za darmo.",
+    "emptyBrowseAll": "Przeglądaj wszystkie oferty",
+    "emptyAddListing": "Dodaj własne ogłoszenie"
   },
   "listing": {
     "additionalInfo": "Dodatkowe informacje",
