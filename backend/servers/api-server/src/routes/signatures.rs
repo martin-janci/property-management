@@ -38,10 +38,10 @@ pub fn router() -> Router<AppState> {
             "/",
             get(list_signature_requests).post(create_signature_request),
         )
-        .route("/:id", get(get_signature_request))
-        .route("/:id/remind", post(send_reminder))
-        .route("/:id/cancel", post(cancel_signature_request))
-        .route("/webhook/:provider", post(handle_webhook))
+        .route("/{id}", get(get_signature_request))
+        .route("/{id}/remind", post(send_reminder))
+        .route("/{id}/cancel", post(cancel_signature_request))
+        .route("/webhook/{provider}", post(handle_webhook))
 }
 
 /// Create a new signature request for a document.

@@ -22,42 +22,45 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // AI Risk Scoring Models
         .route("/models", get(list_risk_models).post(create_risk_model))
-        .route("/models/:id", get(get_risk_model).delete(delete_risk_model))
-        .route("/models/:id/activate", post(activate_risk_model))
+        .route(
+            "/models/{id}",
+            get(get_risk_model).delete(delete_risk_model),
+        )
+        .route("/models/{id}/activate", post(activate_risk_model))
         // Provider Configs
         .route(
             "/providers",
             get(list_provider_configs).post(create_provider_config),
         )
         .route(
-            "/providers/:id",
+            "/providers/{id}",
             get(get_provider_config).delete(delete_provider_config),
         )
-        .route("/providers/:id/status", put(update_provider_status))
+        .route("/providers/{id}/status", put(update_provider_status))
         // AI Results
         .route("/results", get(list_ai_results))
-        .route("/results/:screening_id", get(get_ai_result))
-        .route("/results/:screening_id/factors", get(get_risk_factors))
+        .route("/results/{screening_id}", get(get_ai_result))
+        .route("/results/{screening_id}/factors", get(get_risk_factors))
         .route(
-            "/results/:screening_id/complete",
+            "/results/{screening_id}/complete",
             get(get_complete_screening_data),
         )
         // Run AI Scoring
         .route("/score", post(run_ai_scoring))
         // Credit Results
-        .route("/credit/:screening_id", get(get_credit_result))
+        .route("/credit/{screening_id}", get(get_credit_result))
         .route("/credit", post(create_credit_result))
         // Background Results
-        .route("/background/:screening_id", get(get_background_result))
+        .route("/background/{screening_id}", get(get_background_result))
         .route("/background", post(create_background_result))
         // Eviction Results
-        .route("/eviction/:screening_id", get(get_eviction_result))
+        .route("/eviction/{screening_id}", get(get_eviction_result))
         .route("/eviction", post(create_eviction_result))
         // Queue
         .route("/queue", get(get_pending_queue).post(create_queue_item))
-        .route("/queue/:id/status", put(update_queue_status))
+        .route("/queue/{id}/status", put(update_queue_status))
         // Reports
-        .route("/reports/:screening_id", get(get_reports))
+        .route("/reports/{screening_id}", get(get_reports))
         .route("/reports", post(create_report))
         // Statistics
         .route("/statistics", get(get_statistics))

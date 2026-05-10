@@ -2,7 +2,6 @@
 
 use crate::AuthUser;
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
@@ -30,7 +29,6 @@ impl std::ops::Deref for TenantExtractor {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for TenantExtractor
 where
     S: Send + Sync,
@@ -120,7 +118,6 @@ impl std::ops::Deref for ValidatedTenantExtractor {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for ValidatedTenantExtractor
 where
     S: TenantMembershipProvider,
@@ -258,7 +255,6 @@ where
 #[derive(Debug, Clone)]
 pub struct OptionalTenant(pub Option<TenantContext>);
 
-#[async_trait]
 impl<S> FromRequestParts<S> for OptionalTenant
 where
     S: Send + Sync,

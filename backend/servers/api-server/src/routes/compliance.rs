@@ -35,7 +35,7 @@ pub fn router() -> Router<AppState> {
         // Audit Log Reports
         .route("/audit-logs", get(get_audit_logs))
         .route("/audit-logs/summary", get(get_audit_summary))
-        .route("/audit-logs/user/:user_id", get(get_user_audit_logs))
+        .route("/audit-logs/user/{user_id}", get(get_user_audit_logs))
         .route("/audit-logs/integrity", get(verify_audit_integrity))
         // GDPR Reports
         .route("/gdpr/data-exports", get(get_data_export_report))

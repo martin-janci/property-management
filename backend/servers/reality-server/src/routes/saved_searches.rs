@@ -19,10 +19,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_saved_searches))
         .route("/", post(create_saved_search))
-        .route("/:id", get(get_saved_search))
-        .route("/:id", put(update_saved_search))
-        .route("/:id", delete(delete_saved_search))
-        .route("/:id/run", post(run_saved_search))
+        .route("/{id}", get(get_saved_search))
+        .route("/{id}", put(update_saved_search))
+        .route("/{id}", delete(delete_saved_search))
+        .route("/{id}/run", post(run_saved_search))
 }
 
 /// Saved searches list response.

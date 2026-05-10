@@ -27,36 +27,36 @@ pub fn router() -> Router<AppState> {
         // Vote CRUD
         .route("/", post(create_vote))
         .route("/", get(list_votes))
-        .route("/:id", get(get_vote))
-        .route("/:id", put(update_vote))
-        .route("/:id", delete(delete_vote))
+        .route("/{id}", get(get_vote))
+        .route("/{id}", put(update_vote))
+        .route("/{id}", delete(delete_vote))
         // Workflow
-        .route("/:id/publish", post(publish_vote))
-        .route("/:id/cancel", post(cancel_vote))
-        .route("/:id/close", post(close_vote))
+        .route("/{id}/publish", post(publish_vote))
+        .route("/{id}/cancel", post(cancel_vote))
+        .route("/{id}/close", post(close_vote))
         // Questions
-        .route("/:id/questions", post(add_question))
-        .route("/:id/questions", get(list_questions))
-        .route("/:id/questions/:question_id", put(update_question))
-        .route("/:id/questions/:question_id", delete(delete_question))
+        .route("/{id}/questions", post(add_question))
+        .route("/{id}/questions", get(list_questions))
+        .route("/{id}/questions/{question_id}", put(update_question))
+        .route("/{id}/questions/{question_id}", delete(delete_question))
         // Voting
-        .route("/:id/eligibility", get(check_eligibility))
-        .route("/:id/cast", post(cast_vote))
-        .route("/:id/my-response", get(get_my_response))
+        .route("/{id}/eligibility", get(check_eligibility))
+        .route("/{id}/cast", post(cast_vote))
+        .route("/{id}/my-response", get(get_my_response))
         // Comments
-        .route("/:id/comments", post(add_comment))
-        .route("/:id/comments", get(list_comments))
-        .route("/:id/comments/:comment_id/replies", get(list_replies))
-        .route("/:id/comments/:comment_id/hide", post(hide_comment))
+        .route("/{id}/comments", post(add_comment))
+        .route("/{id}/comments", get(list_comments))
+        .route("/{id}/comments/{comment_id}/replies", get(list_replies))
+        .route("/{id}/comments/{comment_id}/hide", post(hide_comment))
         // Results
-        .route("/:id/results", get(get_results))
+        .route("/{id}/results", get(get_results))
         // Reports
-        .route("/:id/report", get(get_report_data))
+        .route("/{id}/report", get(get_report_data))
         // Audit
-        .route("/:id/audit", get(get_audit_log))
+        .route("/{id}/audit", get(get_audit_log))
         // Building votes
         .route(
-            "/building/:building_id/active",
+            "/building/{building_id}/active",
             get(list_active_by_building),
         )
 }

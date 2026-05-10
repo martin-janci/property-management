@@ -22,8 +22,8 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // Data Export (Story 9.3)
         .route("/export/request", post(request_data_export))
-        .route("/export/status/:request_id", get(get_export_status))
-        .route("/export/download/:token", get(download_export))
+        .route("/export/status/{request_id}", get(get_export_status))
+        .route("/export/download/{token}", get(download_export))
         .route("/export/categories", get(get_export_categories))
         .route("/export/history", get(get_export_history))
         // Data Deletion (Story 9.4) - will be implemented next

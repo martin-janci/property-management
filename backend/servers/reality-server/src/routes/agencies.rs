@@ -23,13 +23,13 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_agency))
         .route("/", get(list_agencies))
-        .route("/:id", get(get_agency))
-        .route("/:id", put(update_agency))
-        .route("/:id/branding", put(update_branding))
-        .route("/:id/members", get(list_members))
-        .route("/:id/invitations", post(create_invitation))
-        .route("/by-slug/:slug", get(get_agency_by_slug))
-        .route("/invitations/:token/accept", post(accept_invitation))
+        .route("/{id}", get(get_agency))
+        .route("/{id}", put(update_agency))
+        .route("/{id}/branding", put(update_branding))
+        .route("/{id}/members", get(list_members))
+        .route("/{id}/invitations", post(create_invitation))
+        .route("/by-slug/{slug}", get(get_agency_by_slug))
+        .route("/invitations/{token}/accept", post(accept_invitation))
 }
 
 /// Agency response with summary info.
