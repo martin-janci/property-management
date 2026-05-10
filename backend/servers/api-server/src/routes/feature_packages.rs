@@ -168,7 +168,7 @@ pub fn admin_router() -> Router<AppState> {
         .route("/organizations/{org_id}", get(get_org_packages))
         .route("/organizations/{org_id}/assign", post(assign_package))
         .route(
-            "/organizations/:org_id/packages/:pid",
+            "/organizations/{org_id}/packages/{pid}",
             delete(deactivate_org_package),
         )
 }

@@ -66,7 +66,7 @@ pub fn router() -> Router<AppState> {
         .route("/templates", get(list_templates))
         .route("/templates/{id}", get(get_template))
         .route(
-            "/organizations/:org_id/rules/from-template",
+            "/organizations/{org_id}/rules/from-template",
             post(create_from_template),
         )
 }

@@ -46,7 +46,7 @@ pub fn router() -> Router<AppState> {
         .route("/deployments/{id}/switch", post(switch_traffic))
         .route("/deployments/{id}/rollback", post(rollback_deployment))
         .route(
-            "/deployments/:id/health-checks",
+            "/deployments/{id}/health-checks",
             get(list_deployment_health_checks),
         )
         .route("/deployments/{id}/health-checks", post(run_health_checks))
@@ -80,7 +80,7 @@ pub fn router() -> Router<AppState> {
         .route("/costs/budgets/{id}", put(update_budget))
         .route("/costs/alerts", get(list_cost_alerts))
         .route(
-            "/costs/alerts/:id/acknowledge",
+            "/costs/alerts/{id}/acknowledge",
             post(acknowledge_cost_alert),
         )
         .route("/costs/utilization", get(list_resource_utilization))
@@ -89,7 +89,7 @@ pub fn router() -> Router<AppState> {
             get(list_optimization_recommendations),
         )
         .route(
-            "/costs/recommendations/:id/implement",
+            "/costs/recommendations/{id}/implement",
             post(mark_recommendation_implemented),
         )
 }

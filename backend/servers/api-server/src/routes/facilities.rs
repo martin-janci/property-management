@@ -34,24 +34,24 @@ pub fn router() -> Router<AppState> {
             get(get_facility),
         )
         .route(
-            "/buildings/:building_id/facilities/:id",
+            "/buildings/{building_id}/facilities/{id}",
             put(update_facility),
         )
         .route(
-            "/buildings/:building_id/facilities/:id",
+            "/buildings/{building_id}/facilities/{id}",
             delete(delete_facility),
         )
         // Bookings
         .route(
-            "/buildings/:building_id/facilities/:facility_id/bookings",
+            "/buildings/{building_id}/facilities/{facility_id}/bookings",
             get(list_facility_bookings),
         )
         .route(
-            "/buildings/:building_id/facilities/:facility_id/bookings",
+            "/buildings/{building_id}/facilities/{facility_id}/bookings",
             post(create_booking),
         )
         .route(
-            "/buildings/:building_id/facilities/:facility_id/availability",
+            "/buildings/{building_id}/facilities/{facility_id}/availability",
             get(check_availability),
         )
         // Booking management
@@ -61,7 +61,7 @@ pub fn router() -> Router<AppState> {
         .route("/bookings/{id}/cancel", post(cancel_booking))
         // Approval workflow
         .route(
-            "/buildings/:building_id/bookings/pending",
+            "/buildings/{building_id}/bookings/pending",
             get(list_pending_bookings),
         )
         .route("/bookings/{id}/approve", post(approve_booking))

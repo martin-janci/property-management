@@ -198,32 +198,32 @@ pub fn router() -> Router<AppState> {
         // Policy routes
         .route("/policies", get(list_policies).post(create_policy))
         .route(
-            "/policies/:policy_id",
+            "/policies/{policy_id}",
             get(get_policy).put(update_policy).delete(delete_policy),
         )
         .route("/policies/expiring", get(get_expiring_policies))
         // Policy document routes
         .route(
-            "/policies/:policy_id/documents",
+            "/policies/{policy_id}/documents",
             get(list_policy_documents).post(add_policy_document),
         )
         .route(
-            "/policies/:policy_id/documents/:document_id",
+            "/policies/{policy_id}/documents/{document_id}",
             delete(remove_policy_document),
         )
         // Renewal reminder routes
         .route(
-            "/policies/:policy_id/reminders",
+            "/policies/{policy_id}/reminders",
             get(list_reminders).post(create_reminder),
         )
         .route(
-            "/reminders/:reminder_id",
+            "/reminders/{reminder_id}",
             put(update_reminder).delete(delete_reminder),
         )
         // Claim routes
         .route("/claims", get(list_claims).post(create_claim))
         .route(
-            "/claims/:claim_id",
+            "/claims/{claim_id}",
             get(get_claim).put(update_claim).delete(delete_claim),
         )
         .route("/claims/{claim_id}/submit", post(submit_claim))
@@ -232,11 +232,11 @@ pub fn router() -> Router<AppState> {
         .route("/claims/{claim_id}/history", get(get_claim_history))
         // Claim document routes
         .route(
-            "/claims/:claim_id/documents",
+            "/claims/{claim_id}/documents",
             get(list_claim_documents).post(add_claim_document),
         )
         .route(
-            "/claims/:claim_id/documents/:document_id",
+            "/claims/{claim_id}/documents/{document_id}",
             delete(remove_claim_document),
         )
         // Statistics

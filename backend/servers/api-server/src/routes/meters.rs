@@ -47,7 +47,7 @@ pub fn router() -> Router<AppState> {
         // Submission windows
         .route("/submission-windows", post(create_submission_window))
         .route(
-            "/submission-windows/open/:building_id",
+            "/submission-windows/open/{building_id}",
             get(get_open_window),
         )
         // Validation (Story 12.3)

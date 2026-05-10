@@ -49,11 +49,11 @@ pub fn router() -> Router<AppState> {
         .route("/properties", get(list_property_currency_configs))
         .route("/properties", post(create_property_currency_config))
         .route(
-            "/properties/:building_id",
+            "/properties/{building_id}",
             get(get_property_currency_config),
         )
         .route(
-            "/properties/:building_id",
+            "/properties/{building_id}",
             put(update_property_currency_config),
         )
         // Exchange Rates
@@ -73,7 +73,7 @@ pub fn router() -> Router<AppState> {
         .route("/cross-border/{lease_id}", get(get_cross_border_lease))
         .route("/cross-border/{lease_id}", put(update_cross_border_lease))
         .route(
-            "/cross-border/compliance/:country",
+            "/cross-border/compliance/{country}",
             get(get_compliance_requirements),
         )
         // Reports

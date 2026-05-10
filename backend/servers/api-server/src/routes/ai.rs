@@ -1944,11 +1944,11 @@ pub fn llm_router() -> Router<AppState> {
         // Listing descriptions (Story 64.2)
         .route("/listing/description", post(generate_listing_description))
         .route(
-            "/listing/descriptions/:listing_id",
+            "/listing/descriptions/{listing_id}",
             get(list_listing_descriptions),
         )
         .route(
-            "/listing/descriptions/:id/publish",
+            "/listing/descriptions/{id}/publish",
             post(publish_description),
         )
         // Enhanced chat (Story 64.3)

@@ -32,7 +32,7 @@ pub fn router() -> Router<AppState> {
         // Investor profiles
         .route("/investors", get(list_investors).post(create_investor))
         .route(
-            "/investors/:investor_id",
+            "/investors/{investor_id}",
             get(get_investor)
                 .put(update_investor)
                 .delete(delete_investor),
@@ -44,22 +44,22 @@ pub fn router() -> Router<AppState> {
         // Portfolios
         .route("/portfolios", get(list_portfolios).post(create_portfolio))
         .route(
-            "/portfolios/:portfolio_id",
+            "/portfolios/{portfolio_id}",
             get(get_portfolio)
                 .put(update_portfolio)
                 .delete(delete_portfolio),
         )
         .route(
-            "/investors/:investor_id/portfolios",
+            "/investors/{investor_id}/portfolios",
             get(list_investor_portfolios),
         )
         // Portfolio properties
         .route(
-            "/portfolios/:portfolio_id/properties",
+            "/portfolios/{portfolio_id}/properties",
             get(list_portfolio_properties).post(add_portfolio_property),
         )
         .route(
-            "/portfolios/:portfolio_id/properties/:property_id",
+            "/portfolios/{portfolio_id}/properties/{property_id}",
             put(update_portfolio_property).delete(remove_portfolio_property),
         )
         // ROI calculations
@@ -71,28 +71,28 @@ pub fn router() -> Router<AppState> {
         // Distributions
         .route("/distributions", post(create_distribution))
         .route(
-            "/investors/:investor_id/distributions",
+            "/investors/{investor_id}/distributions",
             get(list_investor_distributions),
         )
         .route("/distributions/{distribution_id}", put(update_distribution))
         // Reports
         .route("/reports", post(create_report))
         .route(
-            "/investors/:investor_id/reports",
+            "/investors/{investor_id}/reports",
             get(list_investor_reports),
         )
         .route("/reports/{report_id}", get(get_report))
         // Capital calls
         .route("/capital-calls", post(create_capital_call))
         .route(
-            "/investors/:investor_id/capital-calls",
+            "/investors/{investor_id}/capital-calls",
             get(list_investor_capital_calls),
         )
         .route("/capital-calls/{call_id}", put(update_capital_call))
         // Dashboard
         .route("/dashboard/{investor_id}", get(get_investor_dashboard))
         .route(
-            "/dashboard/:investor_id/metrics",
+            "/dashboard/{investor_id}/metrics",
             post(upsert_dashboard_metrics),
         )
 }

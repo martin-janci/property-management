@@ -23,7 +23,7 @@ pub fn router() -> Router<AppState> {
         .route("/tours/{tour_id}", get(get_tour))
         .route("/tours/{tour_id}/start", post(start_tour))
         .route(
-            "/tours/:tour_id/steps/:step_id/complete",
+            "/tours/{tour_id}/steps/{step_id}/complete",
             post(complete_step),
         )
         .route("/tours/{tour_id}/complete", post(complete_tour))

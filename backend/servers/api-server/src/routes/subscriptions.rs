@@ -230,7 +230,7 @@ pub fn router() -> Router<AppState> {
         .route("/payment-methods", post(create_payment_method))
         .route("/payment-methods", get(list_payment_methods))
         .route(
-            "/payment-methods/:id/default",
+            "/payment-methods/{id}/default",
             post(set_default_payment_method),
         )
         .route("/payment-methods/{id}", delete(delete_payment_method))

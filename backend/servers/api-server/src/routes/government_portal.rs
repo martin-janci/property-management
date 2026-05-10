@@ -33,7 +33,7 @@ pub fn router() -> Router<AppState> {
             get(list_connections).post(create_connection),
         )
         .route(
-            "/connections/:id",
+            "/connections/{id}",
             get(get_connection)
                 .put(update_connection)
                 .delete(delete_connection),
@@ -48,7 +48,7 @@ pub fn router() -> Router<AppState> {
             get(list_submissions).post(create_submission),
         )
         .route(
-            "/submissions/:id",
+            "/submissions/{id}",
             get(get_submission).put(update_submission),
         )
         .route("/submissions/{id}/validate", post(validate_submission))
@@ -57,17 +57,17 @@ pub fn router() -> Router<AppState> {
         .route("/submissions/{id}/audit", get(get_submission_audit))
         // Submission Attachments
         .route(
-            "/submissions/:id/attachments",
+            "/submissions/{id}/attachments",
             get(list_attachments).post(add_attachment),
         )
         .route(
-            "/submissions/:submission_id/attachments/:attachment_id",
+            "/submissions/{submission_id}/attachments/{attachment_id}",
             delete(delete_attachment),
         )
         // Submission Schedules
         .route("/schedules", get(list_schedules).post(create_schedule))
         .route(
-            "/schedules/:id",
+            "/schedules/{id}",
             get(get_schedule)
                 .put(update_schedule)
                 .delete(delete_schedule),

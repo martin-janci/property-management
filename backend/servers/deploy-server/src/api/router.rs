@@ -88,7 +88,7 @@ pub fn build(
         .merge(
             Router::new()
                 .route(
-                    "/api/targets/:target/bootstrap",
+                    "/api/targets/{target}/bootstrap",
                     post(bootstrap::bootstrap_handler),
                 )
                 .with_state(bootstrap_svc),

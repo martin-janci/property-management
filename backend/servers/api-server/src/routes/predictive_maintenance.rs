@@ -42,7 +42,7 @@ pub fn router() -> Router<AppState> {
         .route("/maintenance-logs/{id}", get(get_maintenance_log))
         .route("/maintenance-logs/{id}", put(update_maintenance_log))
         .route(
-            "/equipment/:id/maintenance-logs",
+            "/equipment/{id}/maintenance-logs",
             get(list_equipment_maintenance_logs),
         )
         .route("/maintenance-logs/{id}/photos", post(add_maintenance_photo))

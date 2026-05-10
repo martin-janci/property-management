@@ -47,7 +47,7 @@ pub fn router() -> Router<AppState> {
         .route("/feature-flags/{id}/overrides", get(list_flag_overrides))
         .route("/feature-flags/{id}/overrides", post(create_flag_override))
         .route(
-            "/feature-flags/:id/overrides/:override_id",
+            "/feature-flags/{id}/overrides/{override_id}",
             delete(delete_flag_override),
         )
         .route("/feature-flags/{id}/audit-log", get(get_flag_audit_log))

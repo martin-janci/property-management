@@ -35,7 +35,7 @@ pub fn router() -> Router<AppState> {
         .route("/templates/{template_id}", delete(delete_template))
         .route("/templates/{template_id}/download", get(download_template))
         .route(
-            "/templates/:template_id/duplicate",
+            "/templates/{template_id}/duplicate",
             post(duplicate_template),
         )
         .route("/categories/import", get(get_import_categories))

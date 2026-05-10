@@ -50,7 +50,7 @@ pub fn router() -> Router<AppState> {
         .route("/properties/metrics", get(list_property_metrics))
         .route("/properties/metrics", post(upsert_property_metrics))
         .route(
-            "/properties/:building_id/metrics",
+            "/properties/{building_id}/metrics",
             get(get_property_metrics),
         )
         // Portfolio Metrics

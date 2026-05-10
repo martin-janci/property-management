@@ -240,11 +240,11 @@ pub fn router() -> Router<AppState> {
         .route("/reserve-funds/{id}", get(get_reserve_fund))
         .route("/reserve-funds/{id}", put(update_reserve_fund))
         .route(
-            "/reserve-funds/:id/transactions",
+            "/reserve-funds/{id}/transactions",
             post(record_reserve_transaction),
         )
         .route(
-            "/reserve-funds/:id/transactions",
+            "/reserve-funds/{id}/transactions",
             get(list_reserve_transactions),
         )
         .route(

@@ -38,7 +38,7 @@ pub fn router() -> Router<AppState> {
         .route("/organizations/{id}", get(get_organization))
         .route("/organizations/{id}/suspend", post(suspend_organization))
         .route(
-            "/organizations/:id/reactivate",
+            "/organizations/{id}/reactivate",
             post(reactivate_organization),
         )
         .route("/stats", get(get_platform_stats))
@@ -50,11 +50,11 @@ pub fn router() -> Router<AppState> {
         .route("/feature-flags/{id}", delete(delete_feature_flag))
         .route("/feature-flags/{id}/toggle", post(toggle_feature_flag))
         .route(
-            "/feature-flags/:id/overrides",
+            "/feature-flags/{id}/overrides",
             post(create_feature_flag_override),
         )
         .route(
-            "/feature-flags/:id/overrides/:override_id",
+            "/feature-flags/{id}/overrides/{override_id}",
             delete(delete_feature_flag_override),
         )
         // Health monitoring (Story 10B.3)
@@ -79,7 +79,7 @@ pub fn router() -> Router<AppState> {
         .route("/support/users/{id}/memberships", get(get_user_memberships))
         .route("/support/users/{id}/sessions", get(get_user_sessions))
         .route(
-            "/support/users/:id/sessions/revoke",
+            "/support/users/{id}/sessions/revoke",
             post(revoke_user_sessions),
         )
         .route("/support/users/{id}/activity", get(get_user_activity))

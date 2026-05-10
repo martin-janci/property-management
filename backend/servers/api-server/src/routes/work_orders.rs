@@ -53,11 +53,11 @@ pub fn router() -> Router<AppState> {
         .route("/schedules/{id}/executions", get(list_executions))
         // Service History
         .route(
-            "/equipment/:equipment_id/service-history",
+            "/equipment/{equipment_id}/service-history",
             get(get_equipment_service_history),
         )
         .route(
-            "/buildings/:building_id/service-history",
+            "/buildings/{building_id}/service-history",
             get(get_building_service_history),
         )
         .route("/cost-summary", get(get_cost_summary))

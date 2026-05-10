@@ -231,7 +231,7 @@ pub fn router() -> Router<AppState> {
         .route("/broadcasts/{id}/deactivate", post(deactivate_broadcast))
         .route("/broadcasts/{id}/acknowledge", post(acknowledge_broadcast))
         .route(
-            "/broadcasts/:id/acknowledgments",
+            "/broadcasts/{id}/acknowledgments",
             get(list_broadcast_acknowledgments),
         )
         // Drill routes

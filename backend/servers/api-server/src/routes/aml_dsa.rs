@@ -38,7 +38,7 @@ pub fn router() -> Router<AppState> {
         .route("/edd/{id}", get(get_edd_record))
         .route("/edd/{id}/documents", post(upload_edd_document))
         .route(
-            "/edd/:id/documents/:doc_id/verify",
+            "/edd/{id}/documents/{doc_id}/verify",
             post(verify_edd_document),
         )
         .route("/edd/{id}/notes", post(add_edd_note))

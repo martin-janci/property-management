@@ -20,12 +20,12 @@ pub fn router() -> Router<AppState> {
         .route("/jurisdiction", put(set_jurisdiction))
         .route("/slovak/voting/config", post(configure_slovak_voting))
         .route(
-            "/slovak/voting/config/:building_id",
+            "/slovak/voting/config/{building_id}",
             get(get_slovak_voting_config),
         )
         .route("/slovak/voting/validate", post(validate_slovak_vote))
         .route(
-            "/slovak/voting/minutes/:vote_id",
+            "/slovak/voting/minutes/{vote_id}",
             get(get_slovak_vote_minutes),
         )
         .route(

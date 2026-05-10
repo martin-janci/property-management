@@ -46,24 +46,24 @@ pub fn router() -> Router<AppState> {
         .route("/buildings/{building_id}/emissions", post(record_emission))
         .route("/buildings/{building_id}/emissions", get(list_emissions))
         .route(
-            "/buildings/:building_id/carbon/target",
+            "/buildings/{building_id}/carbon/target",
             post(set_carbon_target),
         )
         .route(
-            "/buildings/:building_id/carbon/export",
+            "/buildings/{building_id}/carbon/export",
             get(export_carbon_report),
         )
         // Sustainability Scores (Story 65.3)
         .route(
-            "/listings/:listing_id/sustainability",
+            "/listings/{listing_id}/sustainability",
             get(get_sustainability_score),
         )
         .route(
-            "/listings/:listing_id/sustainability",
+            "/listings/{listing_id}/sustainability",
             post(create_sustainability_score),
         )
         .route(
-            "/listings/:listing_id/sustainability",
+            "/listings/{listing_id}/sustainability",
             put(update_sustainability_score),
         )
         .route(
@@ -72,19 +72,19 @@ pub fn router() -> Router<AppState> {
         )
         // Benchmarking (Story 65.4)
         .route(
-            "/buildings/:building_id/benchmark",
+            "/buildings/{building_id}/benchmark",
             get(get_benchmark_dashboard),
         )
         .route(
-            "/buildings/:building_id/benchmark/calculate",
+            "/buildings/{building_id}/benchmark/calculate",
             post(calculate_benchmark),
         )
         .route(
-            "/buildings/:building_id/benchmark/alerts",
+            "/buildings/{building_id}/benchmark/alerts",
             get(list_benchmark_alerts),
         )
         .route(
-            "/benchmark/alerts/:id/resolve",
+            "/benchmark/alerts/{id}/resolve",
             post(resolve_benchmark_alert),
         )
 }

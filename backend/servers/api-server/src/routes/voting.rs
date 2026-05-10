@@ -56,7 +56,7 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/audit", get(get_audit_log))
         // Building votes
         .route(
-            "/building/:building_id/active",
+            "/building/{building_id}/active",
             get(list_active_by_building),
         )
 }

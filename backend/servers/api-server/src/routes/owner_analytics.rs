@@ -25,11 +25,11 @@ pub fn router() -> Router<AppState> {
         .route("/units/{unit_id}/valuation", get(get_unit_valuation))
         .route("/units/{unit_id}/valuation", post(create_valuation))
         .route(
-            "/valuations/:valuation_id",
+            "/valuations/{valuation_id}",
             get(get_valuation_with_comparables),
         )
         .route(
-            "/valuations/:valuation_id/comparables",
+            "/valuations/{valuation_id}/comparables",
             post(add_comparable),
         )
         .route("/units/{unit_id}/value-history", get(get_value_history))

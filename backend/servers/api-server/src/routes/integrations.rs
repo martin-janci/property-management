@@ -56,11 +56,11 @@ pub fn router() -> Router<AppState> {
         .route("/organizations/{org_id}/stats", get(get_integration_stats))
         // Calendar routes (Story 61.1)
         .route(
-            "/organizations/:org_id/calendars",
+            "/organizations/{org_id}/calendars",
             get(list_calendar_connections),
         )
         .route(
-            "/organizations/:org_id/calendars",
+            "/organizations/{org_id}/calendars",
             post(create_calendar_connection),
         )
         .route("/calendars/{id}", get(get_calendar_connection))
@@ -71,33 +71,33 @@ pub fn router() -> Router<AppState> {
         .route("/calendars/{id}/events", post(create_calendar_event))
         // Accounting routes (Story 61.2)
         .route(
-            "/organizations/:org_id/accounting/exports",
+            "/organizations/{org_id}/accounting/exports",
             get(list_accounting_exports),
         )
         .route(
-            "/organizations/:org_id/accounting/exports",
+            "/organizations/{org_id}/accounting/exports",
             post(create_accounting_export),
         )
         .route("/accounting/exports/{id}", get(get_accounting_export))
         .route(
-            "/accounting/exports/:id/download",
+            "/accounting/exports/{id}/download",
             get(download_accounting_export),
         )
         .route(
-            "/organizations/:org_id/accounting/settings/:system",
+            "/organizations/{org_id}/accounting/settings/{system}",
             get(get_accounting_settings),
         )
         .route(
-            "/organizations/:org_id/accounting/settings/:system",
+            "/organizations/{org_id}/accounting/settings/{system}",
             put(update_accounting_settings),
         )
         // E-Signature routes (Story 61.3)
         .route(
-            "/organizations/:org_id/esignatures",
+            "/organizations/{org_id}/esignatures",
             get(list_esignature_workflows),
         )
         .route(
-            "/organizations/:org_id/esignatures",
+            "/organizations/{org_id}/esignatures",
             post(create_esignature_workflow),
         )
         .route("/esignatures/{id}", get(get_esignature_workflow))
@@ -107,20 +107,20 @@ pub fn router() -> Router<AppState> {
         .route("/esignatures/webhook", post(esignature_webhook))
         // Video Conferencing routes (Story 61.4)
         .route(
-            "/organizations/:org_id/video/connections",
+            "/organizations/{org_id}/video/connections",
             get(list_video_connections),
         )
         .route(
-            "/organizations/:org_id/video/connections",
+            "/organizations/{org_id}/video/connections",
             post(create_video_connection),
         )
         .route("/video/connections/{id}", delete(delete_video_connection))
         .route(
-            "/organizations/:org_id/video/meetings",
+            "/organizations/{org_id}/video/meetings",
             get(list_video_meetings),
         )
         .route(
-            "/organizations/:org_id/video/meetings",
+            "/organizations/{org_id}/video/meetings",
             post(create_video_meeting),
         )
         .route("/video/meetings/{id}", get(get_video_meeting))
@@ -129,11 +129,11 @@ pub fn router() -> Router<AppState> {
         .route("/video/meetings/{id}/start", post(start_video_meeting))
         // Webhook routes (Story 61.5)
         .route(
-            "/organizations/:org_id/webhooks",
+            "/organizations/{org_id}/webhooks",
             get(list_webhook_subscriptions),
         )
         .route(
-            "/organizations/:org_id/webhooks",
+            "/organizations/{org_id}/webhooks",
             post(create_webhook_subscription),
         )
         .route("/webhooks/{id}", get(get_webhook_subscription))
@@ -145,26 +145,26 @@ pub fn router() -> Router<AppState> {
         // ==================== Epic 83: External Platform Integrations ====================
         // Airbnb Integration (Story 83.1)
         .route(
-            "/organizations/:org_id/airbnb/status",
+            "/organizations/{org_id}/airbnb/status",
             get(get_airbnb_status),
         )
         .route(
-            "/organizations/:org_id/airbnb/connect",
+            "/organizations/{org_id}/airbnb/connect",
             post(connect_airbnb),
         )
         .route(
-            "/organizations/:org_id/airbnb/callback",
+            "/organizations/{org_id}/airbnb/callback",
             get(airbnb_oauth_callback),
         )
         .route("/organizations/{org_id}/airbnb/sync", post(sync_airbnb))
         .route("/organizations/{org_id}/airbnb", delete(disconnect_airbnb))
         // Booking.com Integration (Story 83.2)
         .route(
-            "/organizations/:org_id/booking/status",
+            "/organizations/{org_id}/booking/status",
             get(get_booking_status),
         )
         .route(
-            "/organizations/:org_id/booking/connect",
+            "/organizations/{org_id}/booking/connect",
             post(connect_booking),
         )
         .route("/organizations/{org_id}/booking/sync", post(sync_booking))
@@ -175,17 +175,17 @@ pub fn router() -> Router<AppState> {
         .route("/booking/push", post(booking_push_notification))
         // Portal Webhooks (Story 83.3)
         .route(
-            "/organizations/:org_id/portals",
+            "/organizations/{org_id}/portals",
             get(list_portal_connections),
         )
         .route(
-            "/organizations/:org_id/portals",
+            "/organizations/{org_id}/portals",
             post(create_portal_connection),
         )
         .route("/portals/{id}", get(get_portal_connection))
         .route("/portals/{id}", delete(delete_portal_connection))
         .route(
-            "/organizations/:org_id/portal-inquiries",
+            "/organizations/{org_id}/portal-inquiries",
             get(list_portal_inquiries),
         )
         .route("/portal-inquiries/{id}", get(get_portal_inquiry))
@@ -193,7 +193,7 @@ pub fn router() -> Router<AppState> {
         .route("/portal-inquiries/{id}/archive", post(archive_inquiry))
         // Portal webhook endpoint (public, no auth)
         .route(
-            "/webhooks/portal/:connection_id",
+            "/webhooks/portal/{connection_id}",
             post(handle_portal_webhook),
         )
 }

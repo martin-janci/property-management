@@ -1087,7 +1087,7 @@ pub fn router() -> Router<AppState> {
         .route("/buildings/{building_id}/rules", get(get_registry_rules))
         .route("/buildings/{building_id}/rules", put(update_registry_rules))
         .route(
-            "/buildings/:building_id/statistics",
+            "/buildings/{building_id}/statistics",
             get(get_registry_statistics),
         )
 }

@@ -61,7 +61,7 @@ pub fn router() -> Router<AppState> {
         .route("/recommendations/request", post(request_recommendation))
         .route("/recommendations/{id}", get(get_recommendation))
         .route(
-            "/recommendations/:id/details",
+            "/recommendations/{id}/details",
             get(get_recommendation_details),
         )
         .route("/recommendations/{id}/accept", post(accept_recommendation))
@@ -80,7 +80,7 @@ pub fn router() -> Router<AppState> {
         .route("/cma/{id}/properties", get(get_cma_properties))
         .route("/cma/{id}/properties", post(add_cma_property))
         .route(
-            "/cma/:cma_id/properties/:property_id",
+            "/cma/{cma_id}/properties/{property_id}",
             delete(remove_cma_property),
         )
         .route("/cma/{id}/recalculate", post(recalculate_cma))

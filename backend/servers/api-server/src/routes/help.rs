@@ -23,11 +23,11 @@ pub fn router() -> Router<AppState> {
         .route("/articles", get(list_articles))
         .route("/articles/search", get(search_articles))
         .route(
-            "/articles/category/:category",
+            "/articles/category/{category}",
             get(list_articles_by_category),
         )
         .route(
-            "/articles/context/:context_key",
+            "/articles/context/{context_key}",
             get(list_articles_by_context),
         )
         .route("/articles/{slug}", get(get_article))

@@ -1135,15 +1135,15 @@ pub fn packages_router() -> Router<AppState> {
         .route("/{id}/receive", post(receive_package))
         .route("/{id}/pickup", post(pickup_package))
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             get(get_package_settings),
         )
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             put(update_package_settings),
         )
         .route(
-            "/buildings/:building_id/statistics",
+            "/buildings/{building_id}/statistics",
             get(get_package_statistics),
         )
 }
@@ -1161,15 +1161,15 @@ pub fn visitors_router() -> Router<AppState> {
         .route("/{id}/check-out", post(check_out_visitor))
         .route("/{id}/cancel", post(cancel_visitor))
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             get(get_visitor_settings),
         )
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             put(update_visitor_settings),
         )
         .route(
-            "/buildings/:building_id/statistics",
+            "/buildings/{building_id}/statistics",
             get(get_visitor_statistics),
         )
 }

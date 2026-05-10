@@ -74,26 +74,26 @@ pub fn router() -> Router<AppState> {
             get(get_property),
         )
         .route(
-            "/portfolios/:id/properties/:property_id",
+            "/portfolios/{id}/properties/{property_id}",
             put(update_property),
         )
         .route(
-            "/portfolios/:id/properties/:property_id",
+            "/portfolios/{id}/properties/{property_id}",
             delete(remove_property),
         )
         // Transactions
         .route("/portfolios/{id}/transactions", post(create_transaction))
         .route("/portfolios/{id}/transactions", get(list_transactions))
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             get(get_transaction),
         )
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             put(update_transaction),
         )
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             delete(delete_transaction),
         )
         // Cash flows
@@ -116,31 +116,31 @@ pub fn router() -> Router<AppState> {
         .route("/portfolios/{id}/comparisons", post(create_comparison))
         .route("/portfolios/{id}/comparisons", get(list_comparisons))
         .route(
-            "/portfolios/:id/comparisons/:comparison_id",
+            "/portfolios/{id}/comparisons/{comparison_id}",
             get(get_comparison),
         )
         // Dashboard
         .route(
-            "/portfolios/:id/dashboard/summary",
+            "/portfolios/{id}/dashboard/summary",
             get(get_dashboard_summary),
         )
         .route(
-            "/portfolios/:id/dashboard/property-cards",
+            "/portfolios/{id}/dashboard/property-cards",
             get(get_property_cards),
         )
         .route(
-            "/portfolios/:id/dashboard/cash-flow-trend",
+            "/portfolios/{id}/dashboard/cash-flow-trend",
             get(get_cash_flow_trend),
         )
         // Alerts
         .route("/portfolios/{id}/alerts", post(create_alert))
         .route("/portfolios/{id}/alerts", get(list_alerts))
         .route(
-            "/portfolios/:id/alerts/:alert_id/read",
+            "/portfolios/{id}/alerts/{alert_id}/read",
             post(mark_alert_read),
         )
         .route(
-            "/portfolios/:id/alerts/:alert_id/resolve",
+            "/portfolios/{id}/alerts/{alert_id}/resolve",
             post(resolve_alert),
         )
 }

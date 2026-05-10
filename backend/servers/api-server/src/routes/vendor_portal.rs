@@ -100,7 +100,7 @@ pub fn router() -> Router<AppState> {
         // Property Access (Story 78.2)
         .route("/jobs/{job_id}/access", get(get_access_info))
         .route(
-            "/jobs/:job_id/access/generate-code",
+            "/jobs/{job_id}/access/generate-code",
             post(generate_access_code),
         )
         // Work Completion & Invoicing (Story 78.3)

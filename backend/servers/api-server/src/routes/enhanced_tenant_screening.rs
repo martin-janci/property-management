@@ -33,7 +33,7 @@ pub fn router() -> Router<AppState> {
             get(list_provider_configs).post(create_provider_config),
         )
         .route(
-            "/providers/:id",
+            "/providers/{id}",
             get(get_provider_config).delete(delete_provider_config),
         )
         .route("/providers/{id}/status", put(update_provider_status))
@@ -42,7 +42,7 @@ pub fn router() -> Router<AppState> {
         .route("/results/{screening_id}", get(get_ai_result))
         .route("/results/{screening_id}/factors", get(get_risk_factors))
         .route(
-            "/results/:screening_id/complete",
+            "/results/{screening_id}/complete",
             get(get_complete_screening_data),
         )
         // Run AI Scoring

@@ -68,7 +68,7 @@ pub fn router() -> Router<AppState> {
         // Notice Recipients
         .route("/notices/{id}/recipients", get(list_recipients))
         .route(
-            "/notices/:notice_id/acknowledge/:recipient_id",
+            "/notices/{notice_id}/acknowledge/{recipient_id}",
             post(acknowledge_notice),
         )
         // Compliance Templates
