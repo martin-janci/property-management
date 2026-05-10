@@ -160,9 +160,10 @@ export default function PriceMapPage() {
                   onClick={() => setSelectedId(selectedId === district.id ? null : district.id)}
                   aria-label={district.name}
                 >
-                  <title>
-                    {district.name}: {formatPrice(district.avgPricePerSqm)} / m²
-                  </title>
+                  {/* Single template-string child avoids the SSR/CSR
+                      whitespace-handling mismatch that triggered Next.js's
+                      "hydration error" overlay on first paint. */}
+                  <title>{`${district.name}: ${formatPrice(district.avgPricePerSqm)} / m²`}</title>
                 </path>
               ))}
             </svg>

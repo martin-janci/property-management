@@ -39,6 +39,7 @@ pub struct BackendDedicatedSpec {
     pub container_port: u16, // 8080 (api) or 8081 (reality)
     pub db_url: String,
     pub jwt_secret: String,
+    pub extra_env: Vec<String>,
 }
 
 impl DockerClient {
@@ -308,11 +309,21 @@ impl DockerClient {
             )
             .await;
 
-        let env = vec![
-            format!("DATABASE_URL={}", spec.db_url),
+        // Container needs to reach Postgres via Docker DNS, not host loopback.
+        let container_db_url = spec
+            .db_url
+            .replace("127.0.0.1", "ppt-postgres")
+            .replace("localhost", "ppt-postgres");
+        let mut env = vec![
+            format!("DATABASE_URL={}", container_db_url),
             format!("JWT_SECRET={}", spec.jwt_secret),
             "RUST_LOG=info".to_string(),
+            // Dev mode disables strict env-var checks (PM_CLIENT_SECRET,
+            // TOTP_ENCRYPTION_KEY, INTEGRATION_ENCRYPTION_KEY) that prod
+            // demands but worktree dev doesn't need.
+            "RUST_ENV=development".to_string(),
         ];
+        env.extend(spec.extra_env.iter().cloned());
 
         let port_str = format!("{}/tcp", spec.container_port);
         let mut port_bindings = HashMap::new();
@@ -358,6 +369,21 @@ impl DockerClient {
         self.docker
             .start_container(&create.id, None::<StartContainerOptions<String>>)
             .await?;
+
+        // Attach to the network where ppt-postgres lives so DATABASE_URL using
+        // `ppt-postgres:5432` actually resolves. Idempotent across re-opens —
+        // ensure_network_membership inspects the container first and only
+        // connects when needed (no error-string matching).
+        if let Err(e) = self
+            .ensure_network_membership("ppt-prod", &spec.container_name)
+            .await
+        {
+            tracing::warn!(
+                error = %e,
+                container = %spec.container_name,
+                "failed to attach backend container to ppt-prod network — DB connection will fail"
+            );
+        }
         Ok(create.id)
     }
 

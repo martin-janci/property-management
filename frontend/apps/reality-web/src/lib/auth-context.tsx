@@ -14,6 +14,8 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { clearStoredSession } from './auth-api';
+import { getAuthHeader, getSession } from './auth-token';
 import { getApiBase } from './env';
 
 /** User information from SSO. */
@@ -57,10 +59,45 @@ interface AuthProviderProps {
 
 /** Auth provider component. */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<SsoUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Hydrate optimistically from localStorage so the header doesn't
+  // momentarily render the "Sign in" button between mount and the first
+  // /sso/session fetch. The async checkSession below corrects this if
+  // the stored token has been revoked server-side.
+  const [user, setUser] = useState<SsoUser | null>(() => {
+    const s = getSession();
+    return s ? { user_id: s.user.id, email: s.user.email, name: s.user.name } : null;
+  });
+  // Start `true` only when there's no stored bearer session — that's the
+  // case where consumers (e.g. ProtectedRoute) need to wait for the cookie
+  // /sso/session check before they decide between rendering "Sign in
+  // required" and the gated content. With a stored session we already
+  // have an optimistic user, so loading is effectively done. The
+  // checkSession() below flips this to `false` in its finally.
+  const [isLoading, setIsLoading] = useState(() => getSession() === null);
 
   const checkSession = useCallback(async () => {
+    // Bearer-token path (form-login): /users/me requires Authorization
+    // header which getAuthHeader() reads from localStorage.
+    const stored = getSession();
+    if (stored) {
+      try {
+        const meResp = await fetch(`${getApiBase()}/api/v1/users/me`, {
+          credentials: 'include',
+          headers: { ...getAuthHeader() },
+        });
+        if (meResp.ok) {
+          const me: { id: string; email: string; name: string } = await meResp.json();
+          setUser({ user_id: me.id, email: me.email, name: me.name });
+          setIsLoading(false);
+          return;
+        }
+        // Token rejected — wipe localStorage; fall through to cookie path.
+        clearStoredSession();
+      } catch {
+        // Network blip — keep optimistic user; cookie path may still work.
+      }
+    }
+
     try {
       const response = await fetch(`${getApiBase()}/api/v1/sso/session`, {
         credentials: 'include',
@@ -89,30 +126,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [checkSession]);
 
   const login = useCallback((redirectUri?: string) => {
+    // Send the user to the email/password form. The OAuth/SSO redirect
+    // (`${getApiBase()}/api/v1/sso/login`) is left in place at the
+    // backend, but the consent UI on api-server hasn't shipped — hitting
+    // /oauth/authorize ends up on a JSON consent page instead of a real
+    // login screen. The form-login flow at /[locale]/auth/login posts to
+    // /api/v1/users/login, persists the bearer token via auth-token, and
+    // returns to redirectUri (defaulting to /).
+    //
+    // Locale is taken from the current URL's first segment so the user
+    // stays in their language; falls back to /sk because that's the
+    // primary audience and matches the route layout default.
+    const locale = (() => {
+      const seg = window.location.pathname.split('/').filter(Boolean)[0];
+      return /^[a-z]{2}$/.test(seg ?? '') ? seg : 'sk';
+    })();
     const params = new URLSearchParams();
     if (redirectUri) {
-      params.set('redirect_uri', redirectUri);
+      params.set('redirect', redirectUri);
     }
-    // Generate CSRF state token
-    const state = crypto.randomUUID();
-    sessionStorage.setItem('sso_state', state);
-    params.set('state', state);
-
-    window.location.href = `${getApiBase()}/api/v1/sso/login?${params.toString()}`;
+    const qs = params.toString();
+    window.location.href = `/${locale}/auth/login${qs ? `?${qs}` : ''}`;
   }, []);
 
   const logout = useCallback(async () => {
+    // Best-effort: tell the server (covers both bearer + cookie sessions).
     try {
       await fetch(`${getApiBase()}/api/v1/sso/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers: { ...getAuthHeader() },
       });
-    } finally {
-      setUser(null);
+    } catch {
+      // Ignore — local cleanup must still happen.
     }
+    // Always clear local state regardless of network outcome.
+    clearStoredSession();
+    setUser(null);
   }, []);
 
   const refreshSession = useCallback(async () => {
+    // Bearer-token path first — covers form-login, where the page just
+    // wrote a new token to localStorage and needs the header to update
+    // without a hard reload.
+    const stored = getSession();
+    if (stored) {
+      try {
+        const meResp = await fetch(`${getApiBase()}/api/v1/users/me`, {
+          credentials: 'include',
+          headers: { ...getAuthHeader() },
+        });
+        if (meResp.ok) {
+          const me: { id: string; email: string; name: string } = await meResp.json();
+          setUser({ user_id: me.id, email: me.email, name: me.name });
+          return;
+        }
+        // Definitive auth failure — drop the stale token so we don't keep
+        // sending it on subsequent fetches. Any other status (5xx, etc.)
+        // is treated as transient: leave optimistic state intact and try
+        // the cookie path below.
+        if (meResp.status === 401 || meResp.status === 403) {
+          clearStoredSession();
+          setUser(null);
+        }
+      } catch {
+        // Network blip — fall through to cookie path; keep optimistic state.
+      }
+    }
+
+    // Cookie/SSO path (kept intact for the eventual end-to-end OAuth flow).
     try {
       const response = await fetch(`${getApiBase()}/api/v1/sso/refresh`, {
         method: 'POST',

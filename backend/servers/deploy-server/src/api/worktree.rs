@@ -266,53 +266,75 @@ pub async fn open_handler(
                 // Stored row exists but no db_name (e.g. previous attempt was Shared mode
                 // or crashed before the dedicated branch ran). Create fresh.
                 let db = format!("{}{}", svc.postgres.user_db_prefix, name);
+                tracing::info!(name = %name, db = %db, "creating dedicated DB");
                 svc.postgres.create_from_template(&db).await?;
+                tracing::info!(name = %name, db = %db, "DB created");
                 db
             }
         } else {
             let db = format!("{}{}", svc.postgres.user_db_prefix, name);
+            tracing::info!(name = %name, db = %db, "creating dedicated DB (fresh path)");
             svc.postgres.create_from_template(&db).await?;
+            tracing::info!(name = %name, db = %db, "DB created (fresh path)");
             db
         };
         db_name = Some(db.clone());
 
-        // Dispatch GHA workflow (skip if resuming — images cached from previous open).
-        // Also skip if this is an idempotent retry against an existing row whose
-        // previous open already dispatched a build — re-dispatching is fine but
-        // wastes runner minutes. The polling logic still picks up the latest run.
+        // Dispatch the docker-build.yml workflow (skip if resuming — images
+        // cached from previous open). The handler is intentionally non-blocking:
+        // the fast-path below short-circuits to `completed=true` if a green run
+        // already exists for the branch; otherwise we dispatch and immediately
+        // return `backend_status="building"` so the operator (or pmctl) can
+        // re-invoke `open` once GHA finishes pushing images. We never poll the
+        // workflow ourselves — that keeps the deploy-server's request path bounded
+        // and the runner-minute usage symmetrical with normal commit-push CI.
         let completed = if resume_db.is_some() {
             true
         } else {
-            svc.gh
-                .dispatch_workflow("docker-build.yml", &req.branch)
-                .await?;
-            let mut completed = false;
-            for _ in 0..60 {
-                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
-                if let Some(run) = svc.gh.latest_run("docker-build.yml", &req.branch).await? {
-                    if run.status == "completed" {
-                        if run.conclusion.as_deref() != Some("success") {
-                            return Err(DeployError::Internal(format!(
-                                "workflow failed: {}",
-                                run.html_url
-                            )));
-                        }
-                        completed = true;
-                        break;
-                    }
+            // Fast-path: check if a successful run already exists for this branch.
+            // If so, skip dispatch + poll entirely — the images are already pushed
+            // to ghcr.io. This makes the open call return in seconds instead of 10
+            // minutes when the build was already done by an earlier dispatch (or
+            // a normal commit-push CI flow).
+            let existing_success = match svc.gh.latest_run("docker-build.yml", &req.branch).await? {
+                Some(r)
+                    if r.status == "completed" && r.conclusion.as_deref() == Some("success") =>
+                {
+                    tracing::info!(
+                        run_id = r.id,
+                        "fast-path: existing success run detected, skipping dispatch+poll"
+                    );
+                    true
                 }
+                Some(r) => {
+                    tracing::info!(run_id = r.id, status = %r.status, conclusion = ?r.conclusion, "fast-path: latest run not success, dispatching new build");
+                    false
+                }
+                None => {
+                    tracing::info!("fast-path: no run found, dispatching first build");
+                    false
+                }
+            };
+            if existing_success {
+                true
+            } else {
+                tracing::info!(branch = %req.branch, "dispatching docker-build.yml");
+                svc.gh
+                    .dispatch_workflow("docker-build.yml", &req.branch)
+                    .await?;
+                tracing::info!(branch = %req.branch, "dispatched, returning building status (caller should retry after GHA completes)");
+                false
             }
-            completed
         };
         if !completed {
-            // Build still in progress after the polling window. The Worktree row
-            // is persisted below with db_name set; the caller should re-invoke
-            // `open` once the build completes — that retry hits the idempotent
-            // branch above and reuses the existing DB instead of recreating it.
-            // (No background task: keeping the deploy-server stateless on this
-            // path is intentional. A future Phase 6+ improvement could spawn a
-            // best-effort follow-up that finishes the deploy when the build
-            // signals completion.)
+            // Build still running. The Worktree row is persisted below with
+            // db_name set; the caller should re-invoke `open` once the GHA
+            // workflow finishes — that retry hits the idempotent branch above
+            // and reuses the existing DB instead of recreating it.
+            // (No background task and no polling: keeping the deploy-server
+            // stateless on this path is intentional. A future Phase 6+
+            // improvement could spawn a best-effort follow-up that finishes
+            // the deploy when the build signals completion.)
             backend_status = "building".into();
             tracing::info!(
                 name = %name,
@@ -365,24 +387,37 @@ pub async fn open_handler(
             // SSR, broken for any client-side fetch from the browser.
             let host_reality_api = format!("api.wt-{name}.{}", svc.domain_dev_reality);
             let backend_result: Result<()> = async {
-                svc.docker
-                    .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                tracing::info!(container = %api_c, image = %api_image, "starting dedicated api container");
+                svc.docker.run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
                         container_name: api_c.clone(),
                         image: api_image,
                         host_port: api_port,
                         container_port: 8080,
                         db_url: db_url.clone(),
                         jwt_secret: jwt_secret.clone(),
+                        extra_env: vec![],
                     })
                     .await?;
-                svc.docker
-                    .run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
+                tracing::info!(container = %reality_c, image = %reality_image, "starting dedicated reality container");
+                let reality_cors_origins = format!(
+                    "https://{host},https://{host_ppt},http://localhost:3000,http://localhost:3001",
+                    host = host_reality_for_env,
+                    host_ppt = host_ppt_for_env,
+                );
+                svc.docker.run_backend_dedicated(&crate::infra::BackendDedicatedSpec {
                         container_name: reality_c.clone(),
                         image: reality_image,
                         host_port: reality_port,
                         container_port: 8081,
                         db_url,
                         jwt_secret,
+                        extra_env: vec![
+                            format!("CORS_ALLOWED_ORIGINS={}", reality_cors_origins),
+                            // PM_API_URL points reality-server at the dedicated
+                            // api-server for SSO. Mirrors blue_green prod path.
+                            format!("PM_API_URL=https://{}", host_api),
+                            format!("SSO_CALLBACK_URL=https://{}/api/v1/sso/callback", host_reality_for_env),
+                        ],
                     })
                     .await?;
 
@@ -393,16 +428,16 @@ pub async fn open_handler(
                     .docker
                     .bridge_ip_with_retry(&api_c, BRIDGE_IP_TIMEOUT)
                     .await?;
-                svc.caddy
-                    .register_route(&host_api, &format!("{api_bridge_ip}:8080"))
-                    .await?;
+                tracing::info!(host = %host_api, ip = %api_bridge_ip, "registering api Caddy route");
+                svc.caddy.register_route(&host_api, &format!("{api_bridge_ip}:8080")).await?;
+                tracing::info!(host = %host_api, "api Caddy route registered");
                 let reality_bridge_ip = svc
                     .docker
                     .bridge_ip_with_retry(&reality_c, BRIDGE_IP_TIMEOUT)
                     .await?;
-                svc.caddy
-                    .register_route(&host_reality_api, &format!("{reality_bridge_ip}:8081"))
-                    .await?;
+                tracing::info!(host = %host_reality_api, ip = %reality_bridge_ip, "registering reality_api Caddy route");
+                svc.caddy.register_route(&host_reality_api, &format!("{reality_bridge_ip}:8081")).await?;
+                tracing::info!(host = %host_reality_api, "reality_api Caddy route registered");
                 Ok(())
             }
             .await;

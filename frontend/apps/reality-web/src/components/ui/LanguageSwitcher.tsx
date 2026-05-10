@@ -18,12 +18,12 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <div className="relative inline-block">
+    <div className="lang-wrap">
       <select
         value={locale}
         onChange={(e) => handleLocaleChange(e.target.value as Locale)}
         disabled={isPending}
-        className="appearance-none bg-transparent border border-gray-300 rounded-md px-3 py-1.5 pr-8 text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        className="lang-select"
         aria-label="Select language"
       >
         {locales.map((loc) => (
@@ -32,16 +32,60 @@ export function LanguageSwitcher() {
           </option>
         ))}
       </select>
-      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-        <svg
-          className="h-4 w-4 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
+      {/* Width/height attributes are explicit so the chevron stays at 16px
+          even before any stylesheet has loaded — without them the SVG
+          expands to ~300px when CSS is still in flight, which was the
+          dominant CLS contributor on the homepage (single 0.92 shift). */}
+      <svg
+        className="lang-chevron"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+      <style jsx>{`
+        .lang-wrap {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+        }
+        .lang-select {
+          appearance: none;
+          -webkit-appearance: none;
+          background: transparent;
+          border: 1px solid var(--ppt-border-default);
+          border-radius: var(--ppt-radius-md);
+          padding: 6px 28px 6px 12px;
+          font-size: var(--ppt-font-size-sm);
+          font-family: var(--ppt-font-family);
+          color: var(--ppt-fg-secondary);
+          cursor: pointer;
+          transition: border-color var(--ppt-transition-fast);
+        }
+        .lang-select:hover {
+          border-color: var(--ppt-border-strong);
+        }
+        .lang-select:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        .lang-select:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .lang-chevron {
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--ppt-fg-muted);
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 }

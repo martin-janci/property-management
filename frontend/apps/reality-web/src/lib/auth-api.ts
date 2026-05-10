@@ -11,6 +11,7 @@
  * helpers throw an informative `AuthApiError` until the backend ships.
  */
 
+import { clearSession, getAuthHeader, setSession } from './auth-token';
 import { getApiBase } from './env';
 
 export class AuthApiError extends Error {
@@ -33,8 +34,14 @@ async function requestJson<T>(method: string, path: string, body?: unknown): Pro
   try {
     response = await fetch(`${getApiBase()}${path}`, {
       method,
+      // credentials:'include' kept for the cookie/SSO path; bearer header is
+      // additive — reality-server's extractor checks Authorization first then
+      // falls back to cookie, so both flows can coexist.
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
@@ -82,7 +89,20 @@ export interface LoginResponse {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  return postJson<LoginResponse>('/api/v1/users/login', { email, password });
+  const result = await postJson<LoginResponse>('/api/v1/users/login', { email, password });
+  // Persist so the auth-context picks up the user on next render and so
+  // subsequent fetch() calls include the bearer token via getAuthHeader().
+  setSession({
+    token: result.token,
+    user: result.user,
+    expiresAt: result.expires_at,
+  });
+  return result;
+}
+
+/** Clears the stored portal session. Used by auth-context.logout(). */
+export function clearStoredSession(): void {
+  clearSession();
 }
 
 /**
