@@ -161,7 +161,46 @@
     "emptyTitle": "Derzeit haben wir keine empfohlenen Angebote",
     "emptyBody": "Täglich kommen neue Inserate hinzu. Sehen Sie sich alle aktuellen Angebote an oder fügen Sie Ihr eigenes Inserat kostenlos hinzu.",
     "emptyBrowseAll": "Alle Angebote durchsuchen",
-    "emptyAddListing": "Eigenes Inserat aufgeben"
+    "emptyAddListing": "Eigenes Inserat aufgeben",
+    "neighbourhoods": {
+      "title": "Beliebte Stadtteile",
+      "subtitle": "Preis, Verfügbarkeit und Markttrend auf einen Blick.",
+      "exploreMap": "Karte erkunden",
+      "browse": "Angebote ansehen",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Verifizierte Makler",
+        "desc": "ID-geprüft mit 30-Tage Antwortgarantie"
+      },
+      "passport": {
+        "label": "Gebäudepass",
+        "desc": "Energie · Fondsstand · gemeldete Mängel"
+      },
+      "history": {
+        "label": "Preisverlauf",
+        "desc": "Jede Änderung im Inserat datiert"
+      },
+      "mortgage": {
+        "label": "Hypothekenvorabgenehmigung",
+        "desc": "In-App, mit unseren Partnerbanken"
+      }
+    },
+    "cta": {
+      "title": "Verkaufen Sie Ihre Immobilie?",
+      "body": "In fünf Minuten inserieren, kostenlosen Gebäudepass erhalten und 210.000 verifizierte Käufer pro Woche erreichen.",
+      "learnMore": "Mehr erfahren",
+      "startListing": "Inserat starten"
+    }
   },
   "listing": {
     "additionalInfo": "Zusätzliche Informationen",

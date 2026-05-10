@@ -161,7 +161,46 @@
     "emptyTitle": "Jelenleg nincsenek kiemelt hirdetéseink",
     "emptyBody": "Naponta új ajánlatok érkeznek. Tekintse meg az összes aktuális hirdetést, vagy adja fel saját hirdetését ingyen.",
     "emptyBrowseAll": "Összes hirdetés böngészése",
-    "emptyAddListing": "Saját hirdetés feladása"
+    "emptyAddListing": "Saját hirdetés feladása",
+    "neighbourhoods": {
+      "title": "Népszerű kerületek",
+      "subtitle": "Ár, elérhetőség és piaci trend egy pillantásra.",
+      "exploreMap": "Térkép felfedezése",
+      "browse": "Hirdetések böngészése",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Igazolt ügynökök",
+        "desc": "Személyazonosság ellenőrzött, 30 napos válasz SLA"
+      },
+      "passport": {
+        "label": "Épület-passport",
+        "desc": "Energia · alap egyenleg · hibák közzétéve"
+      },
+      "history": {
+        "label": "Árváltozások",
+        "desc": "Minden változás dátummal a hirdetésen"
+      },
+      "mortgage": {
+        "label": "Előminősített hitel",
+        "desc": "Az alkalmazásban, partnerbankokkal"
+      }
+    },
+    "cta": {
+      "title": "Eladja az ingatlanát?",
+      "body": "Hirdesse meg 5 perc alatt, kapjon ingyenes épület-passportot, és érje el 210 000 ellenőrzött vevőt hetente.",
+      "learnMore": "Tudjon meg többet",
+      "startListing": "Hirdetés indítása"
+    }
   },
   "listing": {
     "additionalInfo": "További információk",
