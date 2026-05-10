@@ -55,32 +55,49 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        {/* Logo */}
-        <Link href="/" className="logo">
-          Reality Portal
+        {/* Logo — brand square + 2-tone wordmark. The square uses the same
+            brand-600 the wordmark uses; the second word ("Portal") drops to
+            fg-primary weight 600 so the brand sits visually first. Matches
+            the design's `.logo` rule from colors_and_type.css. */}
+        <Link href="/" className="logo" aria-label="Reality Portal">
+          <span className="logo-mark" aria-hidden="true" />
+          <span className="logo-text">
+            Reality<em className="logo-text-em">Portal</em>
+          </span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation — Buy / Rent / Journal / Help. Sell is
+            represented by the "List your property" primary CTA on the right
+            (a separate /for-sellers info page would be where the design's
+            "Sell" nav link points; we don't have one yet, so the CTA is the
+            single seller affordance). */}
         <nav className="nav-desktop">
-          {/* Sale/Rent are quick-filters — no active state (query params
-              unavailable in the header without Suspense; the tab bar on
-              the listings page is the authoritative selection indicator) */}
           <Link href="/listings?transactionType=sale" className="nav-link">
-            {t('search.sale')}
+            {t('search.buy')}
           </Link>
           <Link href="/listings?transactionType=rent" className="nav-link">
             {t('search.rent')}
           </Link>
           <Link
-            href="/listings"
-            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
+            href="/journal"
+            className={`nav-link ${isActive('/journal') ? 'nav-link-active' : ''}`}
           >
-            {t('nav.allListings')}
+            {t('nav.journal')}
+          </Link>
+          <Link href="/help" className={`nav-link ${isActive('/help') ? 'nav-link-active' : ''}`}>
+            {t('nav.help')}
           </Link>
         </nav>
 
         {/* Auth Section */}
         <div className="auth-section">
+          {/* Seller CTA — shown on >=768px only (mobile menu has its own
+              entry). Primary-color filled so it reads as the main action
+              even alongside the auth slot. */}
+          <Link href="/sell" className="list-cta">
+            {t('nav.listProperty')}
+          </Link>
+
           <LanguageSwitcher />
 
           {/*
@@ -205,6 +222,23 @@ export function Header() {
           >
             {t('nav.allListings')}
           </Link>
+          <Link
+            href="/journal"
+            className="nav-link-mobile"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            {t('nav.journal')}
+          </Link>
+          <Link href="/help" className="nav-link-mobile" onClick={() => setShowMobileMenu(false)}>
+            {t('nav.help')}
+          </Link>
+          <Link
+            href="/sell"
+            className="nav-link-mobile sell-cta-mobile"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            {t('nav.listProperty')}
+          </Link>
           {isAuthenticated && (
             <>
               <Link
@@ -253,12 +287,36 @@ export function Header() {
         }
 
         .logo {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+        .logo:focus-visible {
+          outline: none;
+          border-radius: var(--ppt-radius-md);
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        .logo-mark {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: var(--ppt-color-primary);
+          flex-shrink: 0;
+        }
+        .logo-text {
           font-size: 18px;
           font-weight: 800;
           color: var(--ppt-color-primary);
-          text-decoration: none;
           letter-spacing: -0.02em;
-          flex-shrink: 0;
+          line-height: 1;
+        }
+        .logo-text-em {
+          font-style: normal;
+          color: var(--ppt-fg-primary);
+          font-weight: 600;
+          margin-left: 2px;
         }
 
         .nav-desktop {
@@ -299,6 +357,35 @@ export function Header() {
           align-items: center;
           gap: 8px;
           margin-left: auto;
+        }
+
+        /* Primary "List your property" CTA in the header. Same blue as the
+           brand square and the primary button used elsewhere; hidden on
+           narrow viewports (mobile menu has its own /sell entry). */
+        .auth-section :global(.list-cta) {
+          display: none;
+          padding: 8px 14px;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent, #fff);
+          border-radius: var(--ppt-radius-md);
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-semibold);
+          text-decoration: none;
+          transition: background var(--ppt-transition-fast);
+          white-space: nowrap;
+        }
+        .auth-section :global(.list-cta):hover {
+          background: var(--ppt-color-primary-hover);
+        }
+        .auth-section :global(.list-cta):focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        @media (min-width: 1024px) {
+          .auth-section :global(.list-cta) {
+            display: inline-flex;
+            align-items: center;
+          }
         }
 
         /* Reserve a constant width so the swap between the sign-in button
@@ -516,6 +603,17 @@ export function Header() {
 
         .nav-link-mobile:last-child {
           border-bottom: none;
+        }
+
+        /* Highlight the seller CTA inside the mobile menu so it doesn't blend
+           with the other nav rows. Keeps the same border-row look but tints
+           the text and adds the same arrow affordance the design uses. */
+        .nav-link-mobile.sell-cta-mobile {
+          color: var(--ppt-color-primary);
+          font-weight: var(--ppt-font-weight-semibold);
+        }
+        .nav-link-mobile.sell-cta-mobile::after {
+          content: ' →';
         }
       `}</style>
     </header>

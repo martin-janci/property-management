@@ -1,6 +1,5 @@
 import { Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
@@ -89,6 +88,25 @@ export default async function LocaleLayout({ children, params }: Props) {
     >
       <head>
         {/*
+         * Color-scheme bootstrap MUST be the first thing in <head> so it runs
+         * before any layout paint. A previous version put this in <body> with
+         * Next.js's <Script strategy="beforeInteractive"> which sounds right
+         * but in the App Router that strategy still queues the script after
+         * the framework's hydration boundary — first paint had no theme attr
+         * set and dark-mode users saw a white flash on every navigation.
+         * Plain inline <script> with `dangerouslySetInnerHTML` runs eagerly
+         * during HTML parse, which is what we actually want here.
+         */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: bootstrap must inline
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var s=localStorage.getItem('ppt-color-scheme');" +
+              "var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');" +
+              "document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();",
+          }}
+        />
+        {/*
          * Runtime env config: the /env.js route handler (src/app/env.js/route.ts)
          * serves window.__ENV__ dynamically at request time, so the same built
          * image can be deployed to different environments without a rebuild.
@@ -100,10 +118,6 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script src="/env.js" />
       </head>
       <body>
-        {/* Sets data-color-scheme before first paint to avoid flash of wrong theme */}
-        <Script id="color-scheme-init" strategy="beforeInteractive">{`
-(function(){try{var s=localStorage.getItem('ppt-color-scheme');var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();
-        `}</Script>
         {/* StyledJsxRegistry must wrap any subtree that uses `<style jsx>`
             so the styles get streamed into the SSR HTML rather than
             injected post-hydration (which caused a ~0.92 CLS shift). */}

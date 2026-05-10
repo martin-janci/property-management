@@ -57,3 +57,58 @@ export function loadSnapshot<T = unknown>(): T | null {
     return null;
   }
 }
+
+/**
+ * Color-scheme preference shared with the inline bootstrap script in
+ * apps/reality-web/src/app/[locale]/layout.tsx — both read/write the same
+ * `ppt-color-scheme` localStorage key so a toggle in the DevPanel is picked
+ * up on the next reload (and immediately via the `applyColorScheme` helper
+ * below, which patches the live document's data-color-scheme attribute).
+ */
+export type ColorScheme = 'light' | 'dark' | 'system';
+
+const SCHEME_KEY = 'ppt-color-scheme';
+
+export function isColorScheme(v: unknown): v is ColorScheme {
+  return v === 'light' || v === 'dark' || v === 'system';
+}
+
+/**
+ * Read the user's stored preference. `null` (not 'system') means "no
+ * explicit choice yet" so callers can distinguish the default-system case
+ * from the explicit-system case for UI affordances.
+ */
+export function getColorScheme(): ColorScheme | null {
+  try {
+    const v = localStorage.getItem(SCHEME_KEY);
+    if (isColorScheme(v)) return v;
+  } catch {}
+  return null;
+}
+
+export function setColorScheme(scheme: ColorScheme): void {
+  try {
+    if (scheme === 'system') {
+      // 'system' is encoded as "no preference" so the bootstrap script
+      // falls back to `prefers-color-scheme` on next load.
+      localStorage.removeItem(SCHEME_KEY);
+    } else {
+      localStorage.setItem(SCHEME_KEY, scheme);
+    }
+  } catch {}
+}
+
+/**
+ * Apply a color scheme to `<html>` immediately (no reload). Mirrors what
+ * the inline bootstrap script does at first paint.
+ */
+export function applyColorScheme(scheme: ColorScheme): void {
+  if (typeof document === 'undefined') return;
+  const resolved =
+    scheme === 'system'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : scheme;
+  document.documentElement.setAttribute('data-color-scheme', resolved);
+}

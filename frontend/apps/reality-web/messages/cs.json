@@ -266,7 +266,11 @@
     "home": "Domů",
     "myInquiries": "Moje dotazy",
     "profile": "Profil",
-    "savedSearches": "Uložená vyhledávání"
+    "savedSearches": "Uložená vyhledávání",
+    "journal": "Magazín",
+    "help": "Nápověda",
+    "listProperty": "Přidat inzerát",
+    "sell": "Prodej"
   },
   "pages": {
     "about": {

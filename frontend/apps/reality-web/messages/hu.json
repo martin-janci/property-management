@@ -266,7 +266,11 @@
     "home": "Főoldal",
     "myInquiries": "Érdeklődéseim",
     "profile": "Profil",
-    "savedSearches": "Mentett keresések"
+    "savedSearches": "Mentett keresések",
+    "journal": "Magazin",
+    "help": "Súgó",
+    "listProperty": "Hirdetés feladása",
+    "sell": "Eladás"
   },
   "pages": {
     "about": {

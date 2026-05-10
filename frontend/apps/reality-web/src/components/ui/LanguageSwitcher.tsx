@@ -1,7 +1,18 @@
 'use client';
 
+/**
+ * LanguageSwitcher — custom popover dropdown.
+ *
+ * Replaces the previous native <select>, which (a) looked OS-dependent
+ * (Windows vs macOS rendering wildly different) and (b) couldn't be themed
+ * to match the design's pill-on-surface look. This is a self-contained
+ * popover with a globe-icon trigger; the menu opens below-right, lists all
+ * six locales with their flag and full name, and closes on outside click /
+ * Escape / locale selection.
+ */
+
 import { useLocale } from 'next-intl';
-import { useTransition } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type Locale, localeFlags, localeNames, locales } from '../../i18n';
 import { usePathname, useRouter } from '../../i18n/routing';
 
@@ -9,81 +20,211 @@ export function LanguageSwitcher() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
-  const handleLocaleChange = (newLocale: Locale) => {
-    startTransition(() => {
-      router.replace(pathname, { locale: newLocale });
-    });
+  // Close on outside click + Escape (mouse + keyboard, no library)
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const choose = (next: Locale) => {
+    setOpen(false);
+    if (next === locale) return;
+    router.replace(pathname, { locale: next });
   };
 
   return (
-    <div className="lang-wrap">
-      <select
-        value={locale}
-        onChange={(e) => handleLocaleChange(e.target.value as Locale)}
-        disabled={isPending}
-        className="lang-select"
-        aria-label="Select language"
+    <div className="lang-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="lang-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Language: ${localeNames[locale]}`}
+        onClick={() => setOpen((v) => !v)}
       >
-        {locales.map((loc) => (
-          <option key={loc} value={loc}>
-            {localeFlags[loc]} {localeNames[loc]}
-          </option>
-        ))}
-      </select>
-      {/* Width/height attributes are explicit so the chevron stays at 16px
-          even before any stylesheet has loaded — without them the SVG
-          expands to ~300px when CSS is still in flight, which was the
-          dominant CLS contributor on the homepage (single 0.92 shift). */}
-      <svg
-        className="lang-chevron"
-        width="16"
-        height="16"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
+        {/* Globe icon — 16px, stroke 2 (Feather/Lucide style). Explicit
+            width/height attributes keep it sized even before CSS arrives. */}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+        <span className="code">{locale.toUpperCase()}</span>
+        <svg
+          className="caret"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="lang-menu" role="listbox" aria-label="Select language">
+          {locales.map((loc) => (
+            <li key={loc}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={loc === locale}
+                className={`lang-item ${loc === locale ? 'active' : ''}`}
+                onClick={() => choose(loc)}
+              >
+                <span className="flag" aria-hidden="true">
+                  {localeFlags[loc]}
+                </span>
+                <span className="name">{localeNames[loc]}</span>
+                {loc === locale && (
+                  <svg
+                    className="check"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <style jsx>{`
         .lang-wrap {
           position: relative;
           display: inline-flex;
           align-items: center;
         }
-        .lang-select {
-          appearance: none;
-          -webkit-appearance: none;
+        .lang-trigger {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 10px;
           background: transparent;
           border: 1px solid var(--ppt-border-default);
           border-radius: var(--ppt-radius-md);
-          padding: 6px 28px 6px 12px;
-          font-size: var(--ppt-font-size-sm);
-          font-family: var(--ppt-font-family);
           color: var(--ppt-fg-secondary);
+          font-family: var(--ppt-font-family);
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-medium);
           cursor: pointer;
-          transition: border-color var(--ppt-transition-fast);
+          transition: background var(--ppt-transition-fast),
+            border-color var(--ppt-transition-fast);
         }
-        .lang-select:hover {
+        .lang-trigger:hover {
+          background: var(--ppt-bg-subtle);
           border-color: var(--ppt-border-strong);
         }
-        .lang-select:focus-visible {
+        .lang-trigger:focus-visible {
           outline: none;
           box-shadow: var(--ppt-focus-ring-shadow);
         }
-        .lang-select:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
+        .lang-trigger[aria-expanded='true'] {
+          background: var(--ppt-bg-subtle);
+          border-color: var(--ppt-border-strong);
         }
-        .lang-chevron {
+        .code {
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 0.02em;
+        }
+        .caret {
+          opacity: 0.6;
+          transition: transform var(--ppt-transition-fast);
+        }
+        .lang-trigger[aria-expanded='true'] .caret {
+          transform: rotate(180deg);
+        }
+        .lang-menu {
           position: absolute;
-          right: 8px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--ppt-fg-muted);
-          pointer-events: none;
+          top: calc(100% + 6px);
+          right: 0;
+          min-width: 200px;
+          padding: 4px;
+          margin: 0;
+          list-style: none;
+          background: var(--ppt-bg-elevated);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: var(--ppt-radius-lg);
+          box-shadow: var(--ppt-shadow-popover, 0 8px 24px rgba(0, 0, 0, 0.12));
+          z-index: var(--ppt-z-dropdown, 1000);
+        }
+        .lang-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          padding: 8px 10px;
+          background: transparent;
+          border: none;
+          border-radius: var(--ppt-radius-sm);
+          cursor: pointer;
+          font-family: var(--ppt-font-family);
+          font-size: var(--ppt-font-size-sm);
+          color: var(--ppt-fg-secondary);
+          text-align: left;
+          transition: background var(--ppt-transition-fast);
+        }
+        .lang-item:hover {
+          background: var(--ppt-bg-subtle);
+        }
+        .lang-item.active {
+          color: var(--ppt-color-primary);
+          font-weight: var(--ppt-font-weight-semibold);
+        }
+        .lang-item:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        .flag {
+          font-size: 16px;
+          line-height: 1;
+        }
+        .name {
+          flex: 1;
+        }
+        .check {
+          color: var(--ppt-color-primary);
+          flex-shrink: 0;
         }
       `}</style>
     </div>

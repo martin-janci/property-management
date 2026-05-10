@@ -266,7 +266,11 @@
     "home": "Startseite",
     "myInquiries": "Meine Anfragen",
     "profile": "Profil",
-    "savedSearches": "Gespeicherte Suchen"
+    "savedSearches": "Gespeicherte Suchen",
+    "journal": "Magazin",
+    "help": "Hilfe",
+    "listProperty": "Inserat aufgeben",
+    "sell": "Verkauf"
   },
   "pages": {
     "about": {

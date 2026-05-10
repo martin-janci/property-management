@@ -67,17 +67,28 @@ function inferSiteUrlFromHost(host: string, protocol: string): string | null {
  */
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
-    // 1) Explicit injection via /env.js wins — used by dedicated worktrees to
-    //    point at api.wt-<name>.dev.rlt.sk (not the prod api.rlt.sk).
-    if (window.__ENV__?.NEXT_PUBLIC_API_URL) {
-      return window.__ENV__.NEXT_PUBLIC_API_URL;
+    const envUrl = window.__ENV__?.NEXT_PUBLIC_API_URL;
+    const onWorktree = WORKTREE_HOST_RE.test(window.location.hostname);
+
+    if (envUrl) {
+      // Distinguish dedicated vs shared worktree backends. The deploy-server
+      // sets NEXT_PUBLIC_API_URL=https://api.rlt.sk on shared-mode worktrees
+      // (which is correct for the build but wrong for the browser — prod's
+      // CORS allow-list rejects wt-* origins). When we're on a worktree host
+      // and env points at a non-dedicated backend, prefer the relative-URL
+      // proxy so next.config.js's rewrite handles CORS server-side.
+      try {
+        const envHost = new URL(envUrl).hostname;
+        if (envHost.startsWith('api.wt-')) return envUrl; // dedicated
+        if (onWorktree) return ''; // shared worktree → proxy
+        return envUrl;
+      } catch {
+        // Malformed env value — ignore and fall through.
+      }
     }
-    // 2) Shared-mode worktrees with no env injection: prefer relative URLs so
-    //    the next.config.js rewrite proxies to api.rlt.sk and the browser
-    //    sees same-origin (no CORS preflight).
-    if (WORKTREE_HOST_RE.test(window.location.hostname)) {
-      return '';
-    }
+
+    if (onWorktree) return '';
+
     const inferred = inferApiBaseFromHost(window.location.hostname);
     if (inferred) return inferred;
   }

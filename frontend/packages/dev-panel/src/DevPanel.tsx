@@ -1,7 +1,17 @@
 // frontend/packages/dev-panel/src/DevPanel.tsx
 import type React from 'react';
 import { useState } from 'react';
-import { type ApiMode, getMode, isApiMode, setMode } from './store';
+import {
+  type ApiMode,
+  applyColorScheme,
+  type ColorScheme,
+  getColorScheme,
+  getMode,
+  isApiMode,
+  isColorScheme,
+  setColorScheme,
+  setMode,
+} from './store';
 
 export interface DevPanelProps {
   defaultMode: ApiMode;
@@ -17,11 +27,23 @@ export const DevPanel: React.FC<DevPanelProps> = ({
   onSnapshotState,
 }) => {
   const [mode, setLocalMode] = useState<ApiMode>(() => getMode(defaultMode));
-  const apply = (m: ApiMode) => {
+  // null = no explicit choice (== 'system' fallback). We render the radio as
+  // 'system' in that case but keep the distinction in storage so the inline
+  // bootstrap can fall through to `prefers-color-scheme` cleanly.
+  const [scheme, setLocalScheme] = useState<ColorScheme>(() => getColorScheme() ?? 'system');
+
+  const applyMode = (m: ApiMode) => {
     setMode(m);
     setLocalMode(m);
     onModeChange(m);
   };
+
+  const applyScheme = (s: ColorScheme) => {
+    setColorScheme(s);
+    setLocalScheme(s);
+    applyColorScheme(s);
+  };
+
   return (
     <div
       style={{
@@ -35,7 +57,10 @@ export const DevPanel: React.FC<DevPanelProps> = ({
         borderRadius: 6,
         fontFamily: 'monospace',
         fontSize: 12,
-        opacity: 0.85,
+        opacity: 0.9,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
       }}
     >
       <div>
@@ -45,14 +70,8 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           aria-label="API mode (local, worktree, or mock)"
           value={mode}
           onChange={(e) => {
-            // Defense in depth: a tampered DOM (devtools-edit, future option
-            // added to one place but not another, etc.) could deliver a value
-            // that isn't a valid ApiMode. Validate before persisting to
-            // localStorage and notifying the parent.
             const next = e.target.value;
-            if (isApiMode(next)) {
-              apply(next);
-            }
+            if (isApiMode(next)) applyMode(next);
           }}
         >
           <option value="local">local</option>
@@ -60,6 +79,24 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           <option value="mock">mock</option>
         </select>
       </div>
+
+      <div>
+        <label htmlFor="ppt-dev-panel-scheme">Theme:&nbsp;</label>
+        <select
+          id="ppt-dev-panel-scheme"
+          aria-label="Color scheme (light, dark, or system)"
+          value={scheme}
+          onChange={(e) => {
+            const next = e.target.value;
+            if (isColorScheme(next)) applyScheme(next);
+          }}
+        >
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+          <option value="system">system</option>
+        </select>
+      </div>
+
       {mode === 'mock' && onReseedMock && (
         <button type="button" onClick={onReseedMock} style={{ marginTop: 4 }}>
           Re-seed mock

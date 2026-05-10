@@ -286,7 +286,7 @@ export function ListingCard({
         }
 
         .favorite-button:hover {
-          background: #fff;
+          background: var(--ppt-bg-surface);
           color: var(--ppt-color-danger);
         }
 

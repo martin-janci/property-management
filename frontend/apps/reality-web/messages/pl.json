@@ -266,7 +266,11 @@
     "home": "Strona główna",
     "myInquiries": "Moje zapytania",
     "profile": "Profil",
-    "savedSearches": "Zapisane wyszukiwania"
+    "savedSearches": "Zapisane wyszukiwania",
+    "journal": "Magazyn",
+    "help": "Pomoc",
+    "listProperty": "Dodaj ogłoszenie",
+    "sell": "Sprzedaż"
   },
   "pages": {
     "about": {
