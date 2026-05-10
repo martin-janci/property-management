@@ -22,18 +22,18 @@ repository = "https://github.com/hanibalsk/property-management"
 tokio = { version = "1.35", features = ["full"] }
 
 # Web framework
-axum = { version = "0.7", features = ["macros"] }
-axum-extra = { version = "0.9", features = ["typed-header", "multipart"] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "trace", "compression-gzip"] }
+axum = { version = "0.8", features = ["macros"] }
+axum-extra = { version = "0.12", features = ["typed-header", "multipart"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "compression-gzip"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # OpenAPI
-utoipa = { version = "4.2", features = ["axum_extras", "uuid", "chrono"] }
-utoipa-swagger-ui = { version = "6.0", features = ["axum"] }
+utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
 
 # Validation
 validator = { version = "0.16", features = ["derive"] }
@@ -60,8 +60,8 @@ rand = "0.10"
 hex = "0.4"
 
 # Crypto
-sha2 = "0.10"
-hmac = "0.12"
+sha2 = "0.11"
+hmac = "0.13"
 base64 = "0.21"
 
 # URL encoding
@@ -87,7 +87,7 @@ aws-sdk-s3 = "1.17"
 aws-credential-types = "1.1"
 
 # Redis (Epic 103)
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 
 # CLI (Epic 110)
 clap = { version = "4.4", features = ["derive"] }

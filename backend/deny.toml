@@ -74,6 +74,9 @@ allow = [
     # 0BSD (BSD Zero Clause) is OSI-approved and effectively public-domain.
     # Pulled in by `quoted_printable` (transitive of `lettre`).
     "0BSD",
+    # BSL-1.0 (Boost Software License 1.0) is OSI-approved and permissive.
+    # Pulled in by `xxhash-rust` (transitive of `redis`).
+    "BSL-1.0",
 ]
 confidence-threshold = 0.8
 

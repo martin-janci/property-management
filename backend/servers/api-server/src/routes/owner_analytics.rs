@@ -22,30 +22,30 @@ type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/units/:unit_id/valuation", get(get_unit_valuation))
-        .route("/units/:unit_id/valuation", post(create_valuation))
+        .route("/units/{unit_id}/valuation", get(get_unit_valuation))
+        .route("/units/{unit_id}/valuation", post(create_valuation))
         .route(
-            "/valuations/:valuation_id",
+            "/valuations/{valuation_id}",
             get(get_valuation_with_comparables),
         )
         .route(
-            "/valuations/:valuation_id/comparables",
+            "/valuations/{valuation_id}/comparables",
             post(add_comparable),
         )
-        .route("/units/:unit_id/value-history", get(get_value_history))
-        .route("/units/:unit_id/value-trend", get(get_value_trend))
-        .route("/units/:unit_id/roi", post(calculate_roi))
-        .route("/units/:unit_id/cash-flow", get(get_cash_flow_breakdown))
-        .route("/units/:unit_id/roi-dashboard", get(get_roi_dashboard))
+        .route("/units/{unit_id}/value-history", get(get_value_history))
+        .route("/units/{unit_id}/value-trend", get(get_value_trend))
+        .route("/units/{unit_id}/roi", post(calculate_roi))
+        .route("/units/{unit_id}/cash-flow", get(get_cash_flow_breakdown))
+        .route("/units/{unit_id}/roi-dashboard", get(get_roi_dashboard))
         .route("/portfolio", get(get_portfolio_summary))
         .route("/portfolio/compare", post(compare_properties))
         .route("/expense-rules", get(list_auto_approval_rules))
         .route("/expense-rules", post(create_auto_approval_rule))
-        .route("/expense-rules/:id", put(update_auto_approval_rule))
-        .route("/expense-rules/:id", delete(delete_auto_approval_rule))
+        .route("/expense-rules/{id}", put(update_auto_approval_rule))
+        .route("/expense-rules/{id}", delete(delete_auto_approval_rule))
         .route("/expenses/submit", post(submit_expense))
         .route("/expenses", get(list_expense_requests))
-        .route("/expenses/:id/review", post(review_expense))
+        .route("/expenses/{id}/review", post(review_expense))
 }
 
 #[derive(Debug, Deserialize, IntoParams)]

@@ -161,15 +161,15 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_outage))
         .route("/", get(list_outages))
         .route("/active", get(list_active_outages))
-        .route("/:id", get(get_outage))
-        .route("/:id", put(update_outage))
-        .route("/:id", delete(delete_outage))
+        .route("/{id}", get(get_outage))
+        .route("/{id}", put(update_outage))
+        .route("/{id}", delete(delete_outage))
         // Status changes
-        .route("/:id/start", post(start_outage))
-        .route("/:id/resolve", post(resolve_outage))
-        .route("/:id/cancel", post(cancel_outage))
+        .route("/{id}/start", post(start_outage))
+        .route("/{id}/resolve", post(resolve_outage))
+        .route("/{id}/cancel", post(cancel_outage))
         // Read tracking
-        .route("/:id/read", post(mark_read))
+        .route("/{id}/read", post(mark_read))
         // Statistics & Dashboard
         .route("/statistics", get(get_statistics))
         .route("/dashboard", get(get_dashboard))

@@ -20,12 +20,12 @@ pub fn router() -> Router<AppState> {
         .route("/jurisdiction", put(set_jurisdiction))
         .route("/slovak/voting/config", post(configure_slovak_voting))
         .route(
-            "/slovak/voting/config/:building_id",
+            "/slovak/voting/config/{building_id}",
             get(get_slovak_voting_config),
         )
         .route("/slovak/voting/validate", post(validate_slovak_vote))
         .route(
-            "/slovak/voting/minutes/:vote_id",
+            "/slovak/voting/minutes/{vote_id}",
             get(get_slovak_vote_minutes),
         )
         .route(
@@ -43,9 +43,9 @@ pub fn router() -> Router<AppState> {
         .route("/slovak/gdpr/consent/status", get(get_gdpr_consent_status))
         .route("/slovak/gdpr/consent/withdraw", post(withdraw_gdpr_consent))
         .route("/czech/svj/config", post(configure_czech_svj))
-        .route("/czech/svj/config/:building_id", get(get_czech_svj_config))
+        .route("/czech/svj/config/{building_id}", get(get_czech_svj_config))
         .route("/czech/svj/validate", post(validate_czech_vote))
-        .route("/czech/svj/usneseni/:vote_id", get(get_czech_usneseni))
+        .route("/czech/svj/usneseni/{vote_id}", get(get_czech_usneseni))
         .route("/status", get(get_compliance_status))
 }
 

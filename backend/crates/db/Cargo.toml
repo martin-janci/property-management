@@ -19,7 +19,7 @@ utoipa = { workspace = true }
 rust_decimal = { workspace = true }
 rand = { workspace = true }
 hex = { workspace = true }
-sha2 = "0.10"
+sha2 = { workspace = true }
 argon2 = "0.5"
 password-hash = "0.5"
 url = "2.5"

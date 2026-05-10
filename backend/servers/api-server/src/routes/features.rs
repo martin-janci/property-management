@@ -26,14 +26,14 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // Story 109.1 & 109.2: Feature resolution
         .route("/resolved", get(get_resolved_features))
-        .route("/:key/check", get(check_feature))
+        .route("/{key}/check", get(check_feature))
         // Story 109.3: Upgrade options
-        .route("/:key/upgrade-options", get(get_upgrade_options))
+        .route("/{key}/upgrade-options", get(get_upgrade_options))
         // Story 109.1: User preferences
-        .route("/:key/preference", post(set_feature_preference))
+        .route("/{key}/preference", post(set_feature_preference))
         // Story 109.4: Analytics
         .route("/analytics/event", post(log_feature_event))
-        .route("/analytics/:feature_id/stats", get(get_feature_stats))
+        .route("/analytics/{feature_id}/stats", get(get_feature_stats))
 }
 
 // ==================== Types ====================

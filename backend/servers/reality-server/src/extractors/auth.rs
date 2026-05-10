@@ -4,7 +4,6 @@
 //! Uses the SessionService to validate and retrieve session information.
 
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
@@ -23,7 +22,6 @@ pub struct AuthenticatedUser {
     pub name: String,
 }
 
-#[async_trait]
 impl FromRequestParts<AppState> for AuthenticatedUser {
     type Rejection = (StatusCode, &'static str);
 
@@ -55,7 +53,6 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
 #[derive(Debug, Clone)]
 pub struct OptionalAuth(pub Option<AuthenticatedUser>);
 
-#[async_trait]
 impl FromRequestParts<AppState> for OptionalAuth {
     type Rejection = std::convert::Infallible;
 

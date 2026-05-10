@@ -16,9 +16,9 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_favorites))
-        .route("/:listing_id", post(add_favorite))
-        .route("/:listing_id", delete(remove_favorite))
-        .route("/:listing_id/check", get(check_favorite))
+        .route("/{listing_id}", post(add_favorite))
+        .route("/{listing_id}", delete(remove_favorite))
+        .route("/{listing_id}/check", get(check_favorite))
 }
 
 /// Favorites list response.

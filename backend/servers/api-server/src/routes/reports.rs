@@ -208,7 +208,7 @@ pub fn router() -> Router<AppState> {
         .route("/consumption", get(get_consumption_report))
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
-        .route("/export/:job_id/status", get(get_export_job_status))
+        .route("/export/{job_id}/status", get(get_export_job_status))
 }
 
 // ============================================================================

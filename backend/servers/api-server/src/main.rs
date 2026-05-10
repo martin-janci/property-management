@@ -421,7 +421,7 @@ async fn main() -> anyhow::Result<()> {
         )
         // Critical notifications routes (Epic 8A, Story 8A.2)
         .nest(
-            "/api/v1/organizations/:org_id/critical-notifications",
+            "/api/v1/organizations/{org_id}/critical-notifications",
             routes::critical_notifications::router(),
         )
         // MFA routes (Epic 9, Story 9.1)

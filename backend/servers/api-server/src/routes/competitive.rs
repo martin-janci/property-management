@@ -26,72 +26,75 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Virtual Tours (Story 70.1)
-        .route("/listings/:listing_id/tours", get(list_virtual_tours))
-        .route("/listings/:listing_id/tours", post(create_virtual_tour))
+        .route("/listings/{listing_id}/tours", get(list_virtual_tours))
+        .route("/listings/{listing_id}/tours", post(create_virtual_tour))
         .route(
-            "/listings/:listing_id/tours/reorder",
+            "/listings/{listing_id}/tours/reorder",
             post(reorder_virtual_tours),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id",
+            "/listings/{listing_id}/tours/{tour_id}",
             get(get_virtual_tour),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id",
+            "/listings/{listing_id}/tours/{tour_id}",
             put(update_virtual_tour),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id",
+            "/listings/{listing_id}/tours/{tour_id}",
             delete(delete_virtual_tour),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id/hotspots",
+            "/listings/{listing_id}/tours/{tour_id}/hotspots",
             get(list_tour_hotspots),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id/hotspots",
+            "/listings/{listing_id}/tours/{tour_id}/hotspots",
             post(create_tour_hotspot),
         )
         .route(
-            "/listings/:listing_id/tours/:tour_id/hotspots/:hotspot_id",
+            "/listings/{listing_id}/tours/{tour_id}/hotspots/{hotspot_id}",
             delete(delete_tour_hotspot),
         )
         // Dynamic Pricing (Story 70.2)
-        .route("/listings/:listing_id/pricing", get(get_pricing_suggestion))
         .route(
-            "/listings/:listing_id/pricing/analyze",
+            "/listings/{listing_id}/pricing",
+            get(get_pricing_suggestion),
+        )
+        .route(
+            "/listings/{listing_id}/pricing/analyze",
             post(analyze_pricing),
         )
         .route(
-            "/listings/:listing_id/pricing/history",
+            "/listings/{listing_id}/pricing/history",
             get(get_price_history),
         )
         // Neighborhood Insights (Story 70.3)
         .route(
-            "/listings/:listing_id/neighborhood",
+            "/listings/{listing_id}/neighborhood",
             get(get_neighborhood_insights),
         )
         .route(
-            "/listings/:listing_id/neighborhood/refresh",
+            "/listings/{listing_id}/neighborhood/refresh",
             post(refresh_neighborhood_insights),
         )
         .route(
-            "/listings/:listing_id/neighborhood/amenities",
+            "/listings/{listing_id}/neighborhood/amenities",
             get(get_nearby_amenities),
         )
         // Comparables (Story 70.4)
-        .route("/listings/:listing_id/comparables", get(get_comparables))
+        .route("/listings/{listing_id}/comparables", get(get_comparables))
         .route(
-            "/listings/:listing_id/comparables/refresh",
+            "/listings/{listing_id}/comparables/refresh",
             post(refresh_comparables),
         )
         // Combined Analysis
         .route(
-            "/listings/:listing_id/competitive-analysis",
+            "/listings/{listing_id}/competitive-analysis",
             get(get_competitive_analysis),
         )
         .route(
-            "/listings/:listing_id/competitive-status",
+            "/listings/{listing_id}/competitive-status",
             get(get_competitive_status),
         )
 }

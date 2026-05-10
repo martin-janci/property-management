@@ -49,11 +49,11 @@ pub fn router() -> Router<AppState> {
         .route("/properties", get(list_property_currency_configs))
         .route("/properties", post(create_property_currency_config))
         .route(
-            "/properties/:building_id",
+            "/properties/{building_id}",
             get(get_property_currency_config),
         )
         .route(
-            "/properties/:building_id",
+            "/properties/{building_id}",
             put(update_property_currency_config),
         )
         // Exchange Rates
@@ -65,15 +65,15 @@ pub fn router() -> Router<AppState> {
         // Cross-Currency Transactions
         .route("/transactions", get(list_transactions))
         .route("/transactions", post(create_transaction))
-        .route("/transactions/:id", get(get_transaction))
-        .route("/transactions/:id/rate", put(update_transaction_rate))
+        .route("/transactions/{id}", get(get_transaction))
+        .route("/transactions/{id}/rate", put(update_transaction_rate))
         // Cross-Border Leases
         .route("/cross-border", get(list_cross_border_leases))
         .route("/cross-border", post(create_cross_border_lease))
-        .route("/cross-border/:lease_id", get(get_cross_border_lease))
-        .route("/cross-border/:lease_id", put(update_cross_border_lease))
+        .route("/cross-border/{lease_id}", get(get_cross_border_lease))
+        .route("/cross-border/{lease_id}", put(update_cross_border_lease))
         .route(
-            "/cross-border/compliance/:country",
+            "/cross-border/compliance/{country}",
             get(get_compliance_requirements),
         )
         // Reports

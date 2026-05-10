@@ -29,11 +29,14 @@ pub fn router() -> Router<AppState> {
         .route("/routing/access-logs", get(list_access_logs))
         // Story 146.3: Compliance Verification
         .route("/compliance/verify", post(run_compliance_verification))
-        .route("/compliance/verification/:id", get(get_verification_result))
+        .route(
+            "/compliance/verification/{id}",
+            get(get_verification_result),
+        )
         .route("/compliance/export", get(export_compliance_report))
         // Story 146.4: Audit Trail
         .route("/audit", get(list_audit_logs))
-        .route("/audit/:id", get(get_audit_entry))
+        .route("/audit/{id}", get(get_audit_entry))
         .route("/audit/verify-chain", post(verify_audit_chain))
         // Dashboard
         .route("/dashboard", get(get_residency_dashboard))
@@ -750,5 +753,5 @@ fn generate_audit_hash(entry: &AuditLogEntry, previous_hash: Option<&str>) -> St
         hasher.update(prev);
     }
 
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
