@@ -129,6 +129,47 @@ const nextConfig = {
       },
     ];
   },
+
+  // Rewrite /api/* to the prod reality-server when running on a *.dev.rlt.sk
+  // worktree host. Shared-backend mode means the worktree's reality-web is
+  // backed by api.rlt.sk, but the prod CORS allowlist doesn't include the
+  // worktree subdomain, so direct cross-origin fetch fails. The dev server
+  // proxies the call, turning it into a same-origin request from the
+  // browser's perspective — CORS is bypassed.
+  //
+  // Gated on the request `host` header so localhost dev keeps talking to
+  // localhost:8081 directly, prod (rlt.sk) goes straight to api.rlt.sk
+  // (which is in its CORS allowlist), and only worktree subdomains take
+  // the rewrite path.
+  //
+  // Caveat: this proxies authenticated calls but does NOT rewrite the
+  // Set-Cookie domain. Login on shared-backend worktrees still requires a
+  // session cookie on the worktree's domain — open with backend: dedicated
+  // for full SSO functionality.
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://api.rlt.sk/api/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wt-.+\\.dev\\.rlt\\.sk',
+          },
+        ],
+      },
+      {
+        source: '/api/:path*',
+        destination: 'https://api.staging.rlt.sk/api/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'wt-.+\\.staging\\.rlt\\.sk',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = withNextIntl(nextConfig);

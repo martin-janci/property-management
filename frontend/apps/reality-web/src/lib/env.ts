@@ -33,6 +33,9 @@ declare global {
  * Mapping is deliberately narrow — only known *.rlt.sk topology — so a stray
  * vercel.app preview or localhost dev never silently hits prod.
  */
+/** Worktree hosts: `wt-<name>.dev.rlt.sk` or `wt-<name>.staging.rlt.sk`. */
+const WORKTREE_HOST_RE = /^wt-.+\.(dev|staging)\.rlt\.sk$/;
+
 function inferApiBaseFromHost(host: string): string | null {
   if (host === 'rlt.sk' || host.endsWith('.rlt.sk')) {
     if (host.endsWith('.staging.rlt.sk') || host === 'staging.rlt.sk') {
@@ -53,9 +56,20 @@ function inferSiteUrlFromHost(host: string, protocol: string): string | null {
 /**
  * Returns the reality-server API base URL.
  * Evaluated at call time so it picks up window.__ENV__ after script injection.
+ *
+ * Worktree hosts return an empty string so callers produce relative URLs
+ * (e.g. `/api/v1/sso/session`); the Next.js rewrite in next.config.js
+ * proxies those to api.rlt.sk, avoiding the cross-origin CORS preflight
+ * that would otherwise fail (worktree subdomains aren't in the prod CORS
+ * allowlist). Empty-string return is intentional and load-bearing —
+ * downstream callers do `${getApiBase()}/api/v1/...` which becomes a
+ * relative URL when the base is empty.
  */
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
+    if (WORKTREE_HOST_RE.test(window.location.hostname)) {
+      return '';
+    }
     if (window.__ENV__?.NEXT_PUBLIC_API_URL) {
       return window.__ENV__.NEXT_PUBLIC_API_URL;
     }
