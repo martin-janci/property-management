@@ -31,11 +31,16 @@ ARG TARGETPLATFORM
 ARG TARGETARCH
 
 # Install build dependencies
+# `curl` is required at compile time by `utoipa-swagger-ui` v9+ — its build
+# script downloads the Swagger UI bundle from CDN, and bombs the build with
+# `failed to download Swagger UI: curl command not found` on slim images.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     mold \
     clang \
+    curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
@@ -51,6 +56,8 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
     libssl-dev:arm64 \
     mold \
     clang \
+    curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && rustup target add aarch64-unknown-linux-gnu; \
     fi
