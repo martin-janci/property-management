@@ -161,7 +161,46 @@
     "emptyTitle": "Právě teď nemáme doporučené nabídky",
     "emptyBody": "Naše inzeráty se přidávají každý den. Projděte si všechny aktuální nabídky nebo přidejte vlastní inzerát zdarma.",
     "emptyBrowseAll": "Prohlédnout všechny nabídky",
-    "emptyAddListing": "Přidat vlastní inzerát"
+    "emptyAddListing": "Přidat vlastní inzerát",
+    "neighbourhoods": {
+      "title": "Oblíbené čtvrti",
+      "subtitle": "Cena, dostupnost a vývoj trhu na jeden pohled.",
+      "exploreMap": "Prozkoumat mapu",
+      "browse": "Zobrazit nabídky",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Ověření agenti",
+        "desc": "ID-ověření, SLA odpovědi 30 dní"
+      },
+      "passport": {
+        "label": "Pas budovy",
+        "desc": "Energie · stav fondu · poruchy zveřejněné"
+      },
+      "history": {
+        "label": "Historie cen",
+        "desc": "Každá změna ceny zaznamenaná v inzerátu"
+      },
+      "mortgage": {
+        "label": "Předschválená hypotéka",
+        "desc": "V aplikaci, s našimi partnerskými bankami"
+      }
+    },
+    "cta": {
+      "title": "Prodáváte svou nemovitost?",
+      "body": "Přidejte inzerát za 5 minut, získejte zdarma pas budovy a oslovíte 210 000 ověřených kupujících týdně.",
+      "learnMore": "Zjistit více",
+      "startListing": "Přidat inzerát"
+    }
   },
   "listing": {
     "additionalInfo": "Další informace",

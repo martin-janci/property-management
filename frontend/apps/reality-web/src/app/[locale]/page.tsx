@@ -6,9 +6,24 @@
 
 'use client';
 
-import { CategoryCards, FeaturedListings, HeroSearch } from '@/components/home';
+import {
+  CategoryCards,
+  FeaturedListings,
+  HeroSearch,
+  HomeCTA,
+  PopularNeighbourhoods,
+  ValueStrip,
+} from '@/components/home';
 import { Footer, Header } from '@/components/ui';
 
+/**
+ * Reality Portal homepage.
+ *
+ * Section order matches the design system reference (`Reality Portal Home -
+ * Standalone.html` in the design bundle): hero → categories → featured →
+ * neighbourhoods → value strip → selling CTA → footer. Adding/removing a
+ * section here should be reflected in the design too — keep the order.
+ */
 export default function HomePage() {
   return (
     <div className="page-container">
@@ -17,6 +32,9 @@ export default function HomePage() {
         <HeroSearch />
         <CategoryCards />
         <FeaturedListings />
+        <PopularNeighbourhoods />
+        <ValueStrip />
+        <HomeCTA />
       </main>
       <Footer />
 
