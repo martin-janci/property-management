@@ -85,6 +85,73 @@ export function FeaturedListings() {
     },
   ];
 
+  // Empty-state: no featured listings at all (e.g. fresh DB with no inventory).
+  // Without this CTA the homepage was hero → footer with nothing in between
+  // because each section's `length > 0` filter hid them all.
+  const allEmpty = sections.every((s) => s.listings.length === 0);
+  if (allEmpty) {
+    return (
+      <section className="featured-section">
+        <div className="container">
+          <div className="empty-state">
+            <div className="empty-icon" aria-hidden="true">
+              🔍
+            </div>
+            <h2 className="empty-title">Práve teraz nemáme odporúčané ponuky</h2>
+            <p className="empty-body">
+              Naše inzeráty sa pridávajú každý deň. Prejdite na všetky aktuálne ponuky alebo
+              pridajte vlastný inzerát zadarmo.
+            </p>
+            <div className="empty-actions">
+              <Link href="/listings" className="empty-cta-primary">
+                Prehliadnuť všetky ponuky
+              </Link>
+              <Link href="/sell" className="empty-cta-secondary">
+                Pridať vlastný inzerát
+              </Link>
+            </div>
+          </div>
+        </div>
+        <style jsx>{`
+          .featured-section { padding: 64px 16px; background: var(--ppt-bg-app); }
+          .container { max-width: 720px; margin: 0 auto; }
+          .empty-state {
+            text-align: center;
+            background: var(--ppt-bg-surface);
+            border: 1px solid var(--ppt-border-default);
+            border-radius: 12px;
+            padding: 48px 32px;
+          }
+          .empty-icon { font-size: 48px; margin-bottom: 12px; }
+          .empty-title {
+            font-size: 1.5rem; font-weight: 700; color: var(--ppt-fg-primary);
+            margin: 0 0 12px;
+          }
+          .empty-body {
+            font-size: 1rem; color: var(--ppt-fg-secondary); line-height: 1.6;
+            margin: 0 auto 24px; max-width: 520px;
+          }
+          .empty-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+          .empty-cta-primary, .empty-cta-secondary {
+            padding: 12px 20px; border-radius: 8px; font-weight: 600;
+            text-decoration: none; transition: opacity .15s;
+          }
+          .empty-cta-primary {
+            background: var(--ppt-color-primary, #2563eb);
+            color: var(--ppt-fg-on-accent, #fff);
+          }
+          .empty-cta-primary:hover { opacity: .9; }
+          .empty-cta-secondary {
+            background: transparent;
+            color: var(--ppt-color-primary, #2563eb);
+            border: 1px solid var(--ppt-color-primary, #2563eb);
+          }
+          .empty-cta-secondary:hover { background: var(--ppt-color-primary-light, #dbeafe); }
+        `}</style>
+      </section>
+    );
+  }
+
   return (
     <>
       {sections.map(
