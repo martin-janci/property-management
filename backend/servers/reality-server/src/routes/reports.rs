@@ -2,7 +2,7 @@
 //!
 //! Allows users to submit reports about problematic listings and track their status.
 
-use crate::extractors::AuthenticatedUser;
+use crate::extractors::{AuthenticatedUser, OptionalAuth};
 use crate::state::AppState;
 use axum::{
     extract::{Query, State},
@@ -100,6 +100,11 @@ pub struct MyReportsQuery {
 }
 
 /// Submit a listing report (UC-23).
+///
+/// Auth is optional — anonymous reports allowed (per screen-map
+/// `reality/report-listing`). Authenticated reports get a faster SLA because
+/// the moderator can follow up; anonymous reports still go through but should
+/// be rate-limited by IP at the moderation layer.
 #[utoipa::path(
     post,
     path = "/api/v1/reports",
@@ -110,11 +115,11 @@ pub struct MyReportsQuery {
         (status = 400, description = "Invalid request"),
         (status = 404, description = "Listing not found")
     ),
-    security(("session_token" = []))
+    security((), ("session_token" = []))
 )]
 pub async fn submit_report(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    auth: OptionalAuth,
     Json(data): Json<SubmitReportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<SubmitReportResponse>), (axum::http::StatusCode, String)>
 {
@@ -170,7 +175,7 @@ pub async fn submit_report(
         "#,
     )
     .bind(data.listing_id)
-    .bind(auth.user_id)
+    .bind(auth.0.as_ref().map(|a| a.user_id))
     .bind(&problem_type_str)
     .bind(&data.description)
     .bind(&attachments_json)

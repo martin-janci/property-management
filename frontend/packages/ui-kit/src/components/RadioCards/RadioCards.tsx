@@ -59,9 +59,12 @@ export const RadioCards: React.FC<RadioCardsProps> = ({
       className={[styles.grid, className].filter(Boolean).join(' ')}
       style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
     >
-      {options.map((opt) => {
+      {options.map((opt, idx) => {
         const isActive = value === opt.value;
-        const inputId = `${groupName}-${opt.value}`;
+        // Index-based ID — opt.value may contain spaces / special chars unsafe
+        // for HTML `id` attribute and CSS selectors. The radio's `value` prop
+        // (below) keeps form semantics intact.
+        const inputId = `${groupName}-${idx}`;
 
         return (
           <label key={opt.value} htmlFor={inputId} className={styles.label}>
