@@ -92,66 +92,66 @@ export function Header() {
            * in both cases the final UI can render immediately.
            */}
           <div className="auth-slot">
-          {isAuthenticated ? (
-            <div className="user-container" ref={dropdownRef}>
-              <button
-                type="button"
-                className="user-button"
-                onClick={() => setShowDropdown((v) => !v)}
-                aria-expanded={showDropdown}
-                aria-haspopup="true"
-              >
-                <div className="avatar">{user?.name.charAt(0).toUpperCase()}</div>
-                <span className="user-name">{user?.name}</span>
-              </button>
+            {isAuthenticated ? (
+              <div className="user-container" ref={dropdownRef}>
+                <button
+                  type="button"
+                  className="user-button"
+                  onClick={() => setShowDropdown((v) => !v)}
+                  aria-expanded={showDropdown}
+                  aria-haspopup="true"
+                >
+                  <div className="avatar">{user?.name.charAt(0).toUpperCase()}</div>
+                  <span className="user-name">{user?.name}</span>
+                </button>
 
-              {showDropdown && (
-                <div className="dropdown">
-                  <div className="dropdown-header">
-                    <p className="dropdown-name">{user?.name}</p>
-                    <p className="dropdown-email">{user?.email}</p>
+                {showDropdown && (
+                  <div className="dropdown">
+                    <div className="dropdown-header">
+                      <p className="dropdown-name">{user?.name}</p>
+                      <p className="dropdown-email">{user?.email}</p>
+                    </div>
+                    <div className="dropdown-menu">
+                      <Link
+                        href="/favorites"
+                        className="menu-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        {t('common.favorites')}
+                      </Link>
+                      <Link
+                        href="/saved-searches"
+                        className="menu-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        {t('nav.savedSearches')}
+                      </Link>
+                      <Link
+                        href="/inquiries"
+                        className="menu-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        {t('nav.myInquiries')}
+                      </Link>
+                      <Link
+                        href="/account/profile"
+                        className="menu-item"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        {t('nav.profile')}
+                      </Link>
+                      <button type="button" onClick={logout} className="sign-out-button">
+                        {t('common.logout')}
+                      </button>
+                    </div>
                   </div>
-                  <div className="dropdown-menu">
-                    <Link
-                      href="/favorites"
-                      className="menu-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      {t('common.favorites')}
-                    </Link>
-                    <Link
-                      href="/saved-searches"
-                      className="menu-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      {t('nav.savedSearches')}
-                    </Link>
-                    <Link
-                      href="/inquiries"
-                      className="menu-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      {t('nav.myInquiries')}
-                    </Link>
-                    <Link
-                      href="/account/profile"
-                      className="menu-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      {t('nav.profile')}
-                    </Link>
-                    <button type="button" onClick={logout} className="sign-out-button">
-                      {t('common.logout')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button type="button" onClick={() => login()} className="sign-in-button">
-              {t('common.login')}
-            </button>
-          )}
+                )}
+              </div>
+            ) : (
+              <button type="button" onClick={() => login()} className="sign-in-button">
+                {t('common.login')}
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
