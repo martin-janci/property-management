@@ -107,7 +107,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               aria-controls={`filter-group-${group.key}`}
               type="button"
             >
-              <h5 className={styles.groupTitle}>{group.title}</h5>
+              {/* span (not heading): button content must be phrasing content;
+                  headings are not allowed inside <button>. Visual size kept
+                  via styles.groupTitle. */}
+              <span className={styles.groupTitle}>{group.title}</span>
               <span
                 className={[styles.chevron, isOpen ? styles.chevronOpen : '']
                   .filter(Boolean)
@@ -117,28 +120,29 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               </span>
             </button>
 
-            {isOpen && (
-              <div
-                id={`filter-group-${group.key}`}
-                className={styles.groupItems}
-                role="group"
-                aria-label={group.title}
-              >
-                {group.items.map((item) => (
-                  <label key={item.key} className={styles.item}>
-                    <input
-                      type="checkbox"
-                      className={styles.itemCheck}
-                      checked={item.checked}
-                      onChange={(e) => item.onToggle(item.key, e.target.checked)}
-                      aria-label={item.label}
-                    />
-                    <span className={styles.itemLabel}>{item.label}</span>
-                    {item.count != null && <span className={styles.itemCount}>{item.count}</span>}
-                  </label>
-                ))}
-              </div>
-            )}
+            {/* Always render the controlled region so aria-controls always
+                points at an existing id; toggle visibility with `hidden`. */}
+            <div
+              id={`filter-group-${group.key}`}
+              className={styles.groupItems}
+              role="group"
+              aria-label={group.title}
+              hidden={!isOpen}
+            >
+              {group.items.map((item) => (
+                <label key={item.key} className={styles.item}>
+                  <input
+                    type="checkbox"
+                    className={styles.itemCheck}
+                    checked={item.checked}
+                    onChange={(e) => item.onToggle(item.key, e.target.checked)}
+                    aria-label={item.label}
+                  />
+                  <span className={styles.itemLabel}>{item.label}</span>
+                  {item.count != null && <span className={styles.itemCount}>{item.count}</span>}
+                </label>
+              ))}
+            </div>
           </div>
         );
       })}

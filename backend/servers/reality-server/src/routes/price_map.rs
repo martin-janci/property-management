@@ -1,7 +1,9 @@
 //! Price map routes (UC-31: Price Map Page).
 //!
 //! Returns city-level price aggregations from the listings table.
-//! Results are cached in-process for 1 hour using a simple Arc<RwLock<...>> store.
+//! Results are cached in-process for 1 hour. The cache uses
+//! `tokio::sync::RwLock` (NOT `std::sync::RwLock`) so a contention spike
+//! never blocks the Tokio worker thread the request is running on.
 //! No new migration needed (read-only aggregation over existing listings table).
 
 use crate::state::AppState;
@@ -14,9 +16,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::{Duration, Instant},
 };
+use tokio::sync::RwLock;
 use utoipa::{IntoParams, ToSchema};
 
 /// Price map cache entry.
@@ -96,6 +99,9 @@ pub async fn get_price_map(
     Query(query): Query<PriceMapQuery>,
 ) -> Result<Json<PriceMapResponse>, (axum::http::StatusCode, String)> {
     let mode = query.mode.clone().unwrap_or_else(|| "sale".to_string());
+    // Validate time_window — reject unsupported values up-front rather than
+    // silently falling back. Otherwise the response echoed back an invalid
+    // time_window even though the data was computed for a different interval.
     let time_window_str = query
         .time_window
         .clone()
@@ -105,7 +111,15 @@ pub async fn get_price_map(
         "3m" => "3 months",
         "12m" => "12 months",
         "5y" => "5 years",
-        _ => "3 months",
+        other => {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "Unsupported time_window {:?} — expected one of 1m, 3m, 12m, 5y",
+                    other
+                ),
+            ));
+        }
     };
 
     let cache_key = format!(
@@ -116,8 +130,9 @@ pub async fn get_price_map(
         query.city.as_deref().unwrap_or("")
     );
 
-    // Check cache
-    if let Ok(cache) = price_map_cache().read() {
+    // Check cache (async read lock — never blocks Tokio worker)
+    {
+        let cache = price_map_cache().read().await;
         if let Some(entry) = cache.get(&cache_key) {
             if Instant::now() < entry.expires_at {
                 return Ok(Json(PriceMapResponse {
@@ -214,8 +229,9 @@ pub async fn get_price_map(
         })
         .collect();
 
-    // Store in cache
-    if let Ok(mut cache) = price_map_cache().write() {
+    // Store in cache (async write lock — never blocks Tokio worker)
+    {
+        let mut cache = price_map_cache().write().await;
         // Evict expired entries to avoid unbounded growth
         cache.retain(|_, v| Instant::now() < v.expires_at);
         cache.insert(

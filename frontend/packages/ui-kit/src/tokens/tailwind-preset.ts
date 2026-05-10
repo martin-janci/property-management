@@ -8,8 +8,10 @@
  * import { pptPreset } from '@ppt/ui-kit/tokens';
  * export default { presets: [pptPreset], content: [...] };
  *
- * Note: values reference CSS custom properties so they work with dark-mode
- * overrides in [data-theme="dark"] without Tailwind's dark variant.
+ * Note: only the `colors` extension references CSS custom properties (so it
+ * follows `[data-theme="dark"]` overrides without Tailwind's dark variant).
+ * `fontSize`, `borderRadius`, `boxShadow`, and `transitionDuration` are
+ * static values from `tokens.ts` (these don't change between themes).
  */
 
 import { duration, fontSize, radius, shadow } from './tokens';
