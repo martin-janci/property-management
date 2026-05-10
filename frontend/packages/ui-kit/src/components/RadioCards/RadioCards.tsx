@@ -50,7 +50,9 @@ export const RadioCards: React.FC<RadioCardsProps> = ({
 }) => {
   const uid = useId();
   const groupName = nameProp ?? `radio-cards-${uid}`;
-  const cols = columns ?? Math.min(options.length, 3);
+  // Clamp to ≥1 — Math.min(0, 3) === 0 produces invalid `repeat(0, 1fr)` CSS
+  // when options is empty.
+  const cols = columns ?? Math.max(1, Math.min(options.length, 3));
 
   return (
     <div

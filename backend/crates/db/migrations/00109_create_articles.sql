@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS reality_articles (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_reality_articles_slug
-    ON reality_articles(slug);
+-- Note: `slug UNIQUE` above already creates a btree index, so no separate
+-- idx_reality_articles_slug is needed.
 
 CREATE INDEX IF NOT EXISTS idx_reality_articles_published
     ON reality_articles(published_at DESC)

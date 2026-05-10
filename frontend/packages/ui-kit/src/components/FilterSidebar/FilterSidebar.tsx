@@ -8,7 +8,7 @@
  */
 
 import type React from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import styles from './FilterSidebar.module.css';
 
 export interface FilterItem {
@@ -63,6 +63,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   activeCount,
   className,
 }) => {
+  // Stable per-instance prefix — group.key is arbitrary (may contain spaces /
+  // special chars unsafe for HTML id) and may collide across groups. Pair this
+  // prefix with the group's array index for the actual id.
+  const uid = useId();
+  const groupId = (idx: number) => `${uid}group-${idx}`;
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const g of groups) {
@@ -96,15 +102,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </div>
 
       {/* Groups */}
-      {groups.map((group) => {
+      {groups.map((group, idx) => {
         const isOpen = openGroups[group.key] ?? true;
+        const regionId = groupId(idx);
         return (
           <div key={group.key} className={styles.group}>
             <button
               className={styles.groupHeader}
               onClick={() => toggleGroup(group.key)}
               aria-expanded={isOpen}
-              aria-controls={`filter-group-${group.key}`}
+              aria-controls={regionId}
               type="button"
             >
               {/* span (not heading): button content must be phrasing content;
@@ -123,7 +130,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             {/* Always render the controlled region so aria-controls always
                 points at an existing id; toggle visibility with `hidden`. */}
             <div
-              id={`filter-group-${group.key}`}
+              id={regionId}
               className={styles.groupItems}
               role="group"
               aria-label={group.title}
