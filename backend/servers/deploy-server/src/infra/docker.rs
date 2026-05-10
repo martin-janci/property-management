@@ -297,7 +297,6 @@ impl DockerClient {
         Ok(create.id)
     }
 
-
     /// Attach an existing container to a Docker network. No-op if already attached.
     pub async fn connect_to_network(&self, network: &str, container: &str) -> Result<()> {
         let cfg = bollard::network::ConnectNetworkOptions {

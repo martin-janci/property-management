@@ -293,8 +293,13 @@ pub async fn open_handler(
             // minutes when the build was already done by an earlier dispatch (or
             // a normal commit-push CI flow).
             let existing_success = match svc.gh.latest_run("docker-build.yml", &req.branch).await? {
-                Some(r) if r.status == "completed" && r.conclusion.as_deref() == Some("success") => {
-                    tracing::info!(run_id = r.id, "fast-path: existing success run detected, skipping dispatch+poll");
+                Some(r)
+                    if r.status == "completed" && r.conclusion.as_deref() == Some("success") =>
+                {
+                    tracing::info!(
+                        run_id = r.id,
+                        "fast-path: existing success run detected, skipping dispatch+poll"
+                    );
                     true
                 }
                 Some(r) => {
@@ -310,7 +315,9 @@ pub async fn open_handler(
                 true
             } else {
                 tracing::info!(branch = %req.branch, "dispatching docker-build.yml");
-                svc.gh.dispatch_workflow("docker-build.yml", &req.branch).await?;
+                svc.gh
+                    .dispatch_workflow("docker-build.yml", &req.branch)
+                    .await?;
                 tracing::info!(branch = %req.branch, "dispatched, returning building status (caller should retry after GHA completes)");
                 false
             }
