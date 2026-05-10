@@ -17,8 +17,14 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(search))
-        .route("/:id", get(get_listing))
+        // NOTE: Static segments (`/featured`, `/categories`, `/suggestions`) MUST be
+        // declared before the `/{id}` capture so axum's matcher prefers them.
+        // Otherwise these would be parsed as listing UUIDs and 400 on every request.
+        .route("/featured", get(get_featured))
+        .route("/categories", get(get_categories))
         .route("/suggestions", get(get_suggestions))
+        .route("/{id}", get(get_listing))
+        .route("/{id}/view", axum::routing::post(record_view))
 }
 
 /// Full listing row from database for detail view.
@@ -436,4 +442,396 @@ pub async fn get_suggestions(
             "Pozemok Žilina".to_string(),
         ],
     }))
+}
+
+// ============================================================================
+// Rich listing summary types — match frontend `ListingSummary` shape
+// (camelCase, nested address + primaryPhoto). Used by /featured.
+// ============================================================================
+
+/// Address sub-object on a rich listing summary.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RichListingAddress {
+    pub city: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub district: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub street: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub postal_code: Option<String>,
+    pub country: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latitude: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub longitude: Option<f64>,
+}
+
+/// Primary photo descriptor on a rich listing summary.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RichListingPhoto {
+    pub id: Uuid,
+    pub url: String,
+    pub thumbnail_url: String,
+    pub is_primary: bool,
+    pub order: i32,
+}
+
+/// Rich listing summary returned by /featured. Camel-cased to match the
+/// `ListingSummary` TypeScript type in @ppt/reality-api-client.
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct RichListingSummary {
+    pub id: Uuid,
+    pub title: String,
+    /// URL slug — currently the listing UUID stringified (no slug column yet).
+    pub slug: String,
+    pub property_type: String,
+    pub transaction_type: String,
+    pub status: String,
+    pub price: i64,
+    pub currency: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub price_per_sqm: Option<i64>,
+    pub area: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rooms: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bedrooms: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bathrooms: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub floor: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_floors: Option<i32>,
+    pub address: RichListingAddress,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub primary_photo: Option<RichListingPhoto>,
+    pub is_featured: bool,
+    pub is_favorite: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+/// Featured listings response. Three buckets, matches `FeaturedListingsResponse`
+/// in @ppt/reality-api-client.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FeaturedListingsResponse {
+    pub sale: Vec<RichListingSummary>,
+    pub rent: Vec<RichListingSummary>,
+    pub new: Vec<RichListingSummary>,
+}
+
+/// Category count entry. Matches `CategoryCount` in @ppt/reality-api-client.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CategoryCount {
+    /// Property type key — e.g. "apartment", "house", "land", "commercial".
+    #[serde(rename = "type")]
+    pub property_type: String,
+    /// Count of currently active listings of this type.
+    pub count: i64,
+    /// Localized display label (Slovak — primary market).
+    pub label: String,
+    /// Icon hint for the frontend; client-side `categoryIcons` lookup falls
+    /// back to the property_type key.
+    pub icon: String,
+}
+
+/// Row shape for the rich listing query.
+#[derive(Debug, FromRow)]
+struct RichListingRow {
+    id: Uuid,
+    title: String,
+    property_type: String,
+    transaction_type: String,
+    status: String,
+    price: i64,
+    currency: String,
+    size_sqm: Option<i32>,
+    rooms: Option<i32>,
+    bathrooms: Option<i32>,
+    floor: Option<i32>,
+    total_floors: Option<i32>,
+    street: String,
+    city: String,
+    postal_code: String,
+    country: String,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+    photo_id: Option<Uuid>,
+    photo_url: Option<String>,
+    photo_thumbnail_url: Option<String>,
+    photo_display_order: Option<i32>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+    published_at: Option<DateTime<Utc>>,
+}
+
+impl From<RichListingRow> for RichListingSummary {
+    fn from(r: RichListingRow) -> Self {
+        let area = r.size_sqm.unwrap_or(0);
+        let price_per_sqm = if area > 0 {
+            Some(r.price / area as i64)
+        } else {
+            None
+        };
+        let primary_photo = match (r.photo_id, r.photo_url.clone()) {
+            (Some(id), Some(url)) => Some(RichListingPhoto {
+                id,
+                url: url.clone(),
+                // Fall back to the original URL when no thumbnail variant
+                // was generated (older imports without resized variants).
+                thumbnail_url: r.photo_thumbnail_url.unwrap_or(url),
+                is_primary: true,
+                order: r.photo_display_order.unwrap_or(0),
+            }),
+            _ => None,
+        };
+        Self {
+            id: r.id,
+            title: r.title,
+            // No slug column on listings yet — the frontend treats the path
+            // segment as an opaque identifier and the detail handler accepts
+            // a UUID, so stringifying the id keeps deep links functional.
+            slug: r.id.to_string(),
+            property_type: r.property_type,
+            transaction_type: r.transaction_type,
+            status: r.status,
+            price: r.price,
+            currency: r.currency,
+            price_per_sqm,
+            area,
+            rooms: r.rooms,
+            // No `bedrooms` column in listings; report null.
+            bedrooms: None,
+            bathrooms: r.bathrooms,
+            floor: r.floor,
+            total_floors: r.total_floors,
+            address: RichListingAddress {
+                city: r.city,
+                district: None,
+                street: Some(r.street),
+                postal_code: Some(r.postal_code),
+                country: r.country,
+                latitude: r.latitude,
+                longitude: r.longitude,
+            },
+            primary_photo,
+            // No `is_featured` column — surfaced via `/featured` ranking.
+            is_featured: false,
+            // Anonymous request — favorite state is hydrated client-side
+            // from /api/v1/favorites/ids when the user is authenticated.
+            is_favorite: false,
+            created_at: r.created_at.to_rfc3339(),
+            updated_at: r.updated_at.to_rfc3339(),
+        }
+    }
+}
+
+/// Shared SELECT clause for the rich listing summary query.
+const RICH_LISTING_SELECT: &str = r#"
+    SELECT
+        l.id, l.title, l.property_type, l.transaction_type, l.status,
+        l.price::bigint AS price, l.currency,
+        l.size_sqm::int AS size_sqm,
+        l.rooms, l.bathrooms, l.floor, l.total_floors,
+        l.street, l.city, l.postal_code, l.country,
+        l.latitude::float8 AS latitude,
+        l.longitude::float8 AS longitude,
+        p.id AS photo_id,
+        p.url AS photo_url,
+        p.thumbnail_url AS photo_thumbnail_url,
+        p.display_order AS photo_display_order,
+        l.created_at, l.updated_at, l.published_at
+    FROM listings l
+    LEFT JOIN LATERAL (
+        SELECT id, url, thumbnail_url, display_order
+        FROM listing_photos
+        WHERE listing_id = l.id
+        ORDER BY display_order ASC
+        LIMIT 1
+    ) p ON TRUE
+"#;
+
+/// Fetch the most recent N active listings filtered by transaction type.
+async fn fetch_top_listings(
+    state: &AppState,
+    transaction_type: Option<&str>,
+    limit: i32,
+) -> Result<Vec<RichListingSummary>, sqlx::Error> {
+    let mut conn = state.acquire_public_conn().await?;
+
+    let sql = format!(
+        "{} WHERE l.status = 'active' AND ($1::text IS NULL OR l.transaction_type = $1) \
+         ORDER BY COALESCE(l.published_at, l.created_at) DESC LIMIT $2",
+        RICH_LISTING_SELECT
+    );
+
+    let rows = sqlx::query_as::<_, RichListingRow>(&sql)
+        .bind(transaction_type)
+        .bind(limit)
+        .fetch_all(&mut *conn)
+        .await?;
+
+    Ok(rows.into_iter().map(Into::into).collect())
+}
+
+/// Get featured listings for the homepage.
+///
+/// Returns three curated buckets — `sale`, `rent`, `new` — used by the
+/// reality-web homepage. Selection is "top 4 most-recently published per
+/// bucket" since there's no `is_featured` column on `listings` yet.
+#[utoipa::path(
+    get,
+    path = "/api/v1/listings/featured",
+    tag = "Listings",
+    responses(
+        (status = 200, description = "Featured listings grouped by bucket", body = FeaturedListingsResponse)
+    )
+)]
+pub async fn get_featured(
+    State(state): State<AppState>,
+) -> Result<Json<FeaturedListingsResponse>, (axum::http::StatusCode, String)> {
+    // Frontend renders `slice(0, 4)` per bucket; 12 is plenty of headroom
+    // and lets a curation pass be added later without changing the contract.
+    const PER_BUCKET: i32 = 12;
+
+    fn db_err(
+        context: &'static str,
+    ) -> impl FnOnce(sqlx::Error) -> (axum::http::StatusCode, String) {
+        move |e| {
+            tracing::error!(error = %e, "{context}");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            )
+        }
+    }
+
+    let sale = fetch_top_listings(&state, Some("sale"), PER_BUCKET)
+        .await
+        .map_err(db_err("Failed to fetch featured sale listings"))?;
+    let rent = fetch_top_listings(&state, Some("rent"), PER_BUCKET)
+        .await
+        .map_err(db_err("Failed to fetch featured rent listings"))?;
+    // "New" bucket is just the most recently published, regardless of
+    // transaction type. Two of these will overlap with sale/rent above on
+    // small datasets — that's expected and fine for a homepage rail.
+    let new = fetch_top_listings(&state, None, PER_BUCKET)
+        .await
+        .map_err(db_err("Failed to fetch new listings"))?;
+
+    Ok(Json(FeaturedListingsResponse { sale, rent, new }))
+}
+
+/// Get listing counts grouped by property type.
+///
+/// Drives the homepage "Browse by category" tiles. Only counts listings with
+/// `status = 'active'`. Labels are returned in Slovak (primary market) — the
+/// frontend has its own i18n fallback if a label is missing.
+#[utoipa::path(
+    get,
+    path = "/api/v1/listings/categories",
+    tag = "Listings",
+    responses(
+        (status = 200, description = "Listing counts by property type", body = [CategoryCount])
+    )
+)]
+pub async fn get_categories(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<CategoryCount>>, (axum::http::StatusCode, String)> {
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to acquire db connection");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+
+    let rows: Vec<(String, i64)> = sqlx::query_as(
+        r#"
+        SELECT property_type, COUNT(*)::bigint AS count
+        FROM listings
+        WHERE status = 'active'
+        GROUP BY property_type
+        ORDER BY count DESC
+        "#,
+    )
+    .fetch_all(&mut *conn)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "Failed to count listings by property_type");
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+
+    let result = rows
+        .into_iter()
+        .map(|(property_type, count)| {
+            let label = label_for_property_type(&property_type);
+            CategoryCount {
+                icon: property_type.clone(),
+                property_type,
+                count,
+                label,
+            }
+        })
+        .collect();
+
+    Ok(Json(result))
+}
+
+/// Localized (sk) label for a `property_type` enum value.
+fn label_for_property_type(t: &str) -> String {
+    match t {
+        "apartment" => "Byty",
+        "house" => "Domy",
+        "land" => "Pozemky",
+        "commercial" => "Komerčné priestory",
+        "office" => "Kancelárie",
+        "garage" => "Garáže",
+        "parking" => "Parkovanie",
+        "storage" => "Sklady",
+        // Fallback: capitalize the type so unknown values still render.
+        other => return capitalize(other),
+    }
+    .to_string()
+}
+
+fn capitalize(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
+        None => String::new(),
+    }
+}
+
+/// Record a listing view (analytics).
+///
+/// POST `/api/v1/listings/{id}/view`. Increments the view counter for the
+/// listing. Anonymous endpoint — no auth required so SSR pages can fire it.
+#[utoipa::path(
+    post,
+    path = "/api/v1/listings/{id}/view",
+    tag = "Listings",
+    params(("id" = Uuid, Path, description = "Listing ID")),
+    responses(
+        (status = 204, description = "View recorded"),
+        (status = 404, description = "Listing not found")
+    )
+)]
+pub async fn record_view(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
+    // `track_view` is best-effort — analytics shouldn't break the page on
+    // a transient db hiccup. Log and return 204 either way; only return a
+    // hard error when the listing genuinely doesn't exist.
+    if let Err(e) = state.reality_portal_repo.track_view(id, "website").await {
+        tracing::warn!(%id, error = %e, "Failed to track listing view (non-fatal)");
+    }
+    Ok(axum::http::StatusCode::NO_CONTENT)
 }

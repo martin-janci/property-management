@@ -1,0 +1,42 @@
+graph TD
+  ppt__accessibility-settings["ppt/accessibility-settings<br/>Accessibility Settings"]
+  ppt__announcements["ppt/announcements<br/>Announcements"]
+  ppt__article-detail["ppt/article-detail<br/>Article Detail"]
+  ppt__dashboard["ppt/dashboard<br/>Dashboard"]
+  ppt__dispute-detail["ppt/dispute-detail<br/>Dispute Detail"]
+  ppt__disputes["ppt/disputes<br/>Disputes"]
+  ppt__document-detail["ppt/document-detail<br/>Document Detail"]
+  ppt__documents["ppt/documents<br/>Documents"]
+  ppt__emergency-contacts["ppt/emergency-contacts<br/>Emergency Contacts"]
+  ppt__faults-list["ppt/faults-list<br/>Faults List"]
+  ppt__file-dispute["ppt/file-dispute<br/>File Dispute (5-step wizard)"]
+  ppt__home["ppt/home<br/>Home"]
+  ppt__login["ppt/login<br/>Login"]
+  ppt__news["ppt/news<br/>News"]
+  ppt__privacy-settings["ppt/privacy-settings<br/>Privacy Settings"]
+  ppt__report-fault["ppt/report-fault<br/>Report Fault"]
+  ppt__upload-document["ppt/upload-document<br/>Upload Document"]
+  ppt__vote-create["ppt/vote-create<br/>Vote Create (5-step wizard)"]
+  ppt__vote-detail["ppt/vote-detail<br/>Vote Detail"]
+  ppt__voting["ppt/voting<br/>Voting"]
+  ppt__accessibility-settings -- "ppt/accessibility-settings sibling ppt/privacy-settings" --> ppt__privacy-settings
+  ppt__announcements -- "ppt/announcements parent ppt/home" --> ppt__home
+  ppt__article-detail -- "ppt/article-detail parent ppt/news" --> ppt__news
+  ppt__dashboard -- "ppt/dashboard child ppt/faults-list" --> ppt__faults-list
+  ppt__dashboard -- "ppt/dashboard child ppt/announcements" --> ppt__announcements
+  ppt__dashboard -- "ppt/dashboard child ppt/report-fault" --> ppt__report-fault
+  ppt__dispute-detail -- "ppt/dispute-detail parent ppt/disputes" --> ppt__disputes
+  ppt__dispute-detail -- "ppt/dispute-detail sibling ppt/file-dispute" --> ppt__file-dispute
+  ppt__disputes -- "ppt/disputes child ppt/file-dispute" --> ppt__file-dispute
+  ppt__disputes -- "ppt/disputes parent ppt/home" --> ppt__home
+  ppt__document-detail -- "ppt/document-detail parent ppt/documents" --> ppt__documents
+  ppt__document-detail -- "ppt/document-detail sibling ppt/upload-document" --> ppt__upload-document
+  ppt__documents -- "ppt/documents child ppt/upload-document" --> ppt__upload-document
+  ppt__faults-list -- "ppt/faults-list parent ppt/home" --> ppt__home
+  ppt__faults-list -- "ppt/faults-list sibling ppt/report-fault" --> ppt__report-fault
+  ppt__home -- "ppt/home child ppt/voting" --> ppt__voting
+  ppt__login -- "ppt/login child ppt/home" --> ppt__home
+  ppt__news -- "ppt/news parent ppt/home" --> ppt__home
+  ppt__vote-create -- "ppt/vote-create parent ppt/voting" --> ppt__voting
+  ppt__vote-create -- "ppt/vote-create sibling ppt/vote-detail" --> ppt__vote-detail
+  ppt__vote-detail -- "ppt/vote-detail parent ppt/voting" --> ppt__voting

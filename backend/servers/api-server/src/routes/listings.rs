@@ -35,19 +35,19 @@ pub fn router() -> Router<AppState> {
             "/syndication/stats",
             get(get_organization_syndication_stats),
         )
-        .route("/:id", get(get_listing))
-        .route("/:id", put(update_listing))
-        .route("/:id", delete(delete_listing))
-        .route("/:id/status", put(update_status))
-        .route("/:id/publish", post(publish_listing))
-        .route("/:id/photos", get(get_photos))
-        .route("/:id/photos", post(add_photo))
-        .route("/:id/photos/reorder", post(reorder_photos))
-        .route("/:id/photos/:photo_id", delete(delete_photo))
-        .route("/:id/syndications", get(get_syndications))
+        .route("/{id}", get(get_listing))
+        .route("/{id}", put(update_listing))
+        .route("/{id}", delete(delete_listing))
+        .route("/{id}/status", put(update_status))
+        .route("/{id}/publish", post(publish_listing))
+        .route("/{id}/photos", get(get_photos))
+        .route("/{id}/photos", post(add_photo))
+        .route("/{id}/photos/reorder", post(reorder_photos))
+        .route("/{id}/photos/{photo_id}", delete(delete_photo))
+        .route("/{id}/syndications", get(get_syndications))
         // Epic 105: Per-listing syndication status
         .route(
-            "/:id/syndication/status",
+            "/{id}/syndication/status",
             get(get_listing_syndication_status),
         )
 }

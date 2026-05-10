@@ -106,7 +106,9 @@
   border-radius: var(--ppt-radius-md);
   color: var(--ppt-color-text-secondary);
   cursor: pointer;
-  transition: background-color var(--ppt-transition-fast), color var(--ppt-transition-fast);
+  transition:
+    background-color var(--ppt-transition-fast),
+    color var(--ppt-transition-fast);
   flex-shrink: 0;
 }
 

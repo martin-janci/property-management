@@ -134,13 +134,7 @@ export function ComparablesTable({
     return diff > 0 ? 'text-green-600' : 'text-red-600';
   };
 
-  const SortHeader = ({
-    field,
-    children,
-  }: {
-    field: SortField;
-    children: React.ReactNode;
-  }) => (
+  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
       className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
       onClick={() => handleSort(field)}

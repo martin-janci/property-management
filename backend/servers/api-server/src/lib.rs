@@ -41,8 +41,10 @@ fn parse_default_origins() -> Vec<HeaderValue> {
 /// This function is exposed for integration testing.
 pub fn create_router(state: AppState) -> Router {
     Router::new()
-        // Health check
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + Redis). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Auth routes
         .nest("/api/v1/auth", routes::auth::router())
         // Admin routes
@@ -84,7 +86,7 @@ pub fn create_router(state: AppState) -> Router {
         )
         // Critical notifications routes
         .nest(
-            "/api/v1/organizations/:org_id/critical-notifications",
+            "/api/v1/organizations/{org_id}/critical-notifications",
             routes::critical_notifications::router(),
         )
         // MFA routes

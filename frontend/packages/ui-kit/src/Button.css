@@ -15,8 +15,11 @@
   border-radius: var(--ppt-radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color var(--ppt-transition-fast), border-color var(--ppt-transition-fast),
-    box-shadow var(--ppt-transition-fast), transform var(--ppt-transition-fast);
+  transition:
+    background-color var(--ppt-transition-fast),
+    border-color var(--ppt-transition-fast),
+    box-shadow var(--ppt-transition-fast),
+    transform var(--ppt-transition-fast);
   text-decoration: none;
   white-space: nowrap;
   -webkit-font-smoothing: antialiased;

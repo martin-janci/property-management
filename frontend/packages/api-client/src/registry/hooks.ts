@@ -294,8 +294,10 @@ export const createRegistryHooks = (api: RegistryApi) => ({
       mutationFn: ({
         buildingId,
         data,
-      }: { buildingId: string; data: UpdateRegistryRulesRequest }) =>
-        api.rules.update(buildingId, data),
+      }: {
+        buildingId: string;
+        data: UpdateRegistryRulesRequest;
+      }) => api.rules.update(buildingId, data),
       onSuccess: (_, { buildingId }) => {
         queryClient.invalidateQueries({ queryKey: registryKeys.rules(buildingId) });
       },

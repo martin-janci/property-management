@@ -26,7 +26,7 @@ use db::models::{
     VoiceActionResult, VoiceOAuthExchangeRequest, VoiceOAuthExchangeResponse,
     VoiceTokenRefreshRequest, VoiceTokenRefreshResult, WebhookVerificationResult,
 };
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use integrations::{encrypt_if_available, IntegrationCrypto};
 use serde::Deserialize;
 use sha2::Sha256;

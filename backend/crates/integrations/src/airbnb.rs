@@ -743,7 +743,7 @@ impl AirbnbClient {
     /// # Returns
     /// True if signature is valid.
     pub fn verify_webhook_signature(signature: &str, body: &str, secret: &str) -> bool {
-        use hmac::{Hmac, Mac};
+        use hmac::{Hmac, KeyInit, Mac};
         use sha2::Sha256;
 
         type HmacSha256 = Hmac<Sha256>;

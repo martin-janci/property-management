@@ -2,6 +2,8 @@
 name = "integrations"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+publish = false
 
 [dependencies]
 common = { workspace = true }
@@ -20,8 +22,8 @@ rand = { workspace = true }
 hex = { workspace = true }
 uuid = { workspace = true }
 # Crypto for API signatures (used by Airbnb/Booking integrations)
-hmac = "0.12"
-sha2 = "0.10"
+hmac = { workspace = true }
+sha2 = { workspace = true }
 # Decimal for financial calculations
 rust_decimal = { workspace = true }
 # Lightweight regex for variable interpolation

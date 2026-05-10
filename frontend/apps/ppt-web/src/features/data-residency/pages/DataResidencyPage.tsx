@@ -7,12 +7,12 @@
 
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { AuditLogCard, ComplianceVerificationCard, DataResidencyConfigCard } from '../components';
 import type {
   AuditLogEntry,
   ComplianceVerificationResult,
   DataResidencyConfig,
 } from '../components';
+import { AuditLogCard, ComplianceVerificationCard, DataResidencyConfigCard } from '../components';
 
 // Tab definitions
 type TabId = 'overview' | 'verification' | 'audit';

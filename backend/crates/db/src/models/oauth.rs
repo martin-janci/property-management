@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Available OAuth scopes.
@@ -108,7 +109,7 @@ pub struct CreateOAuthClient {
 }
 
 /// Data for updating an OAuth client.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateOAuthClient {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -119,7 +120,7 @@ pub struct UpdateOAuthClient {
 }
 
 /// OAuth client summary for listing.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct OAuthClientSummary {
     pub id: Uuid,
@@ -300,7 +301,7 @@ pub struct CreateUserOAuthGrant {
 }
 
 /// User grant with client info for display.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UserGrantWithClient {
     pub id: Uuid,
@@ -361,7 +362,7 @@ impl AuthorizeRequest {
 }
 
 /// Token request parameters.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct TokenRequest {
     pub grant_type: String,
@@ -374,7 +375,7 @@ pub struct TokenRequest {
 }
 
 /// Token response.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct TokenResponse {
     pub access_token: String,
@@ -386,7 +387,7 @@ pub struct TokenResponse {
 }
 
 /// Token introspection response (RFC 7662).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct IntrospectionResponse {
     pub active: bool,
@@ -423,7 +424,7 @@ impl IntrospectionResponse {
 }
 
 /// Consent page data for display.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsentPageData {
     pub client_id: String,
@@ -435,7 +436,7 @@ pub struct ConsentPageData {
 }
 
 /// Scope information for consent display.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ScopeDisplay {
     pub name: String,
@@ -443,7 +444,7 @@ pub struct ScopeDisplay {
 }
 
 /// Client registration request.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterClientRequest {
     pub name: String,
@@ -455,7 +456,7 @@ pub struct RegisterClientRequest {
 }
 
 /// Client registration response (secret shown only once).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterClientResponse {
     pub id: Uuid,
@@ -468,7 +469,7 @@ pub struct RegisterClientResponse {
 }
 
 /// Revoke token request.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct RevokeTokenRequest {
     pub token: String,
@@ -477,7 +478,7 @@ pub struct RevokeTokenRequest {
 }
 
 /// OAuth error response.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct OAuthError {
     pub error: String,

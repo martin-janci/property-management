@@ -3,9 +3,9 @@
  * two-factor authentication and profile editing.
  */
 
-export { RegisterPage } from './pages/RegisterPage';
-export { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-export { ResetPasswordPage } from './pages/ResetPasswordPage';
 export { ChangePasswordPage } from './pages/ChangePasswordPage';
-export { TwoFactorAuthPage } from './pages/TwoFactorAuthPage';
+export { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 export { ProfileEditPage } from './pages/ProfileEditPage';
+export { RegisterPage } from './pages/RegisterPage';
+export { ResetPasswordPage } from './pages/ResetPasswordPage';
+export { TwoFactorAuthPage } from './pages/TwoFactorAuthPage';

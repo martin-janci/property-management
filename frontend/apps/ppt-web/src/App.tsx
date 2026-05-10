@@ -1,3 +1,14 @@
+import type {
+  Building as ApiBuilding,
+  Dispute as ApiDispute,
+  DisputeStatus as ApiDisputeStatus,
+  DisputeType as ApiDisputeType,
+  OutageCommodity as ApiOutageCommodity,
+  OutageSeverity as ApiOutageSeverity,
+  OutageStatus as ApiOutageStatus,
+  OutageSummary as ApiOutageSummary,
+  OutageListQuery,
+} from '@ppt/api-client';
 import {
   useBuildings,
   useCancelOutage,
@@ -10,17 +21,6 @@ import {
   useResolveOutage,
   useStartOutage,
   useUpdateOutage,
-} from '@ppt/api-client';
-import type {
-  Building as ApiBuilding,
-  Dispute as ApiDispute,
-  DisputeStatus as ApiDisputeStatus,
-  DisputeType as ApiDisputeType,
-  OutageCommodity as ApiOutageCommodity,
-  OutageSeverity as ApiOutageSeverity,
-  OutageStatus as ApiOutageStatus,
-  OutageSummary as ApiOutageSummary,
-  OutageListQuery,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useEffect, useState } from 'react';
@@ -37,7 +37,7 @@ import {
 } from './components';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
-import { AuthProvider, OrganizationProvider, WebSocketProvider, useAuth } from './contexts';
+import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
 import {
   CommandPaletteDialog,
   CommandPaletteProvider,
@@ -64,8 +64,8 @@ import {
   CreateOutagePage,
   DisputesPage,
   DocumentDetailPage,
-  DocumentUploadPage,
   DocumentsPage,
+  DocumentUploadPage,
   EditAnnouncementPage,
   EditFaultPage,
   EditOutagePage,

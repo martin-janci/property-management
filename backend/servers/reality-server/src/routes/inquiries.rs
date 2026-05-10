@@ -18,13 +18,13 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         // Public routes (no auth required)
-        .route("/contact/:listing_id", post(send_contact_message))
-        .route("/viewing/:listing_id", post(request_viewing))
+        .route("/contact/{listing_id}", post(send_contact_message))
+        .route("/viewing/{listing_id}", post(request_viewing))
         // Authenticated routes
         .route("/", get(list_my_inquiries))
-        .route("/:id", get(get_inquiry))
-        .route("/:id/read", put(mark_as_read))
-        .route("/:id/respond", post(respond_to_inquiry))
+        .route("/{id}", get(get_inquiry))
+        .route("/{id}/read", put(mark_as_read))
+        .route("/{id}/respond", post(respond_to_inquiry))
 }
 
 /// Contact message request.

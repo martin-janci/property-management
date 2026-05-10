@@ -551,9 +551,11 @@ pub struct TokenIntrospectionResponse {
 /// that makes PKCE effective against authorization-code interception attacks,
 /// so it must be unpredictable even under adversarial timing.
 fn generate_code_verifier() -> String {
-    use rand::RngCore;
+    use rand::TryRng;
     let mut bytes = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut bytes);
+    rand::rngs::SysRng
+        .try_fill_bytes(&mut bytes)
+        .expect("OS rng failed");
     base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes)
 }
 

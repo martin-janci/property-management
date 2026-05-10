@@ -280,13 +280,7 @@ export function useActionQueue(role: 'manager' | 'resident', filters?: ActionQue
 
   // Mutation for executing an action
   const executeAction = useMutation({
-    mutationFn: async ({
-      itemId,
-      action,
-    }: {
-      itemId: string;
-      action: ActionButton['action'];
-    }) => {
+    mutationFn: async ({ itemId, action }: { itemId: string; action: ActionButton['action'] }) => {
       // TODO: Replace with actual API call
       // await fetch(`/api/v1/action-queue/${itemId}/execute`, {
       //   method: 'POST',

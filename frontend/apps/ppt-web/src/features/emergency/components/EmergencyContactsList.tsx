@@ -4,8 +4,8 @@
  * Displays a list of emergency contacts grouped by type.
  */
 
-import { CONTACT_TYPE_LABELS } from '@ppt/api-client';
 import type { EmergencyContact } from '@ppt/api-client';
+import { CONTACT_TYPE_LABELS } from '@ppt/api-client';
 import type React from 'react';
 import { EmergencyContactCard } from './EmergencyContactCard';
 

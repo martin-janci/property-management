@@ -120,9 +120,11 @@ impl IntegrationCrypto {
         // (same nonce+key reveals plaintext XORs). Using OsRng directly avoids
         // any risk from a thread-local CSPRNG being seeded from a low-entropy
         // or predictable source at process start.
-        use rand::RngCore;
+        use rand::TryRng;
         let mut nonce_bytes = [0u8; NONCE_LENGTH];
-        rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut nonce_bytes)
+            .expect("OS rng failed");
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt

@@ -2,7 +2,10 @@
   "name": "ppt-frontend",
   "private": true,
   "description": "PPT Frontend Monorepo",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev:ppt": "pnpm --filter @ppt/web dev",
     "dev:reality": "pnpm --filter @ppt/reality-web dev",
@@ -18,12 +21,22 @@
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
+    "@biomejs/biome": "^2.4.14",
     "typescript": "^5.3.0"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "react-test-renderer": "19.2.0",
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3",
+      "@react-native/babel-plugin-codegen": "^0.85.0"
+    }
   },
   "packageManager": "pnpm@8.14.0"
 }

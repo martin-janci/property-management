@@ -1,13 +1,11 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -15,27 +13,42 @@
       "correctness": {
         "noUnusedImports": "warn",
         "noUnusedVariables": "warn",
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "off",
+        "useParseIntRadix": "off"
       },
       "style": {
         "noNonNullAssertion": "off",
-        "noUnusedTemplateLiteral": "warn"
+        "noUnusedTemplateLiteral": "warn",
+        "noDescendingSpecificity": "off"
       },
       "complexity": {
-        "noUselessSwitchCase": "warn"
+        "noUselessSwitchCase": "warn",
+        "noImportantStyles": "off",
+        "useDateNow": "off",
+        "noUselessFragments": "off",
+        "useOptionalChain": "off"
       },
       "a11y": {
         "noSvgWithoutTitle": "off",
         "useKeyWithClickEvents": "off",
         "useSemanticElements": "off",
         "noLabelWithoutControl": "off",
-        "noNoninteractiveElementToInteractiveRole": "warn"
+        "noNoninteractiveElementToInteractiveRole": "warn",
+        "noStaticElementInteractions": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "useAltText": "warn",
+        "noNoninteractiveTabindex": "warn"
       },
       "suspicious": {
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noUnknownAtRules": "off"
       },
       "security": {
         "noDangerouslySetInnerHtml": "warn"
+      },
+      "performance": {
+        "noImgElement": "off"
       }
     }
   },
@@ -52,15 +65,23 @@
       "trailingCommas": "es5"
     }
   },
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "tailwindDirectives": true
+    }
+  },
   "files": {
-    "ignore": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/.next/**",
-      "**/generated/**",
-      "**/*.gen.ts",
-      "**/pnpm-lock.yaml"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/.next",
+      "!**/generated",
+      "!**/*.gen.ts",
+      "!**/pnpm-lock.yaml",
+      "!**/public/mockServiceWorker.js"
     ]
   }
 }

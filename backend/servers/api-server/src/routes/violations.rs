@@ -42,47 +42,47 @@ pub fn router() -> Router<AppState> {
         // Community rules
         .route("/rules", get(list_rules).post(create_rule))
         .route(
-            "/rules/:rule_id",
+            "/rules/{rule_id}",
             get(get_rule).put(update_rule).delete(delete_rule),
         )
         // Violations
         .route("/", get(list_violations).post(create_violation))
-        .route("/:violation_id", get(get_violation).put(update_violation))
-        .route("/:violation_id/assign", post(assign_violation))
+        .route("/{violation_id}", get(get_violation).put(update_violation))
+        .route("/{violation_id}/assign", post(assign_violation))
         // Evidence
         .route(
-            "/:violation_id/evidence",
+            "/{violation_id}/evidence",
             get(list_evidence).post(add_evidence),
         )
         .route(
-            "/:violation_id/evidence/:evidence_id",
+            "/{violation_id}/evidence/{evidence_id}",
             delete(delete_evidence),
         )
         // Enforcement actions
         .route(
-            "/:violation_id/actions",
+            "/{violation_id}/actions",
             get(list_actions).post(create_action),
         )
         .route(
-            "/:violation_id/actions/:action_id",
+            "/{violation_id}/actions/{action_id}",
             get(get_action).put(update_action),
         )
         .route(
-            "/:violation_id/actions/:action_id/send",
+            "/{violation_id}/actions/{action_id}/send",
             post(mark_action_sent),
         )
         .route(
-            "/:violation_id/actions/:action_id/payments",
+            "/{violation_id}/actions/{action_id}/payments",
             get(list_payments).post(record_payment),
         )
         // Appeals
-        .route("/:violation_id/appeals", post(create_appeal))
+        .route("/{violation_id}/appeals", post(create_appeal))
         .route("/appeals", get(list_appeals))
-        .route("/appeals/:appeal_id", get(get_appeal).put(update_appeal))
-        .route("/appeals/:appeal_id/decide", post(decide_appeal))
+        .route("/appeals/{appeal_id}", get(get_appeal).put(update_appeal))
+        .route("/appeals/{appeal_id}/decide", post(decide_appeal))
         // Comments
         .route(
-            "/:violation_id/comments",
+            "/{violation_id}/comments",
             get(list_comments).post(add_comment),
         )
         // Dashboard & Reports

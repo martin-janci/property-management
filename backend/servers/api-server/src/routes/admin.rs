@@ -17,10 +17,10 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/users", get(list_users))
-        .route("/users/:id", get(get_user))
-        .route("/users/:id/suspend", post(suspend_user))
-        .route("/users/:id/reactivate", post(reactivate_user))
-        .route("/users/:id/delete", post(delete_user))
+        .route("/users/{id}", get(get_user))
+        .route("/users/{id}/suspend", post(suspend_user))
+        .route("/users/{id}/reactivate", post(reactivate_user))
+        .route("/users/{id}/delete", post(delete_user))
 }
 
 // ==================== Types ====================

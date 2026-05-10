@@ -6,9 +6,9 @@
 
 'use client';
 
-import { Footer, Header } from '@/components/ui';
 import type { ListingDetail, ListingFeatures } from '@ppt/reality-api-client';
 import { useTranslations } from 'next-intl';
+import { Footer, Header } from '@/components/ui';
 import { ContactForm } from './ContactForm';
 import { PhotoGallery } from './PhotoGallery';
 

@@ -1,0 +1,31 @@
+# docker/frontend/Dockerfile.dev.worktree
+# Bind-mount runner for worktree dev mode. Source is mounted at /app at runtime.
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache git \
+ && corepack enable \
+ && corepack prepare pnpm@9.15.0 --activate
+
+# pnpm: PNPM_HOME holds the pnpm CLI; PNPM_STORE_PATH is the content-addressable
+# package cache. Both live under /pnpm so a single named volume is shared across
+# worktrees → fast `pnpm install` after the first hydration.
+ENV PNPM_HOME=/pnpm
+ENV PNPM_STORE_PATH=/pnpm/store
+ENV PATH=$PNPM_HOME:$PATH
+RUN mkdir -p /pnpm/store
+
+# Default: run ppt-web; override APP=reality-web to run reality.
+ENV APP=ppt-web
+
+EXPOSE 5173 3000
+
+# Per-app dev invocation: Vite uses --host/--port (default 5173); next dev uses
+# --hostname/--port (default 3000). The deploy server can override PORT.
+ENTRYPOINT ["sh", "-c", "cd /app/frontend && pnpm install --prefer-offline --frozen-lockfile=false && \
+  if [ \"$APP\" = \"reality-web\" ]; then \
+    pnpm --filter ./apps/reality-web dev --hostname 0.0.0.0 --port ${PORT:-3000}; \
+  else \
+    pnpm --filter ./apps/$APP dev --host 0.0.0.0 --port ${PORT:-5173}; \
+  fi"]

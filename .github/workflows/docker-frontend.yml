@@ -2,7 +2,7 @@ name: Docker Build & Push (Frontend)
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'frontend/**'
       - 'docker/frontend/**'
@@ -37,14 +37,14 @@ jobs:
             dockerfile: docker/frontend/reality-web.Dockerfile
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_PREFIX }}/${{ matrix.target }}
           tags: |
@@ -67,7 +67,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || inputs.push == true) }}
+          push: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/v') || inputs.push == true) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.target }}
@@ -80,3 +80,51 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           docker buildx imagetools inspect ${{ env.IMAGE_PREFIX }}/${{ matrix.target }}:${{ steps.meta.outputs.version }} 2>/dev/null || true
+
+  # Branch-keyed auto-deploy: main → prod, dev → staging.
+  # Frontend changes alone (no backend churn) still need to roll the running
+  # target's blue/green slot. Backend-only pushes go through the analogous
+  # job in docker-build.yml. If a single merge touches both, both workflows
+  # fire and call /api/deploy with the same SHA — the deploy-server's worktree
+  # locks make the second call a near-no-op redeploy.
+  trigger-deploy:
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Pick deploy target from branch
+        id: target
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            echo "name=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get OIDC token for ppt-deploy
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken('ppt-deploy');
+            core.setOutput('token', token);
+
+      - name: POST /api/deploy
+        env:
+          DEPLOY_URL: https://onyx.rlt.sk
+          # See docker-build.yml's mirror of this step for the rationale on
+          # using the branch tag instead of SHORT_SHA: paths-filtered builds
+          # mean only some service images get a fresh `:<sha>` per push, and
+          # the deploy-server pulls all four. The `:main` / `:dev` tag is
+          # rewritten by whichever workflow produced the most recent build of
+          # that service.
+          BRANCH_TAG: ${{ steps.target.outputs.name == 'prod' && 'main' || 'dev' }}
+          TARGET: ${{ steps.target.outputs.name }}
+        run: |
+          curl -fsS -X POST "$DEPLOY_URL/api/deploy" \
+            -H "Authorization: Bearer ${{ steps.oidc.outputs.token }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\": \"$BRANCH_TAG\", \"target\": \"$TARGET\"}"

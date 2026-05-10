@@ -1,0 +1,110 @@
+graph TD
+  ppt__accessibility-settings["ppt/accessibility-settings<br/>Accessibility Settings"]
+  ppt__announcements["ppt/announcements<br/>Announcements"]
+  ppt__article-detail["ppt/article-detail<br/>Article Detail"]
+  ppt__dashboard["ppt/dashboard<br/>Dashboard"]
+  ppt__dispute-detail["ppt/dispute-detail<br/>Dispute Detail"]
+  ppt__disputes["ppt/disputes<br/>Disputes"]
+  ppt__document-detail["ppt/document-detail<br/>Document Detail"]
+  ppt__documents["ppt/documents<br/>Documents"]
+  ppt__emergency-contacts["ppt/emergency-contacts<br/>Emergency Contacts"]
+  ppt__faults-list["ppt/faults-list<br/>Faults List"]
+  ppt__file-dispute["ppt/file-dispute<br/>File Dispute (5-step wizard)"]
+  ppt__home["ppt/home<br/>Home"]
+  ppt__login["ppt/login<br/>Login"]
+  ppt__news["ppt/news<br/>News"]
+  ppt__privacy-settings["ppt/privacy-settings<br/>Privacy Settings"]
+  ppt__report-fault["ppt/report-fault<br/>Report Fault"]
+  ppt__upload-document["ppt/upload-document<br/>Upload Document"]
+  ppt__vote-create["ppt/vote-create<br/>Vote Create (5-step wizard)"]
+  ppt__vote-detail["ppt/vote-detail<br/>Vote Detail"]
+  ppt__voting["ppt/voting<br/>Voting"]
+  reality__about["reality/about<br/>About"]
+  reality__agency-branding["reality/agency-branding<br/>Agency Branding"]
+  reality__agency-dashboard["reality/agency-dashboard<br/>Agency Dashboard"]
+  reality__agency-import["reality/agency-import<br/>Agency Import (UC-50)"]
+  reality__agent-profile["reality/agent-profile<br/>Agent Profile (public)"]
+  reality__careers["reality/careers<br/>Careers"]
+  reality__compare-properties["reality/compare-properties<br/>Compare Properties"]
+  reality__contact["reality/contact<br/>Contact"]
+  reality__cookies["reality/cookies<br/>Cookies Policy"]
+  reality__favorites["reality/favorites<br/>Favorites"]
+  reality__for-agents["reality/for-agents<br/>For Agents"]
+  reality__help["reality/help<br/>Help Center"]
+  reality__home["reality/home<br/>Home"]
+  reality__inquiries["reality/inquiries<br/>Inquiries"]
+  reality__journal["reality/journal<br/>Journal · Magazine"]
+  reality__listing-detail["reality/listing-detail<br/>Listing Detail"]
+  reality__listing-edit["reality/listing-edit<br/>Listing Edit (5-step wizard)"]
+  reality__listings["reality/listings<br/>Listings"]
+  reality__oauth-callback["reality/oauth-callback<br/>OAuth Callback"]
+  reality__price-map["reality/price-map<br/>Price Map"]
+  reality__privacy["reality/privacy<br/>Privacy Policy"]
+  reality__profile["reality/profile<br/>Profile"]
+  reality__report-listing["reality/report-listing<br/>Report Listing"]
+  reality__saved-searches["reality/saved-searches<br/>Saved Searches"]
+  reality__security["reality/security<br/>Security & Anti-fraud"]
+  reality__sell["reality/sell<br/>Sell · Add Listing (5-step wizard)"]
+  reality__terms["reality/terms<br/>Terms of Service"]
+  ppt__accessibility-settings -- "ppt/accessibility-settings sibling ppt/privacy-settings" --> ppt__privacy-settings
+  ppt__announcements -- "ppt/announcements parent ppt/home" --> ppt__home
+  ppt__article-detail -- "ppt/article-detail parent ppt/news" --> ppt__news
+  ppt__dashboard -- "ppt/dashboard child ppt/faults-list" --> ppt__faults-list
+  ppt__dashboard -- "ppt/dashboard child ppt/announcements" --> ppt__announcements
+  ppt__dashboard -- "ppt/dashboard child ppt/report-fault" --> ppt__report-fault
+  ppt__dispute-detail -- "ppt/dispute-detail parent ppt/disputes" --> ppt__disputes
+  ppt__dispute-detail -- "ppt/dispute-detail sibling ppt/file-dispute" --> ppt__file-dispute
+  ppt__disputes -- "ppt/disputes child ppt/file-dispute" --> ppt__file-dispute
+  ppt__disputes -- "ppt/disputes parent ppt/home" --> ppt__home
+  ppt__document-detail -- "ppt/document-detail parent ppt/documents" --> ppt__documents
+  ppt__document-detail -- "ppt/document-detail sibling ppt/upload-document" --> ppt__upload-document
+  ppt__documents -- "ppt/documents child ppt/upload-document" --> ppt__upload-document
+  ppt__faults-list -- "ppt/faults-list parent ppt/home" --> ppt__home
+  ppt__faults-list -- "ppt/faults-list sibling ppt/report-fault" --> ppt__report-fault
+  ppt__home -- "ppt/home child ppt/voting" --> ppt__voting
+  ppt__login -- "ppt/login child ppt/home" --> ppt__home
+  ppt__news -- "ppt/news parent ppt/home" --> ppt__home
+  ppt__vote-create -- "ppt/vote-create parent ppt/voting" --> ppt__voting
+  ppt__vote-create -- "ppt/vote-create sibling ppt/vote-detail" --> ppt__vote-detail
+  ppt__vote-detail -- "ppt/vote-detail parent ppt/voting" --> ppt__voting
+  reality__about -- "reality/about parent reality/home" --> reality__home
+  reality__agency-branding -- "reality/agency-branding parent reality/agency-dashboard" --> reality__agency-dashboard
+  reality__agency-branding -- "reality/agency-branding sibling reality/agency-import" --> reality__agency-import
+  reality__agency-dashboard -- "reality/agency-dashboard sibling reality/listings" --> reality__listings
+  reality__agency-import -- "reality/agency-import parent reality/agency-dashboard" --> reality__agency-dashboard
+  reality__agent-profile -- "reality/agent-profile parent reality/listing-detail" --> reality__listing-detail
+  reality__agent-profile -- "reality/agent-profile sibling reality/agency-dashboard" --> reality__agency-dashboard
+  reality__careers -- "reality/careers parent reality/home" --> reality__home
+  reality__careers -- "reality/careers sibling reality/about" --> reality__about
+  reality__compare-properties -- "reality/compare-properties parent reality/favorites" --> reality__favorites
+  reality__compare-properties -- "reality/compare-properties sibling reality/listings" --> reality__listings
+  reality__compare-properties -- "reality/compare-properties sibling reality/listing-detail" --> reality__listing-detail
+  reality__contact -- "reality/contact parent reality/home" --> reality__home
+  reality__contact -- "reality/contact sibling reality/help" --> reality__help
+  reality__cookies -- "reality/cookies parent reality/home" --> reality__home
+  reality__cookies -- "reality/cookies sibling reality/privacy" --> reality__privacy
+  reality__favorites -- "reality/favorites sibling reality/listings" --> reality__listings
+  reality__favorites -- "reality/favorites child reality/listing-detail" --> reality__listing-detail
+  reality__favorites -- "reality/favorites sibling reality/saved-searches" --> reality__saved-searches
+  reality__for-agents -- "reality/for-agents parent reality/home" --> reality__home
+  reality__for-agents -- "reality/for-agents child reality/agency-dashboard" --> reality__agency-dashboard
+  reality__help -- "reality/help parent reality/home" --> reality__home
+  reality__inquiries -- "reality/inquiries parent reality/listing-detail" --> reality__listing-detail
+  reality__journal -- "reality/journal parent reality/home" --> reality__home
+  reality__listing-detail -- "reality/listing-detail parent reality/listings" --> reality__listings
+  reality__listing-edit -- "reality/listing-edit parent reality/profile" --> reality__profile
+  reality__listing-edit -- "reality/listing-edit sibling reality/sell" --> reality__sell
+  reality__listings -- "reality/listings sibling reality/saved-searches" --> reality__saved-searches
+  reality__price-map -- "reality/price-map parent reality/home" --> reality__home
+  reality__price-map -- "reality/price-map sibling reality/listings" --> reality__listings
+  reality__privacy -- "reality/privacy parent reality/home" --> reality__home
+  reality__privacy -- "reality/privacy sibling reality/terms" --> reality__terms
+  reality__profile -- "reality/profile parent reality/home" --> reality__home
+  reality__profile -- "reality/profile child reality/favorites" --> reality__favorites
+  reality__profile -- "reality/profile child reality/saved-searches" --> reality__saved-searches
+  reality__profile -- "reality/profile child reality/inquiries" --> reality__inquiries
+  reality__report-listing -- "reality/report-listing parent reality/listing-detail" --> reality__listing-detail
+  reality__report-listing -- "reality/report-listing sibling reality/security" --> reality__security
+  reality__security -- "reality/security parent reality/home" --> reality__home
+  reality__sell -- "reality/sell parent reality/profile" --> reality__profile
+  reality__terms -- "reality/terms parent reality/home" --> reality__home

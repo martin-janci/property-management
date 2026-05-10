@@ -2,8 +2,7 @@
  * Neighbors Feature Component Exports
  */
 
-export { NeighborCard } from './NeighborCard';
 export type { NeighborCardProps } from './NeighborCard';
-
-export { PrivacySettingsForm } from './PrivacySettingsForm';
+export { NeighborCard } from './NeighborCard';
 export type { PrivacySettingsFormProps } from './PrivacySettingsForm';
+export { PrivacySettingsForm } from './PrivacySettingsForm';

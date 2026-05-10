@@ -96,7 +96,9 @@
   color: currentColor;
   opacity: 0.7;
   cursor: pointer;
-  transition: opacity var(--ppt-transition-fast), background-color var(--ppt-transition-fast);
+  transition:
+    opacity var(--ppt-transition-fast),
+    background-color var(--ppt-transition-fast);
   flex-shrink: 0;
 }
 

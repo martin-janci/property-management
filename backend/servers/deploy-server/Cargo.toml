@@ -1,0 +1,57 @@
+[package]
+name = "deploy-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "deploy_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ppt-deploy"
+path = "src/main.rs"
+
+[[bin]]
+name = "pmctl"
+path = "src/bin/pmctl.rs"
+
+[dependencies]
+tokio = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+shellexpand = "3.1"
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "chrono", "json", "migrate"] }
+jsonwebtoken = { workspace = true }
+clap = { workspace = true, features = ["derive", "env"] }
+# Inherit deploy-server-specific deps from `[workspace.dependencies]` so we
+# don't end up with two pinned versions across the workspace.
+listenfd = { workspace = true }
+bollard = { workspace = true }
+tokio-util = { workspace = true }
+futures-util = { workspace = true }
+async-trait = { workspace = true }
+which = { workspace = true }
+dirs = "5.0"
+reqwest = { workspace = true, features = ["stream"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+uuid = { workspace = true }
+url = "2"
+subtle = "2"
+
+[dev-dependencies]
+httpmock = "0.7"
+tempfile = "3.10"
+axum-test = "20"

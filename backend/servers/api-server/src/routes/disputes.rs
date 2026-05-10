@@ -34,60 +34,66 @@ pub fn router() -> Router<AppState> {
         .route("/", post(file_dispute))
         .route("/", get(list_disputes))
         .route("/statistics", get(get_statistics))
-        .route("/:id", get(get_dispute))
-        .route("/:id", patch(update_dispute_status))
-        .route("/:id", delete(withdraw_dispute))
-        .route("/:id/parties", get(list_parties))
-        .route("/:id/parties", post(add_party))
-        .route("/:id/evidence", get(list_evidence))
-        .route("/:id/evidence", post(add_evidence))
-        .route("/:id/evidence/:evidence_id", delete(delete_evidence))
-        .route("/:id/activities", get(list_activities))
+        .route("/{id}", get(get_dispute))
+        .route("/{id}", patch(update_dispute_status))
+        .route("/{id}", delete(withdraw_dispute))
+        .route("/{id}/parties", get(list_parties))
+        .route("/{id}/parties", post(add_party))
+        .route("/{id}/evidence", get(list_evidence))
+        .route("/{id}/evidence", post(add_evidence))
+        .route("/{id}/evidence/{evidence_id}", delete(delete_evidence))
+        .route("/{id}/activities", get(list_activities))
         // Mediation (Story 77.2)
-        .route("/:id/sessions", get(list_sessions))
-        .route("/:id/sessions", post(schedule_session))
-        .route("/:id/sessions/:session_id", get(get_session))
-        .route("/:id/sessions/:session_id", patch(update_session))
-        .route("/:id/sessions/:session_id/cancel", post(cancel_session))
-        .route("/:id/sessions/:session_id/attendance", get(get_attendance))
+        .route("/{id}/sessions", get(list_sessions))
+        .route("/{id}/sessions", post(schedule_session))
+        .route("/{id}/sessions/{session_id}", get(get_session))
+        .route("/{id}/sessions/{session_id}", patch(update_session))
+        .route("/{id}/sessions/{session_id}/cancel", post(cancel_session))
         .route(
-            "/:id/sessions/:session_id/attendance/:party_id",
+            "/{id}/sessions/{session_id}/attendance",
+            get(get_attendance),
+        )
+        .route(
+            "/{id}/sessions/{session_id}/attendance/{party_id}",
             patch(update_attendance),
         )
-        .route("/:id/sessions/:session_id/notes", post(record_notes))
-        .route("/:id/submissions", get(list_submissions))
-        .route("/:id/submissions", post(submit_response))
-        .route("/:id/mediation-case", get(get_mediation_case))
+        .route("/{id}/sessions/{session_id}/notes", post(record_notes))
+        .route("/{id}/submissions", get(list_submissions))
+        .route("/{id}/submissions", post(submit_response))
+        .route("/{id}/mediation-case", get(get_mediation_case))
         // Resolution Tracking (Story 77.3)
-        .route("/:id/resolutions", get(list_resolutions))
-        .route("/:id/resolutions", post(propose_resolution))
-        .route("/:id/resolutions/:resolution_id", get(get_resolution))
+        .route("/{id}/resolutions", get(list_resolutions))
+        .route("/{id}/resolutions", post(propose_resolution))
+        .route("/{id}/resolutions/{resolution_id}", get(get_resolution))
         .route(
-            "/:id/resolutions/:resolution_id/vote",
+            "/{id}/resolutions/{resolution_id}/vote",
             post(vote_on_resolution),
         )
         .route(
-            "/:id/resolutions/:resolution_id/accept",
+            "/{id}/resolutions/{resolution_id}/accept",
             post(accept_resolution),
         )
         .route(
-            "/:id/resolutions/:resolution_id/implement",
+            "/{id}/resolutions/{resolution_id}/implement",
             post(implement_resolution),
         )
         // Enforcement (Story 77.4)
-        .route("/:id/actions", get(list_action_items))
-        .route("/:id/actions", post(create_action_item))
-        .route("/:id/actions/:action_id", get(get_action_item))
-        .route("/:id/actions/:action_id", patch(update_action_item))
+        .route("/{id}/actions", get(list_action_items))
+        .route("/{id}/actions", post(create_action_item))
+        .route("/{id}/actions/{action_id}", get(get_action_item))
+        .route("/{id}/actions/{action_id}", patch(update_action_item))
         .route(
-            "/:id/actions/:action_id/complete",
+            "/{id}/actions/{action_id}/complete",
             post(complete_action_item),
         )
-        .route("/:id/actions/:action_id/remind", post(send_action_reminder))
-        .route("/:id/escalations", get(list_escalations))
-        .route("/:id/escalations", post(create_escalation))
         .route(
-            "/:id/escalations/:escalation_id/resolve",
+            "/{id}/actions/{action_id}/remind",
+            post(send_action_reminder),
+        )
+        .route("/{id}/escalations", get(list_escalations))
+        .route("/{id}/escalations", post(create_escalation))
+        .route(
+            "/{id}/escalations/{escalation_id}/resolve",
             post(resolve_escalation),
         )
         .route("/my-actions", get(get_my_actions))

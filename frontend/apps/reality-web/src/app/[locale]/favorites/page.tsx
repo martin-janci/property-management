@@ -6,12 +6,12 @@
 
 'use client';
 
-import { ProtectedRoute } from '@/components/auth';
-import { ListingCard } from '@/components/listings';
-import { Footer, Header } from '@/components/ui';
 import { useFavorites, useRemoveFavorite } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth';
+import { ListingCard } from '@/components/listings';
+import { Footer, Header } from '@/components/ui';
 
 function FavoritesContent() {
   const [page, setPage] = useState(1);

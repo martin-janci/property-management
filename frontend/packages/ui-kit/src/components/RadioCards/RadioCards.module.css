@@ -1,0 +1,129 @@
+/**
+ * RadioCards styles — grid of icon + label + description radio cards.
+ */
+
+.grid {
+  display: grid;
+  gap: 10px;
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+  position: relative;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.cardActive {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Hide native radio but keep it accessible */
+.radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radio:focus-visible + .card {
+  box-shadow: var(--focus-ring), var(--shadow-card);
+}
+
+/* Alternative: wrap with label, use :has */
+.label {
+  display: block;
+  cursor: pointer;
+}
+
+.label:focus-within .card {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft-bg);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconActive {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardLabel {
+  font-size: var(--text-body, 0.875rem);
+  font-weight: 600;
+  color: var(--fg-primary);
+  margin: 0 0 2px;
+  line-height: 1.3;
+}
+
+.description {
+  font-size: var(--text-body-sm, 0.8125rem);
+  color: var(--fg-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Custom radio indicator (top-right) */
+.indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-circle);
+  border: 2px solid var(--border-strong);
+  background: var(--bg-input);
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+  position: relative;
+}
+
+.indicatorActive {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.indicatorActive::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: var(--radius-circle);
+  background: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .icon,
+  .indicator {
+    transition: none;
+  }
+}

@@ -5,8 +5,8 @@
  * Wired to the registry API for CRUD operations.
  */
 
-import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import type { RegistryStatus } from '@ppt/api-client';
+import { createRegistryApi, createRegistryHooks } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { PetRegistrationList } from '../components/PetRegistrationList';
 import { VehicleRegistrationList } from '../components/VehicleRegistrationList';

@@ -519,13 +519,7 @@ function RealtorCard({
   );
 }
 
-function InviteRealtorModal({
-  agencyId,
-  onClose,
-}: {
-  agencyId: string;
-  onClose: () => void;
-}) {
+function InviteRealtorModal({ agencyId, onClose }: { agencyId: string; onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');

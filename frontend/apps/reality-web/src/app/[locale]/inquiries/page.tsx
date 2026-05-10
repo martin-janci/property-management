@@ -6,12 +6,12 @@
 
 'use client';
 
-import { ProtectedRoute } from '@/components/auth';
-import { Footer, Header } from '@/components/ui';
 import type { Inquiry, InquiryStatus } from '@ppt/reality-api-client';
 import { useCancelInquiry, useMyInquiries } from '@ppt/reality-api-client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ProtectedRoute } from '@/components/auth';
+import { Footer, Header } from '@/components/ui';
 
 const statusConfig: Record<InquiryStatus, { label: string; color: string; bg: string }> = {
   pending: {

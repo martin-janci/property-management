@@ -202,7 +202,12 @@ function Step({
   label,
   active,
   complete,
-}: { number: number; label: string; active: boolean; complete: boolean }) {
+}: {
+  number: number;
+  label: string;
+  active: boolean;
+  complete: boolean;
+}) {
   return (
     <div className={`step ${active ? 'active' : ''} ${complete ? 'complete' : ''}`}>
       <div className="step-number">

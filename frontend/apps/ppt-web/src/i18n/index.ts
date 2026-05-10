@@ -1,8 +1,6 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import { defaultLocale, locales } from './config';
-
 // Import translation files
 import cs from '../../messages/cs.json';
 import de from '../../messages/de.json';
@@ -10,6 +8,7 @@ import en from '../../messages/en.json';
 import hu from '../../messages/hu.json';
 import pl from '../../messages/pl.json';
 import sk from '../../messages/sk.json';
+import { defaultLocale, locales } from './config';
 
 const resources = {
   en: { translation: en },
@@ -38,4 +37,4 @@ i18n
   });
 
 export default i18n;
-export { defaultLocale, localeFlags, localeNames, locales, type Locale } from './config';
+export { defaultLocale, type Locale, localeFlags, localeNames, locales } from './config';

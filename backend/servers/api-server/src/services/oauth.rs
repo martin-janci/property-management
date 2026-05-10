@@ -12,7 +12,7 @@ use db::models::oauth::{
     ScopeDisplay, TokenRequest, TokenResponse, UpdateOAuthClient, UserGrantWithClient,
 };
 use db::repositories::OAuthRepository;
-use rand::RngCore;
+use rand::TryRng;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
@@ -683,14 +683,18 @@ impl OAuthService {
     /// does not depend on the ChaCha20 thread-local state being seeded first.
     fn generate_client_id(&self) -> String {
         let mut bytes = [0u8; 16];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
     /// Generate a 32-byte client_secret (base64url encoded).
     fn generate_client_secret(&self) -> String {
         let mut bytes = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
@@ -700,7 +704,9 @@ impl OAuthService {
     /// all shared secrets that require CSPRNG-quality entropy.
     fn generate_secure_token(&self) -> String {
         let mut bytes = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
@@ -750,14 +756,14 @@ mod tests {
     /// Generate secure token for testing.
     fn generate_test_token() -> String {
         let mut bytes = [0u8; 32];
-        rand::RngCore::fill_bytes(&mut rand::rngs::OsRng, &mut bytes);
+        rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
     /// Generate client ID for testing.
     fn generate_test_client_id() -> String {
         let mut bytes = [0u8; 16];
-        rand::RngCore::fill_bytes(&mut rand::rngs::OsRng, &mut bytes);
+        rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
         URL_SAFE_NO_PAD.encode(bytes)
     }
 

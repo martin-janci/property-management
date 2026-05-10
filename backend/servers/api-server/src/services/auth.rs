@@ -4,7 +4,7 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use rand::{rngs::OsRng as RandOsRng, RngCore};
+use rand::{rngs::SysRng as RandSysRng, TryRng};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -71,9 +71,9 @@ impl AuthService {
     /// being correctly seeded — important for one-shot tokens that are used as
     /// a shared secret between email recipient and server.
     pub fn generate_token(&self) -> String {
-        let mut rng = RandOsRng;
+        let mut rng = RandSysRng;
         let mut bytes = [0u8; 32];
-        rng.fill_bytes(&mut bytes);
+        rng.try_fill_bytes(&mut bytes).expect("OS rng failed");
         hex::encode(bytes)
     }
 

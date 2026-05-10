@@ -50,6 +50,9 @@ frontend/**/build/
 frontend/**/.next/
 frontend/**/coverage/
 frontend/pnpm-lock.yaml
+# Worktree-root pnpm artifacts (created by stray `pnpm install` at repo root)
+/node_modules/
+/pnpm-lock.yaml
 
 # === Mobile Native (Kotlin) ===
 !mobile-native/

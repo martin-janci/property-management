@@ -2,17 +2,13 @@
  * Neighbors Feature Page Exports
  */
 
-export { NeighborsPage } from './NeighborsPage';
-export type { NeighborsPageProps } from './NeighborsPage';
-
-export { PrivacySettingsPage } from './PrivacySettingsPage';
-export type { PrivacySettingsPageProps } from './PrivacySettingsPage';
-
-export { InviteNeighborPage } from './InviteNeighborPage';
-export type { InviteNeighborPageProps } from './InviteNeighborPage';
-
-export { InvitationsPage } from './InvitationsPage';
 export type { InvitationsPageProps } from './InvitationsPage';
-
-export { NeighborDetailPage } from './NeighborDetailPage';
+export { InvitationsPage } from './InvitationsPage';
+export type { InviteNeighborPageProps } from './InviteNeighborPage';
+export { InviteNeighborPage } from './InviteNeighborPage';
 export type { NeighborDetailPageProps } from './NeighborDetailPage';
+export { NeighborDetailPage } from './NeighborDetailPage';
+export type { NeighborsPageProps } from './NeighborsPage';
+export { NeighborsPage } from './NeighborsPage';
+export type { PrivacySettingsPageProps } from './PrivacySettingsPage';
+export { PrivacySettingsPage } from './PrivacySettingsPage';

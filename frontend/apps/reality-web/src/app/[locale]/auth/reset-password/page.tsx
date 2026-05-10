@@ -5,10 +5,10 @@
  * Reads `token` from the URL and submits a new password.
  */
 
-import { AuthApiError, confirmPasswordReset } from '@/lib/auth-api';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, Suspense, useState } from 'react';
+import { AuthApiError, confirmPasswordReset } from '@/lib/auth-api';
 
 const MIN_PASSWORD = 8;
 

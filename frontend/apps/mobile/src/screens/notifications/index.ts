@@ -1,2 +1,2 @@
-export { NotificationsScreen } from './NotificationsScreen';
 export type { AppNotification, NotificationCategory } from './NotificationsScreen';
+export { NotificationsScreen } from './NotificationsScreen';

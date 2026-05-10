@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# pw-win — run Windows-side `npx playwright …` from a WSL shell.
+#
+# Picks the Windows project directory in this order:
+#   1. $WIN_PROJECT_DIR (already a Windows path, e.g. C:\Users\You\projects\foo)
+#   2. derived from $PWD if it lives under /mnt/c/...
+#   3. error out
+#
+# Requires:
+#   - Node.js + npm installed on the Windows side
+#   - project's node_modules installed via Windows `npm install` (NOT WSL)
+#   - the project lives on /mnt/c/ (not /home, not \\wsl.localhost\)
+
+set -euo pipefail
+
+CMD_EXE="/mnt/c/Windows/System32/cmd.exe"
+[[ -x "$CMD_EXE" ]] || { echo "pw-win: $CMD_EXE not found — not a WSL+C: setup" >&2; exit 1; }
+
+# Resolve Windows project dir
+if [[ -n "${WIN_PROJECT_DIR:-}" ]]; then
+  win_dir="$WIN_PROJECT_DIR"
+else
+  case "$PWD" in
+    /mnt/c/*)
+      # /mnt/c/Users/Foo/bar -> C:\Users\Foo\bar
+      rel="${PWD#/mnt/c/}"
+      win_dir="C:\\${rel//\//\\}"
+      ;;
+    *)
+      echo "pw-win: \$PWD is '$PWD' — not under /mnt/c/. Set WIN_PROJECT_DIR or cd into a Windows-side project." >&2
+      exit 2
+      ;;
+  esac
+fi
+
+# Sanity: Windows Node available?
+# Two cases:
+#   (a) node is on cmd.exe's PATH       -> run as-is
+#   (b) node lives at a known location  -> prepend its dir to PATH inside cmd.exe
+#       (this happens when Node was installed AFTER the WSL session started — the
+#        new Windows PATH only takes effect after `wsl --shutdown` + reopen)
+path_prefix=""
+if ! "$CMD_EXE" /c "node -v >NUL 2>&1"; then
+  for cand in \
+      "/mnt/c/Program Files/nodejs/node.exe" \
+      "/mnt/c/Program Files (x86)/nodejs/node.exe" \
+      "/mnt/c/Users/${USER}/AppData/Local/nvs/default/node.exe" \
+      "/mnt/c/Users/${USER}/AppData/Roaming/nvm/current/node.exe"; do
+    if [[ -x "$cand" ]]; then
+      win_node_dir=$(dirname "$cand" | sed 's|^/mnt/c|C:|; s|/|\\|g')
+      # Use unquoted `set` + `&` separator: cmd.exe quoting rules conflict
+      # with bash's once nested, but unquoted set works because Windows PATH
+      # entries are themselves space-tolerant when colon-separated.
+      path_prefix="set PATH=${win_node_dir};%PATH%&"
+      break
+    fi
+  done
+  if [[ -z "$path_prefix" ]]; then
+    echo "pw-win: Windows-side Node.js not found on PATH or in known locations. See references/preflight.md." >&2
+    exit 3
+  fi
+fi
+
+# Build the cmd.exe payload. We need cd /d + npx playwright + args.
+# Pass args as a single quoted string to cmd.exe.
+args="$*"
+"$CMD_EXE" /c "${path_prefix}cd /d \"${win_dir}\"&npx playwright ${args}"

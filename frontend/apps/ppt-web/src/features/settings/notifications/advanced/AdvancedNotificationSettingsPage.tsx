@@ -21,6 +21,7 @@ import {
   useUpdateGroupingPreferences,
   useUpdateQuietHours,
 } from '@ppt/api-client';
+import type * as React from 'react';
 import { useState } from 'react';
 import {
   CategoryPreferenceCard,
@@ -129,7 +130,7 @@ export function AdvancedNotificationSettingsPage({
     );
   }
 
-  const tabs: { id: ActiveTab; label: string; icon: JSX.Element }[] = [
+  const tabs: { id: ActiveTab; label: string; icon: React.JSX.Element }[] = [
     {
       id: 'categories',
       label: 'Categories',

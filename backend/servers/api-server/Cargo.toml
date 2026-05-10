@@ -2,6 +2,8 @@
 name = "api-server"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+publish = false
 
 [lib]
 name = "api_server"
@@ -48,10 +50,10 @@ dialoguer = { workspace = true }
 config = { workspace = true }
 anyhow = { workspace = true }
 validator = { workspace = true }
-rand = "0.8"
-sha2 = "0.10"
-hex = "0.4"
-hmac = "0.12"
+rand = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+hmac = { workspace = true }
 thiserror = { workspace = true }
 rust_decimal = { workspace = true }
 rust_decimal_macros = { workspace = true }

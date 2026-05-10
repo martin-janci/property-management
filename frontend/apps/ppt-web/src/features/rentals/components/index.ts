@@ -7,5 +7,5 @@ export * from './BookingCard';
 export * from './CalendarView';
 export * from './GuestForm';
 export * from './PlatformConnectionCard';
-export * from './TaxSummaryCard';
 export * from './TaxReportPreview';
+export * from './TaxSummaryCard';

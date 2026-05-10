@@ -13,8 +13,8 @@ use axum::{
 };
 use common::errors::ErrorResponse;
 use db::models::{
-    Building, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo, UnitSummary,
-    UnitWithOwners, UpdateBuilding, UpdateUnit,
+    Building, BuildingStatistics, BuildingSummary, CreateBuilding, CreateUnit, Unit, UnitOwnerInfo,
+    UnitSummary, UnitWithOwners, UpdateBuilding, UpdateUnit,
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -40,31 +40,34 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_building))
         .route("/", get(list_buildings))
         .route("/bulk", post(bulk_import_buildings))
-        .route("/:id", get(get_building))
-        .route("/:id", put(update_building))
-        .route("/:id", delete(archive_building))
-        .route("/:id/restore", post(restore_building))
+        .route("/{id}", get(get_building))
+        .route("/{id}", put(update_building))
+        .route("/{id}", delete(archive_building))
+        .route("/{id}/restore", post(restore_building))
         // Building statistics (UC-15.7)
-        .route("/:id/statistics", get(get_building_statistics))
+        .route("/{id}/statistics", get(get_building_statistics))
         // Unit management (UC-15.4-5)
-        .route("/:id/units", get(list_units))
-        .route("/:id/units", post(create_unit))
-        .route("/:building_id/units/:unit_id", get(get_unit))
-        .route("/:building_id/units/:unit_id", put(update_unit))
-        .route("/:building_id/units/:unit_id", delete(archive_unit))
-        .route("/:building_id/units/:unit_id/restore", post(restore_unit))
+        .route("/{id}/units", get(list_units))
+        .route("/{id}/units", post(create_unit))
+        .route("/{building_id}/units/{unit_id}", get(get_unit))
+        .route("/{building_id}/units/{unit_id}", put(update_unit))
+        .route("/{building_id}/units/{unit_id}", delete(archive_unit))
+        .route("/{building_id}/units/{unit_id}/restore", post(restore_unit))
         // Unit owner management (UC-15.6)
-        .route("/:building_id/units/:unit_id/owners", get(list_unit_owners))
         .route(
-            "/:building_id/units/:unit_id/owners",
+            "/{building_id}/units/{unit_id}/owners",
+            get(list_unit_owners),
+        )
+        .route(
+            "/{building_id}/units/{unit_id}/owners",
             post(assign_unit_owner),
         )
         .route(
-            "/:building_id/units/:unit_id/owners/:user_id",
+            "/{building_id}/units/{unit_id}/owners/{user_id}",
             put(update_unit_owner),
         )
         .route(
-            "/:building_id/units/:unit_id/owners/:user_id",
+            "/{building_id}/units/{unit_id}/owners/{user_id}",
             delete(remove_unit_owner),
         )
         // Unit residents (Epic 3, Story 3.3)

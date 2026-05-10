@@ -1,8 +1,8 @@
 export {
   defaultLocale,
+  type Locale,
   localeFlags,
   localeNames,
   locales,
-  type Locale,
 } from './config';
-export { Link, getPathname, redirect, usePathname, useRouter } from './routing';
+export { getPathname, Link, redirect, usePathname, useRouter } from './routing';

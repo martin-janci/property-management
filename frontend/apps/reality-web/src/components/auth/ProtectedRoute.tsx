@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 interface ProtectedRouteProps {
   children: ReactNode;

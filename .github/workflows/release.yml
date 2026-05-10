@@ -1,0 +1,90 @@
+name: Release tag → register prod-candidate
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+  # `actions: read` is required for the wait step's `gh run list` calls. Without
+  # it the API returns 403 and the loop spins until the 15-minute timeout.
+  actions: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for backend + frontend image workflows
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Waiting for image builds for tag $TAG"
+          done=false
+          for i in $(seq 1 90); do
+            backend=$(gh run list --workflow=docker-build.yml --branch="$TAG" --limit 1 \
+              --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
+            frontend=$(gh run list --workflow=docker-frontend.yml --branch="$TAG" --limit 1 \
+              --json status,conclusion -q '.[0]' 2>/dev/null || echo "{}")
+            backend_status=$(echo "$backend" | jq -r '.status // ""')
+            backend_conclusion=$(echo "$backend" | jq -r '.conclusion // ""')
+            frontend_status=$(echo "$frontend" | jq -r '.status // ""')
+            frontend_conclusion=$(echo "$frontend" | jq -r '.conclusion // ""')
+
+            # Fail fast if either workflow finished unsuccessfully — no point waiting longer.
+            for c in "$backend_conclusion" "$frontend_conclusion"; do
+              if [ -n "$c" ] && [ "$c" != "success" ]; then
+                echo "::error::image workflow conclusion=$c — refusing to register prod-candidate"
+                exit 1
+              fi
+            done
+
+            if [ "$backend_status" = "completed" ] && [ "$frontend_status" = "completed" ]; then
+              if [ "$backend_conclusion" = "success" ] && [ "$frontend_conclusion" = "success" ]; then
+                echo "Both workflows completed successfully."
+                done=true
+                break
+              fi
+            fi
+            echo "Backend: ${backend_status:-pending}/${backend_conclusion:-?}, Frontend: ${frontend_status:-pending}/${frontend_conclusion:-?}; sleeping 10s..."
+            sleep 10
+          done
+
+          if [ "$done" != "true" ]; then
+            echo "::error::image workflows did not complete-success within timeout (15 min)"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get OIDC token for ppt-deploy
+        uses: actions/github-script@v7
+        id: oidc
+        with:
+          script: |
+            const token = await core.getIDToken('ppt-deploy');
+            core.setOutput('token', token);
+
+      - name: POST /api/release with image manifest
+        env:
+          DEPLOY_URL: https://onyx.rlt.sk
+          IMAGE_PREFIX: ghcr.io/martin-janci
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Image names ALL carry the `ppt-` prefix in GHCR (matches
+          # docker-build.yml + docker-frontend.yml's matrix). The service KEYS
+          # in the JSON manifest stay short (`reality-web`, etc.) so consumers
+          # of /api/release don't need to know about the registry naming.
+          IMAGES=$(jq -n \
+            --arg api "$IMAGE_PREFIX/ppt-api-server:$TAG" \
+            --arg reality "$IMAGE_PREFIX/ppt-reality-server:$TAG" \
+            --arg pptweb "$IMAGE_PREFIX/ppt-web:$TAG" \
+            --arg realityweb "$IMAGE_PREFIX/ppt-reality-web:$TAG" \
+            '{"api-server":$api,"reality-server":$reality,"ppt-web":$pptweb,"reality-web":$realityweb}')
+          curl -fsS -X POST "$DEPLOY_URL/api/release" \
+            -H "Authorization: Bearer $OIDC_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag\":\"$TAG\",\"images\":$IMAGES}"

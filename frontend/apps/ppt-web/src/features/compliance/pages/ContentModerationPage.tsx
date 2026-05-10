@@ -15,10 +15,10 @@ import {
 } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useState } from 'react';
-import { ModerationCaseCard } from '../components/ModerationCaseCard';
 import type { ModerationCase } from '../components/ModerationCaseCard';
-import { ModerationQueueStats } from '../components/ModerationQueueStats';
+import { ModerationCaseCard } from '../components/ModerationCaseCard';
 import type { ModerationQueueStatsData } from '../components/ModerationQueueStats';
+import { ModerationQueueStats } from '../components/ModerationQueueStats';
 
 interface ActionTemplate {
   id: string;

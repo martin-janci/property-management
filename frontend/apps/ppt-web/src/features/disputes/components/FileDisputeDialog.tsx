@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { type DisputeCategory, categoryLabels } from './DisputeCard';
+import { categoryLabels, type DisputeCategory } from './DisputeCard';
 
 export interface FileDisputeData {
   category: DisputeCategory;

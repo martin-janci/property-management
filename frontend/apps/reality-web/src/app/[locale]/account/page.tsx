@@ -6,10 +6,10 @@
  * Lists account-related actions for an authenticated user.
  */
 
+import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
-import Link from 'next/link';
 
 const SECTIONS: ReadonlyArray<{
   href: string;

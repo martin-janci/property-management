@@ -2,76 +2,142 @@
  * @ppt/ui-kit - Design system for Property Management apps.
  *
  * Shared components for ppt-web, reality-web, and mobile applications.
- * Import the tokens.css file in your app's entry point to enable CSS custom properties.
+ *
+ * CSS tokens (import once in your app's entry point):
+ *   import '@ppt/ui-kit/tokens.css';          — legacy --ppt-* prefixed tokens
+ *   import '@ppt/ui-kit/tokens/tokens.css';   — design-system tokens (UC-*)
+ *
+ * Components + JS tokens:
+ *   import { Button, ListingCard, tokens } from '@ppt/ui-kit';
  */
 
 // ============================================
 // CSS Tokens (import in app entry point)
 // ============================================
-// import '@ppt/ui-kit/src/tokens.css';
+// import '@ppt/ui-kit/tokens.css';
+// import '@ppt/ui-kit/tokens/tokens.css';
 
 // ============================================
 // Version
 // ============================================
 export const VERSION = '0.2.356';
 
+export type { AccessibilityProviderProps } from './AccessibilityProvider';
+export { AccessibilityProvider, useAccessibilityContext } from './AccessibilityProvider';
+export type { SkipNavigationProps } from './SkipNavigation';
 // ============================================
 // Accessibility
 // ============================================
 export { SkipNavigation } from './SkipNavigation';
-export type { SkipNavigationProps } from './SkipNavigation';
-export { AccessibilityProvider, useAccessibilityContext } from './AccessibilityProvider';
-export type { AccessibilityProviderProps } from './AccessibilityProvider';
 
 // ============================================
 // Core Components
 // ============================================
 
-// Button
-export { Button } from './Button';
-export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
-
-// Input
-export { Input } from './Input';
-export type { InputProps, InputType, InputSize } from './Input';
-
-// Modal
-export { Modal } from './Modal';
-export type { ModalProps, ModalSize } from './Modal';
-
-// Card
-export { Card } from './Card';
-export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } from './Card';
-
-// Table
-export { Table } from './Table';
-export type {
-  TableProps,
-  TableHeadProps,
-  TableBodyProps,
-  TableRowProps,
-  TableCellProps,
-  TableHeaderCellProps,
-} from './Table';
-
-// Badge
-export { Badge } from './Badge';
-export type { BadgeProps, BadgeVariant, BadgeSize } from './Badge';
-
+export type { AlertProps, AlertVariant } from './Alert';
 // Alert
 export { Alert } from './Alert';
-export type { AlertProps, AlertVariant } from './Alert';
-
-// Spinner
-export { Spinner, SpinnerOverlay } from './Spinner';
-export type { SpinnerProps, SpinnerSize, SpinnerOverlayProps } from './Spinner';
-
+export type { BadgeProps, BadgeSize, BadgeVariant } from './Badge';
+// Badge
+export { Badge } from './Badge';
+export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
+// Button
+export { Button } from './Button';
+export type { CardContentProps, CardFooterProps, CardHeaderProps, CardProps } from './Card';
+// Card
+export { Card } from './Card';
+export type { InputProps, InputSize, InputType } from './Input';
+// Input
+export { Input } from './Input';
+export type { ModalProps, ModalSize } from './Modal';
+// Modal
+export { Modal } from './Modal';
+export type { PaginationProps } from './Pagination';
 // Pagination
 export { Pagination } from './Pagination';
-export type { PaginationProps } from './Pagination';
+export type { SpinnerOverlayProps, SpinnerProps, SpinnerSize } from './Spinner';
+// Spinner
+export { Spinner, SpinnerOverlay } from './Spinner';
+export type {
+  TableBodyProps,
+  TableCellProps,
+  TableHeaderCellProps,
+  TableHeadProps,
+  TableProps,
+  TableRowProps,
+} from './Table';
+// Table
+export { Table } from './Table';
 
 // ============================================
-// Design Tokens (JavaScript)
+// Design Tokens — new structured tokens (from tokens/ directory)
+// ============================================
+
+export { pptPreset, tailwindPreset } from './tokens';
+export type { Tokens } from './tokens/tokens';
+export {
+  accent,
+  bg,
+  border,
+  brand,
+  danger,
+  duration,
+  easing,
+  featured,
+  fg,
+  fontSize as tokenFontSize,
+  fontWeight as tokenFontWeight,
+  radius,
+  shadow,
+  success,
+  tokens,
+  warning,
+} from './tokens/tokens';
+
+// ============================================
+// New shared components
+// ============================================
+
+// ChipGroup
+export type { Chip, ChipGroupMode, ChipGroupProps } from './components/ChipGroup';
+export { ChipGroup } from './components/ChipGroup';
+// FileUpload
+export type { FileStatus, FileUploadProps, UploadFile } from './components/FileUpload';
+export { FileUpload } from './components/FileUpload';
+// FilterSidebar
+export type { FilterGroup, FilterItem, FilterSidebarProps } from './components/FilterSidebar';
+export { FilterSidebar } from './components/FilterSidebar';
+// HeroSearch
+export type {
+  HeroSearchProps,
+  HeroSearchTab,
+  HeroSearchTab_Config,
+  HeroSearchValues,
+} from './components/HeroSearch';
+export { HeroSearch } from './components/HeroSearch';
+// ListingCard
+export type { ListingCardListing, ListingCardProps } from './components/ListingCard';
+export { ListingCard } from './components/ListingCard';
+// ModalDrawer
+export type { ModalDrawerMode, ModalDrawerProps } from './components/ModalDrawer';
+export { ModalDrawer } from './components/ModalDrawer';
+
+// RadioCards
+export type { RadioCardOption, RadioCardsProps } from './components/RadioCards';
+export { RadioCards } from './components/RadioCards';
+// SegmentedControl
+export type { SegmentedControlProps, SegmentOption } from './components/SegmentedControl';
+export { SegmentedControl } from './components/SegmentedControl';
+// StatusPill
+export type { StatusPillProps, StatusPillVariant } from './components/StatusPill';
+export { StatusPill } from './components/StatusPill';
+
+// Stepper
+export type { StepperProps } from './components/Stepper';
+export { Stepper } from './components/Stepper';
+
+// ============================================
+// Design Tokens (JavaScript) — legacy flat export
 // ============================================
 
 /**

@@ -8,8 +8,8 @@
 
 import type { ListingSummary } from '@ppt/reality-api-client';
 import { useFeaturedListings, useToggleFavorite } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ListingCard } from '../listings/ListingCard';
 
 export function FeaturedListings() {

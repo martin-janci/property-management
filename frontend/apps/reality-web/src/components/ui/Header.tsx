@@ -7,9 +7,9 @@
 
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
 import { Link, usePathname } from '../../i18n/routing';
 import { LanguageSwitcher } from './LanguageSwitcher';
 

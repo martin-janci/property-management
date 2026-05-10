@@ -17,7 +17,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::Utc;
 use common::errors::ErrorResponse;
 use db::models::{listing_portal, webhook_event_type, PortalInquiryWebhook, PortalViewWebhook};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use utoipa::ToSchema;
@@ -50,7 +50,7 @@ pub fn router() -> Router<AppState> {
             post(nehnutelnosti_inquiry_webhook),
         )
         // Generic webhook endpoint (portal specified in path)
-        .route("/:portal/events", post(generic_portal_webhook))
+        .route("/{portal}/events", post(generic_portal_webhook))
 }
 
 // ============================================================================

@@ -1,4 +1,4 @@
 /**
  * App configuration exports.
  */
-export { APP_VERSION, BUILD_NUMBER, API_BASE_URL, CONSTANTS } from './constants';
+export { API_BASE_URL, APP_VERSION, BUILD_NUMBER, CONSTANTS } from './constants';

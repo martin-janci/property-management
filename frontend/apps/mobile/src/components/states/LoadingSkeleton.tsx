@@ -37,7 +37,11 @@ function SkeletonBlock({
   width,
   height,
   radius = 6,
-}: { width: ViewStyle['width']; height: ViewStyle['height']; radius?: number }) {
+}: {
+  width: ViewStyle['width'];
+  height: ViewStyle['height'];
+  radius?: number;
+}) {
   const shimmer = useShimmer();
   const backgroundColor = shimmer.interpolate({
     inputRange: [0, 0.5, 1],

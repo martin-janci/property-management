@@ -6,7 +6,7 @@
 use chrono::{Duration, Utc};
 use db::models::{CreatePortalPasswordResetToken, CreatePortalUser, PortalUser, UpdatePortalUser};
 use db::repositories::{PortalPasswordResetRepository, PortalRepository};
-use rand::RngCore;
+use rand::TryRng;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -366,7 +366,9 @@ impl UserHandler {
         // 32 cryptographically-random bytes → URL-safe base64 → ~43 char
         // token that we surface to the user via email.
         let mut bytes = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut bytes);
+        rand::rngs::SysRng
+            .try_fill_bytes(&mut bytes)
+            .expect("OS rng failed");
         let plaintext_token =
             base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, bytes);
         let token_hash = sha256_hex(&plaintext_token);

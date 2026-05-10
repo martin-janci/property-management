@@ -7,11 +7,11 @@
  * management and analytics.
  */
 
+import { useMyListings } from '@ppt/reality-api-client';
+import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { useAuth } from '@/lib/auth-context';
-import { useMyListings } from '@ppt/reality-api-client';
-import Link from 'next/link';
 
 const SECTIONS: ReadonlyArray<{
   href: string;

@@ -140,11 +140,16 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (url = "https://api.reality-portal.eu", description = "EU-wide")
     ),
     paths(
-        routes::health::health,
+        routes::health::liveness,
+        routes::health::readiness,
         routes::listings::search,
         routes::listings::get_listing,
         routes::listings::get_suggestions,
+        routes::listings::get_featured,
+        routes::listings::get_categories,
+        routes::listings::record_view,
         routes::favorites::list_favorites,
+        routes::favorites::list_favorite_ids,
         routes::favorites::add_favorite,
         routes::favorites::remove_favorite,
         routes::favorites::check_favorite,
@@ -190,9 +195,35 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::imports::get_feed,
         routes::imports::update_feed,
         routes::imports::sync_feed,
+        // Compare (UC-48)
+        routes::compare::get_compare_list,
+        routes::compare::add_to_compare,
+        routes::compare::remove_from_compare,
+        // Reports (UC-23)
+        routes::reports::submit_report,
+        routes::reports::list_my_reports,
+        // Agent reviews (UC-49, UC-51)
+        routes::agent_reviews::list_reviews,
+        routes::agent_reviews::create_review,
+        // Agency branding (UC-49)
+        routes::agency_branding::get_branding,
+        routes::agency_branding::update_branding,
+        // Agency imports (UC-50)
+        routes::agency_imports::list_import_history,
+        routes::agency_imports::test_connection,
+        routes::agency_imports::run_import,
+        routes::agency_imports::get_import_job_status,
+        // Price map (UC-31)
+        routes::price_map::get_price_map,
+        // Articles / Journal (UC-13)
+        routes::articles::list_articles,
+        routes::articles::get_article,
+        routes::articles::list_comments,
+        routes::articles::create_comment,
     ),
     components(schemas(
         routes::health::HealthResponse,
+        routes::health::LivenessResponse,
         routes::health::CacheMetricsResponse,
         routes::health::CacheMetricsDetail,
         routes::listings::ListingSearchRequest,
@@ -200,6 +231,11 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::listings::ListingSummary,
         routes::listings::ListingDetail,
         routes::listings::SuggestionsResponse,
+        routes::listings::FeaturedListingsResponse,
+        routes::listings::RichListingSummary,
+        routes::listings::RichListingAddress,
+        routes::listings::RichListingPhoto,
+        routes::listings::CategoryCount,
         routes::favorites::CheckFavoriteResponse,
         routes::favorites::FavoritesResponse,
         routes::saved_searches::SavedSearchesResponse,
@@ -253,6 +289,48 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         CreateFeedSubscription,
         UpdateFeedSubscription,
         RealityFeedSubscription,
+        // Compare (UC-48)
+        routes::compare::CompareEntry,
+        routes::compare::CompareListResponse,
+        routes::compare::AddCompareResponse,
+        // Reports (UC-23)
+        routes::reports::SubmitReportRequest,
+        routes::reports::ListingReport,
+        routes::reports::SubmitReportResponse,
+        routes::reports::MyReportsResponse,
+        routes::reports::ProblemType,
+        // Agent reviews (UC-49, UC-51)
+        routes::agent_reviews::RealtorReview,
+        routes::agent_reviews::CreateReviewRequest,
+        routes::agent_reviews::ReviewsResponse,
+        // Agency branding (UC-49)
+        routes::agency_branding::AgencyBranding,
+        routes::agency_branding::UpdateBrandingRequest,
+        routes::agency_branding::BrandingResponse,
+        routes::agency_branding::WatermarkPosition,
+        routes::agency_branding::WatermarkStyle,
+        // Agency imports (UC-50)
+        routes::agency_imports::ImportJobSummary,
+        routes::agency_imports::ImportHistoryResponse,
+        routes::agency_imports::TestConnectionRequest,
+        routes::agency_imports::TestConnectionResponse,
+        routes::agency_imports::RunImportRequest,
+        routes::agency_imports::RunImportResponse,
+        routes::agency_imports::ImportJobDetail,
+        routes::agency_imports::ImportJobDetailResponse,
+        routes::agency_imports::ImportProvider,
+        // Price map (UC-31)
+        routes::price_map::DistrictPriceData,
+        routes::price_map::PriceMapResponse,
+        // Articles / Journal (UC-13)
+        routes::articles::ArticleSummary,
+        routes::articles::ArticleDetail,
+        routes::articles::RelatedArticle,
+        routes::articles::ArticlesListResponse,
+        routes::articles::ArticleDetailResponse,
+        routes::articles::ArticleComment,
+        routes::articles::CommentsResponse,
+        routes::articles::CreateCommentRequest,
     )),
     tags(
         (name = "Health", description = "Health check endpoints"),
@@ -264,7 +342,14 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (name = "Inquiries", description = "Contact and viewing requests"),
         (name = "Agencies", description = "Real estate agency management (Epic 32)"),
         (name = "Realtors", description = "Realtor profiles and tools (Epic 33)"),
-        (name = "Imports", description = "Property import and feed management (Epic 34)")
+        (name = "Imports", description = "Property import and feed management (Epic 34)"),
+        (name = "Compare", description = "Compare up to 4 listings side-by-side (UC-48)"),
+        (name = "Reports", description = "Report problematic listings (UC-23)"),
+        (name = "AgentReviews", description = "Realtor reviews and ratings (UC-49, UC-51)"),
+        (name = "AgencyBranding", description = "Agency branding settings (UC-49)"),
+        (name = "AgencyImport", description = "Per-agency import management (UC-50)"),
+        (name = "PriceMap", description = "District price aggregations (UC-31)"),
+        (name = "Articles", description = "Journal and news articles (UC-13)")
     )
 )]
 struct ApiDoc;
@@ -298,13 +383,31 @@ async fn main() -> anyhow::Result<()> {
     let db = db::create_rls_safe_pool(&database_url).await?;
     tracing::info!("Connected to database with RLS-safe pool");
 
+    // Apply any pending migrations. Same migration set as api-server (both
+    // share the per-target Postgres database). Concurrency-safe via sqlx's
+    // advisory lock — if api-server happens to be migrating in parallel
+    // (typical blue/green spin-up), this call blocks then sees zero pending.
+    // Required on first deploy of a fresh target where the database was
+    // created empty from `ppt_dev_template`.
+    // `.context()` preserves the underlying `MigrateError` as the source
+    // for anyhow's chained-error rendering — `map_err(|e| anyhow!("{e}"))`
+    // would have flattened the cause into a single string and lost the
+    // backtrace.
+    use anyhow::Context;
+    db::run_migrations(&db)
+        .await
+        .context("DB migration failed")?;
+    tracing::info!("Database migrations applied (or already current)");
+
     // Create application state
     let state = AppState::new(db);
 
     // Build router with state
     let app = Router::new()
-        // Health check (stateless)
-        .route("/health", get(routes::health::health))
+        // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
+        .route("/health", get(routes::health::liveness))
+        // Readiness — deep dep check (DB + PM API). Operator dashboards.
+        .route("/readiness", get(routes::health::readiness))
         // Prometheus metrics endpoint (Epic 95.4)
         .route("/metrics", get(metrics_endpoint))
         // Public listing routes
@@ -325,6 +428,30 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/realtors", routes::realtors::router())
         // Import routes (Epic 34)
         .nest("/api/v1/imports", routes::imports::router())
+        // Compare routes (UC-48)
+        .nest("/api/v1/compare", routes::compare::router())
+        // Reports routes (UC-23)
+        .nest("/api/v1/reports", routes::reports::router())
+        // Agent reviews — nested under realtors (UC-49, UC-51)
+        .nest(
+            "/api/v1/realtors/{id}/reviews",
+            routes::agent_reviews::router(),
+        )
+        // Agency branding (UC-49) — nested under /:id/branding to avoid prefix
+        // collision with routes::agencies (Axum .nest() shadows on same prefix).
+        .nest(
+            "/api/v1/agencies/{id}/branding",
+            routes::agency_branding::router(),
+        )
+        // Agency imports (UC-50)
+        .nest(
+            "/api/v1/agencies/{id}/imports",
+            routes::agency_imports::router(),
+        )
+        // Price map aggregations (UC-31)
+        .nest("/api/v1/price-map", routes::price_map::router())
+        // Journal / News articles (UC-13)
+        .nest("/api/v1/articles", routes::articles::router())
         // Swagger UI
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Add state

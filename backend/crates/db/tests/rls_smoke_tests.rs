@@ -2,6 +2,14 @@
 //!
 //! These tests run on every PR to catch basic RLS regressions quickly.
 //! For comprehensive testing, see `rls_penetration_tests.rs` (runs weekly).
+//!
+//! Schema mapping (kept here so the test stays in sync with migration drift):
+//! - `buildings`     → columns are `street`, `city`, `postal_code`, `country`
+//!   (NOT `address_line1`; that name was used by an earlier migration that
+//!   was renamed in `00007_create_buildings.sql`).
+//! - `organization_members` → role-as-string lives in `role_type` (default
+//!   `'member'`); `role_id` is a separate UUID FK to the `roles` table for
+//!   custom-role lookups (we don't need that here).
 
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::time::Duration;
@@ -21,6 +29,17 @@ impl TestDb {
             .acquire_timeout(Duration::from_secs(5))
             .connect(&database_url)
             .await?;
+
+        // RLS is enforced for non-owner non-superuser roles WITHOUT needing
+        // `FORCE ROW LEVEL SECURITY`. The CI workflow creates a dedicated
+        // `rls_test_runner` role (non-superuser, granted only the privileges
+        // it needs) and `TEST_DATABASE_URL` connects as that role.
+        //
+        // If you run this test locally and `TEST_DATABASE_URL` points at a
+        // superuser, RLS will be silently bypassed and the assertions will
+        // all fail — that's a configuration issue, not a test bug. See
+        // .github/workflows/backend.yml's "Create non-superuser test role"
+        // step for the exact role/grants.
 
         Ok(Self { pool })
     }
@@ -86,7 +105,12 @@ impl TestDb {
     }
 
     async fn cleanup(&self) {
-        // Clean up in reverse order of dependencies
+        // FORCE RLS is on, so DELETEs need super-admin context to bypass the
+        // per-row policy. Without this, cleanup is a silent no-op and leftover
+        // rows from a previous run leak into subsequent tests (which then see
+        // unexpected building counts and assert-fail).
+        let _ = self.set_request_context(None, None, true).await;
+        // Clean up in reverse order of dependencies.
         let _ = sqlx::query("DELETE FROM buildings WHERE name LIKE 'Smoke%'")
             .execute(&self.pool)
             .await;
@@ -99,6 +123,7 @@ impl TestDb {
         let _ = sqlx::query("DELETE FROM organizations WHERE name LIKE 'Smoke%'")
             .execute(&self.pool)
             .await;
+        let _ = self.clear_context().await;
     }
 }
 
@@ -110,6 +135,17 @@ async fn smoke_test_cross_tenant_isolation() {
         .await
         .expect("Failed to connect to test database");
     db.cleanup().await;
+
+    // ALL setup runs as super-admin so RLS-enforced trigger inserts succeed.
+    // Most importantly: `INSERT INTO organizations` fires the
+    // `create_default_roles()` trigger which inserts into `roles` — and
+    // `roles` has a WITH CHECK that requires
+    // `organization_id = get_current_org_id() OR is_super_admin()`.
+    // Without super-admin context here, the trigger fails with
+    // "new row violates row-level security policy for table \"roles\"".
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
 
     // Create two tenants
     let org_a = db
@@ -234,6 +270,13 @@ async fn smoke_test_null_context_blocks_access() {
         .expect("Failed to connect to test database");
     db.cleanup().await;
 
+    // Setup runs as super-admin so the `create_default_roles` trigger that
+    // fires on `INSERT INTO organizations` can populate `roles` (which is
+    // RLS-protected with WITH CHECK).
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
+
     // Create a tenant and building
     let org = db
         .create_test_org("Smoke Null Context Org")
@@ -281,6 +324,13 @@ async fn smoke_test_context_clearing() {
         .await
         .expect("Failed to connect to test database");
     db.cleanup().await;
+
+    // Setup runs as super-admin so the `create_default_roles` trigger that
+    // fires on `INSERT INTO organizations` can populate `roles` (which is
+    // RLS-protected with WITH CHECK).
+    db.set_request_context(None, None, true)
+        .await
+        .expect("Failed to set super-admin context for setup");
 
     let org = db
         .create_test_org("Smoke Context Clear Org")

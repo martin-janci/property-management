@@ -19,9 +19,10 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # GITHUB_TOKEN push does not re-trigger push-based workflows (GitHub
           # prevents workflow recursion). That is intentional here — the version
@@ -37,14 +38,16 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup Node (for package.json sync)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 
       - name: Bump patch version
         run: ./scripts/bump-version.sh patch
 
-      - name: Commit and push version bump
+      - name: Create PR with version bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(cat VERSION | tr -d '[:space:]')
           git add VERSION
@@ -55,5 +58,22 @@ jobs:
           git add mobile-native/gradle.properties 2>/dev/null || true
           git add docs/api/typespec/main.tsp 2>/dev/null || true
           git diff --cached --quiet && echo "No version files changed" && exit 0
+
+          BRANCH="chore/version-${VERSION}"
+          git checkout -b "$BRANCH"
           git commit -m "chore(version): bump to $VERSION"
-          git push
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "chore(version): bump to $VERSION" \
+            --body "Automated patch version bump triggered by merge to \`main\`." \
+            --base main \
+            --head "$BRANCH")
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+          echo "Created PR #$PR_NUMBER: $PR_URL"
+
+          # Enable auto-merge — merges automatically once approval conditions are met
+          gh pr merge "$PR_NUMBER" --auto --squash \
+            && echo "Auto-merge enabled on PR #$PR_NUMBER" \
+            || echo "Note: auto-merge not available in repo settings — PR #$PR_NUMBER needs manual merge"

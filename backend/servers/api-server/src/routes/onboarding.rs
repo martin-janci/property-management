@@ -20,15 +20,15 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/tours", get(get_user_tours))
-        .route("/tours/:tour_id", get(get_tour))
-        .route("/tours/:tour_id/start", post(start_tour))
+        .route("/tours/{tour_id}", get(get_tour))
+        .route("/tours/{tour_id}/start", post(start_tour))
         .route(
-            "/tours/:tour_id/steps/:step_id/complete",
+            "/tours/{tour_id}/steps/{step_id}/complete",
             post(complete_step),
         )
-        .route("/tours/:tour_id/complete", post(complete_tour))
-        .route("/tours/:tour_id/skip", post(skip_tour))
-        .route("/tours/:tour_id/reset", post(reset_tour))
+        .route("/tours/{tour_id}/complete", post(complete_tour))
+        .route("/tours/{tour_id}/skip", post(skip_tour))
+        .route("/tours/{tour_id}/reset", post(reset_tour))
         .route("/status", get(get_onboarding_status))
 }
 

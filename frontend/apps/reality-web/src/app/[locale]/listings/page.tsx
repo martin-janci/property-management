@@ -6,17 +6,17 @@
 
 'use client';
 
+import type { ListingFilters as FilterType, ListingSortField } from '@ppt/reality-api-client';
+import { useListings, useToggleFavorite } from '@ppt/reality-api-client';
+import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Suspense, useCallback, useState } from 'react';
 import { ListingFilters } from '@/components/listings/ListingFilters';
 import { ListingGrid } from '@/components/listings/ListingGrid';
 import { SearchBar } from '@/components/listings/SearchBar';
 import { LoadingSkeleton } from '@/components/states';
 import { Footer, Header } from '@/components/ui';
 import { useRouter } from '@/i18n/routing';
-import type { ListingFilters as FilterType, ListingSortField } from '@ppt/reality-api-client';
-import { useListings, useToggleFavorite } from '@ppt/reality-api-client';
-import { useTranslations } from 'next-intl';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useState } from 'react';
 
 function ListingsFallback() {
   return (

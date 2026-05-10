@@ -4,6 +4,7 @@
  * Main page for viewing and managing emergency contacts.
  */
 
+import type { CreateEmergencyContact, EmergencyContact } from '@ppt/api-client';
 import {
   CONTACT_TYPE_LABELS,
   createEmergencyContact,
@@ -11,7 +12,6 @@ import {
   listEmergencyContacts,
   updateEmergencyContact,
 } from '@ppt/api-client';
-import type { CreateEmergencyContact, EmergencyContact } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

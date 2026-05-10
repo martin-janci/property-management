@@ -1,0 +1,112 @@
+# Template — `${BG_TARGET}` and `${BG_COLOR}` are filled in at container
+# startup by /docker-entrypoint.d/10-render-template.sh via `envsubst` so the
+# `proxy_pass` upstream resolves to the same blue/green color of api-server
+# in the same Docker network as this ppt-web container.
+
+server {
+    listen 8080;
+    listen [::]:8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/javascript
+        application/x-javascript
+        application/json
+        application/xml
+        application/rss+xml
+        application/atom+xml
+        image/svg+xml;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Cache static assets (include security headers since add_header in location overrides parent)
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Cross-origin shim for the SPA: ppt-web is built with
+    # `VITE_API_URL=` (empty) so the bundle issues `fetch('/api/v1/...')`
+    # against its own origin (ppt.<ppt_apex>). The api-server lives at
+    # api.<ppt_apex> — different host, the relative fetches would never
+    # reach it. Proxy `/api/` (REST) and `/ws/` (WebSocket) here so the
+    # browser's same-origin fetches reach the api-server container in the
+    # same target's Docker network.
+    #
+    # Upstream is `${BG_TARGET}-api-${BG_COLOR}:8080`. The deploy-server's
+    # blue/green flow always brings up ppt-{target}-{color} together with
+    # api-{target}-{color}, so this ppt-web's color matches the api-server
+    # color in the same network — no need to track the active color.
+    #
+    # If `${BG_TARGET}` or `${BG_COLOR}` is empty (e.g. running the image
+    # outside the deploy-server's blue/green flow), nginx will fail to
+    # resolve the upstream and return 502 — preferable to silently routing
+    # /api to the SPA fallback.
+    location /api/ {
+        proxy_pass http://${BG_TARGET}-api-${BG_COLOR}:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        # Generous timeout for slow integration handlers (Adobe Sign,
+        # large building/unit imports etc.). The api-server serves
+        # /health quickly so the deploy-server's health-grace probe is
+        # unaffected.
+        proxy_read_timeout 90s;
+        proxy_send_timeout 90s;
+    }
+
+    location /ws/ {
+        proxy_pass http://${BG_TARGET}-api-${BG_COLOR}:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # WebSockets need long read timeout — the connection stays open
+        # for the lifetime of the user session.
+        proxy_read_timeout 86400s;
+    }
+
+    # SPA routing - serve index.html for all routes (must come AFTER /api
+    # and /ws so they don't fall through to the static fallback).
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Deny access to hidden files
+    location ~ /\. {
+        deny all;
+    }
+}

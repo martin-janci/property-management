@@ -6,12 +6,12 @@
  * Calls reality-server `PUT /api/v1/users/me` to update the display name.
  */
 
+import Link from 'next/link';
+import { type FormEvent, useEffect, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import { AuthApiError, updateProfile } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
-import Link from 'next/link';
-import { type FormEvent, useEffect, useState } from 'react';
 
 function ProfileForm() {
   const { user, refreshSession } = useAuth();
