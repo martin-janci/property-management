@@ -5,10 +5,14 @@
  *
  * Calls reality-server `/api/v1/auth/login` directly. The existing SSO
  * callback flow remains intact for federated sign-ins.
+ *
+ * All user-visible strings come from `messages/<locale>.json -> auth.login`.
+ * If you add a new string, add it to all 6 locale files (sk/cs/de/en/hu/pl).
  */
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
 import { AuthApiError, login } from '@/lib/auth-api';
 
@@ -18,6 +22,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') ?? '/';
+  const t = useTranslations('auth.login');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,14 +39,14 @@ function LoginForm() {
 
     let invalid = false;
     if (!email.trim()) {
-      setEmailError('Email is required');
+      setEmailError(t('emailRequired'));
       invalid = true;
     } else if (!EMAIL_RE.test(email.trim())) {
-      setEmailError('Enter a valid email address');
+      setEmailError(t('emailInvalid'));
       invalid = true;
     }
     if (!password) {
-      setPasswordError('Password is required');
+      setPasswordError(t('passwordRequired'));
       invalid = true;
     }
     if (invalid) return;
@@ -53,10 +58,10 @@ function LoginForm() {
       router.replace(safe);
     } catch (error) {
       if (error instanceof AuthApiError) {
-        if (error.status === 401) setGeneralError('Incorrect email or password.');
+        if (error.status === 401) setGeneralError(t('incorrectCredentials'));
         else setGeneralError(error.message);
       } else {
-        setGeneralError('Sign in failed. Please try again.');
+        setGeneralError(t('genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -71,7 +76,7 @@ function LoginForm() {
         </div>
       )}
       <label className="field">
-        <span className="label">Email</span>
+        <span className="label">{t('emailLabel')}</span>
         <input
           type="email"
           name="email"
@@ -85,7 +90,7 @@ function LoginForm() {
       </label>
 
       <label className="field">
-        <span className="label">Password</span>
+        <span className="label">{t('passwordLabel')}</span>
         <input
           type="password"
           name="password"
@@ -100,18 +105,18 @@ function LoginForm() {
 
       <div className="row">
         <Link href="/auth/forgot-password" className="muted-link">
-          Forgot password?
+          {t('forgotPassword')}
         </Link>
       </div>
 
       <button type="submit" className="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing in…' : 'Sign in'}
+        {isSubmitting ? t('submitting') : t('submit')}
       </button>
 
       <p className="meta">
-        Don't have an account?{' '}
+        {t('noAccount')}{' '}
         <Link href="/auth/register" className="link">
-          Create one
+          {t('createOne')}
         </Link>
       </p>
 
@@ -148,12 +153,13 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useTranslations('auth.login');
   return (
     <main className="page">
       <div className="card">
-        <h1 className="title">Sign in</h1>
-        <p className="subtitle">Welcome back to Reality Portal.</p>
-        <Suspense fallback={<p>Loading…</p>}>
+        <h1 className="title">{t('title')}</h1>
+        <p className="subtitle">{t('subtitle')}</p>
+        <Suspense fallback={<p>{t('loading')}</p>}>
           <LoginForm />
         </Suspense>
       </div>
