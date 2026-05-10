@@ -286,14 +286,20 @@ export function Header() {
           gap: 24px;
         }
 
-        .logo {
+        /*
+         * :global() — Link from next-intl/navigation renders its own <a>
+         * outside styled-jsx's hashed-class scoping. The wrapping .header-inner
+         * still carries the hash, keeping the rules tightly bound to this
+         * component while the inner Link-rendered <a> still picks them up.
+         */
+        .header-inner :global(.logo) {
           display: inline-flex;
           align-items: center;
           gap: 8px;
           text-decoration: none;
           flex-shrink: 0;
         }
-        .logo:focus-visible {
+        .header-inner :global(.logo):focus-visible {
           outline: none;
           border-radius: var(--ppt-radius-md);
           box-shadow: var(--ppt-focus-ring-shadow);
@@ -304,6 +310,7 @@ export function Header() {
           border-radius: 8px;
           background: var(--ppt-color-primary);
           flex-shrink: 0;
+          display: inline-block;
         }
         .logo-text {
           font-size: 18px;
@@ -331,7 +338,7 @@ export function Header() {
           }
         }
 
-        .nav-link {
+        .nav-desktop :global(.nav-link) {
           padding: 8px 14px;
           border-radius: var(--ppt-radius-md);
           font-size: 13.5px;
@@ -342,12 +349,12 @@ export function Header() {
                       color var(--ppt-transition-fast);
         }
 
-        .nav-link:hover {
+        .nav-desktop :global(.nav-link):hover {
           color: var(--ppt-color-primary);
           background: var(--ppt-color-primary-soft-bg);
         }
 
-        .nav-link-active {
+        .nav-desktop :global(.nav-link-active) {
           color: var(--ppt-color-primary);
           background: var(--ppt-color-primary-soft-bg);
         }
@@ -519,7 +526,7 @@ export function Header() {
           padding: 4px;
         }
 
-        .menu-item {
+        .dropdown-menu :global(.menu-item) {
           display: block;
           width: 100%;
           padding: 8px 10px;
@@ -530,7 +537,7 @@ export function Header() {
           transition: background var(--ppt-transition-fast);
         }
 
-        .menu-item:hover {
+        .dropdown-menu :global(.menu-item):hover {
           background-color: var(--ppt-bg-subtle);
         }
 
@@ -588,7 +595,7 @@ export function Header() {
           }
         }
 
-        .nav-link-mobile {
+        .nav-mobile :global(.nav-link-mobile) {
           padding: 12px 4px;
           color: var(--ppt-fg-secondary);
           text-decoration: none;
@@ -597,22 +604,22 @@ export function Header() {
           border-bottom: 1px solid var(--ppt-border-subtle);
         }
 
-        .nav-link-mobile:hover {
+        .nav-mobile :global(.nav-link-mobile):hover {
           color: var(--ppt-color-primary);
         }
 
-        .nav-link-mobile:last-child {
+        .nav-mobile :global(.nav-link-mobile):last-child {
           border-bottom: none;
         }
 
         /* Highlight the seller CTA inside the mobile menu so it doesn't blend
            with the other nav rows. Keeps the same border-row look but tints
            the text and adds the same arrow affordance the design uses. */
-        .nav-link-mobile.sell-cta-mobile {
+        .nav-mobile :global(.nav-link-mobile.sell-cta-mobile) {
           color: var(--ppt-color-primary);
           font-weight: var(--ppt-font-weight-semibold);
         }
-        .nav-link-mobile.sell-cta-mobile::after {
+        .nav-mobile :global(.nav-link-mobile.sell-cta-mobile)::after {
           content: ' →';
         }
       `}</style>
