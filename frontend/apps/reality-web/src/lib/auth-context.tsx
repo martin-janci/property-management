@@ -160,6 +160,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const refreshSession = useCallback(async () => {
+    // Bearer-token path first — covers form-login, where the page just
+    // wrote a new token to localStorage and needs the header to update
+    // without a hard reload.
+    const stored = getSession();
+    if (stored) {
+      try {
+        const meResp = await fetch(`${getApiBase()}/api/v1/users/me`, {
+          credentials: 'include',
+          headers: { ...getAuthHeader() },
+        });
+        if (meResp.ok) {
+          const me: { id: string; email: string; name: string } = await meResp.json();
+          setUser({ user_id: me.id, email: me.email, name: me.name });
+          return;
+        }
+      } catch {
+        // Fall through to cookie path.
+      }
+    }
+
+    // Cookie/SSO path (kept intact for the eventual end-to-end OAuth flow).
     try {
       const response = await fetch(`${getApiBase()}/api/v1/sso/refresh`, {
         method: 'POST',

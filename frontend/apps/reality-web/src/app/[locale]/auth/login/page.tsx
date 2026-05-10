@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
 import { AuthApiError, login } from '@/lib/auth-api';
+import { useAuth } from '@/lib/auth-context';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,9 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') ?? '/';
   const t = useTranslations('auth.login');
+  // refreshSession() picks up the bearer token written to localStorage by
+  // auth-api.login() so the header updates without a hard reload.
+  const { refreshSession } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,6 +58,9 @@ function LoginForm() {
     setIsSubmitting(true);
     try {
       await login(email.trim(), password);
+      // Update auth-context state from the freshly-stored token so the
+      // header re-renders to "logged in" before the navigation happens.
+      await refreshSession();
       const safe = redirectTo.startsWith('/') && !redirectTo.startsWith('//') ? redirectTo : '/';
       router.replace(safe);
     } catch (error) {
