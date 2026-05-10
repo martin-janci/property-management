@@ -25,7 +25,9 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_agencies))
         .route("/{id}", get(get_agency))
         .route("/{id}", put(update_agency))
-        .route("/{id}/branding", put(update_branding))
+        // /{id}/branding handled by routes::agency_branding (mounted at
+        // /api/v1/agencies/{id}/branding) — registering it here too caused
+        // axum's "Overlapping method route" panic at boot.
         .route("/{id}/members", get(list_members))
         .route("/{id}/invitations", post(create_invitation))
         .route("/by-slug/{slug}", get(get_agency_by_slug))
