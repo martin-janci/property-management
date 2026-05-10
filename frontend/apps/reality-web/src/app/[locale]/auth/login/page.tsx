@@ -6,6 +6,10 @@
  * Calls reality-server `/api/v1/users/login` via auth-api.login(). The
  * existing SSO callback flow remains intact for federated sign-ins.
  *
+ * Form fields use the modern form primitives from `@/components/forms`
+ * (floating labels + custom focus ring), matching the design bundle's
+ * `m-field / m-input` rules.
+ *
  * All user-visible strings come from `messages/<locale>.json -> auth.login`.
  * If you add a new string, add it to all 6 locale files (sk/cs/de/en/hu/pl).
  *
@@ -16,6 +20,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
+import { FieldInput } from '@/components/forms';
 import { Link } from '@/i18n/routing';
 import { AuthApiError, login } from '@/lib/auth-api';
 import { useAuth } from '@/lib/auth-context';
@@ -85,33 +90,30 @@ function LoginForm() {
           {generalError}
         </div>
       )}
-      <label className="field">
-        <span className="label">{t('emailLabel')}</span>
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isSubmitting}
-          className={`input ${emailError ? 'input-error' : ''}`}
-        />
-        {emailError && <span className="error">{emailError}</span>}
-      </label>
 
-      <label className="field">
-        <span className="label">{t('passwordLabel')}</span>
-        <input
-          type="password"
-          name="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={isSubmitting}
-          className={`input ${passwordError ? 'input-error' : ''}`}
-        />
-        {passwordError && <span className="error">{passwordError}</span>}
-      </label>
+      <FieldInput
+        type="email"
+        name="email"
+        autoComplete="email"
+        label={t('emailLabel')}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled={isSubmitting}
+        error={emailError}
+        required
+      />
+
+      <FieldInput
+        type="password"
+        name="password"
+        autoComplete="current-password"
+        label={t('passwordLabel')}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={isSubmitting}
+        error={passwordError}
+        required
+      />
 
       <div className="row">
         <Link href="/auth/forgot-password" className="muted-link">
@@ -131,32 +133,71 @@ function LoginForm() {
       </p>
 
       <style jsx>{`
-        .form { display: flex; flex-direction: column; gap: 16px; }
+        .form {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
         .alert {
-          padding: 12px 16px; background: var(--ppt-color-danger-light); color: var(--ppt-color-danger-dark);
-          border: 1px solid var(--ppt-color-danger); border-radius: 8px; font-size: 14px;
+          padding: 12px 16px;
+          background: var(--ppt-color-danger-light);
+          color: var(--ppt-color-danger-dark);
+          border: 1px solid var(--ppt-color-danger);
+          border-radius: 8px;
+          font-size: 14px;
         }
-        .field { display: flex; flex-direction: column; gap: 6px; }
-        .label { font-size: 14px; font-weight: 500; color: var(--ppt-fg-secondary); }
-        .input {
-          padding: 10px 12px; font-size: 16px; border: 1px solid var(--ppt-border-strong);
-          border-radius: 8px; background: var(--ppt-bg-surface); color: var(--ppt-fg-primary);
+        .row {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: -4px;
         }
-        .input:focus-visible { outline: var(--ppt-focus-ring-width) solid var(--ppt-focus-ring-color); outline-offset: var(--ppt-focus-ring-offset); border-color: var(--ppt-color-primary); }
-        .input-error { border-color: var(--ppt-color-danger-hover); }
-        .error { color: var(--ppt-color-danger-hover); font-size: 12px; }
-        .row { display: flex; justify-content: flex-end; }
-        .muted-link { font-size: 14px; color: var(--ppt-color-primary); text-decoration: none; }
-        .muted-link:hover { text-decoration: underline; }
+        .muted-link {
+          font-size: 13.5px;
+          color: var(--ppt-color-primary);
+          text-decoration: none;
+        }
+        .muted-link:hover {
+          text-decoration: underline;
+        }
         .submit {
-          margin-top: 8px; padding: 12px 16px; background: var(--ppt-color-primary); color: var(--ppt-fg-on-accent);
-          border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
+          margin-top: 8px;
+          padding: 12px 16px;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent);
+          border: none;
+          border-radius: 8px;
+          font-size: 15px;
+          font-weight: 600;
+          font-family: var(--ppt-font-family);
+          cursor: pointer;
+          transition: background var(--ppt-transition-fast);
         }
-        .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
-        .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
-        .meta { text-align: center; font-size: 14px; color: var(--ppt-neutral-600); margin: 8px 0 0; }
-        .link { color: var(--ppt-color-primary); text-decoration: none; font-weight: 500; }
-        .link:hover { text-decoration: underline; }
+        .submit:hover:not(:disabled) {
+          background: var(--ppt-color-primary-hover);
+        }
+        .submit:focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        .submit:disabled {
+          background: var(--ppt-brand-500);
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+        .meta {
+          text-align: center;
+          font-size: 14px;
+          color: var(--ppt-fg-muted);
+          margin: 8px 0 0;
+        }
+        .link {
+          color: var(--ppt-color-primary);
+          text-decoration: none;
+          font-weight: 500;
+        }
+        .link:hover {
+          text-decoration: underline;
+        }
       `}</style>
     </form>
   );
@@ -175,15 +216,35 @@ export default function LoginPage() {
       </div>
       <style jsx>{`
         .page {
-          min-height: 100vh; display: flex; align-items: center; justify-content: center;
-          padding: 24px; background: var(--ppt-bg-app);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: var(--ppt-bg-app);
         }
         .card {
-          width: 100%; max-width: 420px; background: var(--ppt-bg-surface); border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 32px;
+          width: 100%;
+          max-width: 420px;
+          background: var(--ppt-bg-surface);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          padding: 32px;
         }
-        .title { font-size: 1.5rem; font-weight: 700; color: var(--ppt-fg-primary); margin: 0 0 4px; text-align: center; }
-        .subtitle { font-size: 14px; color: var(--ppt-fg-muted); margin: 0 0 24px; text-align: center; }
+        .title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--ppt-fg-primary);
+          margin: 0 0 4px;
+          text-align: center;
+        }
+        .subtitle {
+          font-size: 14px;
+          color: var(--ppt-fg-muted);
+          margin: 0 0 24px;
+          text-align: center;
+        }
       `}</style>
     </main>
   );

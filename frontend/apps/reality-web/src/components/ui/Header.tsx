@@ -66,17 +66,21 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop Navigation — Buy / Rent / Journal / Help. Sell is
-            represented by the "List your property" primary CTA on the right
-            (a separate /for-sellers info page would be where the design's
-            "Sell" nav link points; we don't have one yet, so the CTA is the
-            single seller affordance). */}
+        {/* Desktop Navigation — five links matching the design's standard
+            header (Predaj / Prenájom / Predať / Magazín / Pomoc). The
+            "Predať" entry (Sell) is the seller-info entry point; the
+            primary "Pridať nehnuteľnosť" CTA on the right is the action
+            shortcut. Both currently route to /sell — when a dedicated
+            /for-sellers info page lands the nav entry will move there. */}
         <nav className="nav-desktop">
           <Link href="/listings?transactionType=sale" className="nav-link">
             {t('search.buy')}
           </Link>
           <Link href="/listings?transactionType=rent" className="nav-link">
             {t('search.rent')}
+          </Link>
+          <Link href="/sell" className={`nav-link ${isActive('/sell') ? 'nav-link-active' : ''}`}>
+            {t('nav.sell')}
           </Link>
           <Link
             href="/journal"
