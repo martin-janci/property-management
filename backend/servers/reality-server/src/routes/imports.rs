@@ -24,16 +24,16 @@ pub fn router() -> Router<AppState> {
         // Import jobs
         .route("/jobs", get(list_import_jobs))
         .route("/jobs", post(create_import_job))
-        .route("/jobs/:id", get(get_import_job))
-        .route("/jobs/:id", put(update_import_job))
-        .route("/jobs/:id/start", post(start_import_job))
-        .route("/jobs/:id/cancel", post(cancel_import_job))
+        .route("/jobs/{id}", get(get_import_job))
+        .route("/jobs/{id}", put(update_import_job))
+        .route("/jobs/{id}/start", post(start_import_job))
+        .route("/jobs/{id}/cancel", post(cancel_import_job))
         // Feed subscriptions
         .route("/feeds", get(list_feeds))
         .route("/feeds", post(create_feed))
-        .route("/feeds/:id", get(get_feed))
-        .route("/feeds/:id", put(update_feed))
-        .route("/feeds/:id/sync", post(sync_feed))
+        .route("/feeds/{id}", get(get_feed))
+        .route("/feeds/{id}", put(update_feed))
+        .route("/feeds/{id}/sync", post(sync_feed))
 }
 
 /// Import jobs list response.

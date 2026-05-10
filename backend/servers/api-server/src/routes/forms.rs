@@ -345,28 +345,28 @@ pub fn router() -> Router<AppState> {
         .route("/", get(list_forms))
         .route("/available", get(list_available_forms))
         .route("/statistics", get(get_statistics))
-        .route("/:id", get(get_form))
-        .route("/:id", put(update_form))
-        .route("/:id", delete(delete_form))
+        .route("/{id}", get(get_form))
+        .route("/{id}", put(update_form))
+        .route("/{id}", delete(delete_form))
         // Publishing
-        .route("/:id/publish", post(publish_form))
-        .route("/:id/archive", post(archive_form))
+        .route("/{id}/publish", post(publish_form))
+        .route("/{id}/archive", post(archive_form))
         // Fields
-        .route("/:id/fields", get(list_fields))
-        .route("/:id/fields", post(add_field))
-        .route("/:id/fields/reorder", post(reorder_fields))
-        .route("/:id/fields/:field_id", put(update_field))
-        .route("/:id/fields/:field_id", delete(delete_field))
+        .route("/{id}/fields", get(list_fields))
+        .route("/{id}/fields", post(add_field))
+        .route("/{id}/fields/reorder", post(reorder_fields))
+        .route("/{id}/fields/{field_id}", put(update_field))
+        .route("/{id}/fields/{field_id}", delete(delete_field))
         // Submissions
-        .route("/:id/submit", post(submit_form))
-        .route("/:id/submissions", get(list_submissions))
-        .route("/:id/submissions/:submission_id", get(get_submission))
+        .route("/{id}/submit", post(submit_form))
+        .route("/{id}/submissions", get(list_submissions))
+        .route("/{id}/submissions/{submission_id}", get(get_submission))
         .route(
-            "/:id/submissions/:submission_id/review",
+            "/{id}/submissions/{submission_id}/review",
             post(review_submission),
         )
         // Download tracking
-        .route("/:id/download", post(record_download))
+        .route("/{id}/download", post(record_download))
 }
 
 // ============================================================================

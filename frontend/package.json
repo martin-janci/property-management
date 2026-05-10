@@ -28,5 +28,14 @@
     "node": ">=20.0.0",
     "pnpm": ">=8.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "react-test-renderer": "19.2.0",
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3"
+    }
+  },
   "packageManager": "pnpm@8.14.0"
 }

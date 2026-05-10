@@ -17,7 +17,7 @@ use uuid::Uuid;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(search))
-        .route("/:id", get(get_listing))
+        .route("/{id}", get(get_listing))
         .route("/suggestions", get(get_suggestions))
 }
 

@@ -37,7 +37,6 @@
 use crate::extractors::tenant::TenantMembershipProvider;
 use crate::extractors::ValidatedTenantExtractor;
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
@@ -221,7 +220,6 @@ impl Drop for RlsConnection {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for RlsConnection
 where
     S: TenantMembershipProvider,
@@ -383,7 +381,6 @@ impl Drop for SimpleRlsConnection {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for SimpleRlsConnection
 where
     S: TenantMembershipProvider,

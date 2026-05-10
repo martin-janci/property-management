@@ -19,33 +19,33 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // Agency CRUD
         .route("/", post(create_agency))
-        .route("/:id", get(get_agency))
-        .route("/:id", put(update_agency))
-        .route("/:id/branding", put(update_branding))
+        .route("/{id}", get(get_agency))
+        .route("/{id}", put(update_agency))
+        .route("/{id}/branding", put(update_branding))
         // Members
-        .route("/:id/members", get(list_members))
-        .route("/:id/members/invite", post(invite_member))
-        .route("/:id/members/:user_id/role", put(update_member_role))
-        .route("/:id/members/:user_id", delete(remove_member))
+        .route("/{id}/members", get(list_members))
+        .route("/{id}/members/invite", post(invite_member))
+        .route("/{id}/members/{user_id}/role", put(update_member_role))
+        .route("/{id}/members/{user_id}", delete(remove_member))
         .route(
-            "/:id/members/:user_id/reassign/:to_user_id",
+            "/{id}/members/{user_id}/reassign/{to_user_id}",
             post(reassign_listings),
         )
         // Invitations
         .route("/invitations/accept", post(accept_invitation))
         // Listings
         .route(
-            "/:id/listings/:listing_id/visibility",
+            "/{id}/listings/{listing_id}/visibility",
             put(update_visibility),
         )
         .route(
-            "/:id/listings/:listing_id/history",
+            "/{id}/listings/{listing_id}/history",
             get(get_listing_history),
         )
         // Import
-        .route("/:id/import", post(create_import_job))
-        .route("/:id/import/:job_id", get(get_import_job))
-        .route("/:id/import", get(list_import_jobs))
+        .route("/{id}/import", post(create_import_job))
+        .route("/{id}/import/{job_id}", get(get_import_job))
+        .route("/{id}/import", get(list_import_jobs))
 }
 
 /// Create a new agency.

@@ -215,31 +215,31 @@ pub fn router() -> Router<AppState> {
         .route("/plans", post(create_plan))
         .route("/plans", get(list_plans))
         .route("/plans/public", get(list_public_plans))
-        .route("/plans/:id", get(get_plan))
-        .route("/plans/:id", patch(update_plan))
-        .route("/plans/:id", delete(delete_plan))
+        .route("/plans/{id}", get(get_plan))
+        .route("/plans/{id}", patch(update_plan))
+        .route("/plans/{id}", delete(delete_plan))
         // Organization Subscriptions
         .route("/", post(create_subscription))
         .route("/", get(get_subscription))
         .route("/with-plan", get(get_subscription_with_plan))
-        .route("/:id", patch(update_subscription))
-        .route("/:id/change-plan", post(change_plan))
-        .route("/:id/cancel", post(cancel_subscription))
-        .route("/:id/reactivate", post(reactivate_subscription))
+        .route("/{id}", patch(update_subscription))
+        .route("/{id}/change-plan", post(change_plan))
+        .route("/{id}/cancel", post(cancel_subscription))
+        .route("/{id}/reactivate", post(reactivate_subscription))
         // Payment Methods
         .route("/payment-methods", post(create_payment_method))
         .route("/payment-methods", get(list_payment_methods))
         .route(
-            "/payment-methods/:id/default",
+            "/payment-methods/{id}/default",
             post(set_default_payment_method),
         )
-        .route("/payment-methods/:id", delete(delete_payment_method))
+        .route("/payment-methods/{id}", delete(delete_payment_method))
         // Invoices
         .route("/invoices", get(list_invoices))
-        .route("/invoices/:id", get(get_invoice))
-        .route("/invoices/:id/line-items", get(get_invoice_line_items))
-        .route("/invoices/:id/pay", post(mark_invoice_paid))
-        .route("/invoices/:id/void", post(void_invoice))
+        .route("/invoices/{id}", get(get_invoice))
+        .route("/invoices/{id}/line-items", get(get_invoice_line_items))
+        .route("/invoices/{id}/pay", post(mark_invoice_paid))
+        .route("/invoices/{id}/void", post(void_invoice))
         // Usage
         .route("/usage", post(record_usage))
         .route("/usage/summary", get(get_usage_summary))
@@ -247,7 +247,7 @@ pub fn router() -> Router<AppState> {
         // Coupons (Admin only)
         .route("/coupons", post(create_coupon))
         .route("/coupons", get(list_coupons))
-        .route("/coupons/:id", patch(update_coupon))
+        .route("/coupons/{id}", patch(update_coupon))
         .route("/coupons/redeem", post(redeem_coupon))
         // Statistics (Admin only)
         .route("/statistics", get(get_statistics))
@@ -351,7 +351,7 @@ pub struct CurrentUsageResponse {
 }
 
 /// Create subscription request wrapper.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSubscriptionRequest {
     pub organization_id: Uuid,
     #[serde(flatten)]
@@ -359,7 +359,7 @@ pub struct CreateSubscriptionRequest {
 }
 
 /// Record usage request wrapper.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RecordUsageRequest {
     pub organization_id: Uuid,
     #[serde(flatten)]

@@ -102,10 +102,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_template))
         .route("/", get(list_templates))
-        .route("/:id", get(get_template))
-        .route("/:id", put(update_template))
-        .route("/:id", delete(delete_template))
-        .route("/:id/generate", post(generate_document))
+        .route("/{id}", get(get_template))
+        .route("/{id}", put(update_template))
+        .route("/{id}", delete(delete_template))
+        .route("/{id}/generate", post(generate_document))
 }
 
 // ============================================================================

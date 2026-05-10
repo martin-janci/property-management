@@ -6,6 +6,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Policy type constants.
@@ -99,7 +100,7 @@ pub mod reminder_type {
 // ============================================
 
 /// Insurance policy entity.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsurancePolicy {
     pub id: Uuid,
     pub organization_id: Uuid,
@@ -129,7 +130,7 @@ pub struct InsurancePolicy {
 }
 
 /// Create insurance policy request.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateInsurancePolicy {
     pub policy_number: String,
     pub policy_name: String,
@@ -154,7 +155,7 @@ pub struct CreateInsurancePolicy {
 }
 
 /// Update insurance policy request.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, ToSchema)]
 pub struct UpdateInsurancePolicy {
     pub policy_number: Option<String>,
     pub policy_name: Option<String>,
@@ -231,7 +232,7 @@ pub struct InsuranceClaim {
 }
 
 /// Create insurance claim request.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateInsuranceClaim {
     pub policy_id: Uuid,
     pub claim_number: Option<String>,
@@ -247,7 +248,7 @@ pub struct CreateInsuranceClaim {
 }
 
 /// Update insurance claim request.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, ToSchema)]
 pub struct UpdateInsuranceClaim {
     pub claim_number: Option<String>,
     pub provider_claim_number: Option<String>,
@@ -283,7 +284,7 @@ pub struct InsuranceClaimQuery {
 }
 
 /// Insurance claim with policy details.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsuranceClaimWithPolicy {
     // Claim fields
     pub id: Uuid,
@@ -327,7 +328,7 @@ pub struct InsuranceClaimWithPolicy {
 // ============================================
 
 /// Insurance claim status history entry.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsuranceClaimHistory {
     pub id: Uuid,
     pub claim_id: Uuid,
@@ -343,7 +344,7 @@ pub struct InsuranceClaimHistory {
 // ============================================
 
 /// Insurance policy document junction.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsurancePolicyDocument {
     pub id: Uuid,
     pub policy_id: Uuid,
@@ -364,7 +365,7 @@ pub struct AddPolicyDocument {
 // ============================================
 
 /// Insurance claim document junction.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsuranceClaimDocument {
     pub id: Uuid,
     pub claim_id: Uuid,
@@ -385,7 +386,7 @@ pub struct AddClaimDocument {
 // ============================================
 
 /// Insurance renewal reminder entity.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct InsuranceRenewalReminder {
     pub id: Uuid,
     pub policy_id: Uuid,
@@ -417,7 +418,7 @@ pub struct UpdateRenewalReminder {
 // ============================================
 
 /// Expiring policy summary.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ExpiringPolicy {
     pub policy_id: Uuid,
     pub policy_number: String,
@@ -431,7 +432,7 @@ pub struct ExpiringPolicy {
 }
 
 /// Insurance coverage statistics.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, ToSchema)]
 pub struct InsuranceStatistics {
     pub total_policies: i64,
     pub active_policies: i64,
@@ -445,7 +446,7 @@ pub struct InsuranceStatistics {
 }
 
 /// Claim summary by status.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ClaimStatusSummary {
     pub status: String,
     pub count: i64,
@@ -455,7 +456,7 @@ pub struct ClaimStatusSummary {
 }
 
 /// Policy type coverage summary.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct PolicyTypeSummary {
     pub policy_type: String,
     pub policy_count: i64,

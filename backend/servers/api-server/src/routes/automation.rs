@@ -55,18 +55,18 @@ fn extract_tenant_context(
 pub fn router() -> Router<AppState> {
     Router::new()
         // Rules (Story 38.1-38.3)
-        .route("/organizations/:org_id/rules", get(list_rules))
-        .route("/organizations/:org_id/rules", post(create_rule))
-        .route("/rules/:id", get(get_rule))
-        .route("/rules/:id", put(update_rule))
-        .route("/rules/:id", delete(delete_rule))
-        .route("/rules/:id/toggle", post(toggle_rule))
-        .route("/rules/:id/logs", get(get_rule_logs))
+        .route("/organizations/{org_id}/rules", get(list_rules))
+        .route("/organizations/{org_id}/rules", post(create_rule))
+        .route("/rules/{id}", get(get_rule))
+        .route("/rules/{id}", put(update_rule))
+        .route("/rules/{id}", delete(delete_rule))
+        .route("/rules/{id}/toggle", post(toggle_rule))
+        .route("/rules/{id}/logs", get(get_rule_logs))
         // Templates
         .route("/templates", get(list_templates))
-        .route("/templates/:id", get(get_template))
+        .route("/templates/{id}", get(get_template))
         .route(
-            "/organizations/:org_id/rules/from-template",
+            "/organizations/{org_id}/rules/from-template",
             post(create_from_template),
         )
 }

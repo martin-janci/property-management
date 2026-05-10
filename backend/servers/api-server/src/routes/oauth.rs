@@ -12,8 +12,9 @@ use axum::{
 use base64::Engine;
 use common::errors::ErrorResponse;
 use db::models::{
-    AuditAction, CreateAuditLog, OAuthClientSummary, OAuthError, RegisterClientRequest,
-    RevokeTokenRequest, TokenRequest, UpdateOAuthClient,
+    AuditAction, ConsentPageData, CreateAuditLog, IntrospectionResponse, OAuthClientSummary,
+    OAuthError, RegisterClientRequest, RegisterClientResponse, RevokeTokenRequest, TokenRequest,
+    TokenResponse, UpdateOAuthClient, UserGrantWithClient,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -33,7 +34,7 @@ pub fn router() -> Router<AppState> {
         // User grant management
         .route("/grants", get(list_user_grants))
         .route(
-            "/grants/:client_id",
+            "/grants/{client_id}",
             axum::routing::delete(revoke_user_grant),
         )
 }
@@ -43,11 +44,11 @@ pub fn admin_router() -> Router<AppState> {
     Router::new()
         .route("/clients", post(register_client))
         .route("/clients", get(list_clients))
-        .route("/clients/:id", get(get_client))
-        .route("/clients/:id", axum::routing::patch(update_client))
-        .route("/clients/:id", axum::routing::delete(revoke_client))
+        .route("/clients/{id}", get(get_client))
+        .route("/clients/{id}", axum::routing::patch(update_client))
+        .route("/clients/{id}", axum::routing::delete(revoke_client))
         .route(
-            "/clients/:id/regenerate-secret",
+            "/clients/{id}/regenerate-secret",
             post(regenerate_client_secret),
         )
 }

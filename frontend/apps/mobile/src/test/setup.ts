@@ -7,7 +7,7 @@
  * - i18next mock for translation testing
  */
 
-import '@testing-library/react-native/extend-expect';
+// matchers are auto-registered in @testing-library/react-native >= 13
 
 // Mock react-i18next
 jest.mock('react-i18next', () => ({

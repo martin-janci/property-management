@@ -27,12 +27,12 @@ pub fn router() -> Router<AppState> {
         .route("/", post(create_delegation))
         .route("/", get(list_my_delegations))
         .route("/received", get(list_received_delegations))
-        .route("/:id", get(get_delegation))
-        .route("/:id/accept", post(accept_delegation))
-        .route("/:id/decline", post(decline_delegation))
-        .route("/:id/revoke", delete(revoke_delegation))
+        .route("/{id}", get(get_delegation))
+        .route("/{id}/accept", post(accept_delegation))
+        .route("/{id}/decline", post(decline_delegation))
+        .route("/{id}/revoke", delete(revoke_delegation))
         // Check delegation for a unit
-        .route("/check/:unit_id/:scope", get(check_delegation))
+        .route("/check/{unit_id}/{scope}", get(check_delegation))
 }
 
 // ==================== Request/Response Types ====================

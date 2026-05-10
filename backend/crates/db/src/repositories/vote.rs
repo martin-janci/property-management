@@ -204,7 +204,7 @@ impl VoteRepository {
             serde_json::to_string(&data.answers).unwrap_or_default(),
             Utc::now().timestamp_millis()
         );
-        let response_hash = format!("{:x}", Sha256::digest(hash_input.as_bytes()));
+        let response_hash = hex::encode(Sha256::digest(hash_input.as_bytes()));
 
         // Get vote weight from unit ownership_share
         // Note: For RLS version, we use a default weight of 1.0
@@ -968,7 +968,7 @@ impl VoteRepository {
             serde_json::to_string(&data.answers).unwrap_or_default(),
             Utc::now().timestamp_millis()
         );
-        let response_hash = format!("{:x}", Sha256::digest(hash_input.as_bytes()));
+        let response_hash = hex::encode(Sha256::digest(hash_input.as_bytes()));
 
         // Get vote weight from unit ownership_share
         let vote_weight: (Decimal,) = sqlx::query_as(
@@ -1672,7 +1672,7 @@ impl VoteRepository {
     ) -> Result<VoteAuditLog, SqlxError> {
         // Generate hash of the data
         let data_str = serde_json::to_string(&data.data).unwrap_or_default();
-        let data_hash = format!("{:x}", Sha256::digest(data_str.as_bytes()));
+        let data_hash = hex::encode(Sha256::digest(data_str.as_bytes()));
 
         let entry = sqlx::query_as::<_, VoteAuditLog>(
             r#"

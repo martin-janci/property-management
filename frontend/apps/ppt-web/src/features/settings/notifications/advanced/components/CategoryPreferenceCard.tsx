@@ -13,7 +13,7 @@ interface CategoryPreferenceCardProps {
   onToggleChannel: (channel: NotificationChannel, enabled: boolean) => void;
 }
 
-const CHANNEL_ICONS: Record<NotificationChannel, JSX.Element> = {
+const CHANNEL_ICONS: Record<NotificationChannel, React.JSX.Element> = {
   push: (
     <svg
       className="h-5 w-5"

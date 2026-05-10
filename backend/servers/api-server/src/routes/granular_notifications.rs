@@ -33,10 +33,10 @@ pub fn router() -> Router<AppState> {
     Router::new()
         // Event type preferences (Stories 8B.1 & 8B.2)
         .route("/events", get(list_event_preferences))
-        .route("/events/:event_type", put(update_event_preference))
+        .route("/events/{event_type}", put(update_event_preference))
         .route("/events/reset", post(reset_event_preferences))
         .route(
-            "/events/category/:category",
+            "/events/category/{category}",
             put(update_category_preferences),
         )
         // Schedule / quiet hours (Story 8B.3)
@@ -44,19 +44,19 @@ pub fn router() -> Router<AppState> {
         // Role defaults (Story 8B.4) - admin endpoints
         .route("/roles", get(list_role_defaults))
         .route(
-            "/roles/:role",
+            "/roles/{role}",
             get(get_role_defaults)
                 .put(update_role_defaults)
                 .delete(delete_role_defaults),
         )
-        .route("/roles/:role/apply", post(apply_role_defaults))
+        .route("/roles/{role}/apply", post(apply_role_defaults))
         // Notification Grouping (Epic 29, Story 29.4)
         .route("/groups", get(list_notification_groups))
         .route(
-            "/groups/:group_id",
+            "/groups/{group_id}",
             get(get_notification_group).delete(delete_notification_group),
         )
-        .route("/groups/:group_id/read", post(mark_group_read))
+        .route("/groups/{group_id}/read", post(mark_group_read))
         .route("/groups/read-all", post(mark_all_groups_read))
         // Notification Digests (Epic 29, Story 29.3)
         .route("/digests", get(list_digests))

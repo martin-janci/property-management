@@ -86,7 +86,7 @@ pub fn create_router(state: AppState) -> Router {
         )
         // Critical notifications routes
         .nest(
-            "/api/v1/organizations/:org_id/critical-notifications",
+            "/api/v1/organizations/{org_id}/critical-notifications",
             routes::critical_notifications::router(),
         )
         // MFA routes
