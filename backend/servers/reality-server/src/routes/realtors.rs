@@ -21,10 +21,10 @@ pub fn router() -> Router<AppState> {
         .route("/profile", get(get_my_profile))
         .route("/profile", post(create_profile))
         .route("/profile", put(update_profile))
-        .route("/:user_id/profile", get(get_profile))
+        .route("/{user_id}/profile", get(get_profile))
         .route("/inquiries", get(list_inquiries))
-        .route("/inquiries/:id/read", post(mark_inquiry_read))
-        .route("/inquiries/:id/respond", post(respond_to_inquiry))
+        .route("/inquiries/{id}/read", post(mark_inquiry_read))
+        .route("/inquiries/{id}/respond", post(respond_to_inquiry))
 }
 
 /// Realtor profile response.

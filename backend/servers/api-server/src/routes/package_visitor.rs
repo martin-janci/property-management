@@ -1129,21 +1129,21 @@ pub fn packages_router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_package))
         .route("/", get(list_packages))
-        .route("/:id", get(get_package))
-        .route("/:id", put(update_package))
-        .route("/:id", delete(delete_package))
-        .route("/:id/receive", post(receive_package))
-        .route("/:id/pickup", post(pickup_package))
+        .route("/{id}", get(get_package))
+        .route("/{id}", put(update_package))
+        .route("/{id}", delete(delete_package))
+        .route("/{id}/receive", post(receive_package))
+        .route("/{id}/pickup", post(pickup_package))
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             get(get_package_settings),
         )
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             put(update_package_settings),
         )
         .route(
-            "/buildings/:building_id/statistics",
+            "/buildings/{building_id}/statistics",
             get(get_package_statistics),
         )
 }
@@ -1154,22 +1154,22 @@ pub fn visitors_router() -> Router<AppState> {
         .route("/", post(create_visitor))
         .route("/", get(list_visitors))
         .route("/verify-code", post(verify_access_code))
-        .route("/:id", get(get_visitor))
-        .route("/:id", put(update_visitor))
-        .route("/:id", delete(delete_visitor))
-        .route("/:id/check-in", post(check_in_visitor))
-        .route("/:id/check-out", post(check_out_visitor))
-        .route("/:id/cancel", post(cancel_visitor))
+        .route("/{id}", get(get_visitor))
+        .route("/{id}", put(update_visitor))
+        .route("/{id}", delete(delete_visitor))
+        .route("/{id}/check-in", post(check_in_visitor))
+        .route("/{id}/check-out", post(check_out_visitor))
+        .route("/{id}/cancel", post(cancel_visitor))
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             get(get_visitor_settings),
         )
         .route(
-            "/buildings/:building_id/settings",
+            "/buildings/{building_id}/settings",
             put(update_visitor_settings),
         )
         .route(
-            "/buildings/:building_id/statistics",
+            "/buildings/{building_id}/statistics",
             get(get_visitor_statistics),
         )
 }

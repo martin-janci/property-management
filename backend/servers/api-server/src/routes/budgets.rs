@@ -199,61 +199,64 @@ pub fn router() -> Router<AppState> {
         // Budget routes
         .route("/", post(create_budget))
         .route("/", get(list_budgets))
-        .route("/:id", get(get_budget))
-        .route("/:id", put(update_budget))
-        .route("/:id", delete(delete_budget))
-        .route("/:id/submit", post(submit_budget))
-        .route("/:id/approve", post(approve_budget))
-        .route("/:id/activate", post(activate_budget))
-        .route("/:id/close", post(close_budget))
-        .route("/:id/summary", get(get_budget_summary))
-        .route("/:id/variance", get(get_category_variance))
-        .route("/:id/alerts", get(list_variance_alerts))
+        .route("/{id}", get(get_budget))
+        .route("/{id}", put(update_budget))
+        .route("/{id}", delete(delete_budget))
+        .route("/{id}/submit", post(submit_budget))
+        .route("/{id}/approve", post(approve_budget))
+        .route("/{id}/activate", post(activate_budget))
+        .route("/{id}/close", post(close_budget))
+        .route("/{id}/summary", get(get_budget_summary))
+        .route("/{id}/variance", get(get_category_variance))
+        .route("/{id}/alerts", get(list_variance_alerts))
         // Budget items
-        .route("/:id/items", post(add_budget_item))
-        .route("/:id/items", get(list_budget_items))
-        .route("/items/:item_id", put(update_budget_item))
-        .route("/items/:item_id", delete(delete_budget_item))
-        .route("/items/:item_id/actuals", post(record_actual))
-        .route("/items/:item_id/actuals", get(list_actuals))
+        .route("/{id}/items", post(add_budget_item))
+        .route("/{id}/items", get(list_budget_items))
+        .route("/items/{item_id}", put(update_budget_item))
+        .route("/items/{item_id}", delete(delete_budget_item))
+        .route("/items/{item_id}/actuals", post(record_actual))
+        .route("/items/{item_id}/actuals", get(list_actuals))
         // Categories
         .route("/categories", post(create_category))
         .route("/categories", get(list_categories))
-        .route("/categories/:id", put(update_category))
-        .route("/categories/:id", delete(delete_category))
+        .route("/categories/{id}", put(update_category))
+        .route("/categories/{id}", delete(delete_category))
         // Alerts
-        .route("/alerts/:id/acknowledge", post(acknowledge_alert))
+        .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
         // Dashboard
         .route("/dashboard", get(get_dashboard))
         // Capital plans
         .route("/capital-plans", post(create_capital_plan))
         .route("/capital-plans", get(list_capital_plans))
         .route("/capital-plans/summary", get(get_yearly_capital_summary))
-        .route("/capital-plans/:id", get(get_capital_plan))
-        .route("/capital-plans/:id", put(update_capital_plan))
-        .route("/capital-plans/:id", delete(delete_capital_plan))
-        .route("/capital-plans/:id/start", post(start_capital_plan))
-        .route("/capital-plans/:id/complete", post(complete_capital_plan))
+        .route("/capital-plans/{id}", get(get_capital_plan))
+        .route("/capital-plans/{id}", put(update_capital_plan))
+        .route("/capital-plans/{id}", delete(delete_capital_plan))
+        .route("/capital-plans/{id}/start", post(start_capital_plan))
+        .route("/capital-plans/{id}/complete", post(complete_capital_plan))
         // Reserve funds
         .route("/reserve-funds", post(create_reserve_fund))
         .route("/reserve-funds", get(list_reserve_funds))
-        .route("/reserve-funds/:id", get(get_reserve_fund))
-        .route("/reserve-funds/:id", put(update_reserve_fund))
+        .route("/reserve-funds/{id}", get(get_reserve_fund))
+        .route("/reserve-funds/{id}", put(update_reserve_fund))
         .route(
-            "/reserve-funds/:id/transactions",
+            "/reserve-funds/{id}/transactions",
             post(record_reserve_transaction),
         )
         .route(
-            "/reserve-funds/:id/transactions",
+            "/reserve-funds/{id}/transactions",
             get(list_reserve_transactions),
         )
-        .route("/reserve-funds/:id/projection", get(get_reserve_projection))
+        .route(
+            "/reserve-funds/{id}/projection",
+            get(get_reserve_projection),
+        )
         // Forecasts
         .route("/forecasts", post(create_forecast))
         .route("/forecasts", get(list_forecasts))
-        .route("/forecasts/:id", get(get_forecast))
-        .route("/forecasts/:id", put(update_forecast))
-        .route("/forecasts/:id", delete(delete_forecast))
+        .route("/forecasts/{id}", get(get_forecast))
+        .route("/forecasts/{id}", put(update_forecast))
+        .route("/forecasts/{id}", delete(delete_forecast))
 }
 
 // ===========================================

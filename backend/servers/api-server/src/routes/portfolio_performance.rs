@@ -63,78 +63,84 @@ pub fn router() -> Router<AppState> {
         // Portfolio CRUD
         .route("/portfolios", post(create_portfolio))
         .route("/portfolios", get(list_portfolios))
-        .route("/portfolios/:id", get(get_portfolio))
-        .route("/portfolios/:id", put(update_portfolio))
-        .route("/portfolios/:id", delete(delete_portfolio))
+        .route("/portfolios/{id}", get(get_portfolio))
+        .route("/portfolios/{id}", put(update_portfolio))
+        .route("/portfolios/{id}", delete(delete_portfolio))
         // Portfolio properties
-        .route("/portfolios/:id/properties", post(add_property))
-        .route("/portfolios/:id/properties", get(list_properties))
-        .route("/portfolios/:id/properties/:property_id", get(get_property))
+        .route("/portfolios/{id}/properties", post(add_property))
+        .route("/portfolios/{id}/properties", get(list_properties))
         .route(
-            "/portfolios/:id/properties/:property_id",
+            "/portfolios/{id}/properties/{property_id}",
+            get(get_property),
+        )
+        .route(
+            "/portfolios/{id}/properties/{property_id}",
             put(update_property),
         )
         .route(
-            "/portfolios/:id/properties/:property_id",
+            "/portfolios/{id}/properties/{property_id}",
             delete(remove_property),
         )
         // Transactions
-        .route("/portfolios/:id/transactions", post(create_transaction))
-        .route("/portfolios/:id/transactions", get(list_transactions))
+        .route("/portfolios/{id}/transactions", post(create_transaction))
+        .route("/portfolios/{id}/transactions", get(list_transactions))
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             get(get_transaction),
         )
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             put(update_transaction),
         )
         .route(
-            "/portfolios/:id/transactions/:transaction_id",
+            "/portfolios/{id}/transactions/{transaction_id}",
             delete(delete_transaction),
         )
         // Cash flows
-        .route("/portfolios/:id/cash-flows", post(upsert_cash_flow))
-        .route("/portfolios/:id/cash-flows", get(get_cash_flows))
+        .route("/portfolios/{id}/cash-flows", post(upsert_cash_flow))
+        .route("/portfolios/{id}/cash-flows", get(get_cash_flows))
         // Metrics
-        .route("/portfolios/:id/metrics/calculate", post(calculate_metrics))
-        .route("/portfolios/:id/metrics/latest", get(get_latest_metrics))
-        .route("/portfolios/:id/metrics/summary", get(get_metrics_summary))
+        .route(
+            "/portfolios/{id}/metrics/calculate",
+            post(calculate_metrics),
+        )
+        .route("/portfolios/{id}/metrics/latest", get(get_latest_metrics))
+        .route("/portfolios/{id}/metrics/summary", get(get_metrics_summary))
         // Benchmarks
         .route("/benchmarks", post(create_benchmark))
         .route("/benchmarks", get(list_benchmarks))
-        .route("/benchmarks/:id", get(get_benchmark))
-        .route("/benchmarks/:id", put(update_benchmark))
-        .route("/benchmarks/:id", delete(delete_benchmark))
+        .route("/benchmarks/{id}", get(get_benchmark))
+        .route("/benchmarks/{id}", put(update_benchmark))
+        .route("/benchmarks/{id}", delete(delete_benchmark))
         // Comparisons
-        .route("/portfolios/:id/comparisons", post(create_comparison))
-        .route("/portfolios/:id/comparisons", get(list_comparisons))
+        .route("/portfolios/{id}/comparisons", post(create_comparison))
+        .route("/portfolios/{id}/comparisons", get(list_comparisons))
         .route(
-            "/portfolios/:id/comparisons/:comparison_id",
+            "/portfolios/{id}/comparisons/{comparison_id}",
             get(get_comparison),
         )
         // Dashboard
         .route(
-            "/portfolios/:id/dashboard/summary",
+            "/portfolios/{id}/dashboard/summary",
             get(get_dashboard_summary),
         )
         .route(
-            "/portfolios/:id/dashboard/property-cards",
+            "/portfolios/{id}/dashboard/property-cards",
             get(get_property_cards),
         )
         .route(
-            "/portfolios/:id/dashboard/cash-flow-trend",
+            "/portfolios/{id}/dashboard/cash-flow-trend",
             get(get_cash_flow_trend),
         )
         // Alerts
-        .route("/portfolios/:id/alerts", post(create_alert))
-        .route("/portfolios/:id/alerts", get(list_alerts))
+        .route("/portfolios/{id}/alerts", post(create_alert))
+        .route("/portfolios/{id}/alerts", get(list_alerts))
         .route(
-            "/portfolios/:id/alerts/:alert_id/read",
+            "/portfolios/{id}/alerts/{alert_id}/read",
             post(mark_alert_read),
         )
         .route(
-            "/portfolios/:id/alerts/:alert_id/resolve",
+            "/portfolios/{id}/alerts/{alert_id}/resolve",
             post(resolve_alert),
         )
 }

@@ -158,17 +158,17 @@ pub fn admin_router() -> Router<AppState> {
         // Feature Package CRUD
         .route("/", get(list_packages))
         .route("/", post(create_package))
-        .route("/:id", get(get_package))
-        .route("/:id", put(update_package))
-        .route("/:id", delete(delete_package))
+        .route("/{id}", get(get_package))
+        .route("/{id}", put(update_package))
+        .route("/{id}", delete(delete_package))
         // Feature management
-        .route("/:id/features", post(add_features))
-        .route("/:id/features/:fid", delete(remove_feature))
+        .route("/{id}/features", post(add_features))
+        .route("/{id}/features/{fid}", delete(remove_feature))
         // Organization packages
-        .route("/organizations/:org_id", get(get_org_packages))
-        .route("/organizations/:org_id/assign", post(assign_package))
+        .route("/organizations/{org_id}", get(get_org_packages))
+        .route("/organizations/{org_id}/assign", post(assign_package))
         .route(
-            "/organizations/:org_id/packages/:pid",
+            "/organizations/{org_id}/packages/{pid}",
             delete(deactivate_org_package),
         )
 }
@@ -178,7 +178,7 @@ pub fn public_router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_public_packages))
         .route("/compare", get(compare_packages))
-        .route("/:id", get(get_public_package))
+        .route("/{id}", get(get_public_package))
 }
 
 // ==================== Request/Response Types ====================

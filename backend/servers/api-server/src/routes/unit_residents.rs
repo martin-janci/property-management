@@ -28,10 +28,10 @@ pub fn router() -> Router<AppState> {
         // Resident management (Story 3.3)
         .route("/", get(list_residents))
         .route("/", post(add_resident))
-        .route("/:resident_id", get(get_resident))
-        .route("/:resident_id", put(update_resident))
-        .route("/:resident_id", delete(remove_resident))
-        .route("/:resident_id/end", post(end_residency))
+        .route("/{resident_id}", get(get_resident))
+        .route("/{resident_id}", put(update_resident))
+        .route("/{resident_id}", delete(remove_resident))
+        .route("/{resident_id}/end", post(end_residency))
         .route("/history", get(list_resident_history))
 }
 

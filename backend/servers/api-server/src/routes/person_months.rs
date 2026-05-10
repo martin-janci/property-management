@@ -15,7 +15,7 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::models::person_month::{
     person_month_source, BulkPersonMonthEntry, CreatePersonMonth, PersonMonth, PersonMonthWithUnit,
-    UpdatePersonMonth,
+    UpdatePersonMonth, YearlyPersonMonthSummary,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -29,9 +29,9 @@ pub fn router() -> Router<AppState> {
         // Unit-level person months (Story 3.5)
         .route("/", get(get_unit_person_months))
         .route("/", post(upsert_person_month))
-        .route("/:id", get(get_person_month))
-        .route("/:id", put(update_person_month))
-        .route("/:id", delete(delete_person_month))
+        .route("/{id}", get(get_person_month))
+        .route("/{id}", put(update_person_month))
+        .route("/{id}", delete(delete_person_month))
         .route("/yearly", get(get_yearly_summary))
         .route("/calculate", post(calculate_from_residents))
 }

@@ -1,7 +1,6 @@
 //! Authentication extractor.
 
 use axum::{
-    async_trait,
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
@@ -49,7 +48,6 @@ impl AuthUser {
     }
 }
 
-#[async_trait]
 impl<S> FromRequestParts<S> for AuthUser
 where
     S: Send + Sync,
@@ -109,7 +107,6 @@ where
 #[derive(Debug, Clone)]
 pub struct OptionalAuth(pub Option<AuthUser>);
 
-#[async_trait]
 impl<S> FromRequestParts<S> for OptionalAuth
 where
     S: Send + Sync,

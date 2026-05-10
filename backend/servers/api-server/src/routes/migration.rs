@@ -30,32 +30,32 @@ pub fn router() -> Router<AppState> {
         .route("/templates", get(list_templates))
         .route("/templates", post(create_template))
         .route("/templates/system", get(list_system_templates))
-        .route("/templates/:template_id", get(get_template))
-        .route("/templates/:template_id", put(update_template))
-        .route("/templates/:template_id", delete(delete_template))
-        .route("/templates/:template_id/download", get(download_template))
+        .route("/templates/{template_id}", get(get_template))
+        .route("/templates/{template_id}", put(update_template))
+        .route("/templates/{template_id}", delete(delete_template))
+        .route("/templates/{template_id}/download", get(download_template))
         .route(
-            "/templates/:template_id/duplicate",
+            "/templates/{template_id}/duplicate",
             post(duplicate_template),
         )
         .route("/categories/import", get(get_import_categories))
         // Story 66.2: Bulk Data Import
         .route("/import/upload", post(upload_import_file))
         .route("/import/jobs", get(list_import_jobs))
-        .route("/import/jobs/:job_id", get(get_import_job_status))
-        .route("/import/jobs/:job_id/cancel", post(cancel_import_job))
-        .route("/import/jobs/:job_id/retry", post(retry_import_job))
-        .route("/import/jobs/:job_id/errors", get(get_import_job_errors))
+        .route("/import/jobs/{job_id}", get(get_import_job_status))
+        .route("/import/jobs/{job_id}/cancel", post(cancel_import_job))
+        .route("/import/jobs/{job_id}/retry", post(retry_import_job))
+        .route("/import/jobs/{job_id}/errors", get(get_import_job_errors))
         // Story 66.3: Data Export for Migration
         .route("/export", post(request_migration_export))
-        .route("/export/:export_id", get(get_export_status))
-        .route("/export/:export_id/download", get(download_export))
+        .route("/export/{export_id}", get(get_export_status))
+        .route("/export/{export_id}/download", get(download_export))
         .route("/export/history", get(get_export_history))
         .route("/categories/export", get(get_export_categories))
         // Story 66.4: Import Validation & Preview
-        .route("/import/jobs/:job_id/preview", get(get_import_preview))
-        .route("/import/jobs/:job_id/approve", post(approve_import))
-        .route("/import/jobs/:job_id/validate", post(validate_import))
+        .route("/import/jobs/{job_id}/preview", get(get_import_preview))
+        .route("/import/jobs/{job_id}/approve", post(approve_import))
+        .route("/import/jobs/{job_id}/validate", post(validate_import))
 }
 
 // ============================================================================

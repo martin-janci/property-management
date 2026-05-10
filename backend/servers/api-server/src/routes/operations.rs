@@ -41,33 +41,33 @@ pub fn router() -> Router<AppState> {
         .route("/deployments", get(list_deployments))
         .route("/deployments", post(create_deployment))
         .route("/deployments/dashboard", get(get_deployment_dashboard))
-        .route("/deployments/:id", get(get_deployment))
-        .route("/deployments/:id/status", put(update_deployment_status))
-        .route("/deployments/:id/switch", post(switch_traffic))
-        .route("/deployments/:id/rollback", post(rollback_deployment))
+        .route("/deployments/{id}", get(get_deployment))
+        .route("/deployments/{id}/status", put(update_deployment_status))
+        .route("/deployments/{id}/switch", post(switch_traffic))
+        .route("/deployments/{id}/rollback", post(rollback_deployment))
         .route(
-            "/deployments/:id/health-checks",
+            "/deployments/{id}/health-checks",
             get(list_deployment_health_checks),
         )
-        .route("/deployments/:id/health-checks", post(run_health_checks))
+        .route("/deployments/{id}/health-checks", post(run_health_checks))
         // Database Migration Safety (Story 73.2)
         .route("/migrations", get(list_migrations))
         .route("/migrations", post(create_migration))
-        .route("/migrations/:id", get(get_migration))
-        .route("/migrations/:id/progress", put(update_migration_progress))
-        .route("/migrations/:id/logs", get(list_migration_logs))
-        .route("/migrations/:id/rollback", post(rollback_migration))
-        .route("/migrations/:id/safety-check", get(check_migration_safety))
+        .route("/migrations/{id}", get(get_migration))
+        .route("/migrations/{id}/progress", put(update_migration_progress))
+        .route("/migrations/{id}/logs", get(list_migration_logs))
+        .route("/migrations/{id}/rollback", post(rollback_migration))
+        .route("/migrations/{id}/safety-check", get(check_migration_safety))
         .route("/schema/versions", get(list_schema_versions))
         .route("/schema/current", get(get_current_schema_version))
         // Disaster Recovery (Story 73.3)
         .route("/backups", get(list_backups))
         .route("/backups", post(create_backup))
         .route("/backups/dashboard", get(get_dr_dashboard))
-        .route("/backups/:id", get(get_backup))
-        .route("/backups/:id/verify", post(verify_backup))
+        .route("/backups/{id}", get(get_backup))
+        .route("/backups/{id}/verify", post(verify_backup))
         .route("/recovery", post(initiate_recovery))
-        .route("/recovery/:id", get(get_recovery_status))
+        .route("/recovery/{id}", get(get_recovery_status))
         .route("/dr/drills", get(list_dr_drills))
         .route("/dr/drills", post(record_dr_drill))
         // Cost Monitoring (Story 73.4)
@@ -76,11 +76,11 @@ pub fn router() -> Router<AppState> {
         .route("/costs/dashboard", get(get_cost_dashboard))
         .route("/costs/budgets", get(list_budgets))
         .route("/costs/budgets", post(create_budget))
-        .route("/costs/budgets/:id", get(get_budget))
-        .route("/costs/budgets/:id", put(update_budget))
+        .route("/costs/budgets/{id}", get(get_budget))
+        .route("/costs/budgets/{id}", put(update_budget))
         .route("/costs/alerts", get(list_cost_alerts))
         .route(
-            "/costs/alerts/:id/acknowledge",
+            "/costs/alerts/{id}/acknowledge",
             post(acknowledge_cost_alert),
         )
         .route("/costs/utilization", get(list_resource_utilization))
@@ -89,7 +89,7 @@ pub fn router() -> Router<AppState> {
             get(list_optimization_recommendations),
         )
         .route(
-            "/costs/recommendations/:id/implement",
+            "/costs/recommendations/{id}/implement",
             post(mark_recommendation_implemented),
         )
 }

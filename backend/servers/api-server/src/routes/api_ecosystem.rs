@@ -40,136 +40,136 @@ pub fn router() -> Router<AppState> {
         // ==================== Story 150.1: Integration Marketplace ====================
         .route("/marketplace", get(list_marketplace_integrations))
         .route("/marketplace", post(create_marketplace_integration))
-        .route("/marketplace/:id", get(get_marketplace_integration))
-        .route("/marketplace/:id", put(update_marketplace_integration))
-        .route("/marketplace/:id", delete(delete_marketplace_integration))
+        .route("/marketplace/{id}", get(get_marketplace_integration))
+        .route("/marketplace/{id}", put(update_marketplace_integration))
+        .route("/marketplace/{id}", delete(delete_marketplace_integration))
         .route("/marketplace/categories", get(list_integration_categories))
-        .route("/marketplace/:id/ratings", get(list_integration_ratings))
-        .route("/marketplace/:id/ratings", post(create_integration_rating))
+        .route("/marketplace/{id}/ratings", get(list_integration_ratings))
+        .route("/marketplace/{id}/ratings", post(create_integration_rating))
         // Organization installations
         .route(
-            "/organizations/:org_id/integrations",
+            "/organizations/{org_id}/integrations",
             get(list_organization_integrations),
         )
         .route(
-            "/organizations/:org_id/integrations",
+            "/organizations/{org_id}/integrations",
             post(install_integration),
         )
         .route(
-            "/organizations/:org_id/integrations/:id",
+            "/organizations/{org_id}/integrations/{id}",
             get(get_organization_integration),
         )
         .route(
-            "/organizations/:org_id/integrations/:id",
+            "/organizations/{org_id}/integrations/{id}",
             put(update_organization_integration),
         )
         .route(
-            "/organizations/:org_id/integrations/:id",
+            "/organizations/{org_id}/integrations/{id}",
             delete(uninstall_integration),
         )
         .route(
-            "/organizations/:org_id/integrations/:id/sync",
+            "/organizations/{org_id}/integrations/{id}/sync",
             post(sync_integration),
         )
         // ==================== Story 150.2: Connector Framework ====================
         .route("/connectors", get(list_connectors))
         .route("/connectors", post(create_connector))
-        .route("/connectors/:id", get(get_connector))
-        .route("/connectors/:id", put(update_connector))
-        .route("/connectors/:id", delete(delete_connector))
-        .route("/connectors/:id/actions", get(list_connector_actions))
-        .route("/connectors/:id/actions", post(create_connector_action))
+        .route("/connectors/{id}", get(get_connector))
+        .route("/connectors/{id}", put(update_connector))
+        .route("/connectors/{id}", delete(delete_connector))
+        .route("/connectors/{id}/actions", get(list_connector_actions))
+        .route("/connectors/{id}/actions", post(create_connector_action))
         .route(
-            "/organizations/:org_id/connector-logs",
+            "/organizations/{org_id}/connector-logs",
             get(list_connector_logs),
         )
         // ==================== Story 150.3: Webhook Management ====================
         .route(
-            "/organizations/:org_id/webhooks",
+            "/organizations/{org_id}/webhooks",
             get(list_enhanced_webhooks),
         )
         .route(
-            "/organizations/:org_id/webhooks",
+            "/organizations/{org_id}/webhooks",
             post(create_enhanced_webhook),
         )
-        .route("/webhooks/:id", get(get_enhanced_webhook))
-        .route("/webhooks/:id", put(update_enhanced_webhook))
-        .route("/webhooks/:id", delete(delete_enhanced_webhook))
-        .route("/webhooks/:id/test", post(test_enhanced_webhook))
-        .route("/webhooks/:id/logs", get(list_webhook_delivery_logs))
-        .route("/webhooks/:id/stats", get(get_enhanced_webhook_stats))
+        .route("/webhooks/{id}", get(get_enhanced_webhook))
+        .route("/webhooks/{id}", put(update_enhanced_webhook))
+        .route("/webhooks/{id}", delete(delete_enhanced_webhook))
+        .route("/webhooks/{id}/test", post(test_enhanced_webhook))
+        .route("/webhooks/{id}/logs", get(list_webhook_delivery_logs))
+        .route("/webhooks/{id}/stats", get(get_enhanced_webhook_stats))
         .route("/webhooks/events", get(list_webhook_event_types))
         // ==================== Story 150.4: Pre-Built Integrations ====================
         .route(
-            "/organizations/:org_id/prebuilt",
+            "/organizations/{org_id}/prebuilt",
             get(list_prebuilt_connections),
         )
         .route(
-            "/organizations/:org_id/prebuilt",
+            "/organizations/{org_id}/prebuilt",
             post(create_prebuilt_connection),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type",
+            "/organizations/{org_id}/prebuilt/{integration_type}",
             get(get_prebuilt_connection),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type",
+            "/organizations/{org_id}/prebuilt/{integration_type}",
             put(update_prebuilt_connection),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type",
+            "/organizations/{org_id}/prebuilt/{integration_type}",
             delete(delete_prebuilt_connection),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type/sync",
+            "/organizations/{org_id}/prebuilt/{integration_type}/sync",
             post(sync_prebuilt_connection),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type/oauth",
+            "/organizations/{org_id}/prebuilt/{integration_type}/oauth",
             get(get_prebuilt_oauth_url),
         )
         .route(
-            "/organizations/:org_id/prebuilt/:integration_type/oauth/callback",
+            "/organizations/{org_id}/prebuilt/{integration_type}/oauth/callback",
             post(handle_prebuilt_oauth_callback),
         )
         // ==================== Story 150.5: Developer Portal ====================
         .route("/developers/register", post(register_developer))
-        .route("/developers/:id", get(get_developer_registration))
+        .route("/developers/{id}", get(get_developer_registration))
         .route(
-            "/developers/:id/review",
+            "/developers/{id}/review",
             post(review_developer_registration),
         )
-        .route("/developers/:id/keys", get(list_developer_api_keys))
-        .route("/developers/:id/keys", post(create_developer_api_key))
+        .route("/developers/{id}/keys", get(list_developer_api_keys))
+        .route("/developers/{id}/keys", post(create_developer_api_key))
         .route(
-            "/developers/:id/keys/:key_id",
+            "/developers/{id}/keys/{key_id}",
             delete(revoke_developer_api_key),
         )
         .route(
-            "/developers/:id/keys/:key_id/rotate",
+            "/developers/{id}/keys/{key_id}/rotate",
             post(rotate_developer_api_key),
         )
-        .route("/developers/:id/usage", get(get_developer_usage_stats))
-        .route("/developers/:id/sandbox", post(create_sandbox_environment))
-        .route("/developers/:id/sandbox", get(get_sandbox_environment))
-        .route("/developers/:id/sandbox/test", post(test_sandbox_request))
+        .route("/developers/{id}/usage", get(get_developer_usage_stats))
+        .route("/developers/{id}/sandbox", post(create_sandbox_environment))
+        .route("/developers/{id}/sandbox", get(get_sandbox_environment))
+        .route("/developers/{id}/sandbox/test", post(test_sandbox_request))
         // Documentation
         .route("/docs", get(list_api_documentation))
         .route("/docs", post(create_api_documentation))
-        .route("/docs/:slug", get(get_api_documentation))
-        .route("/docs/:slug", put(update_api_documentation))
-        .route("/docs/:slug", delete(delete_api_documentation))
-        .route("/docs/:slug/code-samples", get(list_code_samples))
-        .route("/docs/:slug/code-samples", post(create_code_sample))
+        .route("/docs/{slug}", get(get_api_documentation))
+        .route("/docs/{slug}", put(update_api_documentation))
+        .route("/docs/{slug}", delete(delete_api_documentation))
+        .route("/docs/{slug}/code-samples", get(list_code_samples))
+        .route("/docs/{slug}/code-samples", post(create_code_sample))
         // Portal statistics
         .route("/portal/stats", get(get_developer_portal_stats))
         // ==================== Dashboard ====================
         .route(
-            "/organizations/:org_id/dashboard",
+            "/organizations/{org_id}/dashboard",
             get(get_ecosystem_dashboard),
         )
         .route(
-            "/organizations/:org_id/stats",
+            "/organizations/{org_id}/stats",
             get(get_ecosystem_statistics),
         )
 }

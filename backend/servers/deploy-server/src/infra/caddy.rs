@@ -172,7 +172,7 @@ mod tests {
 
         let app = axum::Router::new()
             .route(
-                "/id/*tail",
+                "/id/{*tail}",
                 axum::routing::delete(move || {
                     let log = log_d.clone();
                     let idx = di.clone();
