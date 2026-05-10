@@ -96,19 +96,20 @@ jobs:
             "Build Reality Portal Web"
             "Build Property Management Web"
           )
+          # Fail the step if any required context can't be posted — otherwise
+          # the workflow appears successful while leaving the PR blocked on
+          # missing checks.
           for ctx in "${REQUIRED_CONTEXTS[@]}"; do
-            gh api -X POST "repos/${{ github.repository }}/statuses/$HEAD_SHA" \
-              -f state=success \
-              -f context="$ctx" \
-              -f description="Skipped — auto-generated version bump" \
-              -f target_url="$PR_URL" \
-              >/dev/null && echo "  ✓ status posted: $ctx"
+            if ! gh api -X POST "repos/${{ github.repository }}/statuses/$HEAD_SHA" \
+                  -f state=success \
+                  -f context="$ctx" \
+                  -f description="Skipped — auto-generated version bump" \
+                  -f target_url="$PR_URL" >/dev/null; then
+              echo "  ✗ failed to post status for context: $ctx"
+              exit 1
+            fi
+            echo "  ✓ status posted: $ctx"
           done
-
-          # Enable auto-merge — merges automatically once approval conditions are met
-          gh pr merge "$PR_NUMBER" --auto --squash \
-            && echo "Auto-merge enabled on PR #$PR_NUMBER" \
-            || echo "Note: auto-merge not available in repo settings — PR #$PR_NUMBER needs manual merge"
 
       - name: Approve and admin-merge with PAT
         # AUTO_APPROVE_TOKEN is a PAT under a non-bot identity (admin perms).
@@ -126,24 +127,29 @@ jobs:
             echo "AUTO_APPROVE_TOKEN secret not set — skipping approval+admin-merge. The PR will need manual handling."
             exit 0
           fi
-          export GH_TOKEN="$AUTO_APPROVE_TOKEN"
 
-          # Re-derive PR number; this step runs in a fresh shell.
+          # Re-derive PR number with the default GITHUB_TOKEN (already in env
+          # as GH_TOKEN from the previous step is gone — fresh shell). The
+          # `gh pr list` call doesn't need the elevated PAT.
           VERSION=$(cat VERSION | tr -d '[:space:]')
           BRANCH="chore/version-${VERSION}"
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+          PR_NUMBER=$(GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr list \
+            --head "$BRANCH" --state open \
             --json number --jq '.[0].number // empty')
           if [ -z "$PR_NUMBER" ]; then
             echo "No open PR found for $BRANCH — nothing to merge."
             exit 0
           fi
 
-          # Approve first (audit trail), then admin-merge.
-          gh pr review "$PR_NUMBER" --approve \
+          # Approve and admin-merge with the elevated PAT. Scoped to these two
+          # commands only — never exported into the shell environment — to
+          # reduce the chance a future change leaks it via subprocess or log.
+          GH_TOKEN="$AUTO_APPROVE_TOKEN" gh pr review "$PR_NUMBER" --approve \
             --body "✅ Auto-approved: auto-generated version bump (no functional changes)." \
             && echo "Approved PR #$PR_NUMBER" \
             || echo "Approval failed (continuing anyway)"
 
-          gh pr merge "$PR_NUMBER" --admin --squash --delete-branch \
+          GH_TOKEN="$AUTO_APPROVE_TOKEN" gh pr merge "$PR_NUMBER" \
+            --admin --squash --delete-branch \
             && echo "Admin-merged PR #$PR_NUMBER" \
             || echo "Admin merge failed — PR #$PR_NUMBER needs manual handling"
