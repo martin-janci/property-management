@@ -24,7 +24,6 @@ function getConfigValue(key: string, defaultValue: string): string {
   }
 
   // Fall back to process.env (EXPO_PUBLIC_ prefix for Expo compatibility)
-  // @ts-expect-error - process.env is provided by metro bundler
   const envValue = process.env[`EXPO_PUBLIC_${key}`];
   if (envValue) {
     return envValue;

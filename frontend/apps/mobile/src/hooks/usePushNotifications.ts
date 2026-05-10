@@ -41,8 +41,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const [isRegistered, setIsRegistered] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   useEffect(() => {
     // Listen for incoming notifications
