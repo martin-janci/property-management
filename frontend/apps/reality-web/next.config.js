@@ -11,8 +11,16 @@ const isDev = process.env.NODE_ENV !== 'production';
 // localhost / emulator host) in connect-src so the browser can actually reach
 // the reality-server.
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL;
+// Hardcoded reality-server origins. Includes the real prod/staging hosts
+// (api.rlt.sk family) and the legacy multi-region hosts (api.reality-portal.*).
+// Worktree dev URLs at *.dev.rlt.sk fall back to api.rlt.sk via host inference
+// in lib/env.ts and app/env.js/route.ts when NEXT_PUBLIC_API_URL isn't set;
+// this list ensures CSP `connect-src` permits those connections even when the
+// dynamic apiOrigin block below adds nothing (process.env unset).
 const connectSrcOrigins = new Set([
   "'self'",
+  'https://api.rlt.sk',
+  'https://api.staging.rlt.sk',
   'https://api.reality-portal.sk',
   'https://api.reality-portal.cz',
   'https://api.reality-portal.eu',
@@ -96,7 +104,13 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    domains: ['api.reality-portal.sk', 'api.reality-portal.cz', 'api.reality-portal.eu'],
+    domains: [
+      'api.rlt.sk',
+      'api.staging.rlt.sk',
+      'api.reality-portal.sk',
+      'api.reality-portal.cz',
+      'api.reality-portal.eu',
+    ],
   },
 
   // Environment variables
