@@ -358,18 +358,17 @@ pub async fn list_comments(
     })?;
 
     // Resolve article ID
-    let article_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()",
-    )
-    .bind(&slug)
-    .fetch_optional(&mut *conn)
-    .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let article_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()")
+            .bind(&slug)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Database error: {}", e),
+                )
+            })?;
 
     let article_id = article_id.ok_or_else(|| {
         (
@@ -455,18 +454,17 @@ pub async fn create_comment(
         )
     })?;
 
-    let article_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()",
-    )
-    .bind(&slug)
-    .fetch_optional(&mut *conn)
-    .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let article_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()")
+            .bind(&slug)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Database error: {}", e),
+                )
+            })?;
 
     let article_id = article_id.ok_or_else(|| {
         (

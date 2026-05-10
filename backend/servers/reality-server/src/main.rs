@@ -424,11 +424,17 @@ async fn main() -> anyhow::Result<()> {
         // Reports routes (UC-23)
         .nest("/api/v1/reports", routes::reports::router())
         // Agent reviews — nested under realtors (UC-49, UC-51)
-        .nest("/api/v1/realtors/:id/reviews", routes::agent_reviews::router())
+        .nest(
+            "/api/v1/realtors/:id/reviews",
+            routes::agent_reviews::router(),
+        )
         // Agency branding (UC-49)
         .nest("/api/v1/agencies", routes::agency_branding::router())
         // Agency imports (UC-50)
-        .nest("/api/v1/agencies/:id/imports", routes::agency_imports::router())
+        .nest(
+            "/api/v1/agencies/:id/imports",
+            routes::agency_imports::router(),
+        )
         // Price map aggregations (UC-31)
         .nest("/api/v1/price-map", routes::price_map::router())
         // Journal / News articles (UC-13)

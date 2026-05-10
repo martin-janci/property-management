@@ -19,7 +19,7 @@
 
 /* Connector line between steps */
 .step:not(:last-child)::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 14px; /* vertically centres on the circle */
   left: calc(50% + 18px);

@@ -232,18 +232,85 @@
       "title": "Podmínky používání",
       "description": "Používáním Reality Portálu souhlasíte s našimi obchodními podmínkami. Úplné podmínky používání budou zveřejněny zde."
     },
-    "careers": { "title": "Kariéra", "hero": { "title": "Pojďme budovat realitní trh, který dává smysl.", "subtitle": "Připojte se k našemu týmu.", "cta": "Zobrazit volné pozice" } },
+    "careers": {
+      "title": "Kariéra",
+      "hero": {
+        "title": "Pojďme budovat realitní trh, který dává smysl.",
+        "subtitle": "Připojte se k našemu týmu.",
+        "cta": "Zobrazit volné pozice"
+      }
+    },
     "cookies": { "title": "Zásady používání cookies", "reopen": "Znovu otevřít nastavení cookies" },
-    "security": { "title": "Bezpečnost", "subtitle": "Vaše bezpečnost je naší prioritou", "reportCta": "Nahlásit inzerát" },
-    "help": { "title": "Centrum nápovědy", "searchPlaceholder": "Vyhledávejte v centru nápovědy...", "categories": "Kategorie", "faq": "Často kladené otázky" },
-    "journal": { "title": "Reality Žurnál", "subtitle": "Analýzy, tipy a novinky ze světa nemovitostí.", "featured": "Titulní příběh", "latest": "Nejnovější články", "newsletter": "Odběr novinek", "editorsPicks": "Výběr redakce", "mostRead": "Nejvíce čtené" },
-    "forAgents": { "title": "Pro makléře a agentury", "subtitle": "Prodávejte více s Reality Portálem", "features": "Co získáte", "pricing": "Cenové plány" },
-    "profile": { "title": "Můj profil", "tabs": { "listings": "Moje inzeráty", "activity": "Aktivita", "reviews": "Hodnocení", "settings": "Nastavení" } },
-    "sell": { "title": "Přidat inzerát", "submit": "Zveřejnit inzerát", "steps": { "typeLocation": "Typ a poloha", "details": "Detaily", "photos": "Fotografie", "price": "Cena", "summary": "Kontakt & shrnutí" } },
-    "priceMap": { "title": "Mapa cen", "subtitle": "Bratislava – přehled", "clickHint": "Klikněte na čtvrť pro detailní statistiky." },
-    "report": { "title": "Nahlásit inzerát", "subtitle": "Pomozte nám udržovat portál bezpečným.", "submit": "Odeslat nahlášení", "success": "Nahlášení bylo odesláno" },
-    "agentProfile": { "verified": "Ověřený makléř", "contact": "Kontaktovat", "specializations": "Specializace", "languages": "Jazyky", "activeListings": "Aktivní inzeráty", "reviews": "Hodnocení" },
-    "listingEdit": { "title": "Upravit inzerát", "save": "Uložit změny", "success": "Inzerát byl uložen!" }
+    "security": {
+      "title": "Bezpečnost",
+      "subtitle": "Vaše bezpečnost je naší prioritou",
+      "reportCta": "Nahlásit inzerát"
+    },
+    "help": {
+      "title": "Centrum nápovědy",
+      "searchPlaceholder": "Vyhledávejte v centru nápovědy...",
+      "categories": "Kategorie",
+      "faq": "Často kladené otázky"
+    },
+    "journal": {
+      "title": "Reality Žurnál",
+      "subtitle": "Analýzy, tipy a novinky ze světa nemovitostí.",
+      "featured": "Titulní příběh",
+      "latest": "Nejnovější články",
+      "newsletter": "Odběr novinek",
+      "editorsPicks": "Výběr redakce",
+      "mostRead": "Nejvíce čtené"
+    },
+    "forAgents": {
+      "title": "Pro makléře a agentury",
+      "subtitle": "Prodávejte více s Reality Portálem",
+      "features": "Co získáte",
+      "pricing": "Cenové plány"
+    },
+    "profile": {
+      "title": "Můj profil",
+      "tabs": {
+        "listings": "Moje inzeráty",
+        "activity": "Aktivita",
+        "reviews": "Hodnocení",
+        "settings": "Nastavení"
+      }
+    },
+    "sell": {
+      "title": "Přidat inzerát",
+      "submit": "Zveřejnit inzerát",
+      "steps": {
+        "typeLocation": "Typ a poloha",
+        "details": "Detaily",
+        "photos": "Fotografie",
+        "price": "Cena",
+        "summary": "Kontakt & shrnutí"
+      }
+    },
+    "priceMap": {
+      "title": "Mapa cen",
+      "subtitle": "Bratislava – přehled",
+      "clickHint": "Klikněte na čtvrť pro detailní statistiky."
+    },
+    "report": {
+      "title": "Nahlásit inzerát",
+      "subtitle": "Pomozte nám udržovat portál bezpečným.",
+      "submit": "Odeslat nahlášení",
+      "success": "Nahlášení bylo odesláno"
+    },
+    "agentProfile": {
+      "verified": "Ověřený makléř",
+      "contact": "Kontaktovat",
+      "specializations": "Specializace",
+      "languages": "Jazyky",
+      "activeListings": "Aktivní inzeráty",
+      "reviews": "Hodnocení"
+    },
+    "listingEdit": {
+      "title": "Upravit inzerát",
+      "save": "Uložit změny",
+      "success": "Inzerát byl uložen!"
+    }
   },
   "footer": {
     "about": "O nás",

@@ -5,5 +5,6 @@
  * JS/TS usage: import { tokens } from '@ppt/ui-kit/src/tokens';
  * Tailwind usage: import { pptPreset } from '@ppt/ui-kit/src/tokens';
  */
+
+export { default as tailwindPreset, pptPreset } from './tailwind-preset';
 export * from './tokens';
-export { pptPreset, default as tailwindPreset } from './tailwind-preset';

@@ -101,7 +101,9 @@
   background: var(--bg-input);
   flex-shrink: 0;
   margin-top: 2px;
-  transition: border-color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
   position: relative;
 }
 
@@ -111,7 +113,7 @@
 }
 
 .indicatorActive::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 3px;
   border-radius: var(--radius-circle);

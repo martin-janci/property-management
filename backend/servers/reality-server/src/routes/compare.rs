@@ -180,7 +180,10 @@ pub async fn add_to_compare(
     if count >= MAX_COMPARE_LISTINGS {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
-            format!("Compare list is full (maximum {} listings)", MAX_COMPARE_LISTINGS),
+            format!(
+                "Compare list is full (maximum {} listings)",
+                MAX_COMPARE_LISTINGS
+            ),
         ));
     }
 
@@ -226,19 +229,17 @@ pub async fn add_to_compare(
         ));
     }
 
-    sqlx::query(
-        "INSERT INTO compare_lists (user_id, listing_id) VALUES ($1, $2)",
-    )
-    .bind(auth.user_id)
-    .bind(listing_id)
-    .execute(&mut *conn)
-    .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to add to compare list: {}", e),
-        )
-    })?;
+    sqlx::query("INSERT INTO compare_lists (user_id, listing_id) VALUES ($1, $2)")
+        .bind(auth.user_id)
+        .bind(listing_id)
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to add to compare list: {}", e),
+            )
+        })?;
 
     Ok((
         axum::http::StatusCode::CREATED,

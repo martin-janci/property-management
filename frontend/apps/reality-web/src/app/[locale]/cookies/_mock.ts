@@ -7,13 +7,55 @@ export interface CookieRow {
 }
 
 export const MOCK_COOKIES: CookieRow[] = [
-  { name: 'ppt_session', provider: 'rlt.sk', purpose: 'Udržuje prihlásenie používateľa', duration: '7 dní', type: 'essential' },
-  { name: 'ppt_locale', provider: 'rlt.sk', purpose: 'Uloží preferovaný jazyk', duration: '1 rok', type: 'functional' },
-  { name: 'ppt_cs', provider: 'rlt.sk', purpose: 'Uloží voľby súhlasu cookies', duration: '1 rok', type: 'essential' },
-  { name: '_ga', provider: 'google.com', purpose: 'Google Analytics – rozlíšenie návštevníkov', duration: '2 roky', type: 'analytics' },
-  { name: '_ga_*', provider: 'google.com', purpose: 'Google Analytics – dĺžka relácie', duration: '2 roky', type: 'analytics' },
-  { name: 'fbp', provider: 'facebook.com', purpose: 'Facebook Pixel – sledovanie konverzií', duration: '3 mesiace', type: 'marketing' },
-  { name: 'intercom-id-*', provider: 'intercom.com', purpose: 'Živý chat a podpora', duration: '9 mesiacov', type: 'functional' },
+  {
+    name: 'ppt_session',
+    provider: 'rlt.sk',
+    purpose: 'Udržuje prihlásenie používateľa',
+    duration: '7 dní',
+    type: 'essential',
+  },
+  {
+    name: 'ppt_locale',
+    provider: 'rlt.sk',
+    purpose: 'Uloží preferovaný jazyk',
+    duration: '1 rok',
+    type: 'functional',
+  },
+  {
+    name: 'ppt_cs',
+    provider: 'rlt.sk',
+    purpose: 'Uloží voľby súhlasu cookies',
+    duration: '1 rok',
+    type: 'essential',
+  },
+  {
+    name: '_ga',
+    provider: 'google.com',
+    purpose: 'Google Analytics – rozlíšenie návštevníkov',
+    duration: '2 roky',
+    type: 'analytics',
+  },
+  {
+    name: '_ga_*',
+    provider: 'google.com',
+    purpose: 'Google Analytics – dĺžka relácie',
+    duration: '2 roky',
+    type: 'analytics',
+  },
+  {
+    name: 'fbp',
+    provider: 'facebook.com',
+    purpose: 'Facebook Pixel – sledovanie konverzií',
+    duration: '3 mesiace',
+    type: 'marketing',
+  },
+  {
+    name: 'intercom-id-*',
+    provider: 'intercom.com',
+    purpose: 'Živý chat a podpora',
+    duration: '9 mesiacov',
+    type: 'functional',
+  },
 ];
 
 export const COOKIE_SECTIONS = [

@@ -9,12 +9,7 @@
 
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
-import {
-  INITIAL_FORM_DATA,
-  PROPERTY_TYPE_OPTIONS,
-  SELL_STEPS,
-  type SellFormData,
-} from './_mock';
+import { INITIAL_FORM_DATA, PROPERTY_TYPE_OPTIONS, SELL_STEPS, type SellFormData } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -24,7 +19,14 @@ function StepIndicator({ current }: { current: number }) {
   return (
     <div style={{ display: 'flex', gap: 0, alignItems: 'center', marginBottom: 40 }}>
       {SELL_STEPS.map((step, idx) => (
-        <div key={step.id} style={{ display: 'flex', alignItems: 'center', flex: idx < SELL_STEPS.length - 1 ? 1 : 'initial' }}>
+        <div
+          key={step.id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: idx < SELL_STEPS.length - 1 ? 1 : 'initial',
+          }}
+        >
           <div
             style={{
               width: 36,
@@ -52,7 +54,10 @@ function StepIndicator({ current }: { current: number }) {
               style={{
                 flex: 1,
                 height: 2,
-                background: step.id < current ? 'var(--ppt-color-success, #10b981)' : 'var(--ppt-border-default, #e5e7eb)',
+                background:
+                  step.id < current
+                    ? 'var(--ppt-color-success, #10b981)'
+                    : 'var(--ppt-border-default, #e5e7eb)',
                 margin: '0 4px',
               }}
             />
@@ -86,7 +91,14 @@ export default function SellPage() {
 
   if (submitted) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--ppt-bg-app)',
+        }}
+      >
         <Header />
         <main
           style={{
@@ -100,7 +112,14 @@ export default function SellPage() {
         >
           <div>
             <div style={{ fontSize: '4rem', marginBottom: 16 }}>🎉</div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 12 }}>
+            <h1
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 800,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 12,
+              }}
+            >
               Váš inzerát bol odoslaný!
             </h1>
             <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28 }}>
@@ -108,7 +127,11 @@ export default function SellPage() {
             </p>
             <button
               type="button"
-              onClick={() => { setSubmitted(false); setStep(1); setForm(INITIAL_FORM_DATA); }}
+              onClick={() => {
+                setSubmitted(false);
+                setStep(1);
+                setForm(INITIAL_FORM_DATA);
+              }}
               style={{
                 padding: '12px 28px',
                 background: 'var(--ppt-color-primary, #2563eb)',
@@ -131,7 +154,12 @@ export default function SellPage() {
   return (
     <div
       data-i18n="pages.sell.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
@@ -147,11 +175,27 @@ export default function SellPage() {
           }}
         >
           {/* Wizard form */}
-          <div style={{ background: 'var(--ppt-bg-surface)', borderRadius: 14, padding: '36px 32px', boxShadow: '0 1px 6px rgba(0,0,0,.08)' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: '0 0 6px' }}>
+          <div
+            style={{
+              background: 'var(--ppt-bg-surface)',
+              borderRadius: 14,
+              padding: '36px 32px',
+              boxShadow: '0 1px 6px rgba(0,0,0,.08)',
+            }}
+          >
+            <h1
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                color: 'var(--ppt-fg-primary)',
+                margin: '0 0 6px',
+              }}
+            >
               Pridať inzerát
             </h1>
-            <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28, fontSize: '0.9375rem' }}>
+            <p
+              style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28, fontSize: '0.9375rem' }}
+            >
               Krok {step} z {SELL_STEPS.length}: {currentStepInfo?.title}
             </p>
 
@@ -162,7 +206,15 @@ export default function SellPage() {
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 8, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 8,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Typ transakcie
                   </label>
                   {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
@@ -177,8 +229,14 @@ export default function SellPage() {
                           padding: '12px',
                           borderRadius: 8,
                           border: `2px solid ${form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
-                          background: form.transactionType === t ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)',
-                          color: form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)',
+                          background:
+                            form.transactionType === t
+                              ? 'var(--ppt-color-primary-light, #dbeafe)'
+                              : 'var(--ppt-bg-surface)',
+                          color:
+                            form.transactionType === t
+                              ? 'var(--ppt-color-primary, #2563eb)'
+                              : 'var(--ppt-fg-secondary)',
                           fontWeight: 600,
                           cursor: 'pointer',
                           fontSize: '0.9375rem',
@@ -191,7 +249,15 @@ export default function SellPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 8, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 8,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Typ nehnuteľnosti
                   </label>
                   {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
@@ -205,8 +271,14 @@ export default function SellPage() {
                           padding: '12px',
                           borderRadius: 8,
                           border: `2px solid ${form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
-                          background: form.propertyType === opt.value ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)',
-                          color: form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)',
+                          background:
+                            form.propertyType === opt.value
+                              ? 'var(--ppt-color-primary-light, #dbeafe)'
+                              : 'var(--ppt-bg-surface)',
+                          color:
+                            form.propertyType === opt.value
+                              ? 'var(--ppt-color-primary, #2563eb)'
+                              : 'var(--ppt-fg-secondary)',
                           fontWeight: 600,
                           cursor: 'pointer',
                         }}
@@ -218,7 +290,15 @@ export default function SellPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Adresa
                   </label>
                   <input
@@ -231,7 +311,15 @@ export default function SellPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Mesto / Obec
                   </label>
                   <input
@@ -256,20 +344,38 @@ export default function SellPage() {
                   { key: 'yearBuilt', label: 'Rok výstavby', placeholder: 'Napr. 1995' },
                 ].map((field) => (
                   <div key={field.key}>
-                    <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontWeight: 600,
+                        color: 'var(--ppt-fg-primary)',
+                        marginBottom: 6,
+                        fontSize: '0.9375rem',
+                      }}
+                    >
                       {field.label}
                     </label>
                     <input
                       type="number"
                       placeholder={field.placeholder}
                       value={form[field.key as keyof SellFormData] as string | number}
-                      onChange={(e) => update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })}
+                      onChange={(e) =>
+                        update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })
+                      }
                       style={inputStyle}
                     />
                   </div>
                 ))}
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Popis nehnuteľnosti
                   </label>
                   <textarea
@@ -319,8 +425,15 @@ export default function SellPage() {
                   />
                 </label>
                 {form.photos.length > 0 && (
-                  <p style={{ marginTop: 12, color: 'var(--ppt-color-success, #10b981)', fontWeight: 500 }}>
-                    ✓ {form.photos.length} {form.photos.length === 1 ? 'fotografia' : 'fotografie'} vybraté
+                  <p
+                    style={{
+                      marginTop: 12,
+                      color: 'var(--ppt-color-success, #10b981)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    ✓ {form.photos.length} {form.photos.length === 1 ? 'fotografia' : 'fotografie'}{' '}
+                    vybraté
                   </p>
                 )}
               </div>
@@ -330,25 +443,45 @@ export default function SellPage() {
             {step === 4 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     Požadovaná cena (€)
                   </label>
                   <input
                     type="number"
-                    placeholder={form.transactionType === 'rent' ? 'Mesačný nájom napr. 800' : 'Napr. 250000'}
+                    placeholder={
+                      form.transactionType === 'rent' ? 'Mesačný nájom napr. 800' : 'Napr. 250000'
+                    }
                     value={form.price}
-                    onChange={(e) => update({ price: e.target.value === '' ? '' : Number(e.target.value) })}
+                    onChange={(e) =>
+                      update({ price: e.target.value === '' ? '' : Number(e.target.value) })
+                    }
                     style={inputStyle}
                   />
                 </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <label
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                >
                   <input
                     type="checkbox"
                     checked={form.priceNegotiable}
                     onChange={(e) => update({ priceNegotiable: e.target.checked })}
-                    style={{ width: 18, height: 18, accentColor: 'var(--ppt-color-primary, #2563eb)' }}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      accentColor: 'var(--ppt-color-primary, #2563eb)',
+                    }}
                   />
-                  <span style={{ color: 'var(--ppt-fg-primary)', fontWeight: 500 }}>Cena je dohodou</span>
+                  <span style={{ color: 'var(--ppt-fg-primary)', fontWeight: 500 }}>
+                    Cena je dohodou
+                  </span>
                 </label>
               </div>
             )}
@@ -369,20 +502,57 @@ export default function SellPage() {
                     gap: 6,
                   }}
                 >
-                  <div><strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'} · {PROPERTY_TYPE_OPTIONS.find(o => o.value === form.propertyType)?.label}</div>
-                  <div><strong>Poloha:</strong> {form.address || '–'}, {form.city || '–'}</div>
-                  <div><strong>Plocha:</strong> {form.area || '–'} m² · <strong>Izby:</strong> {form.rooms || '–'}</div>
-                  <div><strong>Cena:</strong> {form.price ? `${Number(form.price).toLocaleString('sk-SK')} €` : '–'} {form.priceNegotiable ? '(dohodou)' : ''}</div>
-                  <div><strong>Fotografie:</strong> {form.photos.length}</div>
+                  <div>
+                    <strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'}{' '}
+                    · {PROPERTY_TYPE_OPTIONS.find((o) => o.value === form.propertyType)?.label}
+                  </div>
+                  <div>
+                    <strong>Poloha:</strong> {form.address || '–'}, {form.city || '–'}
+                  </div>
+                  <div>
+                    <strong>Plocha:</strong> {form.area || '–'} m² · <strong>Izby:</strong>{' '}
+                    {form.rooms || '–'}
+                  </div>
+                  <div>
+                    <strong>Cena:</strong>{' '}
+                    {form.price ? `${Number(form.price).toLocaleString('sk-SK')} €` : '–'}{' '}
+                    {form.priceNegotiable ? '(dohodou)' : ''}
+                  </div>
+                  <div>
+                    <strong>Fotografie:</strong> {form.photos.length}
+                  </div>
                 </div>
 
                 {[
-                  { key: 'contactName', label: 'Meno', type: 'text', placeholder: 'Vaše meno a priezvisko' },
-                  { key: 'contactPhone', label: 'Telefón', type: 'tel', placeholder: '+421 9XX XXX XXX' },
-                  { key: 'contactEmail', label: 'E-mail', type: 'email', placeholder: 'vas@email.sk' },
+                  {
+                    key: 'contactName',
+                    label: 'Meno',
+                    type: 'text',
+                    placeholder: 'Vaše meno a priezvisko',
+                  },
+                  {
+                    key: 'contactPhone',
+                    label: 'Telefón',
+                    type: 'tel',
+                    placeholder: '+421 9XX XXX XXX',
+                  },
+                  {
+                    key: 'contactEmail',
+                    label: 'E-mail',
+                    type: 'email',
+                    placeholder: 'vas@email.sk',
+                  },
                 ].map((field) => (
                   <div key={field.key}>
-                    <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontWeight: 600,
+                        color: 'var(--ppt-fg-primary)',
+                        marginBottom: 6,
+                        fontSize: '0.9375rem',
+                      }}
+                    >
                       {field.label}
                     </label>
                     <input
@@ -395,25 +565,45 @@ export default function SellPage() {
                   </div>
                 ))}
 
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                <label
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}
+                >
                   <input
                     type="checkbox"
                     checked={form.termsAccepted}
                     onChange={(e) => update({ termsAccepted: e.target.checked })}
-                    style={{ width: 18, height: 18, marginTop: 2, accentColor: 'var(--ppt-color-primary, #2563eb)' }}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      marginTop: 2,
+                      accentColor: 'var(--ppt-color-primary, #2563eb)',
+                    }}
                   />
-                  <span style={{ color: 'var(--ppt-fg-secondary)', fontSize: '0.875rem', lineHeight: 1.5 }}>
+                  <span
+                    style={{
+                      color: 'var(--ppt-fg-secondary)',
+                      fontSize: '0.875rem',
+                      lineHeight: 1.5,
+                    }}
+                  >
                     Súhlasím s{' '}
-                    <a href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>podmienkami používania</a>
-                    {' '}a{' '}
-                    <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>ochranou osobných údajov</a>.
+                    <a href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                      podmienkami používania
+                    </a>{' '}
+                    a{' '}
+                    <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                      ochranou osobných údajov
+                    </a>
+                    .
                   </span>
                 </label>
               </div>
             )}
 
             {/* Navigation */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, gap: 12 }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, gap: 12 }}
+            >
               {step > 1 && (
                 <button
                   type="button"
@@ -456,7 +646,9 @@ export default function SellPage() {
                   onClick={() => setSubmitted(true)}
                   style={{
                     padding: '11px 28px',
-                    background: form.termsAccepted ? 'var(--ppt-color-success, #10b981)' : 'var(--ppt-border-default, #e5e7eb)',
+                    background: form.termsAccepted
+                      ? 'var(--ppt-color-success, #10b981)'
+                      : 'var(--ppt-border-default, #e5e7eb)',
                     color: form.termsAccepted ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
                     border: 'none',
                     borderRadius: 8,
@@ -482,7 +674,14 @@ export default function SellPage() {
               top: 24,
             }}
           >
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', margin: '0 0 16px' }}>
+            <h2
+              style={{
+                fontSize: '1rem',
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                margin: '0 0 16px',
+              }}
+            >
               Postup
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -519,10 +718,18 @@ export default function SellPage() {
                     {s.id < step ? '✓' : s.id}
                   </div>
                   <div>
-                    <div style={{ fontWeight: s.id === step ? 700 : 500, color: 'var(--ppt-fg-primary)', fontSize: '0.875rem' }}>
+                    <div
+                      style={{
+                        fontWeight: s.id === step ? 700 : 500,
+                        color: 'var(--ppt-fg-primary)',
+                        fontSize: '0.875rem',
+                      }}
+                    >
                       {s.title}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>{s.description}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
+                      {s.description}
+                    </div>
                   </div>
                 </div>
               ))}

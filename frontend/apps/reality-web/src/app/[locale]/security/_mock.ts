@@ -28,7 +28,8 @@ export const MOCK_FRAUD_SCENARIOS: FraudScenario[] = [
     title: 'Falošná ponuka',
     description:
       'Inzerát používa fotografie z inej nehnuteľnosti a ponúka nereálne nízku cenu, aby nalákalo obete. Nehnuteľnosť v skutočnosti nie je na predaj ani prenájom.',
-    warning: 'Porovnajte fotografie pomocou spätného vyhľadávania obrázkov a overte adresu na mieste.',
+    warning:
+      'Porovnajte fotografie pomocou spätného vyhľadávania obrázkov a overte adresu na mieste.',
   },
   {
     id: 'identity-theft',
@@ -36,7 +37,8 @@ export const MOCK_FRAUD_SCENARIOS: FraudScenario[] = [
     title: 'Krádež identity makléra',
     description:
       'Podvodník sa vydáva za legitímneho realitného makléra, kopíruje jeho profil a kontaktuje záujemcov s falošnými ponukami.',
-    warning: 'Vždy si overte licenčné číslo makléra na webstránke Národnej asociácie realitných maklérov SR.',
+    warning:
+      'Vždy si overte licenčné číslo makléra na webstránke Národnej asociácie realitných maklérov SR.',
   },
 ];
 
@@ -51,18 +53,21 @@ export const MOCK_GUARANTEES: Guarantee[] = [
     id: 'secure',
     icon: '🔒',
     title: 'Šifrované spojenie',
-    description: 'Všetka komunikácia prebieha cez TLS 1.3 a osobné údaje sú šifrované pri ukladaní.',
+    description:
+      'Všetka komunikácia prebieha cez TLS 1.3 a osobné údaje sú šifrované pri ukladaní.',
   },
   {
     id: 'report',
     icon: '🚩',
     title: 'Jednoduché nahlásenie',
-    description: 'Každú ponuku môžete okamžite nahlásiť jedným klikom. Náš tím preverí podnet do 24 hodín.',
+    description:
+      'Každú ponuku môžete okamžite nahlásiť jedným klikom. Náš tím preverí podnet do 24 hodín.',
   },
   {
     id: '2fa',
     icon: '🛡️',
     title: 'Dvojfaktorová autentifikácia',
-    description: 'Povinná 2FA pre všetkých maklérov a agentúry chráni pred neoprávneným prístupom k účtom.',
+    description:
+      'Povinná 2FA pre všetkých maklérov a agentúry chráni pred neoprávneným prístupom k účtom.',
   },
 ];

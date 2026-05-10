@@ -57,22 +57,90 @@ export const MOCK_PROFILE: UserProfile = {
 };
 
 export const MOCK_LISTINGS: ProfileListing[] = [
-  { id: 'l1', title: '3-izbový byt Petržalka', price: 245000, currency: '€', area: 72, rooms: 3, location: 'Bratislava – Petržalka', status: 'active', imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=70' },
-  { id: 'l2', title: '2-izbový byt Ružinov', price: 1150, currency: '€', area: 55, rooms: 2, location: 'Bratislava – Ružinov', status: 'active', imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=70' },
-  { id: 'l3', title: 'Rodinný dom Senec', price: 389000, currency: '€', area: 186, rooms: 5, location: 'Senec', status: 'sold', imageUrl: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&q=70' },
+  {
+    id: 'l1',
+    title: '3-izbový byt Petržalka',
+    price: 245000,
+    currency: '€',
+    area: 72,
+    rooms: 3,
+    location: 'Bratislava – Petržalka',
+    status: 'active',
+    imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=70',
+  },
+  {
+    id: 'l2',
+    title: '2-izbový byt Ružinov',
+    price: 1150,
+    currency: '€',
+    area: 55,
+    rooms: 2,
+    location: 'Bratislava – Ružinov',
+    status: 'active',
+    imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=70',
+  },
+  {
+    id: 'l3',
+    title: 'Rodinný dom Senec',
+    price: 389000,
+    currency: '€',
+    area: 186,
+    rooms: 5,
+    location: 'Senec',
+    status: 'sold',
+    imageUrl: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&q=70',
+  },
 ];
 
 export const MOCK_ACTIVITY: ActivityEntry[] = [
-  { id: 'a1', type: 'listing_viewed', description: 'Prezerali ste: 3-izbový byt, Petržalka', timestamp: 'Pred 2 hodinami' },
-  { id: 'a2', type: 'inquiry_sent', description: 'Odoslali ste dopyt pre 2-izbový byt, Ružinov', timestamp: 'Včera, 14:32' },
-  { id: 'a3', type: 'favorite_added', description: 'Pridali ste do obľúbených: Penthouse Staré Mesto', timestamp: 'Pred 3 dňami' },
-  { id: 'a4', type: 'search_saved', description: 'Uložili ste vyhľadávanie: Byty, Bratislava I, do 300 000 €', timestamp: 'Pred týždňom' },
+  {
+    id: 'a1',
+    type: 'listing_viewed',
+    description: 'Prezerali ste: 3-izbový byt, Petržalka',
+    timestamp: 'Pred 2 hodinami',
+  },
+  {
+    id: 'a2',
+    type: 'inquiry_sent',
+    description: 'Odoslali ste dopyt pre 2-izbový byt, Ružinov',
+    timestamp: 'Včera, 14:32',
+  },
+  {
+    id: 'a3',
+    type: 'favorite_added',
+    description: 'Pridali ste do obľúbených: Penthouse Staré Mesto',
+    timestamp: 'Pred 3 dňami',
+  },
+  {
+    id: 'a4',
+    type: 'search_saved',
+    description: 'Uložili ste vyhľadávanie: Byty, Bratislava I, do 300 000 €',
+    timestamp: 'Pred týždňom',
+  },
 ];
 
 export const MOCK_REVIEWS: Review[] = [
-  { id: 'r1', reviewer: 'Eva Malíková', rating: 5, comment: 'Skvelý maklér! Veľmi profesionálny a vždy k dispozícii.', date: 'Apríl 2025' },
-  { id: 'r2', reviewer: 'Ján Horváth', rating: 4, comment: 'Dobrá komunikácia a rýchly predaj. Odporúčam.', date: 'Marec 2025' },
-  { id: 'r3', reviewer: 'Marta Bieliková', rating: 5, comment: 'Pomohol mi nájsť presne to, čo som hľadala. Ďakujem!', date: 'Február 2025' },
+  {
+    id: 'r1',
+    reviewer: 'Eva Malíková',
+    rating: 5,
+    comment: 'Skvelý maklér! Veľmi profesionálny a vždy k dispozícii.',
+    date: 'Apríl 2025',
+  },
+  {
+    id: 'r2',
+    reviewer: 'Ján Horváth',
+    rating: 4,
+    comment: 'Dobrá komunikácia a rýchly predaj. Odporúčam.',
+    date: 'Marec 2025',
+  },
+  {
+    id: 'r3',
+    reviewer: 'Marta Bieliková',
+    rating: 5,
+    comment: 'Pomohol mi nájsť presne to, čo som hľadala. Ďakujem!',
+    date: 'Február 2025',
+  },
 ];
 
 export type ProfileTab = 'listings' | 'activity' | 'reviews' | 'settings';

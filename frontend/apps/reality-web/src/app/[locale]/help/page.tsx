@@ -20,13 +20,18 @@ export default function HelpPage() {
     (item) =>
       query.trim() === '' ||
       item.question.toLowerCase().includes(query.toLowerCase()) ||
-      item.answer.toLowerCase().includes(query.toLowerCase()),
+      item.answer.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
     <div
       data-i18n="pages.help.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
@@ -34,12 +39,20 @@ export default function HelpPage() {
         {/* Hero / search */}
         <section
           style={{
-            background: 'linear-gradient(135deg, var(--ppt-brand-700, #1d4ed8) 0%, var(--ppt-brand-500, #3b82f6) 100%)',
+            background:
+              'linear-gradient(135deg, var(--ppt-brand-700, #1d4ed8) 0%, var(--ppt-brand-500, #3b82f6) 100%)',
             padding: '56px 24px',
             textAlign: 'center',
           }}
         >
-          <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.25rem)', fontWeight: 800, color: '#fff', marginBottom: 8 }}>
+          <h1
+            style={{
+              fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+              fontWeight: 800,
+              color: '#fff',
+              marginBottom: 8,
+            }}
+          >
             Ako vám môžeme pomôcť?
           </h1>
           <p style={{ color: 'rgba(255,255,255,.8)', marginBottom: 28 }}>
@@ -63,7 +76,15 @@ export default function HelpPage() {
                 outline: 'none',
               }}
             />
-            <span style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: '1.25rem' }}>
+            <span
+              style={{
+                position: 'absolute',
+                right: 16,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '1.25rem',
+              }}
+            >
               🔍
             </span>
           </div>
@@ -71,11 +92,24 @@ export default function HelpPage() {
 
         {/* Category tiles */}
         <section style={{ maxWidth: 1100, margin: '0 auto', padding: '56px 24px' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 24 }}>
+          <h2
+            style={{
+              fontSize: '1.375rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 24,
+            }}
+          >
             Kategórie
           </h2>
           {/* TODO: replace with @ppt/ui-kit/Card once available */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 20,
+            }}
+          >
             {MOCK_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
@@ -93,9 +127,21 @@ export default function HelpPage() {
                 }}
               >
                 <div style={{ fontSize: '2rem', marginBottom: 10 }}>{cat.icon}</div>
-                <div style={{ fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 6 }}>{cat.title}</div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', marginBottom: 8 }}>{cat.description}</div>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>{cat.articleCount} článkov</div>
+                <div style={{ fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 6 }}>
+                  {cat.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    marginBottom: 8,
+                  }}
+                >
+                  {cat.description}
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
+                  {cat.articleCount} článkov
+                </div>
               </button>
             ))}
           </div>
@@ -103,12 +149,21 @@ export default function HelpPage() {
 
         {/* FAQ accordion */}
         <section style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px 64px' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 24 }}>
+          <h2
+            style={{
+              fontSize: '1.375rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 24,
+            }}
+          >
             Často kladené otázky
           </h2>
           {/* TODO: replace with @ppt/ui-kit/Accordion once available */}
           {filteredFaq.length === 0 && (
-            <p style={{ color: 'var(--ppt-fg-secondary)' }}>Žiadne výsledky pre &quot;{query}&quot;.</p>
+            <p style={{ color: 'var(--ppt-fg-secondary)' }}>
+              Žiadne výsledky pre &quot;{query}&quot;.
+            </p>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filteredFaq.map((item) => (
@@ -142,12 +197,25 @@ export default function HelpPage() {
                   }}
                 >
                   {item.question}
-                  <span style={{ flexShrink: 0, transition: 'transform .2s', transform: openFaq === item.id ? 'rotate(180deg)' : 'none' }}>
+                  <span
+                    style={{
+                      flexShrink: 0,
+                      transition: 'transform .2s',
+                      transform: openFaq === item.id ? 'rotate(180deg)' : 'none',
+                    }}
+                  >
                     ▾
                   </span>
                 </button>
                 {openFaq === item.id && (
-                  <div style={{ padding: '0 20px 16px', color: 'var(--ppt-fg-secondary)', lineHeight: 1.7, fontSize: '0.9375rem' }}>
+                  <div
+                    style={{
+                      padding: '0 20px 16px',
+                      color: 'var(--ppt-fg-secondary)',
+                      lineHeight: 1.7,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
                     {item.answer}
                   </div>
                 )}

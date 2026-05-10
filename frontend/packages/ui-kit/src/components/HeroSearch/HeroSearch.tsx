@@ -8,7 +8,8 @@
  * Reference: reality-web/home.html `.hero` + `.search-panel`
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import styles from './HeroSearch.module.css';
 
 export type HeroSearchTab = 'sale' | 'rent' | 'new-builds';
@@ -49,8 +50,8 @@ export interface HeroSearchProps {
 }
 
 const DEFAULT_TABS: HeroSearchTab_Config[] = [
-  { key: 'sale',       label: 'Predaj' },
-  { key: 'rent',       label: 'Prenájom' },
+  { key: 'sale', label: 'Predaj' },
+  { key: 'rent', label: 'Prenájom' },
   { key: 'new-builds', label: 'Novostavby' },
 ];
 
@@ -87,10 +88,10 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   const [price, setPrice] = useState('');
 
   const labels = {
-    where:     fieldLabels.where     ?? 'Where',
-    type:      fieldLabels.type      ?? 'Type',
-    rooms:     fieldLabels.rooms     ?? 'Rooms',
-    price:     fieldLabels.price     ?? 'Price',
+    where: fieldLabels.where ?? 'Where',
+    type: fieldLabels.type ?? 'Type',
+    rooms: fieldLabels.rooms ?? 'Rooms',
+    price: fieldLabels.price ?? 'Price',
     searchBtn: fieldLabels.searchBtn ?? 'Search',
   };
 
@@ -116,7 +117,9 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 key={t.key}
                 role="tab"
                 aria-selected={activeTab === t.key}
-                className={[styles.tab, activeTab === t.key ? styles.tabActive : ''].filter(Boolean).join(' ')}
+                className={[styles.tab, activeTab === t.key ? styles.tabActive : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 onClick={() => setActiveTab(t.key)}
                 type="button"
               >
@@ -128,7 +131,9 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
           {/* Search panel */}
           <div className={styles.searchPanel} role="search" aria-label="Property search">
             <div className={styles.searchField} style={{ flex: '1.4' }}>
-              <label className={styles.fieldLabel} htmlFor="hs-where">{labels.where}</label>
+              <label className={styles.fieldLabel} htmlFor="hs-where">
+                {labels.where}
+              </label>
               <input
                 id="hs-where"
                 className={styles.fieldInput}
@@ -142,7 +147,9 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             </div>
 
             <div className={styles.searchField}>
-              <label className={styles.fieldLabel} htmlFor="hs-type">{labels.type}</label>
+              <label className={styles.fieldLabel} htmlFor="hs-type">
+                {labels.type}
+              </label>
               <input
                 id="hs-type"
                 className={styles.fieldInput}
@@ -156,7 +163,9 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             </div>
 
             <div className={styles.searchField}>
-              <label className={styles.fieldLabel} htmlFor="hs-rooms">{labels.rooms}</label>
+              <label className={styles.fieldLabel} htmlFor="hs-rooms">
+                {labels.rooms}
+              </label>
               <input
                 id="hs-rooms"
                 className={styles.fieldInput}
@@ -170,7 +179,9 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             </div>
 
             <div className={styles.searchField}>
-              <label className={styles.fieldLabel} htmlFor="hs-price">{labels.price}</label>
+              <label className={styles.fieldLabel} htmlFor="hs-price">
+                {labels.price}
+              </label>
               <input
                 id="hs-price"
                 className={styles.fieldInput}

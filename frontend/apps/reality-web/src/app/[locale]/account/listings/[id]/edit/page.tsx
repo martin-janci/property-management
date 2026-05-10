@@ -14,9 +14,9 @@ import { ProtectedRoute } from '@/components/auth';
 import { Footer, Header } from '@/components/ui';
 import {
   EDIT_STEPS,
+  type ListingEditFormData,
   MOCK_LISTING_DATA,
   PROPERTY_TYPE_OPTIONS,
-  type ListingEditFormData,
 } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
@@ -39,7 +39,14 @@ function StepIndicator({ current }: { current: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32 }}>
       {EDIT_STEPS.map((step, idx) => (
-        <div key={step.id} style={{ display: 'flex', alignItems: 'center', flex: idx < EDIT_STEPS.length - 1 ? 1 : 'initial' }}>
+        <div
+          key={step.id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flex: idx < EDIT_STEPS.length - 1 ? 1 : 'initial',
+          }}
+        >
           <div
             style={{
               width: 32,
@@ -63,7 +70,17 @@ function StepIndicator({ current }: { current: number }) {
             {step.id < current ? '✓' : step.id}
           </div>
           {idx < EDIT_STEPS.length - 1 && (
-            <div style={{ flex: 1, height: 2, background: step.id < current ? 'var(--ppt-color-success, #10b981)' : 'var(--ppt-border-default, #e5e7eb)', margin: '0 4px' }} />
+            <div
+              style={{
+                flex: 1,
+                height: 2,
+                background:
+                  step.id < current
+                    ? 'var(--ppt-color-success, #10b981)'
+                    : 'var(--ppt-border-default, #e5e7eb)',
+                margin: '0 4px',
+              }}
+            />
           )}
         </div>
       ))}
@@ -89,7 +106,14 @@ function EditWizardContent() {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center', padding: '0 24px' }}>
         <div style={{ fontSize: '3rem', marginBottom: 16 }}>✅</div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 12 }}>
+        <h2
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 800,
+            color: 'var(--ppt-fg-primary)',
+            marginBottom: 12,
+          }}
+        >
           Inzerát bol uložený!
         </h2>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 24 }}>
@@ -98,14 +122,31 @@ function EditWizardContent() {
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
             href={`/listings/${listingId}`}
-            style={{ padding: '11px 24px', background: 'var(--ppt-color-primary, #2563eb)', color: '#fff', borderRadius: 8, fontWeight: 700, textDecoration: 'none' }}
+            style={{
+              padding: '11px 24px',
+              background: 'var(--ppt-color-primary, #2563eb)',
+              color: '#fff',
+              borderRadius: 8,
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
           >
             Zobraziť inzerát
           </a>
           <button
             type="button"
-            onClick={() => { setSaved(false); setStep(1); }}
-            style={{ padding: '11px 24px', background: 'var(--ppt-bg-app)', border: '1px solid var(--ppt-border-default, #e5e7eb)', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => {
+              setSaved(false);
+              setStep(1);
+            }}
+            style={{
+              padding: '11px 24px',
+              background: 'var(--ppt-bg-app)',
+              border: '1px solid var(--ppt-border-default, #e5e7eb)',
+              borderRadius: 8,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
             Ďalšie úpravy
           </button>
@@ -118,21 +159,49 @@ function EditWizardContent() {
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
-          <a href="/account" style={{ color: 'var(--ppt-color-primary, #2563eb)', fontSize: '0.875rem', textDecoration: 'none' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            marginBottom: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <a
+            href="/account"
+            style={{
+              color: 'var(--ppt-color-primary, #2563eb)',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+            }}
+          >
             ← Môj účet
           </a>
           <span style={{ color: 'var(--ppt-fg-muted, #9ca3af)', fontSize: '0.875rem' }}>/</span>
-          <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>Upraviť inzerát #{listingId}</span>
+          <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+            Upraviť inzerát #{listingId}
+          </span>
         </div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: 0 }}>
+        <h1
+          style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: 0 }}
+        >
           Upraviť inzerát
         </h1>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', gap: 32, alignItems: 'start' }}>
+      <div
+        style={{ display: 'grid', gridTemplateColumns: '1fr 240px', gap: 32, alignItems: 'start' }}
+      >
         {/* Wizard */}
-        <div style={{ background: 'var(--ppt-bg-surface)', borderRadius: 14, padding: '32px', boxShadow: '0 1px 5px rgba(0,0,0,.07)' }}>
+        <div
+          style={{
+            background: 'var(--ppt-bg-surface)',
+            borderRadius: 14,
+            padding: '32px',
+            boxShadow: '0 1px 5px rgba(0,0,0,.07)',
+          }}
+        >
           <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 20, fontSize: '0.9375rem' }}>
             Krok {step} z {EDIT_STEPS.length}: {EDIT_STEPS[step - 1]?.title}
           </p>
@@ -143,27 +212,80 @@ function EditWizardContent() {
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 8, fontSize: '0.9375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 8,
+                    fontSize: '0.9375rem',
+                  }}
+                >
                   Typ transakcie
                 </label>
                 {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                 <div style={{ display: 'flex', gap: 10 }}>
                   {(['sale', 'rent'] as const).map((t) => (
-                    <button key={t} type="button" onClick={() => update({ transactionType: t })}
-                      style={{ flex: 1, padding: '11px', borderRadius: 8, border: `2px solid ${form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`, background: form.transactionType === t ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)', color: form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)', fontWeight: 600, cursor: 'pointer' }}>
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => update({ transactionType: t })}
+                      style={{
+                        flex: 1,
+                        padding: '11px',
+                        borderRadius: 8,
+                        border: `2px solid ${form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        background:
+                          form.transactionType === t
+                            ? 'var(--ppt-color-primary-light, #dbeafe)'
+                            : 'var(--ppt-bg-surface)',
+                        color:
+                          form.transactionType === t
+                            ? 'var(--ppt-color-primary, #2563eb)'
+                            : 'var(--ppt-fg-secondary)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
                       {t === 'sale' ? 'Predaj' : 'Prenájom'}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 8, fontSize: '0.9375rem' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 8,
+                    fontSize: '0.9375rem',
+                  }}
+                >
                   Typ nehnuteľnosti
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {PROPERTY_TYPE_OPTIONS.map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => update({ propertyType: opt.value })}
-                      style={{ padding: '11px', borderRadius: 8, border: `2px solid ${form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`, background: form.propertyType === opt.value ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)', color: form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)', fontWeight: 600, cursor: 'pointer' }}>
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update({ propertyType: opt.value })}
+                      style={{
+                        padding: '11px',
+                        borderRadius: 8,
+                        border: `2px solid ${form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        background:
+                          form.propertyType === opt.value
+                            ? 'var(--ppt-color-primary-light, #dbeafe)'
+                            : 'var(--ppt-bg-surface)',
+                        color:
+                          form.propertyType === opt.value
+                            ? 'var(--ppt-color-primary, #2563eb)'
+                            : 'var(--ppt-fg-secondary)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
                       {opt.label}
                     </button>
                   ))}
@@ -171,11 +293,32 @@ function EditWizardContent() {
               </div>
               {[
                 { key: 'address', label: 'Adresa', type: 'text', placeholder: 'Ulica a číslo' },
-                { key: 'city', label: 'Mesto / Obec', type: 'text', placeholder: 'Napr. Bratislava' },
+                {
+                  key: 'city',
+                  label: 'Mesto / Obec',
+                  type: 'text',
+                  placeholder: 'Napr. Bratislava',
+                },
               ].map((field) => (
                 <div key={field.key}>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>{field.label}</label>
-                  <input type={field.type} placeholder={field.placeholder} value={form[field.key as keyof ListingEditFormData] as string} onChange={(e) => update({ [field.key]: e.target.value })} style={inputStyle} />
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={form[field.key as keyof ListingEditFormData] as string}
+                    onChange={(e) => update({ [field.key]: e.target.value })}
+                    style={inputStyle}
+                  />
                 </div>
               ))}
             </div>
@@ -192,13 +335,46 @@ function EditWizardContent() {
                 { key: 'yearBuilt', label: 'Rok výstavby', placeholder: '2005' },
               ].map((field) => (
                 <div key={field.key}>
-                  <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>{field.label}</label>
-                  <input type="number" placeholder={field.placeholder} value={form[field.key as keyof ListingEditFormData] as string | number} onChange={(e) => update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })} style={inputStyle} />
+                  <label
+                    style={{
+                      display: 'block',
+                      fontWeight: 600,
+                      color: 'var(--ppt-fg-primary)',
+                      marginBottom: 6,
+                      fontSize: '0.9375rem',
+                    }}
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={field.placeholder}
+                    value={form[field.key as keyof ListingEditFormData] as string | number}
+                    onChange={(e) =>
+                      update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })
+                    }
+                    style={inputStyle}
+                  />
                 </div>
               ))}
               <div>
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>Popis</label>
-                <textarea rows={5} value={form.description} onChange={(e) => update({ description: e.target.value })} style={{ ...inputStyle, resize: 'vertical' }} />
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 6,
+                    fontSize: '0.9375rem',
+                  }}
+                >
+                  Popis
+                </label>
+                <textarea
+                  rows={5}
+                  value={form.description}
+                  onChange={(e) => update({ description: e.target.value })}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
               </div>
             </div>
           )}
@@ -206,31 +382,91 @@ function EditWizardContent() {
           {/* Step 3 */}
           {step === 3 && (
             <div>
-              <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 16 }}>Existujúce fotografie</p>
+              <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 16 }}>
+                Existujúce fotografie
+              </p>
               {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 20 }}>
-                {form.existingPhotoUrls.filter((url) => !removedPhotos.has(url)).map((url) => (
-                  <div key={url} style={{ position: 'relative', width: 100, height: 80 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />
-                    <button
-                      type="button"
-                      onClick={() => setRemovedPhotos((s) => new Set([...s, url]))}
-                      aria-label="Odstrániť fotografiu"
-                      style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,.6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                {form.existingPhotoUrls
+                  .filter((url) => !removedPhotos.has(url))
+                  .map((url) => (
+                    <div key={url} style={{ position: 'relative', width: 100, height: 80 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt="Foto"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setRemovedPhotos((s) => new Set([...s, url]))}
+                        aria-label="Odstrániť fotografiu"
+                        style={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          background: 'rgba(0,0,0,.6)',
+                          color: '#fff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.6875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: 1,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
               </div>
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '28px 20px', border: '2px dashed var(--ppt-border-default, #e5e7eb)', borderRadius: 10, cursor: 'pointer', color: 'var(--ppt-fg-secondary)', textAlign: 'center' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
+                  padding: '28px 20px',
+                  border: '2px dashed var(--ppt-border-default, #e5e7eb)',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  color: 'var(--ppt-fg-secondary)',
+                  textAlign: 'center',
+                }}
+              >
                 <span style={{ fontSize: '2rem' }}>📷</span>
-                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Pridať nové fotografie</span>
-                <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={(e) => { if (e.target.files) update({ newPhotos: [...form.newPhotos, ...Array.from(e.target.files)] }); }} />
+                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+                  Pridať nové fotografie
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.files)
+                      update({ newPhotos: [...form.newPhotos, ...Array.from(e.target.files)] });
+                  }}
+                />
               </label>
               {form.newPhotos.length > 0 && (
-                <p style={{ marginTop: 10, color: 'var(--ppt-color-success, #10b981)', fontSize: '0.875rem' }}>
+                <p
+                  style={{
+                    marginTop: 10,
+                    color: 'var(--ppt-color-success, #10b981)',
+                    fontSize: '0.875rem',
+                  }}
+                >
                   + {form.newPhotos.length} nových fotografií
                 </p>
               )}
@@ -241,24 +477,83 @@ function EditWizardContent() {
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6, fontSize: '0.9375rem' }}>Cena (€)</label>
-                <input type="number" value={form.price} onChange={(e) => update({ price: e.target.value === '' ? '' : Number(e.target.value) })} style={inputStyle} />
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 6,
+                    fontSize: '0.9375rem',
+                  }}
+                >
+                  Cena (€)
+                </label>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) =>
+                    update({ price: e.target.value === '' ? '' : Number(e.target.value) })
+                  }
+                  style={inputStyle}
+                />
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                <input type="checkbox" checked={form.priceNegotiable} onChange={(e) => update({ priceNegotiable: e.target.checked })} style={{ width: 18, height: 18, accentColor: 'var(--ppt-color-primary, #2563eb)' }} />
-                <span style={{ fontWeight: 500, color: 'var(--ppt-fg-primary)' }}>Cena je dohodou</span>
+                <input
+                  type="checkbox"
+                  checked={form.priceNegotiable}
+                  onChange={(e) => update({ priceNegotiable: e.target.checked })}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    accentColor: 'var(--ppt-color-primary, #2563eb)',
+                  }}
+                />
+                <span style={{ fontWeight: 500, color: 'var(--ppt-fg-primary)' }}>
+                  Cena je dohodou
+                </span>
               </label>
               <div>
-                <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 8, fontSize: '0.9375rem' }}>Stav inzerátu</label>
+                <label
+                  style={{
+                    display: 'block',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    marginBottom: 8,
+                    fontSize: '0.9375rem',
+                  }}
+                >
+                  Stav inzerátu
+                </label>
                 {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {([
-                    { value: 'active', label: 'Aktívny' },
-                    { value: 'inactive', label: 'Neaktívny' },
-                    { value: 'draft', label: 'Koncept' },
-                  ] as const).map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => update({ status: opt.value })}
-                      style={{ padding: '9px 18px', borderRadius: 8, border: `2px solid ${form.status === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`, background: form.status === opt.value ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)', color: form.status === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}>
+                  {(
+                    [
+                      { value: 'active', label: 'Aktívny' },
+                      { value: 'inactive', label: 'Neaktívny' },
+                      { value: 'draft', label: 'Koncept' },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update({ status: opt.value })}
+                      style={{
+                        padding: '9px 18px',
+                        borderRadius: 8,
+                        border: `2px solid ${form.status === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                        background:
+                          form.status === opt.value
+                            ? 'var(--ppt-color-primary-light, #dbeafe)'
+                            : 'var(--ppt-bg-surface)',
+                        color:
+                          form.status === opt.value
+                            ? 'var(--ppt-color-primary, #2563eb)'
+                            : 'var(--ppt-fg-secondary)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        fontSize: '0.875rem',
+                      }}
+                    >
                       {opt.label}
                     </button>
                   ))}
@@ -270,15 +565,59 @@ function EditWizardContent() {
           {/* Step 5 — Summary */}
           {step === 5 && (
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 14 }}>Súhrn zmien</h3>
-              <div style={{ background: 'var(--ppt-bg-subtle, #f8fafc)', borderRadius: 8, padding: '16px', fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div><strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'} · {PROPERTY_TYPE_OPTIONS.find(o => o.value === form.propertyType)?.label}</div>
-                <div><strong>Poloha:</strong> {form.address}, {form.city}</div>
-                <div><strong>Plocha:</strong> {form.area} m² · <strong>Izby:</strong> {form.rooms}</div>
-                <div><strong>Poschodie:</strong> {form.floor}/{form.totalFloors} · <strong>Rok:</strong> {form.yearBuilt}</div>
-                <div><strong>Cena:</strong> {typeof form.price === 'number' ? form.price.toLocaleString('sk-SK') : '–'} € {form.priceNegotiable ? '(dohodou)' : ''}</div>
-                <div><strong>Stav:</strong> {form.status === 'active' ? 'Aktívny' : form.status === 'inactive' ? 'Neaktívny' : 'Koncept'}</div>
-                <div><strong>Fotografie:</strong> {form.existingPhotoUrls.length - removedPhotos.size} existujúcich + {form.newPhotos.length} nových</div>
+              <h3
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: 'var(--ppt-fg-primary)',
+                  marginBottom: 14,
+                }}
+              >
+                Súhrn zmien
+              </h3>
+              <div
+                style={{
+                  background: 'var(--ppt-bg-subtle, #f8fafc)',
+                  borderRadius: 8,
+                  padding: '16px',
+                  fontSize: '0.875rem',
+                  color: 'var(--ppt-fg-secondary)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
+                <div>
+                  <strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'} ·{' '}
+                  {PROPERTY_TYPE_OPTIONS.find((o) => o.value === form.propertyType)?.label}
+                </div>
+                <div>
+                  <strong>Poloha:</strong> {form.address}, {form.city}
+                </div>
+                <div>
+                  <strong>Plocha:</strong> {form.area} m² · <strong>Izby:</strong> {form.rooms}
+                </div>
+                <div>
+                  <strong>Poschodie:</strong> {form.floor}/{form.totalFloors} ·{' '}
+                  <strong>Rok:</strong> {form.yearBuilt}
+                </div>
+                <div>
+                  <strong>Cena:</strong>{' '}
+                  {typeof form.price === 'number' ? form.price.toLocaleString('sk-SK') : '–'} €{' '}
+                  {form.priceNegotiable ? '(dohodou)' : ''}
+                </div>
+                <div>
+                  <strong>Stav:</strong>{' '}
+                  {form.status === 'active'
+                    ? 'Aktívny'
+                    : form.status === 'inactive'
+                      ? 'Neaktívny'
+                      : 'Koncept'}
+                </div>
+                <div>
+                  <strong>Fotografie:</strong> {form.existingPhotoUrls.length - removedPhotos.size}{' '}
+                  existujúcich + {form.newPhotos.length} nových
+                </div>
               </div>
             </div>
           )}
@@ -286,16 +625,54 @@ function EditWizardContent() {
           {/* Navigation */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, gap: 10 }}>
             {step > 1 ? (
-              <button type="button" onClick={() => setStep((s) => s - 1)} style={{ padding: '11px 20px', background: 'var(--ppt-bg-app)', border: '1px solid var(--ppt-border-default, #e5e7eb)', borderRadius: 8, fontWeight: 600, cursor: 'pointer', color: 'var(--ppt-fg-primary)' }}>
+              <button
+                type="button"
+                onClick={() => setStep((s) => s - 1)}
+                style={{
+                  padding: '11px 20px',
+                  background: 'var(--ppt-bg-app)',
+                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
+                  borderRadius: 8,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  color: 'var(--ppt-fg-primary)',
+                }}
+              >
                 ← Späť
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
             {step < EDIT_STEPS.length ? (
-              <button type="button" onClick={() => setStep((s) => s + 1)} style={{ padding: '11px 24px', background: 'var(--ppt-color-primary, #2563eb)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={() => setStep((s) => s + 1)}
+                style={{
+                  padding: '11px 24px',
+                  background: 'var(--ppt-color-primary, #2563eb)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
                 Ďalej →
               </button>
             ) : (
-              <button type="button" onClick={handleSave} style={{ padding: '11px 28px', background: 'var(--ppt-color-success, #10b981)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={handleSave}
+                style={{
+                  padding: '11px 28px',
+                  background: 'var(--ppt-color-success, #10b981)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
                 Uložiť zmeny
               </button>
             )}
@@ -303,17 +680,72 @@ function EditWizardContent() {
         </div>
 
         {/* Aside — step list */}
-        <aside style={{ background: 'var(--ppt-bg-surface)', borderRadius: 12, padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,.07)', position: 'sticky', top: 24 }}>
-          <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', margin: '0 0 14px' }}>Kroky</h2>
+        <aside
+          style={{
+            background: 'var(--ppt-bg-surface)',
+            borderRadius: 12,
+            padding: '24px',
+            boxShadow: '0 1px 4px rgba(0,0,0,.07)',
+            position: 'sticky',
+            top: 24,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '0.9375rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              margin: '0 0 14px',
+            }}
+          >
+            Kroky
+          </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {EDIT_STEPS.map((s) => (
-              <div key={s.id} style={{ display: 'flex', gap: 10, alignItems: 'center', opacity: s.id > step ? 0.5 : 1 }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0, background: s.id < step ? 'var(--ppt-color-success, #10b981)' : s.id === step ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)', color: s.id <= step ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6875rem', fontWeight: 700 }}>
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  opacity: s.id > step ? 0.5 : 1,
+                }}
+              >
+                <div
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background:
+                      s.id < step
+                        ? 'var(--ppt-color-success, #10b981)'
+                        : s.id === step
+                          ? 'var(--ppt-color-primary, #2563eb)'
+                          : 'var(--ppt-border-default, #e5e7eb)',
+                    color: s.id <= step ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700,
+                  }}
+                >
                   {s.id < step ? '✓' : s.id}
                 </div>
                 <div>
-                  <div style={{ fontWeight: s.id === step ? 700 : 500, color: 'var(--ppt-fg-primary)', fontSize: '0.8125rem' }}>{s.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>{s.description}</div>
+                  <div
+                    style={{
+                      fontWeight: s.id === step ? 700 : 500,
+                      color: 'var(--ppt-fg-primary)',
+                      fontSize: '0.8125rem',
+                    }}
+                  >
+                    {s.title}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
+                    {s.description}
+                  </div>
                 </div>
               </div>
             ))}
@@ -326,7 +758,14 @@ function EditWizardContent() {
 
 export default function ListingEditPage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
+    >
       <Header />
       <main style={{ flex: 1 }}>
         <ProtectedRoute>

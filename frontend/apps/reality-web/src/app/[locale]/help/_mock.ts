@@ -14,10 +14,34 @@ export interface FaqItem {
 }
 
 export const MOCK_CATEGORIES: HelpCategory[] = [
-  { id: 'listings', icon: '🏠', title: 'Inzeráty', description: 'Ako pridať, upraviť alebo odstrániť inzerát', articleCount: 12 },
-  { id: 'account', icon: '👤', title: 'Môj účet', description: 'Registrácia, prihlásenie a nastavenia profilu', articleCount: 8 },
-  { id: 'search', icon: '🔍', title: 'Vyhľadávanie', description: 'Filtre, uložené vyhľadávania a upozornenia', articleCount: 6 },
-  { id: 'payments', icon: '💳', title: 'Platby', description: 'Fakturácia, kredity a predplatné', articleCount: 10 },
+  {
+    id: 'listings',
+    icon: '🏠',
+    title: 'Inzeráty',
+    description: 'Ako pridať, upraviť alebo odstrániť inzerát',
+    articleCount: 12,
+  },
+  {
+    id: 'account',
+    icon: '👤',
+    title: 'Môj účet',
+    description: 'Registrácia, prihlásenie a nastavenia profilu',
+    articleCount: 8,
+  },
+  {
+    id: 'search',
+    icon: '🔍',
+    title: 'Vyhľadávanie',
+    description: 'Filtre, uložené vyhľadávania a upozornenia',
+    articleCount: 6,
+  },
+  {
+    id: 'payments',
+    icon: '💳',
+    title: 'Platby',
+    description: 'Fakturácia, kredity a predplatné',
+    articleCount: 10,
+  },
 ];
 
 export const MOCK_FAQ: FaqItem[] = [

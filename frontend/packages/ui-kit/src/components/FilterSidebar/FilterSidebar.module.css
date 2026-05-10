@@ -135,7 +135,9 @@
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
 }
 
 .itemCheck:checked {
@@ -144,7 +146,7 @@
 }
 
 .itemCheck:checked::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 3px;
   top: 0px;

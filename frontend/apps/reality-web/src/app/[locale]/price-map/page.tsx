@@ -23,7 +23,10 @@ const PROPERTY_OPTIONS: { value: PropertyType; label: string }[] = [
 ];
 
 export default function PriceMapPage() {
-  const [filter, setFilter] = useState<PriceMapFilter>({ propertyType: 'all', transactionType: 'sale' });
+  const [filter, setFilter] = useState<PriceMapFilter>({
+    propertyType: 'all',
+    transactionType: 'sale',
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = MOCK_DISTRICTS.find((d) => d.id === selectedId) ?? null;
@@ -33,7 +36,12 @@ export default function PriceMapPage() {
   return (
     <div
       data-i18n="pages.price-map.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
@@ -50,7 +58,15 @@ export default function PriceMapPage() {
             flexWrap: 'wrap',
           }}
         >
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: 0, flexShrink: 0 }}>
+          <h1
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 800,
+              color: 'var(--ppt-fg-primary)',
+              margin: 0,
+              flexShrink: 0,
+            }}
+          >
             Mapa cien
           </h1>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -64,7 +80,10 @@ export default function PriceMapPage() {
                   padding: '7px 16px',
                   borderRadius: 6,
                   border: 'none',
-                  background: filter.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-bg-app, #f1f5f9)',
+                  background:
+                    filter.transactionType === t
+                      ? 'var(--ppt-color-primary, #2563eb)'
+                      : 'var(--ppt-bg-app, #f1f5f9)',
                   color: filter.transactionType === t ? '#fff' : 'var(--ppt-fg-secondary)',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -86,8 +105,14 @@ export default function PriceMapPage() {
                   padding: '6px 14px',
                   borderRadius: 99,
                   border: `1px solid ${filter.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
-                  background: filter.propertyType === opt.value ? 'var(--ppt-color-primary-light, #dbeafe)' : 'transparent',
-                  color: filter.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-fg-secondary)',
+                  background:
+                    filter.propertyType === opt.value
+                      ? 'var(--ppt-color-primary-light, #dbeafe)'
+                      : 'transparent',
+                  color:
+                    filter.propertyType === opt.value
+                      ? 'var(--ppt-color-primary, #2563eb)'
+                      : 'var(--ppt-fg-secondary)',
                   fontWeight: filter.propertyType === opt.value ? 600 : 400,
                   cursor: 'pointer',
                   fontSize: '0.875rem',
@@ -99,7 +124,14 @@ export default function PriceMapPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', height: 'calc(100vh - 200px)', minHeight: 500 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 340px',
+            height: 'calc(100vh - 200px)',
+            minHeight: 500,
+          }}
+        >
           {/* SVG Map */}
           <div
             style={{
@@ -128,7 +160,9 @@ export default function PriceMapPage() {
                   onClick={() => setSelectedId(selectedId === district.id ? null : district.id)}
                   aria-label={district.name}
                 >
-                  <title>{district.name}: {formatPrice(district.avgPricePerSqm)} / m²</title>
+                  <title>
+                    {district.name}: {formatPrice(district.avgPricePerSqm)} / m²
+                  </title>
                 </path>
               ))}
             </svg>
@@ -146,15 +180,28 @@ export default function PriceMapPage() {
                 color: 'var(--ppt-fg-secondary)',
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--ppt-fg-primary)' }}>Cena / m²</div>
+              <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--ppt-fg-primary)' }}>
+                Cena / m²
+              </div>
               {[
                 { color: '#65a30d', label: 'do 3 500 €' },
                 { color: '#d97706', label: '3 500 – 5 000 €' },
                 { color: '#ea580c', label: '5 000 – 5 500 €' },
                 { color: '#dc2626', label: 'nad 5 500 €' },
               ].map((item) => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                  <span style={{ width: 14, height: 14, borderRadius: 3, background: item.color, flexShrink: 0 }} />
+                <div
+                  key={item.label}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}
+                >
+                  <span
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: 3,
+                      background: item.color,
+                      flexShrink: 0,
+                    }}
+                  />
                   {item.label}
                 </div>
               ))}
@@ -174,30 +221,59 @@ export default function PriceMapPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedId(null)}
-                  style={{ background: 'none', border: 'none', color: 'var(--ppt-color-primary, #2563eb)', cursor: 'pointer', padding: 0, marginBottom: 16, fontSize: '0.875rem' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--ppt-color-primary, #2563eb)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    marginBottom: 16,
+                    fontSize: '0.875rem',
+                  }}
                 >
                   ← Späť na prehľad
                 </button>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', margin: '0 0 20px' }}>
+                <h2
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 800,
+                    color: 'var(--ppt-fg-primary)',
+                    margin: '0 0 20px',
+                  }}
+                >
                   {selected.name}
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {[
                     { label: 'Priem. cena / m²', value: `${formatPrice(selected.avgPricePerSqm)}` },
-                    { label: 'Zmena (12 mesiacov)', value: `${selected.change12m > 0 ? '+' : ''}${selected.change12m} %`, positive: selected.change12m > 0 },
+                    {
+                      label: 'Zmena (12 mesiacov)',
+                      value: `${selected.change12m > 0 ? '+' : ''}${selected.change12m} %`,
+                      positive: selected.change12m > 0,
+                    },
                     { label: 'Medián celkovej ceny', value: formatPrice(selected.medianTotal) },
                     { label: 'Aktívne inzeráty', value: String(selected.listings) },
                   ].map((row) => (
-                    <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>{row.label}</span>
+                    <div
+                      key={row.label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+                        {row.label}
+                      </span>
                       <span
                         style={{
                           fontWeight: 700,
-                          color: 'positive' in row
-                            ? row.positive
-                              ? 'var(--ppt-color-success-dark, #047857)'
-                              : 'var(--ppt-color-danger, #ef4444)'
-                            : 'var(--ppt-fg-primary)',
+                          color:
+                            'positive' in row
+                              ? row.positive
+                                ? 'var(--ppt-color-success-dark, #047857)'
+                                : 'var(--ppt-color-danger, #ef4444)'
+                              : 'var(--ppt-fg-primary)',
                         }}
                       >
                         {row.value}
@@ -225,10 +301,23 @@ export default function PriceMapPage() {
               </div>
             ) : (
               <div style={{ padding: '28px 24px' }}>
-                <h2 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', margin: '0 0 6px' }}>
+                <h2
+                  style={{
+                    fontSize: '1.0625rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    margin: '0 0 6px',
+                  }}
+                >
                   Bratislava – Prehľad
                 </h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', marginBottom: 20 }}>
+                <p
+                  style={{
+                    fontSize: '0.875rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    marginBottom: 20,
+                  }}
+                >
                   Kliknite na mestskú štvrť pre detailné štatistiky.
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -250,10 +339,33 @@ export default function PriceMapPage() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ width: 12, height: 12, borderRadius: 3, background: d.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-primary)', fontWeight: 500 }}>{d.name.split(' – ')[1] ?? d.name}</span>
+                        <span
+                          style={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: 3,
+                            background: d.color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '0.875rem',
+                            color: 'var(--ppt-fg-primary)',
+                            fontWeight: 500,
+                          }}
+                        >
+                          {d.name.split(' – ')[1] ?? d.name}
+                        </span>
                       </div>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', flexShrink: 0 }}>
+                      <span
+                        style={{
+                          fontSize: '0.875rem',
+                          fontWeight: 700,
+                          color: 'var(--ppt-fg-primary)',
+                          flexShrink: 0,
+                        }}
+                      >
                         {formatPrice(d.avgPricePerSqm)}/m²
                       </span>
                     </button>
@@ -277,13 +389,30 @@ export default function PriceMapPage() {
         >
           {MOCK_INSIGHTS.map((insight) => (
             <div key={insight.label}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 4 }}>
+              <div
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--ppt-fg-muted, #9ca3af)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '.5px',
+                  marginBottom: 4,
+                }}
+              >
                 {insight.label}
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 2 }}>
+              <div
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 800,
+                  color: 'var(--ppt-fg-primary)',
+                  marginBottom: 2,
+                }}
+              >
                 {insight.value}
               </div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-secondary)' }}>{insight.trend}</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-secondary)' }}>
+                {insight.trend}
+              </div>
             </div>
           ))}
         </div>

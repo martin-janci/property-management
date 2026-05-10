@@ -272,19 +272,18 @@ pub async fn create_review(
     })?;
 
     // Get reviewer name from portal_users
-    let reviewer_name: String =
-        sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
-            .bind(auth.user_id)
-            .fetch_optional(&mut *conn)
-            .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to get reviewer name: {}", e),
-                )
-            })?
-            .flatten()
-            .unwrap_or_else(|| "Anonymous".to_string());
+    let reviewer_name: String = sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
+        .bind(auth.user_id)
+        .fetch_optional(&mut *conn)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to get reviewer name: {}", e),
+            )
+        })?
+        .flatten()
+        .unwrap_or_else(|| "Anonymous".to_string());
 
     // Insert review; unique constraint prevents duplicates
     let row = sqlx::query(

@@ -15,7 +15,8 @@
  *   />
  */
 
-import React, { useId } from 'react';
+import type React from 'react';
+import { useId } from 'react';
 import styles from './RadioCards.module.css';
 
 export interface RadioCardOption {
@@ -63,11 +64,7 @@ export const RadioCards: React.FC<RadioCardsProps> = ({
         const inputId = `${groupName}-${opt.value}`;
 
         return (
-          <label
-            key={opt.value}
-            htmlFor={inputId}
-            className={styles.label}
-          >
+          <label key={opt.value} htmlFor={inputId} className={styles.label}>
             <input
               id={inputId}
               type="radio"
@@ -82,18 +79,23 @@ export const RadioCards: React.FC<RadioCardsProps> = ({
               className={[styles.card, isActive ? styles.cardActive : ''].filter(Boolean).join(' ')}
             >
               {opt.icon && (
-                <div className={[styles.icon, isActive ? styles.iconActive : ''].filter(Boolean).join(' ')} aria-hidden="true">
+                <div
+                  className={[styles.icon, isActive ? styles.iconActive : '']
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-hidden="true"
+                >
                   {opt.icon}
                 </div>
               )}
               <div className={styles.body}>
                 <p className={styles.cardLabel}>{opt.label}</p>
-                {opt.description && (
-                  <p className={styles.description}>{opt.description}</p>
-                )}
+                {opt.description && <p className={styles.description}>{opt.description}</p>}
               </div>
               <div
-                className={[styles.indicator, isActive ? styles.indicatorActive : ''].filter(Boolean).join(' ')}
+                className={[styles.indicator, isActive ? styles.indicatorActive : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 aria-hidden="true"
               />
             </div>

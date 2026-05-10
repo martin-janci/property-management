@@ -9,7 +9,7 @@
  *   <Stepper steps={['Details', 'Photos', 'Review', 'Publish']} current={1} />
  */
 
-import React from 'react';
+import type React from 'react';
 import styles from './Stepper.module.css';
 
 export interface StepperProps {
@@ -38,11 +38,11 @@ const CheckIcon = () => (
 
 /** Stepper: horizontal numbered wizard step list. */
 export const Stepper: React.FC<StepperProps> = ({ steps, current, className }) => (
-  <nav
-    aria-label="Progress"
-    className={[styles.stepper, className].filter(Boolean).join(' ')}
-  >
-    <ol className={styles.stepper} style={{ listStyle: 'none', padding: 0, margin: 0, display: 'contents' }}>
+  <nav aria-label="Progress" className={[styles.stepper, className].filter(Boolean).join(' ')}>
+    <ol
+      className={styles.stepper}
+      style={{ listStyle: 'none', padding: 0, margin: 0, display: 'contents' }}
+    >
       {steps.map((label, index) => {
         const isActive = index === current;
         const isDone = index < current;
@@ -50,10 +50,7 @@ export const Stepper: React.FC<StepperProps> = ({ steps, current, className }) =
         return (
           <li
             key={index}
-            className={[
-              styles.step,
-              isDone ? styles.stepDone : '',
-            ].filter(Boolean).join(' ')}
+            className={[styles.step, isDone ? styles.stepDone : ''].filter(Boolean).join(' ')}
             aria-current={isActive ? 'step' : undefined}
           >
             <div
@@ -61,13 +58,15 @@ export const Stepper: React.FC<StepperProps> = ({ steps, current, className }) =
                 styles.circle,
                 isActive ? styles.circleActive : '',
                 isDone ? styles.circleDone : '',
-              ].filter(Boolean).join(' ')}
+              ]
+                .filter(Boolean)
+                .join(' ')}
               aria-label={
                 isDone
                   ? `Step ${index + 1}: ${label} — completed`
                   : isActive
-                  ? `Step ${index + 1}: ${label} — current`
-                  : `Step ${index + 1}: ${label}`
+                    ? `Step ${index + 1}: ${label} — current`
+                    : `Step ${index + 1}: ${label}`
               }
             >
               {isDone ? <CheckIcon /> : index + 1}
@@ -77,7 +76,9 @@ export const Stepper: React.FC<StepperProps> = ({ steps, current, className }) =
                 styles.label,
                 isActive ? styles.labelActive : '',
                 isDone ? styles.labelDone : '',
-              ].filter(Boolean).join(' ')}
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
               {label}
             </span>

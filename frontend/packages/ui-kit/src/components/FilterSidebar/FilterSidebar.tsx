@@ -7,7 +7,8 @@
  * Reference: ppt-documents.html `.fbar`
  */
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import styles from './FilterSidebar.module.css';
 
 export interface FilterItem {
@@ -75,10 +76,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   return (
-    <aside
-      className={[styles.sidebar, className].filter(Boolean).join(' ')}
-      aria-label={title}
-    >
+    <aside className={[styles.sidebar, className].filter(Boolean).join(' ')} aria-label={title}>
       {/* Header */}
       <div className={styles.head}>
         <h4 className={styles.headTitle}>
@@ -110,7 +108,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               type="button"
             >
               <h5 className={styles.groupTitle}>{group.title}</h5>
-              <span className={[styles.chevron, isOpen ? styles.chevronOpen : ''].filter(Boolean).join(' ')}>
+              <span
+                className={[styles.chevron, isOpen ? styles.chevronOpen : '']
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 <ChevronDownIcon />
               </span>
             </button>
@@ -132,9 +134,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                       aria-label={item.label}
                     />
                     <span className={styles.itemLabel}>{item.label}</span>
-                    {item.count != null && (
-                      <span className={styles.itemCount}>{item.count}</span>
-                    )}
+                    {item.count != null && <span className={styles.itemCount}>{item.count}</span>}
                   </label>
                 ))}
               </div>

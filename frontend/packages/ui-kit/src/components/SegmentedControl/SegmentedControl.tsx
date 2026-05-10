@@ -12,7 +12,7 @@
  *   />
  */
 
-import React from 'react';
+import type React from 'react';
 import styles from './SegmentedControl.module.css';
 
 export interface SegmentOption {
@@ -48,10 +48,9 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
       <button
         key={opt.value}
         type="button"
-        className={[
-          styles.option,
-          value === opt.value ? styles.optionActive : '',
-        ].filter(Boolean).join(' ')}
+        className={[styles.option, value === opt.value ? styles.optionActive : '']
+          .filter(Boolean)
+          .join(' ')}
         onClick={() => !opt.disabled && onChange(opt.value)}
         aria-pressed={value === opt.value}
         disabled={opt.disabled}

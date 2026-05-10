@@ -1,2 +1,7 @@
-export type { HeroSearchProps, HeroSearchTab, HeroSearchValues, HeroSearchTab_Config } from './HeroSearch';
-export { HeroSearch, default } from './HeroSearch';
+export type {
+  HeroSearchProps,
+  HeroSearchTab,
+  HeroSearchTab_Config,
+  HeroSearchValues,
+} from './HeroSearch';
+export { default, HeroSearch } from './HeroSearch';

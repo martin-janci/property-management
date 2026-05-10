@@ -8,7 +8,7 @@
  * Reference: reality-web/listings.html `.lcard`
  */
 
-import React from 'react';
+import type React from 'react';
 import styles from './ListingCard.module.css';
 
 export interface ListingCardListing {
@@ -55,14 +55,14 @@ const HeartIcon = ({ filled }: { filled: boolean }) => (
 
 const badgeClassMap: Record<'featured' | 'sale' | 'rent', string> = {
   featured: styles.badgeFeatured ?? '',
-  sale:     styles.badgeSale ?? '',
-  rent:     styles.badgeRent ?? '',
+  sale: styles.badgeSale ?? '',
+  rent: styles.badgeRent ?? '',
 };
 
 const badgeLabelMap: Record<'featured' | 'sale' | 'rent', string> = {
   featured: 'Featured',
-  sale:     'Sale',
-  rent:     'Rent',
+  sale: 'Sale',
+  rent: 'Rent',
 };
 
 /** ListingCard: real-estate property card. */
@@ -73,8 +73,18 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   className,
 }) => {
   const {
-    id, photoUrl, photoAlt, badges = [], isFavorite = false,
-    price, pricePerSqm, address, title, rooms, area, floor,
+    id,
+    photoUrl,
+    photoAlt,
+    badges = [],
+    isFavorite = false,
+    price,
+    pricePerSqm,
+    address,
+    title,
+    rooms,
+    area,
+    floor,
   } = listing;
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -108,22 +118,14 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       {/* Photo */}
       <div className={styles.photo}>
         {photoUrl && (
-          <img
-            className={styles.photoImg}
-            src={photoUrl}
-            alt={photoAlt ?? title}
-            loading="lazy"
-          />
+          <img className={styles.photoImg} src={photoUrl} alt={photoAlt ?? title} loading="lazy" />
         )}
 
         {/* Badges */}
         {badges.length > 0 && (
           <div className={styles.badges} aria-label="Property badges">
             {badges.map((b) => (
-              <span
-                key={b}
-                className={[styles.badge, badgeClassMap[b]].join(' ')}
-              >
+              <span key={b} className={[styles.badge, badgeClassMap[b]].join(' ')}>
                 {badgeLabelMap[b]}
               </span>
             ))}
@@ -147,24 +149,16 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       <div className={styles.body}>
         <div className={styles.price}>
           {price}
-          {pricePerSqm && (
-            <small className={styles.pricePerSqm}> · {pricePerSqm}</small>
-          )}
+          {pricePerSqm && <small className={styles.pricePerSqm}> · {pricePerSqm}</small>}
         </div>
         <div className={styles.address}>{address}</div>
         <div className={styles.title}>{title}</div>
 
         {(rooms != null || area != null || floor != null) && (
           <div className={styles.meta} aria-label="Property details">
-            {rooms != null && (
-              <span className={styles.metaItem}>{rooms} rooms</span>
-            )}
-            {area != null && (
-              <span className={styles.metaItem}>{area}</span>
-            )}
-            {floor != null && (
-              <span className={styles.metaItem}>Floor {floor}</span>
-            )}
+            {rooms != null && <span className={styles.metaItem}>{rooms} rooms</span>}
+            {area != null && <span className={styles.metaItem}>{area}</span>}
+            {floor != null && <span className={styles.metaItem}>Floor {floor}</span>}
           </div>
         )}
       </div>

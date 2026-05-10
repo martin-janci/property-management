@@ -11,7 +11,13 @@ import { EDITORS_PICKS, MOCK_ARTICLES, MOST_READ } from './_mock';
 
 // TODO: replace article cards with @ppt/ui-kit/Card once available
 
-function ArticleCard({ article, variant = 'default' }: { article: (typeof MOCK_ARTICLES)[0]; variant?: 'featured' | 'default' | 'compact' }) {
+function ArticleCard({
+  article,
+  variant = 'default',
+}: {
+  article: (typeof MOCK_ARTICLES)[0];
+  variant?: 'featured' | 'default' | 'compact';
+}) {
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
 
@@ -69,7 +75,14 @@ function ArticleCard({ article, variant = 'default' }: { article: (typeof MOCK_A
           {article.title}
         </h3>
         {!isCompact && (
-          <p style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.65, margin: '0 0 12px' }}>
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--ppt-fg-secondary)',
+              lineHeight: 1.65,
+              margin: '0 0 12px',
+            }}
+          >
             {article.excerpt}
           </p>
         )}
@@ -98,14 +111,35 @@ export default function JournalPage() {
   return (
     <div
       data-i18n="pages.journal.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
-      <main style={{ flex: 1, maxWidth: 1200, margin: '0 auto', padding: '48px 24px', width: '100%', boxSizing: 'border-box' }}>
+      <main
+        style={{
+          flex: 1,
+          maxWidth: 1200,
+          margin: '0 auto',
+          padding: '48px 24px',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
         {/* Page header */}
         <div style={{ marginBottom: 40 }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 8 }}>
+          <h1
+            style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 8,
+            }}
+          >
             Reality Žurnál
           </h1>
           <p style={{ color: 'var(--ppt-fg-secondary)' }}>
@@ -113,13 +147,29 @@ export default function JournalPage() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 40, alignItems: 'start' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 320px',
+            gap: 40,
+            alignItems: 'start',
+          }}
+        >
           {/* Main column */}
           <div>
             {/* Featured */}
             {featured && (
               <section style={{ marginBottom: 48 }}>
-                <h2 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ppt-fg-muted, #9ca3af)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 16 }}>
+                <h2
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-muted, #9ca3af)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '.8px',
+                    marginBottom: 16,
+                  }}
+                >
                   Titulný príbeh
                 </h2>
                 <ArticleCard article={featured} variant="featured" />
@@ -128,10 +178,23 @@ export default function JournalPage() {
 
             {/* Latest grid */}
             <section style={{ marginBottom: 48 }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 20 }}>
+              <h2
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: 'var(--ppt-fg-primary)',
+                  marginBottom: 20,
+                }}
+              >
                 Najnovšie články
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                  gap: 20,
+                }}
+              >
                 {latest.map((article) => (
                   <ArticleCard key={article.id} article={article} />
                 ))}
@@ -141,7 +204,8 @@ export default function JournalPage() {
             {/* Newsletter */}
             <section
               style={{
-                background: 'linear-gradient(135deg, var(--ppt-brand-700, #1d4ed8), var(--ppt-brand-500, #3b82f6))',
+                background:
+                  'linear-gradient(135deg, var(--ppt-brand-700, #1d4ed8), var(--ppt-brand-500, #3b82f6))',
                 borderRadius: 14,
                 padding: '36px 32px',
                 color: '#fff',
@@ -155,9 +219,14 @@ export default function JournalPage() {
                 Dostávajte najnovšie analýzy a tipy priamo do vašej schránky.
               </p>
               {subscribed ? (
-                <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>✅ Ste prihlásení na odber!</p>
+                <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>
+                  ✅ Ste prihlásení na odber!
+                </p>
               ) : (
-                <form onSubmit={handleSubscribe} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <form
+                  onSubmit={handleSubscribe}
+                  style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}
+                >
                   <input
                     type="email"
                     required
@@ -195,7 +264,14 @@ export default function JournalPage() {
 
             {/* Editor's picks */}
             <section>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 20 }}>
+              <h2
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: 'var(--ppt-fg-primary)',
+                  marginBottom: 20,
+                }}
+              >
                 Výber redakcie
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -208,12 +284,22 @@ export default function JournalPage() {
 
           {/* Sidebar — Most read */}
           <aside style={{ position: 'sticky', top: 24 }}>
-            <h2 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 16 }}>
+            <h2
+              style={{
+                fontSize: '1.0625rem',
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 16,
+              }}
+            >
               Najviac čítané
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {mostRead.map((article, idx) => (
-                <div key={article.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div
+                  key={article.id}
+                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}
+                >
                   <span
                     style={{
                       fontWeight: 800,
@@ -227,10 +313,23 @@ export default function JournalPage() {
                     {idx + 1}
                   </span>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--ppt-fg-primary)', lineHeight: 1.4 }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        color: 'var(--ppt-fg-primary)',
+                        lineHeight: 1.4,
+                      }}
+                    >
                       {article.title}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 4 }}>
+                    <div
+                      style={{
+                        fontSize: '0.8rem',
+                        color: 'var(--ppt-fg-muted, #9ca3af)',
+                        marginTop: 4,
+                      }}
+                    >
                       {article.readMin} min čítania
                     </div>
                   </div>

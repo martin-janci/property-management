@@ -19,10 +19,22 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
-  essential: { bg: 'var(--ppt-color-info-light, #dbeafe)', color: 'var(--ppt-color-info-dark, #1e40af)' },
-  functional: { bg: 'var(--ppt-color-success-light, #d1fae5)', color: 'var(--ppt-color-success-dark, #047857)' },
-  analytics: { bg: 'var(--ppt-color-warning-light, #fef3c7)', color: 'var(--ppt-color-warning-dark, #b45309)' },
-  marketing: { bg: 'var(--ppt-color-danger-light, #fee2e2)', color: 'var(--ppt-color-danger-dark, #b91c1c)' },
+  essential: {
+    bg: 'var(--ppt-color-info-light, #dbeafe)',
+    color: 'var(--ppt-color-info-dark, #1e40af)',
+  },
+  functional: {
+    bg: 'var(--ppt-color-success-light, #d1fae5)',
+    color: 'var(--ppt-color-success-dark, #047857)',
+  },
+  analytics: {
+    bg: 'var(--ppt-color-warning-light, #fef3c7)',
+    color: 'var(--ppt-color-warning-dark, #b45309)',
+  },
+  marketing: {
+    bg: 'var(--ppt-color-danger-light, #fee2e2)',
+    color: 'var(--ppt-color-danger-dark, #b91c1c)',
+  },
 };
 
 export default function CookiesPage() {
@@ -31,12 +43,26 @@ export default function CookiesPage() {
   return (
     <div
       data-i18n="pages.cookies.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
-      <main style={{ flex: 1, maxWidth: 900, margin: '0 auto', padding: '48px 24px', width: '100%' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 8 }}>
+      <main
+        style={{ flex: 1, maxWidth: 900, margin: '0 auto', padding: '48px 24px', width: '100%' }}
+      >
+        <h1
+          style={{
+            fontSize: '2rem',
+            fontWeight: 800,
+            color: 'var(--ppt-fg-primary)',
+            marginBottom: 8,
+          }}
+        >
           Zásady používania cookies
         </h1>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 40 }}>
@@ -46,16 +72,32 @@ export default function CookiesPage() {
         {/* §§ text sections */}
         {COOKIE_SECTIONS.map((section) => (
           <section key={section.id} style={{ marginBottom: 32 }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 10 }}>
+            <h2
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 10,
+              }}
+            >
               {section.heading}
             </h2>
-            <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7, margin: 0 }}>{section.body}</p>
+            <p style={{ color: 'var(--ppt-fg-secondary)', lineHeight: 1.7, margin: 0 }}>
+              {section.body}
+            </p>
           </section>
         ))}
 
         {/* Cookie table */}
         <section style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 16 }}>
+          <h2
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 16,
+            }}
+          >
             Zoznam cookies
           </h2>
           <div style={{ overflowX: 'auto' }}>
@@ -73,7 +115,15 @@ export default function CookiesPage() {
               <thead>
                 <tr style={{ background: 'var(--ppt-bg-subtle, #f1f5f9)', textAlign: 'left' }}>
                   {['Názov', 'Poskytovateľ', 'Účel', 'Platnosť', 'Typ'].map((h) => (
-                    <th key={h} style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--ppt-fg-primary)', whiteSpace: 'nowrap' }}>
+                    <th
+                      key={h}
+                      style={{
+                        padding: '12px 16px',
+                        fontWeight: 600,
+                        color: 'var(--ppt-fg-primary)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {h}
                     </th>
                   ))}
@@ -83,12 +133,35 @@ export default function CookiesPage() {
                 {MOCK_COOKIES.map((row, idx) => (
                   <tr
                     key={row.name}
-                    style={{ borderTop: idx > 0 ? '1px solid var(--ppt-border-default, #e5e7eb)' : undefined }}
+                    style={{
+                      borderTop:
+                        idx > 0 ? '1px solid var(--ppt-border-default, #e5e7eb)' : undefined,
+                    }}
                   >
-                    <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: 'var(--ppt-fg-primary)' }}>{row.name}</td>
-                    <td style={{ padding: '12px 16px', color: 'var(--ppt-fg-secondary)' }}>{row.provider}</td>
-                    <td style={{ padding: '12px 16px', color: 'var(--ppt-fg-secondary)' }}>{row.purpose}</td>
-                    <td style={{ padding: '12px 16px', color: 'var(--ppt-fg-secondary)', whiteSpace: 'nowrap' }}>{row.duration}</td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        fontFamily: 'monospace',
+                        color: 'var(--ppt-fg-primary)',
+                      }}
+                    >
+                      {row.name}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--ppt-fg-secondary)' }}>
+                      {row.provider}
+                    </td>
+                    <td style={{ padding: '12px 16px', color: 'var(--ppt-fg-secondary)' }}>
+                      {row.purpose}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 16px',
+                        color: 'var(--ppt-fg-secondary)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {row.duration}
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       {/* TODO: replace with @ppt/ui-kit/StatusPill once available */}
                       <span
@@ -113,11 +186,27 @@ export default function CookiesPage() {
         </section>
 
         {/* Re-open consent button */}
-        <section style={{ padding: '28px 24px', background: 'var(--ppt-bg-surface)', borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,.06)' }}>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', margin: '0 0 8px' }}>
+        <section
+          style={{
+            padding: '28px 24px',
+            background: 'var(--ppt-bg-surface)',
+            borderRadius: 10,
+            boxShadow: '0 1px 4px rgba(0,0,0,.06)',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: '1.125rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              margin: '0 0 8px',
+            }}
+          >
             Spravovať súhlas s cookies
           </h2>
-          <p style={{ color: 'var(--ppt-fg-secondary)', margin: '0 0 16px', fontSize: '0.9375rem' }}>
+          <p
+            style={{ color: 'var(--ppt-fg-secondary)', margin: '0 0 16px', fontSize: '0.9375rem' }}
+          >
             Kedykoľvek môžete zmeniť svoje nastavenia súhlasu.
           </p>
           <button
@@ -162,7 +251,9 @@ export default function CookiesPage() {
                   width: '90%',
                 }}
               >
-                <h3 style={{ margin: '0 0 16px', color: 'var(--ppt-fg-primary)' }}>Nastavenia cookies</h3>
+                <h3 style={{ margin: '0 0 16px', color: 'var(--ppt-fg-primary)' }}>
+                  Nastavenia cookies
+                </h3>
                 <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 24 }}>
                   Funkcia úpravy súhlasu bude plne implementovaná po integrácii CMP knižnice.
                 </p>

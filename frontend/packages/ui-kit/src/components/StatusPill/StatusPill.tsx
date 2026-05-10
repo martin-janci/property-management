@@ -9,7 +9,7 @@
  *   <StatusPill variant="danger" label="Overdue" />
  */
 
-import React from 'react';
+import type React from 'react';
 import styles from './StatusPill.module.css';
 
 export type StatusPillVariant =
@@ -32,11 +32,11 @@ export interface StatusPillProps {
 const variantClassMap: Record<StatusPillVariant, string> = {
   success: styles.success ?? '',
   warning: styles.warning ?? '',
-  danger:  styles.danger ?? '',
-  info:    styles.info ?? '',
-  event:   styles.event ?? '',
+  danger: styles.danger ?? '',
+  info: styles.info ?? '',
+  event: styles.event ?? '',
   neutral: styles.neutral ?? '',
-  brand:   styles.brand ?? '',
+  brand: styles.brand ?? '',
 };
 
 /** StatusPill: compact pill badge for state-machine status labels. */

@@ -13,7 +13,8 @@
  *   </ModalDrawer>
  */
 
-import React, { useEffect, useRef } from 'react';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
 import styles from './ModalDrawer.module.css';
 
 export type ModalDrawerMode = 'modal' | 'drawer';
@@ -89,43 +90,39 @@ export const ModalDrawer: React.FC<ModalDrawerProps> = ({
   return (
     <dialog
       ref={dialogRef}
-      className={[
-        styles.backdrop,
-        isDrawer ? styles.backdropDrawer : '',
-      ].filter(Boolean).join(' ')}
+      className={[styles.backdrop, isDrawer ? styles.backdropDrawer : ''].filter(Boolean).join(' ')}
       onClick={(e) => {
         // Close when clicking the backdrop (outside the panel)
         if (e.target === e.currentTarget) onClose();
       }}
       aria-labelledby="modal-drawer-title"
       // Remove default dialog styling
-      style={{ padding: 0, border: 'none', background: 'transparent', maxWidth: '100vw', maxHeight: '100vh' }}
+      style={{
+        padding: 0,
+        border: 'none',
+        background: 'transparent',
+        maxWidth: '100vw',
+        maxHeight: '100vh',
+      }}
     >
       <div
-        className={[
-          styles.panel,
-          isDrawer ? styles.panelDrawer : '',
-          className,
-        ].filter(Boolean).join(' ')}
+        className={[styles.panel, isDrawer ? styles.panelDrawer : '', className]
+          .filter(Boolean)
+          .join(' ')}
         role="document"
       >
         {/* Header */}
         <div className={styles.header}>
-          <h2 id="modal-drawer-title" className={styles.title}>{title}</h2>
-          <button
-            className={styles.closeBtn}
-            onClick={onClose}
-            type="button"
-            aria-label="Close"
-          >
+          <h2 id="modal-drawer-title" className={styles.title}>
+            {title}
+          </h2>
+          <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="Close">
             <XIcon />
           </button>
         </div>
 
         {/* Content */}
-        <div className={styles.content}>
-          {children}
-        </div>
+        <div className={styles.content}>{children}</div>
       </div>
     </dialog>
   );

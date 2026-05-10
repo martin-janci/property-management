@@ -163,18 +163,17 @@ pub async fn get_branding(
         }
         None => {
             // Check agency exists; if so, return empty branding row
-            let agency_exists: bool = sqlx::query_scalar(
-                "SELECT EXISTS(SELECT 1 FROM reality_agencies WHERE id = $1)",
-            )
-            .bind(agency_id)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check agency: {}", e),
-                )
-            })?;
+            let agency_exists: bool =
+                sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM reality_agencies WHERE id = $1)")
+                    .bind(agency_id)
+                    .fetch_one(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        (
+                            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                            format!("Failed to check agency: {}", e),
+                        )
+                    })?;
 
             if !agency_exists {
                 return Err((

@@ -11,7 +11,7 @@
 }
 
 .hero::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background:
@@ -73,7 +73,9 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
 }
 
 .tab:hover {
@@ -98,7 +100,9 @@
   color: var(--fg-primary);
   border-radius: 14px;
   padding: 8px;
-  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.4), 0 8px 20px -8px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 20px 50px -20px rgba(0, 0, 0, 0.4),
+    0 8px 20px -8px rgba(0, 0, 0, 0.2);
   display: flex;
   gap: 0;
   max-width: 960px;

@@ -14,7 +14,12 @@ export default function ForAgentsPage() {
   return (
     <div
       data-i18n="pages.for-agents.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
@@ -55,7 +60,14 @@ export default function ForAgentsPage() {
           >
             Predávajte viac s Reality Portálom
           </h1>
-          <p style={{ fontSize: '1.125rem', color: 'rgba(255,255,255,.7)', maxWidth: 560, margin: '0 auto 36px' }}>
+          <p
+            style={{
+              fontSize: '1.125rem',
+              color: 'rgba(255,255,255,.7)',
+              maxWidth: 560,
+              margin: '0 auto 36px',
+            }}
+          >
             Nástroje, analytika a dosah na milióny kupujúcich a nájomníkov na jednom mieste.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -93,10 +105,24 @@ export default function ForAgentsPage() {
 
         {/* Features grid */}
         <section id="features" style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', textAlign: 'center', marginBottom: 48 }}>
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              textAlign: 'center',
+              marginBottom: 48,
+            }}
+          >
             Čo získate
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 24,
+            }}
+          >
             {MOCK_FEATURES.map((feature) => (
               <div
                 key={feature.id}
@@ -108,10 +134,24 @@ export default function ForAgentsPage() {
                 }}
               >
                 <div style={{ fontSize: '2rem', marginBottom: 14 }}>{feature.icon}</div>
-                <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', margin: '0 0 8px' }}>
+                <h3
+                  style={{
+                    fontSize: '1.0625rem',
+                    fontWeight: 700,
+                    color: 'var(--ppt-fg-primary)',
+                    margin: '0 0 8px',
+                  }}
+                >
                   {feature.title}
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.65, margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: '0.9rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    lineHeight: 1.65,
+                    margin: 0,
+                  }}
+                >
                   {feature.description}
                 </p>
               </div>
@@ -120,24 +160,46 @@ export default function ForAgentsPage() {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" style={{ background: 'var(--ppt-bg-subtle, #f8fafc)', padding: '80px 24px' }}>
+        <section
+          id="pricing"
+          style={{ background: 'var(--ppt-bg-subtle, #f8fafc)', padding: '80px 24px' }}
+        >
           <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', textAlign: 'center', marginBottom: 8 }}>
+            <h2
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                textAlign: 'center',
+                marginBottom: 8,
+              }}
+            >
               Cenové plány
             </h2>
             <p style={{ color: 'var(--ppt-fg-secondary)', textAlign: 'center', marginBottom: 48 }}>
               30 dní zadarmo · Bez záväzkov · Zrušte kedykoľvek
             </p>
             {/* TODO: replace with @ppt/ui-kit/Card once available */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, alignItems: 'start' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: 24,
+                alignItems: 'start',
+              }}
+            >
               {MOCK_PRICING.map((plan) => (
                 <div
                   key={plan.id}
                   style={{
-                    background: plan.highlighted ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-bg-surface)',
+                    background: plan.highlighted
+                      ? 'var(--ppt-color-primary, #2563eb)'
+                      : 'var(--ppt-bg-surface)',
                     borderRadius: 14,
                     padding: '32px 24px',
-                    boxShadow: plan.highlighted ? '0 8px 24px rgba(37,99,235,.35)' : '0 1px 4px rgba(0,0,0,.08)',
+                    boxShadow: plan.highlighted
+                      ? '0 8px 24px rgba(37,99,235,.35)'
+                      : '0 1px 4px rgba(0,0,0,.08)',
                     position: 'relative',
                     transform: plan.highlighted ? 'scale(1.03)' : 'none',
                     color: plan.highlighted ? '#fff' : 'inherit',
@@ -162,15 +224,53 @@ export default function ForAgentsPage() {
                       Najpopulárnejší
                     </span>
                   )}
-                  <div style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 4 }}>{plan.name}</div>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1.1, marginBottom: 4 }}>
-                    {plan.currency}{plan.price}
+                  <div style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 4 }}>
+                    {plan.name}
                   </div>
-                  <div style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: 24 }}>/ {plan.period}</div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div
+                    style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 800,
+                      lineHeight: 1.1,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {plan.currency}
+                    {plan.price}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.7, marginBottom: 24 }}>
+                    / {plan.period}
+                  </div>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: '0 0 28px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                    }}
+                  >
                     {plan.features.map((f) => (
-                      <li key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.9375rem' }}>
-                        <span style={{ color: plan.highlighted ? 'rgba(255,255,255,.8)' : 'var(--ppt-color-success, #10b981)', flexShrink: 0 }}>✓</span>
+                      <li
+                        key={f}
+                        style={{
+                          display: 'flex',
+                          gap: 8,
+                          alignItems: 'flex-start',
+                          fontSize: '0.9375rem',
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: plan.highlighted
+                              ? 'rgba(255,255,255,.8)'
+                              : 'var(--ppt-color-success, #10b981)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          ✓
+                        </span>
                         {f}
                       </li>
                     ))}
@@ -198,8 +298,17 @@ export default function ForAgentsPage() {
         </section>
 
         {/* CTA band */}
-        <section style={{ maxWidth: 800, margin: '0 auto', padding: '72px 24px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 12 }}>
+        <section
+          style={{ maxWidth: 800, margin: '0 auto', padding: '72px 24px', textAlign: 'center' }}
+        >
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 12,
+            }}
+          >
             Máte otázky?
           </h2>
           <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28 }}>

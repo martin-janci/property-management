@@ -16,7 +16,8 @@ export const MOCK_ARTICLES: JournalArticle[] = [
     id: '1',
     slug: 'trh-nehnutelnosti-2025',
     title: 'Trh s nehnuteľnosťami v roku 2025: čo nás čaká?',
-    excerpt: 'Analytici predpovedajú mierny rast cien bytov v Bratislave a stagnáciu v regiónoch. Prečítajte si náš exkluzívny prehľad.',
+    excerpt:
+      'Analytici predpovedajú mierny rast cien bytov v Bratislave a stagnáciu v regiónoch. Prečítajte si náš exkluzívny prehľad.',
     category: 'Analýza trhu',
     author: 'Martin Kováč',
     publishedAt: '2025-05-01',
@@ -28,7 +29,8 @@ export const MOCK_ARTICLES: JournalArticle[] = [
     id: '2',
     slug: 'ako-pripravit-byt-na-predaj',
     title: 'Ako pripraviť byt na predaj: 10 tipov od expertov',
-    excerpt: 'Prvý dojem je rozhodujúci. Naši odborníci radia, ako jednoducho zvýšiť hodnotu vašej nehnuteľnosti.',
+    excerpt:
+      'Prvý dojem je rozhodujúci. Naši odborníci radia, ako jednoducho zvýšiť hodnotu vašej nehnuteľnosti.',
     category: 'Predaj',
     author: 'Jana Horáková',
     publishedAt: '2025-04-22',
@@ -39,7 +41,8 @@ export const MOCK_ARTICLES: JournalArticle[] = [
     id: '3',
     slug: 'hypoteka-2025-sprievodca',
     title: 'Hypotéka v roku 2025: kompletný sprievodca pre kupujúcich',
-    excerpt: 'Úrokové sadzby, požiadavky bánk a stratégie financovania – všetko, čo potrebujete vedieť pred podaním žiadosti.',
+    excerpt:
+      'Úrokové sadzby, požiadavky bánk a stratégie financovania – všetko, čo potrebujete vedieť pred podaním žiadosti.',
     category: 'Financovanie',
     author: 'Peter Novák',
     publishedAt: '2025-04-15',
@@ -50,7 +53,8 @@ export const MOCK_ARTICLES: JournalArticle[] = [
     id: '4',
     slug: 'bratislava-nova-stvrt',
     title: 'Nová štvrť Bratislavy: príležitosť alebo riziko?',
-    excerpt: 'Rozvoj Petržalky II a nové rezidenčné projekty menia tvár slovenského hlavného mesta.',
+    excerpt:
+      'Rozvoj Petržalky II a nové rezidenčné projekty menia tvár slovenského hlavného mesta.',
     category: 'Správy',
     author: 'Lucia Šimková',
     publishedAt: '2025-04-08',
@@ -61,7 +65,8 @@ export const MOCK_ARTICLES: JournalArticle[] = [
     id: '5',
     slug: 'investovanie-do-nehnutelnosti',
     title: 'Investovanie do nehnuteľností pre začiatočníkov',
-    excerpt: 'Pasívny príjem z prenájmu, flipping bytov alebo REITs? Porovnávame stratégie pre malých investorov.',
+    excerpt:
+      'Pasívny príjem z prenájmu, flipping bytov alebo REITs? Porovnávame stratégie pre malých investorov.',
     category: 'Investície',
     author: 'Martin Kováč',
     publishedAt: '2025-03-30',

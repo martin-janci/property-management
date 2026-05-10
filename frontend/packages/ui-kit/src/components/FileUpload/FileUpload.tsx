@@ -15,7 +15,8 @@
  * `onFiles` fires when the user picks/drops new files.
  */
 
-import React, { useRef, useState } from 'react';
+import type React from 'react';
+import { useRef, useState } from 'react';
 import styles from './FileUpload.module.css';
 
 export type FileStatus = 'idle' | 'uploading' | 'done' | 'error';
@@ -23,7 +24,7 @@ export type FileStatus = 'idle' | 'uploading' | 'done' | 'error';
 export interface UploadFile {
   id: string;
   file: File;
-  progress: number;   // 0–100
+  progress: number; // 0–100
   status: FileStatus;
   errorMessage?: string;
 }
@@ -47,7 +48,17 @@ export interface FileUploadProps {
 }
 
 const UploadIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />
@@ -55,27 +66,67 @@ const UploadIcon = () => (
 );
 
 const FileIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
     <polyline points="14 2 14 8 20 8" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 
 const XIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 
 const RefreshIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
     <polyline points="1 4 1 10 7 10" />
     <path d="M3.51 15a9 9 0 1 0 .49-3.11" />
   </svg>
@@ -128,17 +179,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     <div className={[className].filter(Boolean).join(' ')}>
       {/* Dropzone */}
       <div
-        className={[
-          styles.zone,
-          dragActive ? styles.zoneDragActive : '',
-        ].filter(Boolean).join(' ')}
+        className={[styles.zone, dragActive ? styles.zoneDragActive : ''].filter(Boolean).join(' ')}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         tabIndex={0}
         role="button"
         aria-label="Click to upload or drag and drop files"
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+        }}
       >
         <input
           ref={inputRef}
@@ -157,19 +207,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           {dragActive ? (
             'Drop to upload'
           ) : (
-            <><strong>Click to upload</strong> or drag and drop</>
+            <>
+              <strong>Click to upload</strong> or drag and drop
+            </>
           )}
         </p>
         {(accept || sizeHint) && (
-          <p className={styles.zoneHint}>
-            {[accept, sizeHint].filter(Boolean).join(' · ')}
-          </p>
+          <p className={styles.zoneHint}>{[accept, sizeHint].filter(Boolean).join(' · ')}</p>
         )}
       </div>
 
       {/* File queue */}
       {files.length > 0 && (
-        <ul className={styles.queue} role="list" aria-label="Upload queue">
+        <ul className={styles.queue} aria-label="Upload queue">
           {files.map((f) => (
             <li key={f.id} className={styles.queueItem}>
               <div className={styles.fileIcon}>
@@ -188,7 +238,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                       className={[
                         styles.progressBar,
                         f.status === 'error' ? styles.progressBarError : '',
-                      ].filter(Boolean).join(' ')}
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                       style={{ width: `${f.status === 'error' ? 100 : f.progress}%` }}
                       role="progressbar"
                       aria-valuenow={f.progress}

@@ -40,16 +40,47 @@ export default function ReportPage() {
 
   if (submitted) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--ppt-bg-app)',
+        }}
+      >
         <Header />
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
+        <main
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 24px',
+            textAlign: 'center',
+          }}
+        >
           <div>
             <div style={{ fontSize: '3.5rem', marginBottom: 16 }}>✅</div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 12 }}>
+            <h1
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 800,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 12,
+              }}
+            >
               Nahlásenie bolo odoslané
             </h1>
-            <p style={{ color: 'var(--ppt-fg-secondary)', maxWidth: 480, margin: '0 auto 28px', lineHeight: 1.7 }}>
-              Váš podnet sme prijali. Náš tím ho preverí do 24 hodín. Ďakujeme, že pomáhate udržiavať portál bezpečným.
+            <p
+              style={{
+                color: 'var(--ppt-fg-secondary)',
+                maxWidth: 480,
+                margin: '0 auto 28px',
+                lineHeight: 1.7,
+              }}
+            >
+              Váš podnet sme prijali. Náš tím ho preverí do 24 hodín. Ďakujeme, že pomáhate
+              udržiavať portál bezpečným.
             </p>
             <a
               href="/listings"
@@ -75,22 +106,54 @@ export default function ReportPage() {
   return (
     <div
       data-i18n="pages.report.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
-      <main style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '48px 24px', width: '100%', boxSizing: 'border-box' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--ppt-fg-primary)', marginBottom: 8 }}>
+      <main
+        style={{
+          flex: 1,
+          maxWidth: 720,
+          margin: '0 auto',
+          padding: '48px 24px',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        <h1
+          style={{
+            fontSize: '1.75rem',
+            fontWeight: 800,
+            color: 'var(--ppt-fg-primary)',
+            marginBottom: 8,
+          }}
+        >
           Nahlásiť inzerát
         </h1>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 36, lineHeight: 1.6 }}>
           Pomôžte nám udržiavať portál bezpečným. Váš podnet preveríme do 24 hodín.
         </p>
 
-        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: 28 }}
+        >
           {/* Problem radio cards */}
           <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
-            <legend style={{ fontWeight: 700, color: 'var(--ppt-fg-primary)', fontSize: '1rem', marginBottom: 14 }}>
+            <legend
+              style={{
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                fontSize: '1rem',
+                marginBottom: 14,
+              }}
+            >
               Dôvod nahlásenia <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </legend>
             {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
@@ -104,7 +167,10 @@ export default function ReportPage() {
                     padding: '14px 16px',
                     borderRadius: 10,
                     border: `2px solid ${problem === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
-                    background: problem === opt.value ? 'var(--ppt-color-primary-light, #dbeafe)' : 'var(--ppt-bg-surface)',
+                    background:
+                      problem === opt.value
+                        ? 'var(--ppt-color-primary-light, #dbeafe)'
+                        : 'var(--ppt-bg-surface)',
                     cursor: 'pointer',
                     transition: 'border-color .15s',
                   }}
@@ -118,8 +184,14 @@ export default function ReportPage() {
                     style={{ marginTop: 3, accentColor: 'var(--ppt-color-primary, #2563eb)' }}
                   />
                   <div>
-                    <div style={{ fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 3 }}>{opt.label}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>{opt.description}</div>
+                    <div
+                      style={{ fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 3 }}
+                    >
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
+                      {opt.description}
+                    </div>
                   </div>
                 </label>
               ))}
@@ -128,7 +200,14 @@ export default function ReportPage() {
 
           {/* Listing reference */}
           <div>
-            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6 }}>
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 600,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 6,
+              }}
+            >
               Odkaz na inzerát (URL alebo ID)
             </label>
             <input
@@ -142,7 +221,14 @@ export default function ReportPage() {
 
           {/* Description */}
           <div>
-            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6 }}>
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 600,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 6,
+              }}
+            >
               Popis problému <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </label>
             <textarea
@@ -157,7 +243,14 @@ export default function ReportPage() {
 
           {/* Attachments */}
           <div>
-            <label style={{ display: 'block', fontWeight: 600, color: 'var(--ppt-fg-primary)', marginBottom: 6 }}>
+            <label
+              style={{
+                display: 'block',
+                fontWeight: 600,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 6,
+              }}
+            >
               Prílohy (voliteľné)
             </label>
             {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
@@ -183,10 +276,14 @@ export default function ReportPage() {
                 multiple
                 accept="image/*,.pdf"
                 style={{ display: 'none' }}
-                onChange={(e) => { if (e.target.files) setAttachments(Array.from(e.target.files)); }}
+                onChange={(e) => {
+                  if (e.target.files) setAttachments(Array.from(e.target.files));
+                }}
               />
             </label>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 6 }}>
+            <p
+              style={{ fontSize: '0.8125rem', color: 'var(--ppt-fg-muted, #9ca3af)', marginTop: 6 }}
+            >
               PNG, JPG, PDF · max. 5 MB na súbor · max. 5 súborov
             </p>
           </div>
@@ -198,12 +295,22 @@ export default function ReportPage() {
               required
               checked={gdprAccepted}
               onChange={(e) => setGdprAccepted(e.target.checked)}
-              style={{ width: 18, height: 18, marginTop: 2, accentColor: 'var(--ppt-color-primary, #2563eb)' }}
+              style={{
+                width: 18,
+                height: 18,
+                marginTop: 2,
+                accentColor: 'var(--ppt-color-primary, #2563eb)',
+              }}
             />
-            <span style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.5 }}>
-              Súhlasím so spracovaním osobných údajov za účelom preverenia môjho nahlásenia v súlade s{' '}
-              <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>Zásadami ochrany súkromia</a>.{' '}
-              <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
+            <span
+              style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.5 }}
+            >
+              Súhlasím so spracovaním osobných údajov za účelom preverenia môjho nahlásenia v súlade
+              s{' '}
+              <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                Zásadami ochrany súkromia
+              </a>
+              . <span style={{ color: 'var(--ppt-color-danger, #ef4444)' }}>*</span>
             </span>
           </label>
 
@@ -214,10 +321,14 @@ export default function ReportPage() {
             style={{
               alignSelf: 'flex-start',
               padding: '13px 32px',
-              background: problem && description.trim() && gdprAccepted
-                ? 'var(--ppt-color-danger, #ef4444)'
-                : 'var(--ppt-border-default, #e5e7eb)',
-              color: problem && description.trim() && gdprAccepted ? '#fff' : 'var(--ppt-fg-muted, #9ca3af)',
+              background:
+                problem && description.trim() && gdprAccepted
+                  ? 'var(--ppt-color-danger, #ef4444)'
+                  : 'var(--ppt-border-default, #e5e7eb)',
+              color:
+                problem && description.trim() && gdprAccepted
+                  ? '#fff'
+                  : 'var(--ppt-fg-muted, #9ca3af)',
               border: 'none',
               borderRadius: 8,
               fontWeight: 700,

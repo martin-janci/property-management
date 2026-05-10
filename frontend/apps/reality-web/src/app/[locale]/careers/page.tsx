@@ -14,7 +14,12 @@ export default function CareersPage() {
   return (
     <div
       data-i18n="pages.careers.root"
-      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ppt-bg-app)' }}
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--ppt-bg-app)',
+      }}
     >
       <Header />
 
@@ -22,7 +27,8 @@ export default function CareersPage() {
         {/* Hero */}
         <section
           style={{
-            background: 'linear-gradient(135deg, var(--ppt-brand-800, #1e3a5f) 0%, var(--ppt-brand-600, #2563eb) 100%)',
+            background:
+              'linear-gradient(135deg, var(--ppt-brand-800, #1e3a5f) 0%, var(--ppt-brand-600, #2563eb) 100%)',
             color: '#fff',
             padding: '80px 24px',
             textAlign: 'center',
@@ -30,13 +36,18 @@ export default function CareersPage() {
         >
           <h1
             data-i18n="pages.careers.hero.title"
-            style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', fontWeight: 800, lineHeight: 1.2, margin: '0 0 20px' }}
+            style={{
+              fontSize: 'clamp(1.75rem, 4vw, 3rem)',
+              fontWeight: 800,
+              lineHeight: 1.2,
+              margin: '0 0 20px',
+            }}
           >
             Stavajme realitný trh, ktorý dáva zmysel.
           </h1>
           <p style={{ fontSize: '1.125rem', opacity: 0.85, maxWidth: 640, margin: '0 auto 32px' }}>
-            Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a prenajímajú
-            nehnuteľnosti na Slovensku a v strednej Európe.
+            Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a
+            prenajímajú nehnuteľnosti na Slovensku a v strednej Európe.
           </p>
           <a
             href="#open-positions"
@@ -57,7 +68,15 @@ export default function CareersPage() {
 
         {/* Benefits grid */}
         <section style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 24px' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 40, textAlign: 'center' }}>
+          <h2
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 40,
+              textAlign: 'center',
+            }}
+          >
             Prečo Reality Portál?
           </h2>
           <div
@@ -78,10 +97,24 @@ export default function CareersPage() {
                 }}
               >
                 <div style={{ fontSize: '2rem', marginBottom: 12 }}>{benefit.icon}</div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--ppt-fg-primary)', margin: '0 0 8px' }}>
+                <h3
+                  style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 600,
+                    color: 'var(--ppt-fg-primary)',
+                    margin: '0 0 8px',
+                  }}
+                >
                   {benefit.title}
                 </h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--ppt-fg-secondary)', lineHeight: 1.6, margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: '0.9rem',
+                    color: 'var(--ppt-fg-secondary)',
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
                   {benefit.description}
                 </p>
               </div>
@@ -90,12 +123,31 @@ export default function CareersPage() {
         </section>
 
         {/* Open positions */}
-        <section id="open-positions" style={{ background: 'var(--ppt-bg-subtle, #f8fafc)', padding: '64px 24px' }}>
+        <section
+          id="open-positions"
+          style={{ background: 'var(--ppt-bg-subtle, #f8fafc)', padding: '64px 24px' }}
+        >
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 32 }}>
+            <h2
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                color: 'var(--ppt-fg-primary)',
+                marginBottom: 32,
+              }}
+            >
               Voľné pozície
             </h2>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
               {MOCK_POSITIONS.map((pos) => (
                 <li
                   key={pos.id}
@@ -112,7 +164,14 @@ export default function CareersPage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '1.0625rem', color: 'var(--ppt-fg-primary)', marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '1.0625rem',
+                        color: 'var(--ppt-fg-primary)',
+                        marginBottom: 4,
+                      }}
+                    >
                       {pos.title}
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--ppt-fg-secondary)' }}>
@@ -131,7 +190,11 @@ export default function CareersPage() {
                         fontWeight: 500,
                       }}
                     >
-                      {pos.type === 'fulltime' ? 'Plný úväzok' : pos.type === 'parttime' ? 'Čiastočný úväzok' : 'Kontrakt'}
+                      {pos.type === 'fulltime'
+                        ? 'Plný úväzok'
+                        : pos.type === 'parttime'
+                          ? 'Čiastočný úväzok'
+                          : 'Kontrakt'}
                     </span>
                     <button
                       type="button"
@@ -156,8 +219,17 @@ export default function CareersPage() {
         </section>
 
         {/* CTA band */}
-        <section style={{ maxWidth: 900, margin: '0 auto', padding: '64px 24px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ppt-fg-primary)', marginBottom: 12 }}>
+        <section
+          style={{ maxWidth: 900, margin: '0 auto', padding: '64px 24px', textAlign: 'center' }}
+        >
+          <h2
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              color: 'var(--ppt-fg-primary)',
+              marginBottom: 12,
+            }}
+          >
             Nenašli ste vhodnú pozíciu?
           </h2>
           <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 24 }}>

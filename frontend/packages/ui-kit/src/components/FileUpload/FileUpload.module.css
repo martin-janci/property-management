@@ -148,7 +148,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
   flex-shrink: 0;
 }
 

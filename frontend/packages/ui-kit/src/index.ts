@@ -71,6 +71,7 @@ export { Table } from './Table';
 // Design Tokens — new structured tokens (from tokens/ directory)
 // ============================================
 
+export { pptPreset, tailwindPreset } from './tokens';
 export type { Tokens } from './tokens/tokens';
 export {
   accent,
@@ -90,47 +91,44 @@ export {
   tokens,
   warning,
 } from './tokens/tokens';
-export { pptPreset, tailwindPreset } from './tokens';
 
 // ============================================
 // New shared components
 // ============================================
 
-// ListingCard
-export type { ListingCardListing, ListingCardProps } from './components/ListingCard';
-export { ListingCard } from './components/ListingCard';
-
-// HeroSearch
-export type { HeroSearchProps, HeroSearchTab, HeroSearchTab_Config, HeroSearchValues } from './components/HeroSearch';
-export { HeroSearch } from './components/HeroSearch';
-
-// StatusPill
-export type { StatusPillProps, StatusPillVariant } from './components/StatusPill';
-export { StatusPill } from './components/StatusPill';
-
-// FilterSidebar
-export type { FilterGroup, FilterItem, FilterSidebarProps } from './components/FilterSidebar';
-export { FilterSidebar } from './components/FilterSidebar';
-
 // ChipGroup
 export type { Chip, ChipGroupMode, ChipGroupProps } from './components/ChipGroup';
 export { ChipGroup } from './components/ChipGroup';
-
-// SegmentedControl
-export type { SegmentedControlProps, SegmentOption } from './components/SegmentedControl';
-export { SegmentedControl } from './components/SegmentedControl';
+// FileUpload
+export type { FileStatus, FileUploadProps, UploadFile } from './components/FileUpload';
+export { FileUpload } from './components/FileUpload';
+// FilterSidebar
+export type { FilterGroup, FilterItem, FilterSidebarProps } from './components/FilterSidebar';
+export { FilterSidebar } from './components/FilterSidebar';
+// HeroSearch
+export type {
+  HeroSearchProps,
+  HeroSearchTab,
+  HeroSearchTab_Config,
+  HeroSearchValues,
+} from './components/HeroSearch';
+export { HeroSearch } from './components/HeroSearch';
+// ListingCard
+export type { ListingCardListing, ListingCardProps } from './components/ListingCard';
+export { ListingCard } from './components/ListingCard';
+// ModalDrawer
+export type { ModalDrawerMode, ModalDrawerProps } from './components/ModalDrawer';
+export { ModalDrawer } from './components/ModalDrawer';
 
 // RadioCards
 export type { RadioCardOption, RadioCardsProps } from './components/RadioCards';
 export { RadioCards } from './components/RadioCards';
-
-// FileUpload
-export type { FileStatus, FileUploadProps, UploadFile } from './components/FileUpload';
-export { FileUpload } from './components/FileUpload';
-
-// ModalDrawer
-export type { ModalDrawerMode, ModalDrawerProps } from './components/ModalDrawer';
-export { ModalDrawer } from './components/ModalDrawer';
+// SegmentedControl
+export type { SegmentedControlProps, SegmentOption } from './components/SegmentedControl';
+export { SegmentedControl } from './components/SegmentedControl';
+// StatusPill
+export type { StatusPillProps, StatusPillVariant } from './components/StatusPill';
+export { StatusPill } from './components/StatusPill';
 
 // Stepper
 export type { StepperProps } from './components/Stepper';
