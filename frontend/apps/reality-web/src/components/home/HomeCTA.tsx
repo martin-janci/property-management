@@ -83,8 +83,16 @@ export function HomeCTA() {
             padding: 8px 16px 32px;
           }
         }
-        .btn-pri,
-        .btn-sec {
+        /*
+         * :global() — Link from next-intl/navigation renders its own <a>,
+         * which styled-jsx can't tag with the component's hashed className.
+         * Without :global(), .btn-pri / .btn-sec selectors won't match the
+         * Link-rendered <a> and the buttons render as plain text. Scoping
+         * stays tight because the wrapping .actions block still has the
+         * hashed class — these rules only target classNames we set ourselves.
+         */
+        .actions :global(.btn-pri),
+        .actions :global(.btn-sec) {
           padding: 10px 16px;
           font-size: 13.5px;
           font-weight: var(--ppt-font-weight-semibold, 600);
@@ -96,26 +104,26 @@ export function HomeCTA() {
           transition: background var(--ppt-transition-fast),
             border-color var(--ppt-transition-fast);
         }
-        .btn-pri {
+        .actions :global(.btn-pri) {
           background: var(--ppt-color-primary);
           color: var(--ppt-fg-on-accent, #fff);
           border: 1px solid var(--ppt-color-primary);
         }
-        .btn-pri:hover {
+        .actions :global(.btn-pri):hover {
           background: var(--ppt-color-primary-hover);
           border-color: var(--ppt-color-primary-hover);
         }
-        .btn-sec {
+        .actions :global(.btn-sec) {
           background: var(--ppt-bg-surface);
           color: var(--ppt-fg-secondary);
           border: 1px solid var(--ppt-border-default);
         }
-        .btn-sec:hover {
+        .actions :global(.btn-sec):hover {
           background: var(--ppt-bg-subtle);
           border-color: var(--ppt-border-strong);
         }
-        .btn-pri:focus-visible,
-        .btn-sec:focus-visible {
+        .actions :global(.btn-pri):focus-visible,
+        .actions :global(.btn-sec):focus-visible {
           outline: none;
           box-shadow: var(--ppt-focus-ring-shadow);
         }

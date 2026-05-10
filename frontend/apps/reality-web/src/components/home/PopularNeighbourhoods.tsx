@@ -161,17 +161,24 @@ export function PopularNeighbourhoods() {
           color: var(--ppt-fg-muted);
           margin: 4px 0 0;
         }
-        .see-all {
+        /*
+         * :global() — Link from next-intl/navigation renders its own <a>
+         * outside of styled-jsx's scoping (no jsx-hash on the rendered
+         * element), so .see-all and .card selectors below have to opt out
+         * of scoping. Wrapping selector (.sec-hd / .grid) still carries
+         * the hash, keeping the rules tightly bound to this component.
+         */
+        .sec-hd :global(.see-all) {
           color: var(--ppt-color-primary);
           font-size: 13.5px;
           font-weight: var(--ppt-font-weight-semibold, 600);
           text-decoration: none;
           flex-shrink: 0;
         }
-        .see-all::after {
+        .sec-hd :global(.see-all)::after {
           content: ' →';
         }
-        .see-all:hover {
+        .sec-hd :global(.see-all):hover {
           text-decoration: underline;
         }
         .grid {
@@ -192,7 +199,7 @@ export function PopularNeighbourhoods() {
             padding: 32px 16px 16px;
           }
         }
-        .card {
+        .grid :global(.card) {
           display: block;
           background: var(--ppt-bg-surface);
           border: 1px solid var(--ppt-border-default);
@@ -204,21 +211,21 @@ export function PopularNeighbourhoods() {
             box-shadow var(--ppt-transition-fast),
             transform var(--ppt-transition-fast);
         }
-        .card:hover {
+        .grid :global(.card):hover {
           border-color: var(--ppt-color-primary);
           box-shadow: var(--ppt-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
           transform: translateY(-2px);
         }
-        .card:focus-visible {
+        .grid :global(.card):focus-visible {
           outline: none;
           box-shadow: var(--ppt-focus-ring-shadow);
         }
-        .img {
+        .grid :global(.card) :global(.img) {
           aspect-ratio: 2 / 1;
           background: linear-gradient(135deg, var(--a), var(--b));
           position: relative;
         }
-        .img::after {
+        .grid :global(.card) :global(.img)::after {
           content: '';
           position: absolute;
           inset: 0;
@@ -228,7 +235,7 @@ export function PopularNeighbourhoods() {
             rgba(0, 0, 0, 0.35) 100%
           );
         }
-        .lbl {
+        .grid :global(.card) :global(.lbl) {
           position: absolute;
           left: 14px;
           bottom: 12px;
@@ -236,27 +243,27 @@ export function PopularNeighbourhoods() {
           color: #fff;
           line-height: 1.3;
         }
-        .lbl strong {
+        .grid :global(.card) :global(.lbl) strong {
           display: block;
           font-size: 17px;
           font-weight: var(--ppt-font-weight-bold, 700);
         }
-        .lbl small {
+        .grid :global(.card) :global(.lbl) small {
           font-size: 12px;
           opacity: 0.9;
         }
-        .body {
+        .grid :global(.card) :global(.body) {
           padding: 14px 16px;
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
-        .cta {
+        .grid :global(.card) :global(.cta) {
           font-size: 13px;
           color: var(--ppt-fg-secondary);
           font-weight: var(--ppt-font-weight-medium, 500);
         }
-        .arrow {
+        .grid :global(.card) :global(.arrow) {
           color: var(--ppt-color-primary);
           font-weight: var(--ppt-font-weight-bold, 700);
         }
