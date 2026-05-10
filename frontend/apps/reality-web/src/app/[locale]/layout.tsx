@@ -8,6 +8,7 @@ import { ComparisonProvider } from '@/lib/comparison-context';
 import { QueryProvider } from '@/lib/query-provider';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
+import { StyledJsxRegistry } from '../../components/StyledJsxRegistry';
 import { type Locale, locales } from '../../i18n/config';
 
 // Self-host Inter via next/font so the browser doesn't reflow once the
@@ -103,17 +104,22 @@ export default async function LocaleLayout({ children, params }: Props) {
         <Script id="color-scheme-init" strategy="beforeInteractive">{`
 (function(){try{var s=localStorage.getItem('ppt-color-scheme');var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();
         `}</Script>
-        <NextIntlClientProvider messages={messages}>
-          <QueryProvider>
-            <AuthProvider>
-              <ComparisonProvider>
-                {children}
-                <ComparisonTray />
-                <DevPanelMount />
-              </ComparisonProvider>
-            </AuthProvider>
-          </QueryProvider>
-        </NextIntlClientProvider>
+        {/* StyledJsxRegistry must wrap any subtree that uses `<style jsx>`
+            so the styles get streamed into the SSR HTML rather than
+            injected post-hydration (which caused a ~0.92 CLS shift). */}
+        <StyledJsxRegistry>
+          <NextIntlClientProvider messages={messages}>
+            <QueryProvider>
+              <AuthProvider>
+                <ComparisonProvider>
+                  {children}
+                  <ComparisonTray />
+                  <DevPanelMount />
+                </ComparisonProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </NextIntlClientProvider>
+        </StyledJsxRegistry>
       </body>
     </html>
   );
