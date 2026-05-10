@@ -14,7 +14,7 @@ import { Link, usePathname } from '../../i18n/routing';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
-  const { user, isLoading, isAuthenticated, login, logout } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const t = useTranslations();
@@ -83,9 +83,16 @@ export function Header() {
         <div className="auth-section">
           <LanguageSwitcher />
 
-          {isLoading ? (
-            <div className="skeleton" />
-          ) : isAuthenticated ? (
+          {/*
+           * Auth slot — has a fixed min-width on the wrapping `.auth-slot`
+           * so swapping between "Sign in" button and the user avatar+name
+           * after the async `/users/me` verification doesn't reflow the
+           * surrounding header items. No skeleton: we either know the user
+           * (optimistic from localStorage) or we know they're anonymous —
+           * in both cases the final UI can render immediately.
+           */}
+          <div className="auth-slot">
+          {isAuthenticated ? (
             <div className="user-container" ref={dropdownRef}>
               <button
                 type="button"
@@ -145,6 +152,7 @@ export function Header() {
               {t('common.login')}
             </button>
           )}
+          </div>
 
           {/* Mobile Menu Toggle */}
           <button
@@ -293,17 +301,23 @@ export function Header() {
           margin-left: auto;
         }
 
-        .skeleton {
-          height: 36px;
-          width: 96px;
-          background-color: var(--ppt-border-default);
-          border-radius: var(--ppt-radius-md);
-          animation: skeleton-pulse 1.5s ease infinite;
+        /* Reserve a constant width so the swap between the sign-in button
+           and the user avatar/name doesn't shift the surrounding items.
+           34px avatar + 8px gap + ~80px username area + 16px padding ≈ 138px.
+           Mobile (<768px) hides the username, so 60px is enough. */
+        .auth-slot {
+          min-width: 138px;
+          min-height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-end;
         }
 
-        @keyframes skeleton-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+        @media (max-width: 767px) {
+          .auth-slot {
+            min-width: 60px;
+            justify-content: flex-end;
+          }
         }
 
         .sign-in-button {

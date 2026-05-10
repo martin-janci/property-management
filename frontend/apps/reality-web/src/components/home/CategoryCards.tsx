@@ -121,41 +121,57 @@ export function CategoryCards() {
   const { data: categories, isLoading, error } = useCategoryCounts();
 
   if (isLoading) {
+    // Skeleton geometry mirrors the resolved grid below (padding, columns,
+    // card height) so the swap to real content doesn't visibly shift.
     return (
       <section className="categories-section">
         <div className="container">
-          <div className="skeleton-header" />
+          <div className="section-header">
+            <div className="skeleton-title" />
+          </div>
           <div className="grid">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={`cat-skeleton-${i}`} className="skeleton-card" />
             ))}
           </div>
         </div>
         <style jsx>{`
           .categories-section {
-            padding: 64px 16px;
-            background: var(--ppt-bg-surface);
+            padding: 48px 32px 24px;
+            background: var(--ppt-bg-app);
           }
           .container {
-            max-width: 1280px;
+            max-width: var(--ppt-content-max, 1280px);
             margin: 0 auto;
           }
-          .skeleton-header {
-            height: 40px;
-            width: 250px;
+          .section-header {
+            margin-bottom: 24px;
+          }
+          .skeleton-title {
+            height: 28px;
+            width: 220px;
             background: var(--ppt-border-default);
-            border-radius: 8px;
-            margin: 0 auto 32px;
+            border-radius: 6px;
+            opacity: 0.6;
           }
           .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+          }
+          @media (max-width: 1024px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+          }
+          @media (max-width: 640px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .categories-section { padding: 32px 16px 16px; }
           }
           .skeleton-card {
-            height: 120px;
-            background: var(--ppt-border-default);
-            border-radius: 12px;
+            height: 88px;
+            background: var(--ppt-bg-surface);
+            border: 1px solid var(--ppt-border-default);
+            border-radius: 10px;
+            opacity: 0.6;
           }
         `}</style>
       </section>

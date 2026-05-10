@@ -67,7 +67,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const s = getSession();
     return s ? { user_id: s.user.id, email: s.user.email, name: s.user.name } : null;
   });
-  const [isLoading, setIsLoading] = useState(true);
+  // Start `false` so consumers don't paint a skeleton on mount: the optimistic
+  // user above is already correct in 99% of cases. The async checkSession()
+  // below corrects state in the background if the server rejects the token.
+  const [isLoading, setIsLoading] = useState(false);
 
   const checkSession = useCallback(async () => {
     // Bearer-token path (form-login): /users/me requires Authorization

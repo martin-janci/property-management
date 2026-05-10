@@ -22,31 +22,51 @@ export function FeaturedListings() {
   };
 
   if (isLoading) {
+    // Skeleton renders the same three-section layout the real component
+    // produces below (sale / rent / new). Each card mirrors ListingCard's
+    // 4:3 image + content footer so the swap to real listings is invisible.
     return (
-      <section className="featured-section">
-        <div className="container">
-          <div className="skeleton-header" />
-          <div className="grid">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="skeleton-card" />
-            ))}
-          </div>
-        </div>
+      <>
+        {[0, 1, 2].map((s) => (
+          <section
+            key={`skel-section-${s}`}
+            className={`featured-section ${s % 2 === 1 ? 'alt' : ''}`}
+          >
+            <div className="container">
+              <div className="section-header">
+                <div className="skeleton-title" />
+                <div className="skeleton-link" />
+              </div>
+              <div className="grid">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={`skel-card-${s}-${i}`} className="skeleton-card">
+                    <div className="skeleton-image" />
+                    <div className="skeleton-body">
+                      <div className="skeleton-line skeleton-price" />
+                      <div className="skeleton-line skeleton-title-line" />
+                      <div className="skeleton-line skeleton-meta" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
         <style jsx>{`
-          .featured-section {
-            padding: 64px 16px;
-            background: var(--ppt-bg-app);
-          }
-          .container {
-            max-width: 1280px;
-            margin: 0 auto;
-          }
-          .skeleton-header {
-            height: 40px;
-            width: 300px;
-            background: var(--ppt-border-default);
-            border-radius: 8px;
+          .featured-section { padding: 64px 16px; background: var(--ppt-bg-app); }
+          .featured-section.alt { background: var(--ppt-bg-surface); }
+          .container { max-width: 1280px; margin: 0 auto; }
+          .section-header {
+            display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 32px;
+          }
+          .skeleton-title {
+            height: 28px; width: 200px; border-radius: 6px;
+            background: var(--ppt-border-default); opacity: 0.6;
+          }
+          .skeleton-link {
+            height: 16px; width: 70px; border-radius: 4px;
+            background: var(--ppt-border-default); opacity: 0.5;
           }
           .grid {
             display: grid;
@@ -54,12 +74,23 @@ export function FeaturedListings() {
             gap: 24px;
           }
           .skeleton-card {
-            height: 320px;
-            background: var(--ppt-border-default);
-            border-radius: 12px;
+            background: var(--ppt-bg-surface);
+            border: 1px solid var(--ppt-border-default);
+            border-radius: var(--ppt-radius-lg, 12px);
+            overflow: hidden;
+            opacity: 0.6;
           }
+          .skeleton-image {
+            aspect-ratio: 4 / 3;
+            background: var(--ppt-border-default);
+          }
+          .skeleton-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+          .skeleton-line { background: var(--ppt-border-default); border-radius: 4px; height: 12px; }
+          .skeleton-price { height: 18px; width: 50%; }
+          .skeleton-title-line { width: 80%; }
+          .skeleton-meta { width: 40%; height: 10px; }
         `}</style>
-      </section>
+      </>
     );
   }
 

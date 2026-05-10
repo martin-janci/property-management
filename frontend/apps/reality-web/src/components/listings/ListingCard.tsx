@@ -42,7 +42,18 @@ export function ListingCard({
       {/* Image */}
       <div className="image-container">
         {listing.primaryPhoto ? (
-          <img src={listing.primaryPhoto.thumbnailUrl} alt={listing.title} className="image" />
+          // width/height match the 4:3 aspect-ratio container — gives the
+          // browser intrinsic dimensions while the image is fetching, so
+          // there's no flash even before the placeholder background paints.
+          <img
+            src={listing.primaryPhoto.thumbnailUrl}
+            alt={listing.title}
+            className="image"
+            width={800}
+            height={600}
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div className="image-placeholder">
             <svg

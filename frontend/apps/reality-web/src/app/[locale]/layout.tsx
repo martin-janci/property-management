@@ -1,3 +1,4 @@
+import { Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
 import { NextIntlClientProvider } from 'next-intl';
@@ -8,6 +9,18 @@ import { QueryProvider } from '@/lib/query-provider';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
 import { type Locale, locales } from '../../i18n/config';
+
+// Self-host Inter via next/font so the browser doesn't reflow once the
+// webfont arrives (FOUT). `display: 'swap'` keeps text visible while the
+// font loads; the CSS `size-adjust` Next emits keeps fallback metrics
+// close enough that any swap is imperceptible. Exposed as a CSS variable
+// so the existing `--ppt-font-family` token can pick it up.
+const inter = Inter({
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
+  variable: '--ppt-font-inter',
+  weight: ['400', '500', '600', '700', '800'],
+});
 
 type Props = {
   children: React.ReactNode;
@@ -68,6 +81,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html
       lang={locale}
+      className={inter.variable}
       // Apply system color scheme by default; JS in ColorSchemeScript can
       // override with a stored user preference at runtime.
       suppressHydrationWarning
