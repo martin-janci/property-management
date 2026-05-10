@@ -240,7 +240,10 @@
         "cta": "Zobrazit volné pozice"
       }
     },
-    "cookies": { "title": "Zásady používání cookies", "reopen": "Znovu otevřít nastavení cookies" },
+    "cookies": {
+      "title": "Zásady používání cookies",
+      "reopen": "Znovu otevřít nastavení cookies"
+    },
     "security": {
       "title": "Bezpečnost",
       "subtitle": "Vaše bezpečnost je naší prioritou",

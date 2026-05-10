@@ -120,7 +120,7 @@ pub struct ArticlesQuery {
 #[utoipa::path(
     get,
     path = "/api/v1/articles",
-    tag = "articles",
+    tag = "Articles",
     params(ArticlesQuery),
     responses(
         (status = 200, description = "Article list", body = ArticlesListResponse)
@@ -154,9 +154,9 @@ pub async fn list_articles(
             a.cover_image_url,
             COUNT(ac.id) AS comment_count,
             a.published_at
-        FROM articles a
+        FROM reality_articles a
         LEFT JOIN portal_users pu ON pu.id = a.author_user_id
-        LEFT JOIN article_comments ac ON ac.article_id = a.id
+        LEFT JOIN reality_article_comments ac ON ac.article_id = a.id
         WHERE a.published_at <= NOW()
           AND ($1::text IS NULL OR a.category = $1)
           AND ($2::text IS NULL OR (a.title ILIKE $2 OR a.excerpt ILIKE $2))
@@ -180,7 +180,7 @@ pub async fn list_articles(
 
     let total: i64 = sqlx::query_scalar(
         r#"
-        SELECT COUNT(*) FROM articles
+        SELECT COUNT(*) FROM reality_articles
         WHERE published_at <= NOW()
           AND ($1::text IS NULL OR category = $1)
           AND ($2::text IS NULL OR (title ILIKE $2 OR excerpt ILIKE $2))
@@ -226,7 +226,7 @@ pub async fn list_articles(
 #[utoipa::path(
     get,
     path = "/api/v1/articles/{slug}",
-    tag = "articles",
+    tag = "Articles",
     params(("slug" = String, Path, description = "Article URL slug")),
     responses(
         (status = 200, description = "Article detail", body = ArticleDetailResponse),
@@ -253,9 +253,9 @@ pub async fn get_article(
             a.cover_image_url, a.tags,
             COUNT(ac.id) AS comment_count,
             a.published_at, a.updated_at
-        FROM articles a
+        FROM reality_articles a
         LEFT JOIN portal_users pu ON pu.id = a.author_user_id
-        LEFT JOIN article_comments ac ON ac.article_id = a.id
+        LEFT JOIN reality_article_comments ac ON ac.article_id = a.id
         WHERE a.slug = $1 AND a.published_at <= NOW()
         GROUP BY a.id, pu.name, pu.profile_image_url
         "#,
@@ -282,7 +282,7 @@ pub async fn get_article(
     let related_rows = sqlx::query(
         r#"
         SELECT id, slug, title, cover_image_url, published_at
-        FROM articles
+        FROM reality_articles
         WHERE category = $1 AND slug != $2 AND published_at <= NOW()
         ORDER BY published_at DESC
         LIMIT 3
@@ -339,7 +339,7 @@ pub async fn get_article(
 #[utoipa::path(
     get,
     path = "/api/v1/articles/{slug}/comments",
-    tag = "articles",
+    tag = "Articles",
     params(("slug" = String, Path, description = "Article URL slug")),
     responses(
         (status = 200, description = "Comment list", body = CommentsResponse),
@@ -359,7 +359,7 @@ pub async fn list_comments(
 
     // Resolve article ID
     let article_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()")
+        sqlx::query_scalar("SELECT id FROM reality_articles WHERE slug = $1 AND published_at <= NOW()")
             .bind(&slug)
             .fetch_optional(&mut *conn)
             .await
@@ -384,7 +384,7 @@ pub async fn list_comments(
             COALESCE(pu.name, 'Anonymous') AS author_name,
             pu.profile_image_url AS author_avatar_url,
             ac.body, ac.created_at
-        FROM article_comments ac
+        FROM reality_article_comments ac
         LEFT JOIN portal_users pu ON pu.id = ac.author_user_id
         WHERE ac.article_id = $1
         ORDER BY ac.created_at ASC
@@ -423,7 +423,7 @@ pub async fn list_comments(
 #[utoipa::path(
     post,
     path = "/api/v1/articles/{slug}/comments",
-    tag = "articles",
+    tag = "Articles",
     params(("slug" = String, Path, description = "Article URL slug")),
     request_body = CreateCommentRequest,
     responses(
@@ -455,7 +455,7 @@ pub async fn create_comment(
     })?;
 
     let article_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM articles WHERE slug = $1 AND published_at <= NOW()")
+        sqlx::query_scalar("SELECT id FROM reality_articles WHERE slug = $1 AND published_at <= NOW()")
             .bind(&slug)
             .fetch_optional(&mut *conn)
             .await
@@ -502,7 +502,7 @@ pub async fn create_comment(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO article_comments (article_id, author_user_id, body)
+        INSERT INTO reality_article_comments (article_id, author_user_id, body)
         VALUES ($1, $2, $3)
         RETURNING id, article_id, author_user_id, body, created_at
         "#,

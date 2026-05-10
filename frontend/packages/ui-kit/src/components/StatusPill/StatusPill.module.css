@@ -51,8 +51,8 @@
 
 /* event = violet */
 .event {
-  background: #ede9fe;
-  color: #5b21b6;
+  background: var(--event-100);
+  color: var(--event-700);
 }
 
 .neutral {

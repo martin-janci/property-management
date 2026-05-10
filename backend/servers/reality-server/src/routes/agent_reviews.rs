@@ -66,7 +66,7 @@ pub struct ReviewsQuery {
 #[utoipa::path(
     get,
     path = "/api/v1/realtors/{id}/reviews",
-    tag = "agent_reviews",
+    tag = "AgentReviews",
     params(
         ("id" = Uuid, Path, description = "Realtor profile ID"),
         ReviewsQuery
@@ -197,7 +197,7 @@ pub async fn list_reviews(
 #[utoipa::path(
     post,
     path = "/api/v1/realtors/{id}/reviews",
-    tag = "agent_reviews",
+    tag = "AgentReviews",
     params(("id" = Uuid, Path, description = "Realtor profile ID")),
     request_body = CreateReviewRequest,
     responses(

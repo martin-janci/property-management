@@ -138,7 +138,7 @@ pub struct ImportJobDetailResponse {
 #[utoipa::path(
     get,
     path = "/api/v1/agencies/{id}/imports",
-    tag = "agency_import",
+    tag = "AgencyImport",
     params(("id" = Uuid, Path, description = "Agency ID")),
     responses(
         (status = 200, description = "Import history", body = ImportHistoryResponse),
@@ -211,7 +211,7 @@ pub async fn list_import_history(
 #[utoipa::path(
     post,
     path = "/api/v1/agencies/{id}/imports/test-connection",
-    tag = "agency_import",
+    tag = "AgencyImport",
     params(("id" = Uuid, Path, description = "Agency ID")),
     request_body = TestConnectionRequest,
     responses(
@@ -253,7 +253,7 @@ pub async fn test_connection(
 #[utoipa::path(
     post,
     path = "/api/v1/agencies/{id}/imports/run",
-    tag = "agency_import",
+    tag = "AgencyImport",
     params(("id" = Uuid, Path, description = "Agency ID")),
     request_body = RunImportRequest,
     responses(
@@ -317,7 +317,7 @@ pub async fn run_import(
 #[utoipa::path(
     get,
     path = "/api/v1/agencies/{id}/imports/{job_id}",
-    tag = "agency_import",
+    tag = "AgencyImport",
     params(
         ("id" = Uuid, Path, description = "Agency ID"),
         ("job_id" = Uuid, Path, description = "Import job ID")

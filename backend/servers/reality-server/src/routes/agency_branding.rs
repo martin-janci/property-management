@@ -17,12 +17,13 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Create agency branding router.
-/// NOTE: mounted at /api/v1/agencies (without trailing id) so the /:id/branding
-/// pattern works correctly when nested in main.rs.
+/// Mounted at /api/v1/agencies/:id/branding to avoid prefix collision with
+/// routes::agencies (which nests under /api/v1/agencies — Axum's .nest() with
+/// the same prefix shadows the earlier router).
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/:id/branding", get(get_branding))
-        .route("/:id/branding", put(update_branding))
+        .route("/", get(get_branding))
+        .route("/", put(update_branding))
 }
 
 /// Watermark position enum.
@@ -108,7 +109,7 @@ pub struct BrandingResponse {
 #[utoipa::path(
     get,
     path = "/api/v1/agencies/{id}/branding",
-    tag = "agency_branding",
+    tag = "AgencyBranding",
     params(("id" = Uuid, Path, description = "Agency ID")),
     responses(
         (status = 200, description = "Agency branding settings", body = BrandingResponse),
@@ -204,7 +205,7 @@ pub async fn get_branding(
 #[utoipa::path(
     put,
     path = "/api/v1/agencies/{id}/branding",
-    tag = "agency_branding",
+    tag = "AgencyBranding",
     params(("id" = Uuid, Path, description = "Agency ID")),
     request_body = UpdateBrandingRequest,
     responses(

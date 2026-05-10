@@ -76,6 +76,16 @@
   --featured-500: #fbbf24;
   --featured-ink: #78350f;
 
+  /* ─── Event (violet — UC-04 votes, UC-38 mediator) ───── */
+  --event-100: #ede9fe;
+  --event-500: #8b5cf6;
+  --event-700: #5b21b6;
+
+  /* ─── Photo placeholder (when listing image missing) ─── */
+  --photo-placeholder-from: #9ca3af;
+  --photo-placeholder-to: #6b7280;
+  --photo-overlay-ink: #ffffff;
+
   /* ─── Shadows ────────────────────────────────────────── */
   --shadow-flat: none;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);

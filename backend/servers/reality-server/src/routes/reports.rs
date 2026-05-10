@@ -103,7 +103,7 @@ pub struct MyReportsQuery {
 #[utoipa::path(
     post,
     path = "/api/v1/reports",
-    tag = "reports",
+    tag = "Reports",
     request_body = SubmitReportRequest,
     responses(
         (status = 201, description = "Report submitted", body = SubmitReportResponse),
@@ -215,7 +215,7 @@ pub async fn submit_report(
 #[utoipa::path(
     get,
     path = "/api/v1/reports/me",
-    tag = "reports",
+    tag = "Reports",
     params(MyReportsQuery),
     responses(
         (status = 200, description = "User's submitted reports", body = MyReportsResponse),

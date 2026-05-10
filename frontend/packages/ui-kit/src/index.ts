@@ -2,18 +2,20 @@
  * @ppt/ui-kit - Design system for Property Management apps.
  *
  * Shared components for ppt-web, reality-web, and mobile applications.
- * Import the tokens.css file in your app's entry point to enable CSS custom properties.
  *
- * CSS token files:
- *   import '@ppt/ui-kit/src/tokens.css';          — legacy (existing)
- *   import '@ppt/ui-kit/src/tokens/tokens.css';   — design-system tokens (new)
+ * CSS tokens (import once in your app's entry point):
+ *   import '@ppt/ui-kit/tokens.css';          — legacy --ppt-* prefixed tokens
+ *   import '@ppt/ui-kit/tokens/tokens.css';   — design-system tokens (UC-*)
+ *
+ * Components + JS tokens:
+ *   import { Button, ListingCard, tokens } from '@ppt/ui-kit';
  */
 
 // ============================================
 // CSS Tokens (import in app entry point)
 // ============================================
-// import '@ppt/ui-kit/src/tokens.css';
-// import '@ppt/ui-kit/src/tokens/tokens.css';
+// import '@ppt/ui-kit/tokens.css';
+// import '@ppt/ui-kit/tokens/tokens.css';
 
 // ============================================
 // Version

@@ -85,7 +85,7 @@ pub struct PriceMapResponse {
 #[utoipa::path(
     get,
     path = "/api/v1/price-map",
-    tag = "price_map",
+    tag = "PriceMap",
     params(PriceMapQuery),
     responses(
         (status = 200, description = "City price aggregations", body = PriceMapResponse)

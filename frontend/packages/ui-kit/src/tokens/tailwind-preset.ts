@@ -5,7 +5,7 @@
  * Add this to your tailwind.config.ts `presets` array to apply design tokens:
  *
  * @example
- * import { pptPreset } from '@ppt/ui-kit/src/tokens';
+ * import { pptPreset } from '@ppt/ui-kit/tokens';
  * export default { presets: [pptPreset], content: [...] };
  *
  * Note: values reference CSS custom properties so they work with dark-mode

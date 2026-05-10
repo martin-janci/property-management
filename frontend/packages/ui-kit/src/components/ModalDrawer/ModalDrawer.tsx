@@ -14,7 +14,7 @@
  */
 
 import type React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import styles from './ModalDrawer.module.css';
 
 export type ModalDrawerMode = 'modal' | 'drawer';
@@ -56,6 +56,8 @@ export const ModalDrawer: React.FC<ModalDrawerProps> = ({
   className,
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Unique ID per instance — multiple ModalDrawers in same tree must not collide.
+  const titleId = useId();
 
   // Open / close native dialog
   useEffect(() => {
@@ -95,7 +97,7 @@ export const ModalDrawer: React.FC<ModalDrawerProps> = ({
         // Close when clicking the backdrop (outside the panel)
         if (e.target === e.currentTarget) onClose();
       }}
-      aria-labelledby="modal-drawer-title"
+      aria-labelledby={titleId}
       // Remove default dialog styling
       style={{
         padding: 0,
@@ -113,7 +115,7 @@ export const ModalDrawer: React.FC<ModalDrawerProps> = ({
       >
         {/* Header */}
         <div className={styles.header}>
-          <h2 id="modal-drawer-title" className={styles.title}>
+          <h2 id={titleId} className={styles.title}>
             {title}
           </h2>
           <button className={styles.closeBtn} onClick={onClose} type="button" aria-label="Close">

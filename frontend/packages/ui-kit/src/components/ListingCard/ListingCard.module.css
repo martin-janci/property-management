@@ -31,7 +31,7 @@
 .photo {
   aspect-ratio: 4 / 3;
   position: relative;
-  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  background: linear-gradient(135deg, var(--photo-placeholder-from), var(--photo-placeholder-to));
   overflow: hidden;
 }
 
@@ -61,7 +61,7 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--photo-overlay-ink);
 }
 
 .badgeFeatured {
@@ -71,12 +71,12 @@
 
 .badgeSale {
   background: var(--success-500);
-  color: #ffffff;
+  color: var(--photo-overlay-ink);
 }
 
 .badgeRent {
   background: var(--brand-500);
-  color: #ffffff;
+  color: var(--photo-overlay-ink);
 }
 
 /* ─── Favourite button ───────────────────────────────────── */

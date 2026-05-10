@@ -334,13 +334,13 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         (name = "Agencies", description = "Real estate agency management (Epic 32)"),
         (name = "Realtors", description = "Realtor profiles and tools (Epic 33)"),
         (name = "Imports", description = "Property import and feed management (Epic 34)"),
-        (name = "compare", description = "Compare up to 4 listings side-by-side (UC-48)"),
-        (name = "reports", description = "Report problematic listings (UC-23)"),
-        (name = "agent_reviews", description = "Realtor reviews and ratings (UC-49, UC-51)"),
-        (name = "agency_branding", description = "Agency branding settings (UC-49)"),
-        (name = "agency_import", description = "Per-agency import management (UC-50)"),
-        (name = "price_map", description = "District price aggregations (UC-31)"),
-        (name = "articles", description = "Journal and news articles (UC-13)")
+        (name = "Compare", description = "Compare up to 4 listings side-by-side (UC-48)"),
+        (name = "Reports", description = "Report problematic listings (UC-23)"),
+        (name = "AgentReviews", description = "Realtor reviews and ratings (UC-49, UC-51)"),
+        (name = "AgencyBranding", description = "Agency branding settings (UC-49)"),
+        (name = "AgencyImport", description = "Per-agency import management (UC-50)"),
+        (name = "PriceMap", description = "District price aggregations (UC-31)"),
+        (name = "Articles", description = "Journal and news articles (UC-13)")
     )
 )]
 struct ApiDoc;
@@ -428,8 +428,12 @@ async fn main() -> anyhow::Result<()> {
             "/api/v1/realtors/:id/reviews",
             routes::agent_reviews::router(),
         )
-        // Agency branding (UC-49)
-        .nest("/api/v1/agencies", routes::agency_branding::router())
+        // Agency branding (UC-49) — nested under /:id/branding to avoid prefix
+        // collision with routes::agencies (Axum .nest() shadows on same prefix).
+        .nest(
+            "/api/v1/agencies/:id/branding",
+            routes::agency_branding::router(),
+        )
         // Agency imports (UC-50)
         .nest(
             "/api/v1/agencies/:id/imports",

@@ -61,7 +61,7 @@ export const MOCK_PRICING: PricingPlan[] = [
     price: 29,
     period: 'mesiac',
     currency: '€',
-    features: ['До 10 aktívnych inzerátov', 'Základná štatistika', 'E-mailová podpora'],
+    features: ['Do 10 aktívnych inzerátov', 'Základná štatistika', 'E-mailová podpora'],
   },
   {
     id: 'pro',

@@ -63,7 +63,7 @@ pub struct AddCompareResponse {
 #[utoipa::path(
     get,
     path = "/api/v1/compare",
-    tag = "compare",
+    tag = "Compare",
     responses(
         (status = 200, description = "Compare list", body = CompareListResponse),
         (status = 401, description = "Unauthorized")
@@ -143,7 +143,7 @@ pub async fn get_compare_list(
 #[utoipa::path(
     post,
     path = "/api/v1/compare/{listing_id}",
-    tag = "compare",
+    tag = "Compare",
     params(("listing_id" = Uuid, Path, description = "Listing ID to add")),
     responses(
         (status = 201, description = "Added to compare list", body = AddCompareResponse),
@@ -254,7 +254,7 @@ pub async fn add_to_compare(
 #[utoipa::path(
     delete,
     path = "/api/v1/compare/{listing_id}",
-    tag = "compare",
+    tag = "Compare",
     params(("listing_id" = Uuid, Path, description = "Listing ID to remove")),
     responses(
         (status = 204, description = "Removed from compare list"),

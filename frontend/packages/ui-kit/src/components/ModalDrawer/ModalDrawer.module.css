@@ -4,6 +4,13 @@
 
 /* ─── Backdrop ───────────────────────────────────────────── */
 
+/* Hide native dialog::backdrop — we render our own .backdrop overlay below.
+   Without this, dialog.showModal() draws a UA-default backdrop on top of
+   ours, producing a darker double overlay. */
+.backdrop::backdrop {
+  background: transparent;
+}
+
 .backdrop {
   position: fixed;
   inset: 0;

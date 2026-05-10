@@ -240,7 +240,10 @@
         "cta": "Offene Stellen anzeigen"
       }
     },
-    "cookies": { "title": "Cookie-Richtlinie", "reopen": "Cookie-Einstellungen erneut öffnen" },
+    "cookies": {
+      "title": "Cookie-Richtlinie",
+      "reopen": "Cookie-Einstellungen erneut öffnen"
+    },
     "security": {
       "title": "Sicherheit",
       "subtitle": "Ihre Sicherheit hat oberste Priorität",
