@@ -120,16 +120,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [checkSession]);
 
   const login = useCallback((redirectUri?: string) => {
+    // Send the user to the email/password form. The OAuth/SSO redirect
+    // (`${getApiBase()}/api/v1/sso/login`) is left in place at the
+    // backend, but the consent UI on api-server hasn't shipped — hitting
+    // /oauth/authorize ends up on a JSON consent page instead of a real
+    // login screen. The form-login flow at /[locale]/auth/login posts to
+    // /api/v1/users/login, persists the bearer token via auth-token, and
+    // returns to redirectUri (defaulting to /).
+    //
+    // Locale is taken from the current URL's first segment so the user
+    // stays in their language; falls back to /sk because that's the
+    // primary audience and matches the route layout default.
+    const locale = (() => {
+      const seg = window.location.pathname.split('/').filter(Boolean)[0];
+      return /^[a-z]{2}$/.test(seg ?? '') ? seg : 'sk';
+    })();
     const params = new URLSearchParams();
     if (redirectUri) {
-      params.set('redirect_uri', redirectUri);
+      params.set('redirect', redirectUri);
     }
-    // Generate CSRF state token
-    const state = crypto.randomUUID();
-    sessionStorage.setItem('sso_state', state);
-    params.set('state', state);
-
-    window.location.href = `${getApiBase()}/api/v1/sso/login?${params.toString()}`;
+    const qs = params.toString();
+    window.location.href = `/${locale}/auth/login${qs ? `?${qs}` : ''}`;
   }, []);
 
   const logout = useCallback(async () => {
