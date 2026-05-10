@@ -434,18 +434,18 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/reports", routes::reports::router())
         // Agent reviews — nested under realtors (UC-49, UC-51)
         .nest(
-            "/api/v1/realtors/:id/reviews",
+            "/api/v1/realtors/{id}/reviews",
             routes::agent_reviews::router(),
         )
         // Agency branding (UC-49) — nested under /:id/branding to avoid prefix
         // collision with routes::agencies (Axum .nest() shadows on same prefix).
         .nest(
-            "/api/v1/agencies/:id/branding",
+            "/api/v1/agencies/{id}/branding",
             routes::agency_branding::router(),
         )
         // Agency imports (UC-50)
         .nest(
-            "/api/v1/agencies/:id/imports",
+            "/api/v1/agencies/{id}/imports",
             routes::agency_imports::router(),
         )
         // Price map aggregations (UC-31)
