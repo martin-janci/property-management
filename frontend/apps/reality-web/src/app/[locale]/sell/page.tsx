@@ -164,16 +164,7 @@ export default function SellPage() {
       <Header />
 
       <main style={{ flex: 1, padding: '48px 24px' }}>
-        <div
-          style={{
-            maxWidth: 800,
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: '1fr 260px',
-            gap: 40,
-            alignItems: 'start',
-          }}
-        >
+        <div className="sell-grid">
           {/* Wizard form */}
           <div
             style={{
@@ -739,6 +730,25 @@ export default function SellPage() {
       </main>
 
       <Footer />
+
+      <style jsx>{`
+        /* Sell-wizard 2-col layout: form + Steps sidebar. Stacks to 1 col
+           below 1024 px so the 260 px aside doesn't push past the viewport
+           (was +225 px overflow on 375 px before this rule). */
+        .sell-grid {
+          max-width: 800px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 40px;
+          align-items: start;
+        }
+        @media (min-width: 1024px) {
+          .sell-grid {
+            grid-template-columns: 1fr 260px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

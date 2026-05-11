@@ -17,7 +17,20 @@ export default function TermsPage() {
       }}
     >
       <Header />
-      <main style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
+      {/* width:100% + box-sizing keeps the main from overflowing the
+          viewport. `flex:1` alone only stretches the cross-axis (height
+          in column-flex), not the width, so without an explicit width the
+          element sizes to its content + padding and ignores the viewport. */}
+      <main
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: 800,
+          margin: '0 auto',
+          padding: '48px 24px',
+          boxSizing: 'border-box',
+        }}
+      >
         <h1
           style={{
             fontSize: '2rem',
