@@ -147,14 +147,7 @@ export default function JournalPage() {
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 320px',
-            gap: 40,
-            alignItems: 'start',
-          }}
-        >
+        <div className="journal-grid">
           {/* Main column */}
           <div>
             {/* Featured */}
@@ -341,6 +334,23 @@ export default function JournalPage() {
       </main>
 
       <Footer />
+
+      <style jsx>{`
+        /* Two-column layout above 1024 px; stacks to a single column below
+           so the 320 px sidebar doesn't force horizontal overflow on
+           mobile (was +297 px on 375 px viewport before this rule). */
+        .journal-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 40px;
+          align-items: start;
+        }
+        @media (min-width: 1024px) {
+          .journal-grid {
+            grid-template-columns: 1fr 320px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

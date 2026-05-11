@@ -266,7 +266,31 @@ export function Header() {
               >
                 {t('nav.myInquiries')}
               </Link>
+              <button
+                type="button"
+                className="nav-link-mobile auth-cta-mobile"
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  logout();
+                }}
+              >
+                {t('common.logout')}
+              </button>
             </>
+          )}
+          {/* Sign-in entry on mobile — replaces the auth-slot button that's
+              hidden by media query below 768 px. */}
+          {!isAuthenticated && (
+            <button
+              type="button"
+              className="nav-link-mobile auth-cta-mobile"
+              onClick={() => {
+                setShowMobileMenu(false);
+                login();
+              }}
+            >
+              {t('common.login')}
+            </button>
           )}
         </nav>
       )}
@@ -413,8 +437,10 @@ export function Header() {
 
         @media (max-width: 767px) {
           .auth-slot {
-            min-width: 60px;
-            justify-content: flex-end;
+            /* Hide the entire auth slot on mobile — the hamburger menu has
+               its own Sign in / Logout entry, so duplicating the affordance
+               here costs ~140 px of header width and forces overflow. */
+            display: none;
           }
         }
 
@@ -625,6 +651,19 @@ export function Header() {
         }
         .nav-mobile :global(.nav-link-mobile.sell-cta-mobile)::after {
           content: ' →';
+        }
+
+        /* Sign in / Logout entries inside the mobile menu — render as
+           buttons (they trigger login()/logout() rather than navigation)
+           but keep the same row look as the link entries. */
+        .nav-mobile :global(.nav-link-mobile.auth-cta-mobile) {
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid var(--ppt-border-subtle);
+          cursor: pointer;
+          text-align: left;
+          font-family: var(--ppt-font-family);
+          width: 100%;
         }
       `}</style>
     </header>
