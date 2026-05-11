@@ -93,40 +93,43 @@ export function LanguageSwitcher() {
       </button>
 
       {open && (
-        <ul className="lang-menu" role="listbox" aria-label="Select language">
+        // <div role="listbox"> rather than <ul role="listbox"> — biome's
+        // noNoninteractiveElementToInteractiveRole rejects the ARIA role
+        // on a semantic list element. ARIA Combobox pattern works with
+        // plain div containers.
+        <div className="lang-menu" role="listbox" aria-label="Select language">
           {locales.map((loc) => (
-            <li key={loc}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={loc === locale}
-                className={`lang-item ${loc === locale ? 'active' : ''}`}
-                onClick={() => choose(loc)}
-              >
-                <span className="flag" aria-hidden="true">
-                  {localeFlags[loc]}
-                </span>
-                <span className="name">{localeNames[loc]}</span>
-                {loc === locale && (
-                  <svg
-                    className="check"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </button>
-            </li>
+            <button
+              key={loc}
+              type="button"
+              role="option"
+              aria-selected={loc === locale}
+              className={`lang-item ${loc === locale ? 'active' : ''}`}
+              onClick={() => choose(loc)}
+            >
+              <span className="flag" aria-hidden="true">
+                {localeFlags[loc]}
+              </span>
+              <span className="name">{localeNames[loc]}</span>
+              {loc === locale && (
+                <svg
+                  className="check"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
           ))}
-        </ul>
+        </div>
       )}
 
       <style jsx>{`

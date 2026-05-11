@@ -48,7 +48,16 @@ a:hover {
  * anything with tabindex/role=button. Native browser outline is hidden
  * by `outline: none` only inside the same rule — never globally.
  */
-:where(button, a, input, select, textarea, summary, [tabindex]:not([tabindex='-1']), [role='button']):focus-visible {
+:where(
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex="-1"]),
+  [role="button"]
+):focus-visible {
   outline: none;
   box-shadow: var(--ppt-focus-ring-shadow);
   border-radius: var(--ppt-radius-sm, 6px);

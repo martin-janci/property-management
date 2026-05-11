@@ -31,7 +31,7 @@ export default function PriceMapPage() {
 
   const selected = MOCK_DISTRICTS.find((d) => d.id === selectedId) ?? null;
 
-  const formatPrice = (v: number) => v.toLocaleString('sk-SK') + ' €';
+  const formatPrice = (v: number) => `${v.toLocaleString('sk-SK')} €`;
 
   return (
     <div

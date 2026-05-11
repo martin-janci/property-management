@@ -104,7 +104,7 @@ export function FieldSelect({
     }
   };
 
-  const handleListKey = (e: React.KeyboardEvent<HTMLUListElement>) => {
+  const handleListKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => Math.min(options.length - 1, i + 1));
@@ -185,53 +185,53 @@ export function FieldSelect({
           without extra plumbing in consumers. */}
       <input type="hidden" name={name} value={value} />
       {open && (
-        <ul
+        // <div role="listbox"> rather than <ul role="listbox"> per ARIA
+        // Combobox pattern — biome rejects the listbox role on semantic
+        // list elements (noNoninteractiveElementToInteractiveRole).
+        <div
           id={listboxId}
           className="field-select-menu"
           role="listbox"
           aria-labelledby={fieldId}
-          tabIndex={-1}
-          // biome-ignore lint/a11y/noNoninteractiveTabindex: listbox is keyboard-navigable
           onKeyDown={handleListKey}
         >
           {options.map((opt, idx) => (
-            <li key={opt.value}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={opt.value === value}
-                disabled={opt.disabled}
-                className={[
-                  'field-select-option',
-                  opt.value === value ? 'active' : '',
-                  idx === activeIndex ? 'highlight' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => choose(opt)}
-                onMouseEnter={() => setActiveIndex(idx)}
-              >
-                <span className="field-select-option-label">{opt.label}</span>
-                {opt.meta && <span className="field-select-option-meta">{opt.meta}</span>}
-                {opt.value === value && (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </button>
-            </li>
+            <button
+              key={opt.value}
+              type="button"
+              role="option"
+              aria-selected={opt.value === value}
+              disabled={opt.disabled}
+              className={[
+                'field-select-option',
+                opt.value === value ? 'active' : '',
+                idx === activeIndex ? 'highlight' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => choose(opt)}
+              onMouseEnter={() => setActiveIndex(idx)}
+            >
+              <span className="field-select-option-label">{opt.label}</span>
+              {opt.meta && <span className="field-select-option-meta">{opt.meta}</span>}
+              {opt.value === value && (
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
           ))}
-        </ul>
+        </div>
       )}
       {(error || helperText) && (
         <p
