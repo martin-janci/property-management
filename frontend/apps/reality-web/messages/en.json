@@ -401,5 +401,15 @@
     "sale": "For Sale",
     "searching": "Searching...",
     "transaction_type": "Transaction Type"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again in a moment.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has moved.",
+    "home": "Back to home"
   }
 }

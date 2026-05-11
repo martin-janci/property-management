@@ -401,5 +401,15 @@
     "sale": "Na prodej",
     "searching": "Vyhledávání...",
     "transaction_type": "Typ transakce"
+  },
+  "error": {
+    "title": "Něco se pokazilo",
+    "description": "Došlo k neočekávané chybě. Zkuste to za chvíli znovu.",
+    "retry": "Zkusit znovu"
+  },
+  "notFound": {
+    "title": "Stránka neexistuje",
+    "description": "Stránka, kterou hledáte, neexistuje nebo byla přesunuta.",
+    "home": "Zpět na hlavní stránku"
   }
 }

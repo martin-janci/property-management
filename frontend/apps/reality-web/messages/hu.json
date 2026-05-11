@@ -401,5 +401,15 @@
     "sale": "Eladó",
     "searching": "Keresés folyamatban...",
     "transaction_type": "Tranzakció típusa"
+  },
+  "error": {
+    "title": "Valami elromlott",
+    "description": "Váratlan hiba történt. Próbálja meg újra egy pillanat múlva.",
+    "retry": "Újra"
+  },
+  "notFound": {
+    "title": "Az oldal nem található",
+    "description": "A keresett oldal nem létezik, vagy átkerült máshová.",
+    "home": "Vissza a főoldalra"
   }
 }

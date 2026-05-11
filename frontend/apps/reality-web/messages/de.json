@@ -401,5 +401,15 @@
     "sale": "Zum Verkauf",
     "searching": "Suche läuft...",
     "transaction_type": "Transaktionstyp"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es gleich erneut.",
+    "retry": "Erneut versuchen"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "home": "Zurück zur Startseite"
   }
 }

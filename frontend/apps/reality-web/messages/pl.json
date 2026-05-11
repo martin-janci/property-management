@@ -401,5 +401,15 @@
     "sale": "Na sprzedaż",
     "searching": "Wyszukiwanie...",
     "transaction_type": "Typ transakcji"
+  },
+  "error": {
+    "title": "Coś poszło nie tak",
+    "description": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie za chwilę.",
+    "retry": "Spróbuj ponownie"
+  },
+  "notFound": {
+    "title": "Strona nie istnieje",
+    "description": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "home": "Powrót do strony głównej"
   }
 }
