@@ -478,6 +478,22 @@
     "favorites": {
       "title": "Moje ulubione",
       "description": "Nieruchomości, które zapisałeś."
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to your Reality Portal account."
+    },
+    "register": {
+      "title": "Create your account",
+      "description": "Save listings, set alerts and contact agents."
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "We'll send you a reset link by email."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a strong password for your account."
     }
   },
   "search": {

@@ -478,6 +478,22 @@
     "favorites": {
       "title": "Moje obľúbené",
       "description": "Nehnuteľnosti, ktoré ste si uložili."
+    },
+    "login": {
+      "title": "Prihlásenie",
+      "description": "Prihláste sa do svojho účtu na Reality Portáli."
+    },
+    "register": {
+      "title": "Vytvorenie účtu",
+      "description": "Uložte si inzeráty, nastavte upozornenia a kontaktujte maklérov."
+    },
+    "forgotPassword": {
+      "title": "Obnovenie hesla",
+      "description": "Pošleme vám e-mailom odkaz na obnovenie hesla."
+    },
+    "resetPassword": {
+      "title": "Nastavenie nového hesla",
+      "description": "Zvoľte si silné heslo k vášmu účtu."
     }
   },
   "search": {
