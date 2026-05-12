@@ -359,14 +359,98 @@
     },
     "sell": {
       "steps": {
-        "details": "Detaily",
-        "photos": "Fotografie",
-        "price": "Cena",
-        "summary": "Kontakt & súhrn",
-        "typeLocation": "Typ a poloha"
+        "type": {
+          "title": "Typ a poloha",
+          "description": "Vyberte typ nehnuteľnosti a zadajte adresu"
+        },
+        "details": {
+          "title": "Detaily",
+          "description": "Plocha, izby, poschodie, rok výstavby"
+        },
+        "photos": {
+          "title": "Fotografie",
+          "description": "Pridajte kvalitné fotografie"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Nastavte požadovanú cenu"
+        },
+        "contact": {
+          "title": "Kontakt & súhrn",
+          "description": "Overte údaje a zverejnite ponuku"
+        }
       },
       "submit": "Zverejniť inzerát",
-      "title": "Pridať inzerát"
+      "title": "Pridať inzerát",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Postup",
+      "back": "← Späť",
+      "next": "Ďalej →",
+      "publish": "Zverejniť inzerát",
+      "submittedTitle": "Váš inzerát bol odoslaný!",
+      "submittedBody": "Po overení bude zverejnený do 2 hodín.",
+      "submittedCta": "Pridať ďalší inzerát",
+      "fields": {
+        "transactionType": "Typ transakcie",
+        "propertyType": "Typ nehnuteľnosti",
+        "address": "Adresa",
+        "addressPlaceholder": "Ulica a číslo",
+        "city": "Mesto / Obec",
+        "cityPlaceholder": "Napr. Bratislava",
+        "area": "Plocha (m²)",
+        "areaPlaceholder": "Napr. 65",
+        "rooms": "Počet izieb",
+        "roomsPlaceholder": "Napr. 3",
+        "floor": "Poschodie",
+        "floorPlaceholder": "Napr. 2",
+        "totalFloors": "Celkový počet poschodí",
+        "totalFloorsPlaceholder": "Napr. 7",
+        "yearBuilt": "Rok výstavby",
+        "yearBuiltPlaceholder": "Napr. 1995",
+        "description": "Popis nehnuteľnosti",
+        "descriptionPlaceholder": "Opíšte nehnuteľnosť, jej vlastnosti, vybavenie…",
+        "price": "Požadovaná cena (€)",
+        "priceSalePlaceholder": "Napr. 250000",
+        "priceRentPlaceholder": "Mesačný nájom napr. 800",
+        "priceNegotiable": "Cena je dohodou",
+        "contactName": "Meno",
+        "contactNamePlaceholder": "Vaše meno a priezvisko",
+        "contactPhone": "Telefón",
+        "contactPhonePlaceholder": "+421 9XX XXX XXX",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "vas@email.sk"
+      },
+      "transactionOptions": {
+        "sale": "Predaj",
+        "rent": "Prenájom"
+      },
+      "propertyOptions": {
+        "apartment": "Byt",
+        "house": "Dom",
+        "land": "Pozemok",
+        "commercial": "Komerčné"
+      },
+      "photos": {
+        "intro": "Nahrajte fotografie (odporúčané min. 5, max. 30).",
+        "cta": "Kliknite alebo pretiahnite fotografie sem",
+        "formats": "JPG, PNG, WEBP · max. 10 MB na fotku",
+        "selected_one": "✓ {count} fotografia vybratá",
+        "selected_other": "✓ {count} fotografií vybratých"
+      },
+      "summary": {
+        "type": "Typ",
+        "location": "Poloha",
+        "area": "Plocha",
+        "rooms": "Izby",
+        "price": "Cena",
+        "photos": "Fotografie",
+        "negotiable": "(dohodou)"
+      },
+      "terms": {
+        "label": "Súhlasím s {termsLink} a {privacyLink}.",
+        "termsLink": "podmienkami používania",
+        "privacyLink": "ochranou osobných údajov"
+      }
     },
     "terms": {
       "description": "Používaním Reality Portálu súhlasíte s našimi podmienkami a ustanoveniami. Úplné podmienky používania budú zverejnené tu.",

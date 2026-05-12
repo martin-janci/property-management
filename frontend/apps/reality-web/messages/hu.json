@@ -363,14 +363,98 @@
     },
     "sell": {
       "steps": {
-        "details": "Részletek",
-        "photos": "Fotók",
-        "price": "Ár",
-        "summary": "Kapcsolat és összegzés",
-        "typeLocation": "Típus és helyszín"
+        "type": {
+          "title": "Type & location",
+          "description": "Choose a property type and enter the address"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Area, rooms, floor, year built"
+        },
+        "photos": {
+          "title": "Photos",
+          "description": "Add high-quality photos"
+        },
+        "price": {
+          "title": "Price",
+          "description": "Set the asking price"
+        },
+        "contact": {
+          "title": "Contact & summary",
+          "description": "Verify details and publish"
+        }
       },
       "submit": "Hirdetés közzététele",
-      "title": "Hirdetés feladása"
+      "title": "Add listing",
+      "stepLabel": "Step {step} of {total}: {stepTitle}",
+      "asideTitle": "Steps",
+      "back": "← Back",
+      "next": "Next →",
+      "publish": "Publish listing",
+      "submittedTitle": "Your listing has been submitted!",
+      "submittedBody": "After review it will be published within 2 hours.",
+      "submittedCta": "Add another listing",
+      "fields": {
+        "transactionType": "Transaction type",
+        "propertyType": "Property type",
+        "address": "Address",
+        "addressPlaceholder": "Street and number",
+        "city": "City / Town",
+        "cityPlaceholder": "e.g. Bratislava",
+        "area": "Area (m²)",
+        "areaPlaceholder": "e.g. 65",
+        "rooms": "Number of rooms",
+        "roomsPlaceholder": "e.g. 3",
+        "floor": "Floor",
+        "floorPlaceholder": "e.g. 2",
+        "totalFloors": "Total floors",
+        "totalFloorsPlaceholder": "e.g. 7",
+        "yearBuilt": "Year built",
+        "yearBuiltPlaceholder": "e.g. 1995",
+        "description": "Property description",
+        "descriptionPlaceholder": "Describe the property, its features and amenities…",
+        "price": "Asking price (€)",
+        "priceSalePlaceholder": "e.g. 250000",
+        "priceRentPlaceholder": "Monthly rent, e.g. 800",
+        "priceNegotiable": "Price is negotiable",
+        "contactName": "Name",
+        "contactNamePlaceholder": "Your full name",
+        "contactPhone": "Phone",
+        "contactPhonePlaceholder": "+421 9XX XXX XXX",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "you@email.com"
+      },
+      "transactionOptions": {
+        "sale": "Sale",
+        "rent": "Rent"
+      },
+      "propertyOptions": {
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "commercial": "Commercial"
+      },
+      "photos": {
+        "intro": "Upload photos (5 minimum, 30 maximum recommended).",
+        "cta": "Click or drag photos here",
+        "formats": "JPG, PNG, WEBP · up to 10 MB each",
+        "selected_one": "✓ {count} photo selected",
+        "selected_other": "✓ {count} photos selected"
+      },
+      "summary": {
+        "type": "Type",
+        "location": "Location",
+        "area": "Area",
+        "rooms": "Rooms",
+        "price": "Price",
+        "photos": "Photos",
+        "negotiable": "(negotiable)"
+      },
+      "terms": {
+        "label": "I agree to the {termsLink} and the {privacyLink}.",
+        "termsLink": "terms of use",
+        "privacyLink": "privacy policy"
+      }
     },
     "listings": {
       "title": "Összes ingatlan",

@@ -5,11 +5,14 @@
  * Screen-map: docs/screens/reality/sell.md
  *
  * 5-step wizard: Type+location → Details → Photos → Price → Contact+summary
+ *
+ * All user-facing strings come from `pages.sell.*` in `messages/<locale>.json`.
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
-import { INITIAL_FORM_DATA, PROPERTY_TYPE_OPTIONS, SELL_STEPS, type SellFormData } from './_mock';
+import { INITIAL_FORM_DATA, PROPERTY_TYPES, SELL_STEPS, type SellFormData } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
 // TODO: replace file upload with @ppt/ui-kit/FileUpload once available
@@ -80,7 +83,16 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontWeight: 600,
+  color: 'var(--ppt-fg-primary)',
+  marginBottom: 6,
+  fontSize: '0.9375rem',
+};
+
 export default function SellPage() {
+  const t = useTranslations('pages.sell');
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SellFormData>(INITIAL_FORM_DATA);
   const [submitted, setSubmitted] = useState(false);
@@ -88,6 +100,7 @@ export default function SellPage() {
   const update = (patch: Partial<SellFormData>) => setForm((f) => ({ ...f, ...patch }));
 
   const currentStepInfo = SELL_STEPS[step - 1];
+  const currentStepTitle = currentStepInfo ? t(`steps.${currentStepInfo.key}.title`) : '';
 
   if (submitted) {
     return (
@@ -120,10 +133,10 @@ export default function SellPage() {
                 marginBottom: 12,
               }}
             >
-              Váš inzerát bol odoslaný!
+              {t('submittedTitle')}
             </h1>
             <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28 }}>
-              Po overení bude zverejnený do 2 hodín.
+              {t('submittedBody')}
             </p>
             <button
               type="button"
@@ -142,7 +155,7 @@ export default function SellPage() {
                 cursor: 'pointer',
               }}
             >
-              Pridať ďalší inzerát
+              {t('submittedCta')}
             </button>
           </div>
         </main>
@@ -182,12 +195,16 @@ export default function SellPage() {
                 margin: '0 0 6px',
               }}
             >
-              Pridať inzerát
+              {t('title')}
             </h1>
             <p
               style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 28, fontSize: '0.9375rem' }}
             >
-              Krok {step} z {SELL_STEPS.length}: {currentStepInfo?.title}
+              {t('stepLabel', {
+                step,
+                total: SELL_STEPS.length,
+                stepTitle: currentStepTitle,
+              })}
             </p>
 
             {/* TODO: replace with @ppt/ui-kit/Stepper once available */}
@@ -197,35 +214,26 @@ export default function SellPage() {
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 8,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Typ transakcie
+                  <label style={{ ...labelStyle, marginBottom: 8 }}>
+                    {t('fields.transactionType')}
                   </label>
-                  {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                   <div style={{ display: 'flex', gap: 10 }}>
-                    {(['sale', 'rent'] as const).map((t) => (
+                    {(['sale', 'rent'] as const).map((tx) => (
                       <button
-                        key={t}
+                        key={tx}
                         type="button"
-                        onClick={() => update({ transactionType: t })}
+                        onClick={() => update({ transactionType: tx })}
                         style={{
                           flex: 1,
                           padding: '12px',
                           borderRadius: 8,
-                          border: `2px solid ${form.transactionType === t ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                          border: `2px solid ${form.transactionType === tx ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                           background:
-                            form.transactionType === t
+                            form.transactionType === tx
                               ? 'var(--ppt-color-primary-light, #dbeafe)'
                               : 'var(--ppt-bg-surface)',
                           color:
-                            form.transactionType === t
+                            form.transactionType === tx
                               ? 'var(--ppt-color-primary, #2563eb)'
                               : 'var(--ppt-fg-secondary)',
                           fontWeight: 600,
@@ -233,68 +241,49 @@ export default function SellPage() {
                           fontSize: '0.9375rem',
                         }}
                       >
-                        {t === 'sale' ? 'Predaj' : 'Prenájom'}
+                        {t(`transactionOptions.${tx}`)}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 8,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Typ nehnuteľnosti
+                  <label style={{ ...labelStyle, marginBottom: 8 }}>
+                    {t('fields.propertyType')}
                   </label>
-                  {/* TODO: replace with @ppt/ui-kit/RadioCards once available */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-                    {PROPERTY_TYPE_OPTIONS.map((opt) => (
+                    {PROPERTY_TYPES.map((value) => (
                       <button
-                        key={opt.value}
+                        key={value}
                         type="button"
-                        onClick={() => update({ propertyType: opt.value })}
+                        onClick={() => update({ propertyType: value })}
                         style={{
                           padding: '12px',
                           borderRadius: 8,
-                          border: `2px solid ${form.propertyType === opt.value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
+                          border: `2px solid ${form.propertyType === value ? 'var(--ppt-color-primary, #2563eb)' : 'var(--ppt-border-default, #e5e7eb)'}`,
                           background:
-                            form.propertyType === opt.value
+                            form.propertyType === value
                               ? 'var(--ppt-color-primary-light, #dbeafe)'
                               : 'var(--ppt-bg-surface)',
                           color:
-                            form.propertyType === opt.value
+                            form.propertyType === value
                               ? 'var(--ppt-color-primary, #2563eb)'
                               : 'var(--ppt-fg-secondary)',
                           fontWeight: 600,
                           cursor: 'pointer',
                         }}
                       >
-                        {opt.label}
+                        {t(`propertyOptions.${value}`)}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 6,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Adresa
-                  </label>
+                  <label style={labelStyle}>{t('fields.address')}</label>
                   <input
                     type="text"
-                    placeholder="Ulica a číslo"
+                    placeholder={t('fields.addressPlaceholder')}
                     value={form.address}
                     onChange={(e) => update({ address: e.target.value })}
                     style={inputStyle}
@@ -302,20 +291,10 @@ export default function SellPage() {
                 </div>
 
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 6,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Mesto / Obec
-                  </label>
+                  <label style={labelStyle}>{t('fields.city')}</label>
                   <input
                     type="text"
-                    placeholder="Napr. Bratislava"
+                    placeholder={t('fields.cityPlaceholder')}
                     value={form.city}
                     onChange={(e) => update({ city: e.target.value })}
                     style={inputStyle}
@@ -327,51 +306,43 @@ export default function SellPage() {
             {/* Step 2: Details */}
             {step === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {[
-                  { key: 'area', label: 'Plocha (m²)', placeholder: 'Napr. 65' },
-                  { key: 'rooms', label: 'Počet izieb', placeholder: 'Napr. 3' },
-                  { key: 'floor', label: 'Poschodie', placeholder: 'Napr. 2' },
-                  { key: 'totalFloors', label: 'Celkový počet poschodí', placeholder: 'Napr. 7' },
-                  { key: 'yearBuilt', label: 'Rok výstavby', placeholder: 'Napr. 1995' },
-                ].map((field) => (
+                {(
+                  [
+                    { key: 'area', labelKey: 'area', placeholderKey: 'areaPlaceholder' },
+                    { key: 'rooms', labelKey: 'rooms', placeholderKey: 'roomsPlaceholder' },
+                    { key: 'floor', labelKey: 'floor', placeholderKey: 'floorPlaceholder' },
+                    {
+                      key: 'totalFloors',
+                      labelKey: 'totalFloors',
+                      placeholderKey: 'totalFloorsPlaceholder',
+                    },
+                    {
+                      key: 'yearBuilt',
+                      labelKey: 'yearBuilt',
+                      placeholderKey: 'yearBuiltPlaceholder',
+                    },
+                  ] as const
+                ).map((field) => (
                   <div key={field.key}>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontWeight: 600,
-                        color: 'var(--ppt-fg-primary)',
-                        marginBottom: 6,
-                        fontSize: '0.9375rem',
-                      }}
-                    >
-                      {field.label}
-                    </label>
+                    <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
                     <input
                       type="number"
-                      placeholder={field.placeholder}
+                      placeholder={t(`fields.${field.placeholderKey}`)}
                       value={form[field.key as keyof SellFormData] as string | number}
                       onChange={(e) =>
-                        update({ [field.key]: e.target.value === '' ? '' : Number(e.target.value) })
+                        update({
+                          [field.key]: e.target.value === '' ? '' : Number(e.target.value),
+                        })
                       }
                       style={inputStyle}
                     />
                   </div>
                 ))}
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 6,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Popis nehnuteľnosti
-                  </label>
+                  <label style={labelStyle}>{t('fields.description')}</label>
                   <textarea
                     rows={5}
-                    placeholder="Opíšte nehnuteľnosť, jej vlastnosti, vybavenie..."
+                    placeholder={t('fields.descriptionPlaceholder')}
                     value={form.description}
                     onChange={(e) => update({ description: e.target.value })}
                     style={{ ...inputStyle, resize: 'vertical' }}
@@ -384,9 +355,8 @@ export default function SellPage() {
             {step === 3 && (
               <div>
                 <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 16 }}>
-                  Nahrajte fotografie (odporúčané min. 5, max. 30).
+                  {t('photos.intro')}
                 </p>
-                {/* TODO: replace with @ppt/ui-kit/FileUpload once available */}
                 <label
                   style={{
                     display: 'flex',
@@ -403,8 +373,8 @@ export default function SellPage() {
                   }}
                 >
                   <span style={{ fontSize: '2.5rem' }}>📷</span>
-                  <span style={{ fontWeight: 600 }}>Kliknite alebo pretiahnite fotografie sem</span>
-                  <span style={{ fontSize: '0.875rem' }}>JPG, PNG, WEBP · max. 10 MB na fotku</span>
+                  <span style={{ fontWeight: 600 }}>{t('photos.cta')}</span>
+                  <span style={{ fontSize: '0.875rem' }}>{t('photos.formats')}</span>
                   <input
                     type="file"
                     multiple
@@ -423,8 +393,9 @@ export default function SellPage() {
                       fontWeight: 500,
                     }}
                   >
-                    ✓ {form.photos.length} {form.photos.length === 1 ? 'fotografia' : 'fotografie'}{' '}
-                    vybraté
+                    {t(form.photos.length === 1 ? 'photos.selected_one' : 'photos.selected_other', {
+                      count: form.photos.length,
+                    })}
                   </p>
                 )}
               </div>
@@ -434,22 +405,14 @@ export default function SellPage() {
             {step === 4 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontWeight: 600,
-                      color: 'var(--ppt-fg-primary)',
-                      marginBottom: 6,
-                      fontSize: '0.9375rem',
-                    }}
-                  >
-                    Požadovaná cena (€)
-                  </label>
+                  <label style={labelStyle}>{t('fields.price')}</label>
                   <input
                     type="number"
-                    placeholder={
-                      form.transactionType === 'rent' ? 'Mesačný nájom napr. 800' : 'Napr. 250000'
-                    }
+                    placeholder={t(
+                      form.transactionType === 'rent'
+                        ? 'fields.priceRentPlaceholder'
+                        : 'fields.priceSalePlaceholder',
+                    )}
                     value={form.price}
                     onChange={(e) =>
                       update({ price: e.target.value === '' ? '' : Number(e.target.value) })
@@ -471,7 +434,7 @@ export default function SellPage() {
                     }}
                   />
                   <span style={{ color: 'var(--ppt-fg-primary)', fontWeight: 500 }}>
-                    Cena je dohodou
+                    {t('fields.priceNegotiable')}
                   </span>
                 </label>
               </div>
@@ -494,61 +457,55 @@ export default function SellPage() {
                   }}
                 >
                   <div>
-                    <strong>Typ:</strong> {form.transactionType === 'sale' ? 'Predaj' : 'Prenájom'}{' '}
-                    · {PROPERTY_TYPE_OPTIONS.find((o) => o.value === form.propertyType)?.label}
+                    <strong>{t('summary.type')}:</strong>{' '}
+                    {t(`transactionOptions.${form.transactionType}`)} ·{' '}
+                    {t(`propertyOptions.${form.propertyType}`)}
                   </div>
                   <div>
-                    <strong>Poloha:</strong> {form.address || '–'}, {form.city || '–'}
+                    <strong>{t('summary.location')}:</strong> {form.address || '–'},{' '}
+                    {form.city || '–'}
                   </div>
                   <div>
-                    <strong>Plocha:</strong> {form.area || '–'} m² · <strong>Izby:</strong>{' '}
-                    {form.rooms || '–'}
+                    <strong>{t('summary.area')}:</strong> {form.area || '–'} m² ·{' '}
+                    <strong>{t('summary.rooms')}:</strong> {form.rooms || '–'}
                   </div>
                   <div>
-                    <strong>Cena:</strong>{' '}
+                    <strong>{t('summary.price')}:</strong>{' '}
                     {form.price ? `${Number(form.price).toLocaleString('sk-SK')} €` : '–'}{' '}
-                    {form.priceNegotiable ? '(dohodou)' : ''}
+                    {form.priceNegotiable ? t('summary.negotiable') : ''}
                   </div>
                   <div>
-                    <strong>Fotografie:</strong> {form.photos.length}
+                    <strong>{t('summary.photos')}:</strong> {form.photos.length}
                   </div>
                 </div>
 
-                {[
-                  {
-                    key: 'contactName',
-                    label: 'Meno',
-                    type: 'text',
-                    placeholder: 'Vaše meno a priezvisko',
-                  },
-                  {
-                    key: 'contactPhone',
-                    label: 'Telefón',
-                    type: 'tel',
-                    placeholder: '+421 9XX XXX XXX',
-                  },
-                  {
-                    key: 'contactEmail',
-                    label: 'E-mail',
-                    type: 'email',
-                    placeholder: 'vas@email.sk',
-                  },
-                ].map((field) => (
+                {(
+                  [
+                    {
+                      key: 'contactName',
+                      labelKey: 'contactName',
+                      placeholderKey: 'contactNamePlaceholder',
+                      inputType: 'text',
+                    },
+                    {
+                      key: 'contactPhone',
+                      labelKey: 'contactPhone',
+                      placeholderKey: 'contactPhonePlaceholder',
+                      inputType: 'tel',
+                    },
+                    {
+                      key: 'contactEmail',
+                      labelKey: 'contactEmail',
+                      placeholderKey: 'contactEmailPlaceholder',
+                      inputType: 'email',
+                    },
+                  ] as const
+                ).map((field) => (
                   <div key={field.key}>
-                    <label
-                      style={{
-                        display: 'block',
-                        fontWeight: 600,
-                        color: 'var(--ppt-fg-primary)',
-                        marginBottom: 6,
-                        fontSize: '0.9375rem',
-                      }}
-                    >
-                      {field.label}
-                    </label>
+                    <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
                     <input
-                      type={field.type}
-                      placeholder={field.placeholder}
+                      type={field.inputType}
+                      placeholder={t(`fields.${field.placeholderKey}`)}
                       value={form[field.key as keyof SellFormData] as string}
                       onChange={(e) => update({ [field.key]: e.target.value })}
                       style={inputStyle}
@@ -577,15 +534,18 @@ export default function SellPage() {
                       lineHeight: 1.5,
                     }}
                   >
-                    Súhlasím s{' '}
-                    <a href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
-                      podmienkami používania
-                    </a>{' '}
-                    a{' '}
-                    <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
-                      ochranou osobných údajov
-                    </a>
-                    .
+                    {t.rich('terms.label', {
+                      termsLink: (chunks) => (
+                        <a href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                          {chunks}
+                        </a>
+                      ),
+                      privacyLink: (chunks) => (
+                        <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                          {chunks}
+                        </a>
+                      ),
+                    })}
                   </span>
                 </label>
               </div>
@@ -609,7 +569,7 @@ export default function SellPage() {
                     color: 'var(--ppt-fg-primary)',
                   }}
                 >
-                  ← Späť
+                  {t('back')}
                 </button>
               )}
               <div style={{ flex: 1 }} />
@@ -628,7 +588,7 @@ export default function SellPage() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Ďalej →
+                  {t('next')}
                 </button>
               ) : (
                 <button
@@ -648,7 +608,7 @@ export default function SellPage() {
                     fontSize: '0.9375rem',
                   }}
                 >
-                  Zverejniť inzerát
+                  {t('publish')}
                 </button>
               )}
             </div>
@@ -673,7 +633,7 @@ export default function SellPage() {
                 margin: '0 0 16px',
               }}
             >
-              Postup
+              {t('asideTitle')}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {SELL_STEPS.map((s) => (
@@ -716,10 +676,10 @@ export default function SellPage() {
                         fontSize: '0.875rem',
                       }}
                     >
-                      {s.title}
+                      {t(`steps.${s.key}.title`)}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--ppt-fg-muted, #9ca3af)' }}>
-                      {s.description}
+                      {t(`steps.${s.key}.description`)}
                     </div>
                   </div>
                 </div>
