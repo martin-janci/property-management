@@ -17,7 +17,16 @@ export default function PrivacyPage() {
       }}
     >
       <Header />
-      <main style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
+      <main
+        style={{
+          flex: 1,
+          width: '100%',
+          maxWidth: 800,
+          margin: '0 auto',
+          padding: '48px 24px',
+          boxSizing: 'border-box',
+        }}
+      >
         <h1
           style={{
             fontSize: '2rem',
