@@ -100,8 +100,14 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: bootstrap must inline
           dangerouslySetInnerHTML={{
+            // Validate the stored value before applying it — a corrupted
+            // or legacy localStorage entry (e.g. 'system', 'auto', or any
+            // typo from a manual edit) would otherwise become an invalid
+            // data-color-scheme attribute and miss every [data-color-scheme=dark]
+            // CSS selector, leaving the page in a broken half-light state.
             __html:
               "(function(){try{var s=localStorage.getItem('ppt-color-scheme');" +
+              "if(s!=='light'&&s!=='dark')s=null;" +
               "var m=s||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');" +
               "document.documentElement.setAttribute('data-color-scheme',m);}catch(e){}})();",
           }}

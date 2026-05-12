@@ -21,9 +21,29 @@ export function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Roving highlight in the open menu — starts on the currently-active
+  // locale and moves with Arrow keys. aria-activedescendant is set on the
+  // listbox so the assistive-tech focus indicator follows it without us
+  // having to move DOM focus around.
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.max(
+      0,
+      locales.findIndex((l) => l === locale)
+    )
+  );
   const wrapRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Close on outside click + Escape (mouse + keyboard, no library)
+  // Re-sync the highlight to the active locale whenever it changes from
+  // outside (e.g. URL-driven locale swap).
+  useEffect(() => {
+    const i = locales.findIndex((l) => l === locale);
+    if (i >= 0) setActiveIndex(i);
+  }, [locale]);
+
+  // Keyboard navigation while the menu is open. Listening on the document
+  // because the listbox itself doesn't take focus (the trigger keeps it,
+  // per APG listbox-with-aria-activedescendant pattern).
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
@@ -32,7 +52,32 @@ export function LanguageSwitcher() {
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((i) => Math.min(locales.length - 1, i + 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((i) => Math.max(0, i - 1));
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setActiveIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        setActiveIndex(locales.length - 1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setActiveIndex((i) => {
+          const target = locales[i];
+          if (target) choose(target);
+          return i;
+        });
+      }
     };
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
@@ -40,23 +85,40 @@ export function LanguageSwitcher() {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
+    // choose isn't in deps because the underlying functions (router,
+    // pathname) are referentially-stable from next-intl across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const choose = (next: Locale) => {
     setOpen(false);
+    triggerRef.current?.focus();
     if (next === locale) return;
     router.replace(pathname, { locale: next });
+  };
+
+  const handleTriggerKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setOpen(true);
+    }
   };
 
   return (
     <div className="lang-wrap" ref={wrapRef}>
       <button
+        ref={triggerRef}
         type="button"
         className="lang-trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Language: ${localeNames[locale]}`}
+        // aria-activedescendant points at the highlighted option while
+        // the menu is open. Lives on the trigger (which keeps focus) per
+        // APG combobox pattern.
+        aria-activedescendant={open ? `lang-opt-${locales[activeIndex]}` : undefined}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={handleTriggerKey}
       >
         {/* Globe icon — 16px, stroke 2 (Feather/Lucide style). Explicit
             width/height attributes keep it sized even before CSS arrives. */}
@@ -98,14 +160,22 @@ export function LanguageSwitcher() {
         // on a semantic list element. ARIA Combobox pattern works with
         // plain div containers.
         <div className="lang-menu" role="listbox" aria-label="Select language">
-          {locales.map((loc) => (
+          {locales.map((loc, idx) => (
             <button
               key={loc}
+              id={`lang-opt-${loc}`}
               type="button"
               role="option"
               aria-selected={loc === locale}
-              className={`lang-item ${loc === locale ? 'active' : ''}`}
+              className={[
+                'lang-item',
+                loc === locale ? 'active' : '',
+                idx === activeIndex ? 'highlight' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               onClick={() => choose(loc)}
+              onMouseEnter={() => setActiveIndex(idx)}
             >
               <span className="flag" aria-hidden="true">
                 {localeFlags[loc]}
@@ -207,7 +277,8 @@ export function LanguageSwitcher() {
           text-align: left;
           transition: background var(--ppt-transition-fast);
         }
-        .lang-item:hover {
+        .lang-item:hover,
+        .lang-item.highlight {
           background: var(--ppt-bg-subtle);
         }
         .lang-item.active {

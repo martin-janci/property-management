@@ -70,7 +70,19 @@ export function FieldSelect({
   const wrapRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Outside click + Escape — same pattern as LanguageSwitcher.
+  // Keep activeIndex pointed at the currently-selected option whenever
+  // `value` or `options` change from the parent — otherwise the highlight
+  // can drift after a controlled-value swap (reopening the menu).
+  useEffect(() => {
+    const i = options.findIndex((o) => o.value === value);
+    if (i >= 0) setActiveIndex(i);
+  }, [value, options]);
+
+  // Listbox uses a document-level keydown listener instead of an onKeyDown
+  // attached to the menu element, because the listbox never receives focus
+  // (the trigger button keeps focus while the menu is open, per APG
+  // listbox/combobox pattern when no edit field is used). Arrow keys move
+  // the highlight, Enter/Space commits, Escape closes.
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
@@ -80,8 +92,35 @@ export function FieldSelect({
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
         setOpen(false);
         triggerRef.current?.focus();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((i) => Math.min(options.length - 1, i + 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((i) => Math.max(0, i - 1));
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setActiveIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        setActiveIndex(options.length - 1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        // Use the latest activeIndex from state at fire time
+        e.preventDefault();
+        setActiveIndex((i) => {
+          const opt = options[i];
+          if (opt && !opt.disabled) {
+            onChange(opt.value);
+            setOpen(false);
+            triggerRef.current?.focus();
+          }
+          return i;
+        });
       }
     };
     document.addEventListener('mousedown', onClick);
@@ -90,7 +129,7 @@ export function FieldSelect({
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, options, onChange]);
 
   const selected = options.find((o) => o.value === value);
 
@@ -101,24 +140,6 @@ export function FieldSelect({
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setOpen((v) => !v);
-    }
-  };
-
-  const handleListKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.min(options.length - 1, i + 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveIndex((i) => Math.max(0, i - 1));
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      const opt = options[activeIndex];
-      if (opt && !opt.disabled) {
-        onChange(opt.value);
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
     }
   };
 
@@ -154,6 +175,12 @@ export function FieldSelect({
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={error || helperText ? helperId : undefined}
         aria-required={required || undefined}
+        // aria-activedescendant lives on the focusable trigger (not the
+        // listbox) because focus stays here when the menu is open — that's
+        // the APG combobox-with-aria-activedescendant variant.
+        aria-activedescendant={
+          open && options[activeIndex] ? `${fieldId}-opt-${options[activeIndex].value}` : undefined
+        }
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={handleTriggerKey}
@@ -183,21 +210,19 @@ export function FieldSelect({
       <label htmlFor={fieldId}>{label}</label>
       {/* Hidden native input so the value is included in form submissions
           without extra plumbing in consumers. */}
-      <input type="hidden" name={name} value={value} />
+      {/* Disabled fields shouldn't participate in form submission — pass
+          through the disabled prop so the value is excluded when the
+          form is submitted. */}
+      <input type="hidden" name={name} value={value} disabled={disabled} />
       {open && (
         // <div role="listbox"> rather than <ul role="listbox"> per ARIA
         // Combobox pattern — biome rejects the listbox role on semantic
         // list elements (noNoninteractiveElementToInteractiveRole).
-        <div
-          id={listboxId}
-          className="field-select-menu"
-          role="listbox"
-          aria-labelledby={fieldId}
-          onKeyDown={handleListKey}
-        >
+        <div id={listboxId} className="field-select-menu" role="listbox" aria-labelledby={fieldId}>
           {options.map((opt, idx) => (
             <button
               key={opt.value}
+              id={`${fieldId}-opt-${opt.value}`}
               type="button"
               role="option"
               aria-selected={opt.value === value}

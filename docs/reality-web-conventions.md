@@ -44,9 +44,11 @@ paired, never inverted"). Don't introduce new badges that read a raw
 ### Verifying
 
 ```bash
-# Anything that looks like a hex color in src/ should be inside a
-# `var(... fallback)` or inside the tokens file.
-grep -rn "background:\s*#[0-9a-fA-F]\{3,6\}" src/ | grep -v "var(--"
+# Run from the repo root. Anything that looks like a hex color in the
+# reality-web source should be inside a `var(... fallback)` or inside
+# the tokens file.
+grep -rn "background:\s*#[0-9a-fA-F]\{3,6\}" frontend/apps/reality-web/src/ \
+  | grep -v "var(--"
 ```
 
 ## 2. i18n — every locale must have every key

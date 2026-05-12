@@ -74,14 +74,19 @@ export function isColorScheme(v: unknown): v is ColorScheme {
 }
 
 /**
- * Read the user's stored preference. `null` (not 'system') means "no
- * explicit choice yet" so callers can distinguish the default-system case
- * from the explicit-system case for UI affordances.
+ * Read the stored color-scheme preference.
+ *
+ * Storage uses an absent key (returns `null`) to mean "follow system",
+ * because the inline bootstrap script needs that absence-signal to fall
+ * through to `prefers-color-scheme` on first paint. Returns the literal
+ * `'light'` or `'dark'` only when the user made an explicit non-system
+ * choice. `'system'` is therefore never a return value from this function
+ * — callers UI-bind it to `null`.
  */
-export function getColorScheme(): ColorScheme | null {
+export function getColorScheme(): 'light' | 'dark' | null {
   try {
     const v = localStorage.getItem(SCHEME_KEY);
-    if (isColorScheme(v)) return v;
+    if (v === 'light' || v === 'dark') return v;
   } catch {}
   return null;
 }

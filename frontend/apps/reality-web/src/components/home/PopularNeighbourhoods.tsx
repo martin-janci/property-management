@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '../../i18n/routing';
 
 type Neighbourhood = {
-  /** URL-safe id used as the React key and the gradient `data-tone` selector. */
+  /** URL-safe id, used as the React key. */
   id: string;
   /** District label (translated client-side). */
   nameKey: string;
@@ -31,6 +31,15 @@ type Neighbourhood = {
   tone: { from: string; to: string };
 };
 
+/**
+ * The `tone` hex values intentionally bypass the brand-token palette: they
+ * are decorative district identifiers (a stand-in for real photos, which
+ * the listings API doesn't expose yet) and have no theme-driven meaning.
+ * Light-on-blue + dark-overlay is the same composition in both themes, so
+ * the colors don't need a dark-mode pairing. If this set grows beyond a
+ * handful of districts, move it to `--ppt-tone-*` tokens or a generated
+ * palette from the district name. Until then, inline literals are fine.
+ */
 const NEIGHBOURHOODS: Neighbourhood[] = [
   {
     id: 'ruzinov',
@@ -111,8 +120,10 @@ export function PopularNeighbourhoods() {
               <div
                 className="img"
                 style={{
-                  // CSS-vars feed `linear-gradient(135deg, var(--a), var(--b))`
-                  // — picked up by the ::after overlay below.
+                  // CSS-vars are read by the .img background-image rule
+                  // below (linear-gradient(135deg, var(--a), var(--b))).
+                  // The ::after pseudo on the same element layers a dark
+                  // bottom overlay on top — that one uses fixed colors.
                   ['--a' as string]: n.tone.from,
                   ['--b' as string]: n.tone.to,
                 }}

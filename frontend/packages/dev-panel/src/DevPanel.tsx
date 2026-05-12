@@ -27,9 +27,10 @@ export const DevPanel: React.FC<DevPanelProps> = ({
   onSnapshotState,
 }) => {
   const [mode, setLocalMode] = useState<ApiMode>(() => getMode(defaultMode));
-  // null = no explicit choice (== 'system' fallback). We render the radio as
-  // 'system' in that case but keep the distinction in storage so the inline
-  // bootstrap can fall through to `prefers-color-scheme` cleanly.
+  // getColorScheme() returns `null` when no explicit preference is stored
+  // (the inline bootstrap then falls through to prefers-color-scheme).
+  // The select UI surfaces that as 'system' so the user can choose
+  // between the three states; choosing 'system' removes the key again.
   const [scheme, setLocalScheme] = useState<ColorScheme>(() => getColorScheme() ?? 'system');
 
   const applyMode = (m: ApiMode) => {

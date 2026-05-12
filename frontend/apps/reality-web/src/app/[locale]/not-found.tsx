@@ -9,10 +9,10 @@
  * segment so the request's locale is already in scope.
  */
 
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { CSSProperties } from 'react';
 import { StateView } from '@/components/states';
+import { Link } from '@/i18n/routing';
 
 const linkStyle: CSSProperties = {
   padding: '10px 20px',

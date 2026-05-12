@@ -210,7 +210,9 @@ export function Header() {
             className="nav-link-mobile"
             onClick={() => setShowMobileMenu(false)}
           >
-            {t('search.sale')}
+            {/* Desktop uses search.buy ("Kúpiť") for the same action.
+                Mobile keeps that wording aligned. */}
+            {t('search.buy')}
           </Link>
           <Link
             href="/listings?transactionType=rent"
