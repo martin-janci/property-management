@@ -5,6 +5,7 @@
  * Screen-map: docs/screens/reality/cookies.md
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { COOKIE_SECTIONS, MOCK_COOKIES } from './_mock';
@@ -38,6 +39,7 @@ const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 export default function CookiesPage() {
+  const t = useTranslations('pages.cookies');
   const [consentBannerOpen, setConsentBannerOpen] = useState(false);
 
   return (
@@ -63,10 +65,10 @@ export default function CookiesPage() {
             marginBottom: 8,
           }}
         >
-          Zásady používania cookies
+          {t('title')}
         </h1>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 40 }}>
-          Posledná aktualizácia: 1. januára 2025
+          {t('lastUpdated')}
         </p>
 
         {/* §§ text sections */}

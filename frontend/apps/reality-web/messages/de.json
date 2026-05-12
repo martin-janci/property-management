@@ -291,7 +291,8 @@
         "subtitle": "Werden Sie Teil unseres Teams.",
         "title": "Bauen wir einen Immobilienmarkt, der Sinn macht."
       },
-      "title": "Karriere"
+      "title": "Karriere",
+      "h1": "Let's build a real estate market that makes sense."
     },
     "contact": {
       "description": "Für Support oder Geschäftsanfragen kontaktieren Sie uns unter",
@@ -300,19 +301,26 @@
     },
     "cookies": {
       "reopen": "Cookie-Einstellungen erneut öffnen",
-      "title": "Cookie-Richtlinie"
+      "title": "Cookie-Richtlinie",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
     },
     "forAgents": {
       "features": "Was Sie erhalten",
       "pricing": "Preispläne",
       "subtitle": "Verkaufen Sie mehr mit Reality Portal",
-      "title": "Für Makler & Agenturen"
+      "title": "Für Makler & Agenturen",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategorien",
       "faq": "Häufig gestellte Fragen",
       "searchPlaceholder": "Im Hilfe-Center suchen...",
-      "title": "Hilfe-Center"
+      "title": "Hilfe-Center",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
     },
     "journal": {
       "editorsPicks": "Redaktionsauswahl",
@@ -321,7 +329,13 @@
       "mostRead": "Meistgelesen",
       "newsletter": "Newsletter",
       "subtitle": "Analysen, Tipps und Neuigkeiten aus der Immobilienwelt.",
-      "title": "Reality Journal"
+      "title": "Reality Journal",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Änderungen speichern",
@@ -331,7 +345,8 @@
     "priceMap": {
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",
       "subtitle": "Bratislava – Übersicht",
-      "title": "Preiskarte"
+      "title": "Preiskarte",
+      "h1": "Price map"
     },
     "privacy": {
       "description": "Wir sind verpflichtet, Ihre personenbezogenen Daten gemäß DSGVO und geltendem Recht zu schützen. Die vollständigen Datenschutzbestimmungen werden hier veröffentlicht.",

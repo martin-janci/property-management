@@ -291,7 +291,8 @@
         "subtitle": "Připojte se k našemu týmu.",
         "title": "Pojďme budovat realitní trh, který dává smysl."
       },
-      "title": "Kariéra"
+      "title": "Kariéra",
+      "h1": "Let's build a real estate market that makes sense."
     },
     "contact": {
       "description": "Pro podporu nebo obchodní dotazy nás kontaktujte na",
@@ -300,19 +301,26 @@
     },
     "cookies": {
       "reopen": "Znovu otevřít nastavení cookies",
-      "title": "Zásady používání cookies"
+      "title": "Zásady používání cookies",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
     },
     "forAgents": {
       "features": "Co získáte",
       "pricing": "Cenové plány",
       "subtitle": "Prodávejte více s Reality Portálem",
-      "title": "Pro makléře a agentury"
+      "title": "Pro makléře a agentury",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategorie",
       "faq": "Často kladené otázky",
       "searchPlaceholder": "Vyhledávejte v centru nápovědy...",
-      "title": "Centrum nápovědy"
+      "title": "Centrum nápovědy",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
     },
     "journal": {
       "editorsPicks": "Výběr redakce",
@@ -321,7 +329,13 @@
       "mostRead": "Nejvíce čtené",
       "newsletter": "Odběr novinek",
       "subtitle": "Analýzy, tipy a novinky ze světa nemovitostí.",
-      "title": "Reality Žurnál"
+      "title": "Reality Žurnál",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Uložit změny",
@@ -331,7 +345,8 @@
     "priceMap": {
       "clickHint": "Klikněte na čtvrť pro detailní statistiky.",
       "subtitle": "Bratislava – přehled",
-      "title": "Mapa cen"
+      "title": "Mapa cen",
+      "h1": "Price map"
     },
     "privacy": {
       "description": "Zavazujeme se chránit vaše osobní údaje v souladu s GDPR a platnými zákony. Úplné podmínky ochrany osobních údajů budou zveřejněny zde.",

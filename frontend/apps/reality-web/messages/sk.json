@@ -291,7 +291,8 @@
         "subtitle": "Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a prenajímajú nehnuteľnosti.",
         "title": "Stavajme realitný trh, ktorý dáva zmysel."
       },
-      "title": "Kariéra"
+      "title": "Kariéra",
+      "h1": "Stavajme realitný trh, ktorý dáva zmysel."
     },
     "contact": {
       "description": "Pre podporu alebo obchodné otázky nás kontaktujte na",
@@ -300,19 +301,26 @@
     },
     "cookies": {
       "reopen": "Znova otvoriť nastavenia cookies",
-      "title": "Zásady používania cookies"
+      "title": "Zásady používania cookies",
+      "subtitle": "Zásady používania cookies",
+      "lastUpdated": "Posledná aktualizácia: 1. januára 2025"
     },
     "forAgents": {
       "features": "Čo získate",
       "pricing": "Cenové plány",
       "subtitle": "Predávajte viac s Reality Portálom",
-      "title": "Pre maklérov & agentúry"
+      "title": "Pre maklérov & agentúry",
+      "heroTitle": "Predávajte viac s Reality Portal",
+      "heroBadge": "Pre maklérov & agentúry",
+      "heroIntro": "Nástroje, analytika a dosah na milióny kupujúcich a nájomníkov na jednom mieste."
     },
     "help": {
       "categories": "Kategórie",
       "faq": "Často kladené otázky",
       "searchPlaceholder": "Hľadajte v centre pomoci...",
-      "title": "Centrum pomoci"
+      "title": "Centrum pomoci",
+      "subtitle": "Ako vám môžeme pomôcť?",
+      "intro": "Prehľadajte naše centrum pomoci alebo nás kontaktujte priamo."
     },
     "journal": {
       "editorsPicks": "Výber redakcie",
@@ -321,7 +329,13 @@
       "mostRead": "Najviac čítané",
       "newsletter": "Odber noviniek",
       "subtitle": "Analýzy, tipy a správy zo sveta nehnuteľností.",
-      "title": "Reality Žurnál"
+      "title": "Reality Žurnál",
+      "readingTime": "{min} min čítania",
+      "newsletterIntro": "Dostávajte najnovšie analýzy a tipy priamo do vašej schránky.",
+      "newsletterSuccess": "✅ Ste prihlásení na odber!",
+      "newsletterEmailPlaceholder": "vas@email.sk",
+      "newsletterSubmit": "Prihlásiť sa",
+      "newsletterTitle": "Odber noviniek"
     },
     "listingEdit": {
       "save": "Uložiť zmeny",
@@ -331,7 +345,8 @@
     "priceMap": {
       "clickHint": "Kliknite na mestskú štvrť pre detailné štatistiky.",
       "subtitle": "Bratislava – Prehľad",
-      "title": "Mapa cien"
+      "title": "Mapa cien",
+      "h1": "Mapa cien"
     },
     "privacy": {
       "description": "Zaviazali sme sa chrániť vaše osobné údaje v súlade s GDPR a platnými zákonmi. Úplné podmienky ochrany súkromia budú zverejnené tu.",

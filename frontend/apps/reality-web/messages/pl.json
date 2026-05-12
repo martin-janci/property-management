@@ -304,23 +304,31 @@
         "subtitle": "Dołącz do naszego zespołu i pomóż zmienić sposób, w jaki ludzie kupują, sprzedają i wynajmują nieruchomości.",
         "title": "Zbudujmy sensowny rynek nieruchomości."
       },
-      "title": "Kariera"
+      "title": "Kariera",
+      "h1": "Let's build a real estate market that makes sense."
     },
     "cookies": {
       "reopen": "Otwórz ponownie ustawienia cookie",
-      "title": "Polityka cookie"
+      "title": "Polityka cookie",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
     },
     "forAgents": {
       "features": "Co zyskujesz",
       "pricing": "Plany cenowe",
       "subtitle": "Sprzedawaj więcej z Reality Portal",
-      "title": "Dla agentów i agencji"
+      "title": "Dla agentów i agencji",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategorie",
       "faq": "Najczęściej zadawane pytania",
       "searchPlaceholder": "Szukaj w pomocy...",
-      "title": "Centrum pomocy"
+      "title": "Centrum pomocy",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
     },
     "journal": {
       "editorsPicks": "Wybór redakcji",
@@ -329,7 +337,13 @@
       "mostRead": "Najczęściej czytane",
       "newsletter": "Newsletter",
       "subtitle": "Analizy, porady i wiadomości ze świata nieruchomości.",
-      "title": "Reality magazyn"
+      "title": "Reality magazyn",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Zapisz zmiany",
@@ -339,7 +353,8 @@
     "priceMap": {
       "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",
       "subtitle": "Bratysława – przegląd",
-      "title": "Mapa cen"
+      "title": "Mapa cen",
+      "h1": "Price map"
     },
     "profile": {
       "tabs": {

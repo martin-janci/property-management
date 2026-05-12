@@ -304,23 +304,31 @@
         "subtitle": "Csatlakozz a csapatunkhoz és segíts megváltoztatni az ingatlanvásárlás, -eladás és -bérlés módját.",
         "title": "Építsünk együtt értelmes ingatlanpiacot."
       },
-      "title": "Karrier"
+      "title": "Karrier",
+      "h1": "Let's build a real estate market that makes sense."
     },
     "cookies": {
       "reopen": "Cookie beállítások újranyitása",
-      "title": "Sütik kezelése"
+      "title": "Sütik kezelése",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
     },
     "forAgents": {
       "features": "Amit kapsz",
       "pricing": "Csomagok",
       "subtitle": "Adj el többet a Reality Portállal",
-      "title": "Ügynököknek és irodáknak"
+      "title": "Ügynököknek és irodáknak",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategóriák",
       "faq": "Gyakori kérdések",
       "searchPlaceholder": "Keress a súgóban...",
-      "title": "Súgóközpont"
+      "title": "Súgóközpont",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
     },
     "journal": {
       "editorsPicks": "Szerkesztői ajánlás",
@@ -329,7 +337,13 @@
       "mostRead": "Legolvasottabb",
       "newsletter": "Hírlevél",
       "subtitle": "Elemzések, tippek és hírek az ingatlanvilágból.",
-      "title": "Reality magazin"
+      "title": "Reality magazin",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Mentés",
@@ -339,7 +353,8 @@
     "priceMap": {
       "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
       "subtitle": "Pozsony – áttekintés",
-      "title": "Ártérkép"
+      "title": "Ártérkép",
+      "h1": "Price map"
     },
     "profile": {
       "tabs": {

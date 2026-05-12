@@ -5,9 +5,15 @@
  * Screen-map: docs/screens/reality/journal.md
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { EDITORS_PICKS, MOCK_ARTICLES, MOST_READ } from './_mock';
+
+// NOTE: MOCK_ARTICLES (titles, excerpts) are placeholder Slovak strings.
+// Once real journal content lands via CMS / reality-server, those records
+// will carry their own locale field. The page chrome (h1, section headings,
+// newsletter form) is fully localised via pages.journal.*.
 
 // TODO: replace article cards with @ppt/ui-kit/Card once available
 
@@ -95,6 +101,7 @@ function ArticleCard({
 }
 
 export default function JournalPage() {
+  const t = useTranslations('pages.journal');
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -140,11 +147,9 @@ export default function JournalPage() {
               marginBottom: 8,
             }}
           >
-            Reality Žurnál
+            {t('title')}
           </h1>
-          <p style={{ color: 'var(--ppt-fg-secondary)' }}>
-            Analýzy, tipy a správy zo sveta nehnuteľností.
-          </p>
+          <p style={{ color: 'var(--ppt-fg-secondary)' }}>{t('subtitle')}</p>
         </div>
 
         <div className="journal-grid">
@@ -163,7 +168,7 @@ export default function JournalPage() {
                     marginBottom: 16,
                   }}
                 >
-                  Titulný príbeh
+                  {t('featured')}
                 </h2>
                 <ArticleCard article={featured} variant="featured" />
               </section>
@@ -179,7 +184,7 @@ export default function JournalPage() {
                   marginBottom: 20,
                 }}
               >
-                Najnovšie články
+                {t('latest')}
               </h2>
               <div
                 style={{
@@ -206,15 +211,11 @@ export default function JournalPage() {
               }}
             >
               <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: 8 }}>
-                Odber noviniek
+                {t('newsletterTitle')}
               </h2>
-              <p style={{ opacity: 0.85, marginBottom: 20 }}>
-                Dostávajte najnovšie analýzy a tipy priamo do vašej schránky.
-              </p>
+              <p style={{ opacity: 0.85, marginBottom: 20 }}>{t('newsletterIntro')}</p>
               {subscribed ? (
-                <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>
-                  ✅ Ste prihlásení na odber!
-                </p>
+                <p style={{ fontWeight: 600, fontSize: '1.0625rem' }}>{t('newsletterSuccess')}</p>
               ) : (
                 <form
                   onSubmit={handleSubscribe}
@@ -223,7 +224,7 @@ export default function JournalPage() {
                   <input
                     type="email"
                     required
-                    placeholder="vas@email.sk"
+                    placeholder={t('newsletterEmailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={{
@@ -249,7 +250,7 @@ export default function JournalPage() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Prihlásiť sa
+                    {t('newsletterSubmit')}
                   </button>
                 </form>
               )}
@@ -265,7 +266,7 @@ export default function JournalPage() {
                   marginBottom: 20,
                 }}
               >
-                Výber redakcie
+                {t('editorsPicks')}
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {editorsPicks.map((article) => (
@@ -285,7 +286,7 @@ export default function JournalPage() {
                 marginBottom: 16,
               }}
             >
-              Najviac čítané
+              {t('mostRead')}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {mostRead.map((article, idx) => (
@@ -323,7 +324,7 @@ export default function JournalPage() {
                         marginTop: 4,
                       }}
                     >
-                      {article.readMin} min čítania
+                      {t('readingTime', { min: article.readMin })}
                     </div>
                   </div>
                 </div>

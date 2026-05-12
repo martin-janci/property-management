@@ -5,6 +5,7 @@
  * Screen-map: docs/screens/reality/help.md
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_CATEGORIES, MOCK_FAQ } from './_mock';
@@ -13,6 +14,7 @@ import { MOCK_CATEGORIES, MOCK_FAQ } from './_mock';
 // TODO: replace category tiles with @ppt/ui-kit/Card once available
 
 export default function HelpPage() {
+  const t = useTranslations('pages.help');
   const [query, setQuery] = useState('');
   const [openFaq, setOpenFaq] = useState<string | null>(null);
 
@@ -53,15 +55,13 @@ export default function HelpPage() {
               marginBottom: 8,
             }}
           >
-            Ako vám môžeme pomôcť?
+            {t('subtitle')}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,.8)', marginBottom: 28 }}>
-            Prehľadajte naše centrum pomoci alebo nás kontaktujte priamo.
-          </p>
+          <p style={{ color: 'rgba(255,255,255,.8)', marginBottom: 28 }}>{t('intro')}</p>
           <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
             <input
               type="search"
-              placeholder="Hľadajte v centre pomoci..."
+              placeholder={t('searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               data-i18n="pages.help.searchPlaceholder"
