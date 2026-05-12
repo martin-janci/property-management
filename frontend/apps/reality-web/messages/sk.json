@@ -371,6 +371,14 @@
     "terms": {
       "description": "Používaním Reality Portálu súhlasíte s našimi podmienkami a ustanoveniami. Úplné podmienky používania budú zverejnené tu.",
       "title": "Podmienky používania"
+    },
+    "listings": {
+      "title": "Všetky nehnuteľnosti",
+      "description": "Prehľadajte všetky ponuky nehnuteľností na Slovensku, v Českej republike a ďalej."
+    },
+    "favorites": {
+      "title": "Moje obľúbené",
+      "description": "Nehnuteľnosti, ktoré ste si uložili."
     }
   },
   "search": {

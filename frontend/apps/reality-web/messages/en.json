@@ -371,6 +371,14 @@
     "terms": {
       "description": "By using Reality Portal, you agree to our terms and conditions. Full terms of service will be published here.",
       "title": "Terms of Service"
+    },
+    "listings": {
+      "title": "All Properties",
+      "description": "Browse all property listings across Slovakia, Czech Republic, and beyond."
+    },
+    "favorites": {
+      "title": "My Favorites",
+      "description": "Properties you have saved for later."
     }
   },
   "search": {

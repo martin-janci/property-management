@@ -371,6 +371,14 @@
       },
       "submit": "Opublikuj ogłoszenie",
       "title": "Dodaj ogłoszenie"
+    },
+    "listings": {
+      "title": "Wszystkie nieruchomości",
+      "description": "Przeszukaj wszystkie oferty nieruchomości na Słowacji, w Czechach i nie tylko."
+    },
+    "favorites": {
+      "title": "Moje ulubione",
+      "description": "Nieruchomości, które zapisałeś."
     }
   },
   "search": {

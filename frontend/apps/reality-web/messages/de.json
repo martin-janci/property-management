@@ -371,6 +371,14 @@
     "terms": {
       "description": "Durch die Nutzung von Reality Portal stimmen Sie unseren Nutzungsbedingungen zu. Die vollständigen Nutzungsbedingungen werden hier veröffentlicht.",
       "title": "Nutzungsbedingungen"
+    },
+    "listings": {
+      "title": "Alle Immobilien",
+      "description": "Durchsuchen Sie alle Immobilienangebote in der Slowakei, der Tschechischen Republik und darüber hinaus."
+    },
+    "favorites": {
+      "title": "Meine Favoriten",
+      "description": "Immobilien, die Sie gespeichert haben."
     }
   },
   "search": {
