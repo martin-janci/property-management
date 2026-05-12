@@ -161,7 +161,46 @@
     "emptyTitle": "W tej chwili nie mamy polecanych ofert",
     "emptyBody": "Nowe ogłoszenia pojawiają się codziennie. Przejrzyj wszystkie aktualne oferty lub dodaj własne ogłoszenie za darmo.",
     "emptyBrowseAll": "Przeglądaj wszystkie oferty",
-    "emptyAddListing": "Dodaj własne ogłoszenie"
+    "emptyAddListing": "Dodaj własne ogłoszenie",
+    "neighbourhoods": {
+      "title": "Popularne dzielnice",
+      "subtitle": "Cena, dostępność i trend rynkowy w jednym miejscu.",
+      "exploreMap": "Zobacz mapę",
+      "browse": "Przeglądaj oferty",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Zweryfikowani agenci",
+        "desc": "Sprawdzone ID, SLA odpowiedzi 30 dni"
+      },
+      "passport": {
+        "label": "Paszport budynku",
+        "desc": "Energia · stan funduszu · ujawnione usterki"
+      },
+      "history": {
+        "label": "Historia cen",
+        "desc": "Każda zmiana z datą w ogłoszeniu"
+      },
+      "mortgage": {
+        "label": "Wstępna decyzja kredytowa",
+        "desc": "W aplikacji, z naszymi bankami partnerskimi"
+      }
+    },
+    "cta": {
+      "title": "Sprzedajesz nieruchomość?",
+      "body": "Dodaj ogłoszenie w 5 minut, otrzymaj darmowy paszport budynku i dotrzyj do 210 000 zweryfikowanych kupujących tygodniowo.",
+      "learnMore": "Dowiedz się więcej",
+      "startListing": "Dodaj nieruchomość"
+    }
   },
   "listing": {
     "additionalInfo": "Dodatkowe informacje",
@@ -227,7 +266,11 @@
     "home": "Strona główna",
     "myInquiries": "Moje zapytania",
     "profile": "Profil",
-    "savedSearches": "Zapisane wyszukiwania"
+    "savedSearches": "Zapisane wyszukiwania",
+    "journal": "Magazyn",
+    "help": "Pomoc",
+    "listProperty": "Dodaj nieruchomość",
+    "sell": "Sprzedaż"
   },
   "pages": {
     "about": {
@@ -246,6 +289,88 @@
     "terms": {
       "description": "Korzystając z Reality Portal, zgadzasz się na nasze warunki i postanowienia. Pełne warunki korzystania zostaną tutaj opublikowane.",
       "title": "Warunki korzystania"
+    },
+    "agentProfile": {
+      "activeListings": "Aktywne ogłoszenia",
+      "contact": "Kontakt",
+      "languages": "Języki",
+      "reviews": "Opinie",
+      "specializations": "Specjalizacje",
+      "verified": "Zweryfikowany agent"
+    },
+    "careers": {
+      "hero": {
+        "cta": "Wolne stanowiska",
+        "subtitle": "Dołącz do naszego zespołu i pomóż zmienić sposób, w jaki ludzie kupują, sprzedają i wynajmują nieruchomości.",
+        "title": "Zbudujmy sensowny rynek nieruchomości."
+      },
+      "title": "Kariera"
+    },
+    "cookies": {
+      "reopen": "Otwórz ponownie ustawienia cookie",
+      "title": "Polityka cookie"
+    },
+    "forAgents": {
+      "features": "Co zyskujesz",
+      "pricing": "Plany cenowe",
+      "subtitle": "Sprzedawaj więcej z Reality Portal",
+      "title": "Dla agentów i agencji"
+    },
+    "help": {
+      "categories": "Kategorie",
+      "faq": "Najczęściej zadawane pytania",
+      "searchPlaceholder": "Szukaj w pomocy...",
+      "title": "Centrum pomocy"
+    },
+    "journal": {
+      "editorsPicks": "Wybór redakcji",
+      "featured": "Polecany artykuł",
+      "latest": "Najnowsze artykuły",
+      "mostRead": "Najczęściej czytane",
+      "newsletter": "Newsletter",
+      "subtitle": "Analizy, porady i wiadomości ze świata nieruchomości.",
+      "title": "Reality magazyn"
+    },
+    "listingEdit": {
+      "save": "Zapisz zmiany",
+      "success": "Ogłoszenie zapisane!",
+      "title": "Edytuj ogłoszenie"
+    },
+    "priceMap": {
+      "clickHint": "Kliknij dzielnicę po szczegółowe statystyki.",
+      "subtitle": "Bratysława – przegląd",
+      "title": "Mapa cen"
+    },
+    "profile": {
+      "tabs": {
+        "activity": "Aktywność",
+        "listings": "Moje ogłoszenia",
+        "reviews": "Opinie",
+        "settings": "Ustawienia"
+      },
+      "title": "Mój profil"
+    },
+    "report": {
+      "submit": "Wyślij zgłoszenie",
+      "subtitle": "Pomóż utrzymać portal bezpieczny.",
+      "success": "Zgłoszenie wysłane",
+      "title": "Zgłoś ogłoszenie"
+    },
+    "security": {
+      "reportCta": "Zgłoś ogłoszenie",
+      "subtitle": "Twoje bezpieczeństwo jest priorytetem",
+      "title": "Bezpieczeństwo"
+    },
+    "sell": {
+      "steps": {
+        "details": "Szczegóły",
+        "photos": "Zdjęcia",
+        "price": "Cena",
+        "summary": "Kontakt i podsumowanie",
+        "typeLocation": "Typ i lokalizacja"
+      },
+      "submit": "Opublikuj ogłoszenie",
+      "title": "Dodaj ogłoszenie"
     }
   },
   "search": {
@@ -276,5 +401,15 @@
     "sale": "Na sprzedaż",
     "searching": "Wyszukiwanie...",
     "transaction_type": "Typ transakcji"
+  },
+  "error": {
+    "title": "Coś poszło nie tak",
+    "description": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie za chwilę.",
+    "retry": "Spróbuj ponownie"
+  },
+  "notFound": {
+    "title": "Strona nie istnieje",
+    "description": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "home": "Powrót do strony głównej"
   }
 }

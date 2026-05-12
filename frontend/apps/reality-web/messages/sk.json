@@ -161,7 +161,46 @@
     "emptyTitle": "Práve teraz nemáme odporúčané ponuky",
     "emptyBody": "Naše inzeráty sa pridávajú každý deň. Prejdite na všetky aktuálne ponuky alebo pridajte vlastný inzerát zadarmo.",
     "emptyBrowseAll": "Prehliadnuť všetky ponuky",
-    "emptyAddListing": "Pridať vlastný inzerát"
+    "emptyAddListing": "Pridať vlastný inzerát",
+    "neighbourhoods": {
+      "title": "Obľúbené štvrte",
+      "subtitle": "Cena, dostupnosť a vývoj trhu na jeden pohľad.",
+      "exploreMap": "Preskúmať mapu",
+      "browse": "Pozrieť ponuky",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Overení agenti",
+        "desc": "ID-overení s 30-dňovou SLA odpovede"
+      },
+      "passport": {
+        "label": "Pas budovy",
+        "desc": "Energia · stav fondu · poruchy zverejnené"
+      },
+      "history": {
+        "label": "História cien",
+        "desc": "Každá zmena ceny zaznačená v inzeráte"
+      },
+      "mortgage": {
+        "label": "Predschválená hypotéka",
+        "desc": "V appke, s našimi partnerskými bankami"
+      }
+    },
+    "cta": {
+      "title": "Predávate svoju nehnuteľnosť?",
+      "body": "Pridajte inzerát za 5 minút, získajte zdarma pas budovy a dostanete sa k 210 000 overeným kupujúcim týždenne.",
+      "learnMore": "Zistiť viac",
+      "startListing": "Pridať nehnuteľnosť"
+    }
   },
   "listing": {
     "additionalInfo": "Ďalšie informácie",
@@ -227,7 +266,11 @@
     "home": "Domov",
     "myInquiries": "Moje dopyty",
     "profile": "Profil",
-    "savedSearches": "Uložené vyhľadávania"
+    "savedSearches": "Uložené vyhľadávania",
+    "journal": "Magazín",
+    "help": "Pomoc",
+    "listProperty": "Pridať nehnuteľnosť",
+    "sell": "Predaj"
   },
   "pages": {
     "about": {
@@ -358,5 +401,15 @@
     "sale": "Na predaj",
     "searching": "Vyhľadávanie...",
     "transaction_type": "Typ transakcie"
+  },
+  "error": {
+    "title": "Niečo sa pokazilo",
+    "description": "Vyskytla sa neočakávaná chyba. Skúste to o chvíľu znova.",
+    "retry": "Skúsiť znova"
+  },
+  "notFound": {
+    "title": "Stránka neexistuje",
+    "description": "Stránka, ktorú hľadáte, neexistuje alebo bola presunutá.",
+    "home": "Späť na hlavnú stránku"
   }
 }

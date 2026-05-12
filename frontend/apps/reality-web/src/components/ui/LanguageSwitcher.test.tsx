@@ -1,10 +1,14 @@
 /**
- * LanguageSwitcher Component Tests
+ * LanguageSwitcher Component Tests (Epic 111).
  *
- * Tests for language switching functionality (Epic 111).
+ * The original test asserted a native <select> (role=combobox). The
+ * component was rewritten as a custom popover (trigger button + listbox
+ * div with role=option entries) — these tests assert the new interaction
+ * model: trigger click opens the menu, options become visible, clicking
+ * one calls router.replace().
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -25,6 +29,11 @@ vi.mock('../../i18n', () => ({
   },
 }));
 
+// next-intl's useLocale is read inside the component — mock returns 'en'.
+vi.mock('next-intl', () => ({
+  useLocale: () => 'en',
+}));
+
 // Mock routing
 const mockReplace = vi.fn();
 vi.mock('../../i18n/routing', () => ({
@@ -40,17 +49,25 @@ describe('LanguageSwitcher', () => {
     mockReplace.mockClear();
   });
 
-  it('renders language selector', () => {
+  it('renders a trigger button with the active locale code', () => {
     render(<LanguageSwitcher />);
-    expect(screen.getByRole('combobox', { name: /select language/i })).toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: /language: english/i });
+    expect(trigger).toBeInTheDocument();
+    // Code label inside the trigger uses uppercase locale
+    expect(trigger.textContent).toMatch(/EN/);
   });
 
-  it('displays all available languages as options', () => {
+  it('does not show the listbox until the trigger is clicked', () => {
     render(<LanguageSwitcher />);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
 
-    const select = screen.getByRole('combobox', { name: /select language/i });
-    const options = select.querySelectorAll('option');
-
+  it('opens the listbox on trigger click and shows all four locales', () => {
+    render(<LanguageSwitcher />);
+    fireEvent.click(screen.getByRole('button', { name: /language: english/i }));
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toBeInTheDocument();
+    const options = screen.getAllByRole('option');
     expect(options).toHaveLength(4);
     expect(screen.getByText(/English/)).toBeInTheDocument();
     expect(screen.getByText(/Slovenčina/)).toBeInTheDocument();
@@ -58,31 +75,30 @@ describe('LanguageSwitcher', () => {
     expect(screen.getByText(/Deutsch/)).toBeInTheDocument();
   });
 
-  it('has current locale selected by default', () => {
+  it('marks the active locale option as aria-selected', () => {
     render(<LanguageSwitcher />);
-
-    const select = screen.getByRole('combobox', { name: /select language/i });
-    expect(select).toHaveValue('en');
+    fireEvent.click(screen.getByRole('button', { name: /language: english/i }));
+    const active = screen.getAllByRole('option').find((el) => el.textContent?.includes('English'));
+    expect(active).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('calls router.replace when language is changed', () => {
+  it('calls router.replace with the chosen locale and closes the menu', () => {
     render(<LanguageSwitcher />);
-
-    const select = screen.getByRole('combobox', { name: /select language/i });
-    fireEvent.change(select, { target: { value: 'sk' } });
-
-    // Note: Due to startTransition, this may not be called synchronously
-    // In a real test with act(), we would wait for the transition
+    fireEvent.click(screen.getByRole('button', { name: /language: english/i }));
+    const sk = screen.getAllByRole('option').find((el) => el.textContent?.includes('Slovenčina'));
+    expect(sk).toBeTruthy();
+    act(() => {
+      fireEvent.click(sk!);
+    });
     expect(mockReplace).toHaveBeenCalledWith('/listings', { locale: 'sk' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('displays flag emojis with language names', () => {
+  it('closes the menu when Escape is pressed', () => {
     render(<LanguageSwitcher />);
-
-    // Check that flags are displayed
-    expect(screen.getByText(/🇬🇧/)).toBeInTheDocument();
-    expect(screen.getByText(/🇸🇰/)).toBeInTheDocument();
-    expect(screen.getByText(/🇨🇿/)).toBeInTheDocument();
-    expect(screen.getByText(/🇩🇪/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /language: english/i }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });

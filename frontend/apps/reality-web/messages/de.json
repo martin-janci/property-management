@@ -161,7 +161,46 @@
     "emptyTitle": "Derzeit haben wir keine empfohlenen Angebote",
     "emptyBody": "Täglich kommen neue Inserate hinzu. Sehen Sie sich alle aktuellen Angebote an oder fügen Sie Ihr eigenes Inserat kostenlos hinzu.",
     "emptyBrowseAll": "Alle Angebote durchsuchen",
-    "emptyAddListing": "Eigenes Inserat aufgeben"
+    "emptyAddListing": "Eigenes Inserat aufgeben",
+    "neighbourhoods": {
+      "title": "Beliebte Stadtteile",
+      "subtitle": "Preis, Verfügbarkeit und Markttrend auf einen Blick.",
+      "exploreMap": "Karte erkunden",
+      "browse": "Angebote ansehen",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Verifizierte Makler",
+        "desc": "ID-geprüft mit 30-Tage Antwortgarantie"
+      },
+      "passport": {
+        "label": "Gebäudepass",
+        "desc": "Energie · Fondsstand · gemeldete Mängel"
+      },
+      "history": {
+        "label": "Preisverlauf",
+        "desc": "Jede Änderung im Inserat datiert"
+      },
+      "mortgage": {
+        "label": "Hypothekenvorabgenehmigung",
+        "desc": "In-App, mit unseren Partnerbanken"
+      }
+    },
+    "cta": {
+      "title": "Verkaufen Sie Ihre Immobilie?",
+      "body": "In fünf Minuten inserieren, kostenlosen Gebäudepass erhalten und 210.000 verifizierte Käufer pro Woche erreichen.",
+      "learnMore": "Mehr erfahren",
+      "startListing": "Immobilie inserieren"
+    }
   },
   "listing": {
     "additionalInfo": "Zusätzliche Informationen",
@@ -227,7 +266,11 @@
     "home": "Startseite",
     "myInquiries": "Meine Anfragen",
     "profile": "Profil",
-    "savedSearches": "Gespeicherte Suchen"
+    "savedSearches": "Gespeicherte Suchen",
+    "journal": "Magazin",
+    "help": "Hilfe",
+    "listProperty": "Immobilie inserieren",
+    "sell": "Verkauf"
   },
   "pages": {
     "about": {
@@ -358,5 +401,15 @@
     "sale": "Zum Verkauf",
     "searching": "Suche läuft...",
     "transaction_type": "Transaktionstyp"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es gleich erneut.",
+    "retry": "Erneut versuchen"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "home": "Zurück zur Startseite"
   }
 }

@@ -6,8 +6,13 @@
  * Receives the thrown error and a reset function from Next.js. We log the
  * error to the console for diagnostics in development; production
  * deployments should wire it to their telemetry pipeline.
+ *
+ * Lives inside the locale layout, so NextIntlClientProvider is in scope
+ * and useTranslations() works — meaning the message and CTA show in the
+ * user's locale, not English by default.
  */
 
+import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { StateView } from '@/components/states';
 
@@ -17,19 +22,15 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
+  const t = useTranslations('error');
   useEffect(() => {
     console.error('reality-web error boundary:', error);
   }, [error]);
 
   return (
-    <StateView
-      icon="🛠️"
-      code="500"
-      title="Something went wrong"
-      description="An unexpected error occurred. Please try again in a moment."
-    >
+    <StateView icon="🛠️" code="500" title={t('title')} description={t('description')}>
       <button type="button" className="state-action" onClick={reset}>
-        Try again
+        {t('retry')}
       </button>
       <style jsx global>{`
         .state-action {

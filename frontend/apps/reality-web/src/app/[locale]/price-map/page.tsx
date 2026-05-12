@@ -31,7 +31,7 @@ export default function PriceMapPage() {
 
   const selected = MOCK_DISTRICTS.find((d) => d.id === selectedId) ?? null;
 
-  const formatPrice = (v: number) => v.toLocaleString('sk-SK') + ' €';
+  const formatPrice = (v: number) => `${v.toLocaleString('sk-SK')} €`;
 
   return (
     <div
@@ -124,14 +124,7 @@ export default function PriceMapPage() {
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 340px',
-            height: 'calc(100vh - 200px)',
-            minHeight: 500,
-          }}
-        >
+        <div className="price-map-grid">
           {/* SVG Map */}
           <div
             style={{
@@ -420,6 +413,23 @@ export default function PriceMapPage() {
       </main>
 
       <Footer />
+
+      <style jsx>{`
+        /* Map + detail-panel grid. Stacks on mobile so the fixed 340 px
+           panel doesn't overflow the viewport (+13 px observed at 375 px
+           before this rule). Height clamp stays in both layouts. */
+        .price-map-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          min-height: 500px;
+        }
+        @media (min-width: 768px) {
+          .price-map-grid {
+            grid-template-columns: 1fr 340px;
+            height: calc(100vh - 200px);
+          }
+        }
+      `}</style>
     </div>
   );
 }

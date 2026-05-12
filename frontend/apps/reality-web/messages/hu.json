@@ -161,7 +161,46 @@
     "emptyTitle": "Jelenleg nincsenek kiemelt hirdetéseink",
     "emptyBody": "Naponta új ajánlatok érkeznek. Tekintse meg az összes aktuális hirdetést, vagy adja fel saját hirdetését ingyen.",
     "emptyBrowseAll": "Összes hirdetés böngészése",
-    "emptyAddListing": "Saját hirdetés feladása"
+    "emptyAddListing": "Saját hirdetés feladása",
+    "neighbourhoods": {
+      "title": "Népszerű kerületek",
+      "subtitle": "Ár, elérhetőség és piaci trend egy pillantásra.",
+      "exploreMap": "Térkép felfedezése",
+      "browse": "Hirdetések böngészése",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Igazolt ügynökök",
+        "desc": "Személyazonosság ellenőrzött, 30 napos válasz SLA"
+      },
+      "passport": {
+        "label": "Épület-passport",
+        "desc": "Energia · alap egyenleg · hibák közzétéve"
+      },
+      "history": {
+        "label": "Árváltozások",
+        "desc": "Minden változás dátummal a hirdetésen"
+      },
+      "mortgage": {
+        "label": "Előminősített hitel",
+        "desc": "Az alkalmazásban, partnerbankokkal"
+      }
+    },
+    "cta": {
+      "title": "Eladja az ingatlanát?",
+      "body": "Hirdesse meg 5 perc alatt, kapjon ingyenes épület-passportot, és érje el 210 000 ellenőrzött vevőt hetente.",
+      "learnMore": "Tudjon meg többet",
+      "startListing": "Ingatlan feladása"
+    }
   },
   "listing": {
     "additionalInfo": "További információk",
@@ -227,7 +266,11 @@
     "home": "Főoldal",
     "myInquiries": "Érdeklődéseim",
     "profile": "Profil",
-    "savedSearches": "Mentett keresések"
+    "savedSearches": "Mentett keresések",
+    "journal": "Magazin",
+    "help": "Súgó",
+    "listProperty": "Ingatlan feladása",
+    "sell": "Eladás"
   },
   "pages": {
     "about": {
@@ -246,6 +289,88 @@
     "terms": {
       "description": "A Reality Portal használatával elfogadja általános szerződési feltételeinket. A teljes felhasználási feltételek hamarosan közzétételre kerülnek.",
       "title": "Felhasználási feltételek"
+    },
+    "agentProfile": {
+      "activeListings": "Aktív hirdetések",
+      "contact": "Kapcsolat",
+      "languages": "Nyelvek",
+      "reviews": "Értékelések",
+      "specializations": "Szakterületek",
+      "verified": "Igazolt ügynök"
+    },
+    "careers": {
+      "hero": {
+        "cta": "Nyitott pozíciók",
+        "subtitle": "Csatlakozz a csapatunkhoz és segíts megváltoztatni az ingatlanvásárlás, -eladás és -bérlés módját.",
+        "title": "Építsünk együtt értelmes ingatlanpiacot."
+      },
+      "title": "Karrier"
+    },
+    "cookies": {
+      "reopen": "Cookie beállítások újranyitása",
+      "title": "Sütik kezelése"
+    },
+    "forAgents": {
+      "features": "Amit kapsz",
+      "pricing": "Csomagok",
+      "subtitle": "Adj el többet a Reality Portállal",
+      "title": "Ügynököknek és irodáknak"
+    },
+    "help": {
+      "categories": "Kategóriák",
+      "faq": "Gyakori kérdések",
+      "searchPlaceholder": "Keress a súgóban...",
+      "title": "Súgóközpont"
+    },
+    "journal": {
+      "editorsPicks": "Szerkesztői ajánlás",
+      "featured": "Kiemelt cikk",
+      "latest": "Legújabb cikkek",
+      "mostRead": "Legolvasottabb",
+      "newsletter": "Hírlevél",
+      "subtitle": "Elemzések, tippek és hírek az ingatlanvilágból.",
+      "title": "Reality magazin"
+    },
+    "listingEdit": {
+      "save": "Mentés",
+      "success": "Hirdetés mentve!",
+      "title": "Hirdetés szerkesztése"
+    },
+    "priceMap": {
+      "clickHint": "Kattints egy kerületre a részletes statisztikákért.",
+      "subtitle": "Pozsony – áttekintés",
+      "title": "Ártérkép"
+    },
+    "profile": {
+      "tabs": {
+        "activity": "Aktivitás",
+        "listings": "Hirdetéseim",
+        "reviews": "Értékelések",
+        "settings": "Beállítások"
+      },
+      "title": "Profilom"
+    },
+    "report": {
+      "submit": "Bejelentés elküldése",
+      "subtitle": "Segíts megőrizni a portál biztonságát.",
+      "success": "Bejelentés elküldve",
+      "title": "Hirdetés bejelentése"
+    },
+    "security": {
+      "reportCta": "Hirdetés bejelentése",
+      "subtitle": "A biztonságod a legfontosabb",
+      "title": "Biztonság"
+    },
+    "sell": {
+      "steps": {
+        "details": "Részletek",
+        "photos": "Fotók",
+        "price": "Ár",
+        "summary": "Kapcsolat és összegzés",
+        "typeLocation": "Típus és helyszín"
+      },
+      "submit": "Hirdetés közzététele",
+      "title": "Hirdetés feladása"
     }
   },
   "search": {
@@ -276,5 +401,15 @@
     "sale": "Eladó",
     "searching": "Keresés folyamatban...",
     "transaction_type": "Tranzakció típusa"
+  },
+  "error": {
+    "title": "Valami elromlott",
+    "description": "Váratlan hiba történt. Próbálja meg újra egy pillanat múlva.",
+    "retry": "Újra"
+  },
+  "notFound": {
+    "title": "Az oldal nem található",
+    "description": "A keresett oldal nem létezik, vagy átkerült máshová.",
+    "home": "Vissza a főoldalra"
   }
 }

@@ -161,7 +161,46 @@
     "emptyTitle": "We don't have any featured listings right now",
     "emptyBody": "New listings are added every day. Browse all current properties or post your own listing for free.",
     "emptyBrowseAll": "Browse all listings",
-    "emptyAddListing": "Post a listing"
+    "emptyAddListing": "Post a listing",
+    "neighbourhoods": {
+      "title": "Popular neighbourhoods",
+      "subtitle": "Price, availability and market trend at a glance.",
+      "exploreMap": "Explore the map",
+      "browse": "Browse listings",
+      "ruzinov": "Ružinov",
+      "staremesto": "Staré Mesto",
+      "petrzalka": "Petržalka",
+      "novemesto": "Nové Mesto",
+      "karlovaves": "Karlova Ves",
+      "dubravka": "Dúbravka"
+    },
+    "city": {
+      "bratislava": "Bratislava"
+    },
+    "value": {
+      "agents": {
+        "label": "Verified agents",
+        "desc": "ID-checked with 30-day response SLA"
+      },
+      "passport": {
+        "label": "Building passport",
+        "desc": "Energy · fund balance · faults disclosed"
+      },
+      "history": {
+        "label": "Price history",
+        "desc": "Every change timestamped on the listing"
+      },
+      "mortgage": {
+        "label": "Mortgage pre-approval",
+        "desc": "In-app, with our partner banks"
+      }
+    },
+    "cta": {
+      "title": "Selling your home?",
+      "body": "List in five minutes, get a free building-passport report, and reach 210,000 verified buyers a week.",
+      "learnMore": "Learn more",
+      "startListing": "List a property"
+    }
   },
   "listing": {
     "additionalInfo": "Additional Information",
@@ -227,7 +266,11 @@
     "home": "Home",
     "myInquiries": "My Inquiries",
     "profile": "Profile",
-    "savedSearches": "Saved Searches"
+    "savedSearches": "Saved Searches",
+    "journal": "Journal",
+    "help": "Help",
+    "listProperty": "List a property",
+    "sell": "Sell"
   },
   "pages": {
     "about": {
@@ -358,5 +401,15 @@
     "sale": "For Sale",
     "searching": "Searching...",
     "transaction_type": "Transaction Type"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again in a moment.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has moved.",
+    "home": "Back to home"
   }
 }

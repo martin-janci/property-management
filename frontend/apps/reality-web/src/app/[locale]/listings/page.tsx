@@ -126,6 +126,9 @@ function ListingsContent() {
     const city = searchParams.get('city');
     if (city) filters.city = city;
 
+    const district = searchParams.get('district');
+    if (district) filters.district = district;
+
     const sortBy = searchParams.get('sortBy') as ListingSortField | undefined;
     if (sortBy) filters.sortBy = sortBy;
 
@@ -156,6 +159,7 @@ function ListingsContent() {
       if (newFilters.areaMax !== undefined) params.set('areaMax', String(newFilters.areaMax));
       if (newFilters.roomsMin !== undefined) params.set('roomsMin', String(newFilters.roomsMin));
       if (newFilters.city) params.set('city', newFilters.city);
+      if (newFilters.district) params.set('district', newFilters.district);
       if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
       if (newFilters.sortOrder) params.set('sortOrder', newFilters.sortOrder);
       if (page > 1) params.set('page', String(page));

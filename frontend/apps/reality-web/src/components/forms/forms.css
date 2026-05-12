@@ -1,0 +1,359 @@
+/*
+ * Modern form system — direct translation of the design bundle's
+ * `m-field / m-input / m-textarea / m-dropdown / form-card / form-actions`
+ * rules from pages/sell.html. Reads existing ui-kit tokens (`--ppt-*`) so
+ * dark mode pairs automatically.
+ *
+ * The class names drop the `m-` prefix because we don't ship a legacy form
+ * system alongside this one — these primitives are the form system.
+ */
+
+/* ============================================================
+   Form-card container
+   ============================================================ */
+
+.form-card {
+  background: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 16px;
+}
+.form-card + .form-card {
+  margin-top: 0;
+}
+
+.form-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--ppt-fg-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-card-sub {
+  font-size: 13.5px;
+  color: var(--ppt-fg-muted);
+  margin: 0 0 20px;
+}
+
+.form-card-step-pill {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--ppt-color-primary-soft-bg);
+  color: var(--ppt-color-primary);
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.field-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ppt-fg-muted);
+  margin: 24px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field-group-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ppt-border-subtle, var(--ppt-border-default));
+}
+
+/* ============================================================
+   Floating-label fields
+   ============================================================ */
+
+.field {
+  position: relative;
+  margin: 0;
+}
+.field + .field {
+  margin-top: 14px;
+}
+
+/*
+ * Inputs and textareas share the same look. The top padding is wider
+ * (22px) than the bottom (8px) so the floating label has room to live
+ * inside the field at rest. Padding-top jumps to 26px on textarea to
+ * keep multiline content from butting against the label.
+ */
+.field > input,
+.field > textarea,
+.field-select-trigger {
+  width: 100%;
+  padding: 22px 14px 8px;
+  background: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--ppt-font-family);
+  color: var(--ppt-fg-primary);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background-color 0.15s;
+  appearance: none;
+  line-height: 1.4;
+  text-align: left;
+}
+.field > textarea {
+  padding-top: 26px;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.field > input:hover,
+.field > textarea:hover,
+.field-select-trigger:not(:disabled):hover {
+  border-color: var(--ppt-neutral-400);
+}
+.field > input:focus,
+.field > textarea:focus,
+.field-select-trigger:focus-visible {
+  outline: none;
+  border-color: var(--ppt-color-primary);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  background: var(--ppt-bg-surface);
+}
+[data-color-scheme="dark"] .field > input:focus,
+[data-color-scheme="dark"] .field > textarea:focus,
+[data-color-scheme="dark"] .field-select-trigger:focus-visible {
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.18);
+}
+.field > input:disabled,
+.field > textarea:disabled,
+.field-select-trigger:disabled {
+  background: var(--ppt-bg-subtle);
+  color: var(--ppt-fg-muted);
+  cursor: not-allowed;
+}
+
+/*
+ * Label sits over the input like a placeholder, then animates up + shrinks
+ * on focus or when the field has a value. The :not(:placeholder-shown)
+ * trick requires every field to render with placeholder=" " — see
+ * Field.tsx for why.
+ */
+.field > label {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  font-size: 13.5px;
+  color: var(--ppt-fg-muted);
+  font-weight: 500;
+  pointer-events: none;
+  background: transparent;
+  padding: 0 2px;
+  z-index: 1;
+  transition:
+    transform 0.15s ease,
+    color 0.15s,
+    font-size 0.15s,
+    font-weight 0.15s;
+  transform-origin: left center;
+}
+.field > input:focus ~ label,
+.field > input:not(:placeholder-shown) ~ label,
+.field > textarea:focus ~ label,
+.field > textarea:not(:placeholder-shown) ~ label,
+.field-select.field-select-open > label,
+.field-select.field-has-value > label {
+  transform: translateY(-9px);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ppt-fg-muted);
+}
+.field > input:focus ~ label,
+.field > textarea:focus ~ label,
+.field-select.field-select-open > label,
+.field-select-trigger:focus-visible ~ label {
+  color: var(--ppt-color-primary);
+}
+
+/* Error state */
+.field.field-error > input,
+.field.field-error > textarea,
+.field.field-error .field-select-trigger {
+  border-color: var(--ppt-color-danger);
+}
+.field.field-error > input:focus,
+.field.field-error > textarea:focus,
+.field.field-error .field-select-trigger:focus-visible {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+}
+
+/* Helper text + error message */
+.field-msg {
+  margin: 6px 2px 0;
+  font-size: 12.5px;
+  color: var(--ppt-fg-muted);
+}
+.field-msg-error {
+  color: var(--ppt-color-danger);
+}
+
+/* Prefix / suffix (currency, units) */
+.field-has-prefix > input {
+  padding-left: 32px;
+}
+.field-has-suffix > input {
+  padding-right: 40px;
+}
+.field-prefix,
+.field-suffix {
+  position: absolute;
+  top: 22px;
+  font-size: 14px;
+  color: var(--ppt-fg-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+.field-prefix {
+  left: 14px;
+}
+.field-suffix {
+  right: 14px;
+}
+
+/* ============================================================
+   Custom select / dropdown
+   ============================================================ */
+
+.field-select {
+  position: relative;
+}
+.field-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  /* Trigger always shows a value or placeholder, so the label is always
+     in the "floated" position. Reduce top padding to leave room. */
+  padding-top: 22px;
+  padding-bottom: 8px;
+}
+.field-select-value {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-select-placeholder {
+  color: var(--ppt-fg-muted);
+}
+.field-select-caret {
+  color: var(--ppt-fg-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.field-select-trigger[aria-expanded="true"] .field-select-caret {
+  transform: rotate(180deg);
+}
+
+.field-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  background: var(--ppt-bg-elevated, var(--ppt-bg-surface));
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-lg, 12px);
+  box-shadow: var(--ppt-shadow-popover, 0 8px 24px rgba(0, 0, 0, 0.12));
+  z-index: var(--ppt-z-dropdown, 1000);
+}
+.field-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--ppt-radius-sm, 6px);
+  cursor: pointer;
+  font-family: var(--ppt-font-family);
+  font-size: var(--ppt-font-size-sm, 14px);
+  color: var(--ppt-fg-secondary);
+  text-align: left;
+  transition: background var(--ppt-transition-fast, 0.15s);
+}
+.field-select-option:hover:not(:disabled),
+.field-select-option.highlight {
+  background: var(--ppt-bg-subtle);
+}
+.field-select-option.active {
+  color: var(--ppt-color-primary);
+  font-weight: var(--ppt-font-weight-semibold, 600);
+}
+.field-select-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.field-select-option-label {
+  flex: 1;
+}
+.field-select-option-meta {
+  color: var(--ppt-fg-muted);
+  font-size: 12px;
+}
+
+/* ============================================================
+   Form actions (sticky bottom bar)
+   ============================================================ */
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 28px;
+  background: var(--ppt-bg-surface);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: 12px;
+  position: sticky;
+  bottom: 16px;
+  box-shadow: var(--ppt-shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+  margin-top: 16px;
+  z-index: 5;
+}
+.form-actions-left {
+  font-size: 13px;
+  color: var(--ppt-fg-muted);
+}
+.form-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .field > label,
+  .field-select-caret,
+  .field > input,
+  .field > textarea,
+  .field-select-trigger {
+    transition: none !important;
+  }
+}

@@ -55,32 +55,53 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        {/* Logo */}
-        <Link href="/" className="logo">
-          Reality Portal
+        {/* Logo — brand square + 2-tone wordmark. The square uses the same
+            brand-600 the wordmark uses; the second word ("Portal") drops to
+            fg-primary weight 600 so the brand sits visually first. Matches
+            the design's `.logo` rule from colors_and_type.css. */}
+        <Link href="/" className="logo" aria-label="Reality Portal">
+          <span className="logo-mark" aria-hidden="true" />
+          <span className="logo-text">
+            Reality<em className="logo-text-em">Portal</em>
+          </span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation — five links matching the design's standard
+            header (Predaj / Prenájom / Predať / Magazín / Pomoc). The
+            "Predať" entry (Sell) is the seller-info entry point; the
+            primary "Pridať nehnuteľnosť" CTA on the right is the action
+            shortcut. Both currently route to /sell — when a dedicated
+            /for-sellers info page lands the nav entry will move there. */}
         <nav className="nav-desktop">
-          {/* Sale/Rent are quick-filters — no active state (query params
-              unavailable in the header without Suspense; the tab bar on
-              the listings page is the authoritative selection indicator) */}
           <Link href="/listings?transactionType=sale" className="nav-link">
-            {t('search.sale')}
+            {t('search.buy')}
           </Link>
           <Link href="/listings?transactionType=rent" className="nav-link">
             {t('search.rent')}
           </Link>
+          <Link href="/sell" className={`nav-link ${isActive('/sell') ? 'nav-link-active' : ''}`}>
+            {t('nav.sell')}
+          </Link>
           <Link
-            href="/listings"
-            className={`nav-link ${isActive('/listings') ? 'nav-link-active' : ''}`}
+            href="/journal"
+            className={`nav-link ${isActive('/journal') ? 'nav-link-active' : ''}`}
           >
-            {t('nav.allListings')}
+            {t('nav.journal')}
+          </Link>
+          <Link href="/help" className={`nav-link ${isActive('/help') ? 'nav-link-active' : ''}`}>
+            {t('nav.help')}
           </Link>
         </nav>
 
         {/* Auth Section */}
         <div className="auth-section">
+          {/* Seller CTA — shown on >=768px only (mobile menu has its own
+              entry). Primary-color filled so it reads as the main action
+              even alongside the auth slot. */}
+          <Link href="/sell" className="list-cta">
+            {t('nav.listProperty')}
+          </Link>
+
           <LanguageSwitcher />
 
           {/*
@@ -189,7 +210,9 @@ export function Header() {
             className="nav-link-mobile"
             onClick={() => setShowMobileMenu(false)}
           >
-            {t('search.sale')}
+            {/* Desktop uses search.buy ("Kúpiť") for the same action.
+                Mobile keeps that wording aligned. */}
+            {t('search.buy')}
           </Link>
           <Link
             href="/listings?transactionType=rent"
@@ -204,6 +227,23 @@ export function Header() {
             onClick={() => setShowMobileMenu(false)}
           >
             {t('nav.allListings')}
+          </Link>
+          <Link
+            href="/journal"
+            className="nav-link-mobile"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            {t('nav.journal')}
+          </Link>
+          <Link href="/help" className="nav-link-mobile" onClick={() => setShowMobileMenu(false)}>
+            {t('nav.help')}
+          </Link>
+          <Link
+            href="/sell"
+            className="nav-link-mobile sell-cta-mobile"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            {t('nav.listProperty')}
           </Link>
           {isAuthenticated && (
             <>
@@ -228,7 +268,31 @@ export function Header() {
               >
                 {t('nav.myInquiries')}
               </Link>
+              <button
+                type="button"
+                className="nav-link-mobile auth-cta-mobile"
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  logout();
+                }}
+              >
+                {t('common.logout')}
+              </button>
             </>
+          )}
+          {/* Sign-in entry on mobile — replaces the auth-slot button that's
+              hidden by media query below 768 px. */}
+          {!isAuthenticated && (
+            <button
+              type="button"
+              className="nav-link-mobile auth-cta-mobile"
+              onClick={() => {
+                setShowMobileMenu(false);
+                login();
+              }}
+            >
+              {t('common.login')}
+            </button>
           )}
         </nav>
       )}
@@ -252,13 +316,44 @@ export function Header() {
           gap: 24px;
         }
 
-        .logo {
+        /*
+         * :global() — Link from next-intl/navigation renders its own <a>
+         * outside styled-jsx's hashed-class scoping. The wrapping .header-inner
+         * still carries the hash, keeping the rules tightly bound to this
+         * component while the inner Link-rendered <a> still picks them up.
+         */
+        .header-inner :global(.logo) {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+        .header-inner :global(.logo):focus-visible {
+          outline: none;
+          border-radius: var(--ppt-radius-md);
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        .logo-mark {
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: var(--ppt-color-primary);
+          flex-shrink: 0;
+          display: inline-block;
+        }
+        .logo-text {
           font-size: 18px;
           font-weight: 800;
           color: var(--ppt-color-primary);
-          text-decoration: none;
           letter-spacing: -0.02em;
-          flex-shrink: 0;
+          line-height: 1;
+        }
+        .logo-text-em {
+          font-style: normal;
+          color: var(--ppt-fg-primary);
+          font-weight: 600;
+          margin-left: 2px;
         }
 
         .nav-desktop {
@@ -273,7 +368,7 @@ export function Header() {
           }
         }
 
-        .nav-link {
+        .nav-desktop :global(.nav-link) {
           padding: 8px 14px;
           border-radius: var(--ppt-radius-md);
           font-size: 13.5px;
@@ -284,12 +379,12 @@ export function Header() {
                       color var(--ppt-transition-fast);
         }
 
-        .nav-link:hover {
+        .nav-desktop :global(.nav-link):hover {
           color: var(--ppt-color-primary);
           background: var(--ppt-color-primary-soft-bg);
         }
 
-        .nav-link-active {
+        .nav-desktop :global(.nav-link-active) {
           color: var(--ppt-color-primary);
           background: var(--ppt-color-primary-soft-bg);
         }
@@ -299,6 +394,35 @@ export function Header() {
           align-items: center;
           gap: 8px;
           margin-left: auto;
+        }
+
+        /* Primary "List your property" CTA in the header. Same blue as the
+           brand square and the primary button used elsewhere; hidden on
+           narrow viewports (mobile menu has its own /sell entry). */
+        .auth-section :global(.list-cta) {
+          display: none;
+          padding: 8px 14px;
+          background: var(--ppt-color-primary);
+          color: var(--ppt-fg-on-accent, #fff);
+          border-radius: var(--ppt-radius-md);
+          font-size: var(--ppt-font-size-sm);
+          font-weight: var(--ppt-font-weight-semibold);
+          text-decoration: none;
+          transition: background var(--ppt-transition-fast);
+          white-space: nowrap;
+        }
+        .auth-section :global(.list-cta):hover {
+          background: var(--ppt-color-primary-hover);
+        }
+        .auth-section :global(.list-cta):focus-visible {
+          outline: none;
+          box-shadow: var(--ppt-focus-ring-shadow);
+        }
+        @media (min-width: 1024px) {
+          .auth-section :global(.list-cta) {
+            display: inline-flex;
+            align-items: center;
+          }
         }
 
         /* Reserve a constant width so the swap between the sign-in button
@@ -315,8 +439,10 @@ export function Header() {
 
         @media (max-width: 767px) {
           .auth-slot {
-            min-width: 60px;
-            justify-content: flex-end;
+            /* Hide the entire auth slot on mobile — the hamburger menu has
+               its own Sign in / Logout entry, so duplicating the affordance
+               here costs ~140 px of header width and forces overflow. */
+            display: none;
           }
         }
 
@@ -432,7 +558,7 @@ export function Header() {
           padding: 4px;
         }
 
-        .menu-item {
+        .dropdown-menu :global(.menu-item) {
           display: block;
           width: 100%;
           padding: 8px 10px;
@@ -443,7 +569,7 @@ export function Header() {
           transition: background var(--ppt-transition-fast);
         }
 
-        .menu-item:hover {
+        .dropdown-menu :global(.menu-item):hover {
           background-color: var(--ppt-bg-subtle);
         }
 
@@ -501,7 +627,7 @@ export function Header() {
           }
         }
 
-        .nav-link-mobile {
+        .nav-mobile :global(.nav-link-mobile) {
           padding: 12px 4px;
           color: var(--ppt-fg-secondary);
           text-decoration: none;
@@ -510,12 +636,36 @@ export function Header() {
           border-bottom: 1px solid var(--ppt-border-subtle);
         }
 
-        .nav-link-mobile:hover {
+        .nav-mobile :global(.nav-link-mobile):hover {
           color: var(--ppt-color-primary);
         }
 
-        .nav-link-mobile:last-child {
+        .nav-mobile :global(.nav-link-mobile):last-child {
           border-bottom: none;
+        }
+
+        /* Highlight the seller CTA inside the mobile menu so it doesn't blend
+           with the other nav rows. Keeps the same border-row look but tints
+           the text and adds the same arrow affordance the design uses. */
+        .nav-mobile :global(.nav-link-mobile.sell-cta-mobile) {
+          color: var(--ppt-color-primary);
+          font-weight: var(--ppt-font-weight-semibold);
+        }
+        .nav-mobile :global(.nav-link-mobile.sell-cta-mobile)::after {
+          content: ' →';
+        }
+
+        /* Sign in / Logout entries inside the mobile menu — render as
+           buttons (they trigger login()/logout() rather than navigation)
+           but keep the same row look as the link entries. */
+        .nav-mobile :global(.nav-link-mobile.auth-cta-mobile) {
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid var(--ppt-border-subtle);
+          cursor: pointer;
+          text-align: left;
+          font-family: var(--ppt-font-family);
+          width: 100%;
         }
       `}</style>
     </header>

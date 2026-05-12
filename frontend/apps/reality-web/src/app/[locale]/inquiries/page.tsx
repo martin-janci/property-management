@@ -54,7 +54,9 @@ function InquiryCard({ inquiry }: { inquiry: Inquiry }) {
       <div className="card-header">
         <div className="listing-info">
           {inquiry.listingPhoto && (
-            <img src={inquiry.listingPhoto} alt="" className="listing-photo" />
+            // Thumbnail is decorative: the listing title link beside it
+            // already names the listing for screen readers.
+            <img src={inquiry.listingPhoto} alt="" aria-hidden="true" className="listing-photo" />
           )}
           <div>
             <Link href={`/listings/${inquiry.listingId}`} className="listing-title">
