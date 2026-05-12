@@ -52,6 +52,30 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Module-level dedup for the unauthenticated /sso/session probe. In dev,
+// React StrictMode double-fires the mount effect and Next.js can remount
+// the locale layout once after hydration, which together produced four
+// network hits to /sso/session per pageload (each surfacing as a 401
+// console error for anonymous users). With this guard, concurrent callers
+// share the same in-flight Response and a short result cache prevents a
+// burst of re-mounts within 2 s from each issuing their own request.
+let _inflightSessionProbe: Promise<Response | null> | null = null;
+let _cachedSessionProbeAt = 0;
+async function probeSsoSession(apiBase: string): Promise<Response | null> {
+  const now = Date.now();
+  if (_inflightSessionProbe) return _inflightSessionProbe;
+  if (now - _cachedSessionProbeAt < 2000) return null;
+  _inflightSessionProbe = fetch(`${apiBase}/api/v1/sso/session`, {
+    credentials: 'include',
+  })
+    .catch(() => null)
+    .finally(() => {
+      _cachedSessionProbeAt = Date.now();
+      _inflightSessionProbe = null;
+    });
+  return _inflightSessionProbe;
+}
+
 /** Auth provider props. */
 interface AuthProviderProps {
   children: ReactNode;
@@ -98,26 +122,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    try {
-      const response = await fetch(`${getApiBase()}/api/v1/sso/session`, {
-        credentials: 'include',
+    const response = await probeSsoSession(getApiBase());
+    if (response?.ok) {
+      const session: SessionInfo = await response.json();
+      setUser({
+        user_id: session.user_id,
+        email: session.email,
+        name: session.name,
       });
-
-      if (response.ok) {
-        const session: SessionInfo = await response.json();
-        setUser({
-          user_id: session.user_id,
-          email: session.email,
-          name: session.name,
-        });
-      } else {
-        setUser(null);
-      }
-    } catch {
+    } else {
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }, []);
 
   // Check session on mount
