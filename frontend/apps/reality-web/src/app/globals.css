@@ -25,6 +25,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Long single-word headings (German compound nouns like
+ * "Nutzungsbedingungen", "Datenschutzrichtlinie") can be wider than the
+ * mobile viewport at the design's 1.5–2rem display sizes and force the
+ * page into horizontal scroll. The design system rule: "Never clip
+ * headings with ellipsis; wrap instead." overflow-wrap:anywhere lets the
+ * browser break mid-word as a last resort; hyphens:auto inserts a real
+ * hyphen where the lang attr permits (set on <html> per request).
+ */
+h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
 .container {
   max-width: var(--ppt-content-max, 1280px);
   margin: 0 auto;
