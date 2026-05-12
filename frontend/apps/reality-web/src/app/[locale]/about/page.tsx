@@ -1,11 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
-import { ABOUT_HERO, ABOUT_SECTIONS, ABOUT_STATS } from './_content';
+import { getAboutContent } from './_content';
 
 export default function AboutPage() {
   const t = useTranslations('pages.about');
+  const locale = useLocale();
+  const { hero: ABOUT_HERO, stats: ABOUT_STATS, sections: ABOUT_SECTIONS } = getAboutContent(locale);
 
   return (
     <div
