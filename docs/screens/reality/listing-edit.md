@@ -9,9 +9,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: CreateListingScreen+MyListingsScreen+ListingAnalyticsScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: stub
 relatedScreens:
   - id: reality/profile
     rel: parent
@@ -110,4 +111,5 @@ UC-31 listing edit flow. Distinct from `reality/sell` (creation) — same field 
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP CreateListingScreen + MyListingsScreen + ListingAnalyticsScreen redesigns per ui_kits/mobile-native/screens-extension.jsx KmpCreateListingScreen / KmpMyListingsScreen / KmpListingAnalyticsScreen. Create: close + "New listing" + green "Draft saved" pill in top bar, 5-step progress header, Sale/Rent segmented control, leading-icon outlined inputs (Title/Description/City/Price+Currency split), sticky bottom bar (ghost Back + filled Publish). MyListings: status chip strip with live counts, 16:9 cards with uppercase status badge + kebab pill, price row with inline views/inquiries counters, Extended FAB "Add". Analytics: 2-col metric grid, each card has label + large value + delta (green/red) + 32dp Canvas sparkline with light-fill area + 2dp stroke. AnalyticsMetric data class gains optional delta + trend. buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: bootstrapped from bundle (9 listing-edit files: 5 steps + stepper + mobile + JSX + shell); UC-31; parent reality/profile; sibling reality/sell

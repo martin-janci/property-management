@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: AgencyHubScreen+AgencyInquiriesScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: stub
 endpoints:
   - agencies_get
 epics:
@@ -103,5 +104,6 @@ UC-49 agency management hub. Overview is the daily-use surface (KPIs + activity)
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP AgencyHubScreen + AgencyInquiriesScreen redesigns per ui_kits/mobile-native/screens-extension.jsx KmpAgencyHubScreen / KmpAgencyInquiriesScreen. Hub: gradient RP identity row, 2×2 stat grid (Active / New inquiries [accent] / Avg response / Conversion), Workspace section card with 4 action rows, recent activity feed (5 events with status pills), Extended FAB "Add listing". Inquiries: large title + search action, dynamic status chip strip with live counts, flat thread rows (44dp gradient avatar + name + listing link in brand color + 2-line preview + uppercase status pill), batch-reply FAB. buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/agency-dashboard.html — 4 states: default + empty(onboarding) + loading + error, 6 tabs, 4 quickstats, 8-row activity feed, 3-card top-listings); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (6 sections), all 4 states, design-specific notes; linked UC-49/50/51; declared 6 sharedComponents; added 1 relatedScreen
 - 2026-05-08 — init: created from scan (source: sitemap)
