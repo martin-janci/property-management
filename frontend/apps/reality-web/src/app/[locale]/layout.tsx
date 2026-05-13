@@ -122,6 +122,25 @@ export default async function LocaleLayout({ children, params }: Props) {
          */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/env.js" />
+        {/* Organization JSON-LD: surfaces the brand panel on Google search
+            (sitelinks + logo + social profiles). Emitted at the locale
+            layout so every page carries it; per-page schema (Listing,
+            Article, Breadcrumb) is added by individual routes on top. */}
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD must inline
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Reality Portal',
+              url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rlt.sk',
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rlt.sk'}/icon.svg`,
+              email: 'info@rlt.sk',
+              areaServed: ['SK', 'CZ', 'DE', 'PL', 'HU'],
+            }),
+          }}
+        />
       </head>
       <body>
         {/* StyledJsxRegistry must wrap any subtree that uses `<style jsx>`
