@@ -606,5 +606,12 @@
     "title": "Seite nicht gefunden",
     "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
     "home": "Zurück zur Startseite"
+  },
+  "cookieBanner": {
+    "title": "We use cookies",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
+    "accept": "Accept all",
+    "reject": "Reject optional",
+    "manage": "Cookie settings"
   }
 }

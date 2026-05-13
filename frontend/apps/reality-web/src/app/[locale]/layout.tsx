@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
 import { ComparisonProvider } from '@/lib/comparison-context';
 import { QueryProvider } from '@/lib/query-provider';
+import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
 import { StyledJsxRegistry } from '../../components/StyledJsxRegistry';
@@ -53,6 +54,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 
   return {
+    // metadataBase lets per-route generateMetadata emit relative canonicals
+    // (e.g. '/about') and Next resolves them to absolute URLs in <head>.
+    // Without this, OG/canonical URLs in headers are emitted as paths and
+    // get flagged by Twitter / FB share validators.
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rlt.sk'),
     title: titles[locale as Locale] || titles.en,
     description: descriptions[locale as Locale] || descriptions.en,
     openGraph: {
@@ -60,6 +66,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       description: descriptions[locale as Locale] || descriptions.en,
       type: 'website',
       locale: locale,
+      images: ['/opengraph-image'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titles[locale as Locale] || titles.en,
+      description: descriptions[locale as Locale] || descriptions.en,
+      images: ['/opengraph-image'],
     },
   };
 }
@@ -153,6 +166,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <ComparisonProvider>
                   {children}
                   <ComparisonTray />
+                  <CookieConsentBanner />
                   <DevPanelMount />
                 </ComparisonProvider>
               </AuthProvider>

@@ -606,5 +606,12 @@
     "title": "Stránka neexistuje",
     "description": "Stránka, ktorú hľadáte, neexistuje alebo bola presunutá.",
     "home": "Späť na hlavnú stránku"
+  },
+  "cookieBanner": {
+    "title": "Používame cookies",
+    "body": "Nevyhnutné cookies udržujú stránku funkčnú. Voliteľné analytické a marketingové cookies nám pomáhajú ju zlepšovať — nenastavíme ich, pokiaľ ich neprijmete.",
+    "accept": "Prijať všetky",
+    "reject": "Odmietnuť voliteľné",
+    "manage": "Nastavenia cookies"
   }
 }

@@ -606,5 +606,12 @@
     "title": "Az oldal nem található",
     "description": "A keresett oldal nem létezik, vagy átkerült máshová.",
     "home": "Vissza a főoldalra"
+  },
+  "cookieBanner": {
+    "title": "We use cookies",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
+    "accept": "Accept all",
+    "reject": "Reject optional",
+    "manage": "Cookie settings"
   }
 }

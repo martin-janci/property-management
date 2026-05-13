@@ -102,14 +102,20 @@ const nextConfig = {
   // deps here (or build them to `dist/*` and switch their `main`/`exports`).
   transpilePackages: ['@ppt/dev-panel'],
 
-  // Image optimization
+  // Image optimization.
+  // `domains` is deprecated in Next 14+ in favour of `remotePatterns`, which
+  // also accepts wildcards. Added unsplash for mock journal article photos
+  // and `*.rlt.sk` to cover both prod and worktree-deploy hosts; the API
+  // family is enumerated for prod CDN-served listing photos.
   images: {
-    domains: [
-      'api.rlt.sk',
-      'api.staging.rlt.sk',
-      'api.reality-portal.sk',
-      'api.reality-portal.cz',
-      'api.reality-portal.eu',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'api.rlt.sk' },
+      { protocol: 'https', hostname: 'api.staging.rlt.sk' },
+      { protocol: 'https', hostname: 'api.reality-portal.sk' },
+      { protocol: 'https', hostname: 'api.reality-portal.cz' },
+      { protocol: 'https', hostname: 'api.reality-portal.eu' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: '**.rlt.sk' },
     ],
   },
 
