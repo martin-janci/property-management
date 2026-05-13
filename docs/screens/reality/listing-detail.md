@@ -11,10 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    component: KmpListingDetailScreen
-    buildStatus: planned
-    redesignStatus: in-progress
-    apiStatus: stub
+    component: ListingDetailScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: partial
 endpoints:
   - listings_get
 relatedScreens:
@@ -116,5 +116,6 @@ Single-property detail view — converts portal traffic into UC-46 inquiries (Ca
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP ListingDetailScreen redesign per ui_kits/mobile-native/screens.jsx KmpListingDetailScreen. New layout: 280dp swipeable hero gallery with white-pill back/share/heart, page dots + counter; sticky agent bar (gradient avatar + Verified pill + Call pill); header section (Featured + transaction-type uppercase badges, large display price + €/m², title, address); 4-card quick stats strip (Area / Year / Energy / Floor); tab strip (Overview / Building / Nearby / Price history) with brand-600 underline; tab body — overview = description + features chips, building = 2-col K/V passport card, nearby = map placeholder, price-history = placeholder; bottom action bar with circle message tile + full-width primary "Žiadať obhliadku". Inquiry dialog + share sheet preserved. Added 11 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (ui_kits/reality-web/listing-detail.html); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), states, design-specific notes; linked UC-31/44/46; declared 7 sharedComponents; added 3 relatedScreens (report-listing forward ref deferred — screen-map not yet created)
 - 2026-05-08 — init: created from scan (source: sitemap)

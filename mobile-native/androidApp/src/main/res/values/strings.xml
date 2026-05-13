@@ -291,6 +291,17 @@
     <string name="send_feedback">Send Feedback</string>
 
     <!-- Listing Detail Screen -->
+    <string name="detail_stat_area">Area</string>
+    <string name="detail_stat_built">Built</string>
+    <string name="detail_stat_energy">Energy</string>
+    <string name="detail_stat_floor">Floor</string>
+    <string name="detail_tab_overview">Overview</string>
+    <string name="detail_tab_building">Building passport</string>
+    <string name="detail_tab_nearby">Nearby</string>
+    <string name="detail_tab_price_history">Price history</string>
+    <string name="detail_realtor_unknown">Realtor</string>
+    <string name="detail_building_no_data">No building details available yet.</string>
+    <string name="action_request_viewing">Request viewing</string>
     <string name="detail_rooms">Rooms</string>
     <string name="detail_beds">Beds</string>
     <string name="detail_baths">Baths</string>
