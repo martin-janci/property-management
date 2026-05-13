@@ -11,10 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    component: KmpFavoritesScreen
-    buildStatus: planned
-    redesignStatus: in-progress
-    apiStatus: stub
+    component: FavoritesScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: partial
 endpoints:
   - favorites_list
 relatedScreens:
@@ -103,5 +103,6 @@ UC-44 favorites management — the personal shortlist surface. Public anonymous 
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP FavoritesScreen redesign per ui_kits/mobile-native/screens.jsx KmpFavoritesScreen. New layout: large-title header + share/export actions, M3 TabRow (Properties · Searches), transaction-filter chip strip (All / Sale / Rent), pill segmented sort control (Newest / Price ↑ / Price ↓), 2-col grid of cards with 4:3 photo + white heart pill + price + 1-line title + meta. FAB "Create list" (primaryContainer). Saved-searches tab preserved. Added 10 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/favorites.html, 4 states: loaded + loading + empty + error); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), all 4 states, design-specific notes; linked UC-44; declared 5 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)

@@ -1,11 +1,13 @@
 package three.two.bit.ppt.reality.ui.search
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,7 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -24,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
@@ -33,9 +38,36 @@ import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
- * Search screen for Reality Portal mobile app.
+ * Search / Listings screen — KMP / Compose M3 redesign matching the design
+ * bundle (`guest-registration-v2-design-system/project/ui_kits/mobile-native/
+ * screens.jsx` → `KmpListingsScreen`).
  *
- * Epic 48 - Story 48.1: Portal Mobile Search
+ * Layout (top → bottom):
+ *   1. Top bar — back arrow, Filtre chip (with active-filter count), View
+ *      switcher (List / Mapa) as a pill-style segmented control.
+ *   2. Search field row — single-line outlined input with leading search
+ *      icon, "x" trailing clear (kept from previous implementation, hidden
+ *      when bottom-sheet filter is open per design hint).
+ *   3. Filter chip strip — horizontally scrollable: Všetky · count / 1+1 /
+ *      2+1 / 3+1 / 4+1 / Viac… The active chip uses primaryContainer fill
+ *      and onPrimaryContainer ink (M3 chip token).
+ *   4. Result list — 16:9 hero card with Featured badge (top-left) +
+ *      heart pill (top-right); under image: price + city row, 1-line
+ *      title, meta line (rooms · m² · floor).
+ *   5. FAB — primaryContainer "Save search" (bottom-right, above bottom
+ *      nav).
+ *   6. Optional map view — placeholder (real Mapbox/MapLibre integration
+ *      tracked in screens-extension D2).
+ *
+ * Bottom nav lives in `Navigation.kt`; this composable reserves 96dp of
+ * bottom padding for it.
+ *
+ * The public `ListingCard` composable remains in this file (used by the
+ * rest of the app via `import three.two.bit.ppt.reality.ui.search.ListingCard`).
+ * It now uses the redesigned card body so callers automatically inherit
+ * the new visual.
+ *
+ * Epic 48 - Story 48.1: Portal Mobile Search.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +86,7 @@ fun SearchScreen(
     var currentPage by remember { mutableStateOf(1) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showFilters by remember { mutableStateOf(false) }
+    var viewMode by remember { mutableStateOf(ViewMode.LIST) }
 
     // Filter state
     var selectedType by remember { mutableStateOf<ListingType?>(null) }
@@ -68,213 +101,355 @@ fun SearchScreen(
             isLoading = true
             errorMessage = null
 
-            val filters =
-                ListingSearchFilters(
-                    type = selectedType,
-                    category = selectedCategory,
-                    minPrice = minPrice.toLongOrNull(),
-                    maxPrice = maxPrice.toLongOrNull(),
-                    minRooms = minRooms,
-                )
-
-            val request =
-                ListingSearchRequest(
-                    query = searchQuery.takeIf { it.isNotBlank() },
-                    filters = filters,
-                    sort = selectedSort,
-                    page = page,
-                    pageSize = 20,
-                )
-
-            repository
-                .searchListings(request)
-                .fold(
-                    onSuccess = { response ->
-                        if (page == 1) {
-                            searchResults = response.listings
-                        } else {
-                            searchResults = searchResults + response.listings
-                        }
-                        totalResults = response.total
-                        currentPage = page
-                    },
-                    onFailure = { error -> errorMessage = error.message ?: "Search failed" },
-                )
-
+            val filters = ListingSearchFilters(
+                type = selectedType,
+                category = selectedCategory,
+                minPrice = minPrice.toLongOrNull(),
+                maxPrice = maxPrice.toLongOrNull(),
+                minRooms = minRooms,
+            )
+            val request = ListingSearchRequest(
+                query = searchQuery.takeIf { it.isNotBlank() },
+                filters = filters,
+                sort = selectedSort,
+                page = page,
+                pageSize = 20,
+            )
+            repository.searchListings(request).fold(
+                onSuccess = { response ->
+                    searchResults = if (page == 1) response.listings
+                    else searchResults + response.listings
+                    totalResults = response.total
+                    currentPage = page
+                },
+                onFailure = { errorMessage = it.message ?: "Search failed" },
+            )
             isLoading = false
         }
     }
 
-    // Initial search on mount
     LaunchedEffect(Unit) { performSearch() }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        placeholder = { Text(stringResource(R.string.search_placeholder)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions =
-                            KeyboardActions(
-                                onSearch = {
-                                    keyboardController?.hide()
-                                    performSearch()
-                                },
-                            ),
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = stringResource(R.string.cd_search),
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        searchQuery = ""
-                                        performSearch()
-                                    },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Clear,
-                                        contentDescription = stringResource(R.string.cd_clear),
-                                    )
-                                }
-                            }
-                        },
-                        colors =
-                            OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent,
-                            ),
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showFilters = !showFilters }) {
-                        Icon(
-                            Icons.Default.FilterList,
-                            contentDescription = stringResource(R.string.cd_filters),
-                            tint =
-                                if (showFilters) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-            )
-        },
-    ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            // Filter chips row
-            if (showFilters) {
-                FilterSection(
-                    selectedType = selectedType,
-                    onTypeChange = {
-                        selectedType = it
+    val activeFilterCount = remember(selectedType, selectedCategory, minRooms, minPrice, maxPrice) {
+        listOf(selectedType, selectedCategory, minRooms).count { it != null } +
+            (if (minPrice.isNotBlank() || maxPrice.isNotBlank()) 1 else 0)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                ListingsTopBar(
+                    activeFilterCount = activeFilterCount,
+                    viewMode = viewMode,
+                    onBackClick = onBackClick,
+                    onFiltersClick = { showFilters = !showFilters },
+                    onViewModeChange = { viewMode = it },
+                )
+
+                // Search input row — single line, inline with chips per design hint
+                SearchInputRow(
+                    value = searchQuery,
+                    onChange = { searchQuery = it },
+                    onSearch = {
+                        keyboardController?.hide()
                         performSearch()
                     },
-                    selectedCategory = selectedCategory,
-                    onCategoryChange = {
-                        selectedCategory = it
+                    onClear = {
+                        searchQuery = ""
                         performSearch()
                     },
-                    minPrice = minPrice,
-                    onMinPriceChange = { minPrice = it },
-                    maxPrice = maxPrice,
-                    onMaxPriceChange = { maxPrice = it },
-                    minRooms = minRooms,
-                    onMinRoomsChange = {
+                )
+
+                // Filter chip strip
+                RoomsChipStrip(
+                    selected = minRooms,
+                    onSelect = {
                         minRooms = it
                         performSearch()
                     },
-                    selectedSort = selectedSort,
-                    onSortChange = {
-                        selectedSort = it
-                        performSearch()
-                    },
-                    onApplyPrice = { performSearch() },
+                    totalResults = totalResults,
                 )
-            }
 
-            // Results count
-            if (totalResults > 0) {
-                Text(
-                    text = stringResource(R.string.properties_found, totalResults),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-
-            // Error message
-            errorMessage?.let { error ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                        ),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Default.Error,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = error, color = MaterialTheme.colorScheme.onErrorContainer)
-                    }
+                if (showFilters) {
+                    AdvancedFilterPanel(
+                        selectedType = selectedType,
+                        onTypeChange = { selectedType = it; performSearch() },
+                        selectedCategory = selectedCategory,
+                        onCategoryChange = { selectedCategory = it; performSearch() },
+                        minPrice = minPrice,
+                        onMinPriceChange = { minPrice = it },
+                        maxPrice = maxPrice,
+                        onMaxPriceChange = { maxPrice = it },
+                        selectedSort = selectedSort,
+                        onSortChange = { selectedSort = it; performSearch() },
+                        onApplyPrice = { performSearch() },
+                    )
                 }
-            }
 
-            // Results list
-            if (isLoading && searchResults.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (searchResults.isEmpty()) {
-                EmptySearchResults()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(searchResults) { listing ->
-                        ListingCard(listing = listing, onClick = { onListingClick(listing.id) })
+                errorMessage?.let { ErrorBanner(it) }
+
+                when {
+                    isLoading && searchResults.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
                     }
-
-                    // Load more button
-                    if (searchResults.size < totalResults) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (isLoading) {
-                                    CircularProgressIndicator()
-                                } else {
-                                    Button(onClick = { performSearch(currentPage + 1) }) {
-                                        Text(stringResource(R.string.action_load_more))
+                    searchResults.isEmpty() -> EmptySearchResults()
+                    viewMode == ViewMode.LIST -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                start = 16.dp, end = 16.dp, top = 4.dp, bottom = 120.dp,
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            items(searchResults) { listing ->
+                                ListingCard(
+                                    listing = listing,
+                                    onClick = { onListingClick(listing.id) },
+                                )
+                            }
+                            if (searchResults.size < totalResults) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (isLoading) CircularProgressIndicator()
+                                        else TextButton(onClick = { performSearch(currentPage + 1) }) {
+                                            Text(stringResource(R.string.action_load_more))
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+                    viewMode == ViewMode.MAP -> MapPlaceholder()
+                }
+            }
+
+            // FAB — Save search
+            if (searchResults.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = { /* save search — opens KmpSaveSearchModal (deferred) */ },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = if (viewMode == ViewMode.MAP) 100.dp else 96.dp),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    icon = { Icon(Icons.Default.BookmarkBorder, contentDescription = null) },
+                    text = { Text(stringResource(R.string.action_save_search)) },
+                )
+            }
+        }
+    }
+}
+
+private enum class ViewMode { LIST, MAP }
+
+// ─── Top bar ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ListingsTopBar(
+    activeFilterCount: Int,
+    viewMode: ViewMode,
+    onBackClick: () -> Unit,
+    onFiltersClick: () -> Unit,
+    onViewModeChange: (ViewMode) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(start = 4.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                Icons.Default.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        // Filtre chip — primaryContainer when filters active
+        Surface(
+            onClick = onFiltersClick,
+            shape = RoundedCornerShape(8.dp),
+            color = if (activeFilterCount > 0) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface,
+            border = if (activeFilterCount > 0) null
+            else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.FilterList,
+                    contentDescription = null,
+                    tint = if (activeFilterCount > 0) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (activeFilterCount > 0)
+                        stringResource(R.string.filters_with_count, activeFilterCount)
+                    else stringResource(R.string.filters),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (activeFilterCount > 0)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        // View switcher (segmented control)
+        Surface(
+            shape = RoundedCornerShape(999.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+        ) {
+            Row(modifier = Modifier.padding(3.dp)) {
+                SegmentChip(
+                    icon = Icons.Default.ViewList,
+                    label = stringResource(R.string.view_list),
+                    selected = viewMode == ViewMode.LIST,
+                    onClick = { onViewModeChange(ViewMode.LIST) },
+                )
+                SegmentChip(
+                    icon = Icons.Default.Map,
+                    label = stringResource(R.string.view_map),
+                    selected = viewMode == ViewMode.MAP,
+                    onClick = { onViewModeChange(ViewMode.MAP) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SegmentChip(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(999.dp),
+        color = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent,
+        shadowElevation = if (selected) 1.dp else 0.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = if (selected) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = if (selected) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ─── Search input ────────────────────────────────────────────────────────────
+
+@Composable
+private fun SearchInputRow(
+    value: String,
+    onChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onClear: () -> Unit,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = { Text(stringResource(R.string.search_placeholder)) },
+        singleLine = true,
+        leadingIcon = {
+            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+        },
+        trailingIcon = {
+            if (value.isNotEmpty()) {
+                IconButton(onClick = onClear) {
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear))
+                }
+            }
+        },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+        shape = RoundedCornerShape(12.dp),
+    )
+}
+
+// ─── Rooms chip strip ────────────────────────────────────────────────────────
+
+@Composable
+private fun RoomsChipStrip(
+    selected: Int?,
+    onSelect: (Int?) -> Unit,
+    totalResults: Int,
+) {
+    val chips = listOf<Pair<Int?, String>>(
+        null to stringResource(R.string.filter_all),
+        1 to "1+1",
+        2 to "2+1",
+        3 to "3+1",
+        4 to "4+1",
+    )
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(chips.size) { idx ->
+            val (rooms, label) = chips[idx]
+            val isOn = selected == rooms
+            Surface(
+                onClick = { onSelect(rooms) },
+                shape = RoundedCornerShape(8.dp),
+                color = if (isOn) MaterialTheme.colorScheme.primaryContainer
+                else Color.Transparent,
+                border = if (isOn) null
+                else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isOn) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (isOn && totalResults > 0) {
+                        Text(
+                            text = " · $totalResults",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                        )
                     }
                 }
             }
@@ -282,8 +457,10 @@ fun SearchScreen(
     }
 }
 
+// ─── Advanced filter panel (collapsible) ────────────────────────────────────
+
 @Composable
-private fun FilterSection(
+private fun AdvancedFilterPanel(
     selectedType: ListingType?,
     onTypeChange: (ListingType?) -> Unit,
     selectedCategory: PropertyCategory?,
@@ -292,32 +469,21 @@ private fun FilterSection(
     onMinPriceChange: (String) -> Unit,
     maxPrice: String,
     onMaxPriceChange: (String) -> Unit,
-    minRooms: Int?,
-    onMinRoomsChange: (Int?) -> Unit,
     selectedSort: ListingSortOption,
     onSortChange: (ListingSortOption) -> Unit,
     onApplyPrice: () -> Unit,
 ) {
-    val filterAllLabel = stringResource(R.string.filter_all)
-    val filterAnyLabel = stringResource(R.string.filter_any)
-    val sortNewestLabel = stringResource(R.string.sort_newest)
-    val sortOldestLabel = stringResource(R.string.sort_oldest)
-    val sortPriceAscLabel = stringResource(R.string.sort_price_asc)
-    val sortPriceDescLabel = stringResource(R.string.sort_price_desc)
-    val sortAreaAscLabel = stringResource(R.string.sort_area_asc)
-    val sortAreaDescLabel = stringResource(R.string.sort_area_desc)
-    val sortRelevanceLabel = stringResource(R.string.sort_relevance)
-
     Column(
-        modifier =
-            Modifier.fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
     ) {
-        // Type filter
+        // Type
         Text(
             text = stringResource(R.string.filter_type),
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -325,7 +491,7 @@ private fun FilterSection(
                 FilterChip(
                     selected = selectedType == null,
                     onClick = { onTypeChange(null) },
-                    label = { Text(filterAllLabel) },
+                    label = { Text(stringResource(R.string.filter_all)) },
                 )
             }
             items(ListingType.entries) { type ->
@@ -336,13 +502,12 @@ private fun FilterSection(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Category filter
+        // Category
         Text(
             text = stringResource(R.string.filter_category),
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -350,7 +515,7 @@ private fun FilterSection(
                 FilterChip(
                     selected = selectedCategory == null,
                     onClick = { onCategoryChange(null) },
-                    label = { Text(filterAllLabel) },
+                    label = { Text(stringResource(R.string.filter_all)) },
                 )
             }
             items(PropertyCategory.entries) { category ->
@@ -361,13 +526,12 @@ private fun FilterSection(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Price range
+        // Price
         Text(
             text = stringResource(R.string.filter_price_range_eur),
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         Row(
@@ -394,64 +558,62 @@ private fun FilterSection(
                 keyboardActions = KeyboardActions(onDone = { onApplyPrice() }),
             )
             IconButton(onClick = onApplyPrice) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = stringResource(R.string.filter_apply),
-                )
+                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.filter_apply))
             }
         }
-
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Rooms filter
-        Text(
-            text = stringResource(R.string.filter_rooms),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = minRooms == null,
-                    onClick = { onMinRoomsChange(null) },
-                    label = { Text(filterAnyLabel) },
-                )
-            }
-            items(listOf(1, 2, 3, 4, 5)) { rooms ->
-                FilterChip(
-                    selected = minRooms == rooms,
-                    onClick = { onMinRoomsChange(rooms) },
-                    label = { Text("$rooms+") },
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
         // Sort
         Text(
             text = stringResource(R.string.sort_by),
             style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(ListingSortOption.entries) { sort ->
-                val label =
-                    when (sort) {
-                        ListingSortOption.NEWEST -> sortNewestLabel
-                        ListingSortOption.OLDEST -> sortOldestLabel
-                        ListingSortOption.PRICE_ASC -> sortPriceAscLabel
-                        ListingSortOption.PRICE_DESC -> sortPriceDescLabel
-                        ListingSortOption.AREA_ASC -> sortAreaAscLabel
-                        ListingSortOption.AREA_DESC -> sortAreaDescLabel
-                        ListingSortOption.RELEVANCE -> sortRelevanceLabel
-                    }
+                val label = when (sort) {
+                    ListingSortOption.NEWEST -> stringResource(R.string.sort_newest)
+                    ListingSortOption.OLDEST -> stringResource(R.string.sort_oldest)
+                    ListingSortOption.PRICE_ASC -> stringResource(R.string.sort_price_asc)
+                    ListingSortOption.PRICE_DESC -> stringResource(R.string.sort_price_desc)
+                    ListingSortOption.AREA_ASC -> stringResource(R.string.sort_area_asc)
+                    ListingSortOption.AREA_DESC -> stringResource(R.string.sort_area_desc)
+                    ListingSortOption.RELEVANCE -> stringResource(R.string.sort_relevance)
+                }
                 FilterChip(
                     selected = selectedSort == sort,
                     onClick = { onSortChange(sort) },
                     label = { Text(label) },
                 )
             }
+        }
+    }
+}
+
+// ─── Empty / error / map placeholder ────────────────────────────────────────
+
+@Composable
+private fun ErrorBanner(error: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Error,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = error, color = MaterialTheme.colorScheme.onErrorContainer)
         }
     }
 }
@@ -485,114 +647,133 @@ private fun EmptySearchResults() {
 }
 
 @Composable
+private fun MapPlaceholder() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.Map,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.map_placeholder),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ─── Listing card (public — also used by Favorites + other screens) ─────────
+
+@Composable
 fun ListingCard(
     listing: ListingSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    showFavoriteButton: Boolean = false,
+    showFavoriteButton: Boolean = true,
     isFavorite: Boolean = false,
     onFavoriteClick: (() -> Unit)? = null,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            // Image
-            Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+            // Hero — 16:9 photo with badges and heart pill
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f),
+            ) {
                 AsyncImage(
-                    model =
-                        ImageRequest.Builder(LocalContext.current)
-                            .data(listing.primaryImage?.url ?: "")
-                            .crossfade(true)
-                            .build(),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(listing.primaryImage?.url ?: "")
+                        .crossfade(true)
+                        .build(),
                     contentDescription = listing.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
 
-                // Badges row
+                // Featured / Sale / Rent badges (top-left)
                 Row(
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     if (listing.isFeatured) {
-                        Badge(containerColor = BadgeColors.featuredBg) {
-                            Text(
-                                stringResource(R.string.label_featured),
-                                modifier = Modifier.padding(horizontal = 4.dp),
-                                color = BadgeColors.featuredInk,
-                            )
-                        }
+                        UppercaseBadge(
+                            text = stringResource(R.string.label_featured),
+                            bg = BadgeColors.featuredBg,
+                            ink = BadgeColors.featuredInk,
+                        )
                     }
-                    if (listing.isNew) {
-                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
-                            Text(
-                                stringResource(R.string.label_new),
-                                modifier = Modifier.padding(horizontal = 4.dp),
-                            )
-                        }
-                    }
-                    if (listing.isPriceReduced) {
-                        Badge(containerColor = MaterialTheme.colorScheme.error) {
-                            Text(
-                                stringResource(R.string.label_reduced),
-                                modifier = Modifier.padding(horizontal = 4.dp),
-                            )
-                        }
-                    }
-                }
-
-                // Type badge
-                val typeBadgeBg =
-                    when (listing.type) {
+                    val transactionBg = when (listing.type) {
                         ListingType.SALE -> BadgeColors.saleBg
                         ListingType.RENT -> BadgeColors.rentBg
                     }
-                val typeBadgeInk =
-                    when (listing.type) {
+                    val transactionInk = when (listing.type) {
                         ListingType.SALE -> BadgeColors.saleInk
                         ListingType.RENT -> BadgeColors.rentInk
                     }
-                Surface(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    color = typeBadgeBg,
-                ) {
-                    Text(
-                        text =
-                            when (listing.type) {
-                                ListingType.SALE -> stringResource(R.string.for_sale)
-                                ListingType.RENT -> stringResource(R.string.for_rent)
-                            },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = typeBadgeInk,
+                    UppercaseBadge(
+                        text = when (listing.type) {
+                            ListingType.SALE -> stringResource(R.string.for_sale)
+                            ListingType.RENT -> stringResource(R.string.for_rent)
+                        },
+                        bg = transactionBg,
+                        ink = transactionInk,
                     )
                 }
 
-                // Favorite button
-                if (showFavoriteButton && onFavoriteClick != null) {
-                    IconButton(
-                        onClick = onFavoriteClick,
-                        modifier = Modifier.align(Alignment.BottomEnd),
+                // Heart pill (top-right)
+                if (showFavoriteButton) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(12.dp)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.92f))
+                            .clickable(enabled = onFavoriteClick != null) {
+                                onFavoriteClick?.invoke()
+                            },
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector =
-                                if (isFavorite) Icons.Default.Favorite
-                                else Icons.Default.FavoriteBorder,
-                            contentDescription =
-                                if (isFavorite) stringResource(R.string.remove_from_favorites)
-                                else stringResource(R.string.add_to_favorites),
-                            tint = if (isFavorite) MaterialTheme.colorScheme.error else Color.White,
+                            imageVector = if (isFavorite) Icons.Default.Favorite
+                            else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite)
+                                stringResource(R.string.remove_from_favorites)
+                            else stringResource(R.string.add_to_favorites),
+                            tint = if (isFavorite) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
 
-                // Image count
+                // Image count (bottom-left) — kept from previous impl
                 if (listing.imageCount > 1) {
                     Surface(
-                        modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(12.dp),
                         shape = RoundedCornerShape(4.dp),
                         color = Color.Black.copy(alpha = 0.6f),
                     ) {
@@ -617,105 +798,80 @@ fun ListingCard(
                 }
             }
 
-            // Content
-            Column(modifier = Modifier.padding(12.dp)) {
-                // Price
-                Text(
-                    text = formatPrice(listing.price, listing.currency),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Title
+            // Body — price + location row, title, meta
+            Column(
+                modifier = Modifier.padding(
+                    start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp,
+                ),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = FormatUtils.formatPrice(listing.price, listing.currency),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.size(11.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = listing.address.city,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = listing.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Location
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = buildLocationString(listing.address),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Property details
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    listing.areaSqm?.let { area ->
-                        PropertyDetail(
-                            icon = Icons.Default.SquareFoot,
-                            value = "${area.toInt()} ${stringResource(R.string.sqm)}",
-                        )
-                    }
-                    listing.rooms?.let { rooms ->
-                        PropertyDetail(
-                            icon = Icons.Default.MeetingRoom,
-                            value = stringResource(R.string.rooms_count, rooms),
-                        )
-                    }
-                    listing.bedrooms?.let { bedrooms ->
-                        PropertyDetail(
-                            icon = Icons.Default.Bed,
-                            value = stringResource(R.string.bed_count, bedrooms),
-                        )
-                    }
-                    listing.bathrooms?.let { bathrooms ->
-                        PropertyDetail(
-                            icon = Icons.Default.Bathtub,
-                            value = stringResource(R.string.bath_count, bathrooms),
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = listingMeta(listing),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun PropertyDetail(icon: androidx.compose.ui.graphics.vector.ImageVector, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.width(4.dp))
+private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = bg,
+    ) {
         Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = text.uppercase(),
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.04.sp,
+            ),
+            color = ink,
         )
     }
 }
 
-private fun formatPrice(price: Long, currency: String): String {
-    return FormatUtils.formatPrice(price, currency)
-}
-
-private fun buildLocationString(address: Address): String {
-    return FormatUtils.buildSimpleLocationString(address)
+private fun listingMeta(listing: ListingSummary): String {
+    val parts = buildList {
+        listing.rooms?.let { add("$it izby") }
+        listing.areaSqm?.toInt()?.let { add("$it m²") }
+    }
+    return parts.joinToString(" · ")
 }

@@ -163,6 +163,11 @@
 
     <!-- Filters -->
     <string name="action_filters">Filters</string>
+    <string name="filters_with_count">Filters · %1$d</string>
+    <string name="view_list">List</string>
+    <string name="view_map">Map</string>
+    <string name="map_placeholder">Map preview — full integration coming soon</string>
+    <string name="action_save_search">Save search</string>
     <string name="filter_for_sale">For Sale</string>
     <string name="filter_for_rent">For Rent</string>
     <string name="filter_apartments">Apartments</string>
@@ -243,6 +248,16 @@
     <string name="favorites_sign_in_title">Sign in to save favorites</string>
     <string name="favorites_sign_in_description">Keep track of properties you\'re interested in</string>
     <string name="favorites_empty_description">Save properties to compare later</string>
+    <string name="favorites_summary">%1$d listings · %2$d lists</string>
+    <string name="favorites_filter_all">All</string>
+    <string name="filter_sale">Sale</string>
+    <string name="filter_rent">Rent</string>
+    <string name="favorites_create_list">Create list</string>
+    <string name="sort_price_asc_short">Price ↑</string>
+    <string name="sort_price_desc_short">Price ↓</string>
+    <string name="cd_share">Share</string>
+    <string name="cd_export">Export</string>
+    <string name="cd_remove_favorite">Remove from favorites</string>
     <string name="saved_search_new_count">%1$d new</string>
     <string name="saved_search_disable_alerts">Disable alerts</string>
     <string name="saved_search_enable_alerts">Enable alerts</string>
@@ -252,6 +267,20 @@
     <string name="saved_searches_empty_description">Save your search to get notified about new listings</string>
 
     <!-- Account Screen -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_verified">Verified</string>
+    <string name="profile_stat_favorites">Favorites</string>
+    <string name="profile_stat_searches">Searches</string>
+    <string name="profile_stat_inquiries">Inquiries</string>
+    <string name="profile_section_searches">Saved searches</string>
+    <string name="profile_section_searches_sub">3 active</string>
+    <string name="profile_section_compare">Comparison</string>
+    <string name="profile_section_compare_sub">2 on the list</string>
+    <string name="profile_section_notifications">Notifications</string>
+    <string name="profile_section_notifications_sub">Push, email and SMS</string>
+    <string name="profile_section_privacy">Privacy &amp; data</string>
+    <string name="profile_section_about">About</string>
+    <string name="profile_section_about_sub">v %1$s · Legal</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="notification_listing_updates">Listing Updates</string>
     <string name="notification_listing_updates_desc">Get notified when a favorite listing is updated</string>
@@ -306,4 +335,21 @@
     <string name="viewing_cancel_keep">Keep</string>
     <string name="viewings_empty_title">No viewings scheduled</string>
     <string name="viewings_empty_description">Schedule viewings to see properties in person</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_welcome">Welcome back</string>
+    <string name="home_hero_search_placeholder">City, location, or listing ID…</string>
+    <string name="home_hero_tab_sale">For sale</string>
+    <string name="home_hero_tab_rent">For rent</string>
+    <string name="home_hero_tab_new">New builds</string>
+    <string name="cd_notifications">Notifications</string>
+
+    <!-- Categories -->
+    <string name="categories">Categories</string>
+    <string name="cat_apartments">Apartments</string>
+    <string name="cat_houses">Houses</string>
+    <string name="cat_commercial">Commercial</string>
+    <string name="cat_land">Land</string>
+    <string name="cat_recreation">Recreation</string>
+    <string name="cat_parking">Parking</string>
 </resources>

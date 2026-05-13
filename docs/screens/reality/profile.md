@@ -9,10 +9,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: stub
   mobile-native:
-    component: KmpProfileScreen
+    component: AccountScreen
     buildStatus: in-progress
-    redesignStatus: in-progress
-    apiStatus: stub
+    redesignStatus: applied
+    apiStatus: partial
 relatedScreens:
   - id: reality/home
     rel: parent
@@ -100,4 +100,5 @@ UC-47 portal user account hub. Pulls from UC-44 favorites, UC-45 saved searches,
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP AccountScreen redesign per ui_kits/mobile-native/screens.jsx KmpProfileScreen. New layout: large-title top bar (Profil + Settings cog), centered hero (88dp gradient avatar with initials + name + Verified uppercase pill + email), 3-card stat strip (Favorites/Searches/Inquiries with tabular numerics + uppercase labels), section card grouping rows (Saved searches · 3 active, Comparison · 2 on list, Notifications with master toggle, Privacy & data, About · vX.X.X · Legal) with 40dp tile + chev/switch. Notification preferences detail card revealed via the master toggle (preserves existing 5 prefs: new listings, price drops, inquiry responses, listing updates, marketing). App settings + About cards restyled to match section-row idiom. Sign out as standalone danger-tinted card. Added 13 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: bootstrapped from bundle (pages/profile.html + mobile-new-pages.html MProfile frame); linked UC-47/44/45/46; relatedScreens to favorites + saved-searches + inquiries

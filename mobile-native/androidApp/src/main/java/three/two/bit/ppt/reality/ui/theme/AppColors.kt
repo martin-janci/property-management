@@ -5,9 +5,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 // ─── Brand palette ───────────────────────────────────────────────────────────
+val Brand800 = Color(0xFF1E40AF) // hero gradient start (darker)
 val Brand600 = Color(0xFF2563EB) // primary
 val Brand700 = Color(0xFF1D4ED8) // primary-hover / dark
-val Brand500 = Color(0xFF3B82F6) // soft accent
+val Brand500 = Color(0xFF3B82F6) // hero gradient end / soft accent
 val Brand400 = Color(0xFF60A5FA) // dark-mode primary
 val Brand100 = Color(0xFFDBEAFE)
 val Brand50 = Color(0xFFEFF6FF) // primary-soft-bg
