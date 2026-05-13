@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -272,7 +274,7 @@ private fun ListingsTopBar(
     ) {
         IconButton(onClick = onBackClick) {
             Icon(
-                Icons.Default.ArrowBack,
+                Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.cd_back),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
@@ -318,7 +320,7 @@ private fun ListingsTopBar(
         ) {
             Row(modifier = Modifier.padding(3.dp)) {
                 SegmentChip(
-                    icon = Icons.Default.ViewList,
+                    icon = Icons.AutoMirrored.Filled.ViewList,
                     label = stringResource(R.string.view_list),
                     selected = viewMode == ViewMode.LIST,
                     onClick = { onViewModeChange(ViewMode.LIST) },

@@ -16,6 +16,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -327,7 +329,7 @@ private fun HeroGallery(
         // Back pill (top-left)
         WhitePill(
             modifier = Modifier.align(Alignment.TopStart).padding(14.dp),
-            icon = Icons.Default.ArrowBack,
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
             tint = MaterialTheme.colorScheme.onSurface,
             onClick = onBackClick,
         )
@@ -942,7 +944,7 @@ private fun BottomActionBar(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    Icons.Default.Message,
+                    Icons.AutoMirrored.Filled.Message,
                     contentDescription = stringResource(R.string.action_inquire),
                     modifier = Modifier.size(22.dp),
                     tint = MaterialTheme.colorScheme.onSurface,

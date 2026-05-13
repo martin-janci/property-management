@@ -9,10 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -92,7 +92,7 @@ fun AgencyInquiriesScreen(
                     .padding(end = 16.dp, bottom = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
-                icon = { Icon(Icons.Default.Send, contentDescription = null) },
+                icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
                 text = { Text(stringResource(R.string.agency_inquiries_batch_reply)) },
             )
         }
@@ -108,7 +108,7 @@ private fun AgencyInquiriesHeader(onBackClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBackClick) {
-            Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
         }
         Text(
             text = stringResource(R.string.inquiries),
