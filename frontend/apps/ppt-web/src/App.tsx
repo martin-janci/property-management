@@ -811,7 +811,6 @@ function DisputeDetailRoute() {
  * Manages filter state and navigation callbacks.
  */
 function OutagesPageRoute() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [queryParams, setQueryParams] = useState<OutageListQuery>({ limit: 10, offset: 0 });
