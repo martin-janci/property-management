@@ -87,8 +87,8 @@ export default function RegisterPage() {
           </>
         ) : (
           <>
-            <h1 className="title">Create your account</h1>
-            <p className="subtitle">Save listings, set alerts and contact agents.</p>
+            <h1 className="title">{t('title')}</h1>
+            <p className="subtitle">{t('description')}</p>
 
             <form className="form" onSubmit={handleSubmit} noValidate>
               {generalError && (

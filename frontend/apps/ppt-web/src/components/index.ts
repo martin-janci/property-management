@@ -3,6 +3,7 @@
  */
 
 export { AnnouncerProvider, useAnnouncer } from './Announcer';
+export { AuthRequiredGate } from './AuthRequiredGate';
 export type { ConfirmationDialogProps } from './ConfirmationDialog';
 export { ConfirmationDialog } from './ConfirmationDialog';
 export type { ConnectionStatusProps } from './ConnectionStatus';

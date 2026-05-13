@@ -37,6 +37,7 @@ import {
 import {
   AnnouncerProvider,
   ConnectionStatus,
+  AuthRequiredGate,
   LanguageSwitcher,
   OfflineIndicator,
   ProtectedRoute,
@@ -518,13 +519,7 @@ function DisputesPageRoute() {
 
   // Require organization context for disputes
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const organizationId = user.organizationId;
@@ -618,13 +613,7 @@ function FileDisputePageRoute() {
 
   // Require organization context for filing disputes
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const organizationId = user.organizationId;
@@ -830,13 +819,7 @@ function OutagesPageRoute() {
   const { data, isLoading } = useOutages(queryParams);
 
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const outages: ApiOutageSummary[] = data?.outages ?? [];
@@ -882,13 +865,7 @@ function CreateOutagePageRoute() {
   const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
 
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   // Transform API buildings to UI format
