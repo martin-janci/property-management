@@ -36,8 +36,8 @@ import {
 } from 'react-router-dom';
 import {
   AnnouncerProvider,
-  ConnectionStatus,
   AuthRequiredGate,
+  ConnectionStatus,
   LanguageSwitcher,
   OfflineIndicator,
   ProtectedRoute,

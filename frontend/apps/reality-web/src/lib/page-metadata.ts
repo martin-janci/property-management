@@ -15,7 +15,7 @@ const SITE_NAME = 'Reality Portal';
  */
 export function pageMetadata(
   key: string,
-  opts: { suffixBrand?: boolean } = {},
+  opts: { suffixBrand?: boolean } = {}
 ): (ctx: { params: Promise<{ locale: string }> }) => Promise<Metadata> {
   const { suffixBrand = true } = opts;
   return async ({ params }) => {
@@ -24,9 +24,10 @@ export function pageMetadata(
     const rawTitle = safeT(t, 'title');
     const description = safeT(t, 'description');
     if (!rawTitle) return {};
-    const title = suffixBrand && !rawTitle.toLowerCase().includes('reality portal')
-      ? `${rawTitle} — ${SITE_NAME}`
-      : rawTitle;
+    const title =
+      suffixBrand && !rawTitle.toLowerCase().includes('reality portal')
+        ? `${rawTitle} — ${SITE_NAME}`
+        : rawTitle;
     return {
       title,
       ...(description ? { description } : {}),

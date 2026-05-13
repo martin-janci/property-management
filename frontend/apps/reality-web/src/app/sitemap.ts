@@ -37,10 +37,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: path === '' ? 1 : 0.6,
         alternates: {
           languages: Object.fromEntries(
-            locales.map((alt) => [alt, `${base}${alt === 'en' ? '' : `/${alt}`}${path}`]),
+            locales.map((alt) => [alt, `${base}${alt === 'en' ? '' : `/${alt}`}${path}`])
           ),
         },
       };
-    }),
+    })
   );
 }

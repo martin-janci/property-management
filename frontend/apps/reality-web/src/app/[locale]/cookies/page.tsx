@@ -67,9 +67,7 @@ export default function CookiesPage() {
         >
           {t('title')}
         </h1>
-        <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 40 }}>
-          {t('lastUpdated')}
-        </p>
+        <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 40 }}>{t('lastUpdated')}</p>
 
         {/* §§ text sections */}
         {COOKIE_SECTIONS.map((section) => (

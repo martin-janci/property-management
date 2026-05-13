@@ -126,11 +126,9 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
   } else if (step === 5) {
     if (!form.contactName.trim()) errors.contactName = tKey('nameRequired');
     if (!form.contactPhone.trim()) errors.contactPhone = tKey('phoneRequired');
-    else if (!PHONE_RE.test(form.contactPhone.trim()))
-      errors.contactPhone = tKey('phoneFormat');
+    else if (!PHONE_RE.test(form.contactPhone.trim())) errors.contactPhone = tKey('phoneFormat');
     if (!form.contactEmail.trim()) errors.contactEmail = tKey('emailRequired');
-    else if (!EMAIL_RE.test(form.contactEmail.trim()))
-      errors.contactEmail = tKey('emailFormat');
+    else if (!EMAIL_RE.test(form.contactEmail.trim())) errors.contactEmail = tKey('emailFormat');
   }
   return errors;
 }
@@ -336,7 +334,9 @@ export default function SellPage() {
                       ...inputStyle,
                       borderColor: errors.address
                         ? 'var(--ppt-color-danger-hover, #dc2626)'
-                        : inputStyle.border?.toString().includes('1px') ? undefined : undefined,
+                        : inputStyle.border?.toString().includes('1px')
+                          ? undefined
+                          : undefined,
                     }}
                   />
                   {errors.address && <span style={errorStyle}>{errors.address}</span>}
@@ -470,7 +470,7 @@ export default function SellPage() {
                     placeholder={t(
                       form.transactionType === 'rent'
                         ? 'fields.priceRentPlaceholder'
-                        : 'fields.priceSalePlaceholder',
+                        : 'fields.priceSalePlaceholder'
                     )}
                     value={form.price}
                     onChange={(e) =>

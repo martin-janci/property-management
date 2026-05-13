@@ -7,7 +7,11 @@ import { getAboutContent } from './_content';
 export default function AboutPage() {
   const t = useTranslations('pages.about');
   const locale = useLocale();
-  const { hero: ABOUT_HERO, stats: ABOUT_STATS, sections: ABOUT_SECTIONS } = getAboutContent(locale);
+  const {
+    hero: ABOUT_HERO,
+    stats: ABOUT_STATS,
+    sections: ABOUT_SECTIONS,
+  } = getAboutContent(locale);
 
   return (
     <div
