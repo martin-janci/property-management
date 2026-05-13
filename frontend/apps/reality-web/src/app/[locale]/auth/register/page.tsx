@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { AuthApiError, register } from '@/lib/auth-api';
 
@@ -18,14 +19,17 @@ interface FieldErrors {
   password?: string;
   confirmPassword?: string;
   displayName?: string;
+  terms?: string;
 }
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations('pages.register');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,13 +39,14 @@ export default function RegisterPage() {
     event.preventDefault();
     setGeneralError(undefined);
     const next: FieldErrors = {};
-    if (!displayName.trim()) next.displayName = 'Display name is required';
-    if (!email.trim()) next.email = 'Email is required';
-    else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address';
-    if (!password) next.password = 'Password is required';
+    if (!displayName.trim()) next.displayName = t('displayNameRequired');
+    if (!email.trim()) next.email = t('emailRequired');
+    else if (!EMAIL_RE.test(email.trim())) next.email = t('emailInvalid');
+    if (!password) next.password = t('passwordRequired');
     else if (password.length < MIN_PASSWORD)
-      next.password = `Password must be at least ${MIN_PASSWORD} characters`;
-    if (confirmPassword !== password) next.confirmPassword = 'Passwords do not match';
+      next.password = t('passwordTooShort', { min: MIN_PASSWORD });
+    if (confirmPassword !== password) next.confirmPassword = t('passwordsMismatch');
+    if (!termsAccepted) next.terms = t('termsRequired');
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -55,11 +60,11 @@ export default function RegisterPage() {
       setSubmitted(true);
     } catch (error) {
       if (error instanceof AuthApiError && error.status === 409) {
-        setErrors({ email: 'An account with this email already exists.' });
+        setErrors({ email: t('emailTaken') });
       } else if (error instanceof AuthApiError) {
         setGeneralError(error.message);
       } else {
-        setGeneralError('Registration failed. Please try again.');
+        setGeneralError(t('genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -71,19 +76,16 @@ export default function RegisterPage() {
       <div className="card">
         {submitted ? (
           <>
-            <h1 className="title">Check your inbox</h1>
-            <p className="subtitle">
-              We sent a verification email to <strong>{email}</strong>. Click the link to activate
-              your account.
-            </p>
+            <h1 className="title">{t('checkInbox')}</h1>
+            <p className="subtitle">{t('checkInboxBody', { email })}</p>
             <button type="button" className="submit" onClick={() => router.push('/auth/login')}>
-              Back to sign in
+              {t('backToSignIn')}
             </button>
           </>
         ) : (
           <>
-            <h1 className="title">Create your account</h1>
-            <p className="subtitle">Save listings, set alerts and contact agents.</p>
+            <h1 className="title">{t('title')}</h1>
+            <p className="subtitle">{t('description')}</p>
 
             <form className="form" onSubmit={handleSubmit} noValidate>
               {generalError && (
@@ -93,7 +95,7 @@ export default function RegisterPage() {
               )}
 
               <label className="field">
-                <span className="label">Display name</span>
+                <span className="label">{t('displayNameLabel')}</span>
                 <input
                   type="text"
                   autoComplete="name"
@@ -106,7 +108,7 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="label">Email</span>
+                <span className="label">{t('emailLabel')}</span>
                 <input
                   type="email"
                   autoComplete="email"
@@ -119,7 +121,7 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="label">Password</span>
+                <span className="label">{t('passwordLabel')}</span>
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -131,12 +133,12 @@ export default function RegisterPage() {
                 {errors.password ? (
                   <span className="error">{errors.password}</span>
                 ) : (
-                  <span className="hint">At least {MIN_PASSWORD} characters.</span>
+                  <span className="hint">{t('passwordHint', { min: MIN_PASSWORD })}</span>
                 )}
               </label>
 
               <label className="field">
-                <span className="label">Confirm password</span>
+                <span className="label">{t('confirmPasswordLabel')}</span>
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -148,14 +150,40 @@ export default function RegisterPage() {
                 {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
               </label>
 
+              <label className="terms-field">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  disabled={isSubmitting}
+                  className="terms-checkbox"
+                  aria-invalid={errors.terms ? true : undefined}
+                />
+                <span className="terms-text">
+                  {t.rich('termsLabel', {
+                    termsLink: (chunks) => (
+                      <Link href="/terms" className="link" target="_blank">
+                        {chunks}
+                      </Link>
+                    ),
+                    privacyLink: (chunks) => (
+                      <Link href="/privacy" className="link" target="_blank">
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </span>
+              </label>
+              {errors.terms && <span className="error">{errors.terms}</span>}
+
               <button type="submit" className="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating account…' : 'Create account'}
+                {isSubmitting ? t('creating') : t('submit')}
               </button>
 
               <p className="meta">
-                Already have an account?{' '}
+                {t('haveAccount')}{' '}
                 <Link href="/auth/login" className="link">
-                  Sign in
+                  {t('signInLink')}
                 </Link>
               </p>
             </form>
@@ -181,6 +209,9 @@ export default function RegisterPage() {
         .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
         .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
         .meta { text-align: center; font-size: 14px; color: var(--ppt-neutral-600); margin: 8px 0 0; }
+        .terms-field { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ppt-fg-secondary); line-height: 1.5; cursor: pointer; margin-top: 4px; }
+        .terms-checkbox { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ppt-color-primary); flex-shrink: 0; cursor: pointer; }
+        .terms-text { flex: 1; }
         .link { color: var(--ppt-color-primary); text-decoration: none; font-weight: 500; }
         .link:hover { text-decoration: underline; }
       `}</style>

@@ -291,7 +291,8 @@
         "subtitle": "Werden Sie Teil unseres Teams.",
         "title": "Bauen wir einen Immobilienmarkt, der Sinn macht."
       },
-      "title": "Karriere"
+      "title": "Karriere",
+      "h1": "Let's build a real estate market that makes sense."
     },
     "contact": {
       "description": "Für Support oder Geschäftsanfragen kontaktieren Sie uns unter",
@@ -300,19 +301,26 @@
     },
     "cookies": {
       "reopen": "Cookie-Einstellungen erneut öffnen",
-      "title": "Cookie-Richtlinie"
+      "title": "Cookie-Richtlinie",
+      "subtitle": "Cookie policy",
+      "lastUpdated": "Last updated: 1 January 2025"
     },
     "forAgents": {
       "features": "Was Sie erhalten",
       "pricing": "Preispläne",
       "subtitle": "Verkaufen Sie mehr mit Reality Portal",
-      "title": "Für Makler & Agenturen"
+      "title": "Für Makler & Agenturen",
+      "heroTitle": "Sell more with Reality Portal",
+      "heroBadge": "For agents & agencies",
+      "heroIntro": "Tools, analytics and reach across millions of buyers and renters in one place."
     },
     "help": {
       "categories": "Kategorien",
       "faq": "Häufig gestellte Fragen",
       "searchPlaceholder": "Im Hilfe-Center suchen...",
-      "title": "Hilfe-Center"
+      "title": "Hilfe-Center",
+      "subtitle": "How can we help?",
+      "intro": "Search our help centre or contact us directly."
     },
     "journal": {
       "editorsPicks": "Redaktionsauswahl",
@@ -321,7 +329,13 @@
       "mostRead": "Meistgelesen",
       "newsletter": "Newsletter",
       "subtitle": "Analysen, Tipps und Neuigkeiten aus der Immobilienwelt.",
-      "title": "Reality Journal"
+      "title": "Reality Journal",
+      "readingTime": "{min} min read",
+      "newsletterIntro": "Get the latest analyses and tips delivered to your inbox.",
+      "newsletterSuccess": "✅ You're subscribed!",
+      "newsletterEmailPlaceholder": "you@email.com",
+      "newsletterSubmit": "Subscribe",
+      "newsletterTitle": "Newsletter signup"
     },
     "listingEdit": {
       "save": "Änderungen speichern",
@@ -331,7 +345,8 @@
     "priceMap": {
       "clickHint": "Klicken Sie auf einen Bezirk für detaillierte Statistiken.",
       "subtitle": "Bratislava – Übersicht",
-      "title": "Preiskarte"
+      "title": "Preiskarte",
+      "h1": "Price map"
     },
     "privacy": {
       "description": "Wir sind verpflichtet, Ihre personenbezogenen Daten gemäß DSGVO und geltendem Recht zu schützen. Die vollständigen Datenschutzbestimmungen werden hier veröffentlicht.",
@@ -348,29 +363,209 @@
     },
     "report": {
       "submit": "Meldung absenden",
-      "subtitle": "Helfen Sie uns, das Portal sicher zu halten.",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
       "success": "Meldung wurde gesendet",
-      "title": "Inserat melden"
+      "title": "Report a listing",
+      "h1": "Report a listing"
     },
     "security": {
       "reportCta": "Inserat melden",
-      "subtitle": "Ihre Sicherheit hat oberste Priorität",
-      "title": "Sicherheit"
+      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
+      "title": "Security",
+      "h1": "Your security is our priority",
+      "scenariosHeading": "Common fraud scenarios"
     },
     "sell": {
       "steps": {
-        "details": "Details",
-        "photos": "Fotos",
-        "price": "Preis",
-        "summary": "Kontakt & Zusammenfassung",
-        "typeLocation": "Typ & Lage"
+        "type": {
+          "title": "Type & location",
+          "description": "Choose a property type and enter the address"
+        },
+        "details": {
+          "title": "Details",
+          "description": "Area, rooms, floor, year built"
+        },
+        "photos": {
+          "title": "Photos",
+          "description": "Add high-quality photos"
+        },
+        "price": {
+          "title": "Price",
+          "description": "Set the asking price"
+        },
+        "contact": {
+          "title": "Contact & summary",
+          "description": "Verify details and publish"
+        }
       },
       "submit": "Inserat veröffentlichen",
-      "title": "Inserat aufgeben"
+      "title": "Add listing",
+      "stepLabel": "Step {step} of {total}: {stepTitle}",
+      "asideTitle": "Steps",
+      "back": "← Back",
+      "next": "Next →",
+      "publish": "Publish listing",
+      "submittedTitle": "Your listing has been submitted!",
+      "submittedBody": "After review it will be published within 2 hours.",
+      "submittedCta": "Add another listing",
+      "fields": {
+        "transactionType": "Transaction type",
+        "propertyType": "Property type",
+        "address": "Address",
+        "addressPlaceholder": "Street and number",
+        "city": "City / Town",
+        "cityPlaceholder": "e.g. Bratislava",
+        "area": "Area (m²)",
+        "areaPlaceholder": "e.g. 65",
+        "rooms": "Number of rooms",
+        "roomsPlaceholder": "e.g. 3",
+        "floor": "Floor",
+        "floorPlaceholder": "e.g. 2",
+        "totalFloors": "Total floors",
+        "totalFloorsPlaceholder": "e.g. 7",
+        "yearBuilt": "Year built",
+        "yearBuiltPlaceholder": "e.g. 1995",
+        "description": "Property description",
+        "descriptionPlaceholder": "Describe the property, its features and amenities…",
+        "price": "Asking price (€)",
+        "priceSalePlaceholder": "e.g. 250000",
+        "priceRentPlaceholder": "Monthly rent, e.g. 800",
+        "priceNegotiable": "Price is negotiable",
+        "contactName": "Name",
+        "contactNamePlaceholder": "Your full name",
+        "contactPhone": "Phone",
+        "contactPhonePlaceholder": "+421 9XX XXX XXX",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "you@email.com"
+      },
+      "transactionOptions": {
+        "sale": "Sale",
+        "rent": "Rent"
+      },
+      "propertyOptions": {
+        "apartment": "Apartment",
+        "house": "House",
+        "land": "Land",
+        "commercial": "Commercial"
+      },
+      "photos": {
+        "intro": "Upload photos (5 minimum, 30 maximum recommended).",
+        "cta": "Click or drag photos here",
+        "formats": "JPG, PNG, WEBP · up to 10 MB each",
+        "selected_one": "✓ {count} photo selected",
+        "selected_other": "✓ {count} photos selected"
+      },
+      "summary": {
+        "type": "Type",
+        "location": "Location",
+        "area": "Area",
+        "rooms": "Rooms",
+        "price": "Price",
+        "photos": "Photos",
+        "negotiable": "(negotiable)"
+      },
+      "terms": {
+        "label": "I agree to the {termsLink} and the {privacyLink}.",
+        "termsLink": "terms of use",
+        "privacyLink": "privacy policy"
+      },
+      "validation": {
+        "required": "Required",
+        "addressRequired": "Address is required",
+        "cityRequired": "City is required",
+        "areaRequired": "Area is required",
+        "areaPositive": "Area must be greater than 0",
+        "roomsRequired": "Number of rooms is required",
+        "priceRequired": "Price is required",
+        "pricePositive": "Price must be greater than 0",
+        "nameRequired": "Name is required",
+        "phoneRequired": "Phone is required",
+        "phoneFormat": "Please enter a valid phone number",
+        "emailRequired": "E-mail is required",
+        "emailFormat": "Please enter a valid e-mail address",
+        "termsRequired": "You must agree to the terms of use to publish",
+        "roomsPositive": "Number of rooms must be greater than 0"
+      }
     },
     "terms": {
       "description": "Durch die Nutzung von Reality Portal stimmen Sie unseren Nutzungsbedingungen zu. Die vollständigen Nutzungsbedingungen werden hier veröffentlicht.",
       "title": "Nutzungsbedingungen"
+    },
+    "listings": {
+      "title": "Alle Immobilien",
+      "description": "Durchsuchen Sie alle Immobilienangebote in der Slowakei, der Tschechischen Republik und darüber hinaus."
+    },
+    "favorites": {
+      "title": "Meine Favoriten",
+      "description": "Immobilien, die Sie gespeichert haben."
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to your Reality Portal account."
+    },
+    "register": {
+      "title": "Create your account",
+      "description": "Save listings, set alerts and contact agents.",
+      "termsLabel": "I agree to the {termsLink} and the {privacyLink}.",
+      "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.",
+      "termsLinkText": "Terms of Service",
+      "privacyLinkText": "Privacy Policy",
+      "checkInbox": "Check your inbox",
+      "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.",
+      "backToSignIn": "Back to sign in",
+      "creating": "Creating account…",
+      "submit": "Create account",
+      "displayNameRequired": "Display name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least {min} characters",
+      "passwordsMismatch": "Passwords do not match",
+      "emailTaken": "An account with this email already exists.",
+      "genericError": "Registration failed. Please try again.",
+      "displayNameLabel": "Display name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordHint": "At least {min} characters.",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "checkInbox": "Check your inbox",
+      "checkInboxBody": "If an account exists for {email}, we've sent instructions to reset your password.",
+      "backToSignIn": "Back to sign in",
+      "remembered": "Remembered your password?",
+      "signIn": "Sign in",
+      "networkError": "Network error. Please check your connection and try again.",
+      "serverError": "Server error. Please try again later.",
+      "genericError": "Could not send reset email. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a strong password you haven't used before.",
+      "invalidTitle": "Invalid link",
+      "invalidBody": "This reset link is invalid or has expired. Request a new one.",
+      "successTitle": "Password updated",
+      "successBody": "You can now sign in with your new password.",
+      "passwordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "passwordHint": "At least 8 characters.",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "passwordsMismatch": "Passwords do not match",
+      "submit": "Update password",
+      "submitting": "Saving…",
+      "requestNew": "Request a new reset link",
+      "goToSignIn": "Go to sign in",
+      "genericError": "Could not reset password. Please try again."
     }
   },
   "search": {

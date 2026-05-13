@@ -6,10 +6,12 @@
  */
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_FRAUD_SCENARIOS, MOCK_GUARANTEES } from './_mock';
 
 export default function SecurityPage() {
+  const t = useTranslations('pages.security');
   return (
     <div
       data-i18n="pages.security.root"
@@ -41,7 +43,7 @@ export default function SecurityPage() {
                 marginBottom: 16,
               }}
             >
-              Vaša bezpečnosť je naša priorita
+              {t('h1')}
             </h1>
             <p
               style={{
@@ -52,7 +54,7 @@ export default function SecurityPage() {
                 margin: '0 auto',
               }}
             >
-              Pomáhame vám rozpoznať podvody a obchodovať s nehnuteľnosťami v bezpečnom prostredí.
+              {t('subtitle')}
             </p>
           </div>
         </section>
@@ -67,7 +69,7 @@ export default function SecurityPage() {
               marginBottom: 32,
             }}
           >
-            Časté podvodné scenáre
+            {t('scenariosHeading')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {MOCK_FRAUD_SCENARIOS.map((scenario) => (

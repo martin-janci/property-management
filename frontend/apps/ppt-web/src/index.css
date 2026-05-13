@@ -57,11 +57,39 @@
 .app-nav {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   background-color: var(--color-surface, #ffffff);
   border-bottom: 1px solid var(--color-border, #e5e7eb);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.app-nav > .ml-auto {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .app-nav {
+    gap: 0.5rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .app-nav a {
+    /* Larger tap target than the body-text 0.875rem the desktop nav uses;
+       WCAG 2.5.5 recommends ≥24×24 CSS px for touch targets. With the
+       0.5rem column-gap this keeps adjacent links comfortably apart. */
+    padding: 0.25rem 0;
+    min-height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+  }
+  .app-nav > .ml-auto {
+    /* On phones the action cluster wraps to its own row below the links
+       instead of being pushed off-screen by the auto margin. */
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .app-nav a {

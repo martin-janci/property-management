@@ -291,7 +291,8 @@
         "subtitle": "Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a prenajímajú nehnuteľnosti.",
         "title": "Stavajme realitný trh, ktorý dáva zmysel."
       },
-      "title": "Kariéra"
+      "title": "Kariéra",
+      "h1": "Stavajme realitný trh, ktorý dáva zmysel."
     },
     "contact": {
       "description": "Pre podporu alebo obchodné otázky nás kontaktujte na",
@@ -300,19 +301,26 @@
     },
     "cookies": {
       "reopen": "Znova otvoriť nastavenia cookies",
-      "title": "Zásady používania cookies"
+      "title": "Zásady používania cookies",
+      "subtitle": "Zásady používania cookies",
+      "lastUpdated": "Posledná aktualizácia: 1. januára 2025"
     },
     "forAgents": {
       "features": "Čo získate",
       "pricing": "Cenové plány",
       "subtitle": "Predávajte viac s Reality Portálom",
-      "title": "Pre maklérov & agentúry"
+      "title": "Pre maklérov & agentúry",
+      "heroTitle": "Predávajte viac s Reality Portálom",
+      "heroBadge": "Pre maklérov & agentúry",
+      "heroIntro": "Nástroje, analytika a dosah na milióny kupujúcich a nájomníkov na jednom mieste."
     },
     "help": {
       "categories": "Kategórie",
       "faq": "Často kladené otázky",
       "searchPlaceholder": "Hľadajte v centre pomoci...",
-      "title": "Centrum pomoci"
+      "title": "Centrum pomoci",
+      "subtitle": "Ako vám môžeme pomôcť?",
+      "intro": "Prehľadajte naše centrum pomoci alebo nás kontaktujte priamo."
     },
     "journal": {
       "editorsPicks": "Výber redakcie",
@@ -321,7 +329,13 @@
       "mostRead": "Najviac čítané",
       "newsletter": "Odber noviniek",
       "subtitle": "Analýzy, tipy a správy zo sveta nehnuteľností.",
-      "title": "Reality Žurnál"
+      "title": "Reality Žurnál",
+      "readingTime": "{min} min čítania",
+      "newsletterIntro": "Dostávajte najnovšie analýzy a tipy priamo do vašej schránky.",
+      "newsletterSuccess": "✅ Ste prihlásení na odber!",
+      "newsletterEmailPlaceholder": "vas@email.sk",
+      "newsletterSubmit": "Prihlásiť sa",
+      "newsletterTitle": "Odber noviniek"
     },
     "listingEdit": {
       "save": "Uložiť zmeny",
@@ -331,7 +345,8 @@
     "priceMap": {
       "clickHint": "Kliknite na mestskú štvrť pre detailné štatistiky.",
       "subtitle": "Bratislava – Prehľad",
-      "title": "Mapa cien"
+      "title": "Mapa cien",
+      "h1": "Mapa cien"
     },
     "privacy": {
       "description": "Zaviazali sme sa chrániť vaše osobné údaje v súlade s GDPR a platnými zákonmi. Úplné podmienky ochrany súkromia budú zverejnené tu.",
@@ -348,29 +363,209 @@
     },
     "report": {
       "submit": "Odoslať nahlásenie",
-      "subtitle": "Pomôžte nám udržiavať portál bezpečným.",
+      "subtitle": "Pomôžte nám udržať portál dôveryhodný — povedzte nám, čo je v ponuke zlé.",
       "success": "Nahlásenie bolo odoslané",
-      "title": "Nahlásiť inzerát"
+      "title": "Nahlásiť inzerát",
+      "h1": "Nahlásiť inzerát"
     },
     "security": {
       "reportCta": "Nahlásiť ponuku",
-      "subtitle": "Vaša bezpečnosť je naša priorita",
-      "title": "Bezpečnosť"
+      "subtitle": "Pomáhame vám rozpoznať podvody a obchodovať s nehnuteľnosťami v bezpečnom prostredí.",
+      "title": "Bezpečnosť",
+      "h1": "Vaša bezpečnosť je naša priorita",
+      "scenariosHeading": "Časté podvodné scenáre"
     },
     "sell": {
       "steps": {
-        "details": "Detaily",
-        "photos": "Fotografie",
-        "price": "Cena",
-        "summary": "Kontakt & súhrn",
-        "typeLocation": "Typ a poloha"
+        "type": {
+          "title": "Typ a poloha",
+          "description": "Vyberte typ nehnuteľnosti a zadajte adresu"
+        },
+        "details": {
+          "title": "Detaily",
+          "description": "Plocha, izby, poschodie, rok výstavby"
+        },
+        "photos": {
+          "title": "Fotografie",
+          "description": "Pridajte kvalitné fotografie"
+        },
+        "price": {
+          "title": "Cena",
+          "description": "Nastavte požadovanú cenu"
+        },
+        "contact": {
+          "title": "Kontakt & súhrn",
+          "description": "Overte údaje a zverejnite ponuku"
+        }
       },
       "submit": "Zverejniť inzerát",
-      "title": "Pridať inzerát"
+      "title": "Pridať inzerát",
+      "stepLabel": "Krok {step} z {total}: {stepTitle}",
+      "asideTitle": "Postup",
+      "back": "← Späť",
+      "next": "Ďalej →",
+      "publish": "Zverejniť inzerát",
+      "submittedTitle": "Váš inzerát bol odoslaný!",
+      "submittedBody": "Po overení bude zverejnený do 2 hodín.",
+      "submittedCta": "Pridať ďalší inzerát",
+      "fields": {
+        "transactionType": "Typ transakcie",
+        "propertyType": "Typ nehnuteľnosti",
+        "address": "Adresa",
+        "addressPlaceholder": "Ulica a číslo",
+        "city": "Mesto / Obec",
+        "cityPlaceholder": "Napr. Bratislava",
+        "area": "Plocha (m²)",
+        "areaPlaceholder": "Napr. 65",
+        "rooms": "Počet izieb",
+        "roomsPlaceholder": "Napr. 3",
+        "floor": "Poschodie",
+        "floorPlaceholder": "Napr. 2",
+        "totalFloors": "Celkový počet poschodí",
+        "totalFloorsPlaceholder": "Napr. 7",
+        "yearBuilt": "Rok výstavby",
+        "yearBuiltPlaceholder": "Napr. 1995",
+        "description": "Popis nehnuteľnosti",
+        "descriptionPlaceholder": "Opíšte nehnuteľnosť, jej vlastnosti, vybavenie…",
+        "price": "Požadovaná cena (€)",
+        "priceSalePlaceholder": "Napr. 250000",
+        "priceRentPlaceholder": "Mesačný nájom napr. 800",
+        "priceNegotiable": "Cena je dohodou",
+        "contactName": "Meno",
+        "contactNamePlaceholder": "Vaše meno a priezvisko",
+        "contactPhone": "Telefón",
+        "contactPhonePlaceholder": "+421 9XX XXX XXX",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "vas@email.sk"
+      },
+      "transactionOptions": {
+        "sale": "Predaj",
+        "rent": "Prenájom"
+      },
+      "propertyOptions": {
+        "apartment": "Byt",
+        "house": "Dom",
+        "land": "Pozemok",
+        "commercial": "Komerčné"
+      },
+      "photos": {
+        "intro": "Nahrajte fotografie (odporúčané min. 5, max. 30).",
+        "cta": "Kliknite alebo pretiahnite fotografie sem",
+        "formats": "JPG, PNG, WEBP · max. 10 MB na fotku",
+        "selected_one": "✓ {count} fotografia vybratá",
+        "selected_other": "✓ {count} fotografií vybratých"
+      },
+      "summary": {
+        "type": "Typ",
+        "location": "Poloha",
+        "area": "Plocha",
+        "rooms": "Izby",
+        "price": "Cena",
+        "photos": "Fotografie",
+        "negotiable": "(dohodou)"
+      },
+      "terms": {
+        "label": "Súhlasím s {termsLink} a {privacyLink}.",
+        "termsLink": "podmienkami používania",
+        "privacyLink": "ochranou osobných údajov"
+      },
+      "validation": {
+        "required": "Povinné",
+        "addressRequired": "Adresa je povinná",
+        "cityRequired": "Mesto je povinné",
+        "areaRequired": "Plocha je povinná",
+        "areaPositive": "Plocha musí byť väčšia ako 0",
+        "roomsRequired": "Počet izieb je povinný",
+        "priceRequired": "Cena je povinná",
+        "pricePositive": "Cena musí byť väčšia ako 0",
+        "nameRequired": "Meno je povinné",
+        "phoneRequired": "Telefón je povinný",
+        "phoneFormat": "Zadajte platné telefónne číslo",
+        "emailRequired": "E-mail je povinný",
+        "emailFormat": "Zadajte platnú e-mailovú adresu",
+        "termsRequired": "Pre zverejnenie musíte akceptovať podmienky používania",
+        "roomsPositive": "Počet izieb musí byť väčší ako 0"
+      }
     },
     "terms": {
       "description": "Používaním Reality Portálu súhlasíte s našimi podmienkami a ustanoveniami. Úplné podmienky používania budú zverejnené tu.",
       "title": "Podmienky používania"
+    },
+    "listings": {
+      "title": "Všetky nehnuteľnosti",
+      "description": "Prehľadajte všetky ponuky nehnuteľností na Slovensku, v Českej republike a ďalej."
+    },
+    "favorites": {
+      "title": "Moje obľúbené",
+      "description": "Nehnuteľnosti, ktoré ste si uložili."
+    },
+    "login": {
+      "title": "Prihlásenie",
+      "description": "Prihláste sa do svojho účtu na Reality Portáli."
+    },
+    "register": {
+      "title": "Vytvorenie účtu",
+      "description": "Uložte si inzeráty, nastavte upozornenia a kontaktujte maklérov.",
+      "termsLabel": "Súhlasím s {termsLink} a {privacyLink}.",
+      "termsRequired": "Pre registráciu musíte akceptovať podmienky používania a ochranu súkromia.",
+      "termsLinkText": "podmienkami používania",
+      "privacyLinkText": "ochranou súkromia",
+      "checkInbox": "Skontrolujte si schránku",
+      "checkInboxBody": "Poslali sme overovací e-mail na adresu {email}. Kliknite na odkaz pre aktiváciu účtu.",
+      "backToSignIn": "Späť na prihlásenie",
+      "creating": "Vytvára sa účet…",
+      "submit": "Vytvoriť účet",
+      "displayNameRequired": "Zobrazované meno je povinné",
+      "emailRequired": "E-mail je povinný",
+      "emailInvalid": "Zadajte platnú e-mailovú adresu",
+      "passwordRequired": "Heslo je povinné",
+      "passwordTooShort": "Heslo musí mať aspoň {min} znakov",
+      "passwordsMismatch": "Heslá sa nezhodujú",
+      "emailTaken": "Účet s týmto e-mailom už existuje.",
+      "genericError": "Registrácia zlyhala. Skúste to znova.",
+      "displayNameLabel": "Zobrazované meno",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Heslo",
+      "confirmPasswordLabel": "Potvrdiť heslo",
+      "passwordHint": "Aspoň {min} znakov.",
+      "haveAccount": "Už máte účet?",
+      "signInLink": "Prihlásiť sa"
+    },
+    "forgotPassword": {
+      "title": "Obnovenie hesla",
+      "description": "Zadajte svoj e-mail a pošleme vám odkaz na obnovenie.",
+      "emailLabel": "E-mail",
+      "emailRequired": "E-mail je povinný",
+      "emailInvalid": "Zadajte platnú e-mailovú adresu",
+      "submit": "Poslať odkaz",
+      "submitting": "Odosielam…",
+      "checkInbox": "Skontrolujte si schránku",
+      "checkInboxBody": "Ak pre {email} existuje účet, poslali sme vám pokyny na obnovenie hesla.",
+      "backToSignIn": "Späť na prihlásenie",
+      "remembered": "Spomenuli ste si na heslo?",
+      "signIn": "Prihlásiť sa",
+      "networkError": "Chyba siete. Skontrolujte pripojenie a skúste znova.",
+      "serverError": "Chyba servera. Skúste to neskôr.",
+      "genericError": "Nepodarilo sa odoslať obnovovací e-mail. Skúste znova."
+    },
+    "resetPassword": {
+      "title": "Nastavenie nového hesla",
+      "description": "Zvoľte si silné heslo, ktoré ste predtým nepoužili.",
+      "invalidTitle": "Neplatný odkaz",
+      "invalidBody": "Tento obnovovací odkaz je neplatný alebo expirovaný. Vyžiadajte si nový.",
+      "successTitle": "Heslo aktualizované",
+      "successBody": "Teraz sa môžete prihlásiť novým heslom.",
+      "passwordLabel": "Nové heslo",
+      "confirmLabel": "Potvrdiť heslo",
+      "passwordHint": "Aspoň 8 znakov.",
+      "passwordRequired": "Heslo je povinné",
+      "passwordTooShort": "Heslo musí mať aspoň 8 znakov",
+      "passwordsMismatch": "Heslá sa nezhodujú",
+      "submit": "Aktualizovať heslo",
+      "submitting": "Ukladám…",
+      "requestNew": "Vyžiadať nový odkaz",
+      "goToSignIn": "Prejsť na prihlásenie",
+      "genericError": "Nepodarilo sa obnoviť heslo. Skúste znova."
     }
   },
   "search": {

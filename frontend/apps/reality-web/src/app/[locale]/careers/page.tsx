@@ -5,12 +5,14 @@
  * Screen-map: docs/screens/reality/careers.md
  */
 
+import { useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_BENEFITS, MOCK_POSITIONS } from './_mock';
 
 // TODO: replace with @ppt/ui-kit/Stepper, @ppt/ui-kit/StatusPill once available
 
 export default function CareersPage() {
+  const t = useTranslations('pages.careers');
   return (
     <div
       data-i18n="pages.careers.root"
@@ -43,11 +45,10 @@ export default function CareersPage() {
               margin: '0 0 20px',
             }}
           >
-            Stavajme realitný trh, ktorý dáva zmysel.
+            {t('hero.title')}
           </h1>
           <p style={{ fontSize: '1.125rem', opacity: 0.85, maxWidth: 640, margin: '0 auto 32px' }}>
-            Pridajte sa k nášmu tímu a pomôžte nám meniť spôsob, akým ľudia nakupujú, predávajú a
-            prenajímajú nehnuteľnosti na Slovensku a v strednej Európe.
+            {t('hero.subtitle')}
           </p>
           <a
             href="#open-positions"

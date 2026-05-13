@@ -1,15 +1,24 @@
+/**
+ * Static (locale-agnostic) data for the sell-wizard.
+ *
+ * Localized labels for steps, transaction options and property options
+ * live in `pages.sell.*` in `messages/<locale>.json` and are read inside
+ * `page.tsx` via `useTranslations`. Keep this file free of human-readable
+ * strings so the wizard works correctly under every supported locale.
+ */
+
 export interface SellStep {
   id: number;
-  title: string;
-  description: string;
+  /** Key under `pages.sell.steps.*` */
+  key: 'type' | 'details' | 'photos' | 'price' | 'contact';
 }
 
 export const SELL_STEPS: SellStep[] = [
-  { id: 1, title: 'Typ a poloha', description: 'Vyberte typ nehnuteľnosti a zadajte adresu' },
-  { id: 2, title: 'Detaily', description: 'Plocha, izby, poschodie, rok výstavby' },
-  { id: 3, title: 'Fotografie', description: 'Pridajte kvalitné fotografie' },
-  { id: 4, title: 'Cena', description: 'Nastavte požadovanú cenu' },
-  { id: 5, title: 'Kontakt & súhrn', description: 'Overte údaje a zverejnite ponuku' },
+  { id: 1, key: 'type' },
+  { id: 2, key: 'details' },
+  { id: 3, key: 'photos' },
+  { id: 4, key: 'price' },
+  { id: 5, key: 'contact' },
 ];
 
 export type PropertyType = 'apartment' | 'house' | 'land' | 'commercial';
@@ -57,9 +66,4 @@ export const INITIAL_FORM_DATA: SellFormData = {
   termsAccepted: false,
 };
 
-export const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
-  { value: 'apartment', label: 'Byt' },
-  { value: 'house', label: 'Dom' },
-  { value: 'land', label: 'Pozemok' },
-  { value: 'commercial', label: 'Komerčné' },
-];
+export const PROPERTY_TYPES: PropertyType[] = ['apartment', 'house', 'land', 'commercial'];

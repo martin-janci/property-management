@@ -5,6 +5,7 @@
  * Screen-map: docs/screens/reality/price-map.md
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_DISTRICTS, MOCK_INSIGHTS, type PriceMapFilter } from './_mock';
@@ -23,6 +24,7 @@ const PROPERTY_OPTIONS: { value: PropertyType; label: string }[] = [
 ];
 
 export default function PriceMapPage() {
+  const t = useTranslations('pages.priceMap');
   const [filter, setFilter] = useState<PriceMapFilter>({
     propertyType: 'all',
     transactionType: 'sale',
@@ -67,7 +69,7 @@ export default function PriceMapPage() {
               flexShrink: 0,
             }}
           >
-            Mapa cien
+            {t('h1')}
           </h1>
           <div style={{ display: 'flex', gap: 4 }}>
             {/* TODO: replace with @ppt/ui-kit/SegmentedControl once available */}

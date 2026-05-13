@@ -5,12 +5,14 @@
  * Screen-map: docs/screens/reality/for-agents.md
  */
 
+import { useTranslations } from 'next-intl';
 import { Footer, Header } from '@/components/ui';
 import { MOCK_FEATURES, MOCK_PRICING } from './_mock';
 
 // TODO: replace pricing cards with @ppt/ui-kit/Card once available
 
 export default function ForAgentsPage() {
+  const t = useTranslations('pages.forAgents');
   return (
     <div
       data-i18n="pages.for-agents.root"
@@ -46,7 +48,7 @@ export default function ForAgentsPage() {
               letterSpacing: '.6px',
             }}
           >
-            Pre maklérov &amp; agentúry
+            {t('heroBadge')}
           </span>
           <h1
             style={{
@@ -58,7 +60,7 @@ export default function ForAgentsPage() {
               margin: '0 auto 20px',
             }}
           >
-            Predávajte viac s Reality Portálom
+            {t('heroTitle')}
           </h1>
           <p
             style={{
@@ -68,7 +70,7 @@ export default function ForAgentsPage() {
               margin: '0 auto 36px',
             }}
           >
-            Nástroje, analytika a dosah na milióny kupujúcich a nájomníkov na jednom mieste.
+            {t('heroIntro')}
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a

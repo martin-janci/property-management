@@ -6,12 +6,14 @@
  */
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { AuthApiError, requestPasswordReset } from '@/lib/auth-api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations('pages.forgotPassword');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string>();
   const [generalError, setGeneralError] = useState<string>();
@@ -23,8 +25,8 @@ export default function ForgotPasswordPage() {
     setEmailError(undefined);
     setGeneralError(undefined);
     const trimmed = email.trim();
-    if (!trimmed) return setEmailError('Email is required');
-    if (!EMAIL_RE.test(trimmed)) return setEmailError('Enter a valid email address');
+    if (!trimmed) return setEmailError(t('emailRequired'));
+    if (!EMAIL_RE.test(trimmed)) return setEmailError(t('emailInvalid'));
 
     setIsSubmitting(true);
     try {
@@ -32,23 +34,18 @@ export default function ForgotPasswordPage() {
       setSubmitted(true);
     } catch (error) {
       if (error instanceof AuthApiError) {
-        // Surface real errors to the user instead of silently showing the
-        // "Check your inbox" confirmation. NOT_IMPLEMENTED comes from the
-        // wrapper while reality-server still lacks a password-reset
-        // endpoint; network failures should also be visible.
         if (error.code === 'NOT_IMPLEMENTED' || error.status === 501) {
           setGeneralError(error.message);
         } else if (error.code === 'NETWORK_ERROR') {
-          setGeneralError('Network error. Please check your connection and try again.');
+          setGeneralError(t('networkError'));
         } else if (error.status >= 500) {
-          setGeneralError(error.message || 'Server error. Please try again later.');
+          setGeneralError(error.message || t('serverError'));
         } else {
-          // 4xx and other client-side errors: don't leak whether an account
-          // exists for this email, fall through to the confirmation screen.
+          // 4xx: don't leak whether an account exists — confirmation screen.
           setSubmitted(true);
         }
       } else {
-        setGeneralError('Could not send reset email. Please try again.');
+        setGeneralError(t('genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -60,19 +57,16 @@ export default function ForgotPasswordPage() {
       <div className="card">
         {submitted ? (
           <>
-            <h1 className="title">Check your inbox</h1>
-            <p className="subtitle">
-              If an account exists for <strong>{email}</strong>, we've sent instructions to reset
-              your password.
-            </p>
+            <h1 className="title">{t('checkInbox')}</h1>
+            <p className="subtitle">{t('checkInboxBody', { email })}</p>
             <Link href="/auth/login" className="link center">
-              Back to sign in
+              {t('backToSignIn')}
             </Link>
           </>
         ) : (
           <>
-            <h1 className="title">Reset your password</h1>
-            <p className="subtitle">Enter your email and we'll send you a reset link.</p>
+            <h1 className="title">{t('title')}</h1>
+            <p className="subtitle">{t('description')}</p>
             <form className="form" onSubmit={handleSubmit} noValidate>
               {generalError && (
                 <div className="alert" role="alert">
@@ -80,24 +74,25 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
               <label className="field">
-                <span className="label">Email</span>
+                <span className="label">{t('emailLabel')}</span>
                 <input
                   type="email"
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
+                  aria-invalid={emailError ? true : undefined}
                   className={`input ${emailError ? 'input-error' : ''}`}
                 />
                 {emailError && <span className="error">{emailError}</span>}
               </label>
               <button type="submit" className="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending…' : 'Send reset link'}
+                {isSubmitting ? t('submitting') : t('submit')}
               </button>
               <p className="meta">
-                Remembered your password?{' '}
+                {t('remembered')}{' '}
                 <Link href="/auth/login" className="link">
-                  Sign in
+                  {t('signIn')}
                 </Link>
               </p>
             </form>

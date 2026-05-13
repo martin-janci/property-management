@@ -25,9 +25,18 @@ import {
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BrowserRouter, Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import {
   AnnouncerProvider,
+  AuthRequiredGate,
   ConnectionStatus,
   LanguageSwitcher,
   OfflineIndicator,
@@ -298,7 +307,16 @@ function App() {
                               <Route path="/settings/password" element={<ChangePasswordPage />} />
                               <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
                               <Route path="/settings/profile" element={<ProfileEditPage />} />
-                              {/* Dashboard routes (Epic 124) */}
+                              {/* Dashboard routes (Epic 124).
+                                  Bare /dashboard 404'd previously — redirect
+                                  it to the manager dashboard so users typing
+                                  the obvious URL get something useful (the
+                                  ProtectedRoute / role check on the target
+                                  page handles auth + role-based fan-out). */}
+                              <Route
+                                path="/dashboard"
+                                element={<Navigate to="/dashboard/manager" replace />}
+                              />
                               <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
                               <Route
                                 path="/dashboard/resident"
@@ -501,13 +519,7 @@ function DisputesPageRoute() {
 
   // Require organization context for disputes
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const organizationId = user.organizationId;
@@ -601,13 +613,7 @@ function FileDisputePageRoute() {
 
   // Require organization context for filing disputes
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const organizationId = user.organizationId;
@@ -805,7 +811,6 @@ function DisputeDetailRoute() {
  * Manages filter state and navigation callbacks.
  */
 function OutagesPageRoute() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [queryParams, setQueryParams] = useState<OutageListQuery>({ limit: 10, offset: 0 });
@@ -813,13 +818,7 @@ function OutagesPageRoute() {
   const { data, isLoading } = useOutages(queryParams);
 
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   const outages: ApiOutageSummary[] = data?.outages ?? [];
@@ -865,13 +864,7 @@ function CreateOutagePageRoute() {
   const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
 
   if (!user?.organizationId) {
-    return (
-      <div className="error-page">
-        <h1>{t('errors.authenticationRequired')}</h1>
-        <p>{t('errors.missingOrgContext')}</p>
-        <Link to="/login">{t('auth.signIn')}</Link>
-      </div>
-    );
+    return <AuthRequiredGate />;
   }
 
   // Transform API buildings to UI format
