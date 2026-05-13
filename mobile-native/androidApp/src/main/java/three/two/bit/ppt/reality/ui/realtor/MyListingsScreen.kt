@@ -9,8 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
@@ -33,11 +33,10 @@ import coil.request.ImageRequest
 import three.two.bit.ppt.reality.R
 
 /**
- * "My listings" screen — KMP / Compose M3 redesign matching the design
- * (`KmpMyListingsScreen`). Large-title header, status chip strip
- * (All / Active / Paused / Sold / Drafts), 16:9 cards with uppercase
- * status badge top-left + white kebab pill top-right, price row with
- * inline view + inquiry counters, title, meta. Extended FAB "Add".
+ * "My listings" screen — KMP / Compose M3 redesign matching the design (`KmpMyListingsScreen`).
+ * Large-title header, status chip strip (All / Active / Paused / Sold / Drafts), 16:9 cards with
+ * uppercase status badge top-left + white kebab pill top-right, price row with inline view +
+ * inquiry counters, title, meta. Extended FAB "Add".
  *
  * UC-49 / UC-51.3 — Realtor listing management.
  */
@@ -58,13 +57,16 @@ fun MyListingsScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 16.dp, top = 14.dp, bottom = 4.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .padding(start = 4.dp, end = 16.dp, top = 14.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
                     Text(
                         text = stringResource(R.string.realtor_listings_title),
@@ -99,20 +101,25 @@ fun MyListingsScreen(
                 }
 
                 when {
-                    isLoading -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+                    isLoading ->
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     listings.isEmpty() -> EmptyState()
                     else -> {
-                        val filtered = listings.filter {
-                            statusFilter == null || it.status == statusFilter
-                        }
+                        val filtered =
+                            listings.filter { statusFilter == null || it.status == statusFilter }
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start = 16.dp, end = 16.dp, bottom = 110.dp,
-                            ),
+                            contentPadding =
+                                PaddingValues(
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    bottom = 110.dp,
+                                ),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             items(filtered, key = { it.id }) { listing ->
@@ -128,9 +135,7 @@ fun MyListingsScreen(
 
             ExtendedFloatingActionButton(
                 onClick = onCreateClick,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 24.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
@@ -151,26 +156,31 @@ private fun StatusChip(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        border = if (selected) null else androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline,
-        ),
+        border =
+            if (selected) null
+            else
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline,
+                ),
     ) {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
-                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                else MaterialTheme.colorScheme.onSurface,
+                color =
+                    if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
             )
             if (count > 0) {
                 Text(
                     text = " · $count",
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                        .copy(alpha = 0.7f)
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color =
+                        if (selected)
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -180,56 +190,51 @@ private fun StatusChip(
 @Composable
 private fun ListingCard(listing: RealtorListing, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f / 9f),
+                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
             ) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(listing.imageUrl ?: "")
-                        .crossfade(true)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(listing.imageUrl)
+                            .crossfade(true)
+                            .build(),
                     contentDescription = listing.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    modifier =
+                        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                 )
                 Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(10.dp),
+                    modifier = Modifier.align(Alignment.TopStart).padding(10.dp),
                     shape = RoundedCornerShape(6.dp),
                     color = MaterialTheme.colorScheme.surface,
                 ) {
                     Text(
                         text = listing.status.uppercase(),
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.04.sp,
-                            fontSize = 10.sp,
-                        ),
+                        style =
+                            MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.04.sp,
+                                fontSize = 10.sp,
+                            ),
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.92f))
-                        .clickable { /* menu */ },
+                    modifier =
+                        Modifier.align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.92f))
+                            .clickable { /* menu */},
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -304,17 +309,15 @@ private fun Counter(
 @Composable
 private fun EmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(72.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

@@ -10,9 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,11 +32,10 @@ import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
 
 /**
- * Agency inquiries screen — KMP / Compose M3 redesign matching the
- * design (`KmpAgencyInquiriesScreen`). Large-title header with back +
- * search action; status filter chip strip; flat thread rows with
- * gradient avatar, name + time, 2-line preview, status uppercase pill +
- * response time (e.g. "Unanswered · 12 min" in red); FAB "Batch reply".
+ * Agency inquiries screen — KMP / Compose M3 redesign matching the design
+ * (`KmpAgencyInquiriesScreen`). Large-title header with back + search action; status filter chip
+ * strip; flat thread rows with gradient avatar, name + time, 2-line preview, status uppercase
+ * pill + response time (e.g. "Unanswered · 12 min" in red); FAB "Batch reply".
  *
  * UC-49.5 / UC-50 — Agency inquiry management.
  */
@@ -62,15 +61,20 @@ fun AgencyInquiriesScreen(
                     onSelect = { statusFilter = it },
                 )
                 when {
-                    isLoading -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+                    isLoading ->
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     inquiries.isEmpty() -> EmptyState()
                     else -> {
-                        val filtered = inquiries.filter {
-                            statusFilter == null || it.status.equals(statusFilter, ignoreCase = true)
-                        }
+                        val filtered =
+                            inquiries.filter {
+                                statusFilter == null ||
+                                    it.status.equals(statusFilter, ignoreCase = true)
+                            }
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = 110.dp),
@@ -86,10 +90,8 @@ fun AgencyInquiriesScreen(
                 }
             }
             ExtendedFloatingActionButton(
-                onClick = { /* batch reply */ },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 24.dp),
+                onClick = { /* batch reply */},
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
@@ -102,13 +104,15 @@ fun AgencyInquiriesScreen(
 @Composable
 private fun AgencyInquiriesHeader(onBackClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 4.dp, end = 8.dp, top = 14.dp, bottom = 4.dp),
+        modifier =
+            Modifier.fillMaxWidth().padding(start = 4.dp, end = 8.dp, top = 14.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onBackClick) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.cd_back)
+            )
         }
         Text(
             text = stringResource(R.string.inquiries),
@@ -117,7 +121,7 @@ private fun AgencyInquiriesHeader(onBackClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { /* search */ }) {
+        IconButton(onClick = { /* search */}) {
             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
         }
     }
@@ -166,26 +170,31 @@ private fun FilterChipPill(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        border = if (selected) null else androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline,
-        ),
+        border =
+            if (selected) null
+            else
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline,
+                ),
     ) {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
-                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                else MaterialTheme.colorScheme.onSurface,
+                color =
+                    if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
             )
             if (count > 0) {
                 Text(
                     text = " · $count",
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                        .copy(alpha = 0.7f)
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color =
+                        if (selected)
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -195,32 +204,34 @@ private fun FilterChipPill(
 @Composable
 private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            val initials = remember(inquiry.contactName) {
-                inquiry.contactName.split(" ").take(2)
-                    .mapNotNull { it.firstOrNull()?.uppercase() }
-                    .joinToString("")
-                    .ifEmpty { "?" }
-            }
+            val initials =
+                remember(inquiry.contactName) {
+                    inquiry.contactName
+                        .split(" ")
+                        .take(2)
+                        .mapNotNull { it.firstOrNull()?.uppercase() }
+                        .joinToString("")
+                        .ifEmpty { "?" }
+                }
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .drawBehind {
+                modifier =
+                    Modifier.size(44.dp).clip(CircleShape).drawBehind {
                         drawRect(
-                            brush = Brush.linearGradient(
-                                colors = listOf(Brand800, Brand500),
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, size.height),
-                            ),
+                            brush =
+                                Brush.linearGradient(
+                                    colors = listOf(Brand800, Brand500),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, size.height),
+                                ),
                         )
                     },
                 contentAlignment = Alignment.Center,
@@ -277,11 +288,12 @@ private fun StatusPill(label: String) {
         Text(
             text = label.uppercase(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.04.sp,
-                fontSize = 10.sp,
-            ),
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.04.sp,
+                    fontSize = 10.sp,
+                ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -290,9 +302,7 @@ private fun StatusPill(label: String) {
 @Composable
 private fun EmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

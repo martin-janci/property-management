@@ -21,21 +21,20 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 
 /**
- * Email/password login screen — KMP / Compose M3 redesign matching the
- * design bundle (`guest-registration-v2-design-system/project/ui_kits/
- * mobile-native/screens-extension.jsx` → `KmpLoginScreen`).
+ * Email/password login screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/ mobile-native/screens-extension.jsx` →
+ * `KmpLoginScreen`).
  *
  * Layout:
- *   1. Gradient brand hero (logo + "Reality Portal" + subtitle).
- *   2. Email + password fields with leading icons, password reveal icon
- *      preserved via the M3 OutlinedTextField visual transformation.
- *   3. Right-aligned "Forgot password?" link.
- *   4. Primary "Sign in" button (filled).
- *   5. "OR" divider + footer "Don't have an account? Sign up".
+ * 1. Gradient brand hero (logo + "Reality Portal" + subtitle).
+ * 2. Email + password fields with leading icons, password reveal icon preserved via the M3
+ *    OutlinedTextField visual transformation.
+ * 3. Right-aligned "Forgot password?" link.
+ * 4. Primary "Sign in" button (filled).
+ * 5. "OR" divider + footer "Don't have an account? Sign up".
  *
- * Social-login (Google / Apple) buttons in the mock are not wired here —
- * the Reality Portal SSO is delegated to the PPT app per UC-47, and the
- * separate social-login flow isn't on the roadmap yet.
+ * Social-login (Google / Apple) buttons in the mock are not wired here — the Reality Portal SSO is
+ * delegated to the PPT app per UC-47, and the separate social-login flow isn't on the roadmap yet.
  *
  * UC-47.2 — Email/password login.
  */
@@ -60,18 +59,16 @@ fun LoginScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         ) {
             AuthBrandHero(
                 title = stringResource(R.string.app_name),
                 subtitle = stringResource(R.string.auth_login_subtitle),
             )
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp),
             ) {
                 generalError?.let {
                     ErrorBanner(it)
@@ -82,7 +79,10 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it; emailError = null },
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
                     placeholder = { Text(stringResource(R.string.auth_login_email_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     singleLine = true,
@@ -98,7 +98,10 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it; passwordError = null },
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
                     placeholder = { Text("••••••••") },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     singleLine = true,
@@ -125,31 +128,35 @@ fun LoginScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+                val emailRequiredMsg = stringResource(R.string.auth_validation_email_required)
+                val emailInvalidMsg = stringResource(R.string.auth_validation_email_invalid)
+                val passwordRequiredMsg = stringResource(R.string.auth_validation_password_required)
+                val signInFailedMsg = stringResource(R.string.auth_validation_sign_in_failed)
                 Button(
                     onClick = {
-                        val (validEmail, validPassword) = validateLogin(email, password)
-                        emailError = validEmail
-                        passwordError = validPassword
-                        if (validEmail != null || validPassword != null) return@Button
+                        emailError =
+                            when {
+                                email.isBlank() -> emailRequiredMsg
+                                !emailRegex.matches(email.trim()) -> emailInvalidMsg
+                                else -> null
+                            }
+                        passwordError = if (password.isEmpty()) passwordRequiredMsg else null
+                        if (emailError != null || passwordError != null) return@Button
                         isSubmitting = true
                         generalError = null
                         scope.launch {
                             val result = onSubmit(email.trim(), password)
                             isSubmitting = false
-                            result.onFailure { generalError = it.message ?: "Sign in failed." }
+                            result.onFailure { generalError = it.message ?: signInFailedMsg }
                         }
                     },
                     enabled = !isSubmitting,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     if (isSubmitting) {
                         CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(18.dp),
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
@@ -184,24 +191,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@Composable
-internal fun AuthFieldLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
-}
-
-private fun validateLogin(email: String, password: String): Pair<String?, String?> {
-    val emailErr = when {
-        email.isBlank() -> "Email is required"
-        !emailRegex.matches(email.trim()) -> "Enter a valid email address"
-        else -> null
-    }
-    val passwordErr = if (password.isEmpty()) "Password is required" else null
-    return emailErr to passwordErr
 }

@@ -1,14 +1,13 @@
 package three.two.bit.ppt.reality.ui.savedsearches
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.MoreVert
@@ -28,11 +27,10 @@ import androidx.compose.ui.unit.sp
 import three.two.bit.ppt.reality.R
 
 /**
- * Saved-searches screen — KMP / Compose M3 redesign matching the design
- * (`KmpSavedSearchesScreen`). Large-title header + back, "New search"
- * primaryContainer pill below the title, list of rows with bookmark
- * leading icon (filled when alerts on), name, age + match-count meta,
- * "ALERTS ON/OFF" uppercase pill + "Run" pill action.
+ * Saved-searches screen — KMP / Compose M3 redesign matching the design (`KmpSavedSearchesScreen`).
+ * Large-title header + back, "New search" primaryContainer pill below the title, list of rows with
+ * bookmark leading icon (filled when alerts on), name, age + match-count meta, "ALERTS ON/OFF"
+ * uppercase pill + "Run" pill action.
  *
  * UC-45.2 — Saved searches.
  */
@@ -45,6 +43,7 @@ fun SavedSearchesScreen(
     onSearchClick: (id: String) -> Unit,
     onToggleAlerts: (id: String, enabled: Boolean) -> Unit,
     onDelete: (id: String) -> Unit,
+    onCreateNewSearch: (() -> Unit)? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -53,9 +52,9 @@ fun SavedSearchesScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 4.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(start = 4.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBackClick) {
@@ -73,9 +72,12 @@ fun SavedSearchesScreen(
                 )
             }
             // "New search" CTA pill (primaryContainer)
-            Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp)) {
+            Box(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 14.dp)
+            ) {
                 Surface(
-                    onClick = { /* navigate to new search */ },
+                    onClick = onCreateNewSearch ?: onBackClick,
+                    enabled = onCreateNewSearch != null,
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
@@ -101,25 +103,29 @@ fun SavedSearchesScreen(
             }
 
             when {
-                isLoading -> Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator() }
-                searches.isEmpty() -> EmptyState()
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(searches, key = { it.id }) { search ->
-                        SavedSearchRow(
-                            search = search,
-                            onClick = { onSearchClick(search.id) },
-                            onToggleAlerts = { enabled -> onToggleAlerts(search.id, enabled) },
-                            onDelete = { onDelete(search.id) },
-                        )
+                isLoading ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
-                }
+                searches.isEmpty() -> EmptyState()
+                else ->
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(searches, key = { it.id }) { search ->
+                            SavedSearchRow(
+                                search = search,
+                                onClick = { onSearchClick(search.id) },
+                                onToggleAlerts = { enabled -> onToggleAlerts(search.id, enabled) },
+                                onDelete = { onDelete(search.id) },
+                            )
+                        }
+                    }
             }
         }
     }
@@ -142,14 +148,14 @@ private fun SavedSearchRow(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Icon(
-                    imageVector = if (search.alertsEnabled) Icons.Default.Bookmark
-                    else Icons.Default.BookmarkBorder,
+                    imageVector =
+                        if (search.alertsEnabled) Icons.Default.Bookmark
+                        else Icons.Default.BookmarkBorder,
                     contentDescription = null,
-                    modifier = Modifier
-                        .padding(top = 2.dp)
-                        .size(18.dp),
-                    tint = if (search.alertsEnabled) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp).size(18.dp),
+                    tint =
+                        if (search.alertsEnabled) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -251,23 +257,24 @@ private fun AlertPill(enabled: Boolean) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = if (enabled) Icons.Default.Notifications
-                else Icons.Default.NotificationsOff,
+                imageVector =
+                    if (enabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
                 contentDescription = null,
                 modifier = Modifier.size(11.dp),
                 tint = ink,
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = (
-                    if (enabled) stringResource(R.string.saved_search_alerts_on)
-                    else stringResource(R.string.saved_search_alerts_off)
-                ).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.04.sp,
-                    fontSize = 10.sp,
-                ),
+                text =
+                    (if (enabled) stringResource(R.string.saved_search_alerts_on)
+                        else stringResource(R.string.saved_search_alerts_off))
+                        .uppercase(),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.04.sp,
+                        fontSize = 10.sp,
+                    ),
                 color = ink,
             )
         }
@@ -277,17 +284,15 @@ private fun AlertPill(enabled: Boolean) {
 @Composable
 private fun EmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 32.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(999.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(72.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

@@ -66,6 +66,18 @@
     <string name="auth_2fa_resend">Didn\'t get the code? Try again in 00:24</string>
     <string name="auth_2fa_backup_code">Use a backup code</string>
     <string name="auth_2fa_success">Two-factor authentication is enabled.</string>
+    <string name="auth_validation_email_required">Email is required</string>
+    <string name="auth_validation_email_invalid">Enter a valid email address</string>
+    <string name="auth_validation_password_required">Password is required</string>
+    <string name="auth_validation_password_too_short">Password must be at least %1$d characters</string>
+    <string name="auth_validation_password_mismatch">Passwords do not match</string>
+    <string name="auth_validation_name_required">Name is required</string>
+    <string name="auth_validation_sign_in_failed">Sign in failed.</string>
+    <string name="auth_validation_terms_required">Please accept the terms</string>
+    <string name="auth_validation_register_failed">Registration failed.</string>
+    <string name="auth_validation_reset_failed">Could not reset password.</string>
+    <string name="auth_validation_send_reset_failed">Could not send reset email.</string>
+    <string name="auth_validation_2fa_invalid">Enter the 6-digit code from your authenticator app.</string>
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="sign_in">Sign In</string>
@@ -200,6 +212,10 @@
     <string name="realtor_create_field_price">Price</string>
     <string name="realtor_create_field_currency">Currency</string>
     <string name="realtor_analytics_title">Analytics</string>
+    <string name="realtor_create_validation_title_required">Title is required</string>
+    <string name="realtor_create_validation_city_required">City is required</string>
+    <string name="realtor_create_validation_price_invalid">Enter a positive price</string>
+    <string name="realtor_create_validation_publish_failed">Could not publish listing.</string>
 
     <!-- Section Headers -->
     <string name="section_quick_actions">Quick Actions</string>
@@ -445,6 +461,7 @@
 
     <!-- Home hero -->
     <string name="home_hero_welcome">Welcome back</string>
+    <string name="home_hero_location_placeholder">Browse listings near you</string>
     <string name="home_hero_search_placeholder">City, location, or listing ID…</string>
     <string name="home_hero_tab_sale">For sale</string>
     <string name="home_hero_tab_rent">For rent</string>
@@ -459,4 +476,12 @@
     <string name="cat_land">Land</string>
     <string name="cat_recreation">Recreation</string>
     <string name="cat_parking">Parking</string>
+
+    <string name="area_m2">%1$d m²</string>
+
+    <!-- Plurals -->
+    <plurals name="listing_rooms_plural">
+        <item quantity="one">%1$d room</item>
+        <item quantity="other">%1$d rooms</item>
+    </plurals>
 </resources>

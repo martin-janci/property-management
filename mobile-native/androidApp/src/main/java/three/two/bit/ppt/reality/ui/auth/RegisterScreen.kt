@@ -26,10 +26,9 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 
 /**
- * Account-creation screen — KMP / Compose M3 redesign matching the design
- * (`KmpRegisterScreen`). Sticky bar with back + "Vytvoriť účet" title,
- * fields with leading icons, inline password strength bars, terms
- * checkbox, primary "Create account" button.
+ * Account-creation screen — KMP / Compose M3 redesign matching the design (`KmpRegisterScreen`).
+ * Sticky bar with back + "Vytvoriť účet" title, fields with leading icons, inline password strength
+ * bars, terms checkbox, primary "Create account" button.
  *
  * UC-47.1 — Registration.
  */
@@ -49,7 +48,7 @@ fun RegisterScreen(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmError by remember { mutableStateOf<String?>(null) }
     var generalError by remember { mutableStateOf<String?>(null) }
-    var termsAccepted by remember { mutableStateOf(true) }
+    var termsAccepted by remember { mutableStateOf(false) }
     var isSubmitting by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
     val scope = rememberAuthScope()
@@ -59,29 +58,34 @@ fun RegisterScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = if (submitted) stringResource(R.string.auth_register_inbox_title)
-                        else stringResource(R.string.create_account),
+                        text =
+                            if (submitted) stringResource(R.string.auth_register_inbox_title)
+                            else stringResource(R.string.create_account),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
         ) {
             if (submitted) {
                 Text(
@@ -98,9 +102,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = onSignInClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(stringResource(R.string.auth_back_to_sign_in))
@@ -117,7 +119,10 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = displayName,
-                onValueChange = { displayName = it; displayNameError = null },
+                onValueChange = {
+                    displayName = it
+                    displayNameError = null
+                },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 singleLine = true,
                 isError = displayNameError != null,
@@ -131,7 +136,10 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it; emailError = null },
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 singleLine = true,
                 isError = emailError != null,
@@ -146,7 +154,10 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it; passwordError = null },
+                onValueChange = {
+                    password = it
+                    passwordError = null
+                },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 singleLine = true,
                 isError = passwordError != null,
@@ -161,8 +172,9 @@ fun RegisterScreen(
             Text(
                 text = passwordError ?: passwordStrengthLabel(password),
                 style = MaterialTheme.typography.labelSmall,
-                color = if (passwordError != null) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                color =
+                    if (passwordError != null) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -170,7 +182,10 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = confirmPassword,
-                onValueChange = { confirmPassword = it; confirmError = null },
+                onValueChange = {
+                    confirmPassword = it
+                    confirmError = null
+                },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 singleLine = true,
                 isError = confirmError != null,
@@ -197,27 +212,38 @@ fun RegisterScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+            val nameRequiredMsg = stringResource(R.string.auth_validation_name_required)
+            val emailRequiredMsg = stringResource(R.string.auth_validation_email_required)
+            val emailInvalidMsg = stringResource(R.string.auth_validation_email_invalid)
+            val passwordRequiredMsg = stringResource(R.string.auth_validation_password_required)
+            val passwordTooShortMsg =
+                stringResource(
+                    R.string.auth_validation_password_too_short,
+                    MIN_PASSWORD_LENGTH,
+                )
+            val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
+            val termsRequiredMsg = stringResource(R.string.auth_validation_terms_required)
+            val registerFailedMsg = stringResource(R.string.auth_validation_register_failed)
             Button(
                 onClick = {
-                    displayNameError =
-                        if (displayName.isBlank()) "Name is required" else null
-                    emailError = when {
-                        email.isBlank() -> "Email is required"
-                        !emailRegex.matches(email.trim()) -> "Enter a valid email address"
-                        else -> null
-                    }
-                    passwordError = when {
-                        password.isEmpty() -> "Password is required"
-                        password.length < MIN_PASSWORD_LENGTH ->
-                            "Password must be at least $MIN_PASSWORD_LENGTH characters"
-                        else -> null
-                    }
-                    confirmError =
-                        if (confirmPassword != password) "Passwords do not match" else null
+                    displayNameError = if (displayName.isBlank()) nameRequiredMsg else null
+                    emailError =
+                        when {
+                            email.isBlank() -> emailRequiredMsg
+                            !emailRegex.matches(email.trim()) -> emailInvalidMsg
+                            else -> null
+                        }
+                    passwordError =
+                        when {
+                            password.isEmpty() -> passwordRequiredMsg
+                            password.length < MIN_PASSWORD_LENGTH -> passwordTooShortMsg
+                            else -> null
+                        }
+                    confirmError = if (confirmPassword != password) passwordMismatchMsg else null
                     val errs = listOf(displayNameError, emailError, passwordError, confirmError)
                     if (errs.any { it != null }) return@Button
                     if (!termsAccepted) {
-                        generalError = "Please accept the terms"
+                        generalError = termsRequiredMsg
                         return@Button
                     }
                     isSubmitting = true
@@ -227,21 +253,17 @@ fun RegisterScreen(
                         isSubmitting = false
                         result.fold(
                             onSuccess = { submitted = true },
-                            onFailure = { generalError = it.message ?: "Registration failed." },
+                            onFailure = { generalError = it.message ?: registerFailedMsg },
                         )
                     }
                 },
                 enabled = !isSubmitting && termsAccepted,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp),
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .size(18.dp),
+                        modifier = Modifier.padding(end = 8.dp).size(18.dp),
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
@@ -283,29 +305,32 @@ private fun PasswordStrengthBars(strength: Int) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         repeat(4) { idx ->
-            val fillColor = when {
-                idx < strength && strength >= 3 -> Color(0xFF10B981)
-                idx < strength && strength == 2 -> Color(0xFFF59E0B)
-                idx < strength -> Color(0xFFEF4444)
-                else -> MaterialTheme.colorScheme.outlineVariant
-            }
+            val fillColor =
+                when {
+                    idx < strength && strength >= 3 -> Color(0xFF10B981)
+                    idx < strength && strength == 2 -> Color(0xFFF59E0B)
+                    idx < strength -> Color(0xFFEF4444)
+                    else -> MaterialTheme.colorScheme.outlineVariant
+                }
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(fillColor),
+                modifier =
+                    Modifier.weight(1f)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(fillColor),
             )
         }
     }
 }
 
-private fun passwordStrength(password: String): Int = when {
-    password.length < 6 -> 1
-    password.length < 10 -> 2
-    password.any { !it.isLetterOrDigit() } && password.any { it.isDigit() } -> 4
-    else -> 3
-}
+private fun passwordStrength(password: String): Int =
+    when {
+        password.isEmpty() -> 0
+        password.length < MIN_PASSWORD_LENGTH -> 1
+        password.length < MIN_PASSWORD_LENGTH + 2 -> 2
+        password.any { !it.isLetterOrDigit() } && password.any { it.isDigit() } -> 4
+        else -> 3
+    }
 
 @Composable
 private fun passwordStrengthLabel(password: String): String {

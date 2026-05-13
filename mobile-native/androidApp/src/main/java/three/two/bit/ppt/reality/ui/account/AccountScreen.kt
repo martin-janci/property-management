@@ -45,26 +45,23 @@ import three.two.bit.ppt.reality.ui.theme.Brand800
 private const val TAG = "AccountScreen"
 
 /**
- * Account / Profile screen — KMP / Compose M3 redesign matching the design
- * bundle (`guest-registration-v2-design-system/project/ui_kits/mobile-native/
- * screens.jsx` → `KmpProfileScreen`).
+ * Account / Profile screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/ screens.jsx` →
+ * `KmpProfileScreen`).
  *
  * Layout (top → bottom):
- *   1. Top bar — large title "Profil" + settings cog (right).
- *   2. Hero — 88dp avatar (gradient circle with initials), name + verified
- *      pill, email; centered.
- *   3. 3-card stat strip — Favorites / Searches / Inquiries with large
- *      numeric values and uppercase labels.
- *   4. Section list — single rounded card grouping rows: Saved searches,
- *      Comparison, Notifications (toggle), Privacy, About. Each row uses a
- *      40dp icon tile (surface-variant fill) + title + sub + chev / switch.
- *   5. Notification preferences sub-section — preserved from previous
- *      implementation. Lives under the section card and is hidden behind
- *      the master Notifications toggle. Reveals the detailed list of
- *      preferences (new listings, price drops, inquiry responses, listing
- *      updates, marketing) so existing behavior is not lost while the
- *      primary visual surface matches the design.
- *   6. Sign out card — danger-tinted icon tile + label, full-width.
+ * 1. Top bar — large title "Profil" + settings cog (right).
+ * 2. Hero — 88dp avatar (gradient circle with initials), name + verified pill, email; centered.
+ * 3. 3-card stat strip — Favorites / Searches / Inquiries with large numeric values and uppercase
+ *    labels.
+ * 4. Section list — single rounded card grouping rows: Saved searches, Comparison, Notifications
+ *    (toggle), Privacy, About. Each row uses a 40dp icon tile (surface-variant fill) + title +
+ *    sub + chev / switch.
+ * 5. Notification preferences sub-section — preserved from previous implementation. Lives under the
+ *    section card and is hidden behind the master Notifications toggle. Reveals the detailed list
+ *    of preferences (new listings, price drops, inquiry responses, listing updates, marketing) so
+ *    existing behavior is not lost while the primary visual surface matches the design.
+ * 6. Sign out card — danger-tinted icon tile + label, full-width.
  *
  * Epic 48 - Story 48.5: Portal Mobile Account.
  */
@@ -78,19 +75,22 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
     var notificationPrefs by remember { mutableStateOf<NotificationPreferences?>(null) }
     var notificationsExpanded by remember { mutableStateOf(false) }
 
-    val notificationRepository = remember(authState) {
-        val token = (authState as? AuthState.Authenticated)?.sessionToken
-        NotificationRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
-    }
+    val notificationRepository =
+        remember(authState) {
+            val token = (authState as? AuthState.Authenticated)?.sessionToken
+            NotificationRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
+        }
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
-            notificationRepository.getPreferences().fold(
-                onSuccess = { prefs -> notificationPrefs = prefs },
-                onFailure = { error ->
-                    Log.e(TAG, "Failed to load notification preferences", error)
-                },
-            )
+            notificationRepository
+                .getPreferences()
+                .fold(
+                    onSuccess = { prefs -> notificationPrefs = prefs },
+                    onFailure = { error ->
+                        Log.e(TAG, "Failed to load notification preferences", error)
+                    },
+                )
         }
     }
 
@@ -99,8 +99,9 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
         color = MaterialTheme.colorScheme.background,
     ) {
         when (val state = authState) {
-            is AuthState.Unauthenticated, is AuthState.Error -> {
-                NotSignedInContent(onSignInClick = { /* Open SSO login via PM app */ })
+            is AuthState.Unauthenticated,
+            is AuthState.Error -> {
+                NotSignedInContent(onSignInClick = { /* Open SSO login via PM app */})
             }
             is AuthState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -119,10 +120,14 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                     item {
                         SectionList(
-                            notificationsEnabled = notificationPrefs?.let {
-                                it.newListings || it.priceDrops || it.inquiryResponses ||
-                                    it.listingUpdates || it.marketing
-                            } ?: false,
+                            notificationsEnabled =
+                                notificationPrefs?.let {
+                                    it.newListings ||
+                                        it.priceDrops ||
+                                        it.inquiryResponses ||
+                                        it.listingUpdates ||
+                                        it.marketing
+                                } ?: false,
                             onNotificationsToggle = {
                                 notificationsExpanded = !notificationsExpanded
                             },
@@ -135,12 +140,18 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                                 preferences = notificationPrefs!!,
                                 onPreferenceChange = { newPrefs ->
                                     scope.launch {
-                                        notificationRepository.updatePreferences(newPrefs).fold(
-                                            onSuccess = { notificationPrefs = it },
-                                            onFailure = {
-                                                Log.e(TAG, "Failed to update notification preferences", it)
-                                            },
-                                        )
+                                        notificationRepository
+                                            .updatePreferences(newPrefs)
+                                            .fold(
+                                                onSuccess = { notificationPrefs = it },
+                                                onFailure = {
+                                                    Log.e(
+                                                        TAG,
+                                                        "Failed to update notification preferences",
+                                                        it
+                                                    )
+                                                },
+                                            )
                                     }
                                 },
                             )
@@ -169,10 +180,13 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                         showLogoutDialog = false
                         onLogout()
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) { Text(stringResource(R.string.sign_out)) }
+                    colors =
+                        ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                ) {
+                    Text(stringResource(R.string.sign_out))
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
@@ -188,9 +202,8 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
 @Composable
 private fun ProfileTopBar() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+        modifier =
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -200,7 +213,7 @@ private fun ProfileTopBar() {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { /* settings */ }) {
+        IconButton(onClick = { /* settings */}) {
             Icon(
                 Icons.Default.Settings,
                 contentDescription = stringResource(R.string.settings),
@@ -215,42 +228,43 @@ private fun ProfileTopBar() {
 @Composable
 private fun ProfileHero(user: SsoUserInfo) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val initials = remember(user) {
-            user.name.split(" ").take(2)
-                .mapNotNull { it.firstOrNull()?.uppercase() }
-                .joinToString("")
-                .ifEmpty { user.email.take(2).uppercase() }
-        }
+        val initials =
+            remember(user) {
+                user.name
+                    .split(" ")
+                    .take(2)
+                    .mapNotNull { it.firstOrNull()?.uppercase() }
+                    .joinToString("")
+                    .ifEmpty { user.email.take(2).uppercase() }
+            }
         if (user.avatarUrl != null) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(user.avatarUrl)
-                    .crossfade(true)
-                    .build(),
+                model =
+                    ImageRequest.Builder(LocalContext.current)
+                        .data(user.avatarUrl)
+                        .crossfade(true)
+                        .build(),
                 contentDescription = user.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(88.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier =
+                    Modifier.size(88.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             )
         } else {
             Box(
-                modifier = Modifier
-                    .size(88.dp)
-                    .clip(CircleShape)
-                    .drawBehind {
+                modifier =
+                    Modifier.size(88.dp).clip(CircleShape).drawBehind {
                         drawRect(
-                            brush = Brush.linearGradient(
-                                colors = listOf(Brand800, Brand500),
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, size.height),
-                            ),
+                            brush =
+                                Brush.linearGradient(
+                                    colors = listOf(Brand800, Brand500),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, size.height),
+                                ),
                         )
                     },
                 contentAlignment = Alignment.Center,
@@ -302,11 +316,12 @@ private fun VerifiedPill() {
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = stringResource(R.string.profile_verified).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.04.sp,
-                    fontSize = 10.sp,
-                ),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.04.sp,
+                        fontSize = 10.sp,
+                    ),
                 color = Color(0xFF065F46),
             )
         }
@@ -318,14 +333,24 @@ private fun VerifiedPill() {
 @Composable
 private fun StatsRow() {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        StatCard(value = "4", label = stringResource(R.string.profile_stat_favorites), modifier = Modifier.weight(1f))
-        StatCard(value = "3", label = stringResource(R.string.profile_stat_searches), modifier = Modifier.weight(1f))
-        StatCard(value = "7", label = stringResource(R.string.profile_stat_inquiries), modifier = Modifier.weight(1f))
+        StatCard(
+            value = "4",
+            label = stringResource(R.string.profile_stat_favorites),
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            value = "3",
+            label = stringResource(R.string.profile_stat_searches),
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            value = "7",
+            label = stringResource(R.string.profile_stat_inquiries),
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -338,9 +363,7 @@ private fun StatCard(value: String, label: String, modifier: Modifier = Modifier
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp, horizontal = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -352,10 +375,11 @@ private fun StatCard(value: String, label: String, modifier: Modifier = Modifier
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.04.sp,
-                ),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.04.sp,
+                    ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -371,9 +395,7 @@ private fun SectionList(
     notificationsExpanded: Boolean,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -384,7 +406,7 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_searches),
                 subtitle = stringResource(R.string.profile_section_searches_sub),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to saved searches */ },
+                onClick = { /* nav to saved searches */},
             )
             SectionDivider()
             SectionRow(
@@ -392,7 +414,7 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_compare),
                 subtitle = stringResource(R.string.profile_section_compare_sub),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to compare */ },
+                onClick = { /* nav to compare */},
             )
             SectionDivider()
             SectionRow(
@@ -408,15 +430,16 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_privacy),
                 subtitle = null,
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to privacy */ },
+                onClick = { /* nav to privacy */},
             )
             SectionDivider()
             SectionRow(
                 icon = Icons.Default.Info,
                 title = stringResource(R.string.profile_section_about),
-                subtitle = stringResource(R.string.profile_section_about_sub, BuildConfig.VERSION_NAME),
+                subtitle =
+                    stringResource(R.string.profile_section_about_sub, BuildConfig.VERSION_NAME),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to about */ },
+                onClick = { /* nav to about */},
             )
         }
     }
@@ -424,6 +447,7 @@ private fun SectionList(
 
 private sealed class SectionTrailing {
     object Chevron : SectionTrailing()
+
     data class Toggle(val checked: Boolean) : SectionTrailing()
 }
 
@@ -436,17 +460,17 @@ private fun SectionRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -474,16 +498,18 @@ private fun SectionRow(
             }
         }
         when (trailing) {
-            is SectionTrailing.Chevron -> Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            is SectionTrailing.Toggle -> Switch(
-                checked = trailing.checked,
-                onCheckedChange = { onClick() },
-            )
+            is SectionTrailing.Chevron ->
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            is SectionTrailing.Toggle ->
+                Switch(
+                    checked = trailing.checked,
+                    onCheckedChange = { onClick() },
+                )
         }
     }
 }
@@ -505,9 +531,7 @@ private fun NotificationPreferencesCard(
     onPreferenceChange: (NotificationPreferences) -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -565,9 +589,7 @@ private fun NotificationPreferenceItem(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -588,9 +610,7 @@ private fun NotificationPreferenceItem(
 @Composable
 private fun AppSettingsCard() {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -600,28 +620,28 @@ private fun AppSettingsCard() {
                 icon = Icons.Default.Language,
                 title = stringResource(R.string.setting_language),
                 value = stringResource(R.string.language_english),
-                onClick = { /* picker */ },
+                onClick = { /* picker */},
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.Euro,
                 title = stringResource(R.string.setting_currency),
                 value = stringResource(R.string.currency_eur),
-                onClick = { /* picker */ },
+                onClick = { /* picker */},
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.Straighten,
                 title = stringResource(R.string.setting_units),
                 value = stringResource(R.string.units_metric),
-                onClick = { /* picker */ },
+                onClick = { /* picker */},
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.DarkMode,
                 title = stringResource(R.string.setting_theme),
                 value = stringResource(R.string.theme_system),
-                onClick = { /* picker */ },
+                onClick = { /* picker */},
             )
         }
     }
@@ -635,17 +655,17 @@ private fun SettingsRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -681,9 +701,7 @@ private fun SettingsRow(
 @Composable
 private fun AboutCard() {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -692,25 +710,25 @@ private fun AboutCard() {
             AboutRow(
                 icon = Icons.Default.Description,
                 title = stringResource(R.string.terms_of_service),
-                onClick = { /* open terms */ },
+                onClick = { /* open terms */},
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.Default.PrivacyTip,
                 title = stringResource(R.string.privacy_policy),
-                onClick = { /* open privacy */ },
+                onClick = { /* open privacy */},
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.AutoMirrored.Filled.Help,
                 title = stringResource(R.string.help_support),
-                onClick = { /* open help */ },
+                onClick = { /* open help */},
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.Default.Feedback,
                 title = stringResource(R.string.send_feedback),
-                onClick = { /* open feedback */ },
+                onClick = { /* open feedback */},
             )
         }
     }
@@ -719,17 +737,17 @@ private fun AboutCard() {
 @Composable
 private fun AboutRow(icon: ImageVector, title: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -761,10 +779,7 @@ private fun AboutRow(icon: ImageVector, title: String, onClick: () -> Unit) {
 @Composable
 private fun SignOutCard(onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -774,10 +789,10 @@ private fun SignOutCard(onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer),
+                modifier =
+                    Modifier.size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -838,7 +853,11 @@ private fun NotSignedInContent(onSignInClick: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp),
         ) {
-            Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.Login,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.sign_in_pm_app))
         }

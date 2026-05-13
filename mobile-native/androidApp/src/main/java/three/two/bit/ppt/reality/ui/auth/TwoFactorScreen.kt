@@ -2,6 +2,8 @@ package three.two.bit.ppt.reality.ui.auth
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -16,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,10 +27,9 @@ import androidx.compose.ui.unit.sp
 import three.two.bit.ppt.reality.R
 
 /**
- * Two-factor authentication setup screen — KMP / Compose M3 redesign
- * matching the design (`KmpTwoFactorScreen`). 64dp tinted shield icon
- * hero, "Enter 6-digit code" copy, 6 separated digit boxes, resend
- * countdown + backup-code link, primary "Verify" button.
+ * Two-factor authentication setup screen — KMP / Compose M3 redesign matching the design
+ * (`KmpTwoFactorScreen`). 64dp tinted shield icon hero, "Enter 6-digit code" copy, 6 separated
+ * digit boxes, resend countdown + backup-code link, primary "Verify" button.
  *
  * UC-47.5 — 2FA enrollment/verification.
  */
@@ -55,27 +55,29 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(40.dp))
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                modifier =
+                    Modifier.size(64.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -108,35 +110,45 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     Button(
                         onClick = onDone,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(14.dp),
-                    ) { Text(stringResource(R.string.done)) }
+                    ) {
+                        Text(stringResource(R.string.done))
+                    }
                 }
                 return@Column
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-            // 6-cell code input — driven by a single hidden BasicTextField
-            Box {
+            // 6-cell code input — driven by a single hidden BasicTextField behind the
+            // visible cells. The cell row is clickable so users can re-focus the input
+            // after dismissing the keyboard; the focused-cell highlight clamps to the
+            // last cell once the code is complete.
+            Box(
+                modifier =
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        focusRequester.requestFocus()
+                    },
+            ) {
                 BasicTextField(
                     value = code,
                     onValueChange = {
                         code = it.filter(Char::isDigit).take(6)
                         error = null
                     },
-                    modifier = Modifier
-                        .size(1.dp)
-                        .focusRequester(focusRequester),
+                    modifier = Modifier.size(1.dp).focusRequester(focusRequester),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     singleLine = true,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val focusedIdx = code.length.coerceAtMost(5)
                     repeat(6) { idx ->
                         CodeCell(
                             char = code.getOrNull(idx)?.toString().orEmpty(),
-                            focused = idx == code.length,
+                            focused = idx == focusedIdx,
                         )
                     }
                 }
@@ -149,7 +161,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(10.dp))
-            TextButton(onClick = { /* backup code */ }) {
+            TextButton(onClick = { /* backup code */}) {
                 Text(
                     text = stringResource(R.string.auth_2fa_backup_code),
                     style = MaterialTheme.typography.bodyMedium,
@@ -163,23 +175,26 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                     ErrorBanner(it)
                 }
             }
+            val invalidCodeMsg = stringResource(R.string.auth_validation_2fa_invalid)
             Box(
-                modifier = Modifier.padding(
-                    start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp,
-                ),
+                modifier =
+                    Modifier.padding(
+                        start = 24.dp,
+                        end = 24.dp,
+                        top = 16.dp,
+                        bottom = 32.dp,
+                    ),
             ) {
                 Button(
                     onClick = {
                         if (!Regex("^\\d{6}$").matches(code)) {
-                            error = "Enter the 6-digit code from your authenticator app."
+                            error = invalidCodeMsg
                             return@Button
                         }
                         step = TwoFactorStep.Enabled
                     },
                     enabled = code.length == 6,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(
@@ -195,30 +210,34 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
 
 @Composable
 private fun CodeCell(char: String, focused: Boolean) {
-    val borderColor = if (focused) MaterialTheme.colorScheme.primary
-    else MaterialTheme.colorScheme.outline
+    val borderColor =
+        if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     Box(
-        modifier = Modifier
-            .size(width = 46.dp, height = 56.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(
-                width = if (focused) 1.5.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp),
-            ),
+        modifier =
+            Modifier.size(width = 46.dp, height = 56.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(
+                    width = if (focused) 1.5.dp else 1.dp,
+                    color = borderColor,
+                    shape = RoundedCornerShape(8.dp),
+                ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = char,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-            ),
+            style =
+                MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                ),
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
     }
 }
 
-private enum class TwoFactorStep { Verify, Enabled }
+private enum class TwoFactorStep {
+    Verify,
+    Enabled
+}

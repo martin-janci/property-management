@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -23,9 +22,8 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 
 /**
- * New-password screen — KMP / Compose M3 redesign matching the design
- * (`KmpResetScreen`). Either the entry form (with inline strength meter)
- * or a "Password changed" success state.
+ * New-password screen — KMP / Compose M3 redesign matching the design (`KmpResetScreen`). Either
+ * the entry form (with inline strength meter) or a "Password changed" success state.
  *
  * UC-47.4 — Password reset confirmation.
  */
@@ -58,19 +56,21 @@ fun ResetPasswordScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             if (token.isBlank()) {
                 AuthIconHero(
@@ -107,19 +107,17 @@ fun ResetPasswordScreen(
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     Button(
                         onClick = onSuccess,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(14.dp),
-                    ) { Text(stringResource(R.string.sign_in)) }
+                    ) {
+                        Text(stringResource(R.string.sign_in))
+                    }
                 }
                 return@Column
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.auth_reset_body),
@@ -136,7 +134,10 @@ fun ResetPasswordScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it; passwordError = null },
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     singleLine = true,
                     isError = passwordError != null,
@@ -151,8 +152,9 @@ fun ResetPasswordScreen(
                 Text(
                     text = passwordError ?: strengthLabel(password),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (passwordError != null) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color =
+                        if (passwordError != null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -160,7 +162,10 @@ fun ResetPasswordScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it; confirmError = null },
+                    onValueChange = {
+                        confirmPassword = it
+                        confirmError = null
+                    },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     singleLine = true,
                     isError = confirmError != null,
@@ -172,16 +177,24 @@ fun ResetPasswordScreen(
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+                val passwordRequiredMsg = stringResource(R.string.auth_validation_password_required)
+                val passwordTooShortMsg =
+                    stringResource(
+                        R.string.auth_validation_password_too_short,
+                        MIN_PASSWORD_LENGTH,
+                    )
+                val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
+                val resetFailedMsg = stringResource(R.string.auth_validation_reset_failed)
                 Button(
                     onClick = {
-                        passwordError = when {
-                            password.isEmpty() -> "Password is required"
-                            password.length < MIN_PASSWORD_LENGTH ->
-                                "Password must be at least $MIN_PASSWORD_LENGTH characters"
-                            else -> null
-                        }
+                        passwordError =
+                            when {
+                                password.isEmpty() -> passwordRequiredMsg
+                                password.length < MIN_PASSWORD_LENGTH -> passwordTooShortMsg
+                                else -> null
+                            }
                         confirmError =
-                            if (confirmPassword != password) "Passwords do not match" else null
+                            if (confirmPassword != password) passwordMismatchMsg else null
                         if (passwordError != null || confirmError != null) return@Button
                         isSubmitting = true
                         generalError = null
@@ -190,23 +203,17 @@ fun ResetPasswordScreen(
                             isSubmitting = false
                             result.fold(
                                 onSuccess = { success = true },
-                                onFailure = {
-                                    generalError = it.message ?: "Could not reset password."
-                                },
+                                onFailure = { generalError = it.message ?: resetFailedMsg },
                             )
                         }
                     },
                     enabled = !isSubmitting,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     if (isSubmitting) {
                         CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(18.dp),
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
@@ -230,30 +237,32 @@ private fun StrengthBars(password: String) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         repeat(4) { idx ->
-            val fillColor = when {
-                idx < strength && strength >= 3 -> Color(0xFF10B981)
-                idx < strength && strength == 2 -> Color(0xFFF59E0B)
-                idx < strength -> Color(0xFFEF4444)
-                else -> MaterialTheme.colorScheme.outlineVariant
-            }
+            val fillColor =
+                when {
+                    idx < strength && strength >= 3 -> Color(0xFF10B981)
+                    idx < strength && strength == 2 -> Color(0xFFF59E0B)
+                    idx < strength -> Color(0xFFEF4444)
+                    else -> MaterialTheme.colorScheme.outlineVariant
+                }
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(fillColor),
+                modifier =
+                    Modifier.weight(1f)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(fillColor),
             )
         }
     }
 }
 
-private fun passwordStrength(password: String): Int = when {
-    password.isEmpty() -> 0
-    password.length < 6 -> 1
-    password.length < 10 -> 2
-    password.any { !it.isLetterOrDigit() } && password.any { it.isDigit() } -> 4
-    else -> 3
-}
+private fun passwordStrength(password: String): Int =
+    when {
+        password.isEmpty() -> 0
+        password.length < 6 -> 1
+        password.length < 10 -> 2
+        password.any { !it.isLetterOrDigit() } && password.any { it.isDigit() } -> 4
+        else -> 3
+    }
 
 @Composable
 private fun strengthLabel(password: String): String {

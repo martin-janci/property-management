@@ -7,12 +7,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,32 +47,29 @@ import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
- * Listing Detail screen — KMP / Compose M3 redesign matching the design
- * bundle (`guest-registration-v2-design-system/project/ui_kits/mobile-native/
- * screens.jsx` → `KmpListingDetailScreen`).
+ * Listing Detail screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/ screens.jsx` →
+ * `KmpListingDetailScreen`).
  *
  * Layout (top → bottom):
- *   1. Hero gallery — 280dp, full-bleed swipeable images, white-pill back
- *      (top-left), share + heart pills (top-right), page dots (bottom-
- *      center) + counter "1 / N" (bottom-right).
- *   2. Sticky agent bar — gradient avatar, realtor name + "Verified" pill,
- *      agency caption, primary "Call" pill.
- *   3. Header section — Featured + transaction-type uppercase badges,
- *      large display price + €/m² subline, title, location.
- *   4. Quick stats strip — 4 small cards (Area, Year built, Energy
- *      rating, Floor) with icon + value + uppercase label.
- *   5. Tab strip — Prehľad / Building / Nearby / Price history (active
- *      tab gets brand-600 ink + 2dp underline).
- *   6. Description body.
- *   7. Building passport card — 2-col grid of K/V labels (year, floor,
- *      energy, parking, etc) reusing the existing `ListingDetail` fields.
- *   8. Features chip wrap (preserved from previous impl).
- *   9. Bottom action bar — circle "Message" tile + full-width primary
- *      "Žiadať obhliadku".
+ * 1. Hero gallery — 280dp, full-bleed swipeable images, white-pill back (top-left), share + heart
+ *    pills (top-right), page dots (bottom- center) + counter "1 / N" (bottom-right).
+ * 2. Sticky agent bar — gradient avatar, realtor name + "Verified" pill, agency caption, primary
+ *    "Call" pill.
+ * 3. Header section — Featured + transaction-type uppercase badges, large display price + €/m²
+ *    subline, title, location.
+ * 4. Quick stats strip — 4 small cards (Area, Year built, Energy rating, Floor) with icon + value +
+ *    uppercase label.
+ * 5. Tab strip — Prehľad / Building / Nearby / Price history (active tab gets brand-600 ink + 2dp
+ *    underline).
+ * 6. Description body.
+ * 7. Building passport card — 2-col grid of K/V labels (year, floor, energy, parking, etc) reusing
+ *    the existing `ListingDetail` fields.
+ * 8. Features chip wrap (preserved from previous impl).
+ * 9. Bottom action bar — circle "Message" tile + full-width primary "Žiadať obhliadku".
  *
- * Inquiry dialog + Share sheet preserved from the prior implementation —
- * the design references both as flows (E2 / F2) that live in
- * screens-extension.jsx and aren't fully re-mocked here.
+ * Inquiry dialog + Share sheet preserved from the prior implementation — the design references both
+ * as flows (E2 / F2) that live in screens-extension.jsx and aren't fully re-mocked here.
  *
  * Epic 48 - Story 48.2: Portal Mobile Listing View.
  */
@@ -100,27 +97,39 @@ fun ListingDetailScreen(
     var showShareSheet by remember { mutableStateOf(false) }
 
     val sessionToken = (authState as? AuthState.Authenticated)?.sessionToken
-    val favoritesRepository = remember(sessionToken) {
-        FavoritesRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
-    }
-    val inquiryRepository = remember(sessionToken) {
-        InquiryRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
-    }
+    val favoritesRepository =
+        remember(sessionToken) {
+            FavoritesRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
+        }
+    val inquiryRepository =
+        remember(sessionToken) {
+            InquiryRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = sessionToken)
+        }
 
     LaunchedEffect(listingId, authState) {
         if (authState is AuthState.Authenticated) {
-            favoritesRepository.isFavorite(listingId).fold(
-                onSuccess = { isFavorite = it },
-                onFailure = { /* non-critical */ },
-            )
+            favoritesRepository
+                .isFavorite(listingId)
+                .fold(
+                    onSuccess = { isFavorite = it },
+                    onFailure = { /* non-critical */},
+                )
         }
     }
     LaunchedEffect(listingId) {
         isLoading = true
-        repository.getListingDetail(listingId).fold(
-            onSuccess = { listing = it; isLoading = false },
-            onFailure = { errorMessage = it.message; isLoading = false },
-        )
+        repository
+            .getListingDetail(listingId)
+            .fold(
+                onSuccess = {
+                    listing = it
+                    isLoading = false
+                },
+                onFailure = {
+                    errorMessage = it.message
+                    isLoading = false
+                },
+            )
     }
 
     Surface(
@@ -128,56 +137,66 @@ fun ListingDetailScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         when {
-            isLoading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
-            errorMessage != null -> ErrorContent(
-                message = errorMessage!!,
-                onRetry = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        repository.getListingDetail(listingId).fold(
-                            onSuccess = { listing = it },
-                            onFailure = { errorMessage = it.message },
-                        )
-                        isLoading = false
-                    }
-                },
-            )
-            listing != null -> Box(modifier = Modifier.fillMaxSize()) {
-                ListingContent(
-                    listing = listing!!,
-                    isFavorite = isFavorite,
-                    onBackClick = onBackClick,
-                    onShareClick = { showShareSheet = true },
-                    onFavoriteClick = {
-                        if (authState is AuthState.Authenticated && !isFavoriteLoading) {
-                            val newFav = !isFavorite
-                            isFavoriteLoading = true
-                            scope.launch {
-                                val result = if (newFav) favoritesRepository.addFavorite(listingId)
-                                else favoritesRepository.removeFavorite(listingId)
-                                result.fold(
-                                    onSuccess = { isFavorite = newFav },
-                                    onFailure = { /* revert silently */ },
+            isLoading ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            errorMessage != null ->
+                ErrorContent(
+                    message = errorMessage!!,
+                    onRetry = {
+                        scope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            repository
+                                .getListingDetail(listingId)
+                                .fold(
+                                    onSuccess = { listing = it },
+                                    onFailure = { errorMessage = it.message },
                                 )
-                                isFavoriteLoading = false
-                            }
+                            isLoading = false
                         }
                     },
-                    onCallClick = {
-                        listing!!.realtor?.phone?.let { phone ->
-                            context.startActivity(
-                                Intent(Intent.ACTION_DIAL).apply { data = Uri.parse("tel:$phone") },
-                            )
-                        }
-                    },
-                    onMessageClick = { showInquiryDialog = true },
-                    onInquiryClick = { showInquiryDialog = true },
                 )
-            }
+            listing != null ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ListingContent(
+                        listing = listing!!,
+                        isFavorite = isFavorite,
+                        onBackClick = onBackClick,
+                        onShareClick = { showShareSheet = true },
+                        onFavoriteClick = {
+                            if (authState is AuthState.Authenticated && !isFavoriteLoading) {
+                                val newFav = !isFavorite
+                                isFavoriteLoading = true
+                                scope.launch {
+                                    val result =
+                                        if (newFav) favoritesRepository.addFavorite(listingId)
+                                        else favoritesRepository.removeFavorite(listingId)
+                                    result.fold(
+                                        onSuccess = { isFavorite = newFav },
+                                        onFailure = { /* revert silently */},
+                                    )
+                                    isFavoriteLoading = false
+                                }
+                            }
+                        },
+                        onCallClick = {
+                            listing!!.realtor?.phone?.let { phone ->
+                                context.startActivity(
+                                    Intent(Intent.ACTION_DIAL).apply {
+                                        data = Uri.parse("tel:$phone")
+                                    },
+                                )
+                            }
+                        },
+                        onMessageClick = { showInquiryDialog = true },
+                        onInquiryClick = { showInquiryDialog = true },
+                    )
+                }
         }
     }
 
@@ -195,24 +214,27 @@ fun ListingDetailScreen(
                 isInquirySubmitting = true
                 inquiryError = null
                 scope.launch {
-                    val request = CreateInquiryRequest(
-                        listingId = listingId,
-                        message = message,
-                        name = name,
-                        email = email,
-                        phone = phone,
-                    )
-                    inquiryRepository.createInquiry(request).fold(
-                        onSuccess = {
-                            isInquirySubmitting = false
-                            showInquiryDialog = false
-                            onInquirySuccess()
-                        },
-                        onFailure = { error ->
-                            isInquirySubmitting = false
-                            inquiryError = error.message ?: "Failed to send inquiry"
-                        },
-                    )
+                    val request =
+                        CreateInquiryRequest(
+                            listingId = listingId,
+                            message = message,
+                            name = name,
+                            email = email,
+                            phone = phone,
+                        )
+                    inquiryRepository
+                        .createInquiry(request)
+                        .fold(
+                            onSuccess = {
+                                isInquirySubmitting = false
+                                showInquiryDialog = false
+                                onInquirySuccess()
+                            },
+                            onFailure = { error ->
+                                isInquirySubmitting = false
+                                inquiryError = error.message ?: "Failed to send inquiry"
+                            },
+                        )
                 }
             },
         )
@@ -295,10 +317,10 @@ private fun HeroGallery(
 ) {
     val pagerState = rememberPagerState(pageCount = { images.size.coerceAtLeast(1) })
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+        modifier =
+            Modifier.fillMaxWidth()
+                .height(280.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (images.isEmpty()) {
             Box(
@@ -315,10 +337,11 @@ private fun HeroGallery(
         } else {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(images[page].url)
-                        .crossfade(true)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(images[page].url)
+                            .crossfade(true)
+                            .build(),
                     contentDescription = images[page].caption,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -346,8 +369,9 @@ private fun HeroGallery(
             )
             WhitePill(
                 icon = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                tint = if (isFavorite) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurface,
+                tint =
+                    if (isFavorite) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface,
                 onClick = onFavoriteClick,
             )
         }
@@ -360,13 +384,13 @@ private fun HeroGallery(
             ) {
                 repeat(images.size) { idx ->
                     Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (idx == pagerState.currentPage) Color.White
-                                else Color.White.copy(alpha = 0.5f),
-                            ),
+                        modifier =
+                            Modifier.size(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (idx == pagerState.currentPage) Color.White
+                                    else Color.White.copy(alpha = 0.5f),
+                                ),
                     )
                 }
             }
@@ -379,9 +403,10 @@ private fun HeroGallery(
                 Text(
                     text = "${pagerState.currentPage + 1} / ${images.size}",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                    style =
+                        MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
                     color = Color.White,
                 )
             }
@@ -397,11 +422,12 @@ private fun WhitePill(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.92f))
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.92f))
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -423,38 +449,41 @@ private fun StickyAgentBar(listing: ListingDetail, onCallClick: () -> Unit) {
         shadowElevation = 1.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val realtor = listing.realtor
-            val initials = remember(realtor) {
-                realtor?.name?.split(" ")?.take(2)
-                    ?.mapNotNull { it.firstOrNull()?.uppercase() }
-                    ?.joinToString("")
-                    .orEmpty()
-                    .ifEmpty { "?" }
-            }
+            val initials =
+                remember(realtor) {
+                    realtor
+                        ?.name
+                        ?.split(" ")
+                        ?.take(2)
+                        ?.mapNotNull { it.firstOrNull()?.uppercase() }
+                        ?.joinToString("")
+                        .orEmpty()
+                        .ifEmpty { "?" }
+                }
             if (realtor?.avatarUrl != null) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(realtor.avatarUrl)
-                        .crossfade(true)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(realtor.avatarUrl)
+                            .crossfade(true)
+                            .build(),
                     contentDescription = realtor.name,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    modifier =
+                        Modifier.size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier =
+                        Modifier.size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -534,11 +563,12 @@ private fun SmallVerifiedPill() {
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = stringResource(R.string.profile_verified).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.04.sp,
-                    fontSize = 10.sp,
-                ),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.04.sp,
+                        fontSize = 10.sp,
+                    ),
                 color = Color(0xFF065F46),
             )
         }
@@ -550,9 +580,7 @@ private fun SmallVerifiedPill() {
 @Composable
 private fun HeaderSection(listing: ListingDetail) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             if (listing.isFeatured) {
@@ -563,18 +591,21 @@ private fun HeaderSection(listing: ListingDetail) {
                 )
             }
             UppercaseBadge(
-                text = when (listing.type) {
-                    ListingType.SALE -> stringResource(R.string.for_sale)
-                    ListingType.RENT -> stringResource(R.string.for_rent)
-                },
-                bg = when (listing.type) {
-                    ListingType.SALE -> BadgeColors.saleBg
-                    ListingType.RENT -> BadgeColors.rentBg
-                },
-                ink = when (listing.type) {
-                    ListingType.SALE -> BadgeColors.saleInk
-                    ListingType.RENT -> BadgeColors.rentInk
-                },
+                text =
+                    when (listing.type) {
+                        ListingType.SALE -> stringResource(R.string.for_sale)
+                        ListingType.RENT -> stringResource(R.string.for_rent)
+                    },
+                bg =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleBg
+                        ListingType.RENT -> BadgeColors.rentBg
+                    },
+                ink =
+                    when (listing.type) {
+                        ListingType.SALE -> BadgeColors.saleInk
+                        ListingType.RENT -> BadgeColors.rentInk
+                    },
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -626,10 +657,11 @@ private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
         Text(
             text = text.uppercase(),
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.04.sp,
-            ),
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.04.sp,
+                ),
             color = ink,
         )
     }
@@ -640,9 +672,7 @@ private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
 @Composable
 private fun QuickStatsStrip(listing: ListingDetail) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         StatCard(
@@ -665,9 +695,10 @@ private fun QuickStatsStrip(listing: ListingDetail) {
         )
         StatCard(
             icon = Icons.Default.Layers,
-            value = listing.floor?.let { floor ->
-                listing.totalFloors?.let { "$floor/$it" } ?: "$floor"
-            } ?: "—",
+            value =
+                listing.floor?.let { floor ->
+                    listing.totalFloors?.let { "$floor/$it" } ?: "$floor"
+                } ?: "—",
             label = stringResource(R.string.detail_stat_floor),
             modifier = Modifier.weight(1f),
         )
@@ -688,9 +719,7 @@ private fun StatCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
@@ -709,11 +738,12 @@ private fun StatCard(
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.04.sp,
-                    fontSize = 9.sp,
-                ),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.04.sp,
+                        fontSize = 9.sp,
+                    ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -724,38 +754,38 @@ private fun StatCard(
 
 @Composable
 private fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
-    val tabs = listOf(
-        stringResource(R.string.detail_tab_overview),
-        stringResource(R.string.detail_tab_building),
-        stringResource(R.string.detail_tab_nearby),
-        stringResource(R.string.detail_tab_price_history),
-    )
+    val tabs =
+        listOf(
+            stringResource(R.string.detail_tab_overview),
+            stringResource(R.string.detail_tab_building),
+            stringResource(R.string.detail_tab_nearby),
+            stringResource(R.string.detail_tab_price_history),
+        )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 18.dp)
-            .horizontalScroll(rememberScrollState()),
+        modifier =
+            Modifier.fillMaxWidth().padding(top = 18.dp).horizontalScroll(rememberScrollState()),
     ) {
         tabs.forEachIndexed { index, label ->
             val isOn = selected == index
             Column(
-                modifier = Modifier
-                    .clickable { onSelect(index) }
-                    .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp),
+                modifier =
+                    Modifier.clickable { onSelect(index) }
+                        .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp),
             ) {
                 Text(
                     text = label,
                     modifier = Modifier.padding(vertical = 10.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (isOn) FontWeight.SemiBold else FontWeight.Medium,
-                    color = if (isOn) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color =
+                        if (isOn) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Box(
-                    modifier = Modifier
-                        .height(2.dp)
-                        .width(if (isOn) 44.dp else 0.dp)
-                        .background(MaterialTheme.colorScheme.primary),
+                    modifier =
+                        Modifier.height(2.dp)
+                            .width(if (isOn) 44.dp else 0.dp)
+                            .background(MaterialTheme.colorScheme.primary),
                 )
             }
         }
@@ -769,9 +799,7 @@ private fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
 private fun DescriptionBody(description: String) {
     Text(
         text = description,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
     )
@@ -831,9 +859,7 @@ private fun BuildingPassportCard(listing: ListingDetail) {
         return
     }
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -846,11 +872,12 @@ private fun BuildingPassportCard(listing: ListingDetail) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = label.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = 0.04.sp,
-                                    fontSize = 10.sp,
-                                ),
+                                style =
+                                    MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 0.04.sp,
+                                        fontSize = 10.sp,
+                                    ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Spacer(modifier = Modifier.height(2.dp))
@@ -874,12 +901,12 @@ private fun BuildingPassportCard(listing: ListingDetail) {
 @Composable
 private fun NearbyPreviewCard() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .height(160.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(16.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .height(160.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -902,9 +929,7 @@ private fun NearbyPreviewCard() {
 @Composable
 private fun PlaceholderSection(text: String) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 32.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 32.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -929,18 +954,16 @@ private fun BottomActionBar(
         shadowElevation = 8.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable(onClick = onMessageClick),
+                modifier =
+                    Modifier.size(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable(onClick = onMessageClick),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -952,9 +975,7 @@ private fun BottomActionBar(
             }
             Button(
                 onClick = onInquiryClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
+                modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(14.dp),
             ) {
                 Text(
@@ -1013,8 +1034,10 @@ private fun InquiryDialog(
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
-    val canSubmit = message.isNotBlank() && !isSubmitting &&
-        (isAuthenticated || (name.isNotBlank() && email.isNotBlank()))
+    val canSubmit =
+        message.isNotBlank() &&
+            !isSubmitting &&
+            (isAuthenticated || (name.isNotBlank() && email.isNotBlank()))
 
     AlertDialog(
         onDismissRequest = { if (!isSubmitting) onDismiss() },
@@ -1023,9 +1046,10 @@ private fun InquiryDialog(
             Column {
                 if (!isAuthenticated) {
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        ),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            ),
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),

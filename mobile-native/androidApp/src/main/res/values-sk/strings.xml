@@ -66,6 +66,18 @@
     <string name="auth_2fa_resend">Neprišiel kód? Skúsiť znova za 00:24</string>
     <string name="auth_2fa_backup_code">Použiť záložný kód</string>
     <string name="auth_2fa_success">Dvojfaktorové overenie je zapnuté.</string>
+    <string name="auth_validation_email_required">Vyžaduje sa email</string>
+    <string name="auth_validation_email_invalid">Zadajte platnú emailovú adresu</string>
+    <string name="auth_validation_password_required">Vyžaduje sa heslo</string>
+    <string name="auth_validation_password_too_short">Heslo musí mať aspoň %1$d znakov</string>
+    <string name="auth_validation_password_mismatch">Heslá sa nezhodujú</string>
+    <string name="auth_validation_name_required">Vyžaduje sa meno</string>
+    <string name="auth_validation_sign_in_failed">Prihlásenie zlyhalo.</string>
+    <string name="auth_validation_terms_required">Súhlaste prosím s podmienkami</string>
+    <string name="auth_validation_register_failed">Registrácia zlyhala.</string>
+    <string name="auth_validation_reset_failed">Heslo sa nepodarilo zmeniť.</string>
+    <string name="auth_validation_send_reset_failed">Email na reset sa nepodarilo odoslať.</string>
+    <string name="auth_validation_2fa_invalid">Zadajte 6-miestny kód z vašej autentifikačnej aplikácie.</string>
     <string name="login">Prihlásiť sa</string>
     <string name="logout">Odhlásiť sa</string>
     <string name="sign_in">Prihlásiť sa</string>
@@ -162,7 +174,7 @@
     <string name="agency_stat_new_inquiries">Nové dopyty</string>
     <string name="agency_stat_response">Priem. odozva</string>
     <string name="agency_stat_conversion">Konverzia</string>
-    <string name="agency_actions_title">Workspace</string>
+    <string name="agency_actions_title">Pracovný priestor</string>
     <string name="agency_activity_title">Posledná aktivita</string>
     <string name="agency_activity_see_all">Všetko ›</string>
     <string name="agency_add_listing">Pridať inzerát</string>
@@ -200,6 +212,10 @@
     <string name="realtor_create_field_price">Cena</string>
     <string name="realtor_create_field_currency">Mena</string>
     <string name="realtor_analytics_title">Štatistika</string>
+    <string name="realtor_create_validation_title_required">Vyžaduje sa názov</string>
+    <string name="realtor_create_validation_city_required">Vyžaduje sa mesto</string>
+    <string name="realtor_create_validation_price_invalid">Zadajte kladnú cenu</string>
+    <string name="realtor_create_validation_publish_failed">Inzerát sa nepodarilo publikovať.</string>
 
     <!-- Section Headers -->
     <string name="section_quick_actions">Rýchle akcie</string>
@@ -445,6 +461,7 @@
 
     <!-- Home hero -->
     <string name="home_hero_welcome">Vitajte späť</string>
+    <string name="home_hero_location_placeholder">Prezerajte inzeráty vo vašom okolí</string>
     <string name="home_hero_search_placeholder">Mesto, lokalita, alebo ID inzerátu…</string>
     <string name="home_hero_tab_sale">Predaj</string>
     <string name="home_hero_tab_rent">Prenájom</string>
@@ -459,4 +476,14 @@
     <string name="cat_land">Pozemky</string>
     <string name="cat_recreation">Rekreácia</string>
     <string name="cat_parking">Parkovanie</string>
+
+    <string name="area_m2">%1$d m²</string>
+
+    <!-- Plurals -->
+    <plurals name="listing_rooms_plural">
+        <item quantity="one">%1$d izba</item>
+        <item quantity="few">%1$d izby</item>
+        <item quantity="many">%1$d izieb</item>
+        <item quantity="other">%1$d izieb</item>
+    </plurals>
 </resources>

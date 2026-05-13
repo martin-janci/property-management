@@ -45,30 +45,26 @@ private const val TAG = "InquiriesScreen"
 
 /**
  * Inquiries screen — KMP / Compose M3 redesign matching the design bundle
- * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/
- * screens.jsx` → `KmpInquiriesScreen`).
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/ screens.jsx` →
+ * `KmpInquiriesScreen`).
  *
  * Layout (top → bottom):
- *   1. Large-title header "Dopyty".
- *   2. Status filter chip strip (All · count, Pending, Responded, Closed)
- *      — horizontal scroll.
- *   3. Tab row — Messages / Viewings (preserved, restyled as flat M3
- *      TabRow). The KmpInquiriesScreen design only mocks the messages
- *      list; we keep viewings as a sibling tab so wired functionality
- *      (cancel viewing dialog) is not lost.
- *   4. Messages tab — flat list of thread rows (no card chrome). Each
- *      row: optional 3dp left unread bar, 48dp gradient avatar with the
- *      realtor initials, 22dp listing thumbnail overlay at bottom-right
- *      of the avatar, name (bold when unread) + relative time right-
- *      aligned, 2-line message preview, status uppercase pill.
- *   5. Viewings tab — restyled card list (icon + property + date/time +
- *      message + status pill + cancel action).
- *   6. Bottom nav reserved 96dp.
+ * 1. Large-title header "Dopyty".
+ * 2. Status filter chip strip (All · count, Pending, Responded, Closed) — horizontal scroll.
+ * 3. Tab row — Messages / Viewings (preserved, restyled as flat M3 TabRow). The KmpInquiriesScreen
+ *    design only mocks the messages list; we keep viewings as a sibling tab so wired functionality
+ *    (cancel viewing dialog) is not lost.
+ * 4. Messages tab — flat list of thread rows (no card chrome). Each row: optional 3dp left unread
+ *    bar, 48dp gradient avatar with the realtor initials, 22dp listing thumbnail overlay at
+ *    bottom-right of the avatar, name (bold when unread) + relative time right- aligned, 2-line
+ *    message preview, status uppercase pill.
+ * 5. Viewings tab — restyled card list (icon + property + date/time + message + status pill +
+ *    cancel action).
+ * 6. Bottom nav reserved 96dp.
  *
- * Inline thread view (`KmpInquiryThreadScreen` in the design) is not
- * wired here — the design includes scheduling UI (calendar grid + time
- * slots) that requires API support not yet present in the inquiry
- * domain. Tracked as a follow-up.
+ * Inline thread view (`KmpInquiryThreadScreen` in the design) is not wired here — the design
+ * includes scheduling UI (calendar grid + time slots) that requires API support not yet present in
+ * the inquiry domain. Tracked as a follow-up.
  *
  * Epic 48 - Story 48.6: Portal Mobile Inquiries.
  */
@@ -90,23 +86,28 @@ fun InquiriesScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val inquiryRepository = remember(authState) {
-        val token = (authState as? AuthState.Authenticated)?.sessionToken
-        InquiryRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
-    }
+    val inquiryRepository =
+        remember(authState) {
+            val token = (authState as? AuthState.Authenticated)?.sessionToken
+            InquiryRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
+        }
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
             isLoading = true
             errorMessage = null
-            inquiryRepository.getInquiries().fold(
-                onSuccess = { inquiries = it.inquiries },
-                onFailure = { errorMessage = it.message },
-            )
-            inquiryRepository.getViewings().fold(
-                onSuccess = { viewings = it.viewings },
-                onFailure = { Log.e(TAG, "Failed to load viewings", it) },
-            )
+            inquiryRepository
+                .getInquiries()
+                .fold(
+                    onSuccess = { inquiries = it.inquiries },
+                    onFailure = { errorMessage = it.message },
+                )
+            inquiryRepository
+                .getViewings()
+                .fold(
+                    onSuccess = { viewings = it.viewings },
+                    onFailure = { Log.e(TAG, "Failed to load viewings", it) },
+                )
             isLoading = false
         } else {
             isLoading = false
@@ -118,11 +119,15 @@ fun InquiriesScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         when (authState) {
-            is AuthState.Unauthenticated, is AuthState.Error -> NotSignedInContent()
-            is AuthState.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            is AuthState.Unauthenticated,
+            is AuthState.Error -> NotSignedInContent()
+            is AuthState.Loading ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             is AuthState.Authenticated -> {
                 Column(modifier = Modifier.fillMaxSize()) {
                     InquiriesHeader()
@@ -148,47 +153,59 @@ fun InquiriesScreen(
                         )
                     }
                     when {
-                        isLoading -> Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) { CircularProgressIndicator() }
-                        errorMessage != null -> ErrorContent(
-                            message = errorMessage!!,
-                            onRetry = {
-                                scope.launch {
-                                    isLoading = true
-                                    errorMessage = null
-                                    inquiryRepository.getInquiries().fold(
-                                        onSuccess = { inquiries = it.inquiries },
-                                        onFailure = { errorMessage = it.message },
-                                    )
-                                    isLoading = false
-                                }
-                            },
-                        )
-                        selectedTab == 0 -> InquiriesList(
-                            inquiries = inquiries.filter {
-                                statusFilter == null || it.status == statusFilter
-                            },
-                            onInquiryClick = { onListingClick(it.listingId) },
-                        )
-                        selectedTab == 1 -> ViewingsList(
-                            viewings = viewings,
-                            onViewingClick = { onListingClick(it.listingId) },
-                            onCancelViewing = { viewingId ->
-                                scope.launch {
-                                    inquiryRepository.cancelViewing(viewingId).fold(
-                                        onSuccess = {
-                                            viewings = viewings.filter { it.id != viewingId }
-                                        },
-                                        onFailure = {
-                                            Log.e(TAG, "Failed to cancel viewing", it)
-                                            errorMessage = it.message
-                                        },
-                                    )
-                                }
-                            },
-                        )
+                        isLoading ->
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        errorMessage != null ->
+                            ErrorContent(
+                                message = errorMessage!!,
+                                onRetry = {
+                                    scope.launch {
+                                        isLoading = true
+                                        errorMessage = null
+                                        inquiryRepository
+                                            .getInquiries()
+                                            .fold(
+                                                onSuccess = { inquiries = it.inquiries },
+                                                onFailure = { errorMessage = it.message },
+                                            )
+                                        isLoading = false
+                                    }
+                                },
+                            )
+                        selectedTab == 0 ->
+                            InquiriesList(
+                                inquiries =
+                                    inquiries.filter {
+                                        statusFilter == null || it.status == statusFilter
+                                    },
+                                onInquiryClick = { onListingClick(it.listingId) },
+                            )
+                        selectedTab == 1 ->
+                            ViewingsList(
+                                viewings = viewings,
+                                onViewingClick = { onListingClick(it.listingId) },
+                                onCancelViewing = { viewingId ->
+                                    scope.launch {
+                                        inquiryRepository
+                                            .cancelViewing(viewingId)
+                                            .fold(
+                                                onSuccess = {
+                                                    viewings =
+                                                        viewings.filter { it.id != viewingId }
+                                                },
+                                                onFailure = {
+                                                    Log.e(TAG, "Failed to cancel viewing", it)
+                                                    errorMessage = it.message
+                                                },
+                                            )
+                                    }
+                                },
+                            )
                     }
                 }
             }
@@ -202,9 +219,9 @@ fun InquiriesScreen(
 private fun InquiriesHeader() {
     Text(
         text = stringResource(R.string.inquiries),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurface,
@@ -217,38 +234,40 @@ private fun StatusFilterStrip(
     selected: InquiryStatus?,
     onSelect: (InquiryStatus?) -> Unit,
 ) {
-    val chips = listOf<Pair<InquiryStatus?, Int>>(
-        null to inquiries.size,
-        InquiryStatus.PENDING to inquiries.count { it.status == InquiryStatus.PENDING },
-        InquiryStatus.RESPONDED to inquiries.count { it.status == InquiryStatus.RESPONDED },
-        InquiryStatus.CLOSED to inquiries.count { it.status == InquiryStatus.CLOSED },
-    )
+    val chips =
+        listOf<Pair<InquiryStatus?, Int>>(
+            null to inquiries.size,
+            InquiryStatus.PENDING to inquiries.count { it.status == InquiryStatus.PENDING },
+            InquiryStatus.RESPONDED to inquiries.count { it.status == InquiryStatus.RESPONDED },
+            InquiryStatus.CLOSED to inquiries.count { it.status == InquiryStatus.CLOSED },
+        )
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
     ) {
         items(chips.size) { idx ->
             val (status, count) = chips[idx]
             val isOn = selected == status
-            val label = status?.let {
-                when (it) {
-                    InquiryStatus.PENDING -> stringResource(R.string.status_pending)
-                    InquiryStatus.RESPONDED -> stringResource(R.string.status_responded)
-                    InquiryStatus.CLOSED -> stringResource(R.string.status_closed)
-                }
-            } ?: stringResource(R.string.filter_all)
+            val label =
+                status?.let {
+                    when (it) {
+                        InquiryStatus.PENDING -> stringResource(R.string.status_pending)
+                        InquiryStatus.RESPONDED -> stringResource(R.string.status_responded)
+                        InquiryStatus.CLOSED -> stringResource(R.string.status_closed)
+                    }
+                } ?: stringResource(R.string.filter_all)
             Surface(
                 onClick = { onSelect(status) },
                 shape = RoundedCornerShape(8.dp),
-                color = if (isOn) MaterialTheme.colorScheme.primaryContainer
-                else Color.Transparent,
-                border = if (isOn) null else androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline,
-                ),
+                color = if (isOn) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                border =
+                    if (isOn) null
+                    else
+                        androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline,
+                        ),
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
@@ -258,16 +277,18 @@ private fun StatusFilterStrip(
                         text = label,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = if (isOn) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurface,
+                        color =
+                            if (isOn) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.onSurface,
                     )
                     if (count > 0) {
                         Text(
                             text = " · $count",
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (isOn) MaterialTheme.colorScheme.onPrimaryContainer
-                                .copy(alpha = 0.7f)
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color =
+                                if (isOn)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -298,50 +319,54 @@ private fun InquiriesList(inquiries: List<Inquiry>, onInquiryClick: (Inquiry) ->
 private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
     val isUnread = inquiry.status == InquiryStatus.RESPONDED
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable(onClick = onClick),
     ) {
         if (isUnread) {
             Box(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp)
-                    .width(3.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .align(Alignment.CenterStart),
+                modifier =
+                    Modifier.padding(top = 8.dp, bottom = 8.dp)
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .align(Alignment.CenterStart),
             )
         }
         Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Avatar + listing thumb overlay
             Box(modifier = Modifier.size(54.dp)) {
-                val initials = remember(inquiry.realtor?.name) {
-                    inquiry.realtor?.name?.split(" ")?.take(2)
-                        ?.mapNotNull { it.firstOrNull()?.uppercase() }
-                        ?.joinToString("")
-                        .orEmpty()
-                        .ifEmpty { "?" }
-                }
+                val initials =
+                    remember(inquiry.realtor?.name) {
+                        inquiry.realtor
+                            ?.name
+                            ?.split(" ")
+                            ?.take(2)
+                            ?.mapNotNull { it.firstOrNull()?.uppercase() }
+                            ?.joinToString("")
+                            .orEmpty()
+                            .ifEmpty { "?" }
+                    }
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .drawBehind {
-                            drawRect(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(Brand800, Brand500),
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, size.height),
-                                ),
-                            )
-                        }
-                        .align(Alignment.TopStart),
+                    modifier =
+                        Modifier.size(48.dp)
+                            .clip(CircleShape)
+                            .drawBehind {
+                                drawRect(
+                                    brush =
+                                        Brush.linearGradient(
+                                            colors = listOf(Brand800, Brand500),
+                                            start = Offset(0f, 0f),
+                                            end = Offset(size.width, size.height),
+                                        ),
+                                )
+                            }
+                            .align(Alignment.TopStart),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -353,17 +378,18 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                 }
                 inquiry.listing?.primaryImage?.url?.let { url ->
                     AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(url)
-                            .crossfade(true)
-                            .build(),
+                        model =
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(url)
+                                .crossfade(true)
+                                .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .align(Alignment.BottomEnd)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(MaterialTheme.colorScheme.surface),
+                        modifier =
+                            Modifier.size(22.dp)
+                                .align(Alignment.BottomEnd)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.surface),
                     )
                 }
             }
@@ -371,8 +397,10 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = inquiry.realtor?.name ?: inquiry.listing?.title
-                            ?: stringResource(R.string.property),
+                        text =
+                            inquiry.realtor?.name
+                                ?: inquiry.listing?.title
+                                ?: stringResource(R.string.property),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (isUnread) FontWeight.Bold else FontWeight.SemiBold,
@@ -381,11 +409,12 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = formatRelativeDate(inquiry.createdAt),
+                        text = formatIsoDate(inquiry.createdAt),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isUnread) FontWeight.SemiBold else FontWeight.Medium,
-                        color = if (isUnread) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color =
+                            if (isUnread) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Spacer(modifier = Modifier.height(3.dp))
@@ -410,23 +439,27 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
 
 @Composable
 private fun InquiryStatusPill(status: InquiryStatus) {
-    val (bg, ink, label) = when (status) {
-        InquiryStatus.PENDING -> Triple(
-            InquiryStatusColors.pendingBg,
-            InquiryStatusColors.pendingInk,
-            stringResource(R.string.status_pending),
-        )
-        InquiryStatus.RESPONDED -> Triple(
-            InquiryStatusColors.respondedBg,
-            InquiryStatusColors.respondedInk,
-            stringResource(R.string.status_responded),
-        )
-        InquiryStatus.CLOSED -> Triple(
-            InquiryStatusColors.closedBg,
-            InquiryStatusColors.closedInk,
-            stringResource(R.string.status_closed),
-        )
-    }
+    val (bg, ink, label) =
+        when (status) {
+            InquiryStatus.PENDING ->
+                Triple(
+                    InquiryStatusColors.pendingBg,
+                    InquiryStatusColors.pendingInk,
+                    stringResource(R.string.status_pending),
+                )
+            InquiryStatus.RESPONDED ->
+                Triple(
+                    InquiryStatusColors.respondedBg,
+                    InquiryStatusColors.respondedInk,
+                    stringResource(R.string.status_responded),
+                )
+            InquiryStatus.CLOSED ->
+                Triple(
+                    InquiryStatusColors.closedBg,
+                    InquiryStatusColors.closedInk,
+                    stringResource(R.string.status_closed),
+                )
+        }
     Surface(
         shape = RoundedCornerShape(999.dp),
         color = bg,
@@ -434,11 +467,12 @@ private fun InquiryStatusPill(status: InquiryStatus) {
         Text(
             text = label.uppercase(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.04.sp,
-                fontSize = 10.sp,
-            ),
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.04.sp,
+                    fontSize = 10.sp,
+                ),
             color = ink,
         )
     }
@@ -488,8 +522,9 @@ private fun ViewingCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ViewingStatusPill(status = viewing.status)
                 Spacer(modifier = Modifier.weight(1f))
-                if (viewing.status == ViewingStatus.PENDING ||
-                    viewing.status == ViewingStatus.CONFIRMED
+                if (
+                    viewing.status == ViewingStatus.PENDING ||
+                        viewing.status == ViewingStatus.CONFIRMED
                 ) {
                     IconButton(onClick = { showCancelDialog = true }) {
                         Icon(
@@ -555,10 +590,13 @@ private fun ViewingCard(
                         onCancel()
                         showCancelDialog = false
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) { Text(stringResource(R.string.viewing_cancel_confirm)) }
+                    colors =
+                        ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                ) {
+                    Text(stringResource(R.string.viewing_cancel_confirm))
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showCancelDialog = false }) {
@@ -571,37 +609,43 @@ private fun ViewingCard(
 
 @Composable
 private fun ViewingStatusPill(status: ViewingStatus) {
-    val (bg, ink, label) = when (status) {
-        ViewingStatus.PENDING -> Triple(
-            ViewingStatusColors.pendingBg,
-            ViewingStatusColors.pendingInk,
-            stringResource(R.string.status_pending),
-        )
-        ViewingStatus.CONFIRMED -> Triple(
-            ViewingStatusColors.confirmedBg,
-            ViewingStatusColors.confirmedInk,
-            stringResource(R.string.status_confirmed),
-        )
-        ViewingStatus.COMPLETED -> Triple(
-            ViewingStatusColors.completedBg,
-            ViewingStatusColors.completedInk,
-            stringResource(R.string.status_completed),
-        )
-        ViewingStatus.CANCELLED -> Triple(
-            ViewingStatusColors.cancelledBg,
-            ViewingStatusColors.cancelledInk,
-            stringResource(R.string.status_cancelled),
-        )
-    }
+    val (bg, ink, label) =
+        when (status) {
+            ViewingStatus.PENDING ->
+                Triple(
+                    ViewingStatusColors.pendingBg,
+                    ViewingStatusColors.pendingInk,
+                    stringResource(R.string.status_pending),
+                )
+            ViewingStatus.CONFIRMED ->
+                Triple(
+                    ViewingStatusColors.confirmedBg,
+                    ViewingStatusColors.confirmedInk,
+                    stringResource(R.string.status_confirmed),
+                )
+            ViewingStatus.COMPLETED ->
+                Triple(
+                    ViewingStatusColors.completedBg,
+                    ViewingStatusColors.completedInk,
+                    stringResource(R.string.status_completed),
+                )
+            ViewingStatus.CANCELLED ->
+                Triple(
+                    ViewingStatusColors.cancelledBg,
+                    ViewingStatusColors.cancelledInk,
+                    stringResource(R.string.status_cancelled),
+                )
+        }
     Surface(shape = RoundedCornerShape(999.dp), color = bg) {
         Text(
             text = label.uppercase(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.04.sp,
-                fontSize = 10.sp,
-            ),
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.04.sp,
+                    fontSize = 10.sp,
+                ),
             color = ink,
         )
     }
@@ -717,7 +761,8 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
     }
 }
 
-private fun formatRelativeDate(dateString: String): String {
-    // Production should use kotlinx-datetime + locale-aware relative formatting.
-    return dateString.take(10)
-}
+/**
+ * Trims an ISO-8601 timestamp (e.g. `2026-05-13T11:00:00Z`) down to its `YYYY-MM-DD` prefix. Real
+ * relative-time formatting (kotlinx-datetime + locale-aware) is tracked as a follow-up.
+ */
+private fun formatIsoDate(dateString: String): String = dateString.take(10)

@@ -5,8 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Domain
 import androidx.compose.material.icons.filled.Forest
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Landscape
 import androidx.compose.material.icons.filled.LocationOn
@@ -53,20 +50,20 @@ import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
  * Home screen — KMP / Compose M3 redesign matching the design bundle
- * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx`
- *  → `KmpHomeScreen`).
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx` →
+ * `KmpHomeScreen`).
  *
  * Layout (top → bottom):
- *   1. Custom top bar (logo wordmark, notification bell with red dot,
- *      avatar circle showing user initials).
- *   2. Hero card — blue gradient (Brand800 → Brand500) with location,
- *      search trigger, transaction-type pills.
- *   3. Featured listings horizontal carousel (260dp cards).
- *   4. 3-col category grid (6 categories).
- *   5. Recently viewed vertical list (64dp thumbnails).
+ * 1. Custom top bar (logo wordmark, notification bell with red dot, avatar circle showing user
+ *    initials).
+ * 2. Hero card — blue gradient (Brand800 → Brand500) with location, search trigger,
+ *    transaction-type pills.
+ * 3. Featured listings horizontal carousel (260dp cards).
+ * 4. 3-col category grid (6 categories).
+ * 5. Recently viewed vertical list (64dp thumbnails).
  *
- * Bottom nav lives in `Navigation.kt`; this composable owns the scrollable
- * body and leaves room for it via `contentPadding`.
+ * Bottom nav lives in `Navigation.kt`; this composable owns the scrollable body and leaves room for
+ * it via `contentPadding`.
  *
  * Screen-map: reality/home — see docs/screens/reality/home.md.
  *
@@ -127,9 +124,7 @@ fun HomeScreen(
                 )
             }
 
-            errorMessage?.let { error ->
-                item { ErrorCard(error) }
-            }
+            errorMessage?.let { error -> item { ErrorCard(error) } }
 
             // Featured carousel — only renders when we have data. The
             // hero already gives the user a visible affordance while
@@ -145,9 +140,7 @@ fun HomeScreen(
             item { CategoryGrid(onCategoryClick = { onSearchClick() }) }
 
             if (recentListings.isNotEmpty()) {
-                item {
-                    SectionHeader(stringResource(R.string.recently_added), onSearchClick)
-                }
+                item { SectionHeader(stringResource(R.string.recently_added), onSearchClick) }
                 items(recentListings.take(5)) { listing ->
                     RecentRow(listing = listing, onClick = { onListingClick(listing.id) })
                 }
@@ -170,9 +163,7 @@ private fun HomeTopBar(
     onAvatarClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -191,37 +182,42 @@ private fun HomeTopBar(
                 // Red unread-dot — design uses a 8dp circle with a
                 // background-matching ring to look like a notification badge.
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-2).dp, y = 2.dp)
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.background),
+                    modifier =
+                        Modifier.align(Alignment.TopEnd)
+                            .offset(x = (-2).dp, y = 2.dp)
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .padding(2.dp)
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error),
+                        modifier =
+                            Modifier.padding(2.dp)
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.error),
                     )
                 }
             }
         }
         Spacer(modifier = Modifier.width(4.dp))
-        val initials = remember(authState) {
-            (authState as? AuthState.Authenticated)?.user?.let { user ->
-                user.name?.let { name ->
-                    name.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("")
-                } ?: user.email.take(2).uppercase()
-            } ?: "?"
-        }
+        val initials =
+            remember(authState) {
+                (authState as? AuthState.Authenticated)?.user?.let { user ->
+                    user.name?.let { name ->
+                        name
+                            .split(" ")
+                            .take(2)
+                            .mapNotNull { it.firstOrNull()?.uppercase() }
+                            .joinToString("")
+                    } ?: user.email.take(2).uppercase()
+                } ?: "?"
+            }
         Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .clickable(onClick = onAvatarClick),
+            modifier =
+                Modifier.size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(onClick = onAvatarClick),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -248,20 +244,21 @@ private fun HeroCard(
     onTabClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .drawBehind {
-                drawRect(
-                    brush = Brush.linearGradient(
-                        colors = listOf(Brand800, Brand500),
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width, size.height),
-                    ),
-                )
-            }
-            .padding(18.dp),
+        modifier =
+            Modifier.padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .drawBehind {
+                    drawRect(
+                        brush =
+                            Brush.linearGradient(
+                                colors = listOf(Brand800, Brand500),
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, size.height),
+                            ),
+                    )
+                }
+                .padding(18.dp),
     ) {
         Column {
             Text(
@@ -279,7 +276,7 @@ private fun HeroCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Bratislava · Ružinov",
+                    text = stringResource(R.string.home_hero_location_placeholder),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
@@ -293,9 +290,8 @@ private fun HeroCard(
                 color = Color.White.copy(alpha = 0.95f),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    modifier =
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -315,24 +311,25 @@ private fun HeroCard(
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(
-                    R.string.home_hero_tab_sale,
-                    R.string.home_hero_tab_rent,
-                    R.string.home_hero_tab_new,
-                ).forEach { labelRes ->
-                    Surface(
-                        onClick = onTabClick,
-                        shape = RoundedCornerShape(999.dp),
-                        color = Color.White.copy(alpha = 0.18f),
-                    ) {
-                        Text(
-                            text = stringResource(labelRes),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                        )
+                        R.string.home_hero_tab_sale,
+                        R.string.home_hero_tab_rent,
+                        R.string.home_hero_tab_new,
+                    )
+                    .forEach { labelRes ->
+                        Surface(
+                            onClick = onTabClick,
+                            shape = RoundedCornerShape(999.dp),
+                            color = Color.White.copy(alpha = 0.18f),
+                        ) {
+                            Text(
+                                text = stringResource(labelRes),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                            )
+                        }
                     }
-                }
             }
         }
     }
@@ -343,10 +340,10 @@ private fun HeroCard(
 @Composable
 private fun SectionHeader(title: String, onSeeAllClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .padding(top = 10.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(top = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -390,9 +387,7 @@ private fun FeaturedRow(listings: List<ListingSummary>, onListingClick: (String)
 @Composable
 private fun FeaturedCard(listing: ListingSummary, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .width(260.dp)
-            .clickable(onClick = onClick),
+        modifier = Modifier.width(260.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -400,29 +395,29 @@ private fun FeaturedCard(listing: ListingSummary, onClick: () -> Unit) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
                 AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(listing.primaryImage?.url ?: "")
-                        .crossfade(true)
-                        .build(),
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(listing.primaryImage?.url ?: "")
+                            .crossfade(true)
+                            .build(),
                     contentDescription = listing.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 )
                 Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(10.dp),
+                    modifier = Modifier.align(Alignment.TopStart).padding(10.dp),
                     shape = RoundedCornerShape(4.dp),
                     color = BadgeColors.featuredBg,
                 ) {
                     Text(
                         text = stringResource(R.string.label_featured).uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.04.sp,
-                        ),
+                        style =
+                            MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.04.sp,
+                            ),
                         color = BadgeColors.featuredInk,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     )
@@ -446,7 +441,7 @@ private fun FeaturedCard(listing: ListingSummary, onClick: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${listing.address.city}${meta(listing)}",
+                    text = listing.address.city + listingMeta(listing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -455,10 +450,19 @@ private fun FeaturedCard(listing: ListingSummary, onClick: () -> Unit) {
     }
 }
 
-private fun meta(listing: ListingSummary): String {
+@Composable
+private fun listingMeta(listing: ListingSummary): String {
     val parts = buildList {
-        listing.rooms?.let { add("${it} izby") }
-        listing.areaSqm?.toInt()?.let { add("$it m²") }
+        listing.rooms?.let {
+            add(
+                androidx.compose.ui.res.pluralStringResource(
+                    R.plurals.listing_rooms_plural,
+                    it,
+                    it,
+                )
+            )
+        }
+        listing.areaSqm?.toInt()?.let { add(stringResource(R.string.area_m2, it)) }
     }
     return if (parts.isEmpty()) "" else " · " + parts.joinToString(" · ")
 }
@@ -473,9 +477,10 @@ private fun FeaturedSkeleton() {
             Card(
                 modifier = Modifier.width(260.dp).height(240.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
                 content = {},
             )
         }
@@ -499,14 +504,51 @@ private data class HomeCategory(
     val countPlaceholder: Int,
 )
 
-private val CATEGORIES: List<HomeCategory> = listOf(
-    HomeCategory(R.string.cat_apartments, Icons.Default.Apartment, Color(0xFF1E40AF), Color(0xFFDBEAFE), 842),
-    HomeCategory(R.string.cat_houses, Icons.Default.House, Color(0xFF92400E), Color(0xFFFEF3C7), 212),
-    HomeCategory(R.string.cat_commercial, Icons.Default.Domain, Color(0xFF065F46), Color(0xFFD1FAE5), 128),
-    HomeCategory(R.string.cat_land, Icons.Default.Landscape, Color(0xFF5B21B6), Color(0xFFEDE9FE), 64),
-    HomeCategory(R.string.cat_recreation, Icons.Default.Forest, Color(0xFF155E75), Color(0xFFCFFAFE), 42),
-    HomeCategory(R.string.cat_parking, Icons.Default.DirectionsCar, Color(0xFF991B1B), Color(0xFFFEE2E2), 28),
-)
+private val CATEGORIES: List<HomeCategory> =
+    listOf(
+        HomeCategory(
+            R.string.cat_apartments,
+            Icons.Default.Apartment,
+            Color(0xFF1E40AF),
+            Color(0xFFDBEAFE),
+            842
+        ),
+        HomeCategory(
+            R.string.cat_houses,
+            Icons.Default.House,
+            Color(0xFF92400E),
+            Color(0xFFFEF3C7),
+            212
+        ),
+        HomeCategory(
+            R.string.cat_commercial,
+            Icons.Default.Domain,
+            Color(0xFF065F46),
+            Color(0xFFD1FAE5),
+            128
+        ),
+        HomeCategory(
+            R.string.cat_land,
+            Icons.Default.Landscape,
+            Color(0xFF5B21B6),
+            Color(0xFFEDE9FE),
+            64
+        ),
+        HomeCategory(
+            R.string.cat_recreation,
+            Icons.Default.Forest,
+            Color(0xFF155E75),
+            Color(0xFFCFFAFE),
+            42
+        ),
+        HomeCategory(
+            R.string.cat_parking,
+            Icons.Default.DirectionsCar,
+            Color(0xFF991B1B),
+            Color(0xFFFEE2E2),
+            28
+        ),
+    )
 
 @Composable
 private fun CategoryGrid(onCategoryClick: (Int) -> Unit) {
@@ -547,10 +589,10 @@ private fun CategoryCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(category.iconBg),
+                modifier =
+                    Modifier.size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(category.iconBg),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -582,10 +624,10 @@ private fun CategoryCard(
 @Composable
 private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -595,16 +637,17 @@ private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(listing.primaryImage?.url ?: "")
-                    .crossfade(true)
-                    .build(),
+                model =
+                    ImageRequest.Builder(LocalContext.current)
+                        .data(listing.primaryImage?.url ?: "")
+                        .crossfade(true)
+                        .build(),
                 contentDescription = listing.title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier =
+                    Modifier.size(64.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -624,7 +667,7 @@ private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${listing.address.city}${meta(listing)}",
+                    text = listing.address.city + listingMeta(listing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -643,12 +686,11 @@ private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
 @Composable
 private fun ErrorCard(message: String) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
     ) {
         Text(
             text = message,

@@ -28,12 +28,10 @@ import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
 
 /**
- * Agency hub screen — KMP / Compose M3 redesign matching the design
- * (`KmpAgencyHubScreen`). Agency identity row (gradient RP square +
- * "Agentúra · Reality Profi s.r.o." + bell with red dot), 2×2 stats
- * grid (Active listings / New inquiries [accent] / Avg response /
- * Conversion) with delta deltas, "Recent activity" section card with
- * leading-icon tiles + status pills, FAB "Add listing".
+ * Agency hub screen — KMP / Compose M3 redesign matching the design (`KmpAgencyHubScreen`). Agency
+ * identity row (gradient RP square + "Agentúra · Reality Profi s.r.o." + bell with red dot), 2×2
+ * stats grid (Active listings / New inquiries [accent] / Avg response / Conversion) with delta
+ * deltas, "Recent activity" section card with leading-icon tiles + status pills, FAB "Add listing".
  *
  * UC-49 — Agency management.
  */
@@ -45,6 +43,7 @@ fun AgencyHubScreen(
     onMyListingsClick: () -> Unit,
     onCreateListingClick: () -> Unit,
     onAnalyticsClick: () -> Unit,
+    onNotificationsClick: () -> Unit = onInquiriesClick,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -55,8 +54,13 @@ fun AgencyHubScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 100.dp),
             ) {
-                item { AgencyHeader(onBackClick = onBackClick) }
-                item { StatsGrid(onInquiriesClick = onInquiriesClick, onAnalyticsClick = onAnalyticsClick) }
+                item { AgencyHeader(onNotificationsClick = onNotificationsClick) }
+                item {
+                    StatsGrid(
+                        onInquiriesClick = onInquiriesClick,
+                        onAnalyticsClick = onAnalyticsClick
+                    )
+                }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
                 item {
                     SectionTitle(
@@ -79,16 +83,12 @@ fun AgencyHubScreen(
                         action = stringResource(R.string.agency_activity_see_all),
                     )
                 }
-                items(activitySamples()) { activity ->
-                    ActivityRow(activity = activity)
-                }
+                items(activitySamples()) { activity -> ActivityRow(activity = activity) }
             }
             // FAB
             ExtendedFloatingActionButton(
                 onClick = onCreateListingClick,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 24.dp),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
@@ -99,24 +99,22 @@ fun AgencyHubScreen(
 }
 
 @Composable
-private fun AgencyHeader(onBackClick: () -> Unit) {
+private fun AgencyHeader(onNotificationsClick: () -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
+        modifier =
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .drawBehind {
+            modifier =
+                Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).drawBehind {
                     drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(Brand800, Brand500),
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, size.height),
-                        ),
+                        brush =
+                            Brush.linearGradient(
+                                colors = listOf(Brand800, Brand500),
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, size.height),
+                            ),
                     )
                 },
             contentAlignment = Alignment.Center,
@@ -132,10 +130,11 @@ private fun AgencyHeader(onBackClick: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(R.string.agency_role_label).uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.06.sp,
-                ),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.06.sp,
+                    ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
@@ -146,7 +145,7 @@ private fun AgencyHeader(onBackClick: () -> Unit) {
             )
         }
         Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-            IconButton(onClick = onBackClick) {
+            IconButton(onClick = onNotificationsClick) {
                 Icon(
                     Icons.Default.Notifications,
                     contentDescription = stringResource(R.string.cd_notifications),
@@ -154,12 +153,12 @@ private fun AgencyHeader(onBackClick: () -> Unit) {
                 )
             }
             Box(
-                modifier = Modifier
-                    .padding(top = 8.dp, end = 8.dp)
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.error)
-                    .align(Alignment.TopEnd),
+                modifier =
+                    Modifier.padding(top = 8.dp, end = 8.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                        .align(Alignment.TopEnd),
             )
         }
     }
@@ -171,9 +170,7 @@ private fun StatsGrid(
     onAnalyticsClick: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -182,18 +179,14 @@ private fun StatsGrid(
                 label = stringResource(R.string.agency_stat_active),
                 delta = "+3",
                 accent = false,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClick = onAnalyticsClick),
+                modifier = Modifier.weight(1f).clickable(onClick = onAnalyticsClick),
             )
             StatCard(
                 value = "18",
                 label = stringResource(R.string.agency_stat_new_inquiries),
                 delta = "+5",
                 accent = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClick = onInquiriesClick),
+                modifier = Modifier.weight(1f).clickable(onClick = onInquiriesClick),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -227,18 +220,21 @@ private fun StatCard(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (accent) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (accent) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = if (accent) Color.White.copy(alpha = 0.85f)
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                color =
+                    if (accent) Color.White.copy(alpha = 0.85f)
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -253,8 +249,7 @@ private fun StatCard(
                     text = delta,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (accent) Color.White.copy(alpha = 0.9f)
-                    else Color(0xFF10B981),
+                    color = if (accent) Color.White.copy(alpha = 0.9f) else Color(0xFF10B981),
                 )
             }
         }
@@ -264,9 +259,7 @@ private fun StatCard(
 @Composable
 private fun SectionTitle(text: String, action: String?) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -295,9 +288,7 @@ private fun AgencyActions(
     onAnalyticsClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -342,17 +333,17 @@ private fun ActionRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -397,9 +388,7 @@ private fun ActionDivider() {
 @Composable
 private fun ActivityRow(activity: ActivitySample) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -412,10 +401,10 @@ private fun ActivityRow(activity: ActivitySample) {
                 verticalAlignment = Alignment.Top,
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    modifier =
+                        Modifier.size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -447,11 +436,12 @@ private fun ActivityRow(activity: ActivitySample) {
                         Text(
                             text = tag.label.uppercase(),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.04.sp,
-                                fontSize = 10.sp,
-                            ),
+                            style =
+                                MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.04.sp,
+                                    fontSize = 10.sp,
+                                ),
                             color = tag.ink,
                         )
                     }
@@ -470,35 +460,36 @@ private data class ActivitySample(
 
 private data class ActivityTag(val label: String, val bg: Color, val ink: Color)
 
-private fun activitySamples(): List<ActivitySample> = listOf(
-    ActivitySample(
-        icon = Icons.Default.Email,
-        title = "New inquiry on 3-room · Ružinov",
-        subtitle = "Katarína Molnár · 4 min ago",
-        tag = ActivityTag("New", Color(0xFFDBEAFE), Color(0xFF1E40AF)),
-    ),
-    ActivitySample(
-        icon = Icons.Default.Visibility,
-        title = "Listing Penthouse · Nové Mesto",
-        subtitle = "12 new views · 2h ago",
-        tag = null,
-    ),
-    ActivitySample(
-        icon = Icons.Default.CheckCircle,
-        title = "Viewing confirmed · 2-room Petržalka",
-        subtitle = "Peter Varga · Tue 16:00",
-        tag = ActivityTag("Confirmed", Color(0xFFD1FAE5), Color(0xFF065F46)),
-    ),
-    ActivitySample(
-        icon = Icons.Default.Favorite,
-        title = "New favorite · 4-room Dúbravka",
-        subtitle = "3 favorites · today",
-        tag = null,
-    ),
-    ActivitySample(
-        icon = Icons.Default.Flag,
-        title = "Listing Studio · expires in 2 days",
-        subtitle = "Extend or edit",
-        tag = ActivityTag("Action", Color(0xFFFEF3C7), Color(0xFF92400E)),
-    ),
-)
+private fun activitySamples(): List<ActivitySample> =
+    listOf(
+        ActivitySample(
+            icon = Icons.Default.Email,
+            title = "New inquiry on 3-room · Ružinov",
+            subtitle = "Katarína Molnár · 4 min ago",
+            tag = ActivityTag("New", Color(0xFFDBEAFE), Color(0xFF1E40AF)),
+        ),
+        ActivitySample(
+            icon = Icons.Default.Visibility,
+            title = "Listing Penthouse · Nové Mesto",
+            subtitle = "12 new views · 2h ago",
+            tag = null,
+        ),
+        ActivitySample(
+            icon = Icons.Default.CheckCircle,
+            title = "Viewing confirmed · 2-room Petržalka",
+            subtitle = "Peter Varga · Tue 16:00",
+            tag = ActivityTag("Confirmed", Color(0xFFD1FAE5), Color(0xFF065F46)),
+        ),
+        ActivitySample(
+            icon = Icons.Default.Favorite,
+            title = "New favorite · 4-room Dúbravka",
+            subtitle = "3 favorites · today",
+            tag = null,
+        ),
+        ActivitySample(
+            icon = Icons.Default.Flag,
+            title = "Listing Studio · expires in 2 days",
+            subtitle = "Extend or edit",
+            tag = ActivityTag("Action", Color(0xFFFEF3C7), Color(0xFF92400E)),
+        ),
+    )

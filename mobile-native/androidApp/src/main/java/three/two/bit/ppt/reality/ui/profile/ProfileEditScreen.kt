@@ -37,19 +37,16 @@ import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
 
 /**
- * Edit-profile screen — KMP / Compose M3 redesign matching the design
- * (`KmpEditProfileScreen`). Sticky top bar with back + "Upraviť profil"
- * title; 96dp gradient avatar with camera-edit overlay; field labels +
- * leading-icon text fields (Name, Phone); 2-col radio-card grid of
- * supported languages; "About me" multi-line text area with char
- * counter; sticky bottom bar with "Cancel" ghost + "Save changes"
- * primary button.
+ * Edit-profile screen — KMP / Compose M3 redesign matching the design (`KmpEditProfileScreen`).
+ * Sticky top bar with back + "Upraviť profil" title; 96dp gradient avatar with camera-edit overlay;
+ * field labels + leading-icon text fields (Name, Phone); 2-col radio-card grid of supported
+ * languages; "About me" multi-line text area with char counter; sticky bottom bar with "Cancel"
+ * ghost + "Save changes" primary button.
  *
- * Note: phone, language, and "About me" don't have backing endpoints
- * yet (`PUT /api/v1/users/me` only accepts name). The fields render
- * for design fidelity and remember local state, but only `displayName`
- * is propagated to `onSubmit`. Email field stays disabled per the
- * existing rule (support-driven).
+ * Note: phone, language, and "About me" don't have backing endpoints yet (`PUT /api/v1/users/me`
+ * only accepts name). The fields render for design fidelity and remember local state, but only
+ * `displayName` is propagated to `onSubmit`. Email field stays disabled per the existing rule
+ * (support-driven).
  *
  * UC-47.7 — Edit profile.
  */
@@ -63,9 +60,10 @@ fun ProfileEditScreen(
     val authState by ssoService.authState.collectAsState()
     val authenticated = authState as? AuthState.Authenticated
 
-    var displayName by remember(authenticated?.user?.userId) {
-        mutableStateOf(authenticated?.user?.name.orEmpty())
-    }
+    var displayName by
+        remember(authenticated?.user?.userId) {
+            mutableStateOf(authenticated?.user?.name.orEmpty())
+        }
     var phone by remember { mutableStateOf("") }
     var aboutMe by remember { mutableStateOf("") }
     var selectedLang by remember { mutableStateOf("SK") }
@@ -88,12 +86,16 @@ fun ProfileEditScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         bottomBar = {
@@ -146,39 +148,38 @@ fun ProfileEditScreen(
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState()),
+            modifier =
+                Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Avatar editor
             Box(
-                modifier = Modifier
-                    .padding(top = 24.dp, bottom = 8.dp),
+                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
                 contentAlignment = Alignment.BottomEnd,
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .drawBehind {
+                    modifier =
+                        Modifier.size(96.dp).clip(CircleShape).drawBehind {
                             drawRect(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(Brand800, Brand500),
-                                    start = Offset(0f, 0f),
-                                    end = Offset(size.width, size.height),
-                                ),
+                                brush =
+                                    Brush.linearGradient(
+                                        colors = listOf(Brand800, Brand500),
+                                        start = Offset(0f, 0f),
+                                        end = Offset(size.width, size.height),
+                                    ),
                             )
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    val initials = remember(authenticated.user.name) {
-                        authenticated.user.name.split(" ").take(2)
-                            .mapNotNull { it.firstOrNull()?.uppercase() }
-                            .joinToString("")
-                            .ifEmpty { authenticated.user.email.take(2).uppercase() }
-                    }
+                    val initials =
+                        remember(authenticated.user.name) {
+                            authenticated.user.name
+                                .split(" ")
+                                .take(2)
+                                .mapNotNull { it.firstOrNull()?.uppercase() }
+                                .joinToString("")
+                                .ifEmpty { authenticated.user.email.take(2).uppercase() }
+                        }
                     Text(
                         text = initials,
                         style = MaterialTheme.typography.headlineSmall.copy(fontSize = 32.sp),
@@ -187,10 +188,10 @@ fun ProfileEditScreen(
                     )
                 }
                 Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
+                    modifier =
+                        Modifier.size(32.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -210,9 +211,7 @@ fun ProfileEditScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             ) {
                 generalError?.let {
                     ErrorBanner(it)
@@ -249,9 +248,7 @@ fun ProfileEditScreen(
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     singleLine = true,
                     enabled = false,
-                    supportingText = {
-                        Text(stringResource(R.string.profile_edit_email_locked))
-                    },
+                    supportingText = { Text(stringResource(R.string.profile_edit_email_locked)) },
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -283,9 +280,7 @@ fun ProfileEditScreen(
                 OutlinedTextField(
                     value = aboutMe,
                     onValueChange = { if (it.length <= 280) aboutMe = it },
-                    placeholder = {
-                        Text(stringResource(R.string.profile_edit_about_placeholder))
-                    },
+                    placeholder = { Text(stringResource(R.string.profile_edit_about_placeholder)) },
                     minLines = 4,
                     maxLines = 6,
                     shape = RoundedCornerShape(8.dp),
@@ -308,14 +303,15 @@ fun ProfileEditScreen(
 
 @Composable
 private fun LanguageGrid(selected: String, onSelect: (String) -> Unit) {
-    val langs = listOf(
-        "SK" to "Slovenčina",
-        "CS" to "Čeština",
-        "DE" to "Deutsch",
-        "EN" to "English",
-        "PL" to "Polski",
-        "HU" to "Magyar",
-    )
+    val langs =
+        listOf(
+            "SK" to "Slovenčina",
+            "CS" to "Čeština",
+            "DE" to "Deutsch",
+            "EN" to "English",
+            "PL" to "Polski",
+            "HU" to "Magyar",
+        )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         langs.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -346,65 +342,52 @@ private fun LanguageCard(
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.5.dp,
-            color = if (selected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.outline,
-        ),
+        color =
+            if (selected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface,
+        border =
+            androidx.compose.foundation.BorderStroke(
+                width = 1.5.dp,
+                color =
+                    if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outline,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(18.dp)
-                    .clip(CircleShape)
-                    .background(Color.Transparent),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(18.dp)
-                        .clip(CircleShape)
-                        .background(Color.Transparent)
-                        .then(
-                            Modifier.drawBehind {
-                                // Outer ring
-                            },
-                        ),
-                ) {}
-                Surface(
-                    shape = CircleShape,
-                    color = Color.Transparent,
-                    border = androidx.compose.foundation.BorderStroke(
+            Surface(
+                shape = CircleShape,
+                color = Color.Transparent,
+                border =
+                    androidx.compose.foundation.BorderStroke(
                         width = 2.dp,
-                        color = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline,
+                        color =
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline,
                     ),
-                    modifier = Modifier.size(18.dp),
-                ) {
-                    if (selected) {
-                        Box(
-                            modifier = Modifier
-                                .padding(4.dp)
+                modifier = Modifier.size(18.dp),
+            ) {
+                if (selected) {
+                    Box(
+                        modifier =
+                            Modifier.padding(4.dp)
                                 .fillMaxSize()
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary),
-                        )
-                    }
+                    )
                 }
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = code,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.04.sp,
-                    ),
+                    style =
+                        MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.04.sp,
+                        ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -430,16 +413,12 @@ private fun EditProfileBottomBar(
         shadowElevation = 8.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             OutlinedButton(
                 onClick = onCancel,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
+                modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 enabled = !saving,
             ) {
@@ -451,17 +430,13 @@ private fun EditProfileBottomBar(
             }
             Button(
                 onClick = onSave,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
+                modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 enabled = !saving,
             ) {
                 if (saving) {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .size(16.dp),
+                        modifier = Modifier.padding(end = 8.dp).size(16.dp),
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )

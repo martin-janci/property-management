@@ -8,7 +8,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -19,10 +18,9 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 
 /**
- * Forgot-password screen — KMP / Compose M3 redesign matching the design
- * (`KmpForgotScreen`). Sticky top bar with back + title; either the
- * email-collection form or a "Check your inbox" success state with a
- * 72dp green icon hero.
+ * Forgot-password screen — KMP / Compose M3 redesign matching the design (`KmpForgotScreen`).
+ * Sticky top bar with back + title; either the email-collection form or a "Check your inbox"
+ * success state with a 72dp green icon hero.
  *
  * UC-47.3 — Password reset request.
  */
@@ -52,19 +50,21 @@ fun ForgotPasswordScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             if (submitted) {
                 AuthIconHero(
@@ -84,9 +84,7 @@ fun ForgotPasswordScreen(
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     Button(
                         onClick = onSignInClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(14.dp),
                     ) {
                         Text(stringResource(R.string.auth_back_to_sign_in))
@@ -96,9 +94,7 @@ fun ForgotPasswordScreen(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
             ) {
                 Text(
                     text = stringResource(R.string.auth_forgot_body),
@@ -114,7 +110,10 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it; emailError = null },
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     singleLine = true,
                     isError = emailError != null,
@@ -124,14 +123,18 @@ fun ForgotPasswordScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+                val emailRequiredMsg = stringResource(R.string.auth_validation_email_required)
+                val emailInvalidMsg = stringResource(R.string.auth_validation_email_invalid)
+                val sendFailedMsg = stringResource(R.string.auth_validation_send_reset_failed)
                 Button(
                     onClick = {
                         val trimmed = email.trim()
-                        emailError = when {
-                            trimmed.isEmpty() -> "Email is required"
-                            !emailRegex.matches(trimmed) -> "Enter a valid email address"
-                            else -> null
-                        }
+                        emailError =
+                            when {
+                                trimmed.isEmpty() -> emailRequiredMsg
+                                !emailRegex.matches(trimmed) -> emailInvalidMsg
+                                else -> null
+                            }
                         if (emailError != null) return@Button
                         isSubmitting = true
                         generalError = null
@@ -140,23 +143,17 @@ fun ForgotPasswordScreen(
                             isSubmitting = false
                             result.fold(
                                 onSuccess = { submitted = true },
-                                onFailure = {
-                                    generalError = it.message ?: "Could not send reset email."
-                                },
+                                onFailure = { generalError = it.message ?: sendFailedMsg },
                             )
                         }
                     },
                     enabled = !isSubmitting,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     if (isSubmitting) {
                         CircularProgressIndicator(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(18.dp),
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )

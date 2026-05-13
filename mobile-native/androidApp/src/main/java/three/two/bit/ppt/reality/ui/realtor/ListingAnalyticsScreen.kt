@@ -1,7 +1,6 @@
 package three.two.bit.ppt.reality.ui.realtor
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -14,8 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -26,10 +23,9 @@ import androidx.compose.ui.unit.sp
 import three.two.bit.ppt.reality.R
 
 /**
- * Listing analytics screen — KMP / Compose M3 redesign matching the
- * design (`KmpListingAnalyticsScreen`). Sticky bar with back + share
- * action; 2-col metric grid where each card has a label, large value,
- * delta, and a 32dp sparkline drawn from the optional `trend` list.
+ * Listing analytics screen — KMP / Compose M3 redesign matching the design
+ * (`KmpListingAnalyticsScreen`). Sticky bar with back + share action; 2-col metric grid where each
+ * card has a label, large value, delta, and a 32dp sparkline drawn from the optional `trend` list.
  *
  * UC-51.10 — Realtor analytics.
  */
@@ -52,17 +48,24 @@ fun ListingAnalyticsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* share */ }) {
-                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.share))
+                    IconButton(onClick = { /* share */}) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = stringResource(R.string.share)
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
@@ -70,7 +73,9 @@ fun ListingAnalyticsScreen(
             Box(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            ) {
+                CircularProgressIndicator()
+            }
             return@Scaffold
         }
         LazyVerticalGrid(
@@ -80,9 +85,7 @@ fun ListingAnalyticsScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            items(items = metrics, key = { it.label }) { metric ->
-                MetricCard(metric = metric)
-            }
+            items(items = metrics, key = { it.label }) { metric -> MetricCard(metric = metric) }
         }
     }
 }
@@ -131,11 +134,9 @@ private fun MetricCard(metric: AnalyticsMetric) {
 @Composable
 private fun Sparkline(values: List<Int>, color: Color) {
     if (values.isEmpty()) return
-    val maxVal = (values.max().toFloat()).coerceAtLeast(1f)
+    val maxVal = (values.maxOrNull()?.toFloat() ?: 1f).coerceAtLeast(1f)
     Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(32.dp),
+        modifier = Modifier.fillMaxWidth().height(32.dp),
     ) {
         val w = size.width
         val h = size.height
