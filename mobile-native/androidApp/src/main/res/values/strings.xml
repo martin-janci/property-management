@@ -155,6 +155,52 @@
     <string name="error_not_found">Not found</string>
     <string name="error_unauthorized">You are not authorized to perform this action.</string>
 
+    <!-- Agency -->
+    <string name="agency_role_label">Agency</string>
+    <string name="agency_company_placeholder">Reality Profi s.r.o.</string>
+    <string name="agency_stat_active">Active listings</string>
+    <string name="agency_stat_new_inquiries">New inquiries</string>
+    <string name="agency_stat_response">Avg response</string>
+    <string name="agency_stat_conversion">Conversion</string>
+    <string name="agency_actions_title">Workspace</string>
+    <string name="agency_activity_title">Recent activity</string>
+    <string name="agency_activity_see_all">See all ›</string>
+    <string name="agency_add_listing">Add listing</string>
+    <string name="agency_section_inquiries">Inquiries</string>
+    <string name="agency_section_inquiries_sub">Messages received for your listings</string>
+    <string name="agency_section_listings">My listings</string>
+    <string name="agency_section_listings_sub">Listings you currently manage</string>
+    <string name="agency_section_create">Create listing</string>
+    <string name="agency_section_create_sub">Publish a new property to the portal</string>
+    <string name="agency_section_analytics">Analytics</string>
+    <string name="agency_section_analytics_sub">Performance of your listings over time</string>
+    <string name="agency_inquiries_batch_reply">Batch reply</string>
+    <string name="agency_inquiries_empty_title">No inquiries yet</string>
+    <string name="agency_inquiries_empty_body">Inquiries from interested buyers and renters will appear here.</string>
+
+    <!-- Realtor -->
+    <string name="realtor_listings_title">My listings</string>
+    <string name="realtor_listings_add">Add</string>
+    <string name="realtor_listings_empty_title">No listings yet</string>
+    <string name="realtor_listings_empty_body">Add your first listing — it only takes a few minutes and you\'ll start getting inquiries right away.</string>
+    <string name="realtor_create_title">New listing</string>
+    <string name="realtor_create_publish">Publish listing</string>
+    <string name="realtor_create_draft_saved">Draft saved</string>
+    <string name="realtor_create_transaction">Transaction</string>
+    <string name="realtor_create_step_label">Listing info</string>
+    <string name="realtor_create_step1">Type</string>
+    <string name="realtor_create_step2">Location</string>
+    <string name="realtor_create_step3">Details</string>
+    <string name="realtor_create_step4">Photos</string>
+    <string name="realtor_create_step5">Price</string>
+    <string name="realtor_create_field_title">Title</string>
+    <string name="realtor_create_title_placeholder">3-room apartment with balcony</string>
+    <string name="realtor_create_field_description">Description</string>
+    <string name="realtor_create_field_city">City</string>
+    <string name="realtor_create_field_price">Price</string>
+    <string name="realtor_create_field_currency">Currency</string>
+    <string name="realtor_analytics_title">Analytics</string>
+
     <!-- Section Headers -->
     <string name="section_quick_actions">Quick Actions</string>
     <string name="section_notifications">Notifications</string>

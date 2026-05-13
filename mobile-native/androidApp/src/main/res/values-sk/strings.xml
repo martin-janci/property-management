@@ -155,6 +155,52 @@
     <string name="error_not_found">Nenájdené</string>
     <string name="error_unauthorized">Nemáte oprávnenie na túto akciu.</string>
 
+    <!-- Agency -->
+    <string name="agency_role_label">Agentúra</string>
+    <string name="agency_company_placeholder">Reality Profi s.r.o.</string>
+    <string name="agency_stat_active">Aktívne inzeráty</string>
+    <string name="agency_stat_new_inquiries">Nové dopyty</string>
+    <string name="agency_stat_response">Priem. odozva</string>
+    <string name="agency_stat_conversion">Konverzia</string>
+    <string name="agency_actions_title">Workspace</string>
+    <string name="agency_activity_title">Posledná aktivita</string>
+    <string name="agency_activity_see_all">Všetko ›</string>
+    <string name="agency_add_listing">Pridať inzerát</string>
+    <string name="agency_section_inquiries">Dopyty</string>
+    <string name="agency_section_inquiries_sub">Správy prijaté k vašim inzerátom</string>
+    <string name="agency_section_listings">Moje inzeráty</string>
+    <string name="agency_section_listings_sub">Inzeráty, ktoré práve spravujete</string>
+    <string name="agency_section_create">Nový inzerát</string>
+    <string name="agency_section_create_sub">Publikujte novú nehnuteľnosť na portál</string>
+    <string name="agency_section_analytics">Štatistika</string>
+    <string name="agency_section_analytics_sub">Výkon vašich inzerátov v čase</string>
+    <string name="agency_inquiries_batch_reply">Hromadná odpoveď</string>
+    <string name="agency_inquiries_empty_title">Zatiaľ žiadne dopyty</string>
+    <string name="agency_inquiries_empty_body">Dopyty od záujemcov sa zobrazia tu.</string>
+
+    <!-- Realtor -->
+    <string name="realtor_listings_title">Moje inzeráty</string>
+    <string name="realtor_listings_add">Pridať</string>
+    <string name="realtor_listings_empty_title">Zatiaľ žiadne inzeráty</string>
+    <string name="realtor_listings_empty_body">Pridajte svoj prvý inzerát — vyplníte ho za pár minút a hneď začnete dostávať dopyty.</string>
+    <string name="realtor_create_title">Nový inzerát</string>
+    <string name="realtor_create_publish">Publikovať</string>
+    <string name="realtor_create_draft_saved">Draft uložený</string>
+    <string name="realtor_create_transaction">Typ obchodu</string>
+    <string name="realtor_create_step_label">Informácie o inzeráte</string>
+    <string name="realtor_create_step1">Typ</string>
+    <string name="realtor_create_step2">Lokalita</string>
+    <string name="realtor_create_step3">Detaily</string>
+    <string name="realtor_create_step4">Foto</string>
+    <string name="realtor_create_step5">Cena</string>
+    <string name="realtor_create_field_title">Názov</string>
+    <string name="realtor_create_title_placeholder">3-izbový byt s balkónom</string>
+    <string name="realtor_create_field_description">Popis</string>
+    <string name="realtor_create_field_city">Mesto</string>
+    <string name="realtor_create_field_price">Cena</string>
+    <string name="realtor_create_field_currency">Mena</string>
+    <string name="realtor_analytics_title">Štatistika</string>
+
     <!-- Section Headers -->
     <string name="section_quick_actions">Rýchle akcie</string>
     <string name="section_notifications">Oznámenia</string>
