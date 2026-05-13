@@ -300,6 +300,12 @@
     <string name="saved_search_delete_message">Naozaj chcete vymazať \"%1$s\"?</string>
     <string name="saved_searches_empty_title">Žiadne uložené vyhľadávania</string>
     <string name="saved_searches_empty_description">Uložte vyhľadávanie pre upozornenia na nové ponuky</string>
+    <string name="saved_searches_title">Uložené hľadania</string>
+    <string name="saved_searches_new">Nové hľadanie</string>
+    <string name="saved_search_run">Spustiť</string>
+    <string name="saved_search_alerts_on">Alerty zapnuté</string>
+    <string name="saved_search_alerts_off">Alerty vypnuté</string>
+    <string name="cd_more">Viac</string>
 
     <!-- Account Screen -->
     <string name="profile_title">Profil</string>
@@ -317,6 +323,15 @@
     <string name="profile_section_about">O aplikácii</string>
     <string name="profile_section_about_sub">v %1$s · Právne</string>
     <string name="edit_profile">Upraviť profil</string>
+    <string name="profile_edit_change_photo">Zmeniť fotku</string>
+    <string name="profile_edit_phone">Telefón</string>
+    <string name="profile_edit_language">Preferovaný jazyk</string>
+    <string name="profile_edit_about">O mne</string>
+    <string name="profile_edit_about_placeholder">Povedzte maklérom, čo hľadáte…</string>
+    <string name="profile_edit_email_locked">Pre zmenu emailu kontaktujte podporu.</string>
+    <string name="profile_edit_save">Uložiť zmeny</string>
+    <string name="profile_edit_signin_required_title">Vyžaduje sa prihlásenie</string>
+    <string name="profile_edit_signin_required_body">Pre úpravu profilu sa prosím prihláste.</string>
     <string name="notification_listing_updates">Aktualizácie ponúk</string>
     <string name="notification_listing_updates_desc">Dostávajte upozornenia, keď sa aktualizuje obľúbená ponuka</string>
     <string name="notification_marketing">Marketing</string>
