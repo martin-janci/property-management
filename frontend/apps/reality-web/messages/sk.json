@@ -465,6 +465,22 @@
         "label": "Súhlasím s {termsLink} a {privacyLink}.",
         "termsLink": "podmienkami používania",
         "privacyLink": "ochranou osobných údajov"
+      },
+      "validation": {
+        "required": "Povinné",
+        "addressRequired": "Adresa je povinná",
+        "cityRequired": "Mesto je povinné",
+        "areaRequired": "Plocha je povinná",
+        "areaPositive": "Plocha musí byť väčšia ako 0",
+        "roomsRequired": "Počet izieb je povinný",
+        "priceRequired": "Cena je povinná",
+        "pricePositive": "Cena musí byť väčšia ako 0",
+        "nameRequired": "Meno je povinné",
+        "phoneRequired": "Telefón je povinný",
+        "phoneFormat": "Zadajte platné telefónne číslo",
+        "emailRequired": "E-mail je povinný",
+        "emailFormat": "Zadajte platnú e-mailovú adresu",
+        "termsRequired": "Pre zverejnenie musíte akceptovať podmienky používania"
       }
     },
     "terms": {
@@ -485,7 +501,11 @@
     },
     "register": {
       "title": "Vytvorenie účtu",
-      "description": "Uložte si inzeráty, nastavte upozornenia a kontaktujte maklérov."
+      "description": "Uložte si inzeráty, nastavte upozornenia a kontaktujte maklérov.",
+      "termsLabel": "Súhlasím s {termsLink} a {privacyLink}.",
+      "termsRequired": "Pre registráciu musíte akceptovať podmienky používania a ochranu súkromia.",
+      "termsLinkText": "podmienkami používania",
+      "privacyLinkText": "ochranou súkromia"
     },
     "forgotPassword": {
       "title": "Obnovenie hesla",

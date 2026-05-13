@@ -469,6 +469,22 @@
         "label": "I agree to the {termsLink} and the {privacyLink}.",
         "termsLink": "terms of use",
         "privacyLink": "privacy policy"
+      },
+      "validation": {
+        "required": "Required",
+        "addressRequired": "Address is required",
+        "cityRequired": "City is required",
+        "areaRequired": "Area is required",
+        "areaPositive": "Area must be greater than 0",
+        "roomsRequired": "Number of rooms is required",
+        "priceRequired": "Price is required",
+        "pricePositive": "Price must be greater than 0",
+        "nameRequired": "Name is required",
+        "phoneRequired": "Phone is required",
+        "phoneFormat": "Please enter a valid phone number",
+        "emailRequired": "E-mail is required",
+        "emailFormat": "Please enter a valid e-mail address",
+        "termsRequired": "You must agree to the terms of use to publish"
       }
     },
     "listings": {
@@ -485,7 +501,11 @@
     },
     "register": {
       "title": "Create your account",
-      "description": "Save listings, set alerts and contact agents."
+      "description": "Save listings, set alerts and contact agents.",
+      "termsLabel": "I agree to the {termsLink} and the {privacyLink}.",
+      "termsRequired": "You must accept the Terms of Service and Privacy Policy to register.",
+      "termsLinkText": "Terms of Service",
+      "privacyLinkText": "Privacy Policy"
     },
     "forgotPassword": {
       "title": "Reset your password",

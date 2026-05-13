@@ -91,10 +91,55 @@ const labelStyle: React.CSSProperties = {
   fontSize: '0.9375rem',
 };
 
+const errorStyle: React.CSSProperties = {
+  color: 'var(--ppt-color-danger-hover, #dc2626)',
+  fontSize: '0.8125rem',
+  marginTop: 4,
+  display: 'block',
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[+0-9 ()-]{6,}$/;
+
+type StepErrors = Partial<Record<keyof SellFormData, string>>;
+
+/**
+ * Validate the fields shown on a given wizard step.
+ *
+ * Step 3 (photos) intentionally has no required-field rules — listings
+ * without photos still publish (the UI flags low photo counts as a warning
+ * once the API enforces it). Step terms checkbox is enforced at publish.
+ */
+function validateStep(step: number, form: SellFormData, tKey: (k: string) => string): StepErrors {
+  const errors: StepErrors = {};
+  if (step === 1) {
+    if (!form.address.trim()) errors.address = tKey('addressRequired');
+    if (!form.city.trim()) errors.city = tKey('cityRequired');
+  } else if (step === 2) {
+    if (form.area === '' || form.area === null || Number.isNaN(form.area))
+      errors.area = tKey('areaRequired');
+    else if (Number(form.area) <= 0) errors.area = tKey('areaPositive');
+    if (form.rooms === '' || form.rooms === null) errors.rooms = tKey('roomsRequired');
+  } else if (step === 4) {
+    if (form.price === '' || form.price === null) errors.price = tKey('priceRequired');
+    else if (Number(form.price) <= 0) errors.price = tKey('pricePositive');
+  } else if (step === 5) {
+    if (!form.contactName.trim()) errors.contactName = tKey('nameRequired');
+    if (!form.contactPhone.trim()) errors.contactPhone = tKey('phoneRequired');
+    else if (!PHONE_RE.test(form.contactPhone.trim()))
+      errors.contactPhone = tKey('phoneFormat');
+    if (!form.contactEmail.trim()) errors.contactEmail = tKey('emailRequired');
+    else if (!EMAIL_RE.test(form.contactEmail.trim()))
+      errors.contactEmail = tKey('emailFormat');
+  }
+  return errors;
+}
+
 export default function SellPage() {
   const t = useTranslations('pages.sell');
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<SellFormData>(INITIAL_FORM_DATA);
+  const [errors, setErrors] = useState<StepErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
   const update = (patch: Partial<SellFormData>) => setForm((f) => ({ ...f, ...patch }));
@@ -286,8 +331,15 @@ export default function SellPage() {
                     placeholder={t('fields.addressPlaceholder')}
                     value={form.address}
                     onChange={(e) => update({ address: e.target.value })}
-                    style={inputStyle}
+                    aria-invalid={errors.address ? true : undefined}
+                    style={{
+                      ...inputStyle,
+                      borderColor: errors.address
+                        ? 'var(--ppt-color-danger-hover, #dc2626)'
+                        : inputStyle.border?.toString().includes('1px') ? undefined : undefined,
+                    }}
                   />
+                  {errors.address && <span style={errorStyle}>{errors.address}</span>}
                 </div>
 
                 <div>
@@ -297,8 +349,10 @@ export default function SellPage() {
                     placeholder={t('fields.cityPlaceholder')}
                     value={form.city}
                     onChange={(e) => update({ city: e.target.value })}
+                    aria-invalid={errors.city ? true : undefined}
                     style={inputStyle}
                   />
+                  {errors.city && <span style={errorStyle}>{errors.city}</span>}
                 </div>
               </div>
             )}
@@ -322,22 +376,27 @@ export default function SellPage() {
                       placeholderKey: 'yearBuiltPlaceholder',
                     },
                   ] as const
-                ).map((field) => (
-                  <div key={field.key}>
-                    <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
-                    <input
-                      type="number"
-                      placeholder={t(`fields.${field.placeholderKey}`)}
-                      value={form[field.key as keyof SellFormData] as string | number}
-                      onChange={(e) =>
-                        update({
-                          [field.key]: e.target.value === '' ? '' : Number(e.target.value),
-                        })
-                      }
-                      style={inputStyle}
-                    />
-                  </div>
-                ))}
+                ).map((field) => {
+                  const fieldError = errors[field.key as keyof SellFormData];
+                  return (
+                    <div key={field.key}>
+                      <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
+                      <input
+                        type="number"
+                        placeholder={t(`fields.${field.placeholderKey}`)}
+                        value={form[field.key as keyof SellFormData] as string | number}
+                        onChange={(e) =>
+                          update({
+                            [field.key]: e.target.value === '' ? '' : Number(e.target.value),
+                          })
+                        }
+                        aria-invalid={fieldError ? true : undefined}
+                        style={inputStyle}
+                      />
+                      {fieldError && <span style={errorStyle}>{fieldError}</span>}
+                    </div>
+                  );
+                })}
                 <div>
                   <label style={labelStyle}>{t('fields.description')}</label>
                   <textarea
@@ -417,8 +476,10 @@ export default function SellPage() {
                     onChange={(e) =>
                       update({ price: e.target.value === '' ? '' : Number(e.target.value) })
                     }
+                    aria-invalid={errors.price ? true : undefined}
                     style={inputStyle}
                   />
+                  {errors.price && <span style={errorStyle}>{errors.price}</span>}
                 </div>
                 <label
                   style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
@@ -500,18 +561,30 @@ export default function SellPage() {
                       inputType: 'email',
                     },
                   ] as const
-                ).map((field) => (
-                  <div key={field.key}>
-                    <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
-                    <input
-                      type={field.inputType}
-                      placeholder={t(`fields.${field.placeholderKey}`)}
-                      value={form[field.key as keyof SellFormData] as string}
-                      onChange={(e) => update({ [field.key]: e.target.value })}
-                      style={inputStyle}
-                    />
-                  </div>
-                ))}
+                ).map((field) => {
+                  const fieldError = errors[field.key as keyof SellFormData];
+                  return (
+                    <div key={field.key}>
+                      <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
+                      <input
+                        type={field.inputType}
+                        autoComplete={
+                          field.key === 'contactEmail'
+                            ? 'email'
+                            : field.key === 'contactPhone'
+                              ? 'tel'
+                              : 'name'
+                        }
+                        placeholder={t(`fields.${field.placeholderKey}`)}
+                        value={form[field.key as keyof SellFormData] as string}
+                        onChange={(e) => update({ [field.key]: e.target.value })}
+                        aria-invalid={fieldError ? true : undefined}
+                        style={inputStyle}
+                      />
+                      {fieldError && <span style={errorStyle}>{fieldError}</span>}
+                    </div>
+                  );
+                })}
 
                 <label
                   style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}
@@ -576,7 +649,11 @@ export default function SellPage() {
               {step < SELL_STEPS.length ? (
                 <button
                   type="button"
-                  onClick={() => setStep((s) => s + 1)}
+                  onClick={() => {
+                    const stepErrors = validateStep(step, form, (k) => t(`validation.${k}`));
+                    setErrors(stepErrors);
+                    if (Object.keys(stepErrors).length === 0) setStep((s) => s + 1);
+                  }}
                   style={{
                     padding: '11px 28px',
                     background: 'var(--ppt-color-primary, #2563eb)',
@@ -594,7 +671,11 @@ export default function SellPage() {
                 <button
                   type="button"
                   disabled={!form.termsAccepted}
-                  onClick={() => setSubmitted(true)}
+                  onClick={() => {
+                    const stepErrors = validateStep(step, form, (k) => t(`validation.${k}`));
+                    setErrors(stepErrors);
+                    if (Object.keys(stepErrors).length === 0) setSubmitted(true);
+                  }}
                   style={{
                     padding: '11px 28px',
                     background: form.termsAccepted

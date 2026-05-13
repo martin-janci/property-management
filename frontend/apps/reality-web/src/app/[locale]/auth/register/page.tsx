@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, useState } from 'react';
 import { AuthApiError, register } from '@/lib/auth-api';
 
@@ -18,14 +19,17 @@ interface FieldErrors {
   password?: string;
   confirmPassword?: string;
   displayName?: string;
+  terms?: string;
 }
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations('pages.register');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +46,7 @@ export default function RegisterPage() {
     else if (password.length < MIN_PASSWORD)
       next.password = `Password must be at least ${MIN_PASSWORD} characters`;
     if (confirmPassword !== password) next.confirmPassword = 'Passwords do not match';
+    if (!termsAccepted) next.terms = t('termsRequired');
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -148,6 +153,32 @@ export default function RegisterPage() {
                 {errors.confirmPassword && <span className="error">{errors.confirmPassword}</span>}
               </label>
 
+              <label className="terms-field">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  disabled={isSubmitting}
+                  className="terms-checkbox"
+                  aria-invalid={errors.terms ? true : undefined}
+                />
+                <span className="terms-text">
+                  {t.rich('termsLabel', {
+                    termsLink: (chunks) => (
+                      <Link href="/terms" className="link" target="_blank">
+                        {chunks}
+                      </Link>
+                    ),
+                    privacyLink: (chunks) => (
+                      <Link href="/privacy" className="link" target="_blank">
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </span>
+              </label>
+              {errors.terms && <span className="error">{errors.terms}</span>}
+
               <button type="submit" className="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating account…' : 'Create account'}
               </button>
@@ -181,6 +212,9 @@ export default function RegisterPage() {
         .submit:hover:not(:disabled) { background: var(--ppt-color-primary-hover); }
         .submit:disabled { background: var(--ppt-brand-500); cursor: not-allowed; }
         .meta { text-align: center; font-size: 14px; color: var(--ppt-neutral-600); margin: 8px 0 0; }
+        .terms-field { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ppt-fg-secondary); line-height: 1.5; cursor: pointer; margin-top: 4px; }
+        .terms-checkbox { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ppt-color-primary); flex-shrink: 0; cursor: pointer; }
+        .terms-text { flex: 1; }
         .link { color: var(--ppt-color-primary); text-decoration: none; font-weight: 500; }
         .link:hover { text-decoration: underline; }
       `}</style>
