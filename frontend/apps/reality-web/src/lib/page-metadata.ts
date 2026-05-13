@@ -1,7 +1,21 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { defaultLocale } from '../i18n/config';
 
 const SITE_NAME = 'Reality Portal';
+
+/**
+ * Build the locale prefix used in canonical URLs.
+ *
+ * `i18n/routing.ts` uses `localePrefix: 'as-needed'`, which means the
+ * default locale (English) is served at `/about` and *not* `/en/about`.
+ * Canonical URLs must follow the same rule, otherwise English pages
+ * would canonicalize to a URL that redirects (or to a duplicate that
+ * disagrees with the sitemap).
+ */
+function localePrefix(locale: string): string {
+  return locale === defaultLocale ? '' : `/${locale}`;
+}
 
 /**
  * Build a Next.js Metadata object for a page using the existing
@@ -44,7 +58,7 @@ export function pageMetadata(
         ...(description ? { description } : {}),
       },
       alternates: {
-        canonical: `/${locale}${pagePathForKey(key)}`,
+        canonical: `${localePrefix(locale)}${pagePathForKey(key)}`,
       },
       robots: {
         index: !PRIVATE_KEYS.has(key),

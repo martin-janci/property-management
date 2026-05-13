@@ -310,7 +310,7 @@
       "pricing": "Cenové plány",
       "subtitle": "Predávajte viac s Reality Portálom",
       "title": "Pre maklérov & agentúry",
-      "heroTitle": "Predávajte viac s Reality Portal",
+      "heroTitle": "Predávajte viac s Reality Portálom",
       "heroBadge": "Pre maklérov & agentúry",
       "heroIntro": "Nástroje, analytika a dosah na milióny kupujúcich a nájomníkov na jednom mieste."
     },
@@ -483,7 +483,8 @@
         "phoneFormat": "Zadajte platné telefónne číslo",
         "emailRequired": "E-mail je povinný",
         "emailFormat": "Zadajte platnú e-mailovú adresu",
-        "termsRequired": "Pre zverejnenie musíte akceptovať podmienky používania"
+        "termsRequired": "Pre zverejnenie musíte akceptovať podmienky používania",
+        "roomsPositive": "Počet izieb musí byť väčší ako 0"
       }
     },
     "terms": {
@@ -513,7 +514,22 @@
       "checkInboxBody": "Poslali sme overovací e-mail na adresu {email}. Kliknite na odkaz pre aktiváciu účtu.",
       "backToSignIn": "Späť na prihlásenie",
       "creating": "Vytvára sa účet…",
-      "submit": "Vytvoriť účet"
+      "submit": "Vytvoriť účet",
+      "displayNameRequired": "Zobrazované meno je povinné",
+      "emailRequired": "E-mail je povinný",
+      "emailInvalid": "Zadajte platnú e-mailovú adresu",
+      "passwordRequired": "Heslo je povinné",
+      "passwordTooShort": "Heslo musí mať aspoň {min} znakov",
+      "passwordsMismatch": "Heslá sa nezhodujú",
+      "emailTaken": "Účet s týmto e-mailom už existuje.",
+      "genericError": "Registrácia zlyhala. Skúste to znova.",
+      "displayNameLabel": "Zobrazované meno",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Heslo",
+      "confirmPasswordLabel": "Potvrdiť heslo",
+      "passwordHint": "Aspoň {min} znakov.",
+      "haveAccount": "Už máte účet?",
+      "signInLink": "Prihlásiť sa"
     },
     "forgotPassword": {
       "title": "Obnovenie hesla",

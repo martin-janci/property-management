@@ -12,6 +12,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
+import { Link } from '@/i18n/routing';
 import { INITIAL_FORM_DATA, PROPERTY_TYPES, SELL_STEPS, type SellFormData } from './_mock';
 
 // TODO: replace stepper with @ppt/ui-kit/Stepper once available
@@ -119,7 +120,9 @@ function validateStep(step: number, form: SellFormData, tKey: (k: string) => str
     if (form.area === '' || form.area === null || Number.isNaN(form.area))
       errors.area = tKey('areaRequired');
     else if (Number(form.area) <= 0) errors.area = tKey('areaPositive');
-    if (form.rooms === '' || form.rooms === null) errors.rooms = tKey('roomsRequired');
+    if (form.rooms === '' || form.rooms === null || Number.isNaN(form.rooms))
+      errors.rooms = tKey('roomsRequired');
+    else if (Number(form.rooms) <= 0) errors.rooms = tKey('roomsPositive');
   } else if (step === 4) {
     if (form.price === '' || form.price === null) errors.price = tKey('priceRequired');
     else if (Number(form.price) <= 0) errors.price = tKey('pricePositive');
@@ -323,36 +326,49 @@ export default function SellPage() {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>{t('fields.address')}</label>
+                  <label htmlFor="sell-address" style={labelStyle}>
+                    {t('fields.address')}
+                  </label>
                   <input
+                    id="sell-address"
                     type="text"
                     placeholder={t('fields.addressPlaceholder')}
                     value={form.address}
                     onChange={(e) => update({ address: e.target.value })}
                     aria-invalid={errors.address ? true : undefined}
-                    style={{
-                      ...inputStyle,
-                      borderColor: errors.address
-                        ? 'var(--ppt-color-danger-hover, #dc2626)'
-                        : inputStyle.border?.toString().includes('1px')
-                          ? undefined
-                          : undefined,
-                    }}
+                    aria-describedby={errors.address ? 'sell-address-error' : undefined}
+                    style={
+                      errors.address
+                        ? { ...inputStyle, borderColor: 'var(--ppt-color-danger-hover, #dc2626)' }
+                        : inputStyle
+                    }
                   />
-                  {errors.address && <span style={errorStyle}>{errors.address}</span>}
+                  {errors.address && (
+                    <span id="sell-address-error" style={errorStyle}>
+                      {errors.address}
+                    </span>
+                  )}
                 </div>
 
                 <div>
-                  <label style={labelStyle}>{t('fields.city')}</label>
+                  <label htmlFor="sell-city" style={labelStyle}>
+                    {t('fields.city')}
+                  </label>
                   <input
+                    id="sell-city"
                     type="text"
                     placeholder={t('fields.cityPlaceholder')}
                     value={form.city}
                     onChange={(e) => update({ city: e.target.value })}
                     aria-invalid={errors.city ? true : undefined}
+                    aria-describedby={errors.city ? 'sell-city-error' : undefined}
                     style={inputStyle}
                   />
-                  {errors.city && <span style={errorStyle}>{errors.city}</span>}
+                  {errors.city && (
+                    <span id="sell-city-error" style={errorStyle}>
+                      {errors.city}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -378,10 +394,15 @@ export default function SellPage() {
                   ] as const
                 ).map((field) => {
                   const fieldError = errors[field.key as keyof SellFormData];
+                  const inputId = `sell-${field.key}`;
+                  const errorId = `${inputId}-error`;
                   return (
                     <div key={field.key}>
-                      <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
+                      <label htmlFor={inputId} style={labelStyle}>
+                        {t(`fields.${field.labelKey}`)}
+                      </label>
                       <input
+                        id={inputId}
                         type="number"
                         placeholder={t(`fields.${field.placeholderKey}`)}
                         value={form[field.key as keyof SellFormData] as string | number}
@@ -391,15 +412,23 @@ export default function SellPage() {
                           })
                         }
                         aria-invalid={fieldError ? true : undefined}
+                        aria-describedby={fieldError ? errorId : undefined}
                         style={inputStyle}
                       />
-                      {fieldError && <span style={errorStyle}>{fieldError}</span>}
+                      {fieldError && (
+                        <span id={errorId} style={errorStyle}>
+                          {fieldError}
+                        </span>
+                      )}
                     </div>
                   );
                 })}
                 <div>
-                  <label style={labelStyle}>{t('fields.description')}</label>
+                  <label htmlFor="sell-description" style={labelStyle}>
+                    {t('fields.description')}
+                  </label>
                   <textarea
+                    id="sell-description"
                     rows={5}
                     placeholder={t('fields.descriptionPlaceholder')}
                     value={form.description}
@@ -464,8 +493,11 @@ export default function SellPage() {
             {step === 4 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
-                  <label style={labelStyle}>{t('fields.price')}</label>
+                  <label htmlFor="sell-price" style={labelStyle}>
+                    {t('fields.price')}
+                  </label>
                   <input
+                    id="sell-price"
                     type="number"
                     placeholder={t(
                       form.transactionType === 'rent'
@@ -477,9 +509,14 @@ export default function SellPage() {
                       update({ price: e.target.value === '' ? '' : Number(e.target.value) })
                     }
                     aria-invalid={errors.price ? true : undefined}
+                    aria-describedby={errors.price ? 'sell-price-error' : undefined}
                     style={inputStyle}
                   />
-                  {errors.price && <span style={errorStyle}>{errors.price}</span>}
+                  {errors.price && (
+                    <span id="sell-price-error" style={errorStyle}>
+                      {errors.price}
+                    </span>
+                  )}
                 </div>
                 <label
                   style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
@@ -563,10 +600,15 @@ export default function SellPage() {
                   ] as const
                 ).map((field) => {
                   const fieldError = errors[field.key as keyof SellFormData];
+                  const inputId = `sell-${field.key}`;
+                  const errorId = `${inputId}-error`;
                   return (
                     <div key={field.key}>
-                      <label style={labelStyle}>{t(`fields.${field.labelKey}`)}</label>
+                      <label htmlFor={inputId} style={labelStyle}>
+                        {t(`fields.${field.labelKey}`)}
+                      </label>
                       <input
+                        id={inputId}
                         type={field.inputType}
                         autoComplete={
                           field.key === 'contactEmail'
@@ -579,9 +621,14 @@ export default function SellPage() {
                         value={form[field.key as keyof SellFormData] as string}
                         onChange={(e) => update({ [field.key]: e.target.value })}
                         aria-invalid={fieldError ? true : undefined}
+                        aria-describedby={fieldError ? errorId : undefined}
                         style={inputStyle}
                       />
-                      {fieldError && <span style={errorStyle}>{fieldError}</span>}
+                      {fieldError && (
+                        <span id={errorId} style={errorStyle}>
+                          {fieldError}
+                        </span>
+                      )}
                     </div>
                   );
                 })}
@@ -608,15 +655,21 @@ export default function SellPage() {
                     }}
                   >
                     {t.rich('terms.label', {
+                      // next-intl's locale-aware Link preserves the active
+                      // locale prefix so a SK user lands on /sk/terms, not
+                      // /terms (which would force them back to EN).
                       termsLink: (chunks) => (
-                        <a href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                        <Link href="/terms" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
                           {chunks}
-                        </a>
+                        </Link>
                       ),
                       privacyLink: (chunks) => (
-                        <a href="/privacy" style={{ color: 'var(--ppt-color-primary, #2563eb)' }}>
+                        <Link
+                          href="/privacy"
+                          style={{ color: 'var(--ppt-color-primary, #2563eb)' }}
+                        >
                           {chunks}
-                        </a>
+                        </Link>
                       ),
                     })}
                   </span>

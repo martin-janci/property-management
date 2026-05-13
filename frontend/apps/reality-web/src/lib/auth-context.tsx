@@ -57,23 +57,53 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // the locale layout once after hydration, which together produced four
 // network hits to /sso/session per pageload (each surfacing as a 401
 // console error for anonymous users). With this guard, concurrent callers
-// share the same in-flight Response and a short result cache prevents a
-// burst of re-mounts within 2 s from each issuing their own request.
-let _inflightSessionProbe: Promise<Response | null> | null = null;
-let _cachedSessionProbeAt = 0;
-async function probeSsoSession(apiBase: string): Promise<Response | null> {
+// share the same in-flight Response and a short result cache hands back
+// the *parsed* outcome (ok + session, or unauth) so a burst of remounts
+// within 2 s doesn't issue another request *and* doesn't get misread as
+// "logged out" the way an early `null` return did.
+//
+// (The previous version returned `null` while the cache was warm; that
+// confused checkSession() into calling setUser(null) on every remount,
+// which could blink a logged-in user back to anonymous. Copilot review
+// caught this.)
+interface ProbeResult {
+  ok: boolean;
+  session?: SessionInfo;
+}
+let _inflightSessionProbe: Promise<ProbeResult> | null = null;
+let _cachedProbeResult: ProbeResult | null = null;
+let _cachedProbeAt = 0;
+const PROBE_CACHE_MS = 2000;
+
+async function probeSsoSession(apiBase: string): Promise<ProbeResult> {
   const now = Date.now();
   if (_inflightSessionProbe) return _inflightSessionProbe;
-  if (now - _cachedSessionProbeAt < 2000) return null;
-  _inflightSessionProbe = fetch(`${apiBase}/api/v1/sso/session`, {
-    credentials: 'include',
-  })
-    .catch(() => null)
-    .finally(() => {
-      _cachedSessionProbeAt = Date.now();
-      _inflightSessionProbe = null;
-    });
-  return _inflightSessionProbe;
+  if (_cachedProbeResult && now - _cachedProbeAt < PROBE_CACHE_MS) {
+    return _cachedProbeResult;
+  }
+  _inflightSessionProbe = (async () => {
+    try {
+      const response = await fetch(`${apiBase}/api/v1/sso/session`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const session = (await response.json()) as SessionInfo;
+        return { ok: true, session };
+      }
+      return { ok: false };
+    } catch {
+      // Network blip — treat as transient, NOT as "logged out". Don't cache
+      // so the next mount can retry; return ok=false so the current caller
+      // doesn't clobber any pre-existing optimistic state.
+      return { ok: false };
+    }
+  })().finally(() => {
+    _cachedProbeAt = Date.now();
+    _inflightSessionProbe = null;
+  });
+  const result = await _inflightSessionProbe;
+  _cachedProbeResult = result;
+  return result;
 }
 
 /** Auth provider props. */
@@ -122,9 +152,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    const response = await probeSsoSession(getApiBase());
-    if (response?.ok) {
-      const session: SessionInfo = await response.json();
+    const result = await probeSsoSession(getApiBase());
+    if (result.ok && result.session) {
+      const { session } = result;
       setUser({
         user_id: session.user_id,
         email: session.email,

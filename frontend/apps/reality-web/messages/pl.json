@@ -487,7 +487,8 @@
         "phoneFormat": "Please enter a valid phone number",
         "emailRequired": "E-mail is required",
         "emailFormat": "Please enter a valid e-mail address",
-        "termsRequired": "You must agree to the terms of use to publish"
+        "termsRequired": "You must agree to the terms of use to publish",
+        "roomsPositive": "Number of rooms must be greater than 0"
       }
     },
     "listings": {
@@ -513,7 +514,22 @@
       "checkInboxBody": "We sent a verification email to {email}. Click the link to activate your account.",
       "backToSignIn": "Back to sign in",
       "creating": "Creating account…",
-      "submit": "Create account"
+      "submit": "Create account",
+      "displayNameRequired": "Display name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least {min} characters",
+      "passwordsMismatch": "Passwords do not match",
+      "emailTaken": "An account with this email already exists.",
+      "genericError": "Registration failed. Please try again.",
+      "displayNameLabel": "Display name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordHint": "At least {min} characters.",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in"
     },
     "forgotPassword": {
       "title": "Reset your password",

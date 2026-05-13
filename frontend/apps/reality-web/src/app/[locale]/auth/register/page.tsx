@@ -39,13 +39,13 @@ export default function RegisterPage() {
     event.preventDefault();
     setGeneralError(undefined);
     const next: FieldErrors = {};
-    if (!displayName.trim()) next.displayName = 'Display name is required';
-    if (!email.trim()) next.email = 'Email is required';
-    else if (!EMAIL_RE.test(email.trim())) next.email = 'Enter a valid email address';
-    if (!password) next.password = 'Password is required';
+    if (!displayName.trim()) next.displayName = t('displayNameRequired');
+    if (!email.trim()) next.email = t('emailRequired');
+    else if (!EMAIL_RE.test(email.trim())) next.email = t('emailInvalid');
+    if (!password) next.password = t('passwordRequired');
     else if (password.length < MIN_PASSWORD)
-      next.password = `Password must be at least ${MIN_PASSWORD} characters`;
-    if (confirmPassword !== password) next.confirmPassword = 'Passwords do not match';
+      next.password = t('passwordTooShort', { min: MIN_PASSWORD });
+    if (confirmPassword !== password) next.confirmPassword = t('passwordsMismatch');
     if (!termsAccepted) next.terms = t('termsRequired');
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -60,11 +60,11 @@ export default function RegisterPage() {
       setSubmitted(true);
     } catch (error) {
       if (error instanceof AuthApiError && error.status === 409) {
-        setErrors({ email: 'An account with this email already exists.' });
+        setErrors({ email: t('emailTaken') });
       } else if (error instanceof AuthApiError) {
         setGeneralError(error.message);
       } else {
-        setGeneralError('Registration failed. Please try again.');
+        setGeneralError(t('genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               )}
 
               <label className="field">
-                <span className="label">Display name</span>
+                <span className="label">{t('displayNameLabel')}</span>
                 <input
                   type="text"
                   autoComplete="name"
@@ -108,7 +108,7 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="label">Email</span>
+                <span className="label">{t('emailLabel')}</span>
                 <input
                   type="email"
                   autoComplete="email"
@@ -121,7 +121,7 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="label">Password</span>
+                <span className="label">{t('passwordLabel')}</span>
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -133,12 +133,12 @@ export default function RegisterPage() {
                 {errors.password ? (
                   <span className="error">{errors.password}</span>
                 ) : (
-                  <span className="hint">At least {MIN_PASSWORD} characters.</span>
+                  <span className="hint">{t('passwordHint', { min: MIN_PASSWORD })}</span>
                 )}
               </label>
 
               <label className="field">
-                <span className="label">Confirm password</span>
+                <span className="label">{t('confirmPasswordLabel')}</span>
                 <input
                   type="password"
                   autoComplete="new-password"
@@ -181,9 +181,9 @@ export default function RegisterPage() {
               </button>
 
               <p className="meta">
-                Already have an account?{' '}
+                {t('haveAccount')}{' '}
                 <Link href="/auth/login" className="link">
-                  Sign in
+                  {t('signInLink')}
                 </Link>
               </p>
             </form>
