@@ -11,9 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    buildStatus: n/a
-    redesignStatus: n/a
-    apiStatus: n/a
+    component: SavedSearchesScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: stub
 endpoints:
   - saved_searches_list
 relatedScreens:
@@ -108,5 +109,6 @@ UC-45 saved searches & alerts. Each saved search is a serialized filter state fr
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP SavedSearchesScreen redesign per ui_kits/mobile-native/screens-extension.jsx KmpSavedSearchesScreen. Large-title header + back + primaryContainer "New search" pill, row cards with bookmark leading icon (filled when alerts on), clock + age + match-count meta, kebab menu (Enable/Disable alerts · Delete), "ALERTS ON/OFF" uppercase pill + "Run" primaryContainer pill action. Empty state with 72dp tinted circle. Added 6 strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/saved-searches.html — 4 list states + create-edit modal); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (6 sections), all 4 states, design-specific notes; linked UC-45/31; declared 7 sharedComponents; added 2 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)
