@@ -11,10 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    component: KmpHomeScreen
-    buildStatus: planned
-    redesignStatus: in-progress
-    apiStatus: stub
+    component: HomeScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: partial
 sharedComponents:
   - listing-card
   - hero-search
@@ -93,5 +93,6 @@ Reality Portal homepage with hero search, featured listings, neighbourhood explo
 
 <!-- newest entries on top -->
 
+- 2026-05-12 — agent: implemented KMP HomeScreen redesign per ui_kits/mobile-native/screens.jsx KmpHomeScreen. New layout: custom top bar (logo + bell with red dot + avatar circle), hero card with Brand800→Brand500 gradient + search trigger + transaction-type pills, featured carousel (260dp cards w/ FEATURED badge), 3×2 category grid (Apartments / Houses / Commercial / Land / Recreation / Parking), recent listings vertical list w/ 64dp thumbnails. Added Brand800 token + 14 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (ui_kits/reality-web/home.html); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), states, and design-specific notes; linked UC-31 + UC-44; declared sharedComponents listing-card / hero-search / quickstat
 - 2026-05-08 — init: created from scan (source: sitemap)

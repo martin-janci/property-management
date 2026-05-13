@@ -31,6 +31,53 @@
     <string name="tab_account">Account</string>
 
     <!-- Auth -->
+    <string name="auth_login_subtitle">Sign in to your account</string>
+    <string name="auth_login_email_placeholder">jan.kovac@example.sk</string>
+    <string name="auth_login_no_account">Don\'t have an account?</string>
+    <string name="auth_register_name_label">Name</string>
+    <string name="auth_register_confirm_label">Confirm password</string>
+    <string name="auth_register_terms">I agree to the terms of use and the privacy policy.</string>
+    <string name="auth_register_have_account">Already have an account?</string>
+    <string name="auth_register_password_hint">At least 8 characters with numbers and symbols.</string>
+    <string name="auth_register_strength_weak">Weak password</string>
+    <string name="auth_register_strength_medium">Medium · add symbols</string>
+    <string name="auth_register_strength_good">Good password</string>
+    <string name="auth_register_strength_strong">Strong password</string>
+    <string name="auth_register_inbox_title">Check your inbox</string>
+    <string name="auth_register_inbox_body">We sent a verification link to %1$s. Open it to activate your account.</string>
+    <string name="auth_back_to_sign_in">Back to sign in</string>
+    <string name="auth_forgot_title">Forgot password</string>
+    <string name="auth_forgot_body">Enter the email tied to your account and we\'ll send you a reset link.</string>
+    <string name="auth_forgot_submit">Send reset link</string>
+    <string name="auth_forgot_success_title">Check your email</string>
+    <string name="auth_forgot_success_body">We sent the reset link to %1$s. The link is valid for 60 minutes.</string>
+    <string name="auth_reset_title">New password</string>
+    <string name="auth_reset_body">Enter your new password. At least 8 characters, mixing letters, numbers and symbols.</string>
+    <string name="auth_reset_new_password">New password</string>
+    <string name="auth_reset_submit">Update password</string>
+    <string name="auth_reset_success_title">Password updated</string>
+    <string name="auth_reset_success_body">Your password has been updated. You can sign in with the new password now.</string>
+    <string name="auth_reset_invalid_title">Invalid link</string>
+    <string name="auth_reset_invalid_body">This reset link is missing a token. Request a new password reset email.</string>
+    <string name="auth_2fa_title">Verification</string>
+    <string name="auth_2fa_heading">Enter the 6-digit code</string>
+    <string name="auth_2fa_subtitle">We sent the code to your authenticator app.</string>
+    <string name="auth_2fa_verify">Verify</string>
+    <string name="auth_2fa_resend">Didn\'t get the code? Try again in 00:24</string>
+    <string name="auth_2fa_backup_code">Use a backup code</string>
+    <string name="auth_2fa_success">Two-factor authentication is enabled.</string>
+    <string name="auth_validation_email_required">Email is required</string>
+    <string name="auth_validation_email_invalid">Enter a valid email address</string>
+    <string name="auth_validation_password_required">Password is required</string>
+    <string name="auth_validation_password_too_short">Password must be at least %1$d characters</string>
+    <string name="auth_validation_password_mismatch">Passwords do not match</string>
+    <string name="auth_validation_name_required">Name is required</string>
+    <string name="auth_validation_sign_in_failed">Sign in failed.</string>
+    <string name="auth_validation_terms_required">Please accept the terms</string>
+    <string name="auth_validation_register_failed">Registration failed.</string>
+    <string name="auth_validation_reset_failed">Could not reset password.</string>
+    <string name="auth_validation_send_reset_failed">Could not send reset email.</string>
+    <string name="auth_validation_2fa_invalid">Enter the 6-digit code from your authenticator app.</string>
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="sign_in">Sign In</string>
@@ -120,6 +167,56 @@
     <string name="error_not_found">Not found</string>
     <string name="error_unauthorized">You are not authorized to perform this action.</string>
 
+    <!-- Agency -->
+    <string name="agency_role_label">Agency</string>
+    <string name="agency_company_placeholder">Reality Profi s.r.o.</string>
+    <string name="agency_stat_active">Active listings</string>
+    <string name="agency_stat_new_inquiries">New inquiries</string>
+    <string name="agency_stat_response">Avg response</string>
+    <string name="agency_stat_conversion">Conversion</string>
+    <string name="agency_actions_title">Workspace</string>
+    <string name="agency_activity_title">Recent activity</string>
+    <string name="agency_activity_see_all">See all ›</string>
+    <string name="agency_add_listing">Add listing</string>
+    <string name="agency_section_inquiries">Inquiries</string>
+    <string name="agency_section_inquiries_sub">Messages received for your listings</string>
+    <string name="agency_section_listings">My listings</string>
+    <string name="agency_section_listings_sub">Listings you currently manage</string>
+    <string name="agency_section_create">Create listing</string>
+    <string name="agency_section_create_sub">Publish a new property to the portal</string>
+    <string name="agency_section_analytics">Analytics</string>
+    <string name="agency_section_analytics_sub">Performance of your listings over time</string>
+    <string name="agency_inquiries_batch_reply">Batch reply</string>
+    <string name="agency_inquiries_empty_title">No inquiries yet</string>
+    <string name="agency_inquiries_empty_body">Inquiries from interested buyers and renters will appear here.</string>
+
+    <!-- Realtor -->
+    <string name="realtor_listings_title">My listings</string>
+    <string name="realtor_listings_add">Add</string>
+    <string name="realtor_listings_empty_title">No listings yet</string>
+    <string name="realtor_listings_empty_body">Add your first listing — it only takes a few minutes and you\'ll start getting inquiries right away.</string>
+    <string name="realtor_create_title">New listing</string>
+    <string name="realtor_create_publish">Publish listing</string>
+    <string name="realtor_create_draft_saved">Draft saved</string>
+    <string name="realtor_create_transaction">Transaction</string>
+    <string name="realtor_create_step_label">Listing info</string>
+    <string name="realtor_create_step1">Type</string>
+    <string name="realtor_create_step2">Location</string>
+    <string name="realtor_create_step3">Details</string>
+    <string name="realtor_create_step4">Photos</string>
+    <string name="realtor_create_step5">Price</string>
+    <string name="realtor_create_field_title">Title</string>
+    <string name="realtor_create_title_placeholder">3-room apartment with balcony</string>
+    <string name="realtor_create_field_description">Description</string>
+    <string name="realtor_create_field_city">City</string>
+    <string name="realtor_create_field_price">Price</string>
+    <string name="realtor_create_field_currency">Currency</string>
+    <string name="realtor_analytics_title">Analytics</string>
+    <string name="realtor_create_validation_title_required">Title is required</string>
+    <string name="realtor_create_validation_city_required">City is required</string>
+    <string name="realtor_create_validation_price_invalid">Enter a positive price</string>
+    <string name="realtor_create_validation_publish_failed">Could not publish listing.</string>
+
     <!-- Section Headers -->
     <string name="section_quick_actions">Quick Actions</string>
     <string name="section_notifications">Notifications</string>
@@ -163,6 +260,11 @@
 
     <!-- Filters -->
     <string name="action_filters">Filters</string>
+    <string name="filters_with_count">Filters · %1$d</string>
+    <string name="view_list">List</string>
+    <string name="view_map">Map</string>
+    <string name="map_placeholder">Map preview — full integration coming soon</string>
+    <string name="action_save_search">Save search</string>
     <string name="filter_for_sale">For Sale</string>
     <string name="filter_for_rent">For Rent</string>
     <string name="filter_apartments">Apartments</string>
@@ -243,6 +345,16 @@
     <string name="favorites_sign_in_title">Sign in to save favorites</string>
     <string name="favorites_sign_in_description">Keep track of properties you\'re interested in</string>
     <string name="favorites_empty_description">Save properties to compare later</string>
+    <string name="favorites_summary">%1$d listings · %2$d lists</string>
+    <string name="favorites_filter_all">All</string>
+    <string name="filter_sale">Sale</string>
+    <string name="filter_rent">Rent</string>
+    <string name="favorites_create_list">Create list</string>
+    <string name="sort_price_asc_short">Price ↑</string>
+    <string name="sort_price_desc_short">Price ↓</string>
+    <string name="cd_share">Share</string>
+    <string name="cd_export">Export</string>
+    <string name="cd_remove_favorite">Remove from favorites</string>
     <string name="saved_search_new_count">%1$d new</string>
     <string name="saved_search_disable_alerts">Disable alerts</string>
     <string name="saved_search_enable_alerts">Enable alerts</string>
@@ -250,9 +362,38 @@
     <string name="saved_search_delete_message">Are you sure you want to delete \"%1$s\"?</string>
     <string name="saved_searches_empty_title">No saved searches</string>
     <string name="saved_searches_empty_description">Save your search to get notified about new listings</string>
+    <string name="saved_searches_title">Saved searches</string>
+    <string name="saved_searches_new">New search</string>
+    <string name="saved_search_run">Run</string>
+    <string name="saved_search_alerts_on">Alerts on</string>
+    <string name="saved_search_alerts_off">Alerts off</string>
+    <string name="cd_more">More</string>
 
     <!-- Account Screen -->
-    <string name="edit_profile">Edit Profile</string>
+    <string name="profile_title">Profile</string>
+    <string name="profile_verified">Verified</string>
+    <string name="profile_stat_favorites">Favorites</string>
+    <string name="profile_stat_searches">Searches</string>
+    <string name="profile_stat_inquiries">Inquiries</string>
+    <string name="profile_section_searches">Saved searches</string>
+    <string name="profile_section_searches_sub">3 active</string>
+    <string name="profile_section_compare">Comparison</string>
+    <string name="profile_section_compare_sub">2 on the list</string>
+    <string name="profile_section_notifications">Notifications</string>
+    <string name="profile_section_notifications_sub">Push, email and SMS</string>
+    <string name="profile_section_privacy">Privacy &amp; data</string>
+    <string name="profile_section_about">About</string>
+    <string name="profile_section_about_sub">v %1$s · Legal</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="profile_edit_change_photo">Change photo</string>
+    <string name="profile_edit_phone">Phone</string>
+    <string name="profile_edit_language">Preferred language</string>
+    <string name="profile_edit_about">About me</string>
+    <string name="profile_edit_about_placeholder">Tell agents a bit about what you\'re looking for…</string>
+    <string name="profile_edit_email_locked">Contact support to change the email on this account.</string>
+    <string name="profile_edit_save">Save changes</string>
+    <string name="profile_edit_signin_required_title">Sign in required</string>
+    <string name="profile_edit_signin_required_body">Please sign in to edit your profile.</string>
     <string name="notification_listing_updates">Listing Updates</string>
     <string name="notification_listing_updates_desc">Get notified when a favorite listing is updated</string>
     <string name="notification_marketing">Marketing</string>
@@ -262,6 +403,17 @@
     <string name="send_feedback">Send Feedback</string>
 
     <!-- Listing Detail Screen -->
+    <string name="detail_stat_area">Area</string>
+    <string name="detail_stat_built">Built</string>
+    <string name="detail_stat_energy">Energy</string>
+    <string name="detail_stat_floor">Floor</string>
+    <string name="detail_tab_overview">Overview</string>
+    <string name="detail_tab_building">Building passport</string>
+    <string name="detail_tab_nearby">Nearby</string>
+    <string name="detail_tab_price_history">Price history</string>
+    <string name="detail_realtor_unknown">Realtor</string>
+    <string name="detail_building_no_data">No building details available yet.</string>
+    <string name="action_request_viewing">Request viewing</string>
     <string name="detail_rooms">Rooms</string>
     <string name="detail_beds">Beds</string>
     <string name="detail_baths">Baths</string>
@@ -306,4 +458,30 @@
     <string name="viewing_cancel_keep">Keep</string>
     <string name="viewings_empty_title">No viewings scheduled</string>
     <string name="viewings_empty_description">Schedule viewings to see properties in person</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_welcome">Welcome back</string>
+    <string name="home_hero_location_placeholder">Browse listings near you</string>
+    <string name="home_hero_search_placeholder">City, location, or listing ID…</string>
+    <string name="home_hero_tab_sale">For sale</string>
+    <string name="home_hero_tab_rent">For rent</string>
+    <string name="home_hero_tab_new">New builds</string>
+    <string name="cd_notifications">Notifications</string>
+
+    <!-- Categories -->
+    <string name="categories">Categories</string>
+    <string name="cat_apartments">Apartments</string>
+    <string name="cat_houses">Houses</string>
+    <string name="cat_commercial">Commercial</string>
+    <string name="cat_land">Land</string>
+    <string name="cat_recreation">Recreation</string>
+    <string name="cat_parking">Parking</string>
+
+    <string name="area_m2">%1$d m²</string>
+
+    <!-- Plurals -->
+    <plurals name="listing_rooms_plural">
+        <item quantity="one">%1$d room</item>
+        <item quantity="other">%1$d rooms</item>
+    </plurals>
 </resources>

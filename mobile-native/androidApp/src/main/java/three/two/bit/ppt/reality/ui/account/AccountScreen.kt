@@ -6,7 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,11 +17,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
@@ -27,15 +36,34 @@ import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
+import three.two.bit.ppt.reality.auth.SsoUserInfo
 import three.two.bit.ppt.reality.notifications.NotificationPreferences
 import three.two.bit.ppt.reality.notifications.NotificationRepository
+import three.two.bit.ppt.reality.ui.theme.Brand500
+import three.two.bit.ppt.reality.ui.theme.Brand800
 
 private const val TAG = "AccountScreen"
 
 /**
- * Account screen for Reality Portal mobile app.
+ * Account / Profile screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/ screens.jsx` →
+ * `KmpProfileScreen`).
  *
- * Epic 48 - Story 48.5: Portal Mobile Account
+ * Layout (top → bottom):
+ * 1. Top bar — large title "Profil" + settings cog (right).
+ * 2. Hero — 88dp avatar (gradient circle with initials), name + verified pill, email; centered.
+ * 3. 3-card stat strip — Favorites / Searches / Inquiries with large numeric values and uppercase
+ *    labels.
+ * 4. Section list — single rounded card grouping rows: Saved searches, Comparison, Notifications
+ *    (toggle), Privacy, About. Each row uses a 40dp icon tile (surface-variant fill) + title +
+ *    sub + chev / switch.
+ * 5. Notification preferences sub-section — preserved from previous implementation. Lives under the
+ *    section card and is hidden behind the master Notifications toggle. Reveals the detailed list
+ *    of preferences (new listings, price drops, inquiry responses, listing updates, marketing) so
+ *    existing behavior is not lost while the primary visual surface matches the design.
+ * 6. Sign out card — danger-tinted icon tile + label, full-width.
+ *
+ * Epic 48 - Story 48.5: Portal Mobile Account.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,15 +73,14 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var notificationPrefs by remember { mutableStateOf<NotificationPreferences?>(null) }
+    var notificationsExpanded by remember { mutableStateOf(false) }
 
-    // Create notification repository with session token
     val notificationRepository =
         remember(authState) {
             val token = (authState as? AuthState.Authenticated)?.sessionToken
             NotificationRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
         }
 
-    // Load notification preferences
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
             notificationRepository
@@ -62,109 +89,86 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                     onSuccess = { prefs -> notificationPrefs = prefs },
                     onFailure = { error ->
                         Log.e(TAG, "Failed to load notification preferences", error)
-                        // Use default preferences if loading fails
-                    }
+                    },
                 )
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.tab_account)) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
         when (val state = authState) {
             is AuthState.Unauthenticated,
             is AuthState.Error -> {
-                NotSignedInContent(
-                    onSignInClick = { /* Open SSO login via PM app */},
-                    modifier = Modifier.padding(paddingValues)
-                )
+                NotSignedInContent(onSignInClick = { /* Open SSO login via PM app */})
             }
             is AuthState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
             is AuthState.Authenticated -> {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 100.dp),
                 ) {
-                    // Profile section
-                    item { ProfileSection(user = state.user) }
-
-                    // Notification preferences section
+                    item { ProfileTopBar() }
+                    item { ProfileHero(user = state.user) }
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    item { StatsRow() }
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
                     item {
-                        notificationPrefs?.let { prefs ->
-                            NotificationPreferencesSection(
-                                preferences = prefs,
+                        SectionList(
+                            notificationsEnabled =
+                                notificationPrefs?.let {
+                                    it.newListings ||
+                                        it.priceDrops ||
+                                        it.inquiryResponses ||
+                                        it.listingUpdates ||
+                                        it.marketing
+                                } ?: false,
+                            onNotificationsToggle = {
+                                notificationsExpanded = !notificationsExpanded
+                            },
+                            notificationsExpanded = notificationsExpanded,
+                        )
+                    }
+                    if (notificationsExpanded && notificationPrefs != null) {
+                        item {
+                            NotificationPreferencesCard(
+                                preferences = notificationPrefs!!,
                                 onPreferenceChange = { newPrefs ->
                                     scope.launch {
                                         notificationRepository
                                             .updatePreferences(newPrefs)
                                             .fold(
                                                 onSuccess = { notificationPrefs = it },
-                                                onFailure = { error ->
+                                                onFailure = {
                                                     Log.e(
                                                         TAG,
                                                         "Failed to update notification preferences",
-                                                        error
+                                                        it
                                                     )
-                                                    // Revert to previous preferences on failure
-                                                }
+                                                },
                                             )
                                     }
-                                }
+                                },
                             )
                         }
                     }
-
-                    // App settings section
-                    item { AppSettingsSection() }
-
-                    // About section
-                    item { AboutSection() }
-
-                    // Logout button
-                    item {
-                        OutlinedButton(
-                            onClick = { showLogoutDialog = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors =
-                                ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Logout,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.sign_out))
-                        }
-                    }
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    item { AppSettingsCard() }
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                    item { AboutCard() }
+                    item { Spacer(modifier = Modifier.height(12.dp)) }
+                    item { SignOutCard(onClick = { showLogoutDialog = true }) }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
         }
     }
 
-    // Logout confirmation dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -178,8 +182,8 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                 ) {
                     Text(stringResource(R.string.sign_out))
                 }
@@ -188,158 +192,390 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                 TextButton(onClick = { showLogoutDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 }
 
+// ─── Top bar ────────────────────────────────────────────────────────────────
+
 @Composable
-private fun NotSignedInContent(onSignInClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+private fun ProfileTopBar() {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            Icons.Default.AccountCircle,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Text(
-            text = stringResource(R.string.sign_in_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            text = stringResource(R.string.profile_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.sign_in_benefits),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(onClick = onSignInClick, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Default.Login, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.sign_in_pm_app))
+        IconButton(onClick = { /* settings */}) {
+            Icon(
+                Icons.Default.Settings,
+                contentDescription = stringResource(R.string.settings),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.sign_in_redirect_notice),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
+// ─── Hero ────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun ProfileSection(user: three.two.bit.ppt.reality.auth.SsoUserInfo) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+private fun ProfileHero(user: SsoUserInfo) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val initials =
+            remember(user) {
+                user.name
+                    .split(" ")
+                    .take(2)
+                    .mapNotNull { it.firstOrNull()?.uppercase() }
+                    .joinToString("")
+                    .ifEmpty { user.email.take(2).uppercase() }
+            }
+        if (user.avatarUrl != null) {
             AsyncImage(
                 model =
                     ImageRequest.Builder(LocalContext.current)
-                        .data(user.avatarUrl ?: "")
+                        .data(user.avatarUrl)
                         .crossfade(true)
                         .build(),
                 contentDescription = user.name,
                 contentScale = ContentScale.Crop,
                 modifier =
-                    Modifier.size(72.dp)
+                    Modifier.size(88.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
+        } else {
+            Box(
+                modifier =
+                    Modifier.size(88.dp).clip(CircleShape).drawBehind {
+                        drawRect(
+                            brush =
+                                Brush.linearGradient(
+                                    colors = listOf(Brand800, Brand500),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, size.height),
+                                ),
+                        )
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
-                    text = user.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = user.email,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = initials,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
                 )
             }
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = user.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            VerifiedPill()
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = user.email,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
-            IconButton(onClick = { /* Edit profile */}) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_profile))
+@Composable
+private fun VerifiedPill() {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = Color(0xFFD1FAE5),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF065F46),
+                modifier = Modifier.size(10.dp),
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = stringResource(R.string.profile_verified).uppercase(),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.04.sp,
+                        fontSize = 10.sp,
+                    ),
+                color = Color(0xFF065F46),
+            )
+        }
+    }
+}
+
+// ─── Stats row ──────────────────────────────────────────────────────────────
+
+@Composable
+private fun StatsRow() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        StatCard(
+            value = "4",
+            label = stringResource(R.string.profile_stat_favorites),
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            value = "3",
+            label = stringResource(R.string.profile_stat_searches),
+            modifier = Modifier.weight(1f)
+        )
+        StatCard(
+            value = "7",
+            label = stringResource(R.string.profile_stat_inquiries),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label.uppercase(),
+                style =
+                    MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.04.sp,
+                    ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ─── Section list ───────────────────────────────────────────────────────────
+
+@Composable
+private fun SectionList(
+    notificationsEnabled: Boolean,
+    onNotificationsToggle: () -> Unit,
+    notificationsExpanded: Boolean,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            SectionRow(
+                icon = Icons.Default.Search,
+                title = stringResource(R.string.profile_section_searches),
+                subtitle = stringResource(R.string.profile_section_searches_sub),
+                trailing = SectionTrailing.Chevron,
+                onClick = { /* nav to saved searches */},
+            )
+            SectionDivider()
+            SectionRow(
+                icon = Icons.Default.Compare,
+                title = stringResource(R.string.profile_section_compare),
+                subtitle = stringResource(R.string.profile_section_compare_sub),
+                trailing = SectionTrailing.Chevron,
+                onClick = { /* nav to compare */},
+            )
+            SectionDivider()
+            SectionRow(
+                icon = Icons.Default.NotificationsNone,
+                title = stringResource(R.string.profile_section_notifications),
+                subtitle = stringResource(R.string.profile_section_notifications_sub),
+                trailing = SectionTrailing.Toggle(notificationsEnabled),
+                onClick = onNotificationsToggle,
+            )
+            SectionDivider()
+            SectionRow(
+                icon = Icons.Default.Shield,
+                title = stringResource(R.string.profile_section_privacy),
+                subtitle = null,
+                trailing = SectionTrailing.Chevron,
+                onClick = { /* nav to privacy */},
+            )
+            SectionDivider()
+            SectionRow(
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.profile_section_about),
+                subtitle =
+                    stringResource(R.string.profile_section_about_sub, BuildConfig.VERSION_NAME),
+                trailing = SectionTrailing.Chevron,
+                onClick = { /* nav to about */},
+            )
+        }
+    }
+}
+
+private sealed class SectionTrailing {
+    object Chevron : SectionTrailing()
+
+    data class Toggle(val checked: Boolean) : SectionTrailing()
+}
+
+@Composable
+private fun SectionRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String?,
+    trailing: SectionTrailing,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            subtitle?.let {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+        }
+        when (trailing) {
+            is SectionTrailing.Chevron ->
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            is SectionTrailing.Toggle ->
+                Switch(
+                    checked = trailing.checked,
+                    onCheckedChange = { onClick() },
+                )
         }
     }
 }
 
 @Composable
-private fun NotificationPreferencesSection(
+private fun SectionDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 70.dp),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
+}
+
+// ─── Notification preferences (collapsible) ─────────────────────────────────
+
+@Composable
+private fun NotificationPreferencesCard(
     preferences: NotificationPreferences,
-    onPreferenceChange: (NotificationPreferences) -> Unit
+    onPreferenceChange: (NotificationPreferences) -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(R.string.notifications),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold,
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(modifier = Modifier.height(12.dp))
             NotificationPreferenceItem(
                 title = stringResource(R.string.notification_new_listings),
                 description = stringResource(R.string.notification_new_listings_desc),
                 checked = preferences.newListings,
-                onCheckedChange = { onPreferenceChange(preferences.copy(newListings = it)) }
+                onCheckedChange = { onPreferenceChange(preferences.copy(newListings = it)) },
             )
-
             HorizontalDivider()
-
             NotificationPreferenceItem(
                 title = stringResource(R.string.notification_price_drops),
                 description = stringResource(R.string.notification_price_drops_desc),
                 checked = preferences.priceDrops,
-                onCheckedChange = { onPreferenceChange(preferences.copy(priceDrops = it)) }
+                onCheckedChange = { onPreferenceChange(preferences.copy(priceDrops = it)) },
             )
-
             HorizontalDivider()
-
             NotificationPreferenceItem(
                 title = stringResource(R.string.notification_inquiry_responses),
                 description = stringResource(R.string.notification_inquiry_responses_desc),
                 checked = preferences.inquiryResponses,
-                onCheckedChange = { onPreferenceChange(preferences.copy(inquiryResponses = it)) }
+                onCheckedChange = { onPreferenceChange(preferences.copy(inquiryResponses = it)) },
             )
-
             HorizontalDivider()
-
             NotificationPreferenceItem(
                 title = stringResource(R.string.notification_listing_updates),
                 description = stringResource(R.string.notification_listing_updates_desc),
                 checked = preferences.listingUpdates,
-                onCheckedChange = { onPreferenceChange(preferences.copy(listingUpdates = it)) }
+                onCheckedChange = { onPreferenceChange(preferences.copy(listingUpdates = it)) },
             )
-
             HorizontalDivider()
-
             NotificationPreferenceItem(
                 title = stringResource(R.string.notification_marketing),
                 description = stringResource(R.string.notification_marketing_desc),
                 checked = preferences.marketing,
-                onCheckedChange = { onPreferenceChange(preferences.copy(marketing = it)) }
+                onCheckedChange = { onPreferenceChange(preferences.copy(marketing = it)) },
             )
         }
     }
@@ -350,206 +586,286 @@ private fun NotificationPreferenceItem(
     title: String,
     description: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, style = MaterialTheme.typography.bodyLarge)
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
+// ─── App settings + About (preserved, restyled) ──────────────────────────────
+
 @Composable
-private fun AppSettingsSection() {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.section_app_settings),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SettingsItem(
+private fun AppSettingsCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            SettingsRow(
                 icon = Icons.Default.Language,
                 title = stringResource(R.string.setting_language),
                 value = stringResource(R.string.language_english),
-                onClick = { /* Open language picker */}
+                onClick = { /* picker */},
             )
-
-            HorizontalDivider()
-
-            SettingsItem(
+            SectionDivider()
+            SettingsRow(
                 icon = Icons.Default.Euro,
                 title = stringResource(R.string.setting_currency),
                 value = stringResource(R.string.currency_eur),
-                onClick = { /* Open currency picker */}
+                onClick = { /* picker */},
             )
-
-            HorizontalDivider()
-
-            SettingsItem(
+            SectionDivider()
+            SettingsRow(
                 icon = Icons.Default.Straighten,
                 title = stringResource(R.string.setting_units),
                 value = stringResource(R.string.units_metric),
-                onClick = { /* Open units picker */}
+                onClick = { /* picker */},
             )
-
-            HorizontalDivider()
-
-            SettingsItem(
+            SectionDivider()
+            SettingsRow(
                 icon = Icons.Default.DarkMode,
                 title = stringResource(R.string.setting_theme),
                 value = stringResource(R.string.theme_system),
-                onClick = { /* Open theme picker */}
+                onClick = { /* picker */},
             )
         }
     }
 }
 
 @Composable
-private fun SettingsItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+private fun SettingsRow(
+    icon: ImageVector,
     title: String,
     value: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Box(
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
-
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
+        Spacer(modifier = Modifier.width(6.dp))
         Icon(
             Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
 @Composable
-private fun AboutSection() {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = stringResource(R.string.about),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            AboutItem(
-                icon = Icons.Default.Info,
-                title = stringResource(R.string.version),
-                value = BuildConfig.VERSION_NAME
-            )
-
-            HorizontalDivider()
-
-            AboutItem(
+private fun AboutCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column {
+            AboutRow(
                 icon = Icons.Default.Description,
                 title = stringResource(R.string.terms_of_service),
-                onClick = { /* Open terms */}
+                onClick = { /* open terms */},
             )
-
-            HorizontalDivider()
-
-            AboutItem(
+            SectionDivider()
+            AboutRow(
                 icon = Icons.Default.PrivacyTip,
                 title = stringResource(R.string.privacy_policy),
-                onClick = { /* Open privacy policy */}
+                onClick = { /* open privacy */},
             )
-
-            HorizontalDivider()
-
-            AboutItem(
-                icon = Icons.Default.Help,
+            SectionDivider()
+            AboutRow(
+                icon = Icons.AutoMirrored.Filled.Help,
                 title = stringResource(R.string.help_support),
-                onClick = { /* Open support */}
+                onClick = { /* open help */},
             )
-
-            HorizontalDivider()
-
-            AboutItem(
+            SectionDivider()
+            AboutRow(
                 icon = Icons.Default.Feedback,
                 title = stringResource(R.string.send_feedback),
-                onClick = { /* Open feedback */}
+                onClick = { /* open feedback */},
             )
         }
     }
 }
 
 @Composable
-private fun AboutItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    value: String? = null,
-    onClick: (() -> Unit)? = null
-) {
+private fun AboutRow(icon: ImageVector, title: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier.fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
-        )
-
-        if (value != null) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        Box(
+            modifier =
+                Modifier.size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            Icons.Default.ChevronRight,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
-        if (onClick != null) {
+// ─── Sign out card ───────────────────────────────────────────────────────────
+
+@Composable
+private fun SignOutCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier =
+                    Modifier.size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Text(
+                text = stringResource(R.string.sign_out),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.weight(1f),
+            )
             Icon(
                 Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+// ─── Not signed in ──────────────────────────────────────────────────────────
+
+@Composable
+private fun NotSignedInContent(onSignInClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            Icons.Default.AccountCircle,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = stringResource(R.string.sign_in_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.sign_in_benefits),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onSignInClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.Login,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.sign_in_pm_app))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.sign_in_redirect_notice),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

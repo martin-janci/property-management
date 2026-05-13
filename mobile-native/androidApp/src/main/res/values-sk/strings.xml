@@ -31,6 +31,53 @@
     <string name="tab_account">Účet</string>
 
     <!-- Auth -->
+    <string name="auth_login_subtitle">Prihláste sa do svojho účtu</string>
+    <string name="auth_login_email_placeholder">jan.kovac@example.sk</string>
+    <string name="auth_login_no_account">Nemáte účet?</string>
+    <string name="auth_register_name_label">Meno a priezvisko</string>
+    <string name="auth_register_confirm_label">Potvrdiť heslo</string>
+    <string name="auth_register_terms">Súhlasím s podmienkami používania a ochranou údajov.</string>
+    <string name="auth_register_have_account">Už máte účet?</string>
+    <string name="auth_register_password_hint">Aspoň 8 znakov so symbolmi a číslami.</string>
+    <string name="auth_register_strength_weak">Slabé heslo</string>
+    <string name="auth_register_strength_medium">Stredné · pridajte symboly</string>
+    <string name="auth_register_strength_good">Dobré heslo</string>
+    <string name="auth_register_strength_strong">Silné heslo</string>
+    <string name="auth_register_inbox_title">Skontrolujte si email</string>
+    <string name="auth_register_inbox_body">Overovací odkaz sme poslali na %1$s. Otvorením ho aktivujete účet.</string>
+    <string name="auth_back_to_sign_in">Späť na prihlásenie</string>
+    <string name="auth_forgot_title">Zabudnuté heslo</string>
+    <string name="auth_forgot_body">Zadajte email priradený k účtu a pošleme vám odkaz na obnovu hesla.</string>
+    <string name="auth_forgot_submit">Poslať odkaz na reset</string>
+    <string name="auth_forgot_success_title">Skontrolujte si email</string>
+    <string name="auth_forgot_success_body">Odkaz na reset sme poslali na %1$s. Odkaz je platný 60 minút.</string>
+    <string name="auth_reset_title">Nové heslo</string>
+    <string name="auth_reset_body">Zadajte nové heslo. Aspoň 8 znakov, kombinácia písmen, čísel a symbolov.</string>
+    <string name="auth_reset_new_password">Nové heslo</string>
+    <string name="auth_reset_submit">Zmeniť heslo</string>
+    <string name="auth_reset_success_title">Heslo zmenené</string>
+    <string name="auth_reset_success_body">Vaše heslo bolo aktualizované. Môžete sa prihlásiť s novým heslom.</string>
+    <string name="auth_reset_invalid_title">Neplatný odkaz</string>
+    <string name="auth_reset_invalid_body">Tento odkaz na reset nemá token. Vyžiadajte si nový email na obnovu hesla.</string>
+    <string name="auth_2fa_title">Overenie</string>
+    <string name="auth_2fa_heading">Zadajte 6-miestny kód</string>
+    <string name="auth_2fa_subtitle">Kód sme poslali do vašej autentifikačnej aplikácie.</string>
+    <string name="auth_2fa_verify">Overiť</string>
+    <string name="auth_2fa_resend">Neprišiel kód? Skúsiť znova za 00:24</string>
+    <string name="auth_2fa_backup_code">Použiť záložný kód</string>
+    <string name="auth_2fa_success">Dvojfaktorové overenie je zapnuté.</string>
+    <string name="auth_validation_email_required">Vyžaduje sa email</string>
+    <string name="auth_validation_email_invalid">Zadajte platnú emailovú adresu</string>
+    <string name="auth_validation_password_required">Vyžaduje sa heslo</string>
+    <string name="auth_validation_password_too_short">Heslo musí mať aspoň %1$d znakov</string>
+    <string name="auth_validation_password_mismatch">Heslá sa nezhodujú</string>
+    <string name="auth_validation_name_required">Vyžaduje sa meno</string>
+    <string name="auth_validation_sign_in_failed">Prihlásenie zlyhalo.</string>
+    <string name="auth_validation_terms_required">Súhlaste prosím s podmienkami</string>
+    <string name="auth_validation_register_failed">Registrácia zlyhala.</string>
+    <string name="auth_validation_reset_failed">Heslo sa nepodarilo zmeniť.</string>
+    <string name="auth_validation_send_reset_failed">Email na reset sa nepodarilo odoslať.</string>
+    <string name="auth_validation_2fa_invalid">Zadajte 6-miestny kód z vašej autentifikačnej aplikácie.</string>
     <string name="login">Prihlásiť sa</string>
     <string name="logout">Odhlásiť sa</string>
     <string name="sign_in">Prihlásiť sa</string>
@@ -120,6 +167,56 @@
     <string name="error_not_found">Nenájdené</string>
     <string name="error_unauthorized">Nemáte oprávnenie na túto akciu.</string>
 
+    <!-- Agency -->
+    <string name="agency_role_label">Agentúra</string>
+    <string name="agency_company_placeholder">Reality Profi s.r.o.</string>
+    <string name="agency_stat_active">Aktívne inzeráty</string>
+    <string name="agency_stat_new_inquiries">Nové dopyty</string>
+    <string name="agency_stat_response">Priem. odozva</string>
+    <string name="agency_stat_conversion">Konverzia</string>
+    <string name="agency_actions_title">Pracovný priestor</string>
+    <string name="agency_activity_title">Posledná aktivita</string>
+    <string name="agency_activity_see_all">Všetko ›</string>
+    <string name="agency_add_listing">Pridať inzerát</string>
+    <string name="agency_section_inquiries">Dopyty</string>
+    <string name="agency_section_inquiries_sub">Správy prijaté k vašim inzerátom</string>
+    <string name="agency_section_listings">Moje inzeráty</string>
+    <string name="agency_section_listings_sub">Inzeráty, ktoré práve spravujete</string>
+    <string name="agency_section_create">Nový inzerát</string>
+    <string name="agency_section_create_sub">Publikujte novú nehnuteľnosť na portál</string>
+    <string name="agency_section_analytics">Štatistika</string>
+    <string name="agency_section_analytics_sub">Výkon vašich inzerátov v čase</string>
+    <string name="agency_inquiries_batch_reply">Hromadná odpoveď</string>
+    <string name="agency_inquiries_empty_title">Zatiaľ žiadne dopyty</string>
+    <string name="agency_inquiries_empty_body">Dopyty od záujemcov sa zobrazia tu.</string>
+
+    <!-- Realtor -->
+    <string name="realtor_listings_title">Moje inzeráty</string>
+    <string name="realtor_listings_add">Pridať</string>
+    <string name="realtor_listings_empty_title">Zatiaľ žiadne inzeráty</string>
+    <string name="realtor_listings_empty_body">Pridajte svoj prvý inzerát — vyplníte ho za pár minút a hneď začnete dostávať dopyty.</string>
+    <string name="realtor_create_title">Nový inzerát</string>
+    <string name="realtor_create_publish">Publikovať</string>
+    <string name="realtor_create_draft_saved">Draft uložený</string>
+    <string name="realtor_create_transaction">Typ obchodu</string>
+    <string name="realtor_create_step_label">Informácie o inzeráte</string>
+    <string name="realtor_create_step1">Typ</string>
+    <string name="realtor_create_step2">Lokalita</string>
+    <string name="realtor_create_step3">Detaily</string>
+    <string name="realtor_create_step4">Foto</string>
+    <string name="realtor_create_step5">Cena</string>
+    <string name="realtor_create_field_title">Názov</string>
+    <string name="realtor_create_title_placeholder">3-izbový byt s balkónom</string>
+    <string name="realtor_create_field_description">Popis</string>
+    <string name="realtor_create_field_city">Mesto</string>
+    <string name="realtor_create_field_price">Cena</string>
+    <string name="realtor_create_field_currency">Mena</string>
+    <string name="realtor_analytics_title">Štatistika</string>
+    <string name="realtor_create_validation_title_required">Vyžaduje sa názov</string>
+    <string name="realtor_create_validation_city_required">Vyžaduje sa mesto</string>
+    <string name="realtor_create_validation_price_invalid">Zadajte kladnú cenu</string>
+    <string name="realtor_create_validation_publish_failed">Inzerát sa nepodarilo publikovať.</string>
+
     <!-- Section Headers -->
     <string name="section_quick_actions">Rýchle akcie</string>
     <string name="section_notifications">Oznámenia</string>
@@ -163,6 +260,11 @@
 
     <!-- Filters -->
     <string name="action_filters">Filtre</string>
+    <string name="filters_with_count">Filtre · %1$d</string>
+    <string name="view_list">Zoznam</string>
+    <string name="view_map">Mapa</string>
+    <string name="map_placeholder">Náhľad mapy — plná integrácia čoskoro</string>
+    <string name="action_save_search">Uložiť hľadanie</string>
     <string name="filter_for_sale">Na predaj</string>
     <string name="filter_for_rent">Na prenájom</string>
     <string name="filter_apartments">Byty</string>
@@ -243,6 +345,16 @@
     <string name="favorites_sign_in_title">Prihláste sa pre uloženie obľúbených</string>
     <string name="favorites_sign_in_description">Sledujte nehnuteľnosti, ktoré vás zaujímajú</string>
     <string name="favorites_empty_description">Uložte nehnuteľnosti na neskoršie porovnanie</string>
+    <string name="favorites_summary">%1$d inzerátov · %2$d zoznamov</string>
+    <string name="favorites_filter_all">Všetko</string>
+    <string name="filter_sale">Predaj</string>
+    <string name="filter_rent">Prenájom</string>
+    <string name="favorites_create_list">Vytvoriť zoznam</string>
+    <string name="sort_price_asc_short">Cena ↑</string>
+    <string name="sort_price_desc_short">Cena ↓</string>
+    <string name="cd_share">Zdieľať</string>
+    <string name="cd_export">Exportovať</string>
+    <string name="cd_remove_favorite">Odstrániť z obľúbených</string>
     <string name="saved_search_new_count">%1$d nových</string>
     <string name="saved_search_disable_alerts">Vypnúť upozornenia</string>
     <string name="saved_search_enable_alerts">Zapnúť upozornenia</string>
@@ -250,9 +362,38 @@
     <string name="saved_search_delete_message">Naozaj chcete vymazať \"%1$s\"?</string>
     <string name="saved_searches_empty_title">Žiadne uložené vyhľadávania</string>
     <string name="saved_searches_empty_description">Uložte vyhľadávanie pre upozornenia na nové ponuky</string>
+    <string name="saved_searches_title">Uložené hľadania</string>
+    <string name="saved_searches_new">Nové hľadanie</string>
+    <string name="saved_search_run">Spustiť</string>
+    <string name="saved_search_alerts_on">Alerty zapnuté</string>
+    <string name="saved_search_alerts_off">Alerty vypnuté</string>
+    <string name="cd_more">Viac</string>
 
     <!-- Account Screen -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_verified">Overený</string>
+    <string name="profile_stat_favorites">Obľúbené</string>
+    <string name="profile_stat_searches">Hľadania</string>
+    <string name="profile_stat_inquiries">Dopyty</string>
+    <string name="profile_section_searches">Uložené hľadania</string>
+    <string name="profile_section_searches_sub">3 aktívne</string>
+    <string name="profile_section_compare">Porovnanie</string>
+    <string name="profile_section_compare_sub">2 v zozname</string>
+    <string name="profile_section_notifications">Notifikácie</string>
+    <string name="profile_section_notifications_sub">Push, email a SMS</string>
+    <string name="profile_section_privacy">Súkromie a údaje</string>
+    <string name="profile_section_about">O aplikácii</string>
+    <string name="profile_section_about_sub">v %1$s · Právne</string>
     <string name="edit_profile">Upraviť profil</string>
+    <string name="profile_edit_change_photo">Zmeniť fotku</string>
+    <string name="profile_edit_phone">Telefón</string>
+    <string name="profile_edit_language">Preferovaný jazyk</string>
+    <string name="profile_edit_about">O mne</string>
+    <string name="profile_edit_about_placeholder">Povedzte maklérom, čo hľadáte…</string>
+    <string name="profile_edit_email_locked">Pre zmenu emailu kontaktujte podporu.</string>
+    <string name="profile_edit_save">Uložiť zmeny</string>
+    <string name="profile_edit_signin_required_title">Vyžaduje sa prihlásenie</string>
+    <string name="profile_edit_signin_required_body">Pre úpravu profilu sa prosím prihláste.</string>
     <string name="notification_listing_updates">Aktualizácie ponúk</string>
     <string name="notification_listing_updates_desc">Dostávajte upozornenia, keď sa aktualizuje obľúbená ponuka</string>
     <string name="notification_marketing">Marketing</string>
@@ -262,6 +403,17 @@
     <string name="send_feedback">Poslať spätnú väzbu</string>
 
     <!-- Listing Detail Screen -->
+    <string name="detail_stat_area">Plocha</string>
+    <string name="detail_stat_built">Postavený</string>
+    <string name="detail_stat_energy">Energia</string>
+    <string name="detail_stat_floor">Poschodie</string>
+    <string name="detail_tab_overview">Prehľad</string>
+    <string name="detail_tab_building">Pasport budovy</string>
+    <string name="detail_tab_nearby">Okolie</string>
+    <string name="detail_tab_price_history">História cien</string>
+    <string name="detail_realtor_unknown">Maklér</string>
+    <string name="detail_building_no_data">Informácie o budove nie sú zatiaľ k dispozícii.</string>
+    <string name="action_request_viewing">Žiadať obhliadku</string>
     <string name="detail_rooms">Izby</string>
     <string name="detail_beds">Spálne</string>
     <string name="detail_baths">Kúpeľne</string>
@@ -306,4 +458,32 @@
     <string name="viewing_cancel_keep">Ponechať</string>
     <string name="viewings_empty_title">Žiadne naplánované obhliadky</string>
     <string name="viewings_empty_description">Naplánujte obhliadky pre osobné prehliadnutie</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_welcome">Vitajte späť</string>
+    <string name="home_hero_location_placeholder">Prezerajte inzeráty vo vašom okolí</string>
+    <string name="home_hero_search_placeholder">Mesto, lokalita, alebo ID inzerátu…</string>
+    <string name="home_hero_tab_sale">Predaj</string>
+    <string name="home_hero_tab_rent">Prenájom</string>
+    <string name="home_hero_tab_new">Novostavby</string>
+    <string name="cd_notifications">Upozornenia</string>
+
+    <!-- Categories -->
+    <string name="categories">Kategórie</string>
+    <string name="cat_apartments">Byty</string>
+    <string name="cat_houses">Domy</string>
+    <string name="cat_commercial">Komerčné</string>
+    <string name="cat_land">Pozemky</string>
+    <string name="cat_recreation">Rekreácia</string>
+    <string name="cat_parking">Parkovanie</string>
+
+    <string name="area_m2">%1$d m²</string>
+
+    <!-- Plurals -->
+    <plurals name="listing_rooms_plural">
+        <item quantity="one">%1$d izba</item>
+        <item quantity="few">%1$d izby</item>
+        <item quantity="many">%1$d izieb</item>
+        <item quantity="other">%1$d izieb</item>
+    </plurals>
 </resources>
