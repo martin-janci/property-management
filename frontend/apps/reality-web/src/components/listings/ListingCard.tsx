@@ -7,8 +7,10 @@
 'use client';
 
 import type { ListingSummary } from '@ppt/reality-api-client';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatPrice } from '@/lib/format';
 
 interface ListingCardProps {
   listing: ListingSummary;
@@ -22,14 +24,7 @@ export function ListingCard({
   showFavoriteButton = true,
 }: ListingCardProps) {
   const t = useTranslations('listing');
-
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const locale = useLocale();
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -42,17 +37,18 @@ export function ListingCard({
       {/* Image */}
       <div className="image-container">
         {listing.primaryPhoto ? (
-          // width/height match the 4:3 aspect-ratio container — gives the
-          // browser intrinsic dimensions while the image is fetching, so
-          // there's no flash even before the placeholder background paints.
-          <img
+          // next/image emits WebP/AVIF + a responsive srcset and lazy-loads
+          // by default. width/height match the 4:3 aspect-ratio container so
+          // the browser reserves the right box during the fetch (no CLS).
+          // `sizes` tells the optimizer the rendered width across breakpoints
+          // — card grid is roughly 1-col mobile, 2-col tablet, 3-col desktop.
+          <Image
             src={listing.primaryPhoto.thumbnailUrl}
             alt={listing.title}
             className="image"
             width={800}
             height={600}
-            loading="lazy"
-            decoding="async"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
           <div className="image-placeholder">
@@ -106,7 +102,9 @@ export function ListingCard({
       {/* Content */}
       <div className="content">
         <div className="price-row">
-          <span className="price">{formatPrice(listing.price, listing.currency)}</span>
+          <span className="price">
+            {formatPrice(listing.price, locale, { currency: listing.currency })}
+          </span>
           {listing.transactionType === 'rent' && (
             <span className="price-suffix">{t('perMonth')}</span>
           )}

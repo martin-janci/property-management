@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
 import { ComparisonProvider } from '@/lib/comparison-context';
 import { QueryProvider } from '@/lib/query-provider';
+import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
 import { StyledJsxRegistry } from '../../components/StyledJsxRegistry';
@@ -26,6 +27,27 @@ type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
+
+// Normalize the configured site URL so downstream concatenations don't
+// produce `https://www.rlt.sk//icon.svg` when NEXT_PUBLIC_SITE_URL ships
+// with a trailing slash (which happens whenever someone copies the URL
+// from a browser address bar into env config). Computed once at module
+// load — env vars are static for the lifetime of the process.
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rlt.sk').replace(/\/+$/, '');
+
+// Organization JSON-LD payload is the same for every page render — pull
+// the JSON.stringify out of the render path so we don't re-serialize on
+// every request. (Inline `<script>` injection means no React reconcile
+// either way, but this keeps the layout render hot path clean.)
+const ORGANIZATION_LD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Reality Portal',
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon.svg`,
+  email: 'info@rlt.sk',
+  areaServed: ['SK', 'CZ', 'DE', 'PL', 'HU'],
+});
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -53,6 +75,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 
   return {
+    // metadataBase lets per-route generateMetadata emit relative canonicals
+    // (e.g. '/about') and Next resolves them to absolute URLs in <head>.
+    // Without this, OG/canonical URLs in headers are emitted as paths and
+    // get flagged by Twitter / FB share validators.
+    metadataBase: new URL(SITE_URL),
     title: titles[locale as Locale] || titles.en,
     description: descriptions[locale as Locale] || descriptions.en,
     openGraph: {
@@ -60,6 +87,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       description: descriptions[locale as Locale] || descriptions.en,
       type: 'website',
       locale: locale,
+      images: ['/opengraph-image'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titles[locale as Locale] || titles.en,
+      description: descriptions[locale as Locale] || descriptions.en,
+      images: ['/opengraph-image'],
     },
   };
 }
@@ -122,6 +156,18 @@ export default async function LocaleLayout({ children, params }: Props) {
          */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/env.js" />
+        {/* Organization JSON-LD: surfaces the brand panel on Google search
+            (sitelinks + logo + areaServed). Emitted at the locale layout
+            so every page carries it; per-page schema (Listing, Article,
+            Breadcrumb) is added by individual routes on top.
+
+            Payload is precomputed at module load (see ORGANIZATION_LD)
+            rather than rebuilt on every render. */}
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD must inline
+          dangerouslySetInnerHTML={{ __html: ORGANIZATION_LD }}
+        />
       </head>
       <body>
         {/* StyledJsxRegistry must wrap any subtree that uses `<style jsx>`
@@ -134,6 +180,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <ComparisonProvider>
                   {children}
                   <ComparisonTray />
+                  <CookieConsentBanner />
                   <DevPanelMount />
                 </ComparisonProvider>
               </AuthProvider>

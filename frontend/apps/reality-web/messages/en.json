@@ -606,5 +606,12 @@
     "title": "Page not found",
     "description": "The page you're looking for doesn't exist or has moved.",
     "home": "Back to home"
+  },
+  "cookieBanner": {
+    "title": "We use cookies",
+    "body": "Essential cookies keep the site working. Optional analytics + marketing cookies help us improve it — we won't set them unless you accept.",
+    "accept": "Accept all",
+    "reject": "Reject optional",
+    "manage": "Cookie settings"
   }
 }
