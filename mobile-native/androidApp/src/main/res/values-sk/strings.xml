@@ -291,6 +291,17 @@
     <string name="send_feedback">Poslať spätnú väzbu</string>
 
     <!-- Listing Detail Screen -->
+    <string name="detail_stat_area">Plocha</string>
+    <string name="detail_stat_built">Postavený</string>
+    <string name="detail_stat_energy">Energia</string>
+    <string name="detail_stat_floor">Poschodie</string>
+    <string name="detail_tab_overview">Prehľad</string>
+    <string name="detail_tab_building">Pasport budovy</string>
+    <string name="detail_tab_nearby">Okolie</string>
+    <string name="detail_tab_price_history">História cien</string>
+    <string name="detail_realtor_unknown">Maklér</string>
+    <string name="detail_building_no_data">Informácie o budove nie sú zatiaľ k dispozícii.</string>
+    <string name="action_request_viewing">Žiadať obhliadku</string>
     <string name="detail_rooms">Izby</string>
     <string name="detail_beds">Spálne</string>
     <string name="detail_baths">Kúpeľne</string>

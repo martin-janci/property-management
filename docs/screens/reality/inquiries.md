@@ -11,10 +11,10 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile-native:
-    component: KmpInquiriesScreen+KmpInquiryThreadScreen
-    buildStatus: planned
-    redesignStatus: in-progress
-    apiStatus: stub
+    component: InquiriesScreen
+    buildStatus: in-progress
+    redesignStatus: applied
+    apiStatus: partial
 endpoints:
   - inquiries_list
 relatedScreens:
@@ -100,5 +100,6 @@ UC-46 contact inquiries — primary conversion surface from listing detail. Thre
 
 <!-- newest entries on top -->
 
+- 2026-05-13 — agent: implemented KMP InquiriesScreen redesign per ui_kits/mobile-native/screens.jsx KmpInquiriesScreen. New layout: large-title "Dopyty" header, status filter chip strip (All · count / Pending / Responded / Closed), restyled M3 TabRow (Messages · Viewings), flat (no card chrome) message rows with 3dp left unread bar + 48dp gradient avatar + initials + 22dp listing thumb overlay + relative time + 2-line preview + uppercase status pill. Viewings list restyled as 16dp rounded cards with status pill + cancel dialog. Inline thread view (KmpInquiryThreadScreen — calendar grid + slot picker + bubble composer) deferred until inquiry-reply API + scheduling backend land. buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (pages/inquiries.html — 2-col list+thread, 4 list states × 4 thread states, schedule panel + quick replies + day-strip + slot-grid); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (3 sections), all 4 states (list-side, thread-side documented in checklist), design-specific notes; linked UC-46; declared 8 sharedComponents; added 1 relatedScreen
 - 2026-05-08 — init: created from scan (source: sitemap)
