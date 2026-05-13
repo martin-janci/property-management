@@ -363,14 +363,17 @@
     },
     "report": {
       "submit": "Odeslat nahlášení",
-      "subtitle": "Pomozte nám udržovat portál bezpečným.",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
       "success": "Nahlášení bylo odesláno",
-      "title": "Nahlásit inzerát"
+      "title": "Report a listing",
+      "h1": "Report a listing"
     },
     "security": {
       "reportCta": "Nahlásit inzerát",
-      "subtitle": "Vaše bezpečnost je naší prioritou",
-      "title": "Bezpečnost"
+      "subtitle": "How we keep listings, payments and your data safe — and what to watch out for.",
+      "title": "Security",
+      "h1": "Your security is our priority",
+      "scenariosHeading": "Common fraud scenarios"
     },
     "sell": {
       "steps": {

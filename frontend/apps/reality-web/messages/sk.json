@@ -363,14 +363,17 @@
     },
     "report": {
       "submit": "Odoslať nahlásenie",
-      "subtitle": "Pomôžte nám udržiavať portál bezpečným.",
+      "subtitle": "Pomôžte nám udržať portál dôveryhodný — povedzte nám, čo je v ponuke zlé.",
       "success": "Nahlásenie bolo odoslané",
-      "title": "Nahlásiť inzerát"
+      "title": "Nahlásiť inzerát",
+      "h1": "Nahlásiť inzerát"
     },
     "security": {
       "reportCta": "Nahlásiť ponuku",
-      "subtitle": "Vaša bezpečnosť je naša priorita",
-      "title": "Bezpečnosť"
+      "subtitle": "Pomáhame vám rozpoznať podvody a obchodovať s nehnuteľnosťami v bezpečnom prostredí.",
+      "title": "Bezpečnosť",
+      "h1": "Vaša bezpečnosť je naša priorita",
+      "scenariosHeading": "Časté podvodné scenáre"
     },
     "sell": {
       "steps": {

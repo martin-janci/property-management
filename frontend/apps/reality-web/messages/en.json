@@ -363,14 +363,17 @@
     },
     "report": {
       "submit": "Submit report",
-      "subtitle": "Help us keep the portal safe.",
+      "subtitle": "Help us keep the portal trustworthy — tell us what's wrong.",
       "success": "Report submitted",
-      "title": "Report a listing"
+      "title": "Report a listing",
+      "h1": "Report a listing"
     },
     "security": {
       "reportCta": "Report a listing",
-      "subtitle": "Your safety is our priority",
-      "title": "Security"
+      "subtitle": "We help you spot fraud and trade properties in a safe environment.",
+      "title": "Security",
+      "h1": "Your security is our priority",
+      "scenariosHeading": "Common fraud scenarios"
     },
     "sell": {
       "steps": {

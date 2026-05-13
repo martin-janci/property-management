@@ -5,6 +5,7 @@
  * Screen-map: docs/screens/reality/report-listing.md
  */
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Footer, Header } from '@/components/ui';
 import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
@@ -13,6 +14,7 @@ import { REPORT_PROBLEMS, type ReportProblem } from './_mock';
 // TODO: replace file attachment with @ppt/ui-kit/FileUpload once available
 
 export default function ReportPage() {
+  const t = useTranslations('pages.report');
   const [problem, setProblem] = useState<ReportProblem | null>(null);
   const [listingRef, setListingRef] = useState('');
   const [description, setDescription] = useState('');
@@ -133,10 +135,10 @@ export default function ReportPage() {
             marginBottom: 8,
           }}
         >
-          Nahlásiť inzerát
+          {t('h1')}
         </h1>
         <p style={{ color: 'var(--ppt-fg-secondary)', marginBottom: 36, lineHeight: 1.6 }}>
-          Pomôžte nám udržiavať portál bezpečným. Váš podnet preveríme do 24 hodín.
+          {t('subtitle')}
         </p>
 
         <form
