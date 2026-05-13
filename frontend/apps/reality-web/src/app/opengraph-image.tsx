@@ -8,9 +8,13 @@ import { ImageResponse } from 'next/og';
  * detail with the property photo) can override by dropping a sibling
  * opengraph-image.tsx in their route directory.
  *
- * Brand-mark only — no copy in the image so we don't have to maintain six
- * localized variants. The OG `description` in the metadata carries the
- * locale-specific text below the image in share previews.
+ * Layout: brand mark + "Reality Portal" wordmark + a single English
+ * tagline. The tagline is intentionally kept in English so we don't have
+ * to maintain six locale-specific PNGs — share previews for non-English
+ * users still get the locale-correct OG `description` below the image
+ * from the per-route metadata. (When traffic from a specific non-English
+ * locale justifies it, drop a sibling `[locale]/opengraph-image.tsx`
+ * with localized copy.)
  */
 export const runtime = 'edge';
 export const size = { width: 1200, height: 630 };
