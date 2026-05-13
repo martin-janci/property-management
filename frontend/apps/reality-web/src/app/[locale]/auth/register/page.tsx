@@ -76,13 +76,10 @@ export default function RegisterPage() {
       <div className="card">
         {submitted ? (
           <>
-            <h1 className="title">Check your inbox</h1>
-            <p className="subtitle">
-              We sent a verification email to <strong>{email}</strong>. Click the link to activate
-              your account.
-            </p>
+            <h1 className="title">{t('checkInbox')}</h1>
+            <p className="subtitle">{t('checkInboxBody', { email })}</p>
             <button type="button" className="submit" onClick={() => router.push('/auth/login')}>
-              Back to sign in
+              {t('backToSignIn')}
             </button>
           </>
         ) : (
@@ -180,7 +177,7 @@ export default function RegisterPage() {
               {errors.terms && <span className="error">{errors.terms}</span>}
 
               <button type="submit" className="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating account…' : 'Create account'}
+                {isSubmitting ? t('creating') : t('submit')}
               </button>
 
               <p className="meta">

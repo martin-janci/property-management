@@ -7,12 +7,14 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { type FormEvent, Suspense, useState } from 'react';
 import { AuthApiError, confirmPasswordReset } from '@/lib/auth-api';
 
 const MIN_PASSWORD = 8;
 
 function ResetForm() {
+  const t = useTranslations('pages.resetPassword');
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -28,12 +30,10 @@ function ResetForm() {
   if (!token) {
     return (
       <div className="empty">
-        <h1 className="title">Invalid link</h1>
-        <p className="subtitle">
-          This reset link is missing a token. Request a new password reset email.
-        </p>
+        <h1 className="title">{t('invalidTitle')}</h1>
+        <p className="subtitle">{t('invalidBody')}</p>
         <Link href="/auth/forgot-password" className="link center">
-          Request a new link
+          {t('requestNew')}
         </Link>
         <style jsx>{`
           .empty { padding: 8px 0; }
@@ -55,14 +55,14 @@ function ResetForm() {
 
     let invalid = false;
     if (!password) {
-      setPasswordError('Password is required');
+      setPasswordError(t('passwordRequired'));
       invalid = true;
     } else if (password.length < MIN_PASSWORD) {
-      setPasswordError(`Password must be at least ${MIN_PASSWORD} characters`);
+      setPasswordError(t('passwordTooShort'));
       invalid = true;
     }
     if (confirmPassword !== password) {
-      setConfirmError('Passwords do not match');
+      setConfirmError(t('passwordsMismatch'));
       invalid = true;
     }
     if (invalid) return;
@@ -75,7 +75,7 @@ function ResetForm() {
       if (error instanceof AuthApiError) {
         setGeneralError(error.message);
       } else {
-        setGeneralError('Could not reset password. Please try again.');
+        setGeneralError(t('genericError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -85,10 +85,10 @@ function ResetForm() {
   if (success) {
     return (
       <div className="ok">
-        <h1 className="title">Password updated</h1>
-        <p className="subtitle">You can now sign in with your new password.</p>
+        <h1 className="title">{t('successTitle')}</h1>
+        <p className="subtitle">{t('successBody')}</p>
         <button type="button" className="submit" onClick={() => router.replace('/auth/login')}>
-          Sign in
+          {t('goToSignIn')}
         </button>
         <style jsx>{`
           .ok { padding: 8px 0; }
@@ -103,8 +103,8 @@ function ResetForm() {
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>
-      <h1 className="title">Set a new password</h1>
-      <p className="subtitle">Choose a strong password you haven't used before.</p>
+      <h1 className="title">{t('title')}</h1>
+      <p className="subtitle">{t('description')}</p>
 
       {generalError && (
         <div className="alert" role="alert">
@@ -113,37 +113,39 @@ function ResetForm() {
       )}
 
       <label className="field">
-        <span className="label">New password</span>
+        <span className="label">{t('passwordLabel')}</span>
         <input
           type="password"
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isSubmitting}
+          aria-invalid={passwordError ? true : undefined}
           className={`input ${passwordError ? 'input-error' : ''}`}
         />
         {passwordError ? (
           <span className="error">{passwordError}</span>
         ) : (
-          <span className="hint">At least {MIN_PASSWORD} characters.</span>
+          <span className="hint">{t('passwordHint')}</span>
         )}
       </label>
 
       <label className="field">
-        <span className="label">Confirm password</span>
+        <span className="label">{t('confirmLabel')}</span>
         <input
           type="password"
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={isSubmitting}
+          aria-invalid={confirmError ? true : undefined}
           className={`input ${confirmError ? 'input-error' : ''}`}
         />
         {confirmError && <span className="error">{confirmError}</span>}
       </label>
 
       <button type="submit" className="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Updating…' : 'Update password'}
+        {isSubmitting ? t('submitting') : t('submit')}
       </button>
 
       <style jsx>{`
