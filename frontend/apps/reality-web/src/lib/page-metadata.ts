@@ -35,10 +35,50 @@ export function pageMetadata(
         ...(description ? { description } : {}),
         type: 'website',
         locale,
+        siteName: SITE_NAME,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        ...(description ? { description } : {}),
+      },
+      alternates: {
+        canonical: `/${locale}${pagePathForKey(key)}`,
+      },
+      robots: {
+        index: !PRIVATE_KEYS.has(key),
+        follow: true,
       },
     };
   };
 }
+
+/**
+ * Best-effort key → path mapping for the canonical URL.
+ * Pages whose route name doesn't match the messages key get an override here.
+ */
+function pagePathForKey(key: string): string {
+  const overrides: Record<string, string> = {
+    forAgents: '/for-agents',
+    priceMap: '/price-map',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
+    login: '/auth/login',
+    register: '/auth/register',
+  };
+  return overrides[key] ?? `/${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+}
+
+// Pages we don't want crawled — user-data screens and auth flow internals.
+const PRIVATE_KEYS = new Set([
+  'login',
+  'register',
+  'forgotPassword',
+  'resetPassword',
+  'favorites',
+  'inquiries',
+  'profile',
+]);
 
 function safeT(t: (key: string) => string, key: string): string | undefined {
   try {
