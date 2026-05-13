@@ -163,6 +163,11 @@
 
     <!-- Filters -->
     <string name="action_filters">Filtre</string>
+    <string name="filters_with_count">Filtre · %1$d</string>
+    <string name="view_list">Zoznam</string>
+    <string name="view_map">Mapa</string>
+    <string name="map_placeholder">Náhľad mapy — plná integrácia čoskoro</string>
+    <string name="action_save_search">Uložiť hľadanie</string>
     <string name="filter_for_sale">Na predaj</string>
     <string name="filter_for_rent">Na prenájom</string>
     <string name="filter_apartments">Byty</string>
@@ -243,6 +248,16 @@
     <string name="favorites_sign_in_title">Prihláste sa pre uloženie obľúbených</string>
     <string name="favorites_sign_in_description">Sledujte nehnuteľnosti, ktoré vás zaujímajú</string>
     <string name="favorites_empty_description">Uložte nehnuteľnosti na neskoršie porovnanie</string>
+    <string name="favorites_summary">%1$d inzerátov · %2$d zoznamov</string>
+    <string name="favorites_filter_all">Všetko</string>
+    <string name="filter_sale">Predaj</string>
+    <string name="filter_rent">Prenájom</string>
+    <string name="favorites_create_list">Vytvoriť zoznam</string>
+    <string name="sort_price_asc_short">Cena ↑</string>
+    <string name="sort_price_desc_short">Cena ↓</string>
+    <string name="cd_share">Zdieľať</string>
+    <string name="cd_export">Exportovať</string>
+    <string name="cd_remove_favorite">Odstrániť z obľúbených</string>
     <string name="saved_search_new_count">%1$d nových</string>
     <string name="saved_search_disable_alerts">Vypnúť upozornenia</string>
     <string name="saved_search_enable_alerts">Zapnúť upozornenia</string>
@@ -252,6 +267,20 @@
     <string name="saved_searches_empty_description">Uložte vyhľadávanie pre upozornenia na nové ponuky</string>
 
     <!-- Account Screen -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_verified">Overený</string>
+    <string name="profile_stat_favorites">Obľúbené</string>
+    <string name="profile_stat_searches">Hľadania</string>
+    <string name="profile_stat_inquiries">Dopyty</string>
+    <string name="profile_section_searches">Uložené hľadania</string>
+    <string name="profile_section_searches_sub">3 aktívne</string>
+    <string name="profile_section_compare">Porovnanie</string>
+    <string name="profile_section_compare_sub">2 v zozname</string>
+    <string name="profile_section_notifications">Notifikácie</string>
+    <string name="profile_section_notifications_sub">Push, email a SMS</string>
+    <string name="profile_section_privacy">Súkromie a údaje</string>
+    <string name="profile_section_about">O aplikácii</string>
+    <string name="profile_section_about_sub">v %1$s · Právne</string>
     <string name="edit_profile">Upraviť profil</string>
     <string name="notification_listing_updates">Aktualizácie ponúk</string>
     <string name="notification_listing_updates_desc">Dostávajte upozornenia, keď sa aktualizuje obľúbená ponuka</string>
@@ -306,4 +335,21 @@
     <string name="viewing_cancel_keep">Ponechať</string>
     <string name="viewings_empty_title">Žiadne naplánované obhliadky</string>
     <string name="viewings_empty_description">Naplánujte obhliadky pre osobné prehliadnutie</string>
+
+    <!-- Home hero -->
+    <string name="home_hero_welcome">Vitajte späť</string>
+    <string name="home_hero_search_placeholder">Mesto, lokalita, alebo ID inzerátu…</string>
+    <string name="home_hero_tab_sale">Predaj</string>
+    <string name="home_hero_tab_rent">Prenájom</string>
+    <string name="home_hero_tab_new">Novostavby</string>
+    <string name="cd_notifications">Upozornenia</string>
+
+    <!-- Categories -->
+    <string name="categories">Kategórie</string>
+    <string name="cat_apartments">Byty</string>
+    <string name="cat_houses">Domy</string>
+    <string name="cat_commercial">Komerčné</string>
+    <string name="cat_land">Pozemky</string>
+    <string name="cat_recreation">Rekreácia</string>
+    <string name="cat_parking">Parkovanie</string>
 </resources>

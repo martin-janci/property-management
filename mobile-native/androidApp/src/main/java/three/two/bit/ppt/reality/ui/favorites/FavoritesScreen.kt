@@ -1,18 +1,34 @@
 package three.two.bit.ppt.reality.ui.favorites
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.api.ApiConfig
@@ -20,14 +36,31 @@ import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.favorites.*
 import three.two.bit.ppt.reality.listing.ListingRepository
-import three.two.bit.ppt.reality.ui.search.ListingCard
+import three.two.bit.ppt.reality.listing.ListingSummary
+import three.two.bit.ppt.reality.util.FormatUtils
 
 private const val TAG = "FavoritesScreen"
 
 /**
- * Favorites screen for Reality Portal mobile app.
+ * Favorites screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx`
+ *  → `KmpFavoritesScreen`).
  *
- * Epic 48 - Story 48.3: Portal Mobile Favorites
+ * Layout (top → bottom):
+ *   1. Large-title header ("Obľúbené" + summary + share/export actions).
+ *   2. Transaction-type filter chip strip (Všetko / Predaj / Prenájom).
+ *   3. Sort segmented control (Najnovšie / Cena ↑ / Cena ↓).
+ *   4. Saved-properties tab: 2-column grid of cards with 4:3 photo + heart
+ *      pill overlay; price + truncated title + meta.
+ *   5. Saved-searches tab: kept from existing implementation (the design
+ *      only covers the "Saved properties" tab; saved-search list lives in
+ *      `KmpSavedSearchesScreen` and is reachable from the Profile screen).
+ *   6. FAB: "Vytvoriť zoznam" (create list).
+ *
+ * Bottom nav lives in `Navigation.kt`; this composable owns the scrollable
+ * body and reserves bottom padding (96dp) for it.
+ *
+ * Epic 48 - Story 48.3: Portal Mobile Favorites.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,215 +68,161 @@ fun FavoritesScreen(
     repository: ListingRepository,
     ssoService: SsoService,
     onListingClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) }
+    var transactionFilter by remember { mutableStateOf(TransactionFilter.ALL) }
+    var sortMode by remember { mutableStateOf(SortMode.NEWEST) }
     var favorites by remember { mutableStateOf<List<FavoriteEntry>>(emptyList()) }
     var savedSearches by remember { mutableStateOf<List<SavedSearch>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Create favorites repository with session token
     val favoritesRepository =
         remember(authState) {
             val token = (authState as? AuthState.Authenticated)?.sessionToken
             FavoritesRepository(baseUrl = ApiConfig.requireBaseUrl(), sessionToken = token)
         }
 
-    // Load data
     LaunchedEffect(authState) {
         if (authState is AuthState.Authenticated) {
             isLoading = true
             errorMessage = null
-
-            // Load favorites
             favoritesRepository
                 .getFavorites()
                 .fold(
                     onSuccess = { response -> favorites = response.favorites },
-                    onFailure = { error -> errorMessage = error.message }
+                    onFailure = { error -> errorMessage = error.message },
                 )
-
-            // Load saved searches
             favoritesRepository
                 .getSavedSearches()
                 .fold(
                     onSuccess = { response -> savedSearches = response.searches },
-                    onFailure = { error ->
-                        Log.e(TAG, "Failed to load saved searches", error)
-                        // Don't overwrite error message if favorites already failed
-                    }
+                    onFailure = { error -> Log.e(TAG, "Failed to load saved searches", error) },
                 )
-
             isLoading = false
         } else {
             isLoading = false
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.tab_favorites)) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
         when (authState) {
-            is AuthState.Unauthenticated,
-            is AuthState.Error -> {
-                NotSignedInContent(modifier = Modifier.padding(paddingValues))
-            }
+            is AuthState.Unauthenticated, is AuthState.Error -> NotSignedInContent()
             is AuthState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
             is AuthState.Authenticated -> {
-                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    // Tab row
-                    TabRow(selectedTabIndex = selectedTab) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    FavoritesHeader(
+                        favoriteCount = favorites.size,
+                        savedSearchCount = savedSearches.size,
+                    )
+
+                    // Tab row — Properties / Searches
+                    TabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ) {
                         Tab(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
                             text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(stringResource(R.string.favorites_tab_properties))
-                                    if (favorites.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Badge { Text("${favorites.size}") }
-                                    }
-                                }
+                                TabLabel(
+                                    label = stringResource(R.string.favorites_tab_properties),
+                                    count = favorites.size,
+                                )
                             },
-                            icon = { Icon(Icons.Default.Favorite, contentDescription = null) }
                         )
                         Tab(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
                             text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(stringResource(R.string.favorites_tab_searches))
-                                    if (savedSearches.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Badge { Text("${savedSearches.size}") }
-                                    }
-                                }
+                                TabLabel(
+                                    label = stringResource(R.string.favorites_tab_searches),
+                                    count = savedSearches.size,
+                                )
                             },
-                            icon = { Icon(Icons.Default.Search, contentDescription = null) }
                         )
                     }
 
-                    // Content
                     when {
-                        isLoading -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                        errorMessage != null -> {
-                            ErrorContent(
-                                message = errorMessage!!,
-                                onRetry = {
-                                    scope.launch {
-                                        isLoading = true
-                                        errorMessage = null
-                                        favoritesRepository
-                                            .getFavorites()
-                                            .fold(
-                                                onSuccess = { response ->
-                                                    favorites = response.favorites
-                                                },
-                                                onFailure = { error ->
-                                                    errorMessage = error.message
-                                                }
-                                            )
-                                        isLoading = false
-                                    }
+                        isLoading -> LoadingBox()
+                        errorMessage != null -> ErrorContent(
+                            message = errorMessage!!,
+                            onRetry = {
+                                scope.launch {
+                                    isLoading = true
+                                    errorMessage = null
+                                    favoritesRepository.getFavorites().fold(
+                                        onSuccess = { favorites = it.favorites },
+                                        onFailure = { errorMessage = it.message },
+                                    )
+                                    isLoading = false
                                 }
-                            )
-                        }
+                            },
+                        )
                         selectedTab == 0 -> {
-                            FavoritesList(
-                                favorites = favorites,
+                            val filtered = remember(favorites, transactionFilter, sortMode) {
+                                applyFilterAndSort(favorites, transactionFilter, sortMode)
+                            }
+                            PropertyTabContent(
+                                items = filtered,
+                                transactionFilter = transactionFilter,
+                                onFilterChange = { transactionFilter = it },
+                                sortMode = sortMode,
+                                onSortChange = { sortMode = it },
                                 onListingClick = onListingClick,
                                 onRemoveFavorite = { listingId ->
                                     scope.launch {
-                                        favoritesRepository
-                                            .removeFavorite(listingId)
-                                            .fold(
-                                                onSuccess = {
-                                                    favorites =
-                                                        favorites.filter {
-                                                            it.listingId != listingId
-                                                        }
-                                                },
-                                                onFailure = { error ->
-                                                    Log.e(TAG, "Failed to remove favorite", error)
-                                                    errorMessage = error.message
-                                                }
-                                            )
+                                        favoritesRepository.removeFavorite(listingId).fold(
+                                            onSuccess = {
+                                                favorites = favorites.filter { it.listingId != listingId }
+                                            },
+                                            onFailure = {
+                                                Log.e(TAG, "Failed to remove favorite", it)
+                                                errorMessage = it.message
+                                            },
+                                        )
                                     }
-                                }
+                                },
                             )
                         }
                         selectedTab == 1 -> {
-                            SavedSearchesList(
+                            SavedSearchesTabContent(
                                 searches = savedSearches,
-                                onSearchClick = { /* Navigate to search with filters */},
-                                onToggleAlert = { searchId, enabled ->
+                                onSearchClick = { /* Navigate to search with filters */ },
+                                onToggleAlert = { id, enabled ->
                                     scope.launch {
-                                        favoritesRepository
-                                            .toggleSearchAlert(searchId, enabled)
-                                            .fold(
-                                                onSuccess = { updated ->
-                                                    savedSearches =
-                                                        savedSearches.map {
-                                                            if (it.id == searchId) updated else it
-                                                        }
-                                                },
-                                                onFailure = { error ->
-                                                    Log.e(TAG, "Failed to toggle alert", error)
-                                                    errorMessage = error.message
+                                        favoritesRepository.toggleSearchAlert(id, enabled).fold(
+                                            onSuccess = { updated ->
+                                                savedSearches = savedSearches.map {
+                                                    if (it.id == id) updated else it
                                                 }
-                                            )
+                                            },
+                                            onFailure = { errorMessage = it.message },
+                                        )
                                     }
                                 },
-                                onDeleteSearch = { searchId ->
+                                onDeleteSearch = { id ->
                                     scope.launch {
-                                        favoritesRepository
-                                            .deleteSavedSearch(searchId)
-                                            .fold(
-                                                onSuccess = {
-                                                    savedSearches =
-                                                        savedSearches.filter { it.id != searchId }
-                                                },
-                                                onFailure = { error ->
-                                                    Log.e(
-                                                        TAG,
-                                                        "Failed to delete saved search",
-                                                        error
-                                                    )
-                                                    errorMessage = error.message
-                                                }
-                                            )
+                                        favoritesRepository.deleteSavedSearch(id).fold(
+                                            onSuccess = {
+                                                savedSearches = savedSearches.filter { it.id != id }
+                                            },
+                                            onFailure = { errorMessage = it.message },
+                                        )
                                     }
-                                }
+                                },
                             )
                         }
                     }
@@ -253,55 +232,224 @@ fun FavoritesScreen(
     }
 }
 
+private enum class TransactionFilter { ALL, SALE, RENT }
+private enum class SortMode { NEWEST, PRICE_ASC, PRICE_DESC }
+
+private fun applyFilterAndSort(
+    favorites: List<FavoriteEntry>,
+    filter: TransactionFilter,
+    sort: SortMode,
+): List<FavoriteEntry> {
+    val filtered = when (filter) {
+        TransactionFilter.ALL -> favorites
+        TransactionFilter.SALE -> favorites.filter {
+            it.listing?.type?.name?.equals("SALE", ignoreCase = true) == true
+        }
+        TransactionFilter.RENT -> favorites.filter {
+            it.listing?.type?.name?.equals("RENT", ignoreCase = true) == true
+        }
+    }
+    return when (sort) {
+        SortMode.NEWEST -> filtered.sortedByDescending { it.listing?.createdAt }
+        SortMode.PRICE_ASC -> filtered.sortedBy { it.listing?.price ?: Long.MAX_VALUE }
+        SortMode.PRICE_DESC -> filtered.sortedByDescending { it.listing?.price ?: 0L }
+    }
+}
+
+// ─── Header ─────────────────────────────────────────────────────────────────
+
 @Composable
-private fun NotSignedInContent(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+private fun FavoritesHeader(favoriteCount: Int, savedSearchCount: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            Icons.Default.FavoriteBorder,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.favorites_sign_in_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.favorites_sign_in_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.tab_favorites),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = stringResource(
+                    R.string.favorites_summary,
+                    favoriteCount,
+                    savedSearchCount,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = { /* share */ }) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = stringResource(R.string.cd_share),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        IconButton(onClick = { /* export */ }) {
+            Icon(
+                imageVector = Icons.Default.FileDownload,
+                contentDescription = stringResource(R.string.cd_export),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 
 @Composable
-private fun FavoritesList(
-    favorites: List<FavoriteEntry>,
+private fun TabLabel(label: String, count: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(text = label)
+        if (count > 0) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Badge { Text(count.toString()) }
+        }
+    }
+}
+
+// ─── Property tab content ───────────────────────────────────────────────────
+
+@Composable
+private fun PropertyTabContent(
+    items: List<FavoriteEntry>,
+    transactionFilter: TransactionFilter,
+    onFilterChange: (TransactionFilter) -> Unit,
+    sortMode: SortMode,
+    onSortChange: (SortMode) -> Unit,
     onListingClick: (String) -> Unit,
-    onRemoveFavorite: (String) -> Unit
+    onRemoveFavorite: (String) -> Unit,
 ) {
-    if (favorites.isEmpty()) {
-        EmptyFavorites()
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(favorites, key = { it.id }) { favorite ->
-                favorite.listing?.let { listing ->
-                    ListingCard(
-                        listing = listing,
-                        onClick = { onListingClick(favorite.listingId) },
-                        showFavoriteButton = true,
-                        isFavorite = true,
-                        onFavoriteClick = { onRemoveFavorite(favorite.listingId) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        FilterChipStrip(selected = transactionFilter, onSelect = onFilterChange)
+        Spacer(modifier = Modifier.height(8.dp))
+        SortSegmentedControl(
+            selected = sortMode,
+            onSelect = onSortChange,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (items.isEmpty()) {
+            EmptyFavorites()
+        } else {
+            Box(modifier = Modifier.weight(1f)) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(items, key = { it.id }) { fav ->
+                        fav.listing?.let { listing ->
+                            FavoritePropertyCard(
+                                listing = listing,
+                                onClick = { onListingClick(fav.listingId) },
+                                onRemoveFavorite = { onRemoveFavorite(fav.listingId) },
+                            )
+                        }
+                    }
+                }
+
+                // FAB — "Create list"
+                ExtendedFloatingActionButton(
+                    onClick = { /* create list */ },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                        )
+                    },
+                    text = { Text(text = stringResource(R.string.favorites_create_list)) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterChipStrip(
+    selected: TransactionFilter,
+    onSelect: (TransactionFilter) -> Unit,
+) {
+    val chips = listOf(
+        TransactionFilter.ALL to R.string.favorites_filter_all,
+        TransactionFilter.SALE to R.string.filter_sale,
+        TransactionFilter.RENT to R.string.filter_rent,
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        chips.forEach { (filter, labelRes) ->
+            val isOn = filter == selected
+            Surface(
+                onClick = { onSelect(filter) },
+                shape = RoundedCornerShape(8.dp),
+                color = if (isOn) MaterialTheme.colorScheme.primaryContainer
+                else Color.Transparent,
+                border = if (isOn) null
+                else androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline,
+                ),
+            ) {
+                Text(
+                    text = stringResource(labelRes),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isOn) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SortSegmentedControl(
+    selected: SortMode,
+    onSelect: (SortMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val items = listOf(
+        SortMode.NEWEST to R.string.sort_newest,
+        SortMode.PRICE_ASC to R.string.sort_price_asc_short,
+        SortMode.PRICE_DESC to R.string.sort_price_desc_short,
+    )
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(modifier = Modifier.padding(3.dp)) {
+            items.forEach { (mode, labelRes) ->
+                val isOn = mode == selected
+                Surface(
+                    onClick = { onSelect(mode) },
+                    shape = RoundedCornerShape(999.dp),
+                    color = if (isOn) MaterialTheme.colorScheme.surface else Color.Transparent,
+                    shadowElevation = if (isOn) 1.dp else 0.dp,
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isOn) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -310,55 +458,111 @@ private fun FavoritesList(
 }
 
 @Composable
-private fun EmptyFavorites() {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+private fun FavoritePropertyCard(
+    listing: ListingSummary,
+    onClick: () -> Unit,
+    onRemoveFavorite: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Icon(
-            Icons.Default.FavoriteBorder,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.empty_favorites),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.favorites_empty_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4f / 3f),
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(listing.primaryImage?.url ?: "")
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = listing.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+                // Heart pill (top-right) — white pill, red filled heart
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.92f))
+                        .clickable(onClick = onRemoveFavorite),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = stringResource(R.string.cd_remove_favorite),
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+            Column(modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 10.dp)) {
+                Text(
+                    text = FormatUtils.formatPrice(listing.price, listing.currency),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = listing.title,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = listingMeta(listing),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
+private fun listingMeta(listing: ListingSummary): String {
+    val parts = buildList {
+        listing.areaSqm?.toInt()?.let { add("$it m²") }
+        listing.rooms?.let { add("$it+1") }
+    }
+    return parts.joinToString(" · ").ifEmpty { listing.address.city }
+}
+
+// ─── Saved searches tab (preserved from previous implementation) ──────────────
+
 @Composable
-private fun SavedSearchesList(
+private fun SavedSearchesTabContent(
     searches: List<SavedSearch>,
     onSearchClick: (SavedSearch) -> Unit,
     onToggleAlert: (String, Boolean) -> Unit,
-    onDeleteSearch: (String) -> Unit
+    onDeleteSearch: (String) -> Unit,
 ) {
     if (searches.isEmpty()) {
         EmptySavedSearches()
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(searches, key = { it.id }) { search ->
-                SavedSearchCard(
-                    search = search,
-                    onClick = { onSearchClick(search) },
-                    onToggleAlert = { onToggleAlert(search.id, !search.alertEnabled) },
-                    onDelete = { onDeleteSearch(search.id) }
-                )
-            }
+        return
+    }
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(searches, key = { it.id }) { search ->
+            SavedSearchCard(
+                search = search,
+                onClick = { onSearchClick(search) },
+                onToggleAlert = { onToggleAlert(search.id, !search.alertEnabled) },
+                onDelete = { onDeleteSearch(search.id) },
+            )
         }
     }
 }
@@ -368,59 +572,59 @@ private fun SavedSearchCard(
     search: SavedSearch,
     onClick: () -> Unit,
     onToggleAlert: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = search.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     if (search.newCount > 0) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                            Text(stringResource(R.string.saved_search_new_count, search.newCount))
+                            Text(
+                                stringResource(
+                                    R.string.saved_search_new_count,
+                                    search.newCount,
+                                )
+                            )
                         }
                     }
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
-
-                // Build filter description
                 val filterParts = mutableListOf<String>()
                 search.filters?.let { filters ->
                     filters.type?.let { filterParts.add(it) }
                     filters.category?.let { filterParts.add(it) }
                     filters.city?.let { filterParts.add(it) }
                     if (filters.minPrice != null || filters.maxPrice != null) {
-                        val priceRange = buildString {
-                            append("€")
-                            append(filters.minPrice?.toString() ?: "0")
-                            append(" - €")
-                            append(filters.maxPrice?.toString() ?: "∞")
-                        }
-                        filterParts.add(priceRange)
+                        filterParts.add(
+                            "€${filters.minPrice ?: 0} – €${filters.maxPrice ?: "∞"}"
+                        )
                     }
                 }
-
                 if (filterParts.isNotEmpty()) {
                     Text(
                         text = filterParts.joinToString(" • "),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-
-            // Alert toggle
             IconButton(onClick = onToggleAlert) {
                 Icon(
                     if (search.alertEnabled) Icons.Default.Notifications
@@ -431,16 +635,14 @@ private fun SavedSearchCard(
                         else stringResource(R.string.saved_search_enable_alerts),
                     tint =
                         if (search.alertEnabled) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
-            // Delete button
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = stringResource(R.string.delete),
-                    tint = MaterialTheme.colorScheme.error
+                    tint = MaterialTheme.colorScheme.error,
                 )
             }
         }
@@ -457,19 +659,74 @@ private fun SavedSearchCard(
                         onDelete()
                         showDeleteDialog = false
                     },
-                    colors =
-                        ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
+        )
+    }
+}
+
+// ─── Shared state views ─────────────────────────────────────────────────────
+
+@Composable
+private fun NotSignedInContent() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            Icons.Default.FavoriteBorder,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.favorites_sign_in_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.favorites_sign_in_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun EmptyFavorites() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            Icons.Default.FavoriteBorder,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.empty_favorites),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.favorites_empty_description),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -479,26 +736,33 @@ private fun EmptySavedSearches() {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.SearchOff,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.saved_searches_empty_title),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.saved_searches_empty_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun LoadingBox() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
     }
 }
 
@@ -507,19 +771,19 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             Icons.Default.Error,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }

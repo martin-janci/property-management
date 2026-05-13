@@ -1,38 +1,76 @@
 package three.two.bit.ppt.reality.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Apartment
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Domain
+import androidx.compose.material.icons.filled.Forest
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.House
+import androidx.compose.material.icons.filled.Landscape
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.auth.AuthState
 import three.two.bit.ppt.reality.auth.SsoService
 import three.two.bit.ppt.reality.listing.*
-import three.two.bit.ppt.reality.ui.search.ListingCard
 import three.two.bit.ppt.reality.ui.theme.BadgeColors
+import three.two.bit.ppt.reality.ui.theme.Brand500
+import three.two.bit.ppt.reality.ui.theme.Brand800
 import three.two.bit.ppt.reality.util.FormatUtils
 
 /**
- * Home screen for Reality Portal mobile app.
+ * Home screen — KMP / Compose M3 redesign matching the design bundle
+ * (`guest-registration-v2-design-system/project/ui_kits/mobile-native/screens.jsx`
+ *  → `KmpHomeScreen`).
  *
- * Epic 48 - Story 48.1: Portal Mobile Search
+ * Layout (top → bottom):
+ *   1. Custom top bar (logo wordmark, notification bell with red dot,
+ *      avatar circle showing user initials).
+ *   2. Hero card — blue gradient (Brand800 → Brand500) with location,
+ *      search trigger, transaction-type pills.
+ *   3. Featured listings horizontal carousel (260dp cards).
+ *   4. 3-col category grid (6 categories).
+ *   5. Recently viewed vertical list (64dp thumbnails).
+ *
+ * Bottom nav lives in `Navigation.kt`; this composable owns the scrollable
+ * body and leaves room for it via `contentPadding`.
+ *
+ * Screen-map: reality/home — see docs/screens/reality/home.md.
+ *
+ * Epic 48, Story 48.1 — Portal Mobile Search.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +81,7 @@ fun HomeScreen(
     onListingClick: (String) -> Unit,
     onFavoritesClick: () -> Unit,
     onAccountClick: () -> Unit,
-    onInquiriesClick: () -> Unit
+    onInquiriesClick: () -> Unit,
 ) {
     val authState by ssoService.authState.collectAsState()
 
@@ -52,163 +90,247 @@ fun HomeScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Load data on mount
     LaunchedEffect(Unit) {
         isLoading = true
-
-        // Load featured listings
         repository
             .getFeaturedListings()
             .fold(
                 onSuccess = { response -> featuredListings = response.listings },
-                onFailure = { error -> errorMessage = error.message }
+                onFailure = { error -> errorMessage = error.message },
             )
-
-        // Load recent listings
         repository
             .getRecentListings(limit = 10)
             .fold(
                 onSuccess = { response -> recentListings = response.listings },
-                onFailure = { error -> errorMessage = error.message }
+                onFailure = { error -> errorMessage = error.message },
             )
-
         isLoading = false
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
-                    when (authState) {
-                        is AuthState.Authenticated -> {
-                            IconButton(onClick = onInquiriesClick) {
-                                Icon(
-                                    Icons.Default.Email,
-                                    contentDescription = stringResource(R.string.cd_inquiries)
-                                )
-                            }
-                            IconButton(onClick = onFavoritesClick) {
-                                Icon(
-                                    Icons.Default.Favorite,
-                                    contentDescription = stringResource(R.string.cd_favorites)
-                                )
-                            }
-                            IconButton(onClick = onAccountClick) {
-                                Icon(
-                                    Icons.Default.AccountCircle,
-                                    contentDescription = stringResource(R.string.cd_account)
-                                )
-                            }
-                        }
-                        else -> {
-                            TextButton(onClick = onAccountClick) {
-                                Text(stringResource(R.string.sign_in))
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            // Search bar
-            item { SearchBar(onClick = onSearchClick) }
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+            item {
+                HomeTopBar(
+                    authState = authState,
+                    onBellClick = onInquiriesClick,
+                    onAvatarClick = onAccountClick,
+                )
+            }
 
-            // Quick filters
-            item { QuickFilters(onFilterClick = { /* Navigate to search with filter */}) }
-
-            // Loading or Error state
-            if (isLoading) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
+            item {
+                HeroCard(
+                    onSearchClick = onSearchClick,
+                    onTabClick = onSearchClick,
+                )
             }
 
             errorMessage?.let { error ->
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        colors =
-                            CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Error,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = error, color = MaterialTheme.colorScheme.onErrorContainer)
-                        }
-                    }
-                }
+                item { ErrorCard(error) }
             }
 
-            // Featured listings section
+            // Featured carousel — only renders when we have data. The
+            // hero already gives the user a visible affordance while
+            // featured loads, so a separate skeleton isn't needed here.
             if (featuredListings.isNotEmpty()) {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.featured_properties),
-                        onSeeAllClick = onSearchClick
-                    )
-                }
-
-                item {
-                    FeaturedListingsRow(
-                        listings = featuredListings,
-                        onListingClick = onListingClick
-                    )
-                }
+                item { SectionHeader(stringResource(R.string.featured_properties), onSearchClick) }
+                item { FeaturedRow(featuredListings, onListingClick) }
+            } else if (isLoading) {
+                item { FeaturedSkeleton() }
             }
 
-            // Recent listings section
+            item { SectionHeader(stringResource(R.string.categories), onSearchClick) }
+            item { CategoryGrid(onCategoryClick = { onSearchClick() }) }
+
             if (recentListings.isNotEmpty()) {
                 item {
-                    SectionHeader(
-                        title = stringResource(R.string.recently_added),
-                        onSeeAllClick = onSearchClick
-                    )
+                    SectionHeader(stringResource(R.string.recently_added), onSearchClick)
                 }
-
                 items(recentListings.take(5)) { listing ->
-                    ListingCard(
-                        listing = listing,
-                        onClick = { onListingClick(listing.id) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    RecentRow(listing = listing, onClick = { onListingClick(listing.id) })
+                }
+            }
+        }
+    }
+}
+
+// ─── Top bar ──────────────────────────────────────────────────────────────────
+//
+// Custom top bar (not Material's TopAppBar) because the design needs a
+// notification bell with a red dot + an avatar circle showing initials,
+// and the avatar's primaryContainer fill is hard to get right inside
+// TopAppBar's predefined action slot.
+
+@Composable
+private fun HomeTopBar(
+    authState: AuthState,
+    onBellClick: () -> Unit,
+    onAvatarClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onBellClick) {
+            Box {
+                Icon(
+                    imageVector = Icons.Default.NotificationsNone,
+                    contentDescription = stringResource(R.string.cd_notifications),
+                )
+                // Red unread-dot — design uses a 8dp circle with a
+                // background-matching ring to look like a notification badge.
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-2).dp, y = 2.dp)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.background),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.error),
                     )
                 }
             }
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        val initials = remember(authState) {
+            (authState as? AuthState.Authenticated)?.user?.let { user ->
+                user.name?.let { name ->
+                    name.split(" ").take(2).mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("")
+                } ?: user.email.take(2).uppercase()
+            } ?: "?"
+        }
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable(onClick = onAvatarClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = initials.ifEmpty { "?" },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
 
-            // View all button
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    contentAlignment = Alignment.Center
+// ─── Hero card ────────────────────────────────────────────────────────────────
+//
+// The hero uses the design system's only gradient: Brand800 → Brand500 at
+// 135°. The search field is a white pill on top of the gradient; the
+// three transaction-type chips use rgba(255,255,255,0.18) background per
+// the design (translucent white on blue) — implemented as Color.White
+// with 18% alpha to match.
+
+@Composable
+private fun HeroCard(
+    onSearchClick: () -> Unit,
+    onTabClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .drawBehind {
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(Brand800, Brand500),
+                        start = Offset(0f, 0f),
+                        end = Offset(size.width, size.height),
+                    ),
+                )
+            }
+            .padding(18.dp),
+    ) {
+        Column {
+            Text(
+                text = stringResource(R.string.home_hero_welcome),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.85f),
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Bratislava · Ružinov",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            // Search trigger — white pill, accepts tap to navigate to /search.
+            Surface(
+                onClick = onSearchClick,
+                shape = RoundedCornerShape(28.dp),
+                color = Color.White.copy(alpha = 0.95f),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Button(onClick = onSearchClick) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.view_all_properties))
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = stringResource(R.string.home_hero_search_placeholder),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    R.string.home_hero_tab_sale,
+                    R.string.home_hero_tab_rent,
+                    R.string.home_hero_tab_new,
+                ).forEach { labelRes ->
+                    Surface(
+                        onClick = onTabClick,
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color.White.copy(alpha = 0.18f),
+                    ) {
+                        Text(
+                            text = stringResource(labelRes),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        )
                     }
                 }
             }
@@ -216,220 +338,322 @@ fun HomeScreen(
     }
 }
 
-@Composable
-private fun SearchBar(onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp).clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = stringResource(R.string.search_properties),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickFilters(onFilterClick: (String) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            QuickFilterChip(
-                label = stringResource(R.string.filter_for_sale),
-                icon = Icons.Default.Sell,
-                onClick = { onFilterClick("sale") }
-            )
-        }
-        item {
-            QuickFilterChip(
-                label = stringResource(R.string.filter_for_rent),
-                icon = Icons.Default.Home,
-                onClick = { onFilterClick("rent") }
-            )
-        }
-        item {
-            QuickFilterChip(
-                label = stringResource(R.string.filter_apartments),
-                icon = Icons.Default.Apartment,
-                onClick = { onFilterClick("apartment") }
-            )
-        }
-        item {
-            QuickFilterChip(
-                label = stringResource(R.string.filter_houses),
-                icon = Icons.Default.House,
-                onClick = { onFilterClick("house") }
-            )
-        }
-        item {
-            QuickFilterChip(
-                label = stringResource(R.string.filter_land),
-                icon = Icons.Default.Landscape,
-                onClick = { onFilterClick("land") }
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickFilterChip(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit
-) {
-    ElevatedFilterChip(
-        selected = false,
-        onClick = onClick,
-        label = { Text(label) },
-        leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp)) }
-    )
-}
+// ─── Section header ───────────────────────────────────────────────────────────
 
 @Composable
 private fun SectionHeader(title: String, onSeeAllClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(top = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        TextButton(onClick = onSeeAllClick) {
-            Text(stringResource(R.string.see_all))
+        TextButton(onClick = onSeeAllClick, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            Text(
+                text = stringResource(R.string.see_all),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium,
+            )
             Icon(
-                Icons.Default.ChevronRight,
+                imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.primary,
             )
         }
     }
 }
 
+// ─── Featured row ─────────────────────────────────────────────────────────────
+
 @Composable
-private fun FeaturedListingsRow(listings: List<ListingSummary>, onListingClick: (String) -> Unit) {
+private fun FeaturedRow(listings: List<ListingSummary>, onListingClick: (String) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(listings) { listing ->
-            FeaturedListingCard(listing = listing, onClick = { onListingClick(listing.id) })
+            FeaturedCard(listing = listing, onClick = { onListingClick(listing.id) })
         }
     }
 }
 
 @Composable
-private fun FeaturedListingCard(listing: ListingSummary, onClick: () -> Unit) {
+private fun FeaturedCard(listing: ListingSummary, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(280.dp).clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        modifier = Modifier
+            .width(260.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            // Image
-            Box(modifier = Modifier.fillMaxWidth().height(160.dp)) {
+            Box(modifier = Modifier.fillMaxWidth().height(140.dp)) {
                 AsyncImage(
-                    model =
-                        ImageRequest.Builder(LocalContext.current)
-                            .data(listing.primaryImage?.url ?: "")
-                            .crossfade(true)
-                            .build(),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(listing.primaryImage?.url ?: "")
+                        .crossfade(true)
+                        .build(),
                     contentDescription = listing.title,
                     contentScale = ContentScale.Crop,
-                    modifier =
-                        Modifier.fillMaxSize()
-                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 )
-
-                // Featured badge
                 Surface(
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(10.dp),
                     shape = RoundedCornerShape(4.dp),
-                    color = BadgeColors.featuredBg
+                    color = BadgeColors.featuredBg,
                 ) {
                     Text(
-                        text = stringResource(R.string.label_featured),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = BadgeColors.featuredInk
+                        text = stringResource(R.string.label_featured).uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.04.sp,
+                        ),
+                        color = BadgeColors.featuredInk,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                     )
                 }
             }
-
-            // Content
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = formatPrice(listing.price, listing.currency),
-                    style = MaterialTheme.typography.titleLarge,
+                    text = FormatUtils.formatPrice(listing.price, listing.currency),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = listing.title,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
-
                 Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${listing.address.city}${meta(listing)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+private fun meta(listing: ListingSummary): String {
+    val parts = buildList {
+        listing.rooms?.let { add("${it} izby") }
+        listing.areaSqm?.toInt()?.let { add("$it m²") }
+    }
+    return if (parts.isEmpty()) "" else " · " + parts.joinToString(" · ")
+}
+
+@Composable
+private fun FeaturedSkeleton() {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(3) {
+            Card(
+                modifier = Modifier.width(260.dp).height(240.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+                content = {},
+            )
+        }
+    }
+}
+
+// ─── Category grid ────────────────────────────────────────────────────────────
+//
+// Six categories in a 3×2 grid. Each cell has a 44dp rounded-square icon
+// tile in a tinted background, then the category name + listing count.
+// Backgrounds use Brand100 / Warning / Success / Violet / Cyan / Danger
+// pastel tints — these are the design system's "soft accent" colors and
+// pair correctly across themes via the theme's surfaceContainer/light
+// tokens. See AppColors.kt.
+
+private data class HomeCategory(
+    val labelRes: Int,
+    val icon: ImageVector,
+    val iconTint: Color,
+    val iconBg: Color,
+    val countPlaceholder: Int,
+)
+
+private val CATEGORIES: List<HomeCategory> = listOf(
+    HomeCategory(R.string.cat_apartments, Icons.Default.Apartment, Color(0xFF1E40AF), Color(0xFFDBEAFE), 842),
+    HomeCategory(R.string.cat_houses, Icons.Default.House, Color(0xFF92400E), Color(0xFFFEF3C7), 212),
+    HomeCategory(R.string.cat_commercial, Icons.Default.Domain, Color(0xFF065F46), Color(0xFFD1FAE5), 128),
+    HomeCategory(R.string.cat_land, Icons.Default.Landscape, Color(0xFF5B21B6), Color(0xFFEDE9FE), 64),
+    HomeCategory(R.string.cat_recreation, Icons.Default.Forest, Color(0xFF155E75), Color(0xFFCFFAFE), 42),
+    HomeCategory(R.string.cat_parking, Icons.Default.DirectionsCar, Color(0xFF991B1B), Color(0xFFFEE2E2), 28),
+)
+
+@Composable
+private fun CategoryGrid(onCategoryClick: (Int) -> Unit) {
+    // LazyVerticalGrid can't be nested inside LazyColumn so we use a
+    // fixed-height non-lazy alternative: two Rows of three Cards each.
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        CATEGORIES.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                row.forEach { cat ->
+                    CategoryCard(
+                        category = cat,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onCategoryClick(cat.labelRes) },
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${listing.address.city}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Property details
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    listing.areaSqm?.let { area ->
-                        Text(
-                            text = "${area.toInt()} ${stringResource(R.string.sqm)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    listing.rooms?.let { rooms ->
-                        Text(
-                            text = stringResource(R.string.rooms_count, rooms),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
         }
     }
 }
 
-private fun formatPrice(price: Long, currency: String): String {
-    return FormatUtils.formatPrice(price, currency)
+@Composable
+private fun CategoryCard(
+    category: HomeCategory,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 14.dp, horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(category.iconBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = category.icon,
+                    contentDescription = null,
+                    tint = category.iconTint,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(category.labelRes),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = category.countPlaceholder.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ─── Recent row ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(listing.primaryImage?.url ?: "")
+                    .crossfade(true)
+                    .build(),
+                contentDescription = listing.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = FormatUtils.formatPrice(listing.price, listing.currency),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = listing.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "${listing.address.city}${meta(listing)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ─── Error card ───────────────────────────────────────────────────────────────
+
+@Composable
+private fun ErrorCard(message: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onErrorContainer,
+        )
+    }
 }
