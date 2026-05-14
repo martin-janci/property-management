@@ -399,8 +399,15 @@ async fn main() -> anyhow::Result<()> {
         .context("DB migration failed")?;
     tracing::info!("Database migrations applied (or already current)");
 
+    // Phase 1: Build the host-resolution config + shared tenant-resolution
+    // cache ONCE, then clone the `Arc` into both the middleware config and the
+    // AppState (the field name `tenant_resolution_cache` is a contract with
+    // platform-admin handlers that invalidate cache entries).
+    let host_tenant_config = api_core::middleware::HostTenantConfig::new(db.clone());
+    let tenant_resolution_cache = host_tenant_config.cache.clone();
+
     // Create application state
-    let state = AppState::new(db);
+    let state = AppState::new(db, tenant_resolution_cache);
 
     // Build router with state
     let app = Router::new()
@@ -484,7 +491,16 @@ async fn main() -> anyhow::Result<()> {
                 .allow_credentials(true)
                 // Cache preflight response for 1 hour
                 .max_age(std::time::Duration::from_secs(3600)),
-        );
+        )
+        // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
+        // on the request pipeline (layers execute outside-in), inspecting the
+        // Host header to inject a `ResolvedTenant` extension before any
+        // handler/extractor runs. Public-allowlist paths (`/health`, etc.)
+        // bypass resolution; unknown hosts fail closed with 404.
+        .layer(axum::middleware::from_fn_with_state(
+            host_tenant_config.clone(),
+            api_core::middleware::host_tenant_middleware,
+        ));
 
     // Run server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8081));
