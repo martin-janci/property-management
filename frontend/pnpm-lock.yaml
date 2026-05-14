@@ -62,8 +62,8 @@ importers:
         specifier: ^55.0.13
         version: 55.0.13(expo@55.0.23)(react@19.2.0)
       expo-location:
-        specifier: ~55.1.9
-        version: 55.1.9(expo@55.0.23)(typescript@5.9.3)
+        specifier: ~55.1.10
+        version: 55.1.10(expo@55.0.23)(typescript@5.9.3)
       expo-notifications:
         specifier: ~55.0.22
         version: 55.0.22(expo@55.0.23)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
@@ -5353,8 +5353,8 @@ packages:
       rtl-detect: 1.1.2
     dev: false
 
-  /expo-location@55.1.9(expo@55.0.23)(typescript@5.9.3):
-    resolution: {integrity: sha512-PIH9/qeyhtGh190FyIJNZYHXZOoi42SbVHY9IoTMBmqWLHf1BJyGhPpFlaLBSCjxObqfVZmrWsN5dtjueSwYQA==}
+  /expo-location@55.1.10(expo@55.0.23)(typescript@5.9.3):
+    resolution: {integrity: sha512-MkcFucsZ567Bn8ChElVTYVbOs2QXn27IKaBrVKogw7ZcbooImdj3L/UR6E7s3LkgF33YubKynAp9Opvixdwl7g==}
     peerDependencies:
       expo: '*'
     dependencies:
