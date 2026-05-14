@@ -46,6 +46,7 @@ fun LoginScreen(
     onSubmit: suspend (email: String, password: String) -> Result<Unit>,
     onForgotPasswordClick: () -> Unit,
     onRegisterClick: () -> Unit,
+    onLoginSuccess: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -149,10 +150,14 @@ fun LoginScreen(
                         scope.launch {
                             val result = onSubmit(email.trim(), password)
                             isSubmitting = false
-                            result.onFailure {
-                                generalError =
-                                    if (it.isNetworkError()) networkErrorMsg else signInFailedMsg
-                            }
+                            result.fold(
+                                onSuccess = { onLoginSuccess() },
+                                onFailure = {
+                                    generalError =
+                                        if (it.isNetworkError()) networkErrorMsg
+                                        else signInFailedMsg
+                                },
+                            )
                         }
                     },
                     enabled = !isSubmitting,
