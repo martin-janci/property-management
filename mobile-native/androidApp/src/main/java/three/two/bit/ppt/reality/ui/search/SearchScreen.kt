@@ -37,6 +37,7 @@ import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.listing.*
 import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Search / Listings screen — KMP / Compose M3 redesign matching the design bundle
@@ -96,6 +97,9 @@ fun SearchScreen(
     var minRooms by remember { mutableStateOf<Int?>(null) }
     var selectedSort by remember { mutableStateOf(ListingSortOption.NEWEST) }
 
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val searchFailedMsg = stringResource(R.string.error_generic)
+
     fun performSearch(page: Int = 1) {
         scope.launch {
             isLoading = true
@@ -126,7 +130,9 @@ fun SearchScreen(
                         totalResults = response.total
                         currentPage = page
                     },
-                    onFailure = { errorMessage = it.message ?: "Search failed" },
+                    onFailure = {
+                        errorMessage = if (it.isNetworkError()) networkErrorMsg else searchFailedMsg
+                    },
                 )
             isLoading = false
         }

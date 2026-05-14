@@ -35,6 +35,7 @@ import three.two.bit.ppt.reality.ui.auth.SuccessBanner
 import three.two.bit.ppt.reality.ui.auth.rememberAuthScope
 import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Edit-profile screen — KMP / Compose M3 redesign matching the design (`KmpEditProfileScreen`).
@@ -72,6 +73,8 @@ fun ProfileEditScreen(
     var savedMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val saveFailedMsg = stringResource(R.string.error_generic)
     val scope = rememberAuthScope()
 
     Scaffold(
@@ -116,7 +119,8 @@ fun ProfileEditScreen(
                             result.fold(
                                 onSuccess = { savedMessage = "Profile updated." },
                                 onFailure = {
-                                    generalError = it.message ?: "Could not save profile."
+                                    generalError =
+                                        if (it.isNetworkError()) networkErrorMsg else saveFailedMsg
                                 },
                             )
                         }
