@@ -75,6 +75,7 @@ fun InquiriesScreen(
     ssoService: SsoService,
     onListingClick: (String) -> Unit,
     onBackClick: () -> Unit,
+    onSignInClick: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
@@ -120,7 +121,7 @@ fun InquiriesScreen(
     ) {
         when (authState) {
             is AuthState.Unauthenticated,
-            is AuthState.Error -> NotSignedInContent()
+            is AuthState.Error -> NotSignedInContent(onSignInClick = onSignInClick)
             is AuthState.Loading ->
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -654,7 +655,7 @@ private fun ViewingStatusPill(status: ViewingStatus) {
 // ─── Empty / error / unauth states ──────────────────────────────────────────
 
 @Composable
-private fun NotSignedInContent() {
+private fun NotSignedInContent(onSignInClick: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -678,6 +679,14 @@ private fun NotSignedInContent() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onSignInClick,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.sign_in))
+        }
     }
 }
 

@@ -67,7 +67,14 @@ private const val TAG = "AccountScreen"
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () -> Unit) {
+fun AccountScreen(
+    ssoService: SsoService,
+    onBackClick: () -> Unit,
+    onLogout: () -> Unit,
+    onProfileEditClick: () -> Unit = {},
+    onSavedSearchesClick: () -> Unit = {},
+    onSignInClick: () -> Unit = {},
+) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
 
@@ -101,7 +108,7 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
         when (val state = authState) {
             is AuthState.Unauthenticated,
             is AuthState.Error -> {
-                NotSignedInContent(onSignInClick = { /* Open SSO login via PM app */})
+                NotSignedInContent(onSignInClick = onSignInClick)
             }
             is AuthState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -113,10 +120,13 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 100.dp),
                 ) {
-                    item { ProfileTopBar() }
+                    item { ProfileTopBar(onEditProfileClick = onProfileEditClick) }
                     item { ProfileHero(user = state.user) }
                     item { Spacer(modifier = Modifier.height(8.dp)) }
-                    item { StatsRow() }
+                    // Stats counts will come from /me/stats once the endpoint exists.
+                    // Until then we pass nulls — StatCard renders an em-dash to
+                    // signal "unknown" rather than a fake number.
+                    item { StatsRow(favorites = null, searches = null, inquiries = null) }
                     item { Spacer(modifier = Modifier.height(24.dp)) }
                     item {
                         SectionList(
@@ -132,6 +142,7 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
                                 notificationsExpanded = !notificationsExpanded
                             },
                             notificationsExpanded = notificationsExpanded,
+                            onSavedSearchesClick = onSavedSearchesClick,
                         )
                     }
                     if (notificationsExpanded && notificationPrefs != null) {
@@ -200,7 +211,7 @@ fun AccountScreen(ssoService: SsoService, onBackClick: () -> Unit, onLogout: () 
 // ─── Top bar ────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ProfileTopBar() {
+private fun ProfileTopBar(onEditProfileClick: () -> Unit) {
     Row(
         modifier =
             Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
@@ -213,10 +224,10 @@ private fun ProfileTopBar() {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { /* settings */}) {
+        IconButton(onClick = onEditProfileClick) {
             Icon(
-                Icons.Default.Settings,
-                contentDescription = stringResource(R.string.settings),
+                Icons.Default.Edit,
+                contentDescription = stringResource(R.string.edit_profile),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -331,25 +342,25 @@ private fun VerifiedPill() {
 // ─── Stats row ──────────────────────────────────────────────────────────────
 
 @Composable
-private fun StatsRow() {
+private fun StatsRow(favorites: Int?, searches: Int?, inquiries: Int?) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         StatCard(
-            value = "4",
+            value = favorites?.toString() ?: "—",
             label = stringResource(R.string.profile_stat_favorites),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         StatCard(
-            value = "3",
+            value = searches?.toString() ?: "—",
             label = stringResource(R.string.profile_stat_searches),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         StatCard(
-            value = "7",
+            value = inquiries?.toString() ?: "—",
             label = stringResource(R.string.profile_stat_inquiries),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -393,6 +404,7 @@ private fun SectionList(
     notificationsEnabled: Boolean,
     onNotificationsToggle: () -> Unit,
     notificationsExpanded: Boolean,
+    onSavedSearchesClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -406,7 +418,7 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_searches),
                 subtitle = stringResource(R.string.profile_section_searches_sub),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to saved searches */},
+                onClick = onSavedSearchesClick,
             )
             SectionDivider()
             SectionRow(
