@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,6 +70,8 @@ fun SearchScreen(
     repository: ListingRepository,
     onListingClick: (String) -> Unit,
     onBackClick: () -> Unit,
+    initialType: ListingType? = null,
+    initialCategory: PropertyCategory? = null,
 ) {
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -82,11 +83,14 @@ fun SearchScreen(
     var currentPage by remember { mutableStateOf(1) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showFilters by remember { mutableStateOf(false) }
-    var viewMode by remember { mutableStateOf(ViewMode.LIST) }
+    // ViewMode kept as state since list/map switch is wired in many call-sites,
+    // but the segmented toggle is hidden from the UI until a real map view ships.
+    val viewMode = ViewMode.LIST
 
-    // Filter state
-    var selectedType by remember { mutableStateOf<ListingType?>(null) }
-    var selectedCategory by remember { mutableStateOf<PropertyCategory?>(null) }
+    // Filter state. Initial filter values may come from Home (tab/category tap)
+    // — those are read from the route args and seed `selectedType` / `selectedCategory`.
+    var selectedType by remember { mutableStateOf<ListingType?>(initialType) }
+    var selectedCategory by remember { mutableStateOf<PropertyCategory?>(initialCategory) }
     var minPrice by remember { mutableStateOf("") }
     var maxPrice by remember { mutableStateOf("") }
     var minRooms by remember { mutableStateOf<Int?>(null) }
@@ -144,10 +148,8 @@ fun SearchScreen(
             Column(modifier = Modifier.fillMaxSize()) {
                 ListingsTopBar(
                     activeFilterCount = activeFilterCount,
-                    viewMode = viewMode,
                     onBackClick = onBackClick,
                     onFiltersClick = { showFilters = !showFilters },
-                    onViewModeChange = { viewMode = it },
                 )
 
                 // Search input row — single line, inline with chips per design hint
@@ -210,6 +212,10 @@ fun SearchScreen(
                             CircularProgressIndicator()
                         }
                     }
+                    // Suppress the "No results found / try adjusting filters" empty
+                    // state when the search failed — the error banner above already
+                    // explains why; the empty-state copy is misleading in that case.
+                    errorMessage != null && searchResults.isEmpty() -> Unit
                     searchResults.isEmpty() -> EmptySearchResults()
                     viewMode == ViewMode.LIST -> {
                         LazyColumn(
@@ -282,10 +288,8 @@ private enum class ViewMode {
 @Composable
 private fun ListingsTopBar(
     activeFilterCount: Int,
-    viewMode: ViewMode,
     onBackClick: () -> Unit,
     onFiltersClick: () -> Unit,
-    onViewModeChange: (ViewMode) -> Unit,
 ) {
     Row(
         modifier =
@@ -339,26 +343,9 @@ private fun ListingsTopBar(
             }
         }
         Spacer(modifier = Modifier.weight(1f))
-        // View switcher (segmented control)
-        Surface(
-            shape = RoundedCornerShape(999.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-        ) {
-            Row(modifier = Modifier.padding(3.dp)) {
-                SegmentChip(
-                    icon = Icons.AutoMirrored.Filled.ViewList,
-                    label = stringResource(R.string.view_list),
-                    selected = viewMode == ViewMode.LIST,
-                    onClick = { onViewModeChange(ViewMode.LIST) },
-                )
-                SegmentChip(
-                    icon = Icons.Default.Map,
-                    label = stringResource(R.string.view_map),
-                    selected = viewMode == ViewMode.MAP,
-                    onClick = { onViewModeChange(ViewMode.MAP) },
-                )
-            }
-        }
+        // View switcher hidden until a real map view ships — the toggle was a no-op
+        // and read as a broken control. ViewMode state stays so the underlying
+        // branch keeps working once map integration lands.
     }
 }
 

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Domain
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Forest
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Landscape
@@ -74,7 +75,7 @@ import three.two.bit.ppt.reality.util.FormatUtils
 fun HomeScreen(
     repository: ListingRepository,
     ssoService: SsoService,
-    onSearchClick: () -> Unit,
+    onSearchClick: (type: ListingType?, category: PropertyCategory?) -> Unit,
     onListingClick: (String) -> Unit,
     onFavoritesClick: () -> Unit,
     onAccountClick: () -> Unit,
@@ -113,14 +114,15 @@ fun HomeScreen(
                 HomeTopBar(
                     authState = authState,
                     onBellClick = onInquiriesClick,
+                    onFavoritesClick = onFavoritesClick,
                     onAvatarClick = onAccountClick,
                 )
             }
 
             item {
                 HeroCard(
-                    onSearchClick = onSearchClick,
-                    onTabClick = onSearchClick,
+                    onSearchClick = { onSearchClick(null, null) },
+                    onTabClick = { type -> onSearchClick(type, null) },
                 )
             }
 
@@ -130,17 +132,36 @@ fun HomeScreen(
             // hero already gives the user a visible affordance while
             // featured loads, so a separate skeleton isn't needed here.
             if (featuredListings.isNotEmpty()) {
-                item { SectionHeader(stringResource(R.string.featured_properties), onSearchClick) }
+                item {
+                    SectionHeader(
+                        title = stringResource(R.string.featured_properties),
+                        onSeeAllClick = { onSearchClick(null, null) },
+                    )
+                }
                 item { FeaturedRow(featuredListings, onListingClick) }
             } else if (isLoading) {
                 item { FeaturedSkeleton() }
             }
 
-            item { SectionHeader(stringResource(R.string.categories), onSearchClick) }
-            item { CategoryGrid(onCategoryClick = { onSearchClick() }) }
+            item {
+                SectionHeader(
+                    title = stringResource(R.string.categories),
+                    onSeeAllClick = { onSearchClick(null, null) },
+                )
+            }
+            item {
+                CategoryGrid(
+                    onCategoryClick = { category -> onSearchClick(null, category) },
+                )
+            }
 
             if (recentListings.isNotEmpty()) {
-                item { SectionHeader(stringResource(R.string.recently_added), onSearchClick) }
+                item {
+                    SectionHeader(
+                        title = stringResource(R.string.recently_added),
+                        onSeeAllClick = { onSearchClick(null, null) },
+                    )
+                }
                 items(recentListings.take(5)) { listing ->
                     RecentRow(listing = listing, onClick = { onListingClick(listing.id) })
                 }
@@ -160,6 +181,7 @@ fun HomeScreen(
 private fun HomeTopBar(
     authState: AuthState,
     onBellClick: () -> Unit,
+    onFavoritesClick: () -> Unit,
     onAvatarClick: () -> Unit,
 ) {
     Row(
@@ -173,6 +195,13 @@ private fun HomeTopBar(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onFavoritesClick) {
+            Icon(
+                imageVector = Icons.Default.FavoriteBorder,
+                contentDescription = stringResource(R.string.tab_favorites),
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
         IconButton(onClick = onBellClick) {
             Box {
                 Icon(
@@ -241,7 +270,7 @@ private fun HomeTopBar(
 @Composable
 private fun HeroCard(
     onSearchClick: () -> Unit,
-    onTabClick: () -> Unit,
+    onTabClick: (ListingType?) -> Unit,
 ) {
     Box(
         modifier =
@@ -310,14 +339,17 @@ private fun HeroCard(
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // "New builds" maps to no type (it would need a separate filter once
+                // newly-built inventory is tagged in the backend; until then we just
+                // open Search without a type preselect).
                 listOf(
-                        R.string.home_hero_tab_sale,
-                        R.string.home_hero_tab_rent,
-                        R.string.home_hero_tab_new,
+                        R.string.home_hero_tab_sale to ListingType.SALE,
+                        R.string.home_hero_tab_rent to ListingType.RENT,
+                        R.string.home_hero_tab_new to null,
                     )
-                    .forEach { labelRes ->
+                    .forEach { (labelRes, type) ->
                         Surface(
-                            onClick = onTabClick,
+                            onClick = { onTabClick(type) },
                             shape = RoundedCornerShape(999.dp),
                             color = Color.White.copy(alpha = 0.18f),
                         ) {
@@ -501,7 +533,7 @@ private data class HomeCategory(
     val icon: ImageVector,
     val iconTint: Color,
     val iconBg: Color,
-    val countPlaceholder: Int,
+    val category: PropertyCategory?,
 )
 
 private val CATEGORIES: List<HomeCategory> =
@@ -511,47 +543,49 @@ private val CATEGORIES: List<HomeCategory> =
             Icons.Default.Apartment,
             Color(0xFF1E40AF),
             Color(0xFFDBEAFE),
-            842
+            PropertyCategory.APARTMENT,
         ),
         HomeCategory(
             R.string.cat_houses,
             Icons.Default.House,
             Color(0xFF92400E),
             Color(0xFFFEF3C7),
-            212
+            PropertyCategory.HOUSE,
         ),
         HomeCategory(
             R.string.cat_commercial,
             Icons.Default.Domain,
             Color(0xFF065F46),
             Color(0xFFD1FAE5),
-            128
+            PropertyCategory.COMMERCIAL,
         ),
         HomeCategory(
             R.string.cat_land,
             Icons.Default.Landscape,
             Color(0xFF5B21B6),
             Color(0xFFEDE9FE),
-            64
+            PropertyCategory.LAND,
         ),
+        // No PropertyCategory match for "recreation" yet — tapping opens
+        // Search without preselection, same as today.
         HomeCategory(
             R.string.cat_recreation,
             Icons.Default.Forest,
             Color(0xFF155E75),
             Color(0xFFCFFAFE),
-            42
+            null,
         ),
         HomeCategory(
             R.string.cat_parking,
             Icons.Default.DirectionsCar,
             Color(0xFF991B1B),
             Color(0xFFFEE2E2),
-            28
+            PropertyCategory.GARAGE,
         ),
     )
 
 @Composable
-private fun CategoryGrid(onCategoryClick: (Int) -> Unit) {
+private fun CategoryGrid(onCategoryClick: (PropertyCategory?) -> Unit) {
     // LazyVerticalGrid can't be nested inside LazyColumn so we use a
     // fixed-height non-lazy alternative: two Rows of three Cards each.
     Column(
@@ -564,7 +598,7 @@ private fun CategoryGrid(onCategoryClick: (Int) -> Unit) {
                     CategoryCard(
                         category = cat,
                         modifier = Modifier.weight(1f),
-                        onClick = { onCategoryClick(cat.labelRes) },
+                        onClick = { onCategoryClick(cat.category) },
                     )
                 }
             }
@@ -609,12 +643,9 @@ private fun CategoryCard(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = category.countPlaceholder.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            // Per-category listing counts removed — the previous values were
+            // hardcoded placeholders. Re-introduce once a /listings/counts
+            // endpoint exposes real numbers.
         }
     }
 }
