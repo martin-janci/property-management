@@ -747,11 +747,18 @@ pub struct AppState {
     pub health_cache: HealthCheckCache,
     /// SSO token validation cache (Epic 104.2)
     pub token_cache: TokenValidationCache,
+    /// Phase 1: Host-resolution cache shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses, so domain-management handlers
+    /// can invalidate entries (e.g. after a domain is verified).
+    pub tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
 }
 
 impl AppState {
     /// Create a new AppState with database pool.
-    pub fn new(db: DbPool) -> Self {
+    pub fn new(
+        db: DbPool,
+        tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+    ) -> Self {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
@@ -784,6 +791,8 @@ impl AppState {
             pm_api_client,
             health_cache,
             token_cache,
+            // Phase 1: shared host-resolution cache
+            tenant_resolution_cache,
         }
     }
 
@@ -815,6 +824,17 @@ impl AppState {
             return Err(e);
         }
         Ok(conn)
+    }
+}
+
+// Phase 1: Implement TenantMembershipProvider so host-resolution extractors
+// (`HostRlsConnection`) and the tenant extractors can obtain the db pool from
+// this state. Reality-server does NOT do JWT-based membership checks here —
+// the trait only exposes `db_pool()`; `HostRlsConnection` itself performs no
+// membership query (its tenant comes from host resolution, not from a login).
+impl api_core::TenantMembershipProvider for AppState {
+    fn db_pool(&self) -> &DbPool {
+        &self.db
     }
 }
 
