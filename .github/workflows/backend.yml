@@ -46,6 +46,13 @@ jobs:
         working-directory: backend
         run: ./scripts/check-rls-enforcement.sh --strict
 
+      # RLS policy-coverage gate (Phase 0): boots an ephemeral Postgres via
+      # Docker (available on GitHub-hosted runners), applies all migrations,
+      # and fails if any tenant-scoped table lacks a CREATE POLICY.
+      - name: RLS Policy Coverage Check
+        working-directory: backend
+        run: ./scripts/check-rls-coverage.sh --strict
+
       - name: Check
         working-directory: backend
         env:
