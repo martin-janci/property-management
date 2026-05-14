@@ -1,6 +1,7 @@
 //! Repository pattern implementations.
 //! Each repository handles database operations for a specific domain.
 
+pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
 pub mod building;
@@ -66,6 +67,7 @@ pub use workflow::WorkflowRepository;
 // Epic 14: IoT & Smart Building
 pub use sensor::SensorRepository;
 
+pub use agency_domain::AgencyDomainRepository;
 pub use announcement::AnnouncementRepository;
 pub use audit_log::AuditLogRepository;
 pub use building::BuildingRepository;
