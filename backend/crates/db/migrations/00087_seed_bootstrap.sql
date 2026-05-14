@@ -72,7 +72,6 @@ BEGIN
             name,
             status,
             email_verified_at,
-            is_super_admin,
             locale
         )
         VALUES (
@@ -81,7 +80,6 @@ BEGIN
             'System Administrator',
             'active',
             NOW(),
-            TRUE,
             'en'
         )
         RETURNING id INTO v_admin_id;

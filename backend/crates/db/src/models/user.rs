@@ -125,8 +125,6 @@ pub struct User {
     pub show_contact_info: bool,
     /// GDPR: scheduled deletion timestamp (Story 9.4)
     pub scheduled_deletion_at: Option<DateTime<Utc>>,
-    /// Platform-level super administrator flag (Phase 1.2)
-    pub is_super_admin: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -176,14 +174,6 @@ impl User {
     /// Check if email is verified (helper for GDPR export).
     pub fn email_verified(&self) -> bool {
         self.email_verified_at.is_some()
-    }
-
-    /// Check if user is a platform super administrator (Phase 1.2).
-    ///
-    /// Super admins have unrestricted access across all organizations
-    /// and can perform platform-level administrative operations.
-    pub fn is_super_administrator(&self) -> bool {
-        self.is_super_admin && self.is_active()
     }
 }
 

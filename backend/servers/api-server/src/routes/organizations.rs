@@ -341,30 +341,12 @@ pub async fn list_organizations(
         )
     })?;
 
-    // Check if user is super admin by checking user record
-    // Note: In production, this should check an is_super_admin field on the user
-    let user = match state.user_repo.find_by_id(user_id).await {
-        Ok(Some(u)) => u,
-        Ok(None) => {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("USER_NOT_FOUND", "User not found")),
-            ));
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to fetch user");
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to verify user",
-                )),
-            ));
-        }
-    };
-
-    // Only super admins can list all organizations (Phase 1.2)
-    if !user.is_super_administrator() {
+    // Only super admins can list all organizations.
+    // Super-admin status is carried by the JWT role claim (TenantRole::SuperAdmin
+    // / PlatformAdmin), projected into the `app.is_super_admin` session GUC for
+    // RLS. This mirrors the role gate used by platform_admin / subscriptions /
+    // feature_packages handlers.
+    if !has_super_admin_role(&claims.roles) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -2509,6 +2491,29 @@ fn extract_bearer_token(
     }
 
     Ok(auth_header[7..].to_string())
+}
+
+/// Super admin role names accepted in the JWT `roles` claim.
+///
+/// Matches the canonical list used by the platform_admin / subscriptions /
+/// feature_packages handlers.
+const SUPER_ADMIN_ROLES: &[&str] = &[
+    "SuperAdministrator",
+    "super_admin",
+    "superadmin",
+    "platform_admin",
+];
+
+/// Check if the JWT `roles` claim grants super-admin access.
+fn has_super_admin_role(roles: &Option<Vec<String>>) -> bool {
+    match roles {
+        Some(user_roles) => user_roles.iter().any(|r| {
+            SUPER_ADMIN_ROLES
+                .iter()
+                .any(|admin| r.eq_ignore_ascii_case(admin))
+        }),
+        None => false,
+    }
 }
 
 /// Validate access token and return claims.
