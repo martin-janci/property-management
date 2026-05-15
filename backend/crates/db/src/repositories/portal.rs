@@ -39,6 +39,15 @@ impl PortalRepository {
         Self { pool }
     }
 
+    /// Borrow the underlying connection pool.
+    ///
+    /// N1: callers that need to construct a sibling repository (e.g.
+    /// `UnifiedPortalUserRepo` for dual-write) can clone the pool from here
+    /// instead of being passed a separate handle.
+    pub fn pool(&self) -> &DbPool {
+        &self.pool
+    }
+
     // ========================================================================
     // Portal Users
     // ========================================================================

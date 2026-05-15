@@ -9,7 +9,10 @@ use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
 
 use db::{
-    repositories::{PortalPasswordResetRepository, PortalRepository, RealityPortalRepository},
+    repositories::{
+        PortalPasswordResetRepository, PortalRepository, RealityPortalRepository,
+        UnifiedPortalError, UnifiedPortalUserRepo,
+    },
     DbPool,
 };
 
@@ -113,16 +116,25 @@ impl AppConfig {
 }
 
 /// User service for managing portal users (database-backed).
+///
+/// N1: SSO upsert dual-writes via [`UnifiedPortalUserRepo`] so the
+/// authoritative `users` row is created/updated alongside the legacy
+/// `portal_users` row. Email collisions with non-public principals are
+/// REFUSED (queued in `user_merge_collisions` for review) — never silently
+/// merged. This matches the Phase 2 merge migration's contract for the
+/// historical-data path; it now applies to forward-going SSO sign-ins too.
 #[derive(Clone)]
 pub struct UserService {
     repo: PortalRepository,
+    unified: UnifiedPortalUserRepo,
 }
 
 impl UserService {
     /// Create a new user service with database repository.
     pub fn new(pool: DbPool) -> Self {
         Self {
-            repo: PortalRepository::new(pool),
+            repo: PortalRepository::new(pool.clone()),
+            unified: UnifiedPortalUserRepo::new(pool),
         }
     }
 
@@ -135,18 +147,55 @@ impl UserService {
         let pm_user_id = uuid::Uuid::parse_str(&info.user_id)
             .map_err(|e| anyhow::anyhow!("Invalid PM user ID: {}", e))?;
 
-        let user = self
-            .repo
-            .upsert_sso_user(
-                pm_user_id,
-                &info.email,
-                &info.name,
-                info.avatar_url.as_deref(),
-            )
+        // N1 dual-write: write the unified `users` row first (collision-safe)
+        // then fetch the corresponding `portal_users` row to keep the public
+        // return shape unchanged.
+        match self
+            .unified
+            .sso_upsert("pm_sso", Some(pm_user_id), &info.email, &info.name)
             .await
-            .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
-
-        Ok(user)
+        {
+            Ok(user) => {
+                // The unified write set portal_origin_id; read the matching
+                // portal_users row back. If a profile_image_url was supplied
+                // by the IdP, mirror it through the legacy update path so
+                // existing read paths see it.
+                let portal_id = user.portal_origin_id.unwrap_or(pm_user_id);
+                let portal_user = self
+                    .repo
+                    .find_user_by_id(portal_id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Database error: {}", e))?
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("dual-write succeeded but portal_users mirror not found")
+                    })?;
+                if let Some(avatar) = info.avatar_url.as_deref() {
+                    let _ = self
+                        .repo
+                        .update_user(
+                            portal_id,
+                            db::models::UpdatePortalUser {
+                                name: None,
+                                profile_image_url: Some(avatar.to_string()),
+                                locale: None,
+                            },
+                        )
+                        .await;
+                }
+                Ok(portal_user)
+            }
+            Err(UnifiedPortalError::Collision { existing_user_id }) => {
+                // The user identity already belongs to a non-public
+                // principal (staff or platform). Refuse rather than
+                // silently overwrite. The collision row is already queued.
+                Err(anyhow::anyhow!(
+                    "SSO upsert refused: email '{}' already belongs to non-public principal {} (collision queued)",
+                    info.email,
+                    existing_user_id
+                ))
+            }
+            Err(UnifiedPortalError::Db(e)) => Err(anyhow::anyhow!("Database error: {}", e)),
+        }
     }
 
     /// Get portal user by PM user ID.
