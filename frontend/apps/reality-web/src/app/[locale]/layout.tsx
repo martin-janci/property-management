@@ -120,9 +120,15 @@ export default async function LocaleLayout({ children, params }: Props) {
   const tenantConfig = await getTenantConfig();
 
   // Per-tenant kill switch: when `building_disabled` is enabled the entire
-  // app is replaced with a 503 page (defends operational leak #22). The
-  // exact 503 markup is intentionally minimal — we want it to render even
-  // when the rest of the app's data layer is what got disabled.
+  // app is replaced with a 503 page (defends operational leak #22).
+  //
+  // N8: the canonical kill-switch path is `src/middleware.ts`, which
+  // returns a real `503 Service Unavailable` BEFORE any rendering. This
+  // layout-level branch stays as defense in depth: if the edge fetch
+  // failed but the SSR `getTenantConfig` succeeded, we still want to hide
+  // the app. The HTTP status will be 200 in that fallback, but the
+  // markup-level guard is preserved so users never see the real app
+  // during maintenance.
   const killSwitch = tenantConfig.feature_flags[FeatureFlags.BUILDING_DISABLED];
   if (killSwitch?.enabled) {
     return (
