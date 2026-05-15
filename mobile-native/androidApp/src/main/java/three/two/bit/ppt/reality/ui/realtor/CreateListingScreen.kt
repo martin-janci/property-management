@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
 import three.two.bit.ppt.reality.ui.auth.AuthFieldLabel
 import three.two.bit.ppt.reality.ui.auth.ErrorBanner
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Create-listing screen — KMP / Compose M3 redesign matching the design (`KmpCreateListingScreen`).
@@ -88,6 +89,7 @@ fun CreateListingScreen(
             val cityRequiredMsg = stringResource(R.string.realtor_create_validation_city_required)
             val priceInvalidMsg = stringResource(R.string.realtor_create_validation_price_invalid)
             val publishFailedMsg = stringResource(R.string.realtor_create_validation_publish_failed)
+            val networkErrorMsg = stringResource(R.string.error_network)
             CreateListingFooter(
                 onCancel = onBackClick,
                 onSubmit = {
@@ -117,7 +119,10 @@ fun CreateListingScreen(
                         isSubmitting = false
                         result.fold(
                             onSuccess = { onCreated() },
-                            onFailure = { generalError = it.message ?: publishFailedMsg },
+                            onFailure = {
+                                generalError =
+                                    if (it.isNetworkError()) networkErrorMsg else publishFailedMsg
+                            },
                         )
                     }
                 },
