@@ -127,7 +127,7 @@ async fn start_impersonation_writes_audit_linking_actor_to_target() {
 
     // Audit row links impersonator → target.
     assert_eq!(svc.audit.impersonate_events.load(Ordering::SeqCst), 1);
-    let (audited_actor, audited_target) = svc.audit.last.lock().unwrap().clone().unwrap();
+    let (audited_actor, audited_target) = svc.audit.last.lock().unwrap().unwrap();
     assert_eq!(audited_actor, Some(actor));
     assert_eq!(audited_target, Some(target));
 }

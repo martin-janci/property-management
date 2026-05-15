@@ -98,12 +98,12 @@ mod income_expense_tests {
 
     #[test]
     fn test_transaction_types() {
-        let income_types = vec![
+        let income_types = [
             PortfolioTransactionType::RentalIncome,
             PortfolioTransactionType::OtherIncome,
         ];
 
-        let expense_types = vec![
+        let expense_types = [
             PortfolioTransactionType::OperatingExpense,
             PortfolioTransactionType::MortgagePayment,
             PortfolioTransactionType::CapitalExpenditure,

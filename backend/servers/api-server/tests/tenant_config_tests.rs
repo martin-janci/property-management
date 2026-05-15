@@ -16,7 +16,6 @@ use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::body::to_bytes;
 use serde_json::Value;
 use sqlx::PgPool;
-use uuid::Uuid;
 
 mod common_phase3 {
     //! Local helpers — kept out of the test module so multiple test files

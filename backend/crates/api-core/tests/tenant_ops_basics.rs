@@ -33,8 +33,13 @@ async fn rate_limiter_per_tenant_isolation() {
 async fn rate_limit_default_constant_is_sane() {
     // 600 rpm default: ~10 rps. Sanity-check the constant didn't get
     // accidentally dropped to a value that would brick prod.
-    assert!(DEFAULT_RATE_LIMIT_RPM >= 60);
-    assert!(DEFAULT_RATE_LIMIT_RPM <= 100_000);
+    // (Constant comparisons trip clippy::assertions_on_constants; this is a
+    // compile-time canary so the lint isn't useful here.)
+    #[allow(clippy::assertions_on_constants)]
+    {
+        assert!(DEFAULT_RATE_LIMIT_RPM >= 60);
+        assert!(DEFAULT_RATE_LIMIT_RPM <= 100_000);
+    }
 }
 
 #[test]

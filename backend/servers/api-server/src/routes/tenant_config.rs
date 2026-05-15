@@ -50,6 +50,7 @@ pub fn router() -> Router<AppState> {
 
 /// Public re-export so integration tests can build a Router with this route
 /// alone.
+#[allow(unused_imports)]
 pub use get_tenant_config as handler;
 
 // ============================================================================

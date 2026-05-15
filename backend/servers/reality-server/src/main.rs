@@ -1,3 +1,5 @@
+#![allow(clippy::doc_overindented_list_items)]
+
 //! Reality Server - Public Real Estate Portal
 //!
 //! Public-facing API for the Reality Portal.

@@ -1,3 +1,5 @@
+#![allow(clippy::doc_overindented_list_items)]
+
 //! API Server - Property Management System
 //!
 //! Consolidated backend for all property management operations.

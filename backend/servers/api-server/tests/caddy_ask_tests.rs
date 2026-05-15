@@ -43,10 +43,10 @@ use uuid::Uuid;
 /// extracts `State<DbPool>` directly. This keeps the test free of the
 /// repository-jungle in real AppState.
 mod test_handler {
-    //! Minimal copy of the production handler that takes `State<DbPool>`
-    //! instead of `State<AppState>`. The logic and contract MUST stay in
-    //! lockstep with `routes::caddy_ask` — the assertion is on behavior,
-    //! not implementation.
+    // Minimal copy of the production handler that takes `State<DbPool>`
+    // instead of `State<AppState>`. The logic and contract MUST stay in
+    // lockstep with `routes::caddy_ask` — the assertion is on behavior,
+    // not implementation.
 
     use axum::{
         extract::{ConnectInfo, Query, State},

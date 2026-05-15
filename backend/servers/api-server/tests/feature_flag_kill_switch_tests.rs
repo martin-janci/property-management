@@ -106,11 +106,12 @@ async fn building_disabled_default_false_for_other_orgs(pool: PgPool) {
     let json: Value = serde_json::from_slice(&body).unwrap();
 
     let bd = json["feature_flags"].get("building_disabled");
-    match bd {
-        // Migration 00134 seeds a row per org with enabled=false, so the
-        // flag is present-but-false. Either shape is acceptable:
-        Some(v) => assert_eq!(v["enabled"], false),
-        None => {} // also acceptable: no row = no override = default off
+    // Migration 00134 seeds a row per org with enabled=false, so the
+    // flag is present-but-false. Both Some(v) and None are acceptable;
+    // when present we sanity-check enabled=false. No row = no override
+    // = default off.
+    if let Some(v) = bd {
+        assert_eq!(v["enabled"], false);
     }
 }
 

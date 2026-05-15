@@ -1,3 +1,5 @@
+#![allow(clippy::doc_overindented_list_items)]
+
 //! Phase 4: 4-context RLS policy on `listings`.
 //!
 //! This file is the canonical verification of invariant **I-D** ("a listing
