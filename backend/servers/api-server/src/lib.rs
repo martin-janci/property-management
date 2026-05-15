@@ -73,7 +73,10 @@ pub fn build_admin_extensions(pool: db::DbPool) -> AdminExtensions {
 /// identical between the test-side and production paths. Layered before
 /// `TraceLayer` (the caller is responsible for that ordering) so every nested
 /// route inherits the extensions.
-pub fn attach_admin_extensions(router: Router, ext: &AdminExtensions) -> Router {
+pub fn attach_admin_extensions<S>(router: Router<S>, ext: &AdminExtensions) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     router
         .layer(Extension(ext.deps.clone()))
         .layer(Extension(ext.grants.clone()))
