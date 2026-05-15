@@ -227,6 +227,50 @@ lives in
 
 ---
 
+## CI gates
+
+### WebSocket Tenant Enforcement (Phase 6 / leak #5 & #20 risk)
+
+Script: `backend/scripts/check-ws-tenant-enforcement.sh`
+
+**Why it exists.** WebSocket upgrade handlers in Axum sit outside the normal
+HTTP response middleware chain.  A developer adding a WS route (e.g. for
+real-time notifications) might mount it on a bare `Router` that never passes
+through `host_tenant_middleware`, silently leaking cross-tenant events
+(brainstorming leak #5 — unauthenticated socket handshake — and leak #20 —
+tenanted-Redis key collision via unscoped pub/sub).
+
+The gate runs `ripgrep` against `backend/servers/` looking for any of:
+
+* `axum::extract::ws::WebSocketUpgrade`
+* `WebSocketUpgrade`
+* `tokio_tungstenite::accept_async`
+
+For each match it checks that `host_tenant_middleware` (or `from_fn_with_state`
+pairing it) appears in the same file **or** anywhere else in the same crate's
+`src/` tree.  If no co-located reference is found, the gate fails.
+
+The gate exits 0 when no WS code exists at all (the state at Phase 6 launch)
+so it is safe to enable immediately in CI without any pre-existing violations.
+
+**Convention for adding a compliant WS route.**  Every WebSocket router MUST
+apply the middleware before handing off to the upgrade extractor:
+
+```rust
+let ws_router = Router::new()
+    .route("/ws/notifications", get(ws_handler))
+    .route_layer(from_fn_with_state(state.clone(), host_tenant_middleware));
+```
+
+The middleware resolves the tenant from the `Host` header (or `X-Tenant-Slug`
+in dev mode) and injects `TenantContext` before the WS handshake completes.
+Do **not** call `WebSocketUpgrade::on_upgrade` before `TenantContext` is
+available in the request extensions.
+
+**CI wiring.** The step `WebSocket Tenant Enforcement Check` runs immediately
+after `RLS Enforcement Check` in the `check` job of `.github/workflows/backend.yml`,
+with `working-directory: backend` and the `--strict` flag.
+
 ## Open items deferred from Phase 5.5
 
 * True capability + MFA gating on the admin routes lands in Phase 5
