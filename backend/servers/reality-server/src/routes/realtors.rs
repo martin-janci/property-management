@@ -1,4 +1,5 @@
 //! Realtor routes (Epic 33: Realtor Tools).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 
 use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;

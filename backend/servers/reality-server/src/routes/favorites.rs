@@ -1,7 +1,16 @@
 //! Favorites routes - save and manage favorite listings (Story 16.2).
+//!
+//! N1 PROOF POINT: `GET /api/v1/favorites` is the canary endpoint that adopts
+//! the unified `RequestPrincipal` extractor (Phase 2 identity stack) on
+//! reality-server. The other endpoints in this file still use the legacy
+//! `AuthenticatedUser` extractor — see the `// TODO(N1-followup):` markers.
+//! Migrating one endpoint proves the wiring (state impl, JWT shape,
+//! membership lookup against PlatformHost) without doing a sprint of work
+//! in this PR.
 
 use crate::extractors::{AuthenticatedUser, OptionalAuth};
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post},
@@ -37,22 +46,44 @@ pub struct CheckFavoriteResponse {
 }
 
 /// List user's favorites.
+///
+/// N1 PROOF POINT: this endpoint extracts [`RequestPrincipal`] instead of
+/// the legacy [`AuthenticatedUser`]. Behavior contract:
+///
+/// * No bearer token / invalid token / unknown user → 401 (the extractor
+///   itself emits these — `Missing Authorization header`,
+///   `Invalid or expired token`, `Unknown principal`).
+/// * Token for a public principal whose host-resolved org has no membership
+///   for them → 403. Reality-server's host resolution typically yields the
+///   `PlatformHost` variant, in which case the extractor allows public
+///   principals through with `effective_org = None` (the public portal does
+///   not require an org membership).
+/// * Token for a non-platform principal arriving at a tenant-scoped host
+///   without an active membership → 403 ("no active membership in this
+///   organization") — the desired cross-tenant rejection from leak #11.
+/// * Otherwise → 200 with the favorites payload.
+///
+/// We deliberately do NOT consult `principal.effective_org` here: favorites
+/// are user-scoped, not org-scoped, and the listing rows are read via the
+/// public listings index. The principal is used purely as the
+/// authenticated-user identifier.
 #[utoipa::path(
     get,
     path = "/api/v1/favorites",
     tag = "Favorites",
     responses(
         (status = 200, description = "List of favorites", body = FavoritesResponse),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized — missing or invalid token"),
+        (status = 403, description = "Forbidden — host/principal mismatch (leak #11 defense)")
     )
 )]
 pub async fn list_favorites(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<FavoritesResponse>, (axum::http::StatusCode, String)> {
     let favorites = state
         .reality_portal_repo
-        .get_favorites_with_listings(auth.user_id)
+        .get_favorites_with_listings(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -78,6 +109,7 @@ pub async fn list_favorites(
         (status = 404, description = "Listing not found")
     )
 )]
+// TODO(N1-followup): migrate to RequestPrincipal (Phase 2 unified identity).
 pub async fn add_favorite(
     State(state): State<AppState>,
     auth: AuthenticatedUser,
@@ -123,6 +155,7 @@ pub async fn add_favorite(
         (status = 404, description = "Favorite not found")
     )
 )]
+// TODO(N1-followup): migrate to RequestPrincipal (Phase 2 unified identity).
 pub async fn remove_favorite(
     State(state): State<AppState>,
     auth: AuthenticatedUser,
@@ -153,6 +186,7 @@ pub async fn remove_favorite(
         (status = 401, description = "Unauthorized")
     )
 )]
+// TODO(N1-followup): migrate to RequestPrincipal (Phase 2 unified identity).
 pub async fn check_favorite(
     State(state): State<AppState>,
     auth: AuthenticatedUser,
@@ -190,6 +224,9 @@ pub async fn check_favorite(
         (status = 200, description = "List of favorited listing IDs", body = [Uuid])
     )
 )]
+// TODO(N1-followup): migrate to an Optional<RequestPrincipal> wrapper once
+// the extractor grows an `OptionalRequestPrincipal` form. Today the legacy
+// OptionalAuth path is kept for the SSR anonymous case.
 pub async fn list_favorite_ids(
     State(state): State<AppState>,
     OptionalAuth(auth): OptionalAuth,

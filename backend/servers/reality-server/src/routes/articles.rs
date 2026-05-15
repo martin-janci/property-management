@@ -1,4 +1,5 @@
 //! Journal/News article routes (UC-13: Reality Portal News).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Public article list + detail, comment list and (auth-required) comment creation.
 

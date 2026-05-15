@@ -1,4 +1,5 @@
 //! Saved searches routes (Story 16.3).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 
 use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;

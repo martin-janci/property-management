@@ -1,4 +1,5 @@
 //! Inquiries routes - contact and viewing requests.
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Handles listing inquiries, contact forms, and viewing scheduling.
 

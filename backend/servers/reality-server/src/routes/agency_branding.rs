@@ -1,4 +1,5 @@
 //! Agency branding routes (UC-49: Agency Branding).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! GET/PUT branding settings for an agency.
 //! Only agency members may update branding.

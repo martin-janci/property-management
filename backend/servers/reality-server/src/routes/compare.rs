@@ -1,4 +1,5 @@
 //! Compare routes (UC-48: Compare Listings).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Allows authenticated portal users to maintain a compare list of up to 4 listings.
 

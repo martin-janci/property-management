@@ -1,4 +1,5 @@
 //! Listing report routes (UC-23: Report a Listing).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Allows users to submit reports about problematic listings and track their status.
 

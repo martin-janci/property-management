@@ -1,4 +1,5 @@
 //! Agency import routes (UC-50: Agency Import Management).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Per-agency import history, test-connection, run, and job status.
 

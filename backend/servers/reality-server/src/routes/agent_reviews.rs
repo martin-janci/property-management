@@ -1,4 +1,5 @@
 //! Agent review routes (UC-49, UC-51: Realtor Reviews).
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Allows portal users to review realtors. The "verified buyer" flag is set
 //! server-side based on whether the reviewer has a prior responded inquiry with

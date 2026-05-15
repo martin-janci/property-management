@@ -1,4 +1,5 @@
 //! Portal user routes - separate from Property Management users.
+// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Supports SSO with Property Management via OAuth 2.0.
 
