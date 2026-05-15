@@ -1,12 +1,27 @@
 //! Admin endpoints for capability grants. Phase 5.
+//!
+//! Routes:
+//!   * `GET    /registry`           — list all known capabilities (gated by `AuditRead`).
+//!   * `GET    /me`                 — N10 bootstrap: caller introspects their own
+//!                                    `principal_kind` + active grants. NOT gated by
+//!                                    a capability — only by `RequestPrincipal`.
+//!                                    Without this endpoint, a fresh platform
+//!                                    principal cannot self-introspect because
+//!                                    `/users/{id}` requires `AuditRead`, which
+//!                                    they may not yet hold (deadlock).
+//!   * `GET    /users/{user_id}`    — list another principal's grants (gated by `AuditRead`).
+//!   * `POST   /grant`              — issue a grant (gated by `MembershipsGrant`).
+//!   * `DELETE /{grant_id}`         — revoke a grant (gated by `MembershipsRevoke`).
 
 use admin_core::{
-    require_capability, Capability, CapabilityGrant, CapabilityGrantsRepository, RequireCapability,
+    require_capability, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
+    CapabilityGrantsRepository, RequireCapability,
 };
+use api_core::extractors::principal::RequestPrincipal;
 use api_core::AuthUser;
 use axum::{
     extract::Path,
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{delete, get, post},
     Extension, Json, Router,
 };
@@ -23,6 +38,10 @@ pub fn router() -> Router<AppState> {
             "/registry",
             get(list_registry).layer(require_capability(Capability::AuditRead)),
         )
+        // N10: bootstrap endpoint. Gated only by `RequestPrincipal` so a fresh
+        // platform principal can self-introspect WITHOUT first holding
+        // `AuditRead` — that would be a chicken-and-egg lockout.
+        .route("/me", get(list_for_me))
         .route(
             "/users/{user_id}",
             get(list_for_user).layer(require_capability(Capability::AuditRead)),
@@ -69,6 +88,72 @@ async fn list_for_user(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(rows))
+}
+
+/// Response shape for `GET /admin/capabilities/me` — the N10 bootstrap.
+#[derive(Debug, Serialize)]
+pub struct MyCapabilitiesResponse {
+    pub user_id: Uuid,
+    /// `public` / `staff` / `platform` — re-derived server-side from the
+    /// trusted `users.principal_kind` column on every request.
+    pub principal_kind: &'static str,
+    /// Active (non-revoked, non-expired) capability grants for the caller.
+    pub capabilities: Vec<CapabilityGrant>,
+}
+
+/// GET /admin/capabilities/me
+///
+/// N10 bootstrap. A fresh platform principal cannot self-introspect via
+/// `/admin/capabilities/users/{id}` (that requires `AuditRead`, which they
+/// may not yet hold). This endpoint is gated only by `RequestPrincipal` so
+/// the caller can always discover what they currently hold — the frontend
+/// `useCapability` hook calls this on login.
+///
+/// Read-of-self is still audited (Phase 5 design contract: every capability
+/// surface emits an audit row). The audit action is `AuditRead` because the
+/// data being read is a slice of the audit / capabilities surface, even
+/// though no `AuditRead` capability is required to invoke this endpoint.
+async fn list_for_me(
+    principal: RequestPrincipal,
+    Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
+) -> Result<Json<MyCapabilitiesResponse>, (StatusCode, String)> {
+    let rows = grants
+        .list_for_user(principal.user_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Audit the read-of-self best-effort. We swallow audit-store errors so
+    // an audit-store outage cannot brick the bootstrap path itself — the
+    // alternative is a frontend that cannot recover from a DB blip.
+    let ip = headers
+        .get("x-forwarded-for")
+        .and_then(|h| h.to_str().ok());
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    if let Err(e) = audit
+        .record(
+            Some(principal.user_id),
+            Capability::AuditRead,
+            AuditOutcome::Allowed,
+            Some("capabilities_self"),
+            Some(principal.user_id),
+            None,
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, user_id = %principal.user_id, "audit write for capabilities/me failed");
+    }
+
+    Ok(Json(MyCapabilitiesResponse {
+        user_id: principal.user_id,
+        principal_kind: principal.kind.as_str(),
+        capabilities: rows,
+    }))
 }
 
 #[derive(Debug, Deserialize)]
