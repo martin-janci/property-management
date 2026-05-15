@@ -8,10 +8,10 @@
 //!
 //! Defenses:
 //! * **#15** — noisy-neighbor protection. A flooding tenant gets 429s
-//!            without affecting the latency of any other tenant.
+//!   without affecting the latency of any other tenant.
 //! * **#19** — per-tenant metering. Every request emits a `requests_total`
-//!            counter increment tagged with `org_id`, plus a
-//!            `request_bytes_total` counter for the response body.
+//!   counter increment tagged with `org_id`, plus a
+//!   `request_bytes_total` counter for the response body.
 
 use governor::{
     clock::{Clock, DefaultClock},
@@ -162,6 +162,12 @@ impl TenantRateLimiterSet {
     /// Number of tracked tenants (for tests / metrics).
     pub async fn len(&self) -> usize {
         self.limiters.read().await.len()
+    }
+
+    /// Whether no tenants are currently tracked. Pairs with [`Self::len`] to
+    /// satisfy clippy's `len_without_is_empty` lint.
+    pub async fn is_empty(&self) -> bool {
+        self.limiters.read().await.is_empty()
     }
 }
 

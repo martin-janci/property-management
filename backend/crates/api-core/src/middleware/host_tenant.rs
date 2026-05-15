@@ -170,7 +170,7 @@ fn load_platform_hosts(dev_mode: bool) -> Vec<String> {
         .ok()
         .map(|raw| {
             raw.split(',')
-                .filter_map(|h| normalize_host(h))
+                .filter_map(normalize_host)
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
