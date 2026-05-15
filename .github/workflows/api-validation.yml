@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Upload OpenAPI Spec
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openapi-spec
           path: docs/api/generated/openapi.yaml
@@ -79,7 +79,7 @@ jobs:
           openapi-ts -i docs/api/generated/openapi.yaml -o frontend/packages/api-client/src/generated
 
       - name: Upload TypeScript SDK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: typescript-sdk
           path: frontend/packages/api-client/src/generated

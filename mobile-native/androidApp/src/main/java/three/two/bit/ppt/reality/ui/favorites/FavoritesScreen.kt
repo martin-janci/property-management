@@ -36,6 +36,7 @@ import three.two.bit.ppt.reality.favorites.*
 import three.two.bit.ppt.reality.listing.ListingRepository
 import three.two.bit.ppt.reality.listing.ListingSummary
 import three.two.bit.ppt.reality.util.FormatUtils
+import three.two.bit.ppt.reality.util.isNetworkError
 
 private const val TAG = "FavoritesScreen"
 
@@ -71,6 +72,9 @@ fun FavoritesScreen(
 ) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val genericErrorMsg = stringResource(R.string.error_generic)
+    fun friendlyError(e: Throwable) = if (e.isNetworkError()) networkErrorMsg else genericErrorMsg
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var transactionFilter by remember { mutableStateOf(TransactionFilter.ALL) }
@@ -94,7 +98,7 @@ fun FavoritesScreen(
                 .getFavorites()
                 .fold(
                     onSuccess = { response -> favorites = response.favorites },
-                    onFailure = { error -> errorMessage = error.message },
+                    onFailure = { error -> errorMessage = friendlyError(error) },
                 )
             favoritesRepository
                 .getSavedSearches()
@@ -168,7 +172,7 @@ fun FavoritesScreen(
                                             .getFavorites()
                                             .fold(
                                                 onSuccess = { favorites = it.favorites },
-                                                onFailure = { errorMessage = it.message },
+                                                onFailure = { errorMessage = friendlyError(it) },
                                             )
                                         isLoading = false
                                     }
@@ -199,7 +203,7 @@ fun FavoritesScreen(
                                                 },
                                                 onFailure = {
                                                     Log.e(TAG, "Failed to remove favorite", it)
-                                                    errorMessage = it.message
+                                                    errorMessage = friendlyError(it)
                                                 },
                                             )
                                     }
@@ -221,7 +225,7 @@ fun FavoritesScreen(
                                                             if (it.id == id) updated else it
                                                         }
                                                 },
-                                                onFailure = { errorMessage = it.message },
+                                                onFailure = { errorMessage = friendlyError(it) },
                                             )
                                     }
                                 },
@@ -234,7 +238,7 @@ fun FavoritesScreen(
                                                     savedSearches =
                                                         savedSearches.filter { it.id != id }
                                                 },
-                                                onFailure = { errorMessage = it.message },
+                                                onFailure = { errorMessage = friendlyError(it) },
                                             )
                                     }
                                 },

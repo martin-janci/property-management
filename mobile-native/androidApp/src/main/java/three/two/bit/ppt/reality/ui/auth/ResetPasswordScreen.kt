@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * New-password screen — KMP / Compose M3 redesign matching the design (`KmpResetScreen`). Either
@@ -185,6 +186,7 @@ fun ResetPasswordScreen(
                     )
                 val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
                 val resetFailedMsg = stringResource(R.string.auth_validation_reset_failed)
+                val networkErrorMsg = stringResource(R.string.error_network)
                 Button(
                     onClick = {
                         passwordError =
@@ -203,7 +205,10 @@ fun ResetPasswordScreen(
                             isSubmitting = false
                             result.fold(
                                 onSuccess = { success = true },
-                                onFailure = { generalError = it.message ?: resetFailedMsg },
+                                onFailure = {
+                                    generalError =
+                                        if (it.isNetworkError()) networkErrorMsg else resetFailedMsg
+                                },
                             )
                         }
                     },

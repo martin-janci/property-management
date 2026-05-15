@@ -411,6 +411,11 @@
     <string name="detail_tab_building">Pasport budovy</string>
     <string name="detail_tab_nearby">Okolie</string>
     <string name="detail_tab_price_history">História cien</string>
+    <string name="price_history_empty_title">Žiadne zmeny ceny</string>
+    <string name="price_history_empty_body">Cena sa od zverejnenia tejto ponuky nezmenila.</string>
+    <string name="price_history_previous">Pôvodná cena</string>
+    <string name="price_history_current">Aktuálna cena</string>
+    <string name="price_history_reduced_by">Znížené o %1$s</string>
     <string name="detail_realtor_unknown">Maklér</string>
     <string name="detail_building_no_data">Informácie o budove nie sú zatiaľ k dispozícii.</string>
     <string name="action_request_viewing">Žiadať obhliadku</string>

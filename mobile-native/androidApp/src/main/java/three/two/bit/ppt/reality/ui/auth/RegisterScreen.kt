@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Account-creation screen — KMP / Compose M3 redesign matching the design (`KmpRegisterScreen`).
@@ -224,6 +225,7 @@ fun RegisterScreen(
             val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
             val termsRequiredMsg = stringResource(R.string.auth_validation_terms_required)
             val registerFailedMsg = stringResource(R.string.auth_validation_register_failed)
+            val networkErrorMsg = stringResource(R.string.error_network)
             Button(
                 onClick = {
                     displayNameError = if (displayName.isBlank()) nameRequiredMsg else null
@@ -253,7 +255,10 @@ fun RegisterScreen(
                         isSubmitting = false
                         result.fold(
                             onSuccess = { submitted = true },
-                            onFailure = { generalError = it.message ?: registerFailedMsg },
+                            onFailure = {
+                                generalError =
+                                    if (it.isNetworkError()) networkErrorMsg else registerFailedMsg
+                            },
                         )
                     }
                 },

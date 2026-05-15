@@ -275,6 +275,14 @@ fun RealityNavHost(
                     },
                     onForgotPasswordClick = { navController.navigate(Screen.ForgotPassword.route) },
                     onRegisterClick = { navController.navigate(Screen.Register.route) },
+                    // On success, drop the whole auth stack and land on Home. Home (and
+                    // every top-level screen) collects authState, so it re-renders signed in.
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable(Screen.Register.route) {

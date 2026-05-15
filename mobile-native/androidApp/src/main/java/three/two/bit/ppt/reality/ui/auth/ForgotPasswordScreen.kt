@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import three.two.bit.ppt.reality.R
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Forgot-password screen — KMP / Compose M3 redesign matching the design (`KmpForgotScreen`).
@@ -126,6 +127,7 @@ fun ForgotPasswordScreen(
                 val emailRequiredMsg = stringResource(R.string.auth_validation_email_required)
                 val emailInvalidMsg = stringResource(R.string.auth_validation_email_invalid)
                 val sendFailedMsg = stringResource(R.string.auth_validation_send_reset_failed)
+                val networkErrorMsg = stringResource(R.string.error_network)
                 Button(
                     onClick = {
                         val trimmed = email.trim()
@@ -143,7 +145,10 @@ fun ForgotPasswordScreen(
                             isSubmitting = false
                             result.fold(
                                 onSuccess = { submitted = true },
-                                onFailure = { generalError = it.message ?: sendFailedMsg },
+                                onFailure = {
+                                    generalError =
+                                        if (it.isNetworkError()) networkErrorMsg else sendFailedMsg
+                                },
                             )
                         }
                     },

@@ -411,6 +411,11 @@
     <string name="detail_tab_building">Building passport</string>
     <string name="detail_tab_nearby">Nearby</string>
     <string name="detail_tab_price_history">Price history</string>
+    <string name="price_history_empty_title">No price changes recorded</string>
+    <string name="price_history_empty_body">The price hasn\'t changed since this listing was published.</string>
+    <string name="price_history_previous">Previous price</string>
+    <string name="price_history_current">Current price</string>
+    <string name="price_history_reduced_by">Reduced by %1$s</string>
     <string name="detail_realtor_unknown">Realtor</string>
     <string name="detail_building_no_data">No building details available yet.</string>
     <string name="action_request_viewing">Request viewing</string>
