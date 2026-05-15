@@ -48,6 +48,7 @@ import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
 import three.two.bit.ppt.reality.util.FormatUtils
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Home screen — KMP / Compose M3 redesign matching the design bundle
@@ -88,19 +89,25 @@ fun HomeScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val genericErrorMsg = stringResource(R.string.error_generic)
+
     LaunchedEffect(Unit) {
         isLoading = true
+        val onLoadFailure = { error: Throwable ->
+            errorMessage = if (error.isNetworkError()) networkErrorMsg else genericErrorMsg
+        }
         repository
             .getFeaturedListings()
             .fold(
                 onSuccess = { response -> featuredListings = response.listings },
-                onFailure = { error -> errorMessage = error.message },
+                onFailure = onLoadFailure,
             )
         repository
             .getRecentListings(limit = 10)
             .fold(
                 onSuccess = { response -> recentListings = response.listings },
-                onFailure = { error -> errorMessage = error.message },
+                onFailure = onLoadFailure,
             )
         isLoading = false
     }
