@@ -67,10 +67,7 @@ async fn revoke_flips_is_active_immediately(pool: PgPool) {
     );
 
     // Revoke.
-    let revoked = repo
-        .revoke(user_id, org_id, None)
-        .await
-        .expect("revoke");
+    let revoked = repo.revoke(user_id, org_id, None).await.expect("revoke");
     assert_eq!(revoked, vec!["manager".to_string()]);
 
     // The same query from a "fresh" caller (next request) sees no active row.

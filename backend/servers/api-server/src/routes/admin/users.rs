@@ -31,8 +31,7 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/{id}/principal-kind",
-            post(set_principal_kind)
-                .layer(require_capability(Capability::PrincipalKindEscalate)),
+            post(set_principal_kind).layer(require_capability(Capability::PrincipalKindEscalate)),
         )
 }
 
@@ -186,9 +185,7 @@ fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, String) {
         AuthPolicyError::MfaRequired(_) => {
             (StatusCode::FORBIDDEN, "MFA required by org policy".into())
         }
-        AuthPolicyError::UserNotFound(_) => {
-            (StatusCode::NOT_FOUND, "target user not found".into())
-        }
+        AuthPolicyError::UserNotFound(_) => (StatusCode::NOT_FOUND, "target user not found".into()),
         AuthPolicyError::Lookup(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }

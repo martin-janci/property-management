@@ -94,10 +94,7 @@ fn is_valid_host(host: &str) -> bool {
 }
 
 fn bad_request(code: &str, msg: &str) -> (StatusCode, Json<ErrorResponse>) {
-    (
-        StatusCode::BAD_REQUEST,
-        Json(ErrorResponse::new(code, msg)),
-    )
+    (StatusCode::BAD_REQUEST, Json(ErrorResponse::new(code, msg)))
 }
 
 fn db_error(msg: &str) -> (StatusCode, Json<ErrorResponse>) {

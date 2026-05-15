@@ -30,11 +30,7 @@ pub struct SettingsRecord {
 #[async_trait]
 pub trait SettingsStore: Send + Sync {
     /// Read a typed value for `org_id`/`key`.
-    async fn get_raw(
-        &self,
-        org_id: Uuid,
-        key: &str,
-    ) -> Result<Option<SettingsRecord>, AdminError>;
+    async fn get_raw(&self, org_id: Uuid, key: &str) -> Result<Option<SettingsRecord>, AdminError>;
 
     /// Upsert a JSON value. The audit row is written by the implementation.
     async fn set_raw(
@@ -91,9 +87,8 @@ pub trait SettingsStoreTyped: SettingsStore {
         T: Serialize + Send,
     {
         async move {
-            let json = serde_json::to_value(value).map_err(|e| {
-                AdminError::Internal(format!("settings_store: serialize: {}", e))
-            })?;
+            let json = serde_json::to_value(value)
+                .map_err(|e| AdminError::Internal(format!("settings_store: serialize: {}", e)))?;
             self.set_raw(org_id, key, json, actor).await
         }
     }
@@ -120,11 +115,7 @@ fn map_sqlx(err: SqlxError) -> AdminError {
 
 #[async_trait]
 impl SettingsStore for PgSettingsStore {
-    async fn get_raw(
-        &self,
-        org_id: Uuid,
-        key: &str,
-    ) -> Result<Option<SettingsRecord>, AdminError> {
+    async fn get_raw(&self, org_id: Uuid, key: &str) -> Result<Option<SettingsRecord>, AdminError> {
         let row = sqlx::query_as::<_, SettingsRecord>(
             r#"
             SELECT organization_id, key, value, updated_at, updated_by

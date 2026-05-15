@@ -269,10 +269,7 @@ async fn token_is_rejected_after_membership_revoked(pool: PgPool) {
     mem.revoke(user, org, None).await.expect("revoke");
 
     // Same token, post-revoke: 403 (defends leak #10).
-    let resp = app
-        .oneshot(req_to(slug, &token))
-        .await
-        .expect("req post");
+    let resp = app.oneshot(req_to(slug, &token)).await.expect("req post");
     assert_eq!(
         resp.status(),
         StatusCode::FORBIDDEN,

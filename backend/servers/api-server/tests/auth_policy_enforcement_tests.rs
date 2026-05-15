@@ -30,7 +30,11 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 }
 
 async fn seed_user(pool: &PgPool, email: &str, verified: bool) -> Uuid {
-    let verified_at = if verified { Some(chrono::Utc::now()) } else { None };
+    let verified_at = if verified {
+        Some(chrono::Utc::now())
+    } else {
+        None
+    };
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO users (email, password_hash, name, status, email_verified_at)
@@ -168,7 +172,11 @@ async fn revoke_loads_policy_as_liveness_check(pool: PgPool) {
     let enforcer = AuthPolicyEnforcer::new(pool.clone());
     let result = enforcer.check_membership_revoke(org, user).await;
 
-    assert!(result.is_ok(), "revoke liveness check must pass: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "revoke liveness check must pass: {:?}",
+        result.err()
+    );
 }
 
 // ============================================================================
@@ -380,9 +388,7 @@ async fn password_change_for_org_less_user_uses_platform_default(pool: PgPool) {
     let user = seed_user(&pool, "pw-no-org@n2-int.test", true).await;
 
     let enforcer = AuthPolicyEnforcer::new(pool.clone());
-    let result = enforcer
-        .check_password_change(user, "anything8")
-        .await;
+    let result = enforcer.check_password_change(user, "anything8").await;
 
     assert!(
         result.is_ok(),

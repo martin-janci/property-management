@@ -214,23 +214,24 @@ async fn token_is_stored_only_as_hash(pool: PgPool) {
     .expect("create");
 
     // The plaintext must not appear anywhere in the row.
-    let found_plain: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM user_invites WHERE token_hash = $1"#,
-    )
-    .bind(plaintext)
-    .fetch_one(&pool)
-    .await
-    .expect("scan plaintext");
-    assert_eq!(found_plain, 0, "plaintext token must never appear in token_hash");
+    let found_plain: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*) FROM user_invites WHERE token_hash = $1"#)
+            .bind(plaintext)
+            .fetch_one(&pool)
+            .await
+            .expect("scan plaintext");
+    assert_eq!(
+        found_plain, 0,
+        "plaintext token must never appear in token_hash"
+    );
 
     // The hash form does.
     let hash = UserInviteRepository::hash_token(plaintext);
-    let found_hash: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM user_invites WHERE token_hash = $1"#,
-    )
-    .bind(&hash)
-    .fetch_one(&pool)
-    .await
-    .expect("scan hash");
+    let found_hash: i64 =
+        sqlx::query_scalar(r#"SELECT COUNT(*) FROM user_invites WHERE token_hash = $1"#)
+            .bind(&hash)
+            .fetch_one(&pool)
+            .await
+            .expect("scan hash");
     assert_eq!(found_hash, 1);
 }

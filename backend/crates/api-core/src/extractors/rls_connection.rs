@@ -631,24 +631,19 @@ where
                     )
                 })?;
         } else {
-            db::tenant_context::set_request_context(
-                &mut *conn,
-                Some(organization_id),
-                None,
-                false,
-            )
-            .await
-            .map_err(|e| {
-                tracing::error!(
-                    error = %e,
-                    organization_id = %organization_id,
-                    "Failed to set RLS context for host-resolved tenant"
-                );
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to set security context",
-                )
-            })?;
+            db::tenant_context::set_request_context(&mut *conn, Some(organization_id), None, false)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        organization_id = %organization_id,
+                        "Failed to set RLS context for host-resolved tenant"
+                    );
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to set security context",
+                    )
+                })?;
             // Defense for leak #2: ensure global_read is OFF on every
             // tenant-scoped request, even if the connection arrived with a
             // stale ON from an earlier PlatformHost handler that crashed

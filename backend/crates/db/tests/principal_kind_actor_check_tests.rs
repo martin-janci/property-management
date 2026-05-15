@@ -28,7 +28,10 @@ async fn create_user(pool: &PgPool, email: &str) -> Uuid {
 
 /// Acquire a single connection so `app.current_user_id` set via
 /// `set_request_context` persists across the subsequent statement.
-async fn set_session_user(pool: &PgPool, user_id: Uuid) -> sqlx::pool::PoolConnection<sqlx::Postgres> {
+async fn set_session_user(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> sqlx::pool::PoolConnection<sqlx::Postgres> {
     let mut conn = pool.acquire().await.expect("acquire");
     sqlx::query("SELECT set_request_context($1, $2, $3)")
         .bind(Option::<Uuid>::None)
@@ -60,8 +63,7 @@ async fn forged_actor_is_rejected(pool: PgPool) {
     assert!(res.is_err(), "set_principal_kind must reject forged actor");
     let msg = format!("{:?}", res.err().unwrap()).to_lowercase();
     assert!(
-        msg.contains("actor")
-            && (msg.contains("session user") || msg.contains("must equal")),
+        msg.contains("actor") && (msg.contains("session user") || msg.contains("must equal")),
         "rejection should reference actor/session mismatch, got: {msg}"
     );
 
@@ -127,7 +129,10 @@ async fn matching_actor_succeeds(pool: PgPool) {
     .fetch_one(&pool)
     .await
     .expect("audit count");
-    assert_eq!(audit_count, 1, "exactly one audit row per verified transition");
+    assert_eq!(
+        audit_count, 1,
+        "exactly one audit row per verified transition"
+    );
 
     // The audit row should carry the new `actor_check` marker.
     let details: serde_json::Value = sqlx::query_scalar(

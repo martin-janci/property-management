@@ -128,9 +128,7 @@ async fn list_for_me(
     // Audit the read-of-self best-effort. We swallow audit-store errors so
     // an audit-store outage cannot brick the bootstrap path itself — the
     // alternative is a frontend that cannot recover from a DB blip.
-    let ip = headers
-        .get("x-forwarded-for")
-        .and_then(|h| h.to_str().ok());
+    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
     let ua = headers
         .get(axum::http::header::USER_AGENT)
         .and_then(|h| h.to_str().ok());
@@ -209,10 +207,7 @@ async fn grant_capability(
     // grant that violates the grantee org's email-verification rule is
     // rejected before the capability row is written.
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
-    if let Err(err) = enforcer
-        .check_capability_grant_for_user(body.user_id)
-        .await
-    {
+    if let Err(err) = enforcer.check_capability_grant_for_user(body.user_id).await {
         return Err(map_auth_policy_error(err));
     }
 
@@ -282,9 +277,7 @@ fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, String) {
         AuthPolicyError::MfaRequired(_) => {
             (StatusCode::FORBIDDEN, "MFA required by org policy".into())
         }
-        AuthPolicyError::UserNotFound(_) => {
-            (StatusCode::NOT_FOUND, "target user not found".into())
-        }
+        AuthPolicyError::UserNotFound(_) => (StatusCode::NOT_FOUND, "target user not found".into()),
         AuthPolicyError::Lookup(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }

@@ -193,10 +193,7 @@ impl ImpersonationService for PgImpersonationService {
         Ok(())
     }
 
-    async fn resolve(
-        &self,
-        plain_token: &str,
-    ) -> Result<Option<ImpersonationToken>, AdminError> {
+    async fn resolve(&self, plain_token: &str) -> Result<Option<ImpersonationToken>, AdminError> {
         let hash = hash_token(plain_token);
         let row = sqlx::query_as::<_, ImpersonationToken>(
             r#"

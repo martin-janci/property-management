@@ -73,9 +73,7 @@ mod test_handler {
             return None;
         }
         let without_port = match raw.rsplit_once(':') {
-            Some((host, port))
-                if !port.is_empty() && port.chars().all(|c| c.is_ascii_digit()) =>
-            {
+            Some((host, port)) if !port.is_empty() && port.chars().all(|c| c.is_ascii_digit()) => {
                 host
             }
             _ => raw,
@@ -197,10 +195,7 @@ async fn seed_domain(pool: &PgPool, org_id: Uuid, host: &str, state: &str) {
 }
 
 fn ask_request(host: &str, token: Option<&str>) -> Request<Body> {
-    let uri = format!(
-        "/internal/caddy-ask?domain={}",
-        urlencoding::encode(host)
-    );
+    let uri = format!("/internal/caddy-ask?domain={}", urlencoding::encode(host));
     let mut builder = Request::builder().uri(uri);
     if let Some(t) = token {
         builder = builder.header("x-internal-token", t);

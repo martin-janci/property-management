@@ -268,10 +268,7 @@ pub async fn caddy_ask(
 
 /// Secondary lookup: whether `host` is in `verifying` state. Same system-
 /// connection discipline as `AgencyDomainRepository::resolve_host_system`.
-async fn host_in_verifying_state(
-    pool: db::DbPool,
-    host: &str,
-) -> Result<bool, sqlx::Error> {
+async fn host_in_verifying_state(pool: db::DbPool, host: &str) -> Result<bool, sqlx::Error> {
     let mut conn = pool.acquire().await?;
     db::tenant_context::set_request_context(&mut *conn, None, None, true).await?;
 

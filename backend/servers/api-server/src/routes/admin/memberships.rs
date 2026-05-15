@@ -197,9 +197,7 @@ pub async fn accept(
         ConsumeInviteOutcome::AlreadyAccepted => {
             return Err((StatusCode::CONFLICT, "invite already accepted"))
         }
-        ConsumeInviteOutcome::Expired => {
-            return Err((StatusCode::GONE, "invite expired"))
-        }
+        ConsumeInviteOutcome::Expired => return Err((StatusCode::GONE, "invite expired")),
         ConsumeInviteOutcome::EmailMismatch => {
             return Err((StatusCode::FORBIDDEN, "invite email does not match"))
         }
@@ -218,10 +216,7 @@ pub async fn accept(
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "failed to write membership after accept");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "membership grant failed",
-            )
+            (StatusCode::INTERNAL_SERVER_ERROR, "membership grant failed")
         })?;
 
     Ok(Json(AcceptResponse {
@@ -288,8 +283,7 @@ pub async fn revoke(
 /// Generate a 32-byte URL-safe token. Plaintext is shown once at create.
 fn generate_token() -> String {
     let mut bytes = [0u8; 32];
-    rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes)
-        .expect("OS rng failed");
+    rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
     use base64::Engine as _;
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }

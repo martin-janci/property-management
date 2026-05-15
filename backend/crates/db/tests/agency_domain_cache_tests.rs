@@ -198,7 +198,9 @@ async fn release_invalidates_cached_resolution() {
         .release_rls(&mut *tx2, domain.id)
         .await
         .expect("release");
-    db::tenant_context::clear_request_context(&mut *tx2).await.ok();
+    db::tenant_context::clear_request_context(&mut *tx2)
+        .await
+        .ok();
     tx2.commit().await.expect("commit release");
 
     assert_eq!(released_host.as_deref(), Some(host.as_str()));

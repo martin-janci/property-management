@@ -110,9 +110,8 @@ impl AuthPolicyEnforcer {
             // Take the max of every numeric / boolean / set field so the
             // result is the most restrictive combination. This is the
             // "tighten, never loosen" rule.
-            effective.min_password_length = effective
-                .min_password_length
-                .max(p.min_password_length);
+            effective.min_password_length =
+                effective.min_password_length.max(p.min_password_length);
             effective.require_uppercase = effective.require_uppercase || p.require_uppercase;
             effective.require_digit = effective.require_digit || p.require_digit;
             effective.require_symbol = effective.require_symbol || p.require_symbol;
@@ -329,10 +328,7 @@ impl AuthPolicyEnforcer {
     /// future tenant-lifecycle actions) have a single, named seam in the
     /// enforcer they can call without inventing an `org_id` for a row that
     /// has none.
-    pub async fn check_platform_action(
-        &self,
-        _actor_user_id: Uuid,
-    ) -> Result<(), AuthPolicyError> {
+    pub async fn check_platform_action(&self, _actor_user_id: Uuid) -> Result<(), AuthPolicyError> {
         // Load the platform default as a liveness check. The `Default`
         // implementation is infallible, so this is mostly a documentation
         // anchor today — but if `platform_default_policy` ever grows a DB

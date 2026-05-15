@@ -5,8 +5,8 @@
 //! integration tests in `backend/servers/api-server/tests/`.
 
 use admin_core::{
-    AdminError, AuditOutcome, AuditWriter, Capability, ImpersonationService,
-    ImpersonationToken, IssuedImpersonationToken, RecordedAuditEvent, IMPERSONATION_TTL,
+    AdminError, AuditOutcome, AuditWriter, Capability, ImpersonationService, ImpersonationToken,
+    IssuedImpersonationToken, RecordedAuditEvent, IMPERSONATION_TTL,
 };
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -102,10 +102,7 @@ impl ImpersonationService for InMemoryImpersonation {
         Ok(())
     }
 
-    async fn resolve(
-        &self,
-        plain_token: &str,
-    ) -> Result<Option<ImpersonationToken>, AdminError> {
+    async fn resolve(&self, plain_token: &str) -> Result<Option<ImpersonationToken>, AdminError> {
         // The in-memory impl doesn't actually hash; for the resolve test
         // below we use a different path.
         let _ = plain_token;
@@ -157,11 +154,7 @@ fn token_ttl_is_15_minutes() {
 async fn end_impersonation_marks_token_ended() {
     let svc = InMemoryImpersonation::default();
     let issued = svc
-        .start_impersonation(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            Capability::UsersImpersonate,
-        )
+        .start_impersonation(Uuid::new_v4(), Uuid::new_v4(), Capability::UsersImpersonate)
         .await
         .unwrap();
     let id = issued.record.id;
@@ -197,7 +190,12 @@ fn impersonation_token_serializes_for_api_response() {
         "expires_at",
         "justifying_capability",
     ] {
-        assert!(json.contains(required), "missing field {} in {}", required, json);
+        assert!(
+            json.contains(required),
+            "missing field {} in {}",
+            required,
+            json
+        );
     }
 }
 

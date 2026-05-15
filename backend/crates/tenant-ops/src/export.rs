@@ -66,11 +66,10 @@ pub async fn export_tenant(
         .execute(&mut *conn)
         .await?;
 
-    let exists: Option<(Uuid,)> =
-        sqlx::query_as("SELECT id FROM organizations WHERE id = $1")
-            .bind(org_id)
-            .fetch_optional(&mut *conn)
-            .await?;
+    let exists: Option<(Uuid,)> = sqlx::query_as("SELECT id FROM organizations WHERE id = $1")
+        .bind(org_id)
+        .fetch_optional(&mut *conn)
+        .await?;
     if exists.is_none() {
         return Err(TenantOpsError::NotFound(org_id));
     }
@@ -101,26 +100,14 @@ pub async fn export_tenant(
 
     // 3. organizations.ndjson — one row, the org itself.
     let mut total_rows: u64 = 0;
-    let org_row = serialize_table_to_ndjson(
-        &mut *conn,
-        "organizations",
-        "id",
-        org_id,
-    )
-    .await?;
+    let org_row = serialize_table_to_ndjson(&mut *conn, "organizations", "id", org_id).await?;
     write_tar_entry(&mut tar, "tables/organizations.ndjson", &org_row.bytes)?;
     total_rows += org_row.row_count;
 
     // 4. Per-table NDJSON.
     let mut tables_count: u32 = 1;
     for tbl in manifest.own_org_tables() {
-        let nd = serialize_table_to_ndjson(
-            &mut *conn,
-            &tbl.table,
-            &tbl.org_column,
-            org_id,
-        )
-        .await?;
+        let nd = serialize_table_to_ndjson(&mut *conn, &tbl.table, &tbl.org_column, org_id).await?;
         let path = format!("tables/{}.ndjson", tbl.table);
         write_tar_entry(&mut tar, &path, &nd.bytes)?;
         total_rows += nd.row_count;
@@ -139,7 +126,8 @@ pub async fn export_tenant(
     // unreachable — i.e. it wouldn't be in the manifest at all.)
     let _ = tables_count; // explicit drop to silence "unused mut" if the loop is empty
 
-    tar.finish().map_err(|e| TenantOpsError::Tarball(e.to_string()))?;
+    tar.finish()
+        .map_err(|e| TenantOpsError::Tarball(e.to_string()))?;
     let bytes_written = std::fs::metadata(&tarball_path)?.len();
 
     Ok(TenantExport {
@@ -175,9 +163,7 @@ where
 
     let rows = match sqlx::query(&sql).bind(org_id).fetch_all(conn).await {
         Ok(r) => r,
-        Err(sqlx::Error::Database(db_err))
-            if db_err.message().contains("does not exist") =>
-        {
+        Err(sqlx::Error::Database(db_err)) if db_err.message().contains("does not exist") => {
             // Schema drift — table or column missing. Soft-fail with empty.
             return Ok(NdjsonChunk {
                 bytes: Vec::new(),

@@ -195,8 +195,10 @@ async fn restore_handler(
         bytes = Some(data.to_vec());
         break;
     }
-    let bytes =
-        bytes.ok_or((StatusCode::BAD_REQUEST, "missing tarball upload".to_string()))?;
+    let bytes = bytes.ok_or((
+        StatusCode::BAD_REQUEST,
+        "missing tarball upload".to_string(),
+    ))?;
 
     // Write to a tempfile so tenant-ops can stream it back in.
     let tmpdir = std::env::temp_dir();

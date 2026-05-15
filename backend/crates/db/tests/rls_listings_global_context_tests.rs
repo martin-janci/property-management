@@ -228,9 +228,7 @@ async fn four_context_listings_visibility() {
     db.set_request_context(None, None, true)
         .await
         .expect("super-admin context");
-    db.set_global_read(false)
-        .await
-        .expect("global_read off");
+    db.set_global_read(false).await.expect("global_read off");
     let titles: Vec<String> =
         sqlx::query_scalar("SELECT title FROM listings WHERE title LIKE 'Smoke4%' ORDER BY title")
             .fetch_all(&db.pool)
@@ -248,9 +246,7 @@ async fn four_context_listings_visibility() {
     db.set_request_context(Some(org_a), Some(user_a), false)
         .await
         .expect("agency-A context");
-    db.set_global_read(false)
-        .await
-        .expect("global_read off");
+    db.set_global_read(false).await.expect("global_read off");
     let titles_a: Vec<String> =
         sqlx::query_scalar("SELECT title FROM listings WHERE title LIKE 'Smoke4%' ORDER BY title")
             .fetch_all(&db.pool)
@@ -267,9 +263,7 @@ async fn four_context_listings_visibility() {
     db.set_request_context(Some(org_b), Some(user_b), false)
         .await
         .expect("agency-B context");
-    db.set_global_read(false)
-        .await
-        .expect("global_read off");
+    db.set_global_read(false).await.expect("global_read off");
     let titles_b: Vec<String> =
         sqlx::query_scalar("SELECT title FROM listings WHERE title LIKE 'Smoke4%' ORDER BY title")
             .fetch_all(&db.pool)
@@ -339,18 +333,14 @@ async fn platform_host_cannot_write_listings() {
     db.set_request_context(None, None, false)
         .await
         .expect("clear org");
-    db.set_global_read(true)
-        .await
-        .expect("global_read on");
+    db.set_global_read(true).await.expect("global_read on");
 
     // Sanity: we CAN read it.
-    let title: Option<String> = sqlx::query_scalar(
-        "SELECT title FROM listings WHERE id = $1",
-    )
-    .bind(listing_id)
-    .fetch_optional(&db.pool)
-    .await
-    .expect("read under platform-host");
+    let title: Option<String> = sqlx::query_scalar("SELECT title FROM listings WHERE id = $1")
+        .bind(listing_id)
+        .fetch_optional(&db.pool)
+        .await
+        .expect("read under platform-host");
     assert_eq!(
         title.as_deref(),
         Some("Smoke4 WriteCheck Published"),
@@ -383,9 +373,7 @@ async fn platform_host_cannot_write_listings() {
     db.set_request_context(None, None, true)
         .await
         .expect("verify: super-admin");
-    db.set_global_read(false)
-        .await
-        .expect("global_read off");
+    db.set_global_read(false).await.expect("global_read off");
     let title_after: String = sqlx::query_scalar("SELECT title FROM listings WHERE id = $1")
         .bind(listing_id)
         .fetch_one(&db.pool)
@@ -402,9 +390,7 @@ async fn platform_host_cannot_write_listings() {
     db.set_request_context(None, None, false)
         .await
         .expect("clear org");
-    db.set_global_read(true)
-        .await
-        .expect("global_read on");
+    db.set_global_read(true).await.expect("global_read on");
     let insert = sqlx::query(
         r#"
         INSERT INTO listings (
@@ -474,9 +460,7 @@ async fn clear_request_context_resets_global_read() {
     db.set_request_context(None, None, false)
         .await
         .expect("clear org");
-    db.set_global_read(true)
-        .await
-        .expect("global_read on");
+    db.set_global_read(true).await.expect("global_read on");
     let count_global: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM listings WHERE title LIKE 'Smoke4 BleedCheck%'")
             .fetch_one(&db.pool)

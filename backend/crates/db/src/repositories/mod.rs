@@ -32,13 +32,13 @@ pub mod platform_admin;
 pub mod portal_password_reset;
 pub mod role;
 pub mod session;
-pub mod user_invite;
 pub mod signature_request;
 pub mod system_announcement;
 pub mod two_factor_auth;
 pub mod unit;
 pub mod unit_resident;
 pub mod user;
+pub mod user_invite;
 pub mod vote;
 
 // Epic 13: AI Assistant & Automation

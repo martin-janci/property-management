@@ -85,7 +85,10 @@ async fn revoke_without_mfa_timestamp_is_rejected(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .expect("re-read");
-    assert!(revoked_at.is_none(), "grant must remain live after rejected revoke");
+    assert!(
+        revoked_at.is_none(),
+        "grant must remain live after rejected revoke"
+    );
 }
 
 #[sqlx::test]
@@ -128,7 +131,10 @@ async fn revoke_with_stale_mfa_timestamp_is_rejected(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .expect("re-read");
-    assert!(revoked_at.is_none(), "grant must remain live after stale-MFA revoke");
+    assert!(
+        revoked_at.is_none(),
+        "grant must remain live after stale-MFA revoke"
+    );
 }
 
 #[sqlx::test]
@@ -174,12 +180,19 @@ async fn revoke_with_current_mfa_timestamp_succeeds(pool: PgPool) {
     let revoked_with_mfa_at: Option<chrono::DateTime<chrono::Utc>> = row.get("revoked_with_mfa_at");
     let revoked_by: Option<Uuid> = row.get("revoked_by");
 
-    assert!(revoked_at.is_some(), "revoked_at must be set after successful revoke");
+    assert!(
+        revoked_at.is_some(),
+        "revoked_at must be set after successful revoke"
+    );
     assert!(
         revoked_with_mfa_at.is_some(),
         "revoked_with_mfa_at must be set after successful revoke"
     );
-    assert_eq!(revoked_by, Some(granter), "revoked_by must record the actor");
+    assert_eq!(
+        revoked_by,
+        Some(granter),
+        "revoked_by must record the actor"
+    );
 }
 
 #[sqlx::test]
@@ -210,5 +223,8 @@ async fn unrelated_update_is_not_affected_by_trigger(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .expect("re-read");
-    assert!(revoked_at.is_none(), "unrelated UPDATE must not revoke the grant");
+    assert!(
+        revoked_at.is_none(),
+        "unrelated UPDATE must not revoke the grant"
+    );
 }

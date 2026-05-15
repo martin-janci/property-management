@@ -28,9 +28,7 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 async fn missing_row_falls_back_to_default(pool: PgPool) {
     let org = seed_org(&pool, "default-fallback").await;
 
-    let policy = AuthPolicy::for_org(&pool, org)
-        .await
-        .expect("load default");
+    let policy = AuthPolicy::for_org(&pool, org).await.expect("load default");
 
     assert_eq!(policy, AuthPolicy::default());
 }
@@ -65,14 +63,12 @@ async fn full_override_loads_back_intact(pool: PgPool) {
         max_session_age_minutes: 60,
     };
 
-    sqlx::query(
-        r#"INSERT INTO org_auth_policies (organization_id, policy) VALUES ($1, $2)"#,
-    )
-    .bind(org)
-    .bind(serde_json::to_value(&custom).expect("serialize"))
-    .execute(&pool)
-    .await
-    .expect("insert override");
+    sqlx::query(r#"INSERT INTO org_auth_policies (organization_id, policy) VALUES ($1, $2)"#)
+        .bind(org)
+        .bind(serde_json::to_value(&custom).expect("serialize"))
+        .execute(&pool)
+        .await
+        .expect("insert override");
 
     let loaded = AuthPolicy::for_org(&pool, org).await.expect("load");
     assert_eq!(loaded, custom);
@@ -131,10 +127,11 @@ async fn loader_does_not_leave_rls_context_dirty(pool: PgPool) {
     let _ = AuthPolicy::for_org(&pool, org).await.expect("load");
 
     let mut conn = pool.acquire().await.expect("acquire");
-    let raw: Option<String> = sqlx::query_scalar("SELECT current_setting('app.is_super_admin', true)")
-        .fetch_one(&mut *conn)
-        .await
-        .expect("read GUC");
+    let raw: Option<String> =
+        sqlx::query_scalar("SELECT current_setting('app.is_super_admin', true)")
+            .fetch_one(&mut *conn)
+            .await
+            .expect("read GUC");
     // Either NULL (never set on this fresh conn) or 'false' (cleared) — both
     // are acceptable. The forbidden value is 'true'.
     let v = raw.unwrap_or_default();

@@ -18,7 +18,10 @@ use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/", get(list_agencies).layer(require_capability(Capability::AgenciesRead)))
+        .route(
+            "/",
+            get(list_agencies).layer(require_capability(Capability::AgenciesRead)),
+        )
         .route(
             "/{id}",
             get(get_agency).layer(require_capability(Capability::AgenciesRead)),

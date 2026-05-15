@@ -329,7 +329,12 @@ pub async fn update_me(
     let handler = UserHandler::new(state.portal_repo.clone());
 
     match handler
-        .update_profile(principal.user_id, req.name, req.profile_image_url, req.locale)
+        .update_profile(
+            principal.user_id,
+            req.name,
+            req.profile_image_url,
+            req.locale,
+        )
         .await
     {
         Ok(user) => {

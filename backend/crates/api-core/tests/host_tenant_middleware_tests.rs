@@ -70,9 +70,7 @@ fn build_app(rate_limiters: Arc<TenantRateLimiterSet>, org_id: Uuid) -> Router {
 
     let cfg = HostTenantConfig::with_parts(
         pool,
-        Arc::new(api_core::middleware::host_tenant::TenantResolutionCache::new(
-            300, 30, 100,
-        )),
+        Arc::new(api_core::middleware::host_tenant::TenantResolutionCache::new(300, 30, 100)),
         false,
         Vec::new(),
     )

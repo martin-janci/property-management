@@ -7,8 +7,8 @@ use chrono::{Duration, Utc};
 use db::models::user::Locale;
 use db::models::{CreatePortalPasswordResetToken, PortalUser, UpdatePortalUser};
 use db::repositories::{
-    PortalPasswordResetRepository, PortalRepository, UnifiedPortalError,
-    UnifiedPortalUserRepo, UpdateProfile,
+    PortalPasswordResetRepository, PortalRepository, UnifiedPortalError, UnifiedPortalUserRepo,
+    UpdateProfile,
 };
 use rand::TryRng;
 use sha2::{Digest, Sha256};
@@ -295,7 +295,11 @@ impl UserHandler {
         // `portal_users`.
         let was_existing = matches!(self.repo.find_user_by_pm_id(pm_user_id).await, Ok(Some(_)));
 
-        match self.unified.sso_upsert("pm_sso", Some(pm_user_id), email, name).await {
+        match self
+            .unified
+            .sso_upsert("pm_sso", Some(pm_user_id), email, name)
+            .await
+        {
             Ok(user) => {
                 let portal_id = user.portal_origin_id.unwrap_or(pm_user_id);
                 match self.repo.find_user_by_id(portal_id).await {
@@ -392,7 +396,10 @@ impl UserHandler {
         // to the matching users id when the legacy caller passes a portal
         // user id (the registration flow above returns portal_users.id in
         // its UserInfo, so legacy clients hit /users/me with that id).
-        let users_id = self.resolve_users_id(user_id).await.map_err(|e| e.to_string())?;
+        let users_id = self
+            .resolve_users_id(user_id)
+            .await
+            .map_err(|e| e.to_string())?;
         let update = UpdateProfile {
             name: name.clone(),
             profile_image_url: profile_image_url.clone(),
@@ -463,13 +470,12 @@ impl UserHandler {
     /// (e.g. an unmerged collision).
     async fn lookup_users_id_for_portal_id(&self, portal_id: Uuid) -> Result<Uuid, String> {
         let pool = self.repo.pool();
-        if let Some(uid) = sqlx::query_scalar::<_, Uuid>(
-            "SELECT id FROM users WHERE portal_origin_id = $1",
-        )
-        .bind(portal_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| e.to_string())?
+        if let Some(uid) =
+            sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE portal_origin_id = $1")
+                .bind(portal_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| e.to_string())?
         {
             return Ok(uid);
         }

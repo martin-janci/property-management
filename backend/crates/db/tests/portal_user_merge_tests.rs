@@ -121,22 +121,22 @@ async fn collision_writes_collision_row_no_silent_merge(pool: PgPool) {
     run_merge(&pool).await;
 
     // Exactly one users row for this email — the pre-existing staff one.
-    let user_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER($1)",
-    )
-    .bind(email)
-    .fetch_one(&pool)
-    .await
-    .expect("count users");
-    assert_eq!(user_count, 1, "no silent merge: still exactly one users row");
+    let user_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM users WHERE LOWER(email) = LOWER($1)")
+            .bind(email)
+            .fetch_one(&pool)
+            .await
+            .expect("count users");
+    assert_eq!(
+        user_count, 1,
+        "no silent merge: still exactly one users row"
+    );
 
-    let kind: String = sqlx::query_scalar(
-        "SELECT principal_kind FROM users WHERE id = $1",
-    )
-    .bind(staff_id)
-    .fetch_one(&pool)
-    .await
-    .expect("staff kind");
+    let kind: String = sqlx::query_scalar("SELECT principal_kind FROM users WHERE id = $1")
+        .bind(staff_id)
+        .fetch_one(&pool)
+        .await
+        .expect("staff kind");
     assert_eq!(kind, "staff", "the staff row's kind is unchanged");
 
     // A collision row exists for the portal_user.
@@ -177,17 +177,19 @@ async fn non_collision_inserts_users_row_with_origin_pointer(pool: PgPool) {
 
     let kind: String = row.get("principal_kind");
     let back: Uuid = row.get("portal_origin_id");
-    assert_eq!(kind, "public", "merged portal user must be principal_kind=public");
+    assert_eq!(
+        kind, "public",
+        "merged portal user must be principal_kind=public"
+    );
     assert_eq!(back, portal_id, "portal_origin_id back-pointer set");
 
     // No collision row should exist for this portal_user.
-    let coll: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM user_merge_collisions WHERE source_id = $1",
-    )
-    .bind(portal_id)
-    .fetch_one(&pool)
-    .await
-    .expect("no collisions");
+    let coll: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM user_merge_collisions WHERE source_id = $1")
+            .bind(portal_id)
+            .fetch_one(&pool)
+            .await
+            .expect("no collisions");
     assert_eq!(coll, 0);
 }
 
@@ -198,12 +200,10 @@ async fn merge_is_idempotent(pool: PgPool) {
     run_merge(&pool).await;
     run_merge(&pool).await;
 
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM users WHERE portal_origin_id = $1",
-    )
-    .bind(portal_id)
-    .fetch_one(&pool)
-    .await
-    .expect("count");
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM users WHERE portal_origin_id = $1")
+        .bind(portal_id)
+        .fetch_one(&pool)
+        .await
+        .expect("count");
     assert_eq!(count, 1, "second merge must not duplicate the user row");
 }

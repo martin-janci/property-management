@@ -335,7 +335,9 @@ impl UnifiedPortalUserRepo {
             let synthesized = User {
                 id: p.id,
                 email: p.email,
-                password_hash: p.password_hash.unwrap_or_else(|| SSO_ONLY_SENTINEL.to_string()),
+                password_hash: p
+                    .password_hash
+                    .unwrap_or_else(|| SSO_ONLY_SENTINEL.to_string()),
                 name: p.name,
                 phone: None,
                 status: "active".to_string(),
@@ -537,4 +539,3 @@ impl UnifiedPortalUserRepo {
         Ok(refreshed)
     }
 }
-

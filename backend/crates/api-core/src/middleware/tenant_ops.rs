@@ -118,9 +118,7 @@ impl TenantRateLimiterSet {
             if let Some(entry) = limiters.get(&org_id) {
                 return match entry.limiter.check() {
                     Ok(_) => Ok(()),
-                    Err(not_until) => {
-                        Err(not_until.wait_time_from(DefaultClock::default().now()))
-                    }
+                    Err(not_until) => Err(not_until.wait_time_from(DefaultClock::default().now())),
                 };
             }
         }

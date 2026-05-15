@@ -26,14 +26,14 @@
 //! (`export_tenant`, `purge_tenant`, `restore_tenant_export`) is stable;
 //! the merge is mechanical.
 
+pub mod errors;
+pub mod export;
 pub mod manifest;
 pub mod purge;
-pub mod export;
 pub mod restore;
-pub mod errors;
 
 pub use errors::{TenantOpsError, TenantOpsResult};
-pub use manifest::{TenantDataManifest, TenantTable, TableKind};
-pub use purge::{purge_tenant, PurgeReport};
 pub use export::{export_tenant, TenantExport};
+pub use manifest::{TableKind, TenantDataManifest, TenantTable};
+pub use purge::{purge_tenant, PurgeReport};
 pub use restore::{restore_tenant_export, RestoreReport};

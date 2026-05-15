@@ -59,7 +59,10 @@ pub async fn restore_tenant_export(
     let mut export_manifest: Option<TenantDataManifest> = None;
     let mut tables: HashMap<String, Vec<u8>> = HashMap::new();
 
-    for entry in tar.entries().map_err(|e| TenantOpsError::Tarball(e.to_string()))? {
+    for entry in tar
+        .entries()
+        .map_err(|e| TenantOpsError::Tarball(e.to_string()))?
+    {
         let mut entry = entry.map_err(|e| TenantOpsError::Tarball(e.to_string()))?;
         let path = entry
             .path()
@@ -80,12 +83,10 @@ pub async fn restore_tenant_export(
         }
     }
 
-    let metadata = metadata.ok_or_else(|| {
-        TenantOpsError::RestoreInvalid("missing metadata.json".into())
-    })?;
-    let export_manifest = export_manifest.ok_or_else(|| {
-        TenantOpsError::RestoreInvalid("missing manifest.json".into())
-    })?;
+    let metadata =
+        metadata.ok_or_else(|| TenantOpsError::RestoreInvalid("missing metadata.json".into()))?;
+    let export_manifest = export_manifest
+        .ok_or_else(|| TenantOpsError::RestoreInvalid("missing manifest.json".into()))?;
 
     let original_org_id = metadata.organization_id;
     let new_org_id = Uuid::new_v4();
@@ -176,11 +177,7 @@ fn parse_ndjson(bytes: &[u8]) -> TenantOpsResult<Vec<Value>> {
 
 /// INSERT one JSONB row into a table. Uses `jsonb_populate_record` to
 /// avoid having to know the table's column types statically.
-async fn insert_jsonb_row<'c, E>(
-    conn: E,
-    table: &str,
-    row: &Value,
-) -> TenantOpsResult<()>
+async fn insert_jsonb_row<'c, E>(conn: E, table: &str, row: &Value) -> TenantOpsResult<()>
 where
     E: sqlx::PgExecutor<'c>,
 {

@@ -29,7 +29,9 @@ use std::sync::Arc;
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::tenant::TenantMembershipProvider;
 
-use crate::{AdminError, AuditOutcome, AuditWriter, Capability, CapabilityGrantsRepository, MfaRecency};
+use crate::{
+    AdminError, AuditOutcome, AuditWriter, Capability, CapabilityGrantsRepository, MfaRecency,
+};
 
 /// Bundle of dependencies the extractor needs. Stored in axum's request
 /// extensions by the route layer (e.g. `AppState::admin_deps`).
@@ -65,10 +67,7 @@ where
 {
     type Rejection = AdminError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         // Pull the capability target out of the extension that the route
         // builder set. Routes that use this extractor MUST also call
         // `.layer(Extension(RequiredCapabilityMarker(cap)))` — but we make

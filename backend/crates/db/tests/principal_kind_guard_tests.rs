@@ -57,7 +57,10 @@ async fn raw_update_to_principal_kind_is_rejected(pool: PgPool) {
         .fetch_one(&pool)
         .await
         .expect("re-read");
-    assert_eq!(kind, "staff", "principal_kind must remain 'staff' (default)");
+    assert_eq!(
+        kind, "staff",
+        "principal_kind must remain 'staff' (default)"
+    );
 }
 
 #[sqlx::test]
@@ -66,16 +69,14 @@ async fn set_principal_kind_succeeds_and_writes_audit_row(pool: PgPool) {
     let actor = create_user(&pool, "guard-actor@phase2.test").await;
 
     // Call the SECURITY DEFINER function.
-    let _ = sqlx::query(
-        "SELECT set_principal_kind($1, $2, $3, $4)",
-    )
-    .bind(target)
-    .bind("platform")
-    .bind(actor)
-    .bind("phase2 promotion test")
-    .execute(&pool)
-    .await
-    .expect("set_principal_kind should succeed");
+    let _ = sqlx::query("SELECT set_principal_kind($1, $2, $3, $4)")
+        .bind(target)
+        .bind("platform")
+        .bind(actor)
+        .bind("phase2 promotion test")
+        .execute(&pool)
+        .await
+        .expect("set_principal_kind should succeed");
 
     // Read back: the column must now be 'platform'.
     let kind: String = sqlx::query_scalar("SELECT principal_kind FROM users WHERE id = $1")

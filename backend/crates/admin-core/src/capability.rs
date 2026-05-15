@@ -25,9 +25,7 @@ use crate::AdminError;
 
 /// Named capabilities. Adding a new capability is intentionally a code change
 /// (not a row in a table) so the surface area is reviewable in PR.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, sqlx::Type,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum Capability {
@@ -140,10 +138,7 @@ impl CapabilityRegistry {
 
     /// Convenience: did this binary register `cap`?
     pub fn contains(cap: Capability) -> bool {
-        REGISTRY
-            .get()
-            .map(|set| set.contains(&cap))
-            .unwrap_or(true) // default-open for un-initialized binaries (tests).
+        REGISTRY.get().map(|set| set.contains(&cap)).unwrap_or(true) // default-open for un-initialized binaries (tests).
     }
 }
 

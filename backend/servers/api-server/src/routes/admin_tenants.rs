@@ -117,14 +117,21 @@ fn validate_css_var_value(var_name: &str, value: &str) -> Result<(), &'static st
         return Err("css_vars value contains a forbidden token");
     }
     let lower_name = var_name.to_ascii_lowercase();
-    if lower_name.contains("color") || lower_name.contains("background") || lower_name.contains("border") {
+    if lower_name.contains("color")
+        || lower_name.contains("background")
+        || lower_name.contains("border")
+    {
         let trimmed = value.trim();
         let is_hex = trimmed.starts_with('#')
             && trimmed.len() >= 4
             && trimmed.len() <= 9
             && trimmed[1..].chars().all(|c| c.is_ascii_hexdigit());
         let is_func = matches!(
-            trimmed.split('(').next().map(|p| p.to_ascii_lowercase()).as_deref(),
+            trimmed
+                .split('(')
+                .next()
+                .map(|p| p.to_ascii_lowercase())
+                .as_deref(),
             Some("rgb") | Some("rgba") | Some("hsl") | Some("hsla")
         ) && trimmed.ends_with(')');
         let is_keyword = !trimmed.is_empty() && trimmed.chars().all(|c| c.is_ascii_alphabetic());
@@ -257,13 +264,11 @@ pub async fn update_tenant_branding(
 pub fn feature_flags_router() -> Router<AppState> {
     let read = Router::new().route(
         "/",
-        get(list_tenant_feature_flags)
-            .layer(require_capability(Capability::SiteSettingsRead)),
+        get(list_tenant_feature_flags).layer(require_capability(Capability::SiteSettingsRead)),
     );
     let write = Router::new().route(
         "/",
-        put(upsert_tenant_feature_flag)
-            .layer(require_capability(Capability::FeatureFlagsWrite)),
+        put(upsert_tenant_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
     );
     read.merge(write)
 }

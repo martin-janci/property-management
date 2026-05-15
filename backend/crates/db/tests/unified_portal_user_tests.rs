@@ -37,13 +37,12 @@ async fn fetch_dual_ids(pool: &PgPool, email: &str) -> (Uuid, Uuid) {
     .fetch_one(pool)
     .await
     .expect("fetch users id");
-    let portal_id: Uuid = sqlx::query_scalar(
-        "SELECT id FROM portal_users WHERE LOWER(email) = LOWER($1)",
-    )
-    .bind(email)
-    .fetch_one(pool)
-    .await
-    .expect("fetch portal_users id");
+    let portal_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM portal_users WHERE LOWER(email) = LOWER($1)")
+            .bind(email)
+            .fetch_one(pool)
+            .await
+            .expect("fetch portal_users id");
     (user_id, portal_id)
 }
 
@@ -71,13 +70,11 @@ async fn create_writes_both_tables(pool: PgPool) {
         "users.portal_origin_id back-points at the new portal_users row"
     );
     // The legacy back-pointer (portal_users.pm_user_id) points at users.id.
-    let pm_user_id: Uuid = sqlx::query_scalar(
-        "SELECT pm_user_id FROM portal_users WHERE id = $1",
-    )
-    .bind(portal_id)
-    .fetch_one(&pool)
-    .await
-    .expect("portal_users.pm_user_id");
+    let pm_user_id: Uuid = sqlx::query_scalar("SELECT pm_user_id FROM portal_users WHERE id = $1")
+        .bind(portal_id)
+        .fetch_one(&pool)
+        .await
+        .expect("portal_users.pm_user_id");
     assert_eq!(
         pm_user_id, users_id,
         "portal_users.pm_user_id back-points at the new users row"
@@ -162,12 +159,11 @@ async fn password_change_atomic(pool: PgPool) {
 
     let (users_id, portal_id) = fetch_dual_ids(&pool, email).await;
 
-    let users_hash: String =
-        sqlx::query_scalar("SELECT password_hash FROM users WHERE id = $1")
-            .bind(users_id)
-            .fetch_one(&pool)
-            .await
-            .expect("users hash");
+    let users_hash: String = sqlx::query_scalar("SELECT password_hash FROM users WHERE id = $1")
+        .bind(users_id)
+        .fetch_one(&pool)
+        .await
+        .expect("users hash");
     let portal_hash: Option<String> =
         sqlx::query_scalar("SELECT password_hash FROM portal_users WHERE id = $1")
             .bind(portal_id)
@@ -208,7 +204,10 @@ async fn sso_upsert_handles_collision(pool: PgPool) {
 
     match result {
         Err(UnifiedPortalError::Collision { existing_user_id }) => {
-            assert_eq!(existing_user_id, staff_id, "collision identifies the staff row");
+            assert_eq!(
+                existing_user_id, staff_id,
+                "collision identifies the staff row"
+            );
         }
         other => panic!("expected Collision error, got {other:?}"),
     }
@@ -245,13 +244,12 @@ async fn sso_upsert_handles_collision(pool: PgPool) {
 
     // No portal_users row was inserted for this email — the refuse came
     // before the portal mirror.
-    let portal_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM portal_users WHERE LOWER(email) = LOWER($1)",
-    )
-    .bind(email)
-    .fetch_one(&pool)
-    .await
-    .expect("count portal_users");
+    let portal_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM portal_users WHERE LOWER(email) = LOWER($1)")
+            .bind(email)
+            .fetch_one(&pool)
+            .await
+            .expect("count portal_users");
     assert_eq!(portal_count, 0, "no portal mirror written on refuse");
 
     // Re-running the upsert is idempotent — does not pile up duplicate

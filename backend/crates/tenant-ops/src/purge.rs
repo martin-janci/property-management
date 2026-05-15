@@ -66,17 +66,18 @@ pub async fn purge_tenant(
     let mut conn = pool.acquire().await?;
     set_super_admin_context(&mut conn).await?;
 
-    let exists: Option<(Uuid,)> =
-        sqlx::query_as("SELECT id FROM organizations WHERE id = $1")
-            .bind(org_id)
-            .fetch_optional(&mut *conn)
-            .await?;
+    let exists: Option<(Uuid,)> = sqlx::query_as("SELECT id FROM organizations WHERE id = $1")
+        .bind(org_id)
+        .fetch_optional(&mut *conn)
+        .await?;
     if exists.is_none() {
         return Err(TenantOpsError::NotFound(org_id));
     }
 
     // 2. Collect S3 keys (best-effort).
-    let s3_keys = collect_s3_keys(&mut *conn, org_id).await.unwrap_or_default();
+    let s3_keys = collect_s3_keys(&mut *conn, org_id)
+        .await
+        .unwrap_or_default();
 
     // 3. Per-table delete plan.
     // We delete child-link tables first via FK cascade — we rely on the
@@ -90,8 +91,7 @@ pub async fn purge_tenant(
     // We iterate `OwnOrg` tables in REVERSE so that referencing rows are
     // touched before referenced ones. For `Child`-only tables we trust
     // ON DELETE CASCADE on their parent FK to clear them.
-    let own_org: Vec<&TenantTable> =
-        manifest.own_org_tables().collect::<Vec<_>>();
+    let own_org: Vec<&TenantTable> = manifest.own_org_tables().collect::<Vec<_>>();
     for tbl in own_org.into_iter().rev() {
         let report = purge_one_table(&mut *conn, tbl, org_id).await;
         total += report.rows_deleted;
@@ -139,11 +139,7 @@ pub async fn purge_tenant(
     })
 }
 
-async fn purge_one_table<'c, E>(
-    conn: E,
-    tbl: &TenantTable,
-    org_id: Uuid,
-) -> PerTableReport
+async fn purge_one_table<'c, E>(conn: E, tbl: &TenantTable, org_id: Uuid) -> PerTableReport
 where
     E: Executor<'c, Database = sqlx::Postgres>,
 {

@@ -57,8 +57,8 @@ impl TenantDataManifest {
     /// Read the manifest from disk.
     pub fn load(path: impl AsRef<Path>) -> TenantOpsResult<Self> {
         let raw = std::fs::read_to_string(path.as_ref())?;
-        let manifest: Self = serde_json::from_str(&raw)
-            .map_err(|e| TenantOpsError::ManifestParse(e.to_string()))?;
+        let manifest: Self =
+            serde_json::from_str(&raw).map_err(|e| TenantOpsError::ManifestParse(e.to_string()))?;
         Ok(manifest)
     }
 

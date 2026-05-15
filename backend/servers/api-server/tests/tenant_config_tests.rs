@@ -41,13 +41,7 @@ mod common_phase3 {
         .expect("seed org")
     }
 
-    pub async fn seed_branding(
-        pool: &PgPool,
-        org_id: Uuid,
-        primary: &str,
-        font: &str,
-        logo: &str,
-    ) {
+    pub async fn seed_branding(pool: &PgPool, org_id: Uuid, primary: &str, font: &str, logo: &str) {
         sqlx::query(
             r#"
             INSERT INTO agency_branding
@@ -76,10 +70,8 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
 
     // Quiet the JWT-service constructor — it only matters if we exercise
     // an auth-gated path, which `/tenant-config` is not.
-    let jwt = JwtService::new(
-        "tests-only-jwt-secret-at-least-thirty-two-chars-please",
-    )
-    .expect("jwt");
+    let jwt =
+        JwtService::new("tests-only-jwt-secret-at-least-thirty-two-chars-please").expect("jwt");
     let email = EmailService::new("http://test".into(), false);
 
     let cache = Arc::new(TenantResolutionCache::new(60, 30, 100));
@@ -107,7 +99,10 @@ async fn platform_host_returns_defaults(pool: PgPool) {
     assert!(json.get("tenant_id").unwrap().is_null());
     assert_eq!(json["name"], "Reality Portal");
     assert!(json["feature_flags"].as_object().unwrap().is_empty());
-    assert!(json["locales"].as_array().unwrap().contains(&Value::String("sk".into())));
+    assert!(json["locales"]
+        .as_array()
+        .unwrap()
+        .contains(&Value::String("sk".into())));
 }
 
 #[sqlx::test]
@@ -127,8 +122,7 @@ async fn agency_a_returns_a_branding(pool: PgPool) {
         organization_id: org_a,
         source: TenantSource::Subdomain,
     };
-    let resp =
-        api_server::routes::tenant_config::tenant_config_inner(state, Some(resolved)).await;
+    let resp = api_server::routes::tenant_config::tenant_config_inner(state, Some(resolved)).await;
     assert_eq!(resp.status(), axum::http::StatusCode::OK);
 
     let body = to_bytes(resp.into_body(), usize::MAX).await.unwrap();

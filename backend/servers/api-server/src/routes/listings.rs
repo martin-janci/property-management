@@ -1119,9 +1119,10 @@ pub async fn global_publish(
     // The repository UPDATE is org-scoped (WHERE organization_id = $org), so
     // an attempt to publish another org's listing returns Ok(None) → 404,
     // not 200. We rely on that as the second defensive layer.
-    let org_id = auth
-        .tenant_id
-        .ok_or((axum::http::StatusCode::FORBIDDEN, "No tenant context".to_string()))?;
+    let org_id = auth.tenant_id.ok_or((
+        axum::http::StatusCode::FORBIDDEN,
+        "No tenant context".to_string(),
+    ))?;
 
     let previous = state
         .listing_repo
@@ -1133,7 +1134,10 @@ pub async fn global_publish(
                 format!("Failed to fetch listing: {}", e),
             )
         })?
-        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+        .ok_or((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        ))?;
 
     let listing = state
         .listing_repo
@@ -1145,7 +1149,10 @@ pub async fn global_publish(
                 format!("Failed to publish listing: {}", e),
             )
         })?
-        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+        .ok_or((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        ))?;
 
     // Audit. Best-effort: a logging failure must not surface a 500 on the
     // happy path (the publish itself succeeded). We log but don't propagate.
@@ -1208,9 +1215,10 @@ pub async fn global_unpublish(
     auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
-    let org_id = auth
-        .tenant_id
-        .ok_or((axum::http::StatusCode::FORBIDDEN, "No tenant context".to_string()))?;
+    let org_id = auth.tenant_id.ok_or((
+        axum::http::StatusCode::FORBIDDEN,
+        "No tenant context".to_string(),
+    ))?;
 
     let previous = state
         .listing_repo
@@ -1222,7 +1230,10 @@ pub async fn global_unpublish(
                 format!("Failed to fetch listing: {}", e),
             )
         })?
-        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+        .ok_or((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        ))?;
 
     let listing = state
         .listing_repo
@@ -1234,7 +1245,10 @@ pub async fn global_unpublish(
                 format!("Failed to unpublish listing: {}", e),
             )
         })?
-        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+        .ok_or((
+            axum::http::StatusCode::NOT_FOUND,
+            "Listing not found".to_string(),
+        ))?;
 
     let audit_result = state
         .audit_log_repo

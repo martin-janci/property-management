@@ -92,10 +92,7 @@ where
 /// super-admin) so the connection's state is fully explicit. The migrations
 /// extend [`clear_request_context`] to also reset this flag — defense for
 /// leak #2 (context bleeding between requests).
-pub async fn set_global_read_context<'e, E>(
-    executor: E,
-    enabled: bool,
-) -> Result<(), SqlxError>
+pub async fn set_global_read_context<'e, E>(executor: E, enabled: bool) -> Result<(), SqlxError>
 where
     E: Executor<'e, Database = Postgres>,
 {

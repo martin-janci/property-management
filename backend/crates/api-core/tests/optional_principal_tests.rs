@@ -110,7 +110,10 @@ async fn invalid_bearer_token_propagates_401() {
     //
     // Note: the JWT decoder runs BEFORE any DB lookup, so the stub pool's
     // unreachable address is fine — we never reach a query.
-    std::env::set_var("JWT_SECRET", "test-secret-min-32-chars-for-jwt-signing-okay");
+    std::env::set_var(
+        "JWT_SECRET",
+        "test-secret-min-32-chars-for-jwt-signing-okay",
+    );
     let state = StubState::new();
 
     let mut parts = parts_for(
@@ -135,7 +138,10 @@ async fn invalid_bearer_token_propagates_401() {
 async fn malformed_auth_scheme_propagates_401() {
     // A non-Bearer scheme is also a malformed-credentials case. Same
     // rationale as the invalid-token test: do not swallow.
-    std::env::set_var("JWT_SECRET", "test-secret-min-32-chars-for-jwt-signing-okay");
+    std::env::set_var(
+        "JWT_SECRET",
+        "test-secret-min-32-chars-for-jwt-signing-okay",
+    );
     let state = StubState::new();
 
     let mut parts = parts_for(
@@ -172,7 +178,10 @@ async fn malformed_auth_scheme_propagates_401() {
 /// proves we did not silently demote to anonymous).
 #[tokio::test]
 async fn valid_token_with_dead_db_does_not_demote_to_anonymous() {
-    std::env::set_var("JWT_SECRET", "test-secret-min-32-chars-for-jwt-signing-okay");
+    std::env::set_var(
+        "JWT_SECRET",
+        "test-secret-min-32-chars-for-jwt-signing-okay",
+    );
     let state = StubState::new();
 
     let now = chrono::Utc::now().timestamp();

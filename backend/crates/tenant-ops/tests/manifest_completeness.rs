@@ -30,7 +30,10 @@ fn committed_manifest_is_loadable_and_non_trivial() {
          backend/manifests/tenant-data-manifest.json`",
         m.len()
     );
-    assert_eq!(m.manifest_version, 1, "manifest_version=1 is the only known schema");
+    assert_eq!(
+        m.manifest_version, 1,
+        "manifest_version=1 is the only known schema"
+    );
     let own_org_count = m.own_org_tables().count();
     assert!(
         own_org_count > 0,

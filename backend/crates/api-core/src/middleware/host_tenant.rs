@@ -177,10 +177,7 @@ fn load_platform_hosts(dev_mode: bool) -> Vec<String> {
 
     // Always include the production placeholder so the seed in 00135 and the
     // resolver agree without needing PLATFORM_HOST in dev.
-    if !hosts
-        .iter()
-        .any(|h| h == "reality.example.com")
-    {
+    if !hosts.iter().any(|h| h == "reality.example.com") {
         hosts.push("reality.example.com".to_string());
     }
 
@@ -640,7 +637,10 @@ pub async fn rate_limit_and_meter(
         return Response::builder()
             .status(StatusCode::TOO_MANY_REQUESTS)
             .header("Retry-After", retry_secs.to_string())
-            .header(axum::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
+            .header(
+                axum::http::header::CONTENT_TYPE,
+                "text/plain; charset=utf-8",
+            )
             .body(Body::from("rate limit exceeded for this tenant"))
             .expect("static 429 response is valid");
     }

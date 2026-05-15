@@ -66,7 +66,11 @@ async fn start(
     Json(body): Json<StartBody>,
 ) -> Result<Json<StartResponse>, (StatusCode, String)> {
     let issued = svc
-        .start_impersonation(auth.user_id, body.target_user_id, Capability::UsersImpersonate)
+        .start_impersonation(
+            auth.user_id,
+            body.target_user_id,
+            Capability::UsersImpersonate,
+        )
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
     Ok(Json(issued.into()))

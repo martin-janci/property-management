@@ -54,8 +54,8 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
     use api_server::state::AppState;
     use std::sync::Arc;
 
-    let jwt = JwtService::new("tests-only-jwt-secret-at-least-thirty-two-chars-please")
-        .expect("jwt");
+    let jwt =
+        JwtService::new("tests-only-jwt-secret-at-least-thirty-two-chars-please").expect("jwt");
     let email = EmailService::new("http://test".into(), false);
     let cache = Arc::new(TenantResolutionCache::new(60, 30, 100));
     // Phase 5.5: feature-flag tests don't exercise the rate limiter, so the
