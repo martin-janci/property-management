@@ -19,7 +19,15 @@
  * i18n still get a working modal.
  */
 
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 export interface MfaChallengeLabels {
   /** Modal title. */
@@ -89,7 +97,7 @@ export function MfaChallengeModal({
   onCancel,
   actionLabel,
   labels,
-}: MfaChallengeModalProps): JSX.Element | null {
+}: MfaChallengeModalProps): ReactElement | null {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
