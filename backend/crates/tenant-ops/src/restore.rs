@@ -9,14 +9,14 @@
 //! --------
 //! 1. Read `metadata.json` to discover the original org id.
 //! 2. Mint a NEW `Uuid::new_v4()` for the restored org. Build a remap
-//!    `old_org_id -> new_org_id`.
+//!  `old_org_id -> new_org_id`.
 //! 3. Restore `tables/organizations.ndjson` first, rewriting `id` to the
-//!    new uuid (and making sure `slug` doesn't collide — append a suffix
-//!    on conflict).
+//!  new uuid (and making sure `slug` doesn't collide — append a suffix
+//!  on conflict).
 //! 4. For every per-table NDJSON, rewrite the `organization_id` /  `org_id`
-//!    column to the new uuid and INSERT row-by-row. Other UUID columns
+//!  column to the new uuid and INSERT row-by-row. Other UUID columns
 //!    (FKs to children of the same tenant) keep their original values —
-//!    the export-then-restore round-trip preserves intra-tenant FKs.
+//!  the export-then-restore round-trip preserves intra-tenant FKs.
 
 use crate::errors::{TenantOpsError, TenantOpsResult};
 use crate::export::TenantExportMetadata;

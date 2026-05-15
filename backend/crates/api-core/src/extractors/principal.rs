@@ -7,18 +7,18 @@
 //! # Algorithm
 //!
 //! 1. Decode the bearer JWT — but the ONLY claim that matters is `sub`. Token-
-//!    carried `tenant_id` / `role` claims are accepted for backward-compat
-//!    deserialization but are NEVER trusted server-side (defends leaks #10
-//!    and #11 — "stale authz in a live token" and "skeleton-key token").
+//!  carried `tenant_id` / `role` claims are accepted for backward-compat
+//!  deserialization but are NEVER trusted server-side (defends leaks #10
+//!  and #11 — "stale authz in a live token" and "skeleton-key token").
 //! 2. Read the `ResolvedTenant` injected by `host_tenant_middleware`. If
-//!    present, the request's effective org is that org.
+//!  present, the request's effective org is that org.
 //! 3. Look up the user's `principal_kind` and active `user_memberships`. If
-//!    `ResolvedTenant` is set and the user has NO active membership in that
-//!    org AND the kind is not `Platform`, return **403** (defends leak #11
-//!    again, this time on the read path).
+//!  `ResolvedTenant` is set and the user has NO active membership in that
+//!  org AND the kind is not `Platform`, return **403** (defends leak #11
+//!  again, this time on the read path).
 //! 4. Otherwise, build a `RequestPrincipal` with `effective_org` set to either
-//!    the resolved org (membership case) or `None` (platform-host case for
-//!    a platform principal).
+//!  the resolved org (membership case) or `None` (platform-host case for
+//!  a platform principal).
 
 use crate::extractors::tenant::TenantMembershipProvider;
 use crate::middleware::host_tenant::{ResolvedTenant, TenantSource};

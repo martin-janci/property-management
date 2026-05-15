@@ -7,16 +7,16 @@
 //! # Resolution flow
 //!
 //! 1. Phase 1's `host_tenant_middleware` resolved the inbound `Host` to a
-//!    `ResolvedTenant` (or returned 404). We pull it out of request
-//!    extensions via the existing extractor.
+//!  `ResolvedTenant` (or returned 404). We pull it out of request
+//!  extensions via the existing extractor.
 //! 2. If unresolved (caller is on the platform host) → return platform
-//!    defaults: `tenant_id: null`, brand = "Reality Portal", default
-//!    `--ppt-*` tokens, no feature flags.
+//!  defaults: `tenant_id: null`, brand = "Reality Portal", default
+//!  `--ppt-*` tokens, no feature flags.
 //! 3. If resolved → fetch `agency_branding` + `tenant_feature_flags` rows
-//!    on a SYSTEM connection (we have no JWT — this endpoint is reached
-//!    by every browser hit, including bots and unauthenticated users).
-//!    Both `*_system` repository methods follow the same set/clear-context
-//!    discipline as the Phase 1 host-resolution lookup.
+//!  on a SYSTEM connection (we have no JWT — this endpoint is reached
+//!  by every browser hit, including bots and unauthenticated users).
+//!  Both `*_system` repository methods follow the same set/clear-context
+//!  discipline as the Phase 1 host-resolution lookup.
 //!
 //! # Caching
 //!
