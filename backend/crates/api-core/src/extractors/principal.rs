@@ -21,7 +21,7 @@
 //!    a platform principal).
 
 use crate::extractors::tenant::TenantMembershipProvider;
-use crate::middleware::host_tenant::ResolvedTenant;
+use crate::middleware::host_tenant::{ResolvedTenant, TenantSource};
 use axum::{
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
@@ -133,6 +133,30 @@ where
         let resolved = parts.extensions.get::<ResolvedTenant>().copied();
 
         let effective_org = match (resolved, kind) {
+            // Phase 4 — PlatformHost wiring.
+            //
+            // The PlatformHost variant carries `organization_id == Uuid::nil()`
+            // as a sentinel meaning "no specific tenant — global read context".
+            // Using that nil id as a real org id (e.g. for membership lookup)
+            // would either 403-with-misleading-error (no one has membership in
+            // the nil org) or, worse, leak across tenants downstream. Branch on
+            // `source == PlatformHost` BEFORE the membership-checking arms.
+            //
+            //   * Platform principal on PlatformHost → allowed, `effective_org = None`.
+            //   * Any other principal kind on PlatformHost → 403; the platform
+            //     host is platform-only by definition.
+            (Some(rt), PrincipalKind::Platform) if rt.source == TenantSource::PlatformHost => None,
+            (Some(rt), _) if rt.source == TenantSource::PlatformHost => {
+                tracing::warn!(
+                    user_id = %user_id,
+                    kind = %kind_str,
+                    "RequestPrincipal: non-platform principal on platform host"
+                );
+                return Err((
+                    StatusCode::FORBIDDEN,
+                    "platform host requires platform principal",
+                ));
+            }
             // Host-resolved org + non-platform kind → require an active membership.
             (Some(rt), PrincipalKind::Public) | (Some(rt), PrincipalKind::Staff) => {
                 let repo = MembershipRepository::new(pool.clone());
