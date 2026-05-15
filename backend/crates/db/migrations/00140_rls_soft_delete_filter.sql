@@ -510,20 +510,20 @@ CREATE POLICY critical_notifications_org_read ON critical_notifications FOR SELE
 -- ----------------------------------------------------------------------------
 -- cross_border_leases
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for cross_border_leases ON cross_border_leases;
-CREATE POLICY Tenant isolation for cross_border_leases ON cross_border_leases FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for cross_border_leases" ON cross_border_leases;
+CREATE POLICY "Tenant isolation for cross_border_leases" ON cross_border_leases FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- currency_conversion_audit
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for currency_conversion_audit ON currency_conversion_audit;
-CREATE POLICY Tenant isolation for currency_conversion_audit ON currency_conversion_audit FOR ALL USING (((transaction_id IN ( SELECT multi_currency_transactions.id FROM multi_currency_transactions WHERE (multi_currency_transactions.organization_id = (current_setting('app.current_tenant'::text))::uuid)))) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for currency_conversion_audit" ON currency_conversion_audit;
+CREATE POLICY "Tenant isolation for currency_conversion_audit" ON currency_conversion_audit FOR ALL USING (((transaction_id IN ( SELECT multi_currency_transactions.id FROM multi_currency_transactions WHERE (multi_currency_transactions.organization_id = (current_setting('app.current_tenant'::text))::uuid)))) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- currency_exposure_analysis
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for currency_exposure_analysis ON currency_exposure_analysis;
-CREATE POLICY Tenant isolation for currency_exposure_analysis ON currency_exposure_analysis FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for currency_exposure_analysis" ON currency_exposure_analysis;
+CREATE POLICY "Tenant isolation for currency_exposure_analysis" ON currency_exposure_analysis FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- delegation_audit_log
@@ -892,8 +892,8 @@ CREATE POLICY eu_taxonomy_update ON eu_taxonomy_assessments FOR UPDATE USING (((
 -- ----------------------------------------------------------------------------
 -- exchange_rate_fetch_log
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for exchange_rate_fetch_log ON exchange_rate_fetch_log;
-CREATE POLICY Tenant isolation for exchange_rate_fetch_log ON exchange_rate_fetch_log FOR ALL USING ((((organization_id IS NULL) OR (organization_id = (current_setting('app.current_tenant'::text))::uuid))) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for exchange_rate_fetch_log" ON exchange_rate_fetch_log;
+CREATE POLICY "Tenant isolation for exchange_rate_fetch_log" ON exchange_rate_fetch_log FOR ALL USING ((((organization_id IS NULL) OR (organization_id = (current_setting('app.current_tenant'::text))::uuid))) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- expense_approval_requests
@@ -1486,20 +1486,20 @@ CREATE POLICY motion_votes_tenant_isolation ON motion_votes FOR ALL USING (((EXI
 -- ----------------------------------------------------------------------------
 -- multi_currency_report_config
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for multi_currency_report_config ON multi_currency_report_config;
-CREATE POLICY Tenant isolation for multi_currency_report_config ON multi_currency_report_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for multi_currency_report_config" ON multi_currency_report_config;
+CREATE POLICY "Tenant isolation for multi_currency_report_config" ON multi_currency_report_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- multi_currency_report_snapshots
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for multi_currency_report_snapshots ON multi_currency_report_snapshots;
-CREATE POLICY Tenant isolation for multi_currency_report_snapshots ON multi_currency_report_snapshots FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for multi_currency_report_snapshots" ON multi_currency_report_snapshots;
+CREATE POLICY "Tenant isolation for multi_currency_report_snapshots" ON multi_currency_report_snapshots FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- multi_currency_transactions
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for multi_currency_transactions ON multi_currency_transactions;
-CREATE POLICY Tenant isolation for multi_currency_transactions ON multi_currency_transactions FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for multi_currency_transactions" ON multi_currency_transactions;
+CREATE POLICY "Tenant isolation for multi_currency_transactions" ON multi_currency_transactions FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- news_articles
@@ -1524,8 +1524,8 @@ CREATE POLICY org_connectors_policy ON organization_connectors FOR ALL USING (((
 -- ----------------------------------------------------------------------------
 -- organization_currency_config
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for organization_currency_config ON organization_currency_config;
-CREATE POLICY Tenant isolation for organization_currency_config ON organization_currency_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for organization_currency_config" ON organization_currency_config;
+CREATE POLICY "Tenant isolation for organization_currency_config" ON organization_currency_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- organization_feature_preferences
@@ -1662,26 +1662,26 @@ CREATE POLICY portal_favorites_tenant_isolation ON portal_favorites FOR ALL USIN
 -- ----------------------------------------------------------------------------
 -- portfolio_aggregated_metrics
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for portfolio_aggregated_metrics ON portfolio_aggregated_metrics;
-CREATE POLICY Tenant isolation for portfolio_aggregated_metrics ON portfolio_aggregated_metrics FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for portfolio_aggregated_metrics" ON portfolio_aggregated_metrics;
+CREATE POLICY "Tenant isolation for portfolio_aggregated_metrics" ON portfolio_aggregated_metrics FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- portfolio_alert_rules
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for portfolio_alert_rules ON portfolio_alert_rules;
-CREATE POLICY Tenant isolation for portfolio_alert_rules ON portfolio_alert_rules FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for portfolio_alert_rules" ON portfolio_alert_rules;
+CREATE POLICY "Tenant isolation for portfolio_alert_rules" ON portfolio_alert_rules FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- portfolio_alerts
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for portfolio_alerts ON portfolio_alerts;
-CREATE POLICY Tenant isolation for portfolio_alerts ON portfolio_alerts FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for portfolio_alerts" ON portfolio_alerts;
+CREATE POLICY "Tenant isolation for portfolio_alerts" ON portfolio_alerts FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- portfolio_benchmarks
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for portfolio_benchmarks ON portfolio_benchmarks;
-CREATE POLICY Tenant isolation for portfolio_benchmarks ON portfolio_benchmarks FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for portfolio_benchmarks" ON portfolio_benchmarks;
+CREATE POLICY "Tenant isolation for portfolio_benchmarks" ON portfolio_benchmarks FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- portfolio_properties
@@ -1698,8 +1698,8 @@ CREATE POLICY portfolio_properties_perf_tenant_isolation ON portfolio_properties
 -- ----------------------------------------------------------------------------
 -- portfolio_trends
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for portfolio_trends ON portfolio_trends;
-CREATE POLICY Tenant isolation for portfolio_trends ON portfolio_trends FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for portfolio_trends" ON portfolio_trends;
+CREATE POLICY "Tenant isolation for portfolio_trends" ON portfolio_trends FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- pricing_recommendations
@@ -1716,20 +1716,20 @@ CREATE POLICY property_cash_flows_tenant_isolation ON property_cash_flows FOR AL
 -- ----------------------------------------------------------------------------
 -- property_comparisons
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for property_comparisons ON property_comparisons;
-CREATE POLICY Tenant isolation for property_comparisons ON property_comparisons FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for property_comparisons" ON property_comparisons;
+CREATE POLICY "Tenant isolation for property_comparisons" ON property_comparisons FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- property_currency_config
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for property_currency_config ON property_currency_config;
-CREATE POLICY Tenant isolation for property_currency_config ON property_currency_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for property_currency_config" ON property_currency_config;
+CREATE POLICY "Tenant isolation for property_currency_config" ON property_currency_config FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- property_performance_metrics
 -- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS Tenant isolation for property_performance_metrics ON property_performance_metrics;
-CREATE POLICY Tenant isolation for property_performance_metrics ON property_performance_metrics FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
+DROP POLICY IF EXISTS "Tenant isolation for property_performance_metrics" ON property_performance_metrics;
+CREATE POLICY "Tenant isolation for property_performance_metrics" ON property_performance_metrics FOR ALL USING (((organization_id = (current_setting('app.current_tenant'::text))::uuid)) AND get_current_org_not_deleted());
 
 -- ----------------------------------------------------------------------------
 -- property_transactions

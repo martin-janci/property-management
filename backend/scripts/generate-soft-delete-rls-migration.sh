@@ -235,7 +235,16 @@ HEADER
         echo "-- ----------------------------------------------------------------------------"
         while IFS='|' read -r polname cmd qual wcheck; do
             [[ -z "$polname" ]] && continue
-            echo "DROP POLICY IF EXISTS $polname ON $tbl;"
+            # Quote policy names that contain spaces or other non-identifier
+            # characters — pg_policies.policyname is returned verbatim and
+            # some legacy policies were created with spaces (e.g. "Tenant
+            # isolation for foo").
+            if [[ "$polname" =~ [^a-zA-Z0-9_] ]]; then
+                qpolname="\"$polname\""
+            else
+                qpolname="$polname"
+            fi
+            echo "DROP POLICY IF EXISTS $qpolname ON $tbl;"
 
             # Add the soft-delete filter to whichever predicates exist.
             new_qual=""
@@ -249,7 +258,7 @@ HEADER
 
             # Build the CREATE POLICY statement. cmd is one of
             # ALL/SELECT/INSERT/UPDATE/DELETE.
-            line="CREATE POLICY $polname ON $tbl"
+            line="CREATE POLICY $qpolname ON $tbl"
             line="$line FOR $cmd"
             if [[ -n "$new_qual" ]]; then
                 line="$line USING ($new_qual)"
