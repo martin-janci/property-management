@@ -194,6 +194,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 name = "api-core"
 version = "0.2.375"
 dependencies = [
+ "async-trait",
  "axum 0.8.9",
  "axum-extra",
  "chrono",
@@ -262,6 +263,7 @@ dependencies = [
  "sha2 0.11.0",
  "sqlx",
  "subtle",
+ "tenant-ops",
  "thiserror 1.0.69",
  "tokio",
  "totp-rs",
@@ -1979,6 +1981,7 @@ name = "db"
 version = "0.2.375"
 dependencies = [
  "argon2",
+ "async-trait",
  "chrono",
  "common",
  "hex",
@@ -6692,7 +6695,6 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
- "tracing",
  "uuid",
 ]
 
