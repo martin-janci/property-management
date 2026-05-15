@@ -14,6 +14,7 @@ pub mod fault;
 pub mod financial;
 
 pub mod granular_notification;
+pub mod membership;
 pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
@@ -246,9 +247,11 @@ pub use unit_resident::{
     UnitResidentWithUser, UpdateUnitResident,
 };
 pub use user::{
-    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrivacySettings,
-    ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
+    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrincipalKind,
+    PrivacySettings, ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
 };
+
+pub use membership::{GrantMembership, UserInvite, UserMembership, UserMergeCollision};
 pub use vote::{
     audit_action, question_type, quorum_type, vote_status, CancelVote, CastVote, CreateVote,
     CreateVoteAuditLog, CreateVoteComment, CreateVoteQuestion, EligibleUnit, HideVoteComment,

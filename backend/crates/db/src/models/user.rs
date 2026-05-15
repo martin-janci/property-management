@@ -102,6 +102,56 @@ impl ProfileVisibility {
     }
 }
 
+/// Phase 2 identity discriminator on the unified `users` table.
+///
+/// One identity row → one of three kinds. The variants drive per-kind identity
+/// rules (password policy, email verification, MFA) and authorization in the
+/// `RequestPrincipal` extractor. Mutating this field on a row goes ONLY through
+/// the `set_principal_kind()` SQL function (defends leaks #8 and #12).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "VARCHAR", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum PrincipalKind {
+    /// Public portal user (formerly the `portal_users` table).
+    Public,
+    /// Agency staff user (the historical default).
+    Staff,
+    /// Platform / super-admin principal.
+    Platform,
+}
+
+impl Default for PrincipalKind {
+    fn default() -> Self {
+        Self::Staff
+    }
+}
+
+impl PrincipalKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Staff => "staff",
+            Self::Platform => "platform",
+        }
+    }
+
+    /// Parse from the database string. Unknown values fall back to `Staff` (the
+    /// historical default and least-privilege staff kind).
+    pub fn parse(s: &str) -> Self {
+        match s {
+            "public" => Self::Public,
+            "platform" => Self::Platform,
+            _ => Self::Staff,
+        }
+    }
+}
+
+impl std::fmt::Display for PrincipalKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
 /// User entity from database.
 #[derive(Debug, Clone, FromRow)]
 pub struct User {
@@ -125,6 +175,14 @@ pub struct User {
     pub show_contact_info: bool,
     /// GDPR: scheduled deletion timestamp (Story 9.4)
     pub scheduled_deletion_at: Option<DateTime<Utc>>,
+    /// Phase 2: identity discriminator (public | staff | platform).
+    /// Stored as a `VARCHAR`; convert to [`PrincipalKind`] via [`User::principal_kind_enum`].
+    #[sqlx(default)]
+    pub principal_kind: String,
+    /// Phase 2: back-pointer to `portal_users.id` if this row was created by
+    /// the portal_users → users merge migration. NULL otherwise.
+    #[sqlx(default)]
+    pub portal_origin_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -174,6 +232,11 @@ impl User {
     /// Check if email is verified (helper for GDPR export).
     pub fn email_verified(&self) -> bool {
         self.email_verified_at.is_some()
+    }
+
+    /// Phase 2: parse `principal_kind` into the strongly-typed [`PrincipalKind`].
+    pub fn principal_kind_enum(&self) -> PrincipalKind {
+        PrincipalKind::parse(&self.principal_kind)
     }
 }
 
