@@ -16,6 +16,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::services::{AuthPolicyEnforcer, AuthPolicyError};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -123,6 +124,7 @@ pub struct SetPrincipalKindBody {
 async fn set_principal_kind(
     _cap: RequireCapability,
     principal: RequestPrincipal,
+    State(state): State<AppState>,
     mut rls: RlsConnection,
     Path(target_id): Path<Uuid>,
     Json(body): Json<SetPrincipalKindBody>,
@@ -130,6 +132,15 @@ async fn set_principal_kind(
     if !matches!(body.kind.as_str(), "public" | "staff" | "platform") {
         rls.release().await;
         return Err((StatusCode::BAD_REQUEST, "invalid principal kind".into()));
+    }
+
+    // N2: re-evaluate the target's effective per-org auth policy before the
+    // transition. Defends leak #13 — a corrupt or wrong-tenant policy aborts
+    // the transition before the DB function fires.
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer.check_principal_kind_change(target_id).await {
+        rls.release().await;
+        return Err(map_auth_policy_error(err));
     }
 
     // N3: pass the authenticated principal as `actor`. The SECURITY DEFINER
@@ -156,5 +167,28 @@ async fn set_principal_kind(
             );
             Err((StatusCode::BAD_REQUEST, e.to_string()))
         }
+    }
+}
+
+/// Map an AuthPolicyError onto the (StatusCode, String) shape this module's
+/// handlers return.
+fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, String) {
+    tracing::warn!(error = %err, "auth policy enforcement rejected principal_kind change (N2)");
+    match err {
+        AuthPolicyError::EmailNotVerified => (
+            StatusCode::FORBIDDEN,
+            "org policy requires verified email".into(),
+        ),
+        AuthPolicyError::PasswordPolicy(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "password does not satisfy org policy".into(),
+        ),
+        AuthPolicyError::MfaRequired(_) => {
+            (StatusCode::FORBIDDEN, "MFA required by org policy".into())
+        }
+        AuthPolicyError::UserNotFound(_) => {
+            (StatusCode::NOT_FOUND, "target user not found".into())
+        }
+        AuthPolicyError::Lookup(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }

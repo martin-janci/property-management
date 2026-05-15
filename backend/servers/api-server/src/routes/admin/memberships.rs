@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::services::{AuthPolicyEnforcer, AuthPolicyError};
 use crate::state::AppState;
 use api_core::extractors::principal::RequestPrincipal;
 
@@ -86,6 +87,29 @@ pub async fn invite(
     }
     if req.role.trim().is_empty() {
         return Err((StatusCode::BAD_REQUEST, "role required"));
+    }
+
+    // N2: re-evaluate the org's effective auth policy BEFORE we issue the
+    // invite. If the invitee already exists in `users` and the org demands
+    // verified email, reject early; otherwise the policy load is a liveness
+    // check (a corrupted policy aborts the flow).
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    {
+        use db::repositories::UserRepository;
+        let user_repo = UserRepository::new(state.db.clone());
+        if let Ok(Some(existing)) = user_repo.find_by_email(&req.email).await {
+            if let Err(err) = enforcer
+                .check_membership_grant(req.organization_id, existing.id)
+                .await
+            {
+                return Err(map_auth_policy_error(err));
+            }
+        } else {
+            // No existing row — still pre-load the policy as a liveness check.
+            if let Err(err) = enforcer.policy_for(req.organization_id).await {
+                return Err(map_auth_policy_error(err));
+            }
+        }
     }
 
     let token = generate_token();
@@ -230,6 +254,17 @@ pub async fn revoke(
     Path(user_id): Path<Uuid>,
     Json(req): Json<RevokeRequest>,
 ) -> Result<Json<RevokeResponse>, (StatusCode, &'static str)> {
+    // N2: liveness-check the org's auth policy before mutating membership
+    // state. A corrupted policy row aborts the revoke instead of silently
+    // proceeding under stale / wrong-tenant defaults.
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer
+        .check_membership_revoke(req.organization_id, user_id)
+        .await
+    {
+        return Err(map_auth_policy_error(err));
+    }
+
     let mem_repo = MembershipRepository::new(state.db.clone());
     let revoked = mem_repo
         .revoke(user_id, req.organization_id, Some(principal.user_id))
@@ -257,4 +292,26 @@ fn generate_token() -> String {
         .expect("OS rng failed");
     use base64::Engine as _;
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
+}
+
+/// Map an AuthPolicyError onto the (StatusCode, &'static str) shape this
+/// module's handlers return. We use static strings to keep the existing
+/// handler signature; the structured error is logged for observability.
+fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, &'static str) {
+    tracing::warn!(error = %err, "auth policy enforcement rejected request (N2)");
+    match err {
+        AuthPolicyError::EmailNotVerified => {
+            (StatusCode::FORBIDDEN, "org policy requires verified email")
+        }
+        AuthPolicyError::PasswordPolicy(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "password does not satisfy org policy",
+        ),
+        AuthPolicyError::MfaRequired(_) => (StatusCode::FORBIDDEN, "MFA required by org policy"),
+        AuthPolicyError::UserNotFound(_) => (StatusCode::NOT_FOUND, "target user not found"),
+        AuthPolicyError::Lookup(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "auth policy lookup failed",
+        ),
+    }
 }

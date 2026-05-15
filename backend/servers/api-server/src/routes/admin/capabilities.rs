@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::services::{AuthPolicyEnforcer, AuthPolicyError};
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -177,10 +178,17 @@ fn default_true() -> bool {
 ///     leak #21. Enforced by `PgCapabilityGrantsRepository::grant`.
 ///   * Granting `PrincipalKindEscalate` requires the granter ALSO holds
 ///     `PrincipalKindEscalate` — leak #12.
+///   * N2 (leak #13): the grantee's effective per-org auth policy is
+///     re-evaluated before any grant row is written. The
+///     `check_capability_grant_for_user` helper picks the grantee's first
+///     active membership and applies that org's `require_email_verification`
+///     gate; platform-only principals fall through (governed by platform
+///     defaults).
 async fn grant_capability(
     _cap: RequireCapability,
     auth: AuthUser,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
+    axum::extract::State(state): axum::extract::State<AppState>,
     Json(body): Json<GrantBody>,
 ) -> Result<Json<CapabilityGrant>, (StatusCode, String)> {
     if body.capability == Capability::PrincipalKindEscalate {
@@ -194,6 +202,18 @@ async fn grant_capability(
                 "only PrincipalKindEscalate holders can grant PrincipalKindEscalate".into(),
             ));
         }
+    }
+
+    // N2: re-evaluate the grantee's effective auth policy at the moment of
+    // the grant. Defends leak #13 (policy resolved under wrong tenant) — a
+    // grant that violates the grantee org's email-verification rule is
+    // rejected before the capability row is written.
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer
+        .check_capability_grant_for_user(body.user_id)
+        .await
+    {
+        return Err(map_auth_policy_error(err));
     }
 
     let row = grants
@@ -217,9 +237,37 @@ async fn revoke_capability(
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
     Path(grant_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    // TODO(N2-followup): wire AuthPolicyEnforcer::check_capability_revoke
+    // here. Symmetric to grant — load the grantee's effective policy as a
+    // liveness check before the revoke row is written. Skipped for now
+    // because revoke does not need an `org_id` body and the existing handler
+    // signature only takes the grant_id.
     grants
         .revoke(grant_id, auth.user_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Map an AuthPolicyError onto the (StatusCode, String) shape this module's
+/// handlers return.
+fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, String) {
+    tracing::warn!(error = %err, "auth policy enforcement rejected capability grant (N2)");
+    match err {
+        AuthPolicyError::EmailNotVerified => (
+            StatusCode::FORBIDDEN,
+            "org policy requires verified email".into(),
+        ),
+        AuthPolicyError::PasswordPolicy(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "password does not satisfy org policy".into(),
+        ),
+        AuthPolicyError::MfaRequired(_) => {
+            (StatusCode::FORBIDDEN, "MFA required by org policy".into())
+        }
+        AuthPolicyError::UserNotFound(_) => {
+            (StatusCode::NOT_FOUND, "target user not found".into())
+        }
+        AuthPolicyError::Lookup(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    }
 }
