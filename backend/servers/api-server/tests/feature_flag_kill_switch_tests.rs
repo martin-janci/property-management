@@ -49,7 +49,7 @@ async fn set_flag(pool: &PgPool, org_id: Uuid, key: &str, enabled: bool) {
 }
 
 async fn build_state(pool: PgPool) -> api_server::state::AppState {
-    use api_core::middleware::TenantResolutionCache;
+    use api_core::middleware::{TenantRateLimiterSet, TenantResolutionCache};
     use api_server::services::{EmailService, JwtService};
     use api_server::state::AppState;
     use std::sync::Arc;
@@ -58,7 +58,10 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
         .expect("jwt");
     let email = EmailService::new("http://test".into(), false);
     let cache = Arc::new(TenantResolutionCache::new(60, 30, 100));
-    AppState::new(pool, email, jwt, cache)
+    // Phase 5.5: feature-flag tests don't exercise the rate limiter, so the
+    // 600-rpm default is plenty.
+    let rate_limiters = Arc::new(TenantRateLimiterSet::new());
+    AppState::new(pool, email, jwt, cache, rate_limiters)
 }
 
 #[sqlx::test]

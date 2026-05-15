@@ -403,11 +403,17 @@ async fn main() -> anyhow::Result<()> {
     // cache ONCE, then clone the `Arc` into both the middleware config and the
     // AppState (the field name `tenant_resolution_cache` is a contract with
     // platform-admin handlers that invalidate cache entries).
+    //
+    // Phase 5.5: same pattern for the per-tenant rate limiter set (defense
+    // leak #15) — the middleware enforces the limit and admin handlers
+    // install per-tenant overrides via
+    // `state.tenant_rate_limiters.set_override(org, rpm)`.
     let host_tenant_config = api_core::middleware::HostTenantConfig::new(db.clone());
     let tenant_resolution_cache = host_tenant_config.cache.clone();
+    let tenant_rate_limiters = host_tenant_config.rate_limiters.clone();
 
     // Create application state
-    let state = AppState::new(db, tenant_resolution_cache);
+    let state = AppState::new(db, tenant_resolution_cache, tenant_rate_limiters);
 
     // Build router with state
     let app = Router::new()

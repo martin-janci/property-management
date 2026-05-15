@@ -69,7 +69,7 @@ mod common_phase3 {
 /// tenant resolution cache. The full state has many fields not needed
 /// here; the route only touches `state.db`.
 async fn build_state(pool: PgPool) -> api_server::state::AppState {
-    use api_core::middleware::TenantResolutionCache;
+    use api_core::middleware::{TenantRateLimiterSet, TenantResolutionCache};
     use api_server::services::{EmailService, JwtService};
     use api_server::state::AppState;
     use std::sync::Arc;
@@ -83,7 +83,10 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
     let email = EmailService::new("http://test".into(), false);
 
     let cache = Arc::new(TenantResolutionCache::new(60, 30, 100));
-    AppState::new(pool, email, jwt, cache)
+    // Phase 5.5: tenant-config tests don't exercise the rate limiter — a
+    // fresh default-rpm set is enough to satisfy `AppState::new`.
+    let rate_limiters = Arc::new(TenantRateLimiterSet::new());
+    AppState::new(pool, email, jwt, cache, rate_limiters)
 }
 
 #[sqlx::test]

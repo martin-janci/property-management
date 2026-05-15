@@ -349,8 +349,14 @@ async fn main() -> anyhow::Result<()> {
     // cache ONCE, then clone the `Arc` into both the middleware config and the
     // AppState so domain-management handlers can invalidate cache entries via
     // `state.tenant_resolution_cache`.
+    //
+    // Phase 5.5: same pattern for the per-tenant rate limiter set (defense
+    // leak #15) — the middleware enforces the limit and admin handlers
+    // install per-tenant overrides via
+    // `state.tenant_rate_limiters.set_override(org, rpm)`.
     let host_tenant_config = api_core::middleware::HostTenantConfig::new(db_pool.clone());
     let tenant_resolution_cache = host_tenant_config.cache.clone();
+    let tenant_rate_limiters = host_tenant_config.rate_limiters.clone();
 
     // Create application state
     let state = AppState::new(
@@ -358,6 +364,7 @@ async fn main() -> anyhow::Result<()> {
         email_service,
         jwt_service,
         tenant_resolution_cache,
+        tenant_rate_limiters,
     );
 
     // Start background scheduler for scheduled announcements

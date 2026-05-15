@@ -188,6 +188,11 @@ pub struct AppState {
     /// Holds the SAME `Arc` the middleware uses, so domain-management handlers
     /// can invalidate entries (e.g. after a domain is verified).
     pub tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+    /// Phase 5.5: per-tenant rate limiter set shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses; admin handlers can install
+    /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`
+    /// (e.g. after `tenant_settings.rate_limit_rpm` is updated).
+    pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
 }
 
 impl AppState {
@@ -197,6 +202,7 @@ impl AppState {
         email_service: EmailService,
         jwt_service: JwtService,
         tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+        tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
     ) -> Self {
         let user_repo = UserRepository::new(db.clone());
         let session_repo = SessionRepository::new(db.clone());
@@ -435,6 +441,8 @@ impl AppState {
             storage_service: None,
             // Phase 1: shared host-resolution cache
             tenant_resolution_cache,
+            // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
+            tenant_rate_limiters,
         }
     }
 

@@ -14,6 +14,7 @@ use api_core::extractors::principal::RequestPrincipal;
 use api_core::middleware::host_tenant::{
     host_tenant_middleware, HostTenantConfig, TenantResolutionCache,
 };
+use api_core::middleware::tenant_ops::TenantRateLimiterSet;
 use api_core::TenantMembershipProvider;
 use axum::{
     body::Body,
@@ -82,6 +83,11 @@ fn build_app(pool: PgPool) -> Router {
         cache: Arc::new(TenantResolutionCache::new(300, 30, 100)),
         dev_mode: true,
         platform_hosts: Arc::new(Vec::new()),
+        // Phase 5.5: a fresh rate limiter set; tests in this binary do not
+        // exercise the rate-limit branch — `TenantRateLimiterSet::new()`
+        // uses the 600 rpm default which is far above any single-test
+        // request volume.
+        rate_limiters: Arc::new(TenantRateLimiterSet::new()),
     };
     Router::new()
         .route("/echo", get(echo))
