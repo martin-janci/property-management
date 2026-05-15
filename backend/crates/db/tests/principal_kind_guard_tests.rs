@@ -68,13 +68,23 @@ async fn set_principal_kind_succeeds_and_writes_audit_row(pool: PgPool) {
     let target = create_user(&pool, "guard-target@phase2.test").await;
     let actor = create_user(&pool, "guard-actor@phase2.test").await;
 
+    // Acquire a single connection so the GUC and the function call land
+    // on the same session — N3's SECURITY DEFINER body asserts that
+    // `actor` matches `current_setting('app.current_user_id')`.
+    let mut conn = pool.acquire().await.expect("acquire");
+    sqlx::query("SELECT set_request_context(NULL, $1, FALSE)")
+        .bind(actor)
+        .execute(&mut *conn)
+        .await
+        .expect("set actor session GUC");
+
     // Call the SECURITY DEFINER function.
     let _ = sqlx::query("SELECT set_principal_kind($1, $2, $3, $4)")
         .bind(target)
         .bind("platform")
         .bind(actor)
         .bind("phase2 promotion test")
-        .execute(&pool)
+        .execute(&mut *conn)
         .await
         .expect("set_principal_kind should succeed");
 
