@@ -240,6 +240,13 @@ async fn grant_capability(
 /// `check_capability_revoke` so the policy-load liveness check is symmetric
 /// with `check_capability_grant_for_user` on the grant path — a corrupted
 /// policy-resolution layer aborts the revoke instead of silently proceeding.
+///
+/// E3 hardening: the underlying repo UPDATE writes
+/// `revoked_with_mfa_at = NOW()` and the DB-layer trigger
+/// `capability_grants_revoke_mfa_check` (migration 00145) rejects any
+/// revoke whose MFA timestamp is missing or stale. This is defense in
+/// depth — even if a future code path bypasses the enforcer above, the
+/// trigger refuses the write.
 async fn revoke_capability(
     _cap: RequireCapability,
     auth: AuthUser,

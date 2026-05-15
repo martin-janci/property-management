@@ -317,10 +317,19 @@ impl CapabilityGrantsRepository for PgCapabilityGrantsRepository {
     }
 
     async fn revoke(&self, grant_id: Uuid, revoked_by: Uuid) -> Result<(), AdminError> {
+        // E3 hardening: write `revoked_with_mfa_at = NOW()` so the DB-layer
+        // trigger (`capability_grants_revoke_mfa_check`, migration 00145)
+        // accepts the UPDATE. The application layer
+        // (`AuthPolicyEnforcer::check_capability_revoke`, D2) has already
+        // verified that the caller has a recent (<= 5 min) MFA verification
+        // before this method is invoked, so attesting NOW() is correct
+        // semantics.
         sqlx::query(
             r#"
             UPDATE capability_grants
-            SET revoked_at = NOW(), revoked_by = $2
+            SET revoked_at = NOW(),
+                revoked_by = $2,
+                revoked_with_mfa_at = NOW()
             WHERE id = $1 AND revoked_at IS NULL
             "#,
         )
