@@ -17,3 +17,8 @@ export {
 } from './pages';
 export { usePrincipalCapabilities } from './usePrincipalCapabilities';
 export type { PrincipalCapabilitiesResult } from './usePrincipalCapabilities';
+export { ImpersonationWrapper } from './ImpersonationWrapper';
+export type {
+  ImpersonationWrapperProps,
+  StoredImpersonation,
+} from './ImpersonationWrapper';
