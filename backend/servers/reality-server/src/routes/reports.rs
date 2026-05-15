@@ -1,9 +1,13 @@
 //! Listing report routes (UC-23: Report a Listing).
 //!
 //! Allows users to submit reports about problematic listings and track their status.
+//! D1.2: handlers now use the unified `RequestPrincipal` /
+//! `OptionalRequestPrincipal` extractors. The submit-report path stays
+//! anonymous-friendly via the optional wrapper; the list-my-reports path
+//! requires a real principal.
 
-use crate::extractors::{AuthenticatedUser, OptionalAuth};
 use crate::state::AppState;
+use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
     extract::{Query, State},
     routing::{get, post},
@@ -119,7 +123,7 @@ pub struct MyReportsQuery {
 )]
 pub async fn submit_report(
     State(state): State<AppState>,
-    auth: OptionalAuth,
+    OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
     Json(data): Json<SubmitReportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<SubmitReportResponse>), (axum::http::StatusCode, String)>
 {
@@ -175,7 +179,7 @@ pub async fn submit_report(
         "#,
     )
     .bind(data.listing_id)
-    .bind(auth.0.as_ref().map(|a| a.user_id))
+    .bind(principal.as_ref().map(|p| p.user_id))
     .bind(&problem_type_str)
     .bind(&data.description)
     .bind(&attachments_json)
@@ -230,7 +234,7 @@ pub async fn submit_report(
 )]
 pub async fn list_my_reports(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Query(query): Query<MyReportsQuery>,
 ) -> Result<Json<MyReportsResponse>, (axum::http::StatusCode, String)> {
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
@@ -255,7 +259,7 @@ pub async fn list_my_reports(
         LIMIT $2 OFFSET $3
         "#,
     )
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(limit)
     .bind(offset)
     .bind(&query.status)

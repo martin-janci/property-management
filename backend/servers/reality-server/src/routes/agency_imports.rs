@@ -1,9 +1,10 @@
 //! Agency import routes (UC-50: Agency Import Management).
 //!
 //! Per-agency import history, test-connection, run, and job status.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{get, post},
@@ -150,7 +151,7 @@ pub struct ImportJobDetailResponse {
 )]
 pub async fn list_import_history(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
 ) -> Result<Json<ImportHistoryResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
@@ -160,7 +161,7 @@ pub async fn list_import_history(
         )
     })?;
 
-    check_agency_membership(&mut conn, agency_id, auth.user_id).await?;
+    check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
     let rows = sqlx::query(
         r#"
@@ -223,7 +224,7 @@ pub async fn list_import_history(
 )]
 pub async fn test_connection(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<TestConnectionRequest>,
 ) -> Result<Json<TestConnectionResponse>, (axum::http::StatusCode, String)> {
@@ -234,7 +235,7 @@ pub async fn test_connection(
         )
     })?;
 
-    check_agency_membership(&mut conn, agency_id, auth.user_id).await?;
+    check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
     // Stub: real implementation would call the external provider.
     let response = TestConnectionResponse {
@@ -266,7 +267,7 @@ pub async fn test_connection(
 )]
 pub async fn run_import(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<RunImportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RunImportResponse>), (axum::http::StatusCode, String)> {
@@ -277,7 +278,7 @@ pub async fn run_import(
         )
     })?;
 
-    check_agency_membership(&mut conn, agency_id, auth.user_id).await?;
+    check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
     let provider_str = data.provider.to_string();
 
@@ -291,7 +292,7 @@ pub async fn run_import(
         "#,
     )
     .bind(agency_id)
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(&provider_str)
     .bind(&data.feed_url)
     .fetch_one(&mut *conn)
@@ -332,7 +333,7 @@ pub async fn run_import(
 )]
 pub async fn get_import_job_status(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path((agency_id, job_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ImportJobDetailResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
@@ -342,7 +343,7 @@ pub async fn get_import_job_status(
         )
     })?;
 
-    check_agency_membership(&mut conn, agency_id, auth.user_id).await?;
+    check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
     let row = sqlx::query(
         r#"

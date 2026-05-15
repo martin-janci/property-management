@@ -1,3 +1,4 @@
+import { MfaChallengeProvider } from '@ppt/admin-ui';
 import type {
   Building as ApiBuilding,
   Dispute as ApiDispute,
@@ -10,6 +11,7 @@ import type {
   OutageListQuery,
 } from '@ppt/api-client';
 import {
+  setMfaChallengeHandler,
   useBuildings,
   useCancelOutage,
   useCreateDispute,
@@ -47,6 +49,7 @@ import {
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
+import { AdminRouter, ImpersonationWrapper, usePrincipalCapabilities } from './features/admin';
 import {
   CommandPaletteDialog,
   CommandPaletteProvider,
@@ -211,6 +214,67 @@ function transformDisputeToSummary(dispute: ApiDispute): DisputeSummary {
 }
 
 /**
+ * MFA challenge wrapper (N9).
+ *
+ * Mounts `<MfaChallengeProvider>` so the api-client's mfa_required
+ * interceptor has somewhere to send the challenge. The provider needs
+ * two things from this layer that the package itself cannot reach:
+ *
+ *   * `setMfaChallengeHandler` — the api-client global registration
+ *     point. Passed in so admin-ui has no @ppt/api-client dependency.
+ *   * `verify(code)` — POST {code} to /api/v1/auth/mfa/verify with the
+ *     current bearer token. Built from `AuthContext.getAccessToken`.
+ *
+ * The verify endpoint is `/api/v1/auth/mfa/verify` (api-server's
+ * routes/mfa.rs). On 200 the user is freshly MFA-verified for the
+ * RECENT_MFA_WINDOW (15 min); the api-client retries the original
+ * mutation transparently.
+ *
+ * Must be rendered inside AuthProvider so getAccessToken is available.
+ */
+function MfaWrapper({ children }: { children: ReactNode }) {
+  const { getAccessToken } = useAuth();
+  const { t } = useTranslation();
+  // Resolve labels once per render so the modal sees stable strings even
+  // when the active locale changes (the next render swaps them out).
+  const mfaLabels = {
+    title: t('admin.mfa.title'),
+    description: t('admin.mfa.description'),
+    descriptionForAction: t('admin.mfa.descriptionForAction', { action: '{action}' }),
+    codeLabel: t('admin.mfa.label'),
+    verify: t('admin.mfa.verify'),
+    verifying: t('admin.mfa.verifying'),
+    cancel: t('admin.mfa.cancel'),
+    invalidFormat: t('admin.mfa.invalidFormat'),
+    invalidCode: t('admin.mfa.invalidCode'),
+    verificationFailed: t('admin.mfa.verificationFailed'),
+  };
+  return (
+    <MfaChallengeProvider
+      registerHandler={setMfaChallengeHandler}
+      labels={mfaLabels}
+      verify={async (code: string) => {
+        const token = getAccessToken();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        try {
+          const response = await fetch('/api/v1/auth/mfa/verify', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ code }),
+          });
+          return response.ok;
+        } catch {
+          return false;
+        }
+      }}
+    >
+      {children}
+    </MfaChallengeProvider>
+  );
+}
+
+/**
  * WebSocket wrapper that bridges AuthContext to WebSocketProvider.
  * Must be rendered inside AuthProvider to access auth state.
  */
@@ -231,6 +295,11 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 function AppNavigation() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  // Phase 5 (B6): mirror the predicate used by <RequirePlatformPrincipal>.
+  // Hidden (not just disabled) when the principal isn't platform-kind —
+  // surfacing the link to staff/public would be information disclosure
+  // (leak #21).
+  const { isPlatformPrincipal } = usePrincipalCapabilities();
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -241,12 +310,27 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
+      {isPlatformPrincipal ? <Link to="/admin">{t('nav.admin')}</Link> : null}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
       </div>
     </nav>
   );
+}
+
+/**
+ * Route wrapper for the Phase 5 admin section.
+ *
+ * `<AdminRouter>` expects the host app to feed it the current principal's
+ * capability set + platform-kind flag. We resolve that via
+ * `usePrincipalCapabilities` (interim hook — see its docstring) and pass it
+ * through. The router itself handles the platform-only gate and inner
+ * sub-routing.
+ */
+function AdminRouterRoute() {
+  const { capabilities, isPlatformPrincipal } = usePrincipalCapabilities();
+  return <AdminRouter capabilities={capabilities} isPlatformPrincipal={isPlatformPrincipal} />;
 }
 
 function RouteLoading() {
@@ -288,183 +372,215 @@ function App() {
         <OrganizationProvider>
           <ToastProvider>
             <AnnouncerProvider>
-              <WebSocketWrapper>
-                <BrowserRouter>
-                  <CommandPaletteProvider>
-                    <CommandPaletteWrapper>
-                      <SkipNavigation mainContentId="main-content" />
-                      <OfflineIndicator />
-                      <div className="app">
-                        <AppNavigation />
-                        <main id="main-content">
-                          <Suspense fallback={<RouteLoading />}>
-                            <Routes>
-                              <Route path="/" element={<Home />} />
-                              <Route path="/login" element={<LoginPage />} />
-                              <Route path="/register" element={<RegisterPage />} />
-                              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                              <Route path="/reset-password" element={<ResetPasswordPage />} />
-                              <Route path="/settings/password" element={<ChangePasswordPage />} />
-                              <Route path="/settings/two-factor" element={<TwoFactorAuthPage />} />
-                              <Route path="/settings/profile" element={<ProfileEditPage />} />
-                              {/* Dashboard routes (Epic 124).
+              <MfaWrapper>
+                <WebSocketWrapper>
+                  <BrowserRouter>
+                    <CommandPaletteProvider>
+                      <CommandPaletteWrapper>
+                        <SkipNavigation mainContentId="main-content" />
+                        <OfflineIndicator />
+                        <div className="app">
+                          {/* Phase 5 (E2): sticky banner whenever the
+                            current session is impersonating a tenant
+                            user. Mounted as a sibling of <MfaWrapper>
+                            and above <AppNavigation /> so leak #21
+                            ("impersonation must be impossible to
+                            hide") is satisfied across every route. */}
+                          <ImpersonationWrapper />
+                          <AppNavigation />
+                          <main id="main-content">
+                            <Suspense fallback={<RouteLoading />}>
+                              <Routes>
+                                <Route path="/" element={<Home />} />
+                                <Route path="/login" element={<LoginPage />} />
+                                <Route path="/register" element={<RegisterPage />} />
+                                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                <Route path="/settings/password" element={<ChangePasswordPage />} />
+                                <Route
+                                  path="/settings/two-factor"
+                                  element={<TwoFactorAuthPage />}
+                                />
+                                <Route path="/settings/profile" element={<ProfileEditPage />} />
+                                {/* Dashboard routes (Epic 124).
                                   Bare /dashboard 404'd previously — redirect
                                   it to the manager dashboard so users typing
                                   the obvious URL get something useful (the
                                   ProtectedRoute / role check on the target
                                   page handles auth + role-based fan-out). */}
-                              <Route
-                                path="/dashboard"
-                                element={<Navigate to="/dashboard/manager" replace />}
-                              />
-                              <Route path="/dashboard/manager" element={<ManagerDashboardPage />} />
-                              <Route
-                                path="/dashboard/resident"
-                                element={<ResidentDashboardPage />}
-                              />
-                              {/* Document Intelligence routes (Epic 39) */}
-                              <Route
-                                path="/documents"
-                                element={
-                                  <ProtectedRoute>
-                                    <DocumentsPageRoute />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              <Route
-                                path="/documents/upload"
-                                element={
-                                  <ProtectedRoute>
-                                    <DocumentUploadPage />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              <Route
-                                path="/documents/:documentId"
-                                element={
-                                  <ProtectedRoute>
-                                    <DocumentDetailRoute />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              {/* News routes (Epic 59) */}
-                              <Route
-                                path="/news"
-                                element={
-                                  <ProtectedRoute>
-                                    <NewsListPage />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              <Route
-                                path="/news/:articleId"
-                                element={
-                                  <ProtectedRoute>
-                                    <ArticleDetailRoute />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              {/* Emergency contacts route (Epic 62) */}
-                              <Route
-                                path="/emergency"
-                                element={
-                                  <ProtectedRoute>
-                                    <EmergencyContactDirectoryPage />
-                                  </ProtectedRoute>
-                                }
-                              />
-                              {/* Accessibility settings route (Epic 60) */}
-                              <Route
-                                path="/settings/accessibility"
-                                element={<AccessibilitySettingsPage />}
-                              />
-                              {/* Privacy settings route (Epic 63) */}
-                              <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
-                              {/* Dispute Resolution routes (Epic 77) */}
-                              <Route path="/disputes" element={<DisputesPageRoute />} />
-                              <Route path="/disputes/new" element={<FileDisputePageRoute />} />
-                              <Route path="/disputes/:disputeId" element={<DisputeDetailRoute />} />
-                              {/* Outages routes (UC-12) */}
-                              <Route path="/outages" element={<OutagesPageRoute />} />
-                              <Route path="/outages/new" element={<CreateOutagePageRoute />} />
-                              <Route path="/outages/:outageId" element={<ViewOutagePageRoute />} />
-                              <Route
-                                path="/outages/:outageId/edit"
-                                element={<EditOutagePageRoute />}
-                              />
-                              {/* Announcements routes (UC-06) */}
-                              <Route path="/announcements" element={<AnnouncementsPageRoute />} />
-                              <Route
-                                path="/announcements/new"
-                                element={<CreateAnnouncementPageRoute />}
-                              />
-                              <Route
-                                path="/announcements/:announcementId"
-                                element={<ViewAnnouncementPageRoute />}
-                              />
-                              <Route
-                                path="/announcements/:announcementId/edit"
-                                element={<EditAnnouncementPageRoute />}
-                              />
-                              {/* Messaging routes (UC-07) */}
-                              <Route path="/messages" element={<MessagesPageRoute />} />
-                              <Route path="/messages/new" element={<NewMessagePageRoute />} />
-                              <Route
-                                path="/messages/:threadId"
-                                element={<ThreadDetailPageRoute />}
-                              />
-                              {/* Faults routes (UC-03) */}
-                              <Route path="/faults" element={<FaultsPageRoute />} />
-                              <Route path="/faults/new" element={<CreateFaultPageRoute />} />
-                              <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
-                              <Route
-                                path="/faults/:faultId/edit"
-                                element={<EditFaultPageRoute />}
-                              />
-                              {/* Community routes (Epic 42) */}
-                              <Route path="/community" element={<FeedPageRoute />} />
-                              <Route path="/community/groups" element={<GroupsPageRoute />} />
-                              <Route
-                                path="/community/groups/new"
-                                element={<CreateGroupPageRoute />}
-                              />
-                              <Route
-                                path="/community/groups/:groupId"
-                                element={<GroupDetailPageRoute />}
-                              />
-                              <Route path="/community/events" element={<EventsPageRoute />} />
-                              <Route
-                                path="/community/marketplace"
-                                element={<MarketplacePageRoute />}
-                              />
-                              {/* Financial routes (Epic 52) */}
-                              <Route path="/financial" element={<FinancialDashboardPageRoute />} />
-                              <Route
-                                path="/financial/invoices"
-                                element={<InvoiceManagementPageRoute />}
-                              />
-                              <Route
-                                path="/financial/payments"
-                                element={<PaymentManagementPageRoute />}
-                              />
-                              <Route
-                                path="/financial/budgets"
-                                element={<BudgetManagementPageRoute />}
-                              />
+                                <Route
+                                  path="/dashboard"
+                                  element={<Navigate to="/dashboard/manager" replace />}
+                                />
+                                <Route
+                                  path="/dashboard/manager"
+                                  element={<ManagerDashboardPage />}
+                                />
+                                <Route
+                                  path="/dashboard/resident"
+                                  element={<ResidentDashboardPage />}
+                                />
+                                {/* Document Intelligence routes (Epic 39) */}
+                                <Route
+                                  path="/documents"
+                                  element={
+                                    <ProtectedRoute>
+                                      <DocumentsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/documents/upload"
+                                  element={
+                                    <ProtectedRoute>
+                                      <DocumentUploadPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/documents/:documentId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <DocumentDetailRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* News routes (Epic 59) */}
+                                <Route
+                                  path="/news"
+                                  element={
+                                    <ProtectedRoute>
+                                      <NewsListPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/news/:articleId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ArticleDetailRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Emergency contacts route (Epic 62) */}
+                                <Route
+                                  path="/emergency"
+                                  element={
+                                    <ProtectedRoute>
+                                      <EmergencyContactDirectoryPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Accessibility settings route (Epic 60) */}
+                                <Route
+                                  path="/settings/accessibility"
+                                  element={<AccessibilitySettingsPage />}
+                                />
+                                {/* Privacy settings route (Epic 63) */}
+                                <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                                {/* Dispute Resolution routes (Epic 77) */}
+                                <Route path="/disputes" element={<DisputesPageRoute />} />
+                                <Route path="/disputes/new" element={<FileDisputePageRoute />} />
+                                <Route
+                                  path="/disputes/:disputeId"
+                                  element={<DisputeDetailRoute />}
+                                />
+                                {/* Outages routes (UC-12) */}
+                                <Route path="/outages" element={<OutagesPageRoute />} />
+                                <Route path="/outages/new" element={<CreateOutagePageRoute />} />
+                                <Route
+                                  path="/outages/:outageId"
+                                  element={<ViewOutagePageRoute />}
+                                />
+                                <Route
+                                  path="/outages/:outageId/edit"
+                                  element={<EditOutagePageRoute />}
+                                />
+                                {/* Announcements routes (UC-06) */}
+                                <Route path="/announcements" element={<AnnouncementsPageRoute />} />
+                                <Route
+                                  path="/announcements/new"
+                                  element={<CreateAnnouncementPageRoute />}
+                                />
+                                <Route
+                                  path="/announcements/:announcementId"
+                                  element={<ViewAnnouncementPageRoute />}
+                                />
+                                <Route
+                                  path="/announcements/:announcementId/edit"
+                                  element={<EditAnnouncementPageRoute />}
+                                />
+                                {/* Messaging routes (UC-07) */}
+                                <Route path="/messages" element={<MessagesPageRoute />} />
+                                <Route path="/messages/new" element={<NewMessagePageRoute />} />
+                                <Route
+                                  path="/messages/:threadId"
+                                  element={<ThreadDetailPageRoute />}
+                                />
+                                {/* Faults routes (UC-03) */}
+                                <Route path="/faults" element={<FaultsPageRoute />} />
+                                <Route path="/faults/new" element={<CreateFaultPageRoute />} />
+                                <Route path="/faults/:faultId" element={<FaultDetailPageRoute />} />
+                                <Route
+                                  path="/faults/:faultId/edit"
+                                  element={<EditFaultPageRoute />}
+                                />
+                                {/* Community routes (Epic 42) */}
+                                <Route path="/community" element={<FeedPageRoute />} />
+                                <Route path="/community/groups" element={<GroupsPageRoute />} />
+                                <Route
+                                  path="/community/groups/new"
+                                  element={<CreateGroupPageRoute />}
+                                />
+                                <Route
+                                  path="/community/groups/:groupId"
+                                  element={<GroupDetailPageRoute />}
+                                />
+                                <Route path="/community/events" element={<EventsPageRoute />} />
+                                <Route
+                                  path="/community/marketplace"
+                                  element={<MarketplacePageRoute />}
+                                />
+                                {/* Financial routes (Epic 52) */}
+                                <Route
+                                  path="/financial"
+                                  element={<FinancialDashboardPageRoute />}
+                                />
+                                <Route
+                                  path="/financial/invoices"
+                                  element={<InvoiceManagementPageRoute />}
+                                />
+                                <Route
+                                  path="/financial/payments"
+                                  element={<PaymentManagementPageRoute />}
+                                />
+                                <Route
+                                  path="/financial/budgets"
+                                  element={<BudgetManagementPageRoute />}
+                                />
 
-                              {/* Error / state surfaces */}
-                              <Route path="/forbidden" element={<ForbiddenPage />} />
-                              <Route path="/server-error" element={<ServerErrorPage />} />
-                              <Route path="/session-expired" element={<SessionExpiredPage />} />
-                              <Route path="*" element={<NotFoundPage />} />
-                            </Routes>
-                          </Suspense>
-                        </main>
-                      </div>
-                    </CommandPaletteWrapper>
-                  </CommandPaletteProvider>
-                </BrowserRouter>
-              </WebSocketWrapper>
+                                {/* Phase 5 — Super-admin Control Plane (B6).
+                                  AdminRouter is platform-principal-gated
+                                  internally via <RequirePlatformPrincipal>;
+                                  the gate redirects non-platform users to
+                                  `/` rather than rendering "forbidden"
+                                  (information disclosure, leak #21). */}
+                                <Route path="/admin/*" element={<AdminRouterRoute />} />
+
+                                {/* Error / state surfaces */}
+                                <Route path="/forbidden" element={<ForbiddenPage />} />
+                                <Route path="/server-error" element={<ServerErrorPage />} />
+                                <Route path="/session-expired" element={<SessionExpiredPage />} />
+                                <Route path="*" element={<NotFoundPage />} />
+                              </Routes>
+                            </Suspense>
+                          </main>
+                        </div>
+                      </CommandPaletteWrapper>
+                    </CommandPaletteProvider>
+                  </BrowserRouter>
+                </WebSocketWrapper>
+              </MfaWrapper>
             </AnnouncerProvider>
           </ToastProvider>
         </OrganizationProvider>

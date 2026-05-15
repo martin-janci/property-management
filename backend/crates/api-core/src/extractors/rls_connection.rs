@@ -432,6 +432,246 @@ where
     }
 }
 
+/// An RLS connection whose tenant context comes from host resolution, NOT from
+/// a JWT.
+///
+/// Unlike [`RlsConnection`] / [`SimpleRlsConnection`] (which derive the tenant
+/// from an authenticated token), this extractor reads the `ResolvedTenant` that
+/// `host_tenant_middleware` injected into the request extensions. It is the
+/// bridge between Phase 1 host resolution and RLS-scoped queries: use it on
+/// routes that are tenant-scoped by *host* rather than by *login* (e.g. public
+/// per-agency listing pages on the reality portal).
+///
+/// It carries the SAME `release()` + `Drop`/`spawn_clear_context` discipline as
+/// [`SimpleRlsConnection`] — always call `release().await` before the handler
+/// returns to clear RLS context before the connection returns to the pool.
+///
+/// # Phase 4: PlatformHost (4th RLS context)
+///
+/// When the resolved tenant's `source` is
+/// [`crate::middleware::host_tenant::TenantSource::PlatformHost`] this
+/// extractor opens the connection in the **global-read** context instead of
+/// in a tenant-scoped one:
+/// * `app.current_org_id` is UNSET (empty) — `get_current_org_id()` returns
+///   NULL, so the second branch of the listings policy collapses.
+/// * `app.global_read = on` — the third branch of the listings policy
+///   (`is_published AND is_global_read_context()`) opens up.
+/// * Writes still fail (the policy's WITH CHECK omits the global branch).
+///
+/// `clear_request_context()` resets BOTH the tenant trio and `app.global_read`,
+/// so the same `release()` call works for either path. Defense for leak #2
+/// (context bleeding between requests).
+///
+/// # Rejection
+///
+/// Rejects with `500` if no `ResolvedTenant` extension is present — that means
+/// `host_tenant_middleware` did not run (or the host was unresolved, in which
+/// case the middleware itself already returned `404`).
+pub struct HostRlsConnection {
+    conn: Option<PoolConnection<Postgres>>,
+    organization_id: Uuid,
+    is_platform_host: bool,
+    released: bool,
+}
+
+impl HostRlsConnection {
+    /// Get a mutable reference to the underlying connection.
+    pub fn conn(&mut self) -> &mut PoolConnection<Postgres> {
+        self.conn
+            .as_mut()
+            .expect("HostRlsConnection already released")
+    }
+
+    /// Get the resolved organization (tenant) ID for this request.
+    ///
+    /// For PlatformHost requests this is `Uuid::nil()` — the sentinel meaning
+    /// "no specific tenant." Branch on [`Self::is_platform_host`] before
+    /// treating this as a real org id.
+    pub fn organization_id(&self) -> Uuid {
+        self.organization_id
+    }
+
+    /// True if this connection was opened in the PlatformHost (global-read)
+    /// context — the 4th RLS context introduced in Phase 4.
+    pub fn is_platform_host(&self) -> bool {
+        self.is_platform_host
+    }
+
+    /// Release the connection back to the pool after clearing RLS context.
+    ///
+    /// See [`RlsConnection::release()`] for details. The Phase 4 extension to
+    /// `clear_request_context()` (migration 00136) also resets `app.global_read`
+    /// so the same call cleans up PlatformHost connections.
+    pub async fn release(&mut self) {
+        if self.released {
+            return;
+        }
+
+        if let Some(mut conn) = self.conn.take() {
+            if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await {
+                tracing::warn!(
+                    error = %e,
+                    organization_id = %self.organization_id,
+                    is_platform_host = self.is_platform_host,
+                    "Failed to clear RLS context on release"
+                );
+            }
+        }
+
+        self.released = true;
+    }
+}
+
+impl Deref for HostRlsConnection {
+    type Target = PoolConnection<Postgres>;
+
+    fn deref(&self) -> &Self::Target {
+        self.conn
+            .as_ref()
+            .expect("HostRlsConnection already released")
+    }
+}
+
+impl DerefMut for HostRlsConnection {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.conn
+            .as_mut()
+            .expect("HostRlsConnection already released")
+    }
+}
+
+impl Drop for HostRlsConnection {
+    fn drop(&mut self) {
+        if !self.released {
+            if let Some(conn) = self.conn.take() {
+                tracing::warn!(
+                    organization_id = %self.organization_id,
+                    is_platform_host = self.is_platform_host,
+                    "HostRlsConnection dropped without calling release() - spawning cleanup task"
+                );
+
+                db::tenant_context::spawn_clear_context(
+                    conn,
+                    format!(
+                        "HostRlsConnection(org={}, platform_host={})",
+                        self.organization_id, self.is_platform_host
+                    ),
+                );
+            }
+        }
+    }
+}
+
+impl<S> FromRequestParts<S> for HostRlsConnection
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Step 1: Read the tenant resolved by host_tenant_middleware.
+        let resolved = parts
+            .extensions
+            .get::<crate::middleware::host_tenant::ResolvedTenant>()
+            .copied()
+            .ok_or((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Tenant not resolved (host_tenant_middleware did not run)",
+            ))?;
+
+        let organization_id = resolved.organization_id;
+        let is_platform_host = resolved.is_platform_host();
+
+        // Step 2: Acquire a dedicated connection from the pool.
+        let mut conn = state.db_pool().acquire().await.map_err(|e| {
+            tracing::error!(error = %e, "Failed to acquire database connection for host RLS");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database connection unavailable",
+            )
+        })?;
+
+        // Step 3: Set RLS context on THIS specific connection. The two paths:
+        //
+        // * PlatformHost (Phase 4, 4th RLS context) — `app.current_org_id`
+        //   stays UNSET (we still call set_request_context to clear any stale
+        //   value from a pooled connection), and `app.global_read = on` opens
+        //   the global-read OR-clause on `listings`. WITH CHECK still denies
+        //   writes (no global branch), so this is read-only by construction.
+        //
+        // * Tenant-scoped (Subdomain / CustomDomain / DevPath) — set the org
+        //   id, leave `app.global_read = off`. Same one-org behaviour as
+        //   Phase 1. Defense-in-depth: explicitly setting global_read = off
+        //   prevents a stale `on` from a previous PlatformHost request leaking
+        //   into a tenant-scoped one (leak #2). The Drop / release path
+        //   resets both via clear_request_context().
+        if is_platform_host {
+            db::tenant_context::set_request_context(&mut *conn, None, None, false)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        "Failed to clear RLS context for PlatformHost"
+                    );
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to set security context",
+                    )
+                })?;
+            db::tenant_context::set_global_read_context(&mut *conn, true)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        "Failed to enable global-read context for PlatformHost"
+                    );
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to set security context",
+                    )
+                })?;
+        } else {
+            db::tenant_context::set_request_context(&mut *conn, Some(organization_id), None, false)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        organization_id = %organization_id,
+                        "Failed to set RLS context for host-resolved tenant"
+                    );
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to set security context",
+                    )
+                })?;
+            // Defense for leak #2: ensure global_read is OFF on every
+            // tenant-scoped request, even if the connection arrived with a
+            // stale ON from an earlier PlatformHost handler that crashed
+            // before release().
+            db::tenant_context::set_global_read_context(&mut *conn, false)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        organization_id = %organization_id,
+                        "Failed to disable global-read context for tenant-scoped host"
+                    );
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Failed to set security context",
+                    )
+                })?;
+        }
+
+        Ok(HostRlsConnection {
+            conn: Some(conn),
+            organization_id,
+            is_platform_host,
+            released: false,
+        })
+    }
+}
+
 /// Helper macro to ensure RLS connection is released even on early returns.
 ///
 /// Usage:

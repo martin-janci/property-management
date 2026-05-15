@@ -84,6 +84,15 @@ pub struct Listing {
     // Features (stored as JSON array)
     pub features: serde_json::Value,
 
+    // Phase 4: explicit publish state for the global reality portal.
+    // `is_published` is the toggle that opts a listing into the 4th RLS
+    // context (PlatformHost / global-read across all orgs). It is orthogonal
+    // to `status`: a listing can be `status='active'` on its agency subdomain
+    // while `is_published=FALSE` (not on the global portal), and vice versa.
+    // See migrations 00135/00136 and the ROADMAP Phase 4 section.
+    #[serde(default)]
+    pub is_published: bool,
+
     // Timestamps
     pub published_at: Option<DateTime<Utc>>,
     pub sold_at: Option<DateTime<Utc>>,

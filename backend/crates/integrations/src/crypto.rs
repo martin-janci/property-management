@@ -317,7 +317,7 @@ mod tests {
         assert!(crypto.decrypt("not-valid-base64!!!").is_err());
 
         // Valid base64 but too short
-        assert!(crypto.decrypt(&BASE64.encode(&[1, 2, 3])).is_err());
+        assert!(crypto.decrypt(&BASE64.encode([1, 2, 3])).is_err());
     }
 
     #[test]

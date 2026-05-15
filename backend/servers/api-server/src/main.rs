@@ -1,3 +1,5 @@
+#![allow(clippy::doc_overindented_list_items)]
+
 //! API Server - Property Management System
 //!
 //! Consolidated backend for all property management operations.
@@ -26,6 +28,11 @@ mod state;
 use db::repositories::AnnouncementRepository;
 use services::{EmailService, JwtService, Scheduler, SchedulerConfig};
 use state::AppState;
+
+// Phase 5 — admin extension wiring helpers (B7). Both `main.rs` (production
+// binary) and `lib.rs::create_router` (tests) build the same admin-core
+// dependency chain via these helpers so they cannot drift.
+use api_server::{attach_admin_extensions, build_admin_extensions};
 
 /// Default CORS allowed origins for api-server.
 /// Includes development origins and production domains.
@@ -114,11 +121,11 @@ fn parse_default_origins() -> Vec<HeaderValue> {
         routes::auth::list_sessions,
         routes::auth::revoke_session,
         routes::auth::revoke_all_sessions,
-        routes::admin::list_users,
-        routes::admin::get_user,
-        routes::admin::suspend_user,
-        routes::admin::reactivate_user,
-        routes::admin::delete_user,
+        routes::admin::users_lifecycle::list_users,
+        routes::admin::users_lifecycle::get_user,
+        routes::admin::users_lifecycle::suspend_user,
+        routes::admin::users_lifecycle::reactivate_user,
+        routes::admin::users_lifecycle::delete_user,
         routes::organizations::create_organization,
         routes::organizations::list_organizations,
         routes::organizations::list_my_organizations,
@@ -340,8 +347,27 @@ async fn main() -> anyhow::Result<()> {
 
     let jwt_service = JwtService::new(&jwt_secret).expect("Failed to create JWT service");
 
+    // Phase 1: Build the host-resolution config + shared tenant-resolution
+    // cache ONCE, then clone the `Arc` into both the middleware config and the
+    // AppState so domain-management handlers can invalidate cache entries via
+    // `state.tenant_resolution_cache`.
+    //
+    // Phase 5.5: same pattern for the per-tenant rate limiter set (defense
+    // leak #15) — the middleware enforces the limit and admin handlers
+    // install per-tenant overrides via
+    // `state.tenant_rate_limiters.set_override(org, rpm)`.
+    let host_tenant_config = api_core::middleware::HostTenantConfig::new(db_pool.clone());
+    let tenant_resolution_cache = host_tenant_config.cache.clone();
+    let tenant_rate_limiters = host_tenant_config.rate_limiters.clone();
+
     // Create application state
-    let state = AppState::new(db_pool.clone(), email_service, jwt_service);
+    let state = AppState::new(
+        db_pool.clone(),
+        email_service,
+        jwt_service,
+        tenant_resolution_cache,
+        tenant_rate_limiters,
+    );
 
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
@@ -371,6 +397,17 @@ async fn main() -> anyhow::Result<()> {
     let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config);
     let _scheduler_handle = scheduler.start();
 
+    // Phase 5 — admin dependency injection (B7).
+    //
+    // Build the admin-core dep bundle (capability registry init + grants /
+    // mfa / audit / impersonation services backed by the live `db_pool`) and
+    // attach it to the router below via `attach_admin_extensions`. The same
+    // helpers are called from `lib.rs::create_router` so the production binary
+    // and the test-side router stay in sync; before this fix only `create_router`
+    // wired admin extensions, so production hit 500 on every `/admin/*` call
+    // because `RequireCapability` could not find `AdminDeps` in extensions.
+    let admin_ext = build_admin_extensions(db_pool.clone());
+
     // Build router
     let app = Router::new()
         // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
@@ -383,6 +420,8 @@ async fn main() -> anyhow::Result<()> {
         .nest("/api/v1/auth", routes::auth::router())
         // Admin routes
         .nest("/api/v1/admin", routes::admin::router())
+        // Phase 5.5: tenant lifecycle (export / purge / restore) — platform-admin only.
+        .nest("/api/v1/admin", routes::admin_tenant_lifecycle::router())
         // Organizations routes
         .nest("/api/v1/organizations", routes::organizations::router())
         // Buildings routes
@@ -619,10 +658,46 @@ async fn main() -> anyhow::Result<()> {
         )
         // API Ecosystem Expansion routes (Epic 150)
         .nest("/api/v1/ecosystem", routes::api_ecosystem::router())
+        // Phase 3: per-host tenant config (read by reality-web at request
+        // time). Mounted at the root because reality-web hits the same host
+        // Caddy serves the app on, and the path must match exactly.
+        .nest("/tenant-config", routes::tenant_config::router())
+        // Phase 3: per-tenant admin endpoints (branding + feature flags).
+        // Stub auth via `require_platform_principal`; Phase 5 swaps to a
+        // real capability registry.
+        .nest(
+            "/admin/tenants/{org_id}/branding",
+            routes::admin_tenants::branding_router(),
+        )
+        .nest(
+            "/admin/tenants/{org_id}/feature-flags",
+            routes::admin_tenants::feature_flags_router(),
+        )
+        // Phase 3: Caddy on-demand TLS ask-endpoint. Mounted at `/internal`,
+        // which is in PUBLIC_ALLOWLIST so host_tenant_middleware skips it
+        // entirely — by definition this endpoint runs BEFORE TLS / a
+        // host -> tenant mapping exists. Auth is enforced inside the handler
+        // (loopback bind in dev, X-Internal-Token shared secret in prod).
+        .nest("/internal/caddy-ask", routes::caddy_ask::router())
         // Swagger UI
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
+
+    // Phase 5 — admin dependency injection (B7). Layered before TraceLayer so
+    // every nested route inherits these extensions. Mirrors the chain in
+    // `lib.rs::create_router` exactly via the shared `attach_admin_extensions`
+    // helper so production and tests cannot drift.
+    let app = attach_admin_extensions(app, &admin_ext)
         // Middleware
         .layer(TraceLayer::new_for_http())
+        // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
+        // on the request pipeline (layers execute outside-in), inspecting the
+        // Host header to inject a `ResolvedTenant` extension before any
+        // handler/extractor runs. Public-allowlist paths (`/health`, etc.)
+        // bypass resolution; unknown hosts fail closed with 404.
+        .layer(axum::middleware::from_fn_with_state(
+            host_tenant_config.clone(),
+            api_core::middleware::host_tenant_middleware,
+        ))
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
         .layer(
             CorsLayer::new()

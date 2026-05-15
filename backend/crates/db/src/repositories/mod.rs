@@ -1,6 +1,8 @@
 //! Repository pattern implementations.
 //! Each repository handles database operations for a specific domain.
 
+pub mod agency_branding;
+pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
 pub mod building;
@@ -16,6 +18,7 @@ pub mod financial;
 pub mod granular_notification;
 pub mod health_monitoring;
 pub mod help;
+pub mod membership;
 pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
@@ -35,6 +38,7 @@ pub mod two_factor_auth;
 pub mod unit;
 pub mod unit_resident;
 pub mod user;
+pub mod user_invite;
 pub mod vote;
 
 // Epic 13: AI Assistant & Automation
@@ -66,6 +70,10 @@ pub use workflow::WorkflowRepository;
 // Epic 14: IoT & Smart Building
 pub use sensor::SensorRepository;
 
+pub use agency_branding::AgencyBrandingRepository;
+pub use agency_domain::{
+    AgencyDomainCacheInvalidator, AgencyDomainRepository, NoopDomainCacheInvalidator,
+};
 pub use announcement::AnnouncementRepository;
 pub use audit_log::AuditLogRepository;
 pub use building::BuildingRepository;
@@ -86,6 +94,7 @@ pub use health_monitoring::{
     MetricStats, MetricStatus,
 };
 pub use help::{FaqEntry, HelpArticle, HelpCategory, HelpRepository, Tooltip};
+pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;
 pub use notification_preference::NotificationPreferenceRepository;
@@ -110,6 +119,7 @@ pub use two_factor_auth::TwoFactorAuthRepository;
 pub use unit::UnitRepository;
 pub use unit_resident::UnitResidentRepository;
 pub use user::UserRepository;
+pub use user_invite::{ConsumeInviteOutcome, UserInviteRepository};
 pub use vote::VoteRepository;
 
 // Epic 15: Property Listings & Multi-Portal Sync
@@ -357,3 +367,15 @@ pub use api_ecosystem::ApiEcosystemRepository;
 pub mod marketplace;
 
 pub use marketplace::MarketplaceRepository;
+
+// Phase 3: Hosting & Theming — per-tenant feature flags + kill switches.
+pub mod tenant_feature_flag;
+
+pub use tenant_feature_flag::TenantFeatureFlagRepository;
+
+// Phase 2.5 (N1): unified write path for portal/public users that mirrors
+// to BOTH `users` and `portal_users` so Phase 2's "one identity per human"
+// invariant actually holds for updates and SSO upserts (not just inserts).
+pub mod unified_portal_user;
+
+pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateProfile};

@@ -1,12 +1,14 @@
 //! Portal user routes - separate from Property Management users.
 //!
 //! Supports SSO with Property Management via OAuth 2.0.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
+use crate::extractors::auth::extract_session_token;
 use crate::handlers::users::{
     PasswordResetConfirmResult, PasswordResetRequestResult, RegistrationResult, UserHandler,
 };
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::State,
     routing::{get, post, put},
@@ -230,34 +232,20 @@ pub async fn login(
 pub async fn logout(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    // Extract the token from Authorization header
-    let token = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|auth| auth.strip_prefix("Bearer "))
-        .or_else(|| {
-            // Fall back to cookie
-            headers
-                .get(axum::http::header::COOKIE)
-                .and_then(|v| v.to_str().ok())
-                .and_then(|cookies| {
-                    cookies
-                        .split(';')
-                        .find(|c| c.trim().starts_with("portal_session="))
-                        .map(|c| c.trim().strip_prefix("portal_session=").unwrap())
-                })
-        });
-
-    if let Some(token) = token {
+    // Extract the token from Authorization header or portal_session cookie.
+    // Logout is the one place we still need the raw token (to compute the
+    // session-row hash for invalidation); RequestPrincipal carries the
+    // user id but not the token string.
+    if let Some(token) = extract_session_token(&headers) {
         // Invalidate the session
-        if let Err(e) = state.session_service.invalidate_session(token).await {
-            tracing::warn!(user_id = %auth.user_id, error = %e, "Failed to invalidate session");
+        if let Err(e) = state.session_service.invalidate_session(&token).await {
+            tracing::warn!(user_id = %principal.user_id, error = %e, "Failed to invalidate session");
         }
     }
 
-    tracing::info!(user_id = %auth.user_id, "User logged out");
+    tracing::info!(user_id = %principal.user_id, "User logged out");
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -274,18 +262,18 @@ pub async fn logout(
 )]
 pub async fn get_me(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<UserInfo>, (axum::http::StatusCode, String)> {
     let handler = UserHandler::new(state.portal_repo.clone());
 
-    match handler.get_user(auth.user_id).await {
+    match handler.get_user(principal.user_id).await {
         Ok(Some(user)) => Ok(Json(user.into())),
         Ok(None) => Err((
             axum::http::StatusCode::NOT_FOUND,
             "User not found".to_string(),
         )),
         Err(e) => {
-            tracing::error!(error = %e, user_id = %auth.user_id, "Failed to get user");
+            tracing::error!(error = %e, user_id = %principal.user_id, "Failed to get user");
             Err((
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to get profile".to_string(),
@@ -308,7 +296,7 @@ pub async fn get_me(
 )]
 pub async fn update_me(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<Json<UserInfo>, (axum::http::StatusCode, String)> {
     // Validate name if provided
@@ -341,15 +329,20 @@ pub async fn update_me(
     let handler = UserHandler::new(state.portal_repo.clone());
 
     match handler
-        .update_profile(auth.user_id, req.name, req.profile_image_url, req.locale)
+        .update_profile(
+            principal.user_id,
+            req.name,
+            req.profile_image_url,
+            req.locale,
+        )
         .await
     {
         Ok(user) => {
-            tracing::info!(user_id = %auth.user_id, "Profile updated");
+            tracing::info!(user_id = %principal.user_id, "Profile updated");
             Ok(Json(user.into()))
         }
         Err(e) => {
-            tracing::error!(error = %e, user_id = %auth.user_id, "Failed to update profile");
+            tracing::error!(error = %e, user_id = %principal.user_id, "Failed to update profile");
             Err((
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to update profile".to_string(),

@@ -793,6 +793,6 @@ pub async fn run_all_repository_tests() {
     println!("  - RLS isolation");
     println!("  - Membership management");
     println!("============================");
-    println!("");
+    println!();
     println!("Run with: cargo test --test repository_tests -- --ignored --test-threads=1");
 }

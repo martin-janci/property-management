@@ -1,7 +1,7 @@
 //! User repository (Epic 1, Story 1.1).
 
 use crate::models::user::{
-    CreateUser, EmailVerificationToken, NeighborRow, NeighborView, PrivacySettings,
+    CreateUser, EmailVerificationToken, NeighborRow, NeighborView, PrincipalKind, PrivacySettings,
     ProfileVisibility, UpdatePrivacySettings, UpdateUser, User,
 };
 use crate::DbPool;
@@ -67,6 +67,48 @@ impl UserRepository {
         .await?;
 
         Ok(user)
+    }
+
+    /// Phase 2: find a user by email, filtered by `principal_kind`.
+    /// Used by the reality-server flow to look up `public` (portal) users in
+    /// the unified `users` table.
+    pub async fn find_by_email_and_kind(
+        &self,
+        email: &str,
+        kind: PrincipalKind,
+    ) -> Result<Option<User>, SqlxError> {
+        sqlx::query_as::<_, User>(
+            r#"
+            SELECT * FROM users
+             WHERE LOWER(email) = LOWER($1)
+               AND principal_kind = $2
+               AND status != 'deleted'
+            "#,
+        )
+        .bind(email)
+        .bind(kind.as_str())
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Phase 2: find a user by id, filtered by `principal_kind`.
+    pub async fn find_by_id_and_kind(
+        &self,
+        id: Uuid,
+        kind: PrincipalKind,
+    ) -> Result<Option<User>, SqlxError> {
+        sqlx::query_as::<_, User>(
+            r#"
+            SELECT * FROM users
+             WHERE id = $1
+               AND principal_kind = $2
+               AND status != 'deleted'
+            "#,
+        )
+        .bind(id)
+        .bind(kind.as_str())
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// Check if email exists (including deleted accounts within 30 days).

@@ -1,7 +1,8 @@
-//! Axum extractors for Reality Server.
+//! Axum extractors and request-data helpers for Reality Server.
 //!
-//! Custom extractors for authentication and request data.
+//! Authentication itself goes through `api_core::extractors::RequestPrincipal`
+//! (and its optional sibling). The only custom helper that lives here is
+//! the session-token extractor used by the logout flow — see
+//! [`auth`] for the rationale.
 
 pub mod auth;
-
-pub use auth::*;

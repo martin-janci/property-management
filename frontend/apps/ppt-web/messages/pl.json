@@ -57,7 +57,8 @@
     "settings": "Ustawienia",
     "profile": "Profil",
     "accessibility": "Dostępność",
-    "privacy": "Prywatność"
+    "privacy": "Prywatność",
+    "admin": "Administracja"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -456,6 +457,155 @@
       "closeFilters": "Zamknij filtry",
       "showHelp": "Pokaż tę pomoc",
       "hint": "Skup się na liście zadań, aby używać tych skrótów"
+    }
+  },
+  "admin": {
+    "common": {
+      "actions": "Akcje",
+      "save": "Zapisz",
+      "saving": "Zapisywanie…",
+      "cancel": "Anuluj",
+      "readOnly": "Tylko do odczytu",
+      "saveFailed": "Zapis nie powiódł się.",
+      "loading": "Ładowanie…",
+      "retry": "Ponów",
+      "noResults": "Brak wyników.",
+      "confirm": "Czy na pewno?"
+    },
+    "agencies": {
+      "title": "Agencje",
+      "loading": "Ładowanie agencji…",
+      "loadError": "Nie udało się załadować agencji: {{message}}",
+      "unknownError": "Nieznany błąd",
+      "empty": "Nie znaleziono żadnych agencji.",
+      "columns": {
+        "name": "Nazwa",
+        "slug": "Identyfikator",
+        "status": "Status",
+        "members": "Członkowie"
+      },
+      "actions": {
+        "suspend": "Zawieś",
+        "edit": "Edytuj",
+        "addDomain": "Dodaj domenę"
+      },
+      "toast": {
+        "suspendedTitle": "Agencja zawieszona",
+        "suspendedMessage": "{{name}} została zawieszona.",
+        "suspendFailedTitle": "Zawieszenie nie powiodło się",
+        "suspendFailedMessage": "Zawieszenie nie powiodło się",
+        "notWiredTitle": "Jeszcze niepodłączone",
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add"
+      }
+    },
+    "users": {
+      "title": "Użytkownicy",
+      "searchPlaceholder": "Szukaj użytkowników po e-mailu lub nazwie…",
+      "empty": "Wyszukaj, aby załadować użytkowników.",
+      "columns": {
+        "email": "E-mail",
+        "displayName": "Nazwa wyświetlana",
+        "principalKind": "Typ podmiotu"
+      },
+      "principalKinds": {
+        "platform": "Platforma",
+        "agency": "Agencja",
+        "tenant": "Najemca",
+        "service": "Usługa"
+      },
+      "actions": {
+        "impersonate": "Personifikuj",
+        "edit": "Edytuj",
+        "transition": "Zmień typ"
+      },
+      "transition": {
+        "title": "Zmień typ podmiotu",
+        "description": "Spowoduje to zmianę sposobu uwierzytelniania {{name}} oraz posiadanych uprawnień. Kontynuować?",
+        "confirm": "Zmień typ",
+        "cancel": "Anuluj"
+      }
+    },
+    "featureFlags": {
+      "title": "Flagi funkcji",
+      "warning": "Wyłącznik awaryjny dla najemcy — zmiany wchodzą w życie natychmiast dla wszystkich użytkowników tego najemcy.",
+      "fields": {
+        "newListingsSearch": "Nowe wyszukiwanie ogłoszeń (beta)",
+        "aiFaultTriage": "Klasyfikacja usterek AI (beta)",
+        "buildingDisabled": "Wyłącz ten budynek (wyłącznik awaryjny)"
+      }
+    },
+    "audit": {
+      "title": "Dziennik audytu",
+      "filters": {
+        "legend": "Filtry",
+        "actor": "Wykonawca",
+        "actorId": "ID wykonawcy",
+        "action": "Akcja",
+        "target": "Cel",
+        "targetType": "Typ celu",
+        "since": "Od",
+        "until": "Do",
+        "outcome": "Wynik"
+      },
+      "columns": {
+        "time": "Czas",
+        "actor": "Wykonawca",
+        "action": "Akcja",
+        "target": "Cel",
+        "ip": "IP",
+        "outcome": "Wynik"
+      },
+      "system": "(system)",
+      "loading": "Ładowanie…",
+      "empty": "Żadne zdarzenia audytu nie pasują do bieżących filtrów.",
+      "pagination": {
+        "showing": "Pokazano {{from}}–{{to}} z {{total}}",
+        "previous": "Poprzednia",
+        "next": "Następna",
+        "page": "Strona {{page}}"
+      },
+      "timeAgo": {
+        "justNow": "przed chwilą",
+        "minutes": "{{count}} min temu",
+        "minutes_one": "{{count}} min temu",
+        "hours": "{{count}} godz. temu",
+        "hours_one": "{{count}} godz. temu",
+        "days": "{{count}} dni temu",
+        "days_one": "{{count}} dzień temu"
+      }
+    },
+    "platform": {
+      "title": "Ustawienia platformy",
+      "fields": {
+        "maintenanceMode": "Tryb konserwacji",
+        "signupEnabled": "Rejestracja włączona",
+        "supportEmail": "E-mail wsparcia",
+        "supportEmailPlaceholder": "wsparcie@example.com"
+      }
+    },
+    "impersonation": {
+      "label": "PERSONIFIKACJA",
+      "asUser": "jako {{name}}",
+      "expires": "wygasa o {{time}}",
+      "stop": "Zakończ personifikację",
+      "youAreImpersonating": "Personifikujesz użytkownika {{name}}"
+    },
+    "mfa": {
+      "title": "Zweryfikuj swoją tożsamość",
+      "description": "Wprowadź 6-cyfrowy kod z aplikacji uwierzytelniającej.",
+      "descriptionForAction": "{{action}} wymaga świeżego kodu uwierzytelniającego.",
+      "label": "Kod weryfikacyjny",
+      "verify": "Zweryfikuj",
+      "verifying": "Weryfikacja…",
+      "cancel": "Anuluj",
+      "invalidFormat": "Wprowadź 6-cyfrowy kod z aplikacji uwierzytelniającej.",
+      "invalidCode": "Ten kod nie zadziałał. Spróbuj ponownie.",
+      "verificationFailed": "Weryfikacja nie powiodła się.",
+      "expired": "Weryfikacja MFA wygasła",
+      "requiredToast": {
+        "title": "Wymagane potwierdzenie dwuskładnikowe",
+        "message": "Aby kontynuować, potwierdź w aplikacji uwierzytelniającej."
+      }
     }
   }
 }

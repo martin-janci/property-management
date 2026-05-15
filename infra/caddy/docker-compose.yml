@@ -1,0 +1,69 @@
+# Phase 3: Caddy in front of api-server (8080) + reality-server (8081).
+#
+# Use alongside the root `docker-compose.yml`:
+#
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f infra/caddy/docker-compose.yml \
+#     up -d
+#
+# This file ONLY adds the Caddy edge — the existing api/reality/db services
+# come from the root compose. The `extends` mechanism would give us tighter
+# coupling, but a thin override is more readable for ops.
+
+name: ppt
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: ppt-caddy
+    restart: unless-stopped
+    environment:
+      PLATFORM_HOST: ${PLATFORM_HOST:?PLATFORM_HOST is required (e.g. rlt.sk)}
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api-server:8080}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:?LETSENCRYPT_EMAIL is required for ACME}
+      # Forwarded to the ask-endpoint via Caddy when reverse-proxying.
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
+    volumes:
+      # Bind-mount so changing the Caddyfile + `docker exec ... caddy reload`
+      # does not require an image rebuild.
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Persistent ACME state so cert renewals survive container restarts.
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    depends_on:
+      api-server:
+        condition: service_healthy
+      reality-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:80/caddy-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ppt-external
+
+  # api-server in this stack is reachable internally to Caddy AND to the
+  # ask-endpoint loop. The `INTERNAL_API_TOKEN` env var here is the SAME
+  # value Caddy sends in the `X-Internal-Token` header.
+  api-server:
+    environment:
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?INTERNAL_API_TOKEN required for caddy-ask gate}
+
+# Networks + volumes — `caddy_data` holds the ACME account key + issued
+# certs; losing it forces re-issuance and burns Let's Encrypt rate-limit
+# budget. Treat as production-critical persistent storage.
+volumes:
+  caddy_data:
+    name: ppt-caddy-data
+  caddy_config:
+    name: ppt-caddy-config
+
+networks:
+  ppt-external:
+    external: false

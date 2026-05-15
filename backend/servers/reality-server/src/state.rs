@@ -9,7 +9,10 @@ use std::time::{Duration, Instant};
 use tokio::sync::{Mutex, RwLock};
 
 use db::{
-    repositories::{PortalPasswordResetRepository, PortalRepository, RealityPortalRepository},
+    repositories::{
+        PortalPasswordResetRepository, PortalRepository, RealityPortalRepository,
+        UnifiedPortalError, UnifiedPortalUserRepo,
+    },
     DbPool,
 };
 
@@ -113,16 +116,25 @@ impl AppConfig {
 }
 
 /// User service for managing portal users (database-backed).
+///
+/// N1: SSO upsert dual-writes via [`UnifiedPortalUserRepo`] so the
+/// authoritative `users` row is created/updated alongside the legacy
+/// `portal_users` row. Email collisions with non-public principals are
+/// REFUSED (queued in `user_merge_collisions` for review) — never silently
+/// merged. This matches the Phase 2 merge migration's contract for the
+/// historical-data path; it now applies to forward-going SSO sign-ins too.
 #[derive(Clone)]
 pub struct UserService {
     repo: PortalRepository,
+    unified: UnifiedPortalUserRepo,
 }
 
 impl UserService {
     /// Create a new user service with database repository.
     pub fn new(pool: DbPool) -> Self {
         Self {
-            repo: PortalRepository::new(pool),
+            repo: PortalRepository::new(pool.clone()),
+            unified: UnifiedPortalUserRepo::new(pool),
         }
     }
 
@@ -135,18 +147,55 @@ impl UserService {
         let pm_user_id = uuid::Uuid::parse_str(&info.user_id)
             .map_err(|e| anyhow::anyhow!("Invalid PM user ID: {}", e))?;
 
-        let user = self
-            .repo
-            .upsert_sso_user(
-                pm_user_id,
-                &info.email,
-                &info.name,
-                info.avatar_url.as_deref(),
-            )
+        // N1 dual-write: write the unified `users` row first (collision-safe)
+        // then fetch the corresponding `portal_users` row to keep the public
+        // return shape unchanged.
+        match self
+            .unified
+            .sso_upsert("pm_sso", Some(pm_user_id), &info.email, &info.name)
             .await
-            .map_err(|e| anyhow::anyhow!("Database error: {}", e))?;
-
-        Ok(user)
+        {
+            Ok(user) => {
+                // The unified write set portal_origin_id; read the matching
+                // portal_users row back. If a profile_image_url was supplied
+                // by the IdP, mirror it through the legacy update path so
+                // existing read paths see it.
+                let portal_id = user.portal_origin_id.unwrap_or(pm_user_id);
+                let portal_user = self
+                    .repo
+                    .find_user_by_id(portal_id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Database error: {}", e))?
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("dual-write succeeded but portal_users mirror not found")
+                    })?;
+                if let Some(avatar) = info.avatar_url.as_deref() {
+                    let _ = self
+                        .repo
+                        .update_user(
+                            portal_id,
+                            db::models::UpdatePortalUser {
+                                name: None,
+                                profile_image_url: Some(avatar.to_string()),
+                                locale: None,
+                            },
+                        )
+                        .await;
+                }
+                Ok(portal_user)
+            }
+            Err(UnifiedPortalError::Collision { existing_user_id }) => {
+                // The user identity already belongs to a non-public
+                // principal (staff or platform). Refuse rather than
+                // silently overwrite. The collision row is already queued.
+                Err(anyhow::anyhow!(
+                    "SSO upsert refused: email '{}' already belongs to non-public principal {} (collision queued)",
+                    info.email,
+                    existing_user_id
+                ))
+            }
+            Err(UnifiedPortalError::Db(e)) => Err(anyhow::anyhow!("Database error: {}", e)),
+        }
     }
 
     /// Get portal user by PM user ID.
@@ -304,9 +353,16 @@ impl SessionService {
         use jsonwebtoken::{encode, EncodingKey, Header};
         use serde::{Deserialize, Serialize};
 
+        // Phase 2 token shape: { sub, kind, iat, exp }. The `kind` claim is
+        // informational only — `RequestPrincipal` re-derives `principal_kind`
+        // from the trusted `users` table on every request (defense for leaks
+        // #8 and #11). We still emit it so a future client/tooling can
+        // discriminate public vs staff tokens by inspection without a DB
+        // round-trip; servers must NEVER trust it.
         #[derive(Serialize, Deserialize)]
         struct Claims {
             sub: String,
+            kind: &'static str,
             exp: i64,
             iat: i64,
         }
@@ -314,6 +370,7 @@ impl SessionService {
         let now = chrono::Utc::now();
         let claims = Claims {
             sub: user_id.to_string(),
+            kind: "public",
             exp: (now + chrono::Duration::days(7)).timestamp(),
             iat: now.timestamp(),
         };
@@ -747,11 +804,23 @@ pub struct AppState {
     pub health_cache: HealthCheckCache,
     /// SSO token validation cache (Epic 104.2)
     pub token_cache: TokenValidationCache,
+    /// Phase 1: Host-resolution cache shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses, so domain-management handlers
+    /// can invalidate entries (e.g. after a domain is verified).
+    pub tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+    /// Phase 5.5: per-tenant rate limiter set shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses; admin handlers can install
+    /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`.
+    pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
 }
 
 impl AppState {
     /// Create a new AppState with database pool.
-    pub fn new(db: DbPool) -> Self {
+    pub fn new(
+        db: DbPool,
+        tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+        tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    ) -> Self {
         let portal_repo = PortalRepository::new(db.clone());
         let reality_portal_repo = RealityPortalRepository::new(db.clone());
         let portal_password_reset_repo = PortalPasswordResetRepository::new(db.clone());
@@ -784,6 +853,10 @@ impl AppState {
             pm_api_client,
             health_cache,
             token_cache,
+            // Phase 1: shared host-resolution cache
+            tenant_resolution_cache,
+            // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
+            tenant_rate_limiters,
         }
     }
 
@@ -815,6 +888,24 @@ impl AppState {
             return Err(e);
         }
         Ok(conn)
+    }
+}
+
+// Phase 1 / Phase 2.5 (N1): Implement TenantMembershipProvider so the
+// host-resolution extractors (`HostRlsConnection`) AND the unified
+// `RequestPrincipal` extractor can obtain the db pool from this state.
+//
+// `RequestPrincipal` uses the pool to:
+//   * load `users.principal_kind` per request (re-derived, never trusted
+//     from the JWT — defense for leaks #8/#11),
+//   * call `MembershipRepository::is_active(user, host_org)` when the
+//     resolved host pins a real organization.
+//
+// `HostRlsConnection` itself performs no membership query — its tenant
+// comes from host resolution, not from a login.
+impl api_core::TenantMembershipProvider for AppState {
+    fn db_pool(&self) -> &DbPool {
+        &self.db
     }
 }
 
