@@ -1,3 +1,4 @@
+#![allow(clippy::doc_overindented_list_items)]
 //! API core functionality: OpenAPI, extractors, middleware.
 
 pub mod cache;

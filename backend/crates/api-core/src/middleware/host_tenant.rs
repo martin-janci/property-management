@@ -18,15 +18,15 @@
 //! # Resolution algorithm (`host_tenant_middleware`)
 //!
 //! 1. Public-allowlist paths (`/health`, `/readiness`, `/metrics`,
-//!  `/swagger-ui`, `/api-docs`) pass through with no resolution.
+//!    `/swagger-ui`, `/api-docs`) pass through with no resolution.
 //! 2. Extract the TRUSTED host: the HTTP `Host` header / HTTP/2 `:authority`.
-//!  `X-Forwarded-Host` is ignored unless `TRUST_FORWARDED_HOST=true`.
-//!  The host is normalized (lowercase, port stripped, trailing dot stripped)
-//!  and rejected if it contains whitespace/control chars or exceeds 253 chars.
+//!    `X-Forwarded-Host` is ignored unless `TRUST_FORWARDED_HOST=true`.
+//!    The host is normalized (lowercase, port stripped, trailing dot stripped)
+//!    and rejected if it contains whitespace/control chars or exceeds 253 chars.
 //! 3. Dev-mode only: a `/a/{slug}` path prefix resolves the slug to an org and
-//!  the request URI is rewritten to strip the prefix (`source = DevPath`).
+//!    the request URI is rewritten to strip the prefix (`source = DevPath`).
 //! 4. Otherwise: cache lookup, then `AgencyDomainRepository::resolve_host_system`
-//!  on miss, caching the (possibly negative) result.
+//!    on miss, caching the (possibly negative) result.
 //! 5. Resolved -> inject [`ResolvedTenant`] into extensions, continue.
 //! 6. Unresolved -> **fail closed with HTTP 404** `"Unknown tenant host"`.
 

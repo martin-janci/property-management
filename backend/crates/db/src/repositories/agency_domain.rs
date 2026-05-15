@@ -5,15 +5,15 @@
 //! This repository supports two usage patterns:
 //!
 //! 1. **System lookups** (`*_system`): used by the host-resolution middleware
-//!  BEFORE any tenant context exists. They acquire their own connection,
-//!  set a system (super-admin / RLS-bypassing) context for exactly one
-//!  constrained `SELECT`, then clear the context before returning the
-//!  connection to the pool. This is the ONLY sanctioned way to read
-//!  `agency_domains` / `organizations` pre-auth.
+//!    BEFORE any tenant context exists. They acquire their own connection,
+//!    set a system (super-admin / RLS-bypassing) context for exactly one
+//!    constrained `SELECT`, then clear the context before returning the
+//!    connection to the pool. This is the ONLY sanctioned way to read
+//!    `agency_domains` / `organizations` pre-auth.
 //!
 //! 2. **RLS-aware** (`*_rls`): methods that accept an executor whose RLS
-//!  context is already set (e.g. from an `RlsConnection` extractor). These
-//!  are used by authenticated, tenant-scoped handlers (domain management UI).
+//!    context is already set (e.g. from an `RlsConnection` extractor). These
+//!    are used by authenticated, tenant-scoped handlers (domain management UI).
 //!
 //! ## Example (system resolution — middleware)
 //!

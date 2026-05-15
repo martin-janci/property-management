@@ -11,15 +11,15 @@
 //! # Two flavors
 //!
 //! 1. **Pure unit tests** (run by default): inject a counting in-process
-//!  `MockInvalidator` and observe the calls. These exercise the wiring
-//!  contract without needing Postgres.
+//!    `MockInvalidator` and observe the calls. These exercise the wiring
+//!    contract without needing Postgres.
 //!
 //! 2. **DB-backed smoke** (marked `#[ignore]`, opt-in via
-//!  `cargo test --test agency_domain_cache_tests -- --ignored
+//!    `cargo test --test agency_domain_cache_tests -- --ignored
 //!    --test-threads=1`): drives `create_rls`/`release_rls` against a real
-//!  DB and asserts the host-resolution cache misses on the post-release
-//!  read. Mirrors the existing repository test pattern in
-//!  `tests/repository_tests.rs`.
+//!    DB and asserts the host-resolution cache misses on the post-release
+//!    read. Mirrors the existing repository test pattern in
+//!    `tests/repository_tests.rs`.
 
 use std::sync::{
     atomic::{AtomicUsize, Ordering},

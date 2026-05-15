@@ -1,3 +1,4 @@
+#![allow(clippy::doc_overindented_list_items)]
 //! Database layer: models and repositories.
 //!
 //! # Row-Level Security (RLS)

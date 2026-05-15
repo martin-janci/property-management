@@ -183,7 +183,7 @@ async fn restore_handler(
 ) -> Result<Json<RestoreResponse>, (StatusCode, String)> {
     // Pull the first file part — accept any field name.
     let mut bytes: Option<Vec<u8>> = None;
-    while let Some(field) = multipart
+    if let Some(field) = multipart
         .next_field()
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, format!("multipart: {e}")))?
@@ -193,7 +193,6 @@ async fn restore_handler(
             .await
             .map_err(|e| (StatusCode::BAD_REQUEST, format!("read field: {e}")))?;
         bytes = Some(data.to_vec());
-        break;
     }
     let bytes = bytes.ok_or((
         StatusCode::BAD_REQUEST,

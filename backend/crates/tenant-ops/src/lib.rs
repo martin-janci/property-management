@@ -1,3 +1,4 @@
+#![allow(clippy::doc_overindented_list_items)]
 //! Phase 5.5 — Tenant Lifecycle & Operability.
 //!
 //! This crate owns the per-tenant lifecycle operations:

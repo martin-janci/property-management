@@ -5,14 +5,14 @@
 //! Branding is read on TWO paths and the repository exposes both:
 //!
 //! 1. **System lookup** (`fetch_by_organization_system`) — used by the
-//!  `/tenant-config` endpoint, which serves an unauthenticated request
-//!  that has been resolved to an organization by the Phase 1 host
-//!  middleware. There is no JWT, so `RlsConnection` cannot apply.
-//!  Acquires a connection, sets a system context for ONE constrained
-//!  `SELECT`, clears it. Mirrors `AgencyDomainRepository::resolve_host_system`.
+//!    `/tenant-config` endpoint, which serves an unauthenticated request
+//!    that has been resolved to an organization by the Phase 1 host
+//!    middleware. There is no JWT, so `RlsConnection` cannot apply.
+//!    Acquires a connection, sets a system context for ONE constrained
+//!    `SELECT`, clears it. Mirrors `AgencyDomainRepository::resolve_host_system`.
 //!
 //! 2. **RLS-aware** (`upsert_rls`) — used by the platform-admin update
-//!  endpoint which already holds a super-admin RLS context.
+//!    endpoint which already holds a super-admin RLS context.
 //!
 //! # Why both
 //!

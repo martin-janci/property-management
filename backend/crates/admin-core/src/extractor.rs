@@ -4,15 +4,15 @@
 //! `RequireCapability(Capability::X)` to its handler signature. The extractor:
 //!
 //! 1. Pulls the authenticated user via `api_core::RequestPrincipal` — Phase 2
-//!  contract: principal kind is re-derived from the trusted `users` table on
-//!  every request; JWT `roles` / `kind` claims are NEVER trusted server-side.
+//!    contract: principal kind is re-derived from the trusted `users` table on
+//!    every request; JWT `roles` / `kind` claims are NEVER trusted server-side.
 //! 2. Enforces `principal_kind == Platform` via the strongly-typed
 //!    [`PrincipalKind::Platform`].
 //! 3. Looks up an active capability grant.
 //! 4. Verifies recent MFA (15-minute window).
 //! 5. Writes an audit row — successful or denied.
 //! 6. Inserts the capability into request extensions so downstream code
-//!  can re-check without another round-trip.
+//!    can re-check without another round-trip.
 //!
 //! Failure modes:
 //!   * Step 1 fails → 401 `unauthenticated`.

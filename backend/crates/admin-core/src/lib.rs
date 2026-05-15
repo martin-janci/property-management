@@ -1,3 +1,4 @@
+#![allow(clippy::doc_overindented_list_items)]
 //! Phase 5 — Super-admin Control Plane.
 //!
 //! `admin-core` is the shared crate consumed by both `api-server` and

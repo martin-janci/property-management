@@ -9,29 +9,29 @@
 //! # Wired surfaces
 //!
 //! * `routes::admin::memberships::invite` — enforces `require_email_verification`
-//!  before issuing an invite to an unverified user, and re-validates the org's
-//!  policy is loadable before any audit row is written.
+//!    before issuing an invite to an unverified user, and re-validates the org's
+//!    policy is loadable before any audit row is written.
 //! * `routes::admin::memberships::revoke` — soft check (the policy is read; an
-//!  unloadable policy is treated as a hard fail).
+//!    unloadable policy is treated as a hard fail).
 //! * `routes::admin::capabilities::grant` — enforces `require_email_verification`
-//!  on the grantee before any capability row is written.
+//!    on the grantee before any capability row is written.
 //! * `routes::admin::capabilities::revoke` — platform-scoped liveness check
 //!    (D2.1 follow-up): see [`check_capability_revoke`] /
 //!    [`check_platform_action`]. Capability rows have no `organization_id` —
-//!  they are platform-scoped per
-//!  `docs/multitenancy/decisions/capability-platform-scope.md` — so the
-//!  enforcer reads the platform-default policy and asserts platform-action
-//!  invariants (the principal-kind + recent-MFA gates are owned by the
-//!  `RequireCapability` extractor; this method is the policy-loadability
-//!  liveness check).
+//!    they are platform-scoped per
+//!    `docs/multitenancy/decisions/capability-platform-scope.md` — so the
+//!    enforcer reads the platform-default policy and asserts platform-action
+//!    invariants (the principal-kind + recent-MFA gates are owned by the
+//!    `RequireCapability` extractor; this method is the policy-loadability
+//!    liveness check).
 //! * `routes::admin::users::set_principal_kind` — re-checks the target's
-//!  org-effective policy is loadable before promotion.
+//!    org-effective policy is loadable before promotion.
 //! * `routes::auth::login` — `mfa_required_for_roles` enforcement against the
-//!  union of the user's active org memberships (D2.2). Falls back to the
-//!  platform-default policy for users with no memberships.
+//!    union of the user's active org memberships (D2.2). Falls back to the
+//!    platform-default policy for users with no memberships.
 //! * `routes::auth::reset_password` — `validate_password` against the user's
-//!  org-of-record policy (or platform default for org-less users) (D2.2).
-//!  Reality-server's password change is owned by N1's identity stack.
+//!    org-of-record policy (or platform default for org-less users) (D2.2).
+//!    Reality-server's password change is owned by N1's identity stack.
 
 use db::models::AuthPolicy;
 use db::repositories::{MembershipRepository, UserRepository};
