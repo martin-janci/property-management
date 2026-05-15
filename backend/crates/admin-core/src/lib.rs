@@ -29,9 +29,10 @@ pub use capability::{
     PgCapabilityGrantsRepository,
 };
 pub use error::{AdminError, MfaRequired};
-pub use extractor::RequireCapability;
+pub use extractor::{require_capability, AdminDeps, RequireCapability};
 pub use impersonation::{
     ImpersonationService, ImpersonationToken, IssuedImpersonationToken, PgImpersonationService,
+    IMPERSONATION_TTL,
 };
 pub use mfa::{MfaRecency, NoopMfaRecency, PgMfaRecency, RECENT_MFA_WINDOW};
 pub use settings_store::{PgSettingsStore, SettingsRecord, SettingsStore};

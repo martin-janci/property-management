@@ -5,7 +5,7 @@ use admin_core::{
 };
 use api_core::AuthUser;
 use axum::{
-    extract::{Path, State},
+    extract::Path,
     http::StatusCode,
     routing::{delete, get, post},
     Extension, Json, Router,
