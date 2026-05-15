@@ -180,24 +180,24 @@ export function brandingToStyleObject(
 ): React.CSSProperties | undefined {
   const style: Record<string, string> = {};
   if (branding.font_family) {
-    const safeFont = sanitizeCssValue(branding.font_family);
+    const safeFont = sanitizeCssValue(branding.font_family, '--ppt-font-family');
     if (safeFont) style['--ppt-font-family'] = safeFont;
   }
   if (branding.primary_color) {
-    const safe = sanitizeCssValue(branding.primary_color);
+    const safe = sanitizeCssValue(branding.primary_color, '--ppt-color-primary');
     if (safe) style['--ppt-color-primary'] = safe;
   }
   if (branding.secondary_color) {
-    const safe = sanitizeCssValue(branding.secondary_color);
+    const safe = sanitizeCssValue(branding.secondary_color, '--ppt-color-secondary');
     if (safe) style['--ppt-color-secondary'] = safe;
   }
   if (branding.accent_color) {
-    const safe = sanitizeCssValue(branding.accent_color);
+    const safe = sanitizeCssValue(branding.accent_color, '--ppt-color-accent');
     if (safe) style['--ppt-color-accent'] = safe;
   }
   for (const [k, v] of Object.entries(branding.css_vars)) {
     if (!isSafeCssVarName(k)) continue;
-    const safe = sanitizeCssValue(String(v));
+    const safe = sanitizeCssValue(String(v), k);
     if (safe) style[k] = safe;
   }
   if (Object.keys(style).length === 0) return undefined;
@@ -216,14 +216,67 @@ export function brandingToStyleString(branding: TenantBranding): string {
     .join('; ');
 }
 
-function isSafeCssVarName(name: string): boolean {
+export function isSafeCssVarName(name: string): boolean {
   return /^--[a-z0-9-]+$/.test(name) && name.length <= 64;
 }
 
-function sanitizeCssValue(value: string): string | null {
-  // Reject characters that could break out of the style attribute or
-  // inject another CSS rule. Allow normal CSS value chars + commas + dots.
-  if (/[<>"\n\r{};]/.test(value)) return null;
+/**
+ * Sanitize a CSS custom-property value before it lands in inline `style=`.
+ *
+ * Defense layers (N7):
+ * - Reject characters that break out of the style attribute or chain a
+ *   second declaration: `<`, `>`, `"`, newlines, `{`, `}`, `;`.
+ * - Length cap (200 chars) — bigger than any legit color / font value.
+ * - Denylist tokens that resolve to a network fetch or arbitrary script
+ *   when the var ends up in a property that evaluates URLs (background-image,
+ *   list-style-image, mask, cursor, etc.): `url(`, `expression(`,
+ *   `javascript:`, `data:`. Logo URLs flow through `branding.logo_url`
+ *   (a typed string the layout renders into a real `<link rel="icon">`),
+ *   never through `css_vars`.
+ * - Positive allowlist for color-shaped vars: when the var name suggests
+ *   a color (matches `/color|background|border/`), the value MUST look
+ *   like a CSS color literal (hex, rgb/rgba, hsl/hsla, or a bare CSS
+ *   color keyword). Anything else (e.g. `var(--evil)`, `inherit`,
+ *   `attr(...)`) is rejected.
+ *
+ * Returns `null` when the value cannot be made safe — callers drop the
+ * declaration rather than emit a partial / suspicious value.
+ */
+export function sanitizeCssValue(value: string, varName?: string): string | null {
+  if (typeof value !== 'string') return null;
   if (value.length > 200) return null;
+  // Structural breakouts.
+  if (/[<>"\n\r{};]/.test(value)) return null;
+
+  // Token denylist (case-insensitive). `data:` is denied wholesale even
+  // though `data:image/...` is theoretically harmless — branding rows do
+  // not need it (logos go through `logo_url`), and allow-listing the
+  // `image/png` subset would reopen the door to `data:text/html` via
+  // case / whitespace tricks.
+  const lower = value.toLowerCase().replace(/\s+/g, '');
+  if (
+    lower.includes('url(') ||
+    lower.includes('expression(') ||
+    lower.includes('javascript:') ||
+    lower.includes('data:')
+  ) {
+    return null;
+  }
+
+  // Color-shaped var: enforce a CSS color literal. The allowed shapes are
+  // intentionally narrow — no `var(...)` indirection (would let a tenant
+  // chain to an unsanitized var), no `currentColor` / `inherit` (low
+  // value, easy to bypass intent), no functional notations beyond rgb/hsl
+  // families.
+  if (varName && /color|background|border/i.test(varName)) {
+    const trimmed = value.trim();
+    const isColorLiteral =
+      /^#[0-9a-f]{3,8}$/i.test(trimmed) ||
+      /^rgba?\([^()]*\)$/i.test(trimmed) ||
+      /^hsla?\([^()]*\)$/i.test(trimmed) ||
+      /^[a-z]+$/i.test(trimmed); // bare keyword: red, transparent, etc.
+    if (!isColorLiteral) return null;
+  }
+
   return value;
 }
