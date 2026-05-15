@@ -3,11 +3,16 @@
 //! Each module handles a specific domain and provides its own router.
 
 pub mod admin;
+pub mod admin_tenants;
 pub mod agencies;
 // Phase 1: Tenant Resolution — agency-create provisioning sliver.
 // Merged into `platform_admin::router()`; not nested directly in `lib.rs`.
 pub mod agency_provisioning;
 pub mod ai;
+// Phase 3: Hosting & Theming — Caddy on-demand TLS gate (internal-only).
+pub mod caddy_ask;
+// Phase 3: Hosting & Theming — public per-host tenant config endpoint.
+pub mod tenant_config;
 pub mod announcements;
 pub mod auth;
 pub mod buildings;
