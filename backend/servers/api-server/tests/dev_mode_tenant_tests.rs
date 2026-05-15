@@ -61,6 +61,7 @@ async fn echo_handler(request: Request<Body>) -> axum::response::Response {
                 TenantSource::DevPath => "devpath",
                 TenantSource::Subdomain => "subdomain",
                 TenantSource::CustomDomain => "customdomain",
+                TenantSource::PlatformHost => "platformhost",
             };
             builder = builder
                 .header("x-resolved", "1")
@@ -79,11 +80,14 @@ async fn echo_handler(request: Request<Body>) -> axum::response::Response {
 /// catch-all echo handler. `dev_mode` is set explicitly so the test does not
 /// depend on the ambient `RUST_ENV`.
 fn test_router(pool: PgPool, dev_mode: bool) -> Router {
-    let cfg = HostTenantConfig {
+    // Phase 4 added the `platform_hosts` field; the tests use an empty list so
+    // `ignored-host.example.test` is never short-circuited to PlatformHost.
+    let cfg = HostTenantConfig::with_parts(
         pool,
-        cache: Arc::new(TenantResolutionCache::new(300, 30, 100)),
+        Arc::new(TenantResolutionCache::new(300, 30, 100)),
         dev_mode,
-    };
+        Vec::new(),
+    );
 
     Router::new()
         .route("/", get(echo_handler))
