@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/common",
     "crates/api-core",
+    "crates/admin-core",
     "crates/db",
     "crates/integrations",
     "servers/api-server",
@@ -103,6 +104,7 @@ intl-memoizer = "0.5"
 # Internal crates
 common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
+admin-core = { path = "crates/admin-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
 
