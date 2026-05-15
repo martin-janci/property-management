@@ -213,6 +213,20 @@ If a rehearsal fails, the export pipeline is broken — treat as P1.
 
 ---
 
+## Capability scope (D2.1)
+
+Capability grants live in `capability_grants` and are deliberately
+**platform-scoped** — there is no `organization_id` column on the row.
+Granting `Capability::AgenciesWrite` makes the bearer able to write to
+**any** agency the request can reach via RLS; org-scoping is a job for
+the data layer (RLS + the resolved tenant context), not the capability.
+The full rationale, including why we did NOT add `organization_id` to
+the grant row when wiring `AuthPolicyEnforcer::check_capability_revoke`,
+lives in
+[`decisions/capability-platform-scope.md`](decisions/capability-platform-scope.md).
+
+---
+
 ## Open items deferred from Phase 5.5
 
 * True capability + MFA gating on the admin routes lands in Phase 5

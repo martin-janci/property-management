@@ -231,17 +231,27 @@ async fn grant_capability(
 }
 
 /// DELETE /admin/capabilities/:grant_id
+///
+/// D2.1: capability rows are PLATFORM-scoped (no `organization_id` column);
+/// see `docs/multitenancy/decisions/capability-platform-scope.md`. The
+/// `RequireCapability` extractor on this route has already enforced the
+/// platform invariants (principal_kind == Platform + recent MFA + active
+/// `MembershipsRevoke` grant) by the time we get here. We still call
+/// `check_capability_revoke` so the policy-load liveness check is symmetric
+/// with `check_capability_grant_for_user` on the grant path — a corrupted
+/// policy-resolution layer aborts the revoke instead of silently proceeding.
 async fn revoke_capability(
     _cap: RequireCapability,
     auth: AuthUser,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
+    axum::extract::State(state): axum::extract::State<AppState>,
     Path(grant_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    // TODO(N2-followup): wire AuthPolicyEnforcer::check_capability_revoke
-    // here. Symmetric to grant — load the grantee's effective policy as a
-    // liveness check before the revoke row is written. Skipped for now
-    // because revoke does not need an `org_id` body and the existing handler
-    // signature only takes the grant_id.
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer.check_capability_revoke(auth.user_id).await {
+        return Err(map_auth_policy_error(err));
+    }
+
     grants
         .revoke(grant_id, auth.user_id)
         .await

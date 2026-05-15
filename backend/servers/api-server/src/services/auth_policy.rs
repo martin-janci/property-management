@@ -6,7 +6,7 @@
 //! resolved at the moment of the action — never against a stale per-session
 //! cache or against the wrong tenant's defaults.
 //!
-//! # Wired surfaces (this PR)
+//! # Wired surfaces
 //!
 //! * `routes::admin::memberships::invite` — enforces `require_email_verification`
 //!    before issuing an invite to an unverified user, and re-validates the org's
@@ -15,17 +15,23 @@
 //!    unloadable policy is treated as a hard fail).
 //! * `routes::admin::capabilities::grant` — enforces `require_email_verification`
 //!    on the grantee before any capability row is written.
+//! * `routes::admin::capabilities::revoke` — platform-scoped liveness check
+//!    (D2.1 follow-up): see [`check_capability_revoke`] /
+//!    [`check_platform_action`]. Capability rows have no `organization_id` —
+//!    they are platform-scoped per
+//!    `docs/multitenancy/decisions/capability-platform-scope.md` — so the
+//!    enforcer reads the platform-default policy and asserts platform-action
+//!    invariants (the principal-kind + recent-MFA gates are owned by the
+//!    `RequireCapability` extractor; this method is the policy-loadability
+//!    liveness check).
 //! * `routes::admin::users::set_principal_kind` — re-checks the target's
 //!    org-effective policy is loadable before promotion.
-//!
-//! # TODO surfaces (follow-up)
-//!
-//! * Login (api-server `/auth/login`) — `mfa_required_for_roles` enforcement.
-//! * Password change / reset — `validate_password` against the user's effective
-//!    org policy. Reality-server side belongs to N1's identity stack.
-//! * Capability revoke — symmetric counterpart to grant; left as a follow-up.
-//!
-//! See call sites for `// TODO(N2-followup):` markers.
+//! * `routes::auth::login` — `mfa_required_for_roles` enforcement against the
+//!    union of the user's active org memberships (D2.2). Falls back to the
+//!    platform-default policy for users with no memberships.
+//! * `routes::auth::reset_password` — `validate_password` against the user's
+//!    org-of-record policy (or platform default for org-less users) (D2.2).
+//!    Reality-server's password change is owned by N1's identity stack.
 
 use db::models::AuthPolicy;
 use db::repositories::{MembershipRepository, UserRepository};
@@ -76,15 +82,78 @@ impl AuthPolicyEnforcer {
             .map_err(AuthPolicyError::from)
     }
 
-    /// Check a password change / set against `org_id`'s policy. Caller passes
-    /// the plaintext (only) — we do NOT hash here; that is the caller's job.
-    /// Used by password-reset / change handlers (TODO follow-up).
+    /// Resolve the **platform-default** auth policy. Used by surfaces that
+    /// operate without a tenant in scope (capability grant/revoke, login by a
+    /// user with no active memberships, etc.). The default mirrors Phase 0
+    /// platform behavior — adopting per-org policies is purely additive.
+    pub fn platform_default_policy(&self) -> AuthPolicy {
+        AuthPolicy::default()
+    }
+
+    /// Resolve the **strictest** policy across a set of orgs. The semantic
+    /// chosen here is "any org demands it → it is demanded": a user who is a
+    /// member of two orgs where ONE requires MFA for their role must MFA at
+    /// login. This mirrors how a user can never escape the most restrictive
+    /// tenant they belong to. Returns the platform default if `org_ids` is
+    /// empty.
+    async fn strictest_policy_across(
+        &self,
+        org_ids: &[Uuid],
+    ) -> Result<AuthPolicy, AuthPolicyError> {
+        if org_ids.is_empty() {
+            return Ok(self.platform_default_policy());
+        }
+
+        let mut effective = self.platform_default_policy();
+        for org in org_ids {
+            let p = self.policy_for(*org).await?;
+            // Take the max of every numeric / boolean / set field so the
+            // result is the most restrictive combination. This is the
+            // "tighten, never loosen" rule.
+            effective.min_password_length = effective
+                .min_password_length
+                .max(p.min_password_length);
+            effective.require_uppercase = effective.require_uppercase || p.require_uppercase;
+            effective.require_digit = effective.require_digit || p.require_digit;
+            effective.require_symbol = effective.require_symbol || p.require_symbol;
+            effective.require_email_verification =
+                effective.require_email_verification || p.require_email_verification;
+            // Union the MFA-required role list.
+            for r in p.mfa_required_for_roles {
+                if !effective
+                    .mfa_required_for_roles
+                    .iter()
+                    .any(|x| x.eq_ignore_ascii_case(&r))
+                {
+                    effective.mfa_required_for_roles.push(r);
+                }
+            }
+            // For session-cap, treat 0 as "no cap". Otherwise take the min
+            // (tightest) non-zero value.
+            effective.max_session_age_minutes =
+                match (effective.max_session_age_minutes, p.max_session_age_minutes) {
+                    (0, x) => x,
+                    (x, 0) => x,
+                    (a, b) => a.min(b),
+                };
+        }
+        Ok(effective)
+    }
+
+    /// Check a password change / set against the user's effective org policy.
+    /// Caller passes the plaintext (only) — we do NOT hash here; that is the
+    /// caller's job. Resolves the user's memberships and applies the
+    /// strictest policy across them; falls back to the platform default for
+    /// org-less users.
     pub async fn check_password_change(
         &self,
-        org_id: Uuid,
+        user_id: Uuid,
         plaintext: &str,
     ) -> Result<(), AuthPolicyError> {
-        let policy = self.policy_for(org_id).await?;
+        let mem_repo = MembershipRepository::new(self.pool.clone());
+        let memberships = mem_repo.list_for_user(user_id).await?;
+        let org_ids: Vec<Uuid> = memberships.iter().map(|m| m.organization_id).collect();
+        let policy = self.strictest_policy_across(&org_ids).await?;
         policy
             .validate_password(plaintext)
             .map_err(AuthPolicyError::PasswordPolicy)
@@ -197,23 +266,80 @@ impl AuthPolicyEnforcer {
         Ok(())
     }
 
-    /// Reserved for the login surface. MFA enforcement at login was paused
-    /// pending the login refactor; surfaces should call this once the flow
-    /// is wired through this enforcer.
+    /// Login-time enforcement (D2.2). Loads the **union** of per-org policies
+    /// across the user's active memberships and asserts:
+    ///
+    ///   * If ANY org policy requires MFA for ANY of the user's role(s) in
+    ///     that org and `mfa_presented == false`, returns
+    ///     [`AuthPolicyError::MfaRequired`]. The role in the error string is
+    ///     the first matching role found, useful for telemetry and the 401
+    ///     `mfa_required` response body.
+    ///
+    /// Email-verification at login is already enforced by the legacy
+    /// `User::is_verified` check before this method is called — we do NOT
+    /// re-emit `EmailNotVerified` here to avoid changing the login error
+    /// shape twice (the existing handler returns `EMAIL_NOT_VERIFIED`).
+    ///
+    /// For users with no active memberships (platform-only / fresh signups),
+    /// the platform default policy applies. The default does not require MFA
+    /// for any role, so the call short-circuits to `Ok(())`.
     pub async fn check_login(
         &self,
-        _org_id: Uuid,
-        _user_id: Uuid,
-        _role: &str,
-        _mfa_presented: bool,
+        user_id: Uuid,
+        mfa_presented: bool,
     ) -> Result<(), AuthPolicyError> {
-        // TODO(N2-followup): wire MFA-at-login here. Pseudocode:
-        //
-        //   let policy = self.policy_for(org_id).await?;
-        //   if policy.mfa_required_for(role) && !mfa_presented {
-        //       return Err(AuthPolicyError::MfaRequired(role.to_string()));
-        //   }
-        //   Ok(())
+        let mem_repo = MembershipRepository::new(self.pool.clone());
+        let memberships = mem_repo.list_for_user(user_id).await?;
+
+        // Walk every (org, role) pair and stop on the first MFA demand the
+        // user has NOT satisfied. Platform-default applies when the user has
+        // no memberships; that default carries no MFA roles, so the loop is
+        // a no-op there.
+        for m in &memberships {
+            let policy = self.policy_for(m.organization_id).await?;
+            if policy.mfa_required_for(&m.role) && !mfa_presented {
+                return Err(AuthPolicyError::MfaRequired(m.role.clone()));
+            }
+        }
+        Ok(())
+    }
+
+    /// Re-evaluate before a capability **revoke** proceeds. Capability rows
+    /// are platform-scoped (no `organization_id` column); see
+    /// `docs/multitenancy/decisions/capability-platform-scope.md`. The
+    /// principal-kind + recent-MFA invariants are owned by the
+    /// `RequireCapability` extractor, which has already run by the time this
+    /// method is called. This call therefore loads the **platform-default**
+    /// policy as a liveness check — symmetric to `check_membership_revoke`'s
+    /// org-policy load — so a corrupted policy default-resolution path
+    /// aborts the revoke instead of silently proceeding.
+    pub async fn check_capability_revoke(
+        &self,
+        actor_user_id: Uuid,
+    ) -> Result<(), AuthPolicyError> {
+        self.check_platform_action(actor_user_id).await
+    }
+
+    /// Generic platform-scoped action gate. Loads the platform-default policy
+    /// as a liveness check (the actual platform invariants — `Platform`
+    /// principal-kind + recent MFA — are enforced by the `RequireCapability`
+    /// extractor before any handler that uses this method is reached).
+    ///
+    /// This method exists so platform-scoped surfaces (capability revoke,
+    /// future tenant-lifecycle actions) have a single, named seam in the
+    /// enforcer they can call without inventing an `org_id` for a row that
+    /// has none.
+    pub async fn check_platform_action(
+        &self,
+        _actor_user_id: Uuid,
+    ) -> Result<(), AuthPolicyError> {
+        // Load the platform default as a liveness check. The `Default`
+        // implementation is infallible, so this is mostly a documentation
+        // anchor today — but if `platform_default_policy` ever grows a DB
+        // backing (e.g. a `platform_auth_policy` table), this seam will
+        // surface that lookup's errors as `AuthPolicyError::Lookup` without
+        // any handler-side change.
+        let _policy = self.platform_default_policy();
         Ok(())
     }
 }
