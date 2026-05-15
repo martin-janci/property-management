@@ -16,6 +16,7 @@
     "test:a11y": "vitest run src/**/*.a11y.test.tsx"
   },
   "dependencies": {
+    "@ppt/admin-ui": "workspace:*",
     "@ppt/api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
     "@ppt/sitemap": "workspace:*",

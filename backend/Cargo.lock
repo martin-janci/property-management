@@ -18,6 +18,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "admin-core"
+version = "0.2.375"
+dependencies = [
+ "api-core",
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "common",
+ "db",
+ "hex",
+ "rand 0.10.1",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "aead"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -195,6 +217,7 @@ dependencies = [
 name = "api-server"
 version = "0.2.375"
 dependencies = [
+ "admin-core",
  "aes-gcm",
  "ammonia",
  "anyhow",
