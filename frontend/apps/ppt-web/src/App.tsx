@@ -22,6 +22,8 @@ import {
   useStartOutage,
   useUpdateOutage,
 } from '@ppt/api-client';
+import { setMfaChallengeHandler } from '@ppt/api-client';
+import { MfaChallengeProvider } from '@ppt/admin-ui';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -212,6 +214,51 @@ function transformDisputeToSummary(dispute: ApiDispute): DisputeSummary {
 }
 
 /**
+ * MFA challenge wrapper (N9).
+ *
+ * Mounts `<MfaChallengeProvider>` so the api-client's mfa_required
+ * interceptor has somewhere to send the challenge. The provider needs
+ * two things from this layer that the package itself cannot reach:
+ *
+ *   * `setMfaChallengeHandler` — the api-client global registration
+ *     point. Passed in so admin-ui has no @ppt/api-client dependency.
+ *   * `verify(code)` — POST {code} to /api/v1/auth/mfa/verify with the
+ *     current bearer token. Built from `AuthContext.getAccessToken`.
+ *
+ * The verify endpoint is `/api/v1/auth/mfa/verify` (api-server's
+ * routes/mfa.rs). On 200 the user is freshly MFA-verified for the
+ * RECENT_MFA_WINDOW (15 min); the api-client retries the original
+ * mutation transparently.
+ *
+ * Must be rendered inside AuthProvider so getAccessToken is available.
+ */
+function MfaWrapper({ children }: { children: ReactNode }) {
+  const { getAccessToken } = useAuth();
+  return (
+    <MfaChallengeProvider
+      registerHandler={setMfaChallengeHandler}
+      verify={async (code: string) => {
+        const token = getAccessToken();
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        try {
+          const response = await fetch('/api/v1/auth/mfa/verify', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ code }),
+          });
+          return response.ok;
+        } catch {
+          return false;
+        }
+      }}
+    >
+      {children}
+    </MfaChallengeProvider>
+  );
+}
+
+/**
  * WebSocket wrapper that bridges AuthContext to WebSocketProvider.
  * Must be rendered inside AuthProvider to access auth state.
  */
@@ -311,6 +358,7 @@ function App() {
         <OrganizationProvider>
           <ToastProvider>
             <AnnouncerProvider>
+              <MfaWrapper>
               <WebSocketWrapper>
                 <BrowserRouter>
                   <CommandPaletteProvider>
@@ -496,6 +544,7 @@ function App() {
                   </CommandPaletteProvider>
                 </BrowserRouter>
               </WebSocketWrapper>
+              </MfaWrapper>
             </AnnouncerProvider>
           </ToastProvider>
         </OrganizationProvider>

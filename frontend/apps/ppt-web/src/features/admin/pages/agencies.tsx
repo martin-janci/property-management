@@ -1,21 +1,23 @@
 /**
- * Phase 5 (B6) — `/admin/agencies` page.
+ * Phase 5 (B6 / N9) — `/admin/agencies` page.
  *
  * Wired to `GET /api/v1/admin/agencies` via the typed `useAgencies` hook
  * from `@ppt/api-client`. Rendering is capability-gated row-by-row through
  * `<ResourceTable>` (the Suspend action only renders for principals with
  * `agencies_suspend`).
  *
- * Mutations (Suspend, Add domain) are stubbed for this PR — they emit a
- * toast so QA can spot un-wired affordances during exploratory testing.
- *
- * TODO(N9): When the backend returns `401 mfa_required`, surface an MFA
- * challenge modal before retrying the action. Out of scope for B6.
+ * N9: the Suspend action calls `POST /api/v1/admin/agencies/{id}/suspend`
+ * for real. The capability extractor on api-server requires recent MFA;
+ * api-client's mfa_required interceptor pops `<MfaChallengeModal>` and
+ * retries the request transparently on success. The toast surface still
+ * fires on failure so QA can see what happened.
  */
 
-import { type Agency, useAgencies } from '@ppt/api-client';
+import { type Agency, suspendAgency, useAgencies, adminKeys } from '@ppt/api-client';
 import { ResourceTable, type ResourceTableColumn } from '@ppt/admin-ui';
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
+import { useCallback } from 'react';
 import { useToast } from '../../../components';
 
 const columns: ReadonlyArray<ResourceTableColumn<Agency>> = [
@@ -27,7 +29,33 @@ const columns: ReadonlyArray<ResourceTableColumn<Agency>> = [
 
 const AgenciesPage: React.FC = () => {
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const query = useAgencies({ page: 1, page_size: 50 });
+
+  // N9: the suspend handler is the canonical "this works under MFA"
+  // example. The api-client's mfa_required interceptor handles the
+  // challenge + retry, so this code only sees the final outcome.
+  const handleSuspend = useCallback(
+    async (agency: Agency) => {
+      try {
+        await suspendAgency(agency.id);
+        showToast({
+          type: 'success',
+          title: 'Agency suspended',
+          message: `${agency.name} has been suspended.`,
+        });
+        await queryClient.invalidateQueries({ queryKey: adminKeys.agencies() });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Suspend failed';
+        showToast({
+          type: 'error',
+          title: 'Suspend failed',
+          message,
+        });
+      }
+    },
+    [queryClient, showToast],
+  );
 
   if (query.isLoading) {
     // Lightweight inline spinner — the global PageLoading lives elsewhere
@@ -72,18 +100,16 @@ const AgenciesPage: React.FC = () => {
             label: 'Suspend',
             capability: 'agencies_suspend',
             variant: 'danger',
-            // TODO(N9): MFA challenge modal when 401 mfa_required
-            onClick: (a) =>
-              showToast({
-                type: 'warning',
-                title: 'Not yet wired',
-                message: `TODO: POST /admin/agencies/${a.id}/suspend`,
-              }),
+            // Real call — api-client interceptor opens the MFA modal on
+            // 401 mfa_required and retries on success.
+            onClick: (a) => {
+              void handleSuspend(a);
+            },
           },
           {
             label: 'Add domain',
             capability: 'agencies_write',
-            // TODO(N9): MFA challenge modal when 401 mfa_required
+            // TODO: separate endpoint not yet wired (out of scope for N9).
             onClick: (a) =>
               showToast({
                 type: 'warning',
