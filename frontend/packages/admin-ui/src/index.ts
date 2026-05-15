@@ -22,7 +22,10 @@ export { SettingsForm } from './components/SettingsForm/SettingsForm';
 export type { AuditViewerProps, AuditEntry, AuditFilter } from './components/AuditViewer/AuditViewer';
 export { AuditViewer } from './components/AuditViewer/AuditViewer';
 
-export type { ImpersonationBannerProps } from './components/ImpersonationBanner/ImpersonationBanner';
+export type {
+  ImpersonationBannerProps,
+  ImpersonationBannerLabels,
+} from './components/ImpersonationBanner/ImpersonationBanner';
 export { ImpersonationBanner } from './components/ImpersonationBanner/ImpersonationBanner';
 
 export type {

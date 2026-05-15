@@ -91,3 +91,46 @@ was deliberately platform-scoped.
 If a future use case really does need a "this user can write to THIS org's
 agencies only" semantic, the answer is **a role-bearing membership in
 that org**, not a per-org capability grant.
+
+## Hardening: revoke MFA enforced at DB (E3)
+
+Migration `00145_capability_revoke_requires_mfa.sql` (Phase 2 hardening
+work item E3) adds a defense-in-depth layer beneath the application-layer
+`AuthPolicyEnforcer::check_capability_revoke` introduced by D2.
+
+* New column `capability_grants.revoked_with_mfa_at TIMESTAMPTZ`.
+* New trigger `capability_grants_revoke_mfa_check` (`BEFORE UPDATE`,
+  gated by `WHEN (NEW.revoked_at IS DISTINCT FROM OLD.revoked_at)`)
+  refuses any UPDATE that transitions `revoked_at` from NULL to a
+  non-NULL value unless the same statement also writes a
+  `revoked_with_mfa_at` value within the **5-minute** RECENT_MFA window.
+  Future-dated timestamps (more than 1 minute ahead of `NOW()`) are also
+  rejected to block clock-skew bypass attempts.
+* `PgCapabilityGrantsRepository::revoke` writes
+  `revoked_with_mfa_at = NOW()` alongside `revoked_at = NOW()`. The
+  enforcer has already verified a recent MFA verification at the route
+  layer, so attesting `NOW()` is correct semantics.
+
+### Why both layers?
+
+D2 stops the **expected** call paths — the route handler always runs
+through `AuthPolicyEnforcer::check_capability_revoke`. The DB trigger
+catches the **unexpected** ones:
+
+* A future code path (admin tooling, batch job, migration script) that
+  writes the table directly without going through the repo method.
+* A SQL injection in any handler that touches `capability_grants`.
+* A misbehaving repo refactor that drops the enforcer call.
+
+Because the trigger fires inside the database, no application code path
+can short-circuit it.
+
+### Coverage
+
+`backend/crates/db/tests/capability_revoke_mfa_constraint_tests.rs`
+exercises all four trigger branches:
+1. Missing `revoked_with_mfa_at` -> reject.
+2. Stale (10 min old) `revoked_with_mfa_at` -> reject.
+3. Fresh (`NOW()`) `revoked_with_mfa_at` -> accept.
+4. Unrelated UPDATE that does not change `revoked_at` -> trigger does
+   not fire, edit succeeds.
