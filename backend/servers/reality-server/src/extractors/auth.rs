@@ -2,6 +2,19 @@
 //!
 //! Extracts authenticated user from session token (JWT in Authorization header or cookie).
 //! Uses the SessionService to validate and retrieve session information.
+//!
+//! # D1.2 status
+//!
+//! `AuthenticatedUser` and `OptionalAuth` are NO LONGER consumed by any
+//! route handler — every endpoint has migrated to
+//! `api_core::extractors::RequestPrincipal` /
+//! `api_core::extractors::OptionalRequestPrincipal`. The types remain here
+//! for now as a safety net (a single revert restores them) and because the
+//! `extract_session_token` helper is reused by the `users::logout` route to
+//! pull a token out of either the Authorization header or the
+//! `portal_session` cookie. A later cleanup pass can either delete the
+//! types outright or repurpose `extract_session_token` into its own helper
+//! module. Until then, the symbols are intentionally dead-code-allowed.
 
 use axum::{
     extract::FromRequestParts,

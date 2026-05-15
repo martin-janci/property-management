@@ -1,8 +1,9 @@
 //! Saved searches routes (Story 16.3).
-// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
+//!
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post, put},
@@ -51,11 +52,11 @@ pub struct RunSavedSearchResponse {
 )]
 pub async fn list_saved_searches(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<SavedSearchesResponse>, (axum::http::StatusCode, String)> {
     let searches = state
         .reality_portal_repo
-        .get_saved_searches(auth.user_id)
+        .get_saved_searches(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -81,12 +82,12 @@ pub async fn list_saved_searches(
 )]
 pub async fn create_saved_search(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<CreatePortalSavedSearch>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
     let search = state
         .reality_portal_repo
-        .create_saved_search(auth.user_id, data)
+        .create_saved_search(principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -120,13 +121,13 @@ pub async fn create_saved_search(
 )]
 pub async fn get_saved_search(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
     // Get all saved searches for user and filter by id (since repository doesn't have get_by_id)
     let searches = state
         .reality_portal_repo
-        .get_saved_searches(auth.user_id)
+        .get_saved_searches(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -160,13 +161,13 @@ pub async fn get_saved_search(
 )]
 pub async fn update_saved_search(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdatePortalSavedSearch>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
     let search = state
         .reality_portal_repo
-        .update_saved_search(id, auth.user_id, data)
+        .update_saved_search(id, principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -200,12 +201,12 @@ pub async fn update_saved_search(
 )]
 pub async fn delete_saved_search(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     state
         .reality_portal_repo
-        .delete_saved_search(id, auth.user_id)
+        .delete_saved_search(id, principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -231,13 +232,13 @@ pub async fn delete_saved_search(
 )]
 pub async fn run_saved_search(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RunSavedSearchResponse>, (axum::http::StatusCode, String)> {
     // First get the saved search to verify ownership and get criteria
     let searches = state
         .reality_portal_repo
-        .get_saved_searches(auth.user_id)
+        .get_saved_searches(principal.user_id)
         .await
         .map_err(|e| {
             (

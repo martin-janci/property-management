@@ -1,10 +1,10 @@
 //! Journal/News article routes (UC-13: Reality Portal News).
-// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Public article list + detail, comment list and (auth-required) comment creation.
+//! D1.2: comment creation now uses the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -438,7 +438,7 @@ pub async fn list_comments(
 )]
 pub async fn create_comment(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(slug): Path<String>,
     Json(data): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<ArticleComment>), (axum::http::StatusCode, String)> {
@@ -478,7 +478,7 @@ pub async fn create_comment(
 
     // Get author info
     let author_name: String = sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
-        .bind(auth.user_id)
+        .bind(principal.user_id)
         .fetch_optional(&mut *conn)
         .await
         .map_err(|e| {
@@ -492,7 +492,7 @@ pub async fn create_comment(
 
     let author_avatar_url: Option<String> =
         sqlx::query_scalar("SELECT profile_image_url FROM portal_users WHERE id = $1")
-            .bind(auth.user_id)
+            .bind(principal.user_id)
             .fetch_optional(&mut *conn)
             .await
             .map_err(|e| {
@@ -511,7 +511,7 @@ pub async fn create_comment(
         "#,
     )
     .bind(article_id)
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(&data.body)
     .fetch_one(&mut *conn)
     .await

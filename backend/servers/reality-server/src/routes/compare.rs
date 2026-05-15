@@ -1,10 +1,10 @@
 //! Compare routes (UC-48: Compare Listings).
-// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
 //!
 //! Allows authenticated portal users to maintain a compare list of up to 4 listings.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post},
@@ -73,7 +73,7 @@ pub struct AddCompareResponse {
 )]
 pub async fn get_compare_list(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<CompareListResponse>, (axum::http::StatusCode, String)> {
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
         (
@@ -105,7 +105,7 @@ pub async fn get_compare_list(
         ORDER BY cl.added_at ASC
         "#,
     )
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| {
@@ -156,7 +156,7 @@ pub async fn get_compare_list(
 )]
 pub async fn add_to_compare(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<(axum::http::StatusCode, Json<AddCompareResponse>), (axum::http::StatusCode, String)> {
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
@@ -168,7 +168,7 @@ pub async fn add_to_compare(
 
     // Check current count
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM compare_lists WHERE user_id = $1")
-        .bind(auth.user_id)
+        .bind(principal.user_id)
         .fetch_one(&mut *conn)
         .await
         .map_err(|e| {
@@ -212,7 +212,7 @@ pub async fn add_to_compare(
     let already_in: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM compare_lists WHERE user_id = $1 AND listing_id = $2)",
     )
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(listing_id)
     .fetch_one(&mut *conn)
     .await
@@ -231,7 +231,7 @@ pub async fn add_to_compare(
     }
 
     sqlx::query("INSERT INTO compare_lists (user_id, listing_id) VALUES ($1, $2)")
-        .bind(auth.user_id)
+        .bind(principal.user_id)
         .bind(listing_id)
         .execute(&mut *conn)
         .await
@@ -266,7 +266,7 @@ pub async fn add_to_compare(
 )]
 pub async fn remove_from_compare(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     let mut conn = state.acquire_public_conn().await.map_err(|e| {
@@ -278,7 +278,7 @@ pub async fn remove_from_compare(
 
     let rows_affected =
         sqlx::query("DELETE FROM compare_lists WHERE user_id = $1 AND listing_id = $2")
-            .bind(auth.user_id)
+            .bind(principal.user_id)
             .bind(listing_id)
             .execute(&mut *conn)
             .await

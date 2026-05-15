@@ -1,8 +1,9 @@
 //! Property Import routes (Epic 34: Property Import).
-// TODO(N1-followup): migrate AuthenticatedUser → RequestPrincipal (Phase 2 unified identity).
+//!
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -84,13 +85,13 @@ pub struct FeedResponse {
 )]
 pub async fn list_import_jobs(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Query(query): Query<ImportJobsQuery>,
 ) -> Result<Json<ImportJobsResponse>, (axum::http::StatusCode, String)> {
     let jobs = state
         .reality_portal_repo
         .list_import_jobs(
-            auth.user_id,
+            principal.user_id,
             query.status,
             query.limit.unwrap_or(20),
             query.offset.unwrap_or(0),
@@ -122,12 +123,12 @@ pub async fn list_import_jobs(
 )]
 pub async fn create_import_job(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<CreatePortalImportJob>,
 ) -> Result<Json<ImportJobResponse>, (axum::http::StatusCode, String)> {
     let job = state
         .reality_portal_repo
-        .create_import_job(auth.user_id, data)
+        .create_import_job(principal.user_id, data)
         .await
         .map_err(|e| {
             (
@@ -283,11 +284,11 @@ pub async fn cancel_import_job(
 )]
 pub async fn list_feeds(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<FeedsResponse>, (axum::http::StatusCode, String)> {
     let feeds = state
         .reality_portal_repo
-        .list_feed_subscriptions(auth.user_id)
+        .list_feed_subscriptions(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -315,12 +316,12 @@ pub async fn list_feeds(
 )]
 pub async fn create_feed(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<CreateFeedSubscription>,
 ) -> Result<Json<FeedResponse>, (axum::http::StatusCode, String)> {
     let feed = state
         .reality_portal_repo
-        .create_feed_subscription(auth.user_id, data)
+        .create_feed_subscription(principal.user_id, data)
         .await
         .map_err(|e| {
             (
