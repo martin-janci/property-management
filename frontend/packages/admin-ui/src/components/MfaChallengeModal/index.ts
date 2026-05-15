@@ -1,4 +1,8 @@
-export { MfaChallengeModal, type MfaChallengeModalProps } from './MfaChallengeModal';
+export {
+  MfaChallengeModal,
+  type MfaChallengeModalProps,
+  type MfaChallengeLabels,
+} from './MfaChallengeModal';
 export {
   MfaChallengeProvider,
   useMfaChallenge,

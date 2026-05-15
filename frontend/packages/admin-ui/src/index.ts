@@ -28,6 +28,7 @@ export { ImpersonationBanner } from './components/ImpersonationBanner/Impersonat
 export type {
   MfaChallengeModalProps,
   MfaChallengeProviderProps,
+  MfaChallengeLabels,
 } from './components/MfaChallengeModal';
 export {
   MfaChallengeModal,

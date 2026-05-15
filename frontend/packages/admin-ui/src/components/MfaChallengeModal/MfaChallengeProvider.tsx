@@ -45,7 +45,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { MfaChallengeModal } from './MfaChallengeModal';
+import { MfaChallengeModal, type MfaChallengeLabels } from './MfaChallengeModal';
 
 type MfaChallengeHandler = () => Promise<boolean>;
 type RegisterFn = (handler: MfaChallengeHandler | null) => void;
@@ -60,6 +60,12 @@ export interface MfaChallengeProviderProps {
   registerHandler: RegisterFn;
   /** POST {code} to /api/v1/auth/mfa/verify and return ok. */
   verify: VerifyFn;
+  /**
+   * Optional translated modal labels. Forwarded to `<MfaChallengeModal>`.
+   * Hosts using i18n (ppt-web/react-i18next) should pass labels resolved
+   * from `admin.mfa.*` keys.
+   */
+  labels?: MfaChallengeLabels;
   children: ReactNode;
 }
 
@@ -86,6 +92,7 @@ interface PendingChallenge {
 export function MfaChallengeProvider({
   registerHandler,
   verify,
+  labels,
   children,
 }: MfaChallengeProviderProps) {
   const [pending, setPending] = useState<PendingChallenge | null>(null);
@@ -143,6 +150,7 @@ export function MfaChallengeProvider({
         onVerify={verify}
         onSuccess={handleSuccess}
         onCancel={handleCancel}
+        labels={labels}
       />
     </MfaChallengeContext.Provider>
   );

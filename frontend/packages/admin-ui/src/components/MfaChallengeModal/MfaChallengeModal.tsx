@@ -12,9 +12,53 @@
  * passed in as a prop). That keeps `@ppt/admin-ui` free of any
  * `@ppt/api-client` coupling and makes the modal trivially testable
  * with a stubbed `onVerify`.
+ *
+ * i18n (D3): the package has no i18n runtime. Instead the host app
+ * passes a `labels` prop with already-translated strings. All fields
+ * are optional and fall back to English defaults so callers without
+ * i18n still get a working modal.
  */
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+
+export interface MfaChallengeLabels {
+  /** Modal title. */
+  title?: string;
+  /** Description shown when no `actionLabel` is provided. */
+  description?: string;
+  /**
+   * Description template used when `actionLabel` is provided.
+   * Receives the action label via the `{action}` placeholder.
+   */
+  descriptionForAction?: string;
+  /** Visible label for the verification code input. */
+  codeLabel?: string;
+  /** Submit button text. */
+  verify?: string;
+  /** Submit button text while a verification is in flight. */
+  verifying?: string;
+  /** Cancel button text. */
+  cancel?: string;
+  /** Error shown when the entered string is not a 6-digit code. */
+  invalidFormat?: string;
+  /** Error shown when the verifier returns false. */
+  invalidCode?: string;
+  /** Generic error shown when the verifier throws without a message. */
+  verificationFailed?: string;
+}
+
+const defaultLabels: Required<MfaChallengeLabels> = {
+  title: 'Confirm with two-factor code',
+  description: 'This action requires a fresh authentication code.',
+  descriptionForAction: '{action} requires a fresh authentication code.',
+  codeLabel: 'Verification code',
+  verify: 'Verify',
+  verifying: 'Verifying…',
+  cancel: 'Cancel',
+  invalidFormat: 'Enter the 6-digit code from your authenticator app.',
+  invalidCode: 'That code did not work. Try again.',
+  verificationFailed: 'Verification failed.',
+};
 
 export interface MfaChallengeModalProps {
   /** Controls visibility. Driven by the provider on mfa_required. */
@@ -30,6 +74,12 @@ export interface MfaChallengeModalProps {
   onCancel: () => void;
   /** Optional friendly label (e.g. "Suspend agency") for context. */
   actionLabel?: string;
+  /**
+   * Optional translated labels. The host app should pass these from its
+   * own i18n layer (ppt-web uses react-i18next; see `admin.mfa.*` keys).
+   * Any field left out falls back to the English default.
+   */
+  labels?: MfaChallengeLabels;
 }
 
 export function MfaChallengeModal({
@@ -38,11 +88,19 @@ export function MfaChallengeModal({
   onSuccess,
   onCancel,
   actionLabel,
+  labels,
 }: MfaChallengeModalProps): JSX.Element | null {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Merge once per render — the spread is cheap and the result is used
+  // in three places below.
+  const l = useMemo<Required<MfaChallengeLabels>>(
+    () => ({ ...defaultLabels, ...(labels ?? {}) }),
+    [labels],
+  );
 
   // Reset every time we open — leaving stale codes around is a footgun
   // (user re-opens the modal a minute later and the old code is invalid).
@@ -74,7 +132,7 @@ export function MfaChallengeModal({
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!/^\d{6}$/.test(code.trim())) {
-        setError('Enter the 6-digit code from your authenticator app.');
+        setError(l.invalidFormat);
         return;
       }
       setBusy(true);
@@ -84,18 +142,24 @@ export function MfaChallengeModal({
         if (ok) {
           onSuccess();
         } else {
-          setError('That code did not work. Try again.');
+          setError(l.invalidCode);
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Verification failed.');
+        setError(e instanceof Error ? e.message : l.verificationFailed);
       } finally {
         setBusy(false);
       }
     },
-    [code, onVerify, onSuccess],
+    [code, onVerify, onSuccess, l],
   );
 
   if (!open) return null;
+
+  // Description: substitute `{action}` placeholder if the host provided
+  // a translated template; otherwise fall back to the no-action variant.
+  const description = actionLabel
+    ? l.descriptionForAction.replace('{action}', actionLabel)
+    : l.description;
 
   return (
     <div
@@ -106,19 +170,15 @@ export function MfaChallengeModal({
     >
       <div style={dialogStyle}>
         <h2 id="ppt-mfa-modal-title" style={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>
-          Confirm with two-factor code
+          {l.title}
         </h2>
-        <p style={{ margin: '0 0 1rem', color: '#555', fontSize: '0.9rem' }}>
-          {actionLabel
-            ? `${actionLabel} requires a fresh authentication code.`
-            : 'This action requires a fresh authentication code.'}
-        </p>
+        <p style={{ margin: '0 0 1rem', color: '#555', fontSize: '0.9rem' }}>{description}</p>
         <form onSubmit={handleSubmit} noValidate>
           <label
             htmlFor="ppt-mfa-modal-code"
             style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}
           >
-            Verification code
+            {l.codeLabel}
           </label>
           <input
             id="ppt-mfa-modal-code"
@@ -146,10 +206,10 @@ export function MfaChallengeModal({
               disabled={busy}
               style={secondaryBtnStyle}
             >
-              Cancel
+              {l.cancel}
             </button>
             <button type="submit" disabled={busy} style={primaryBtnStyle}>
-              {busy ? 'Verifying…' : 'Verify'}
+              {busy ? l.verifying : l.verify}
             </button>
           </div>
         </form>
