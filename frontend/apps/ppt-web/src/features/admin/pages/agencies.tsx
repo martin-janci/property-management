@@ -1,23 +1,24 @@
 /**
- * Phase 5 — `/admin/agencies` page.
+ * Phase 5 (B6) — `/admin/agencies` page.
  *
- * Stub: lists agencies via the future `GET /api/v1/admin/agencies` endpoint.
- * Concrete data fetching is intentionally deferred until the typed admin
- * API client is generated; this file provides the route surface.
+ * Wired to `GET /api/v1/admin/agencies` via the typed `useAgencies` hook
+ * from `@ppt/api-client`. Rendering is capability-gated row-by-row through
+ * `<ResourceTable>` (the Suspend action only renders for principals with
+ * `agencies_suspend`).
+ *
+ * Mutations (Suspend, Add domain) are stubbed for this PR — they emit a
+ * toast so QA can spot un-wired affordances during exploratory testing.
+ *
+ * TODO(N9): When the backend returns `401 mfa_required`, surface an MFA
+ * challenge modal before retrying the action. Out of scope for B6.
  */
 
+import { type Agency, useAgencies } from '@ppt/api-client';
 import { ResourceTable, type ResourceTableColumn } from '@ppt/admin-ui';
 import type React from 'react';
+import { useToast } from '../../../components';
 
-interface AgencyRow {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  member_count: number;
-}
-
-const columns: ReadonlyArray<ResourceTableColumn<AgencyRow>> = [
+const columns: ReadonlyArray<ResourceTableColumn<Agency>> = [
   { key: 'name', header: 'Name', render: (a) => a.name },
   { key: 'slug', header: 'Slug', render: (a) => a.slug },
   { key: 'status', header: 'Status', render: (a) => a.status },
@@ -25,22 +26,70 @@ const columns: ReadonlyArray<ResourceTableColumn<AgencyRow>> = [
 ];
 
 const AgenciesPage: React.FC = () => {
-  // TODO(phase-5-followup): wire to GET /api/v1/admin/agencies.
-  const data: AgencyRow[] = [];
+  const { showToast } = useToast();
+  const query = useAgencies({ page: 1, page_size: 50 });
+
+  if (query.isLoading) {
+    // Lightweight inline spinner — the global PageLoading lives elsewhere
+    // and would be overkill for a sub-route partial fetch.
+    return (
+      <section>
+        <h1>Agencies</h1>
+        <div role="status" aria-live="polite">
+          Loading agencies…
+        </div>
+      </section>
+    );
+  }
+
+  if (query.isError) {
+    const message = query.error instanceof Error ? query.error.message : 'Unknown error';
+    return (
+      <section>
+        <h1>Agencies</h1>
+        <div role="alert" className="ppt-admin-error">
+          <p>Failed to load agencies: {message}</p>
+          <button type="button" onClick={() => query.refetch()}>
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const items = query.data?.items ?? [];
+
   return (
     <section>
       <h1>Agencies</h1>
-      <ResourceTable<AgencyRow>
+      <ResourceTable<Agency>
         columns={columns}
-        data={data}
+        data={items}
         rowKey={(a) => a.id}
-        emptyMessage="No agencies loaded yet."
+        emptyMessage="No agencies found."
         actions={[
           {
             label: 'Suspend',
             capability: 'agencies_suspend',
             variant: 'danger',
-            onClick: (a) => console.warn('TODO: suspend', a.id),
+            // TODO(N9): MFA challenge modal when 401 mfa_required
+            onClick: (a) =>
+              showToast({
+                type: 'warning',
+                title: 'Not yet wired',
+                message: `TODO: POST /admin/agencies/${a.id}/suspend`,
+              }),
+          },
+          {
+            label: 'Add domain',
+            capability: 'agencies_write',
+            // TODO(N9): MFA challenge modal when 401 mfa_required
+            onClick: (a) =>
+              showToast({
+                type: 'warning',
+                title: 'Not yet wired',
+                message: `TODO: POST /admin/agencies/${a.id}/domains/add`,
+              }),
           },
         ]}
       />
