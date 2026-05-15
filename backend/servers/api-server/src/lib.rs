@@ -11,12 +11,20 @@ pub mod routes;
 pub mod services;
 pub mod state;
 
-use axum::{http, routing::get, Router};
+use axum::{http, routing::get, Extension, Router};
 use http::HeaderValue;
+use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::state::AppState;
+
+// Phase 5 — Admin extension wiring.
+use admin_core::{
+    AdminDeps, AuditWriter, CapabilityGrantsRepository, CapabilityRegistry, ImpersonationService,
+    MfaRecency, NoopAuditWriter, NoopMfaRecency, PgAuditWriter, PgCapabilityGrantsRepository,
+    PgImpersonationService, PgMfaRecency,
+};
 
 /// Default CORS allowed origins for api-server.
 const DEFAULT_CORS_ORIGINS: &[&str] = &[
@@ -40,6 +48,25 @@ fn parse_default_origins() -> Vec<HeaderValue> {
 ///
 /// This function is exposed for integration testing.
 pub fn create_router(state: AppState) -> Router {
+    // Phase 5 — Admin dependency wiring.
+    //
+    // Registers the capabilities this binary actually exposes (for the
+    // `/admin/capabilities/registry` endpoint), then builds the trio of
+    // services (`grants`, `mfa`, `audit`) the `RequireCapability` extractor
+    // needs. The trio plus `AdminDeps` are injected via Extension layers so
+    // `RequireCapability` can `parts.extensions.get::<AdminDeps>()`.
+    CapabilityRegistry::init(admin_core::Capability::ALL.iter().copied());
+    let grants: Arc<dyn CapabilityGrantsRepository> =
+        Arc::new(PgCapabilityGrantsRepository::new(state.db.clone()));
+    let mfa: Arc<dyn MfaRecency> = Arc::new(PgMfaRecency::new(state.db.clone()));
+    let audit: Arc<dyn AuditWriter> = Arc::new(PgAuditWriter::new(state.db.clone()));
+    let admin_deps = AdminDeps::new(grants.clone(), mfa.clone(), audit.clone());
+    let imp: Arc<dyn ImpersonationService> =
+        Arc::new(PgImpersonationService::new(state.db.clone(), audit.clone()));
+    // Suppress unused warnings for noop fixtures (used by tests, not by the
+    // production binary).
+    let _ = (NoopAuditWriter, NoopMfaRecency);
+
     Router::new()
         // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
         .route("/health", get(routes::health::liveness))
@@ -263,6 +290,13 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/board-meetings", routes::board_meetings::router())
         // Data Residency routes (Epic 146)
         .nest("/api/v1/data-residency", routes::data_residency::router())
+        // Phase 5 — admin dependency injection. Layered before TraceLayer so
+        // every nested route inherits these extensions.
+        .layer(Extension(admin_deps))
+        .layer(Extension(grants))
+        .layer(Extension(mfa))
+        .layer(Extension(audit))
+        .layer(Extension(imp))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration

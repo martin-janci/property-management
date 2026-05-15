@@ -13,8 +13,12 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-/// Create admin router.
-pub fn router() -> Router<AppState> {
+/// Create admin user-lifecycle router (Epic 1, Story 1.6).
+///
+/// Renamed in Phase 5 from `router()` → `lifecycle_router()` so the new
+/// admin module hierarchy (`routes::admin::router`) can mount this alongside
+/// Phase 5's capability-gated routers without name collision.
+pub fn lifecycle_router() -> Router<AppState> {
     Router::new()
         .route("/users", get(list_users))
         .route("/users/{id}", get(get_user))
