@@ -6,13 +6,15 @@ All five phases (2, 3, 4, 5, 5.5) are committed in isolated worktrees branched o
 
 ## Worktree → branch map
 
-| Phase | Branch | Commits ahead of base | Notes |
-|-------|--------|------------------------|-------|
-| 2 | `phase2/identity-work` | 7 | Branch named `phase2/identity-work` because main repo already had `feature/phase-2-identity-unification` (placeholder for the roadmap doc). Rename target branch on integration. |
-| 3 | `feature/phase-3-hosting-theming` | 5 | |
-| 4 | `feature/phase-4-publish-channels` | 5 (incl. fix `a38fe559`) | Test fixture fixed for Phase 1 `AppState::new` 4-arg signature. |
-| 5 | `feature/phase-5-superadmin` | 5 | |
-| 5.5 | `feature/phase-5p5-tenant-lifecycle` | 7 (incl. one rebase commit) | |
+| Phase | Branch | Commits ahead of base | Verify fixes |
+|-------|--------|------------------------|--------------|
+| 2 | `phase2/identity-work` | 9 | `f7705b91` UserInvite Eq derive, `df06884c` exhaustive match, `2ec71fab` rand 0.10 SysRng |
+| 3 | `feature/phase-3-hosting-theming` | 6 | `6dd3300d` AgencyBranding name collision |
+| 4 | `feature/phase-4-publish-channels` | 5 | `a38fe559` AppState::new 4-arg test fixture |
+| 5 | `feature/phase-5-superadmin` | 6 | `b67a6d9e` admin-core re-exports (require_capability, AdminDeps, IMPERSONATION_TTL) |
+| 5.5 | `feature/phase-5p5-tenant-lifecycle` | 8 | `21d75679` metrics 0.21 syntax + manifest stale string + cleanups |
+
+> Phase 2 branch named `phase2/identity-work` because main repo already had `feature/phase-2-identity-unification` (placeholder for roadmap doc). Rename target branch on integration.
 
 ## Migration number ranges (claim table — no overlaps)
 
