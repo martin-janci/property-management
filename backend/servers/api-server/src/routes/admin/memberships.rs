@@ -15,7 +15,6 @@ use axum::{
 use chrono::{DateTime, Utc};
 use db::models::membership::GrantMembership;
 use db::repositories::{ConsumeInviteOutcome, MembershipRepository, UserInviteRepository};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -248,8 +247,9 @@ pub async fn revoke(
 
 /// Generate a 32-byte URL-safe token. Plaintext is shown once at create.
 fn generate_token() -> String {
-    let mut rng = rand::thread_rng();
-    let bytes: [u8; 32] = rng.gen();
+    let mut bytes = [0u8; 32];
+    rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes)
+        .expect("OS rng failed");
     use base64::Engine as _;
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
