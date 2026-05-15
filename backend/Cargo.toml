@@ -62,7 +62,7 @@ hex = "0.4"
 # Crypto
 sha2 = "0.11"
 hmac = "0.13"
-base64 = "0.21"
+base64 = "0.22"
 
 # URL encoding
 urlencoding = "2.1"
