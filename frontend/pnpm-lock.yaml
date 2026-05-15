@@ -125,6 +125,9 @@ importers:
 
   apps/ppt-web:
     dependencies:
+      '@ppt/admin-ui':
+        specifier: workspace:*
+        version: link:../../packages/admin-ui
       '@ppt/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -307,6 +310,31 @@ importers:
       vitest:
         specifier: ^4.1.5
         version: 4.1.5(@types/node@25.6.2)(@vitest/coverage-v8@4.1.5)(jsdom@25.0.1)(msw@2.14.5)(vite@7.3.3)
+
+  packages/admin-ui:
+    dependencies:
+      '@ppt/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@ppt/ui-kit':
+        specifier: workspace:*
+        version: link:../ui-kit
+      react:
+        specifier: 19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: 19.2.0
+        version: 19.2.0(react@19.2.0)
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
 
   packages/api-client:
     dependencies:
