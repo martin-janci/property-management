@@ -75,7 +75,8 @@
     "accessibility": "Accessibility",
     "privacy": "Privacy",
     "neighbors": "Neighbors",
-    "aiChat": "AI Assistant"
+    "aiChat": "AI Assistant",
+    "admin": "Admin"
   },
   "auth": {
     "signIn": "Sign In",
@@ -2713,5 +2714,154 @@
     "helpful": "Mark as helpful",
     "notHelpful": "Mark as not helpful",
     "responseTime": "Response time: {{ms}}ms"
+  },
+  "admin": {
+    "common": {
+      "actions": "Actions",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "readOnly": "Read-only",
+      "saveFailed": "Save failed.",
+      "loading": "Loading…",
+      "retry": "Retry",
+      "noResults": "No results.",
+      "confirm": "Are you sure?"
+    },
+    "agencies": {
+      "title": "Agencies",
+      "loading": "Loading agencies…",
+      "loadError": "Failed to load agencies: {{message}}",
+      "unknownError": "Unknown error",
+      "empty": "No agencies found.",
+      "columns": {
+        "name": "Name",
+        "slug": "Slug",
+        "status": "Status",
+        "members": "Members"
+      },
+      "actions": {
+        "suspend": "Suspend",
+        "edit": "Edit",
+        "addDomain": "Add domain"
+      },
+      "toast": {
+        "suspendedTitle": "Agency suspended",
+        "suspendedMessage": "{{name}} has been suspended.",
+        "suspendFailedTitle": "Suspend failed",
+        "suspendFailedMessage": "Suspend failed",
+        "notWiredTitle": "Not yet wired",
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add"
+      }
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search users by email or name…",
+      "empty": "Search to load users.",
+      "columns": {
+        "email": "Email",
+        "displayName": "Display Name",
+        "principalKind": "Principal kind"
+      },
+      "principalKinds": {
+        "platform": "Platform",
+        "agency": "Agency",
+        "tenant": "Tenant",
+        "service": "Service"
+      },
+      "actions": {
+        "impersonate": "Impersonate",
+        "edit": "Edit",
+        "transition": "Change kind"
+      },
+      "transition": {
+        "title": "Change principal kind",
+        "description": "This will change how {{name}} authenticates and which capabilities they hold. Continue?",
+        "confirm": "Change kind",
+        "cancel": "Cancel"
+      }
+    },
+    "featureFlags": {
+      "title": "Feature Flags",
+      "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant.",
+      "fields": {
+        "newListingsSearch": "New listings search (beta)",
+        "aiFaultTriage": "AI fault triage (beta)",
+        "buildingDisabled": "Disable this building (kill switch)"
+      }
+    },
+    "audit": {
+      "title": "Audit Log",
+      "filters": {
+        "legend": "Filters",
+        "actor": "Actor",
+        "actorId": "Actor ID",
+        "action": "Action",
+        "target": "Target",
+        "targetType": "Target type",
+        "since": "From",
+        "until": "Until",
+        "outcome": "Outcome"
+      },
+      "columns": {
+        "time": "Time",
+        "actor": "Actor",
+        "action": "Action",
+        "target": "Target",
+        "ip": "IP",
+        "outcome": "Outcome"
+      },
+      "system": "(system)",
+      "loading": "Loading…",
+      "empty": "No audit events match the current filters.",
+      "pagination": {
+        "showing": "Showing {{from}}–{{to}} of {{total}}",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{page}}"
+      },
+      "timeAgo": {
+        "justNow": "just now",
+        "minutes": "{{count}} min ago",
+        "minutes_one": "{{count}} min ago",
+        "hours": "{{count}} h ago",
+        "hours_one": "{{count}} h ago",
+        "days": "{{count}} d ago",
+        "days_one": "{{count}} d ago"
+      }
+    },
+    "platform": {
+      "title": "Platform Settings",
+      "fields": {
+        "maintenanceMode": "Maintenance mode",
+        "signupEnabled": "Signup enabled",
+        "supportEmail": "Support email",
+        "supportEmailPlaceholder": "support@example.com"
+      }
+    },
+    "impersonation": {
+      "label": "IMPERSONATING",
+      "asUser": "as {{name}}",
+      "expires": "expires {{time}}",
+      "stop": "End impersonation",
+      "youAreImpersonating": "You are impersonating {{name}}"
+    },
+    "mfa": {
+      "title": "Verify your identity",
+      "description": "Enter the 6-digit code from your authenticator app.",
+      "descriptionForAction": "{{action}} requires a fresh authentication code.",
+      "label": "Verification code",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "cancel": "Cancel",
+      "invalidFormat": "Enter the 6-digit code from your authenticator app.",
+      "invalidCode": "That code did not work. Try again.",
+      "verificationFailed": "Verification failed.",
+      "expired": "MFA verification expired",
+      "requiredToast": {
+        "title": "Two-factor confirmation required",
+        "message": "Please confirm with your authenticator app to continue."
+      }
+    }
   }
 }
