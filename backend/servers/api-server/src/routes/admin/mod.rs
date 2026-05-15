@@ -18,12 +18,12 @@ pub mod impersonation;
 pub mod users;
 pub mod users_lifecycle;
 
-// Backwards compatibility re-exports — `main.rs` and the OpenAPI registry
-// reference the pre-Phase-5 admin handlers under `routes::admin::*`. We keep
-// those paths working by re-exporting from the moved file.
+// `main.rs` and the OpenAPI registry reference the pre-Phase-5 admin
+// handlers via `routes::admin::users_lifecycle::*` directly — utoipa's
+// `__path_*` items don't follow `pub use` re-exports, so the registry
+// must use the real module path.
 pub use users_lifecycle::{
-    delete_user, get_user, list_users, reactivate_user, suspend_user, AdminActionResponse,
-    AdminUserInfo, ListUsersQuery, ListUsersResponse, UserActionRequest,
+    AdminActionResponse, AdminUserInfo, ListUsersQuery, ListUsersResponse, UserActionRequest,
 };
 
 use axum::Router;
