@@ -76,6 +76,11 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/auth", routes::auth::router())
         // Admin routes
         .nest("/api/v1/admin", routes::admin::router())
+        // Phase 5.5: tenant lifecycle (export / purge / restore) — platform-admin only.
+        .nest(
+            "/api/v1/admin",
+            routes::admin_tenant_lifecycle::router(),
+        )
         // Organizations routes
         .nest("/api/v1/organizations", routes::organizations::router())
         // Buildings routes

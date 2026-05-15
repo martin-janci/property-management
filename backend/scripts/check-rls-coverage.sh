@@ -23,9 +23,11 @@
 # tenant, or are pre-auth/global infrastructure) and are excluded from the
 # requirement.
 #
-# Usage: ./scripts/check-rls-coverage.sh [--strict]
-#   --strict : exit 1 on any uncovered tenant-scoped table (use in CI)
-#   (default): report only, exit 0
+# Usage: ./scripts/check-rls-coverage.sh [--strict] [--emit-manifest PATH]
+#   --strict           : exit 1 on any uncovered tenant-scoped table (use in CI)
+#   --emit-manifest P  : also write a machine-readable JSON manifest to P
+#                        (used by Phase 5.5 tenant-ops for export/purge plans)
+#   (default)          : report only, exit 0
 #
 # Env:
 #   DATABASE_URL : if set AND reachable, used instead of spinning up Docker.
@@ -45,9 +47,27 @@ GREEN='\033[0;32m'
 NC='\033[0m'
 
 STRICT_MODE=false
-if [[ "${1:-}" == "--strict" ]]; then
-    STRICT_MODE=true
-fi
+EMIT_MANIFEST_PATH=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --strict)
+            STRICT_MODE=true
+            shift
+            ;;
+        --emit-manifest)
+            EMIT_MANIFEST_PATH="${2:-}"
+            if [[ -z "$EMIT_MANIFEST_PATH" ]]; then
+                echo "✗ --emit-manifest requires a path argument" >&2
+                exit 2
+            fi
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 2
+            ;;
+    esac
+done
 
 # -----------------------------------------------------------------------------
 # EXEMPT TABLES — intentionally have no org-isolation policy.
@@ -256,6 +276,108 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# -----------------------------------------------------------------------------
+# Optional: emit machine-readable JSON manifest of tenant-scoped tables.
+# Phase 5.5 tenant-ops (export / purge / restore) reads this manifest as the
+# *only* source of truth for the per-tenant data plan. Defense for leak #17:
+# CI fails (--strict) if a developer adds a tenant-scoped table without the
+# manifest also being regenerated and committed, so the purge routine is never
+# silently incomplete.
+# -----------------------------------------------------------------------------
+if [[ -n "$EMIT_MANIFEST_PATH" ]]; then
+    echo ""
+    echo "📦 Emitting tenant-data manifest to: $EMIT_MANIFEST_PATH"
+
+    # Re-run a richer query that also classifies each table:
+    #   kind = 'own_org'  → has organization_id / org_id directly
+    #   kind = 'child'    → reaches a tenant-scoped table via FK only
+    # Plus a list of FK columns pointing at organizations(id) (informational).
+    MANIFEST_SQL=$(cat <<SQL
+WITH org_rooted AS (
+    SELECT DISTINCT c.table_name::text AS table_name,
+                    c.column_name::text AS org_column
+    FROM information_schema.columns c
+    WHERE c.table_schema = 'public'
+      AND c.column_name IN ('organization_id', 'org_id')
+),
+fk_edges AS (
+    SELECT
+        con.conrelid::regclass::text  AS child,
+        con.confrelid::regclass::text AS parent
+    FROM pg_constraint con
+    WHERE con.contype = 'f'
+      AND con.connamespace = 'public'::regnamespace
+),
+tenant_scoped AS (
+    SELECT table_name FROM org_rooted
+    UNION
+    SELECT fk.child
+    FROM fk_edges fk
+    JOIN tenant_scoped ts ON ts.table_name = fk.parent
+),
+candidate AS (
+    SELECT t.tablename AS table_name,
+           COALESCE((SELECT or2.org_column FROM org_rooted or2
+                     WHERE or2.table_name = t.tablename LIMIT 1), '') AS org_column
+    FROM pg_tables t
+    JOIN tenant_scoped ts ON ts.table_name = t.tablename
+    WHERE t.schemaname = 'public'
+      AND t.tablename NOT IN ($EXEMPT_SQL)
+)
+SELECT
+    c.table_name,
+    CASE WHEN c.org_column = '' THEN 'child' ELSE 'own_org' END AS kind,
+    c.org_column
+FROM candidate c
+ORDER BY kind DESC, c.table_name;
+SQL
+)
+    MANIFEST_SQL="WITH RECURSIVE${MANIFEST_SQL#WITH}"
+    MANIFEST_RAW=$(psql_run -F'|' -c "$MANIFEST_SQL")
+
+    # Postgres version + migration count + git short-sha for provenance.
+    PG_VERSION=$(psql_run -c "SELECT current_setting('server_version');")
+    MIG_COUNT=$(ls "$MIGRATIONS_DIR"/*.sql | wc -l | tr -d ' ')
+    GIT_SHA=$(git -C "$BACKEND_DIR/.." rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    MANIFEST_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    mkdir -p "$(dirname "$EMIT_MANIFEST_PATH")"
+
+    # Build JSON manually (no jq dependency in CI minimal images).
+    {
+        echo "{"
+        echo "  \"manifest_version\": 1,"
+        echo "  \"generated_at\": \"$MANIFEST_DATE\","
+        echo "  \"git_sha\": \"$GIT_SHA\","
+        echo "  \"migration_count\": $MIG_COUNT,"
+        echo "  \"postgres_version\": \"$(echo "$PG_VERSION" | head -1)\","
+        echo "  \"exempt_tables\": ["
+        i=0
+        for t in "${EXEMPT_TABLES[@]}"; do
+            if [[ $i -gt 0 ]]; then echo ","; fi
+            printf '    "%s"' "$t"
+            i=$((i + 1))
+        done
+        echo ""
+        echo "  ],"
+        echo "  \"tables\": ["
+        first=true
+        while IFS='|' read -r tbl kind org_col; do
+            [[ -z "$tbl" ]] && continue
+            if ! $first; then echo ","; fi
+            first=false
+            printf '    { "table": "%s", "kind": "%s", "org_column": "%s" }' \
+                "$tbl" "$kind" "$org_col"
+        done <<< "$MANIFEST_RAW"
+        echo ""
+        echo "  ]"
+        echo "}"
+    } > "$EMIT_MANIFEST_PATH"
+
+    MANIFEST_TABLE_COUNT=$(grep -c '"table":' "$EMIT_MANIFEST_PATH" || echo 0)
+    echo -e "${GREEN}✓ Manifest written ($MANIFEST_TABLE_COUNT tenant-scoped tables).${NC}"
+fi
 
 if [[ $UNCOVERED -gt 0 ]]; then
     if $STRICT_MODE; then
