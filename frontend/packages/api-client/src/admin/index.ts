@@ -6,8 +6,13 @@
  * platform settings as those endpoints land.
  */
 
-export { listAgencies } from './api';
+export { listAgencies, suspendAgency } from './api';
 export { adminKeys, useAgencies } from './hooks';
+export {
+  setMfaChallengeHandler,
+  hasMfaChallengeHandler,
+  type MfaChallengeHandler,
+} from './mfa-handler';
 export type {
   AdminPaginatedResponse,
   Agency,

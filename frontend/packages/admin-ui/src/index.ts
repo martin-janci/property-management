@@ -25,6 +25,16 @@ export { AuditViewer } from './components/AuditViewer/AuditViewer';
 export type { ImpersonationBannerProps } from './components/ImpersonationBanner/ImpersonationBanner';
 export { ImpersonationBanner } from './components/ImpersonationBanner/ImpersonationBanner';
 
+export type {
+  MfaChallengeModalProps,
+  MfaChallengeProviderProps,
+} from './components/MfaChallengeModal';
+export {
+  MfaChallengeModal,
+  MfaChallengeProvider,
+  useMfaChallenge,
+} from './components/MfaChallengeModal';
+
 export type { CapabilityCheckerOptions } from './hooks/useCapability';
 export {
   useCapability,
