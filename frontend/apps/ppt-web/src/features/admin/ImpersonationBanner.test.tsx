@@ -31,6 +31,29 @@ vi.mock('../../contexts', () => ({
   }),
 }));
 
+// react-i18next stub: return labels with `{name}`/`{time}` placeholders
+// interpolated so the assertions can find rendered text like
+// `as alice@example.com` rather than raw translation keys.
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, vars?: Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'admin.impersonation.label': 'IMPERSONATING',
+        'admin.impersonation.asUser': 'as {name}',
+        'admin.impersonation.expires': 'expires {time}',
+        'admin.impersonation.stop': 'End impersonation',
+      };
+      let s = labels[key] ?? key;
+      if (vars) {
+        for (const [k, v] of Object.entries(vars)) {
+          s = s.replace(`{${k}}`, String(v));
+        }
+      }
+      return s;
+    },
+  }),
+}));
+
 function renderWithProviders(node: ReactNode) {
   return render(<>{node}</>);
 }
