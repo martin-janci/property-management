@@ -27,6 +27,7 @@ common = { workspace = true }
 api-core = { workspace = true }
 db = { workspace = true }
 integrations = { workspace = true }
+tenant-ops = { workspace = true }
 sqlx = { workspace = true }
 reqwest = { workspace = true }
 
