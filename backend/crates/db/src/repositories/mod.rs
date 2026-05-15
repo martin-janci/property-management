@@ -71,7 +71,9 @@ pub use workflow::WorkflowRepository;
 pub use sensor::SensorRepository;
 
 pub use agency_branding::AgencyBrandingRepository;
-pub use agency_domain::AgencyDomainRepository;
+pub use agency_domain::{
+    AgencyDomainCacheInvalidator, AgencyDomainRepository, NoopDomainCacheInvalidator,
+};
 pub use announcement::AnnouncementRepository;
 pub use audit_log::AuditLogRepository;
 pub use building::BuildingRepository;

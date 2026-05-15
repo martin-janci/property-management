@@ -308,6 +308,24 @@ impl TenantResolutionCache {
 }
 
 // ============================================================================
+// AgencyDomainCacheInvalidator impl (N6)
+// ============================================================================
+
+/// Bridges the `db`-side [`db::repositories::agency_domain::AgencyDomainCacheInvalidator`]
+/// trait onto our [`TenantResolutionCache`]. The `db` crate intentionally does
+/// not depend on `api-core`, so the impl lives here and is wired by the binary
+/// at startup via [`AgencyDomainRepository::with_cache`].
+#[async_trait::async_trait]
+impl db::repositories::agency_domain::AgencyDomainCacheInvalidator for TenantResolutionCache {
+    async fn invalidate(&self, host: &str) {
+        TenantResolutionCache::invalidate(self, host).await;
+    }
+    async fn invalidate_all(&self) {
+        self.clear().await;
+    }
+}
+
+// ============================================================================
 // Host normalization + path helpers
 // ============================================================================
 

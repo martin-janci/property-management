@@ -179,7 +179,13 @@ pub async fn create_agency(
     // depending on an `AppState` field (`AppState` is owned by sibling agent
     // 3X and not modified in this lane).
     let org_repo = OrganizationRepository::new(state.db.clone());
-    let agency_domain_repo = AgencyDomainRepository::new(state.db.clone());
+    // N6: wire the host-resolution cache so `create_rls` (and other write
+    // methods) drop any cached entry for the touched host eagerly. The
+    // explicit `state.tenant_resolution_cache.invalidate(&host)` call below
+    // remains as a belt-and-braces — it covers the post-commit `verified`
+    // promotion which still hits agency_domains via raw SQL.
+    let agency_domain_repo = AgencyDomainRepository::new(state.db.clone())
+        .with_cache(state.tenant_resolution_cache.clone());
 
     // ---- 2. Open a transaction on a super-admin RLS connection -----------
     // platform_admin handlers operate without an `RlsConnection` extractor, so
