@@ -24,7 +24,38 @@
 #   bash backend/scripts/generate-soft-delete-rls-migration.sh \
 #     [--manifest backend/manifests/tenant-data-manifest.json] \
 #     [--out backend/crates/db/migrations/00140_rls_soft_delete_filter.sql]
-# =============================================================================
+#
+# ============================================================================
+# GOTCHA — multi-context policies (e.g. `listings_four_context` from 00136)
+# ============================================================================
+# This generator works PER POLICY NAME: it pulls the policy currently attached
+# to the table from `pg_policies` and emits a DROP/CREATE for each name. If
+# the live schema has already been upgraded to a richer multi-context policy
+# (for example, Phase 4's `listings_four_context` replaces the legacy
+# `listings_tenant_isolation`), this script will:
+#
+#   (a) Faithfully rewrite that multi-context policy with the soft-delete
+#       filter AND-ed in — IF it runs against a base that already includes
+#       the upgrade migration. Good.
+#   (b) Quietly miss the upgrade and re-emit the LEGACY 2-context policy
+#       name — IF it runs against a base that pre-dates the upgrade
+#       migration. Bad: Postgres ORs PERMISSIVE policies, so the resulting
+#       table ends up with BOTH policies and the soft-delete filter is
+#       bypassed via the still-present multi-context policy that this script
+#       never touched.
+#
+# Mitigation:
+#   * The TENANT_TABLES_SKIP allowlist below is the single source of truth
+#     for tables whose policies are managed elsewhere and MUST NOT be
+#     rewritten by this script. Add a table here if you upgrade its policy
+#     to a multi-context shape that this generator can't faithfully diff.
+#     The integration fix migration (00141) takes care of `listings`
+#     post-hoc; a future regeneration won't reintroduce the regression
+#     because `listings` is on the skip list.
+#   * Anyone regenerating 00140 against a fresh schema MUST also re-run
+#     `check-rls-coverage.sh --emit-manifest` first so the manifest is
+#     fresh. The `manifest-fresh.sh` lint catches the common skew.
+# ============================================================================
 
 set -euo pipefail
 
@@ -93,6 +124,30 @@ for mig in $(ls "$MIGRATIONS_DIR"/*.sql | sort); do
     "${PSQL_BASE[@]}" -f - < "$mig" >/dev/null
 done
 
+# ---- Tables whose policies must NOT be rewritten by this generator ---------
+# See the GOTCHA comment at the top of the file. Each entry is a table whose
+# RLS policy uses a multi-context shape (more than the standard 2-context
+# `is_super_admin() OR organization_id = get_current_org_id()` pattern) and
+# is therefore managed by a hand-authored migration. Skipping them here keeps
+# this generator from reintroducing the legacy 2-context policy name and
+# leaving Postgres to OR the two PERMISSIVE policies together.
+TENANT_TABLES_SKIP=(
+    # Phase 4: `listings_four_context` adds a 4th OR-leg
+    # (`is_published AND is_global_read_context()`) for the unauthenticated
+    # PlatformHost reader. The soft-delete filter is applied by 00141.
+    listings
+)
+
+is_skipped() {
+    local tbl="$1"
+    for skip in "${TENANT_TABLES_SKIP[@]}"; do
+        if [[ "$tbl" == "$skip" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # ---- Extract tenant tables from manifest -----------------------------------
 # Use grep+sed since jq isn't guaranteed in CI.
 TABLES=$(grep -oE '"table": "[^"]+"' "$MANIFEST" | sed 's/.*"table": "\([^"]*\)"/\1/' | sort -u)
@@ -147,6 +202,15 @@ HEADER
     # For every tenant table in the manifest, look up its existing policies
     # via pg_policies and emit DROP/CREATE pairs that AND in the helper.
     for tbl in $TABLES; do
+        # Skip tables whose policies are multi-context and managed elsewhere
+        # (see the GOTCHA at the top of this file).
+        if is_skipped "$tbl"; then
+            echo ""
+            echo "-- ----------------------------------------------------------------------------"
+            echo "-- $tbl (SKIPPED — multi-context policy managed by a hand-authored migration)"
+            echo "-- ----------------------------------------------------------------------------"
+            continue
+        fi
         # Pull (policyname, cmd, qual, with_check) for every policy on this
         # table. We collapse newlines and tabs in qual/with_check to single
         # spaces so each record fits on one line for the bash parser. The
