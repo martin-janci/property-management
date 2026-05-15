@@ -27,6 +27,11 @@ use db::repositories::AnnouncementRepository;
 use services::{EmailService, JwtService, Scheduler, SchedulerConfig};
 use state::AppState;
 
+// Phase 5 — admin extension wiring helpers (B7). Both `main.rs` (production
+// binary) and `lib.rs::create_router` (tests) build the same admin-core
+// dependency chain via these helpers so they cannot drift.
+use api_server::{attach_admin_extensions, build_admin_extensions};
+
 /// Default CORS allowed origins for api-server.
 /// Includes development origins and production domains.
 const DEFAULT_CORS_ORIGINS: &[&str] = &[
@@ -383,6 +388,17 @@ async fn main() -> anyhow::Result<()> {
     let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config);
     let _scheduler_handle = scheduler.start();
 
+    // Phase 5 — admin dependency injection (B7).
+    //
+    // Build the admin-core dep bundle (capability registry init + grants /
+    // mfa / audit / impersonation services backed by the live `db_pool`) and
+    // attach it to the router below via `attach_admin_extensions`. The same
+    // helpers are called from `lib.rs::create_router` so the production binary
+    // and the test-side router stay in sync; before this fix only `create_router`
+    // wired admin extensions, so production hit 500 on every `/admin/*` call
+    // because `RequireCapability` could not find `AdminDeps` in extensions.
+    let admin_ext = build_admin_extensions(db_pool.clone());
+
     // Build router
     let app = Router::new()
         // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
@@ -658,7 +674,13 @@ async fn main() -> anyhow::Result<()> {
         // (loopback bind in dev, X-Internal-Token shared secret in prod).
         .nest("/internal/caddy-ask", routes::caddy_ask::router())
         // Swagger UI
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()));
+
+    // Phase 5 — admin dependency injection (B7). Layered before TraceLayer so
+    // every nested route inherits these extensions. Mirrors the chain in
+    // `lib.rs::create_router` exactly via the shared `attach_admin_extensions`
+    // helper so production and tests cannot drift.
+    let app = attach_admin_extensions(app, &admin_ext)
         // Middleware
         .layer(TraceLayer::new_for_http())
         // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
