@@ -5,6 +5,8 @@
 //! responsibility) is fully wired.
 
 use admin_core::{require_capability, Capability, RequireCapability};
+use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -109,19 +111,50 @@ pub struct SetPrincipalKindBody {
 
 /// POST /admin/users/:id/principal-kind
 ///
-/// Stub. Phase 2 owns `set_principal_kind(uuid, text, text)` SECURITY DEFINER
-/// SQL function. Once that lands, swap the body for `SELECT
-/// set_principal_kind($1, $2, $3)`. The capability gate
-/// (`PrincipalKindEscalate`) is the Phase 5 contribution.
+/// Wired to the Phase 2 `set_principal_kind(uuid, varchar, uuid, text)`
+/// SECURITY DEFINER SQL function (migrations 00129 + 00143). The capability
+/// gate (`PrincipalKindEscalate`) is the Phase 5 contribution. The N3 actor
+/// check (added in 00143) enforces that we pass `principal.user_id` as the
+/// `actor` argument — the SQL function rejects anything else.
+///
+/// We deliberately route through `RlsConnection` so `app.current_user_id`
+/// is set on the connection that runs the function — the SECURITY DEFINER
+/// body reads that GUC and aborts if it does not equal `actor`.
 async fn set_principal_kind(
     _cap: RequireCapability,
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
+    principal: RequestPrincipal,
+    mut rls: RlsConnection,
+    Path(target_id): Path<Uuid>,
     Json(body): Json<SetPrincipalKindBody>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     if !matches!(body.kind.as_str(), "public" | "staff" | "platform") {
+        rls.release().await;
         return Err((StatusCode::BAD_REQUEST, "invalid principal kind".into()));
     }
-    // TODO(Phase 2): SELECT set_principal_kind($1, $2::principal_kind, $3)
-    Ok(StatusCode::NOT_IMPLEMENTED)
+
+    // N3: pass the authenticated principal as `actor`. The SECURITY DEFINER
+    // function asserts `actor == app.current_user_id` (set by RlsConnection),
+    // so a forged actor argument would be rejected at the DB layer.
+    let result = sqlx::query("SELECT set_principal_kind($1, $2, $3, $4)")
+        .bind(target_id)
+        .bind(&body.kind)
+        .bind(principal.user_id)
+        .bind(&body.reason)
+        .execute(rls.conn())
+        .await;
+
+    rls.release().await;
+
+    match result {
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Err(e) => {
+            tracing::error!(
+                error = %e,
+                target = %target_id,
+                actor = %principal.user_id,
+                "set_principal_kind failed"
+            );
+            Err((StatusCode::BAD_REQUEST, e.to_string()))
+        }
+    }
 }

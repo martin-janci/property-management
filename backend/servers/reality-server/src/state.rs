@@ -304,9 +304,16 @@ impl SessionService {
         use jsonwebtoken::{encode, EncodingKey, Header};
         use serde::{Deserialize, Serialize};
 
+        // Phase 2 token shape: { sub, kind, iat, exp }. The `kind` claim is
+        // informational only — `RequestPrincipal` re-derives `principal_kind`
+        // from the trusted `users` table on every request (defense for leaks
+        // #8 and #11). We still emit it so a future client/tooling can
+        // discriminate public vs staff tokens by inspection without a DB
+        // round-trip; servers must NEVER trust it.
         #[derive(Serialize, Deserialize)]
         struct Claims {
             sub: String,
+            kind: &'static str,
             exp: i64,
             iat: i64,
         }
@@ -314,6 +321,7 @@ impl SessionService {
         let now = chrono::Utc::now();
         let claims = Claims {
             sub: user_id.to_string(),
+            kind: "public",
             exp: (now + chrono::Duration::days(7)).timestamp(),
             iat: now.timestamp(),
         };
@@ -834,11 +842,18 @@ impl AppState {
     }
 }
 
-// Phase 1: Implement TenantMembershipProvider so host-resolution extractors
-// (`HostRlsConnection`) and the tenant extractors can obtain the db pool from
-// this state. Reality-server does NOT do JWT-based membership checks here —
-// the trait only exposes `db_pool()`; `HostRlsConnection` itself performs no
-// membership query (its tenant comes from host resolution, not from a login).
+// Phase 1 / Phase 2.5 (N1): Implement TenantMembershipProvider so the
+// host-resolution extractors (`HostRlsConnection`) AND the unified
+// `RequestPrincipal` extractor can obtain the db pool from this state.
+//
+// `RequestPrincipal` uses the pool to:
+//   * load `users.principal_kind` per request (re-derived, never trusted
+//     from the JWT — defense for leaks #8/#11),
+//   * call `MembershipRepository::is_active(user, host_org)` when the
+//     resolved host pins a real organization.
+//
+// `HostRlsConnection` itself performs no membership query — its tenant
+// comes from host resolution, not from a login.
 impl api_core::TenantMembershipProvider for AppState {
     fn db_pool(&self) -> &DbPool {
         &self.db
