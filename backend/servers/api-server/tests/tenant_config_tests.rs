@@ -80,7 +80,7 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
     AppState::new(pool, email, jwt, cache, rate_limiters)
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_host_returns_defaults(pool: PgPool) {
     let state = build_state(pool).await;
     let resp = api_server::routes::tenant_config::tenant_config_inner(state, None).await;
@@ -104,7 +104,7 @@ async fn platform_host_returns_defaults(pool: PgPool) {
         .contains(&Value::String("sk".into())));
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn agency_a_returns_a_branding(pool: PgPool) {
     let org_a = common_phase3::seed_org(&pool, "Agency A").await;
     common_phase3::seed_branding(
@@ -138,7 +138,7 @@ async fn agency_a_returns_a_branding(pool: PgPool) {
     assert_eq!(json["branding"]["css_vars"]["--ppt-radius-md"], "10px");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn agency_b_returns_b_branding_and_does_not_leak_a(pool: PgPool) {
     let org_a = common_phase3::seed_org(&pool, "Agency A").await;
     common_phase3::seed_branding(&pool, org_a, "#FF0000", "FontA", "https://a.example/logo").await;
@@ -164,7 +164,7 @@ async fn agency_b_returns_b_branding_and_does_not_leak_a(pool: PgPool) {
     assert_ne!(json["branding"]["primary_color"], "#FF0000");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn cache_headers_set_for_resolved_response(pool: PgPool) {
     let org = common_phase3::seed_org(&pool, "Agency C").await;
     let state = build_state(pool).await;

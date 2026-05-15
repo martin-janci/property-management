@@ -91,8 +91,8 @@ impl TestDb {
     async fn create_test_user(&self, email: &str, name: &str) -> Result<Uuid, sqlx::Error> {
         let row = sqlx::query(
             r#"
-            INSERT INTO users (email, password_hash, name, status, email_verified_at)
-            VALUES ($1, 'test_hash', $2, 'active', NOW())
+            INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+            VALUES ($1, 'test_hash', $2, 'active', NOW(), 'public')
             RETURNING id
             "#,
         )
@@ -100,8 +100,25 @@ impl TestDb {
         .bind(name)
         .fetch_one(&self.pool)
         .await?;
+        let id: Uuid = row.get("id");
 
-        Ok(row.get("id"))
+        // Mirror the row into portal_users so FKs that still target the
+        // legacy table (e.g. listing_inquiries.realtor_id_fkey) are
+        // satisfied. Phase 2.5 / 3.0 will repoint those FKs to users(id);
+        // until then this dual-write keeps Phase 0 RLS smoke tests green.
+        sqlx::query(
+            r#"
+            INSERT INTO portal_users (id, email, name, password_hash, provider, email_verified)
+            VALUES ($1, $2, $3, 'test_hash', 'local', TRUE)
+            "#,
+        )
+        .bind(id)
+        .bind(email)
+        .bind(name)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(id)
     }
 
     async fn cleanup(&self) {
@@ -115,6 +132,9 @@ impl TestDb {
             .execute(&self.pool)
             .await;
         let _ = sqlx::query("DELETE FROM organization_members WHERE user_id IN (SELECT id FROM users WHERE email LIKE 'smoke%@test.com')")
+            .execute(&self.pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM portal_users WHERE email LIKE 'smoke%@test.com'")
             .execute(&self.pool)
             .await;
         let _ = sqlx::query("DELETE FROM users WHERE email LIKE 'smoke%@test.com'")
@@ -154,6 +174,9 @@ impl TestDb {
             .execute(&self.pool)
             .await;
         let _ = sqlx::query("DELETE FROM feature_flags WHERE key LIKE 'flag-%'")
+            .execute(&self.pool)
+            .await;
+        let _ = sqlx::query("DELETE FROM portal_users WHERE email LIKE 'smoke_p0_%@test.com'")
             .execute(&self.pool)
             .await;
         let _ = sqlx::query("DELETE FROM users WHERE email LIKE 'smoke_p0_%@test.com'")

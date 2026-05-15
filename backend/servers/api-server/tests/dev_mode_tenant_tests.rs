@@ -129,7 +129,7 @@ fn get_req(uri: &str, host: &str) -> Request<Body> {
 /// With `dev_mode = true`, `/a/{slug}/listings/123` resolves the slug to its
 /// org, the handler sees the stripped path `/listings/123`, and the injected
 /// `ResolvedTenant` has `source = DevPath`.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_resolves_slug_and_strips_prefix(pool: PgPool) {
     let slug = "acme-dev";
     let org_id = seed_org(&pool, slug).await;
@@ -170,7 +170,7 @@ async fn dev_mode_resolves_slug_and_strips_prefix(pool: PgPool) {
 
 /// With `dev_mode = true`, `/a/{slug}` with no trailing path resolves and the
 /// handler sees a bare `/`.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_resolves_slug_root_path(pool: PgPool) {
     let slug = "acme-root";
     seed_org(&pool, slug).await;
@@ -189,7 +189,7 @@ async fn dev_mode_resolves_slug_root_path(pool: PgPool) {
 
 /// With `dev_mode = true`, an `/a/{slug}` whose slug does NOT match any active
 /// org fails closed with `404` (the middleware never reaches the handler).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_unknown_slug_is_404(pool: PgPool) {
     // no org seeded for this slug
     let app = test_router(pool, true);
@@ -216,7 +216,7 @@ async fn dev_mode_unknown_slug_is_404(pool: PgPool) {
 /// a literal request path, so the middleware falls through to host-based
 /// resolution. The `Host` header points at an unknown host, so the request
 /// fails closed with `404` — and crucially the path is never rewritten.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn prod_mode_treats_a_slug_as_literal_path_and_404s_unknown_host(pool: PgPool) {
     // Seed an org with this slug to prove that even a *valid* slug is ignored
     // when dev_mode is off — resolution is strictly host-based.
@@ -242,7 +242,7 @@ async fn prod_mode_treats_a_slug_as_literal_path_and_404s_unknown_host(pool: PgP
 /// With `dev_mode = false`, even a normal path on an unknown host fails closed
 /// with `404` — confirming the dev-slug branch is not what produced the 404
 /// in the test above.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn prod_mode_unknown_host_is_404(pool: PgPool) {
     let app = test_router(pool, false);
     let resp = app
@@ -262,7 +262,7 @@ async fn prod_mode_unknown_host_is_404(pool: PgPool) {
 /// the handler unresolved even though the `Host` header is unknown. This guards
 /// against a regression where the dev-slug branch or host resolution would
 /// swallow allowlisted paths.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn allowlisted_path_bypasses_resolution(pool: PgPool) {
     let app = test_router(pool, true);
     let resp = app

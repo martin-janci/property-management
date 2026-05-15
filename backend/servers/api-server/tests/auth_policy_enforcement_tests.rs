@@ -63,7 +63,7 @@ async fn require_verified_email(pool: &PgPool, org_id: Uuid) {
     .expect("set policy");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn grant_to_verified_user_under_strict_policy_succeeds(pool: PgPool) {
     let org = seed_org(&pool, "happy").await;
     let user = seed_user(&pool, "happy-verified@n2-int.test", true).await;
@@ -79,7 +79,7 @@ async fn grant_to_verified_user_under_strict_policy_succeeds(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn grant_to_unverified_user_under_strict_policy_is_rejected(pool: PgPool) {
     let org = seed_org(&pool, "rejected").await;
     let user = seed_user(&pool, "rejected-unverified@n2-int.test", false).await;
@@ -94,7 +94,7 @@ async fn grant_to_unverified_user_under_strict_policy_is_rejected(pool: PgPool) 
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn grant_to_unverified_user_under_default_policy_succeeds(pool: PgPool) {
     // No `org_auth_policies` row → default policy → no verification gate →
     // unverified user can be granted (status quo). This documents that
@@ -113,7 +113,7 @@ async fn grant_to_unverified_user_under_default_policy_succeeds(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn capability_grant_per_user_picks_first_membership(pool: PgPool) {
     use db::models::membership::GrantMembership;
     use db::repositories::MembershipRepository;
@@ -144,7 +144,7 @@ async fn capability_grant_per_user_picks_first_membership(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn capability_grant_per_user_with_no_memberships_passes(pool: PgPool) {
     // A platform-only principal with no memberships has no per-org policy
     // to enforce — the grant proceeds (governed by platform defaults).
@@ -160,7 +160,7 @@ async fn capability_grant_per_user_with_no_memberships_passes(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn revoke_loads_policy_as_liveness_check(pool: PgPool) {
     // Revoke has no positive policy gate today, but it MUST load the policy
     // (so a corrupted row aborts the revoke). This test just verifies the
@@ -183,7 +183,7 @@ async fn revoke_loads_policy_as_liveness_check(pool: PgPool) {
 // D2.1 — capability revoke / platform-action enforcement
 // ============================================================================
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn capability_revoke_platform_action_passes(pool: PgPool) {
     // D2.1: capability_grants are platform-scoped. The enforcer's
     // `check_capability_revoke` delegates to `check_platform_action`, which
@@ -203,7 +203,7 @@ async fn capability_revoke_platform_action_passes(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn check_platform_action_does_not_require_org(pool: PgPool) {
     // The platform-action gate must be callable WITHOUT any membership in
     // scope. This documents the platform-scoping decision (capabilities
@@ -259,7 +259,7 @@ async fn grant_membership(pool: &PgPool, user_id: Uuid, org_id: Uuid, role: &str
         .expect("seed membership");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn login_with_mfa_required_role_and_no_mfa_is_rejected(pool: PgPool) {
     // Org policy demands MFA for the `manager` role; the user holds that role
     // and has not presented an MFA factor → MfaRequired.
@@ -277,7 +277,7 @@ async fn login_with_mfa_required_role_and_no_mfa_is_rejected(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn login_with_mfa_required_role_and_mfa_presented_succeeds(pool: PgPool) {
     // Same setup, but the user supplied an MFA factor in the login request →
     // the enforcer accepts the login.
@@ -296,7 +296,7 @@ async fn login_with_mfa_required_role_and_mfa_presented_succeeds(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn login_under_default_policy_passes_without_mfa(pool: PgPool) {
     // No org policy → no MFA roles → login proceeds without an MFA factor.
     // This documents the additive contract: orgs that opt out of per-org
@@ -338,7 +338,7 @@ async fn require_strict_password(pool: &PgPool, org_id: Uuid) {
     .expect("set strict password policy");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn password_change_too_short_under_strict_policy_is_rejected(pool: PgPool) {
     // A 12-char password meets the platform default (8 min) but violates the
     // org's 16-char minimum → enforcer rejects.
@@ -362,7 +362,7 @@ async fn password_change_too_short_under_strict_policy_is_rejected(pool: PgPool)
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn password_change_meeting_strict_policy_succeeds(pool: PgPool) {
     let org = seed_org(&pool, "pw-strict-ok").await;
     let user = seed_user(&pool, "pw-strict-ok@n2-int.test", true).await;
@@ -381,7 +381,7 @@ async fn password_change_meeting_strict_policy_succeeds(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn password_change_for_org_less_user_uses_platform_default(pool: PgPool) {
     // A user with no memberships → strictest-across is platform default
     // (8 min, no class requirements).

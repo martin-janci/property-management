@@ -74,8 +74,13 @@ pub use repositories::FormRepository;
 /// `ppt_<target>` database into the full schema; subsequent deploys
 /// no-op as long as no new migrations are added.
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::migrate::MigrateError> {
-    sqlx::migrate!("./migrations").run(pool).await
+    MIGRATOR.run(pool).await
 }
+
+/// Embedded migrator. Use as `#[sqlx::test(migrator = "db::MIGRATOR")]` from
+/// integration tests in other crates so they get the same migration set as
+/// the production binary.
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
 /// Create database connection pool.
 ///

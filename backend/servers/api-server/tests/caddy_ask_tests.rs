@@ -219,7 +219,7 @@ async fn oneshot_with_addr(router: Router, request: Request<Body>) -> axum::resp
 // dev mode (RUST_ENV=development) — auth gate disabled
 // ----------------------------------------------------------------------------
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_known_verified_host_returns_200(pool: PgPool) {
     std::env::set_var("RUST_ENV", "development");
     let org_id = seed_org(&pool).await;
@@ -233,7 +233,7 @@ async fn dev_mode_known_verified_host_returns_200(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_known_verifying_host_returns_200(pool: PgPool) {
     std::env::set_var("RUST_ENV", "development");
     let org_id = seed_org(&pool).await;
@@ -247,7 +247,7 @@ async fn dev_mode_known_verifying_host_returns_200(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_unknown_host_returns_403(pool: PgPool) {
     std::env::set_var("RUST_ENV", "development");
     let resp = oneshot_with_addr(
@@ -258,7 +258,7 @@ async fn dev_mode_unknown_host_returns_403(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_pending_host_returns_403(pool: PgPool) {
     // Defense: only `verifying` and `verified` allow cert issuance.
     // `pending` and `failed` must be refused.
@@ -274,7 +274,7 @@ async fn dev_mode_pending_host_returns_403(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn dev_mode_malformed_input_returns_400(pool: PgPool) {
     std::env::set_var("RUST_ENV", "development");
     let resp = oneshot_with_addr(
@@ -292,7 +292,7 @@ async fn dev_mode_malformed_input_returns_400(pool: PgPool) {
 // prod mode — auth gate enforced
 // ----------------------------------------------------------------------------
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn prod_mode_missing_token_returns_401(pool: PgPool) {
     std::env::set_var("RUST_ENV", "production");
     std::env::remove_var("INTERNAL_API_TOKEN");
@@ -304,7 +304,7 @@ async fn prod_mode_missing_token_returns_401(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn prod_mode_wrong_token_returns_401(pool: PgPool) {
     std::env::set_var("RUST_ENV", "production");
     std::env::set_var("INTERNAL_API_TOKEN", "expected-secret");
@@ -320,7 +320,7 @@ async fn prod_mode_wrong_token_returns_401(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn prod_mode_correct_token_and_known_host_returns_200(pool: PgPool) {
     std::env::set_var("RUST_ENV", "production");
     std::env::set_var("INTERNAL_API_TOKEN", "expected-secret-2");

@@ -64,7 +64,7 @@ async fn build_state(pool: PgPool) -> api_server::state::AppState {
     AppState::new(pool, email, jwt, cache, rate_limiters)
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn building_disabled_flag_propagates_to_tenant_config(pool: PgPool) {
     let org = seed_org(&pool).await;
     set_flag(&pool, org, "building_disabled", true).await;
@@ -84,7 +84,7 @@ async fn building_disabled_flag_propagates_to_tenant_config(pool: PgPool) {
     assert_eq!(json["feature_flags"]["building_disabled"]["enabled"], true);
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn building_disabled_default_false_for_other_orgs(pool: PgPool) {
     // Seed org A with the flag ON; org B should be unaffected.
     let org_a = seed_org(&pool).await;
@@ -120,7 +120,7 @@ async fn building_disabled_default_false_for_other_orgs(pool: PgPool) {
 /// Asserting it here keeps the backend test self-contained: a flag-enabled
 /// response from `/tenant-config` MUST be enough for the layout to render
 /// 503 (no additional backend signal is required).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn flag_value_in_response_is_sufficient_for_frontend_503(pool: PgPool) {
     let org = seed_org(&pool).await;
     set_flag(&pool, org, "building_disabled", true).await;

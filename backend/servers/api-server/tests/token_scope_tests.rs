@@ -135,7 +135,7 @@ fn req_to(host_path_slug: &str, token: &str) -> Request<Body> {
         .unwrap()
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_works_for_org_with_active_membership(pool: PgPool) {
     // Stamp JWT_SECRET so the principal extractor reads the same value.
     static ONCE: std::sync::Once = std::sync::Once::new();
@@ -187,7 +187,7 @@ async fn token_works_for_org_with_active_membership(pool: PgPool) {
     assert_eq!(resp.status(), StatusCode::OK, "should succeed for org B");
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_is_rejected_for_org_without_active_membership(pool: PgPool) {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| std::env::set_var("JWT_SECRET", JWT_SECRET));
@@ -234,7 +234,7 @@ async fn token_is_rejected_for_org_without_active_membership(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn token_is_rejected_after_membership_revoked(pool: PgPool) {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| std::env::set_var("JWT_SECRET", JWT_SECRET));

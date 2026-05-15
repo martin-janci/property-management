@@ -125,7 +125,7 @@ fn ensure_jwt_secret() {
     ONCE.call_once(|| std::env::set_var("JWT_SECRET", JWT_SECRET));
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_host_allows_platform_principal(pool: PgPool) {
     ensure_jwt_secret();
 
@@ -152,7 +152,7 @@ async fn platform_host_allows_platform_principal(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_host_rejects_staff_principal(pool: PgPool) {
     ensure_jwt_secret();
 
@@ -171,7 +171,7 @@ async fn platform_host_rejects_staff_principal(pool: PgPool) {
     );
 }
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn platform_host_rejects_public_principal(pool: PgPool) {
     ensure_jwt_secret();
 
