@@ -1,5 +1,6 @@
 //! Database models.
 
+pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
@@ -90,6 +91,7 @@ pub use workflow_templates::{
     WorkflowTemplateWithDetails,
 };
 
+pub use agency_branding::{AgencyBranding, UpdateOrganizationBranding};
 pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
@@ -1109,3 +1111,8 @@ pub use api_ecosystem::{
     UpdateMarketplaceIntegration, UpdateOrganizationIntegration,
     UpdatePreBuiltIntegrationConnection, WebhookRetryPolicyConfig, XeroConfig,
 };
+
+// Phase 3: Hosting & Theming — per-tenant feature flags + kill switches.
+pub mod tenant_feature_flag;
+
+pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};
