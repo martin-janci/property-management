@@ -44,6 +44,8 @@ use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+use super::tenant_ops::{meter_request, TenantRateLimiterSet};
+
 /// How a request's tenant was determined.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TenantSource {
@@ -105,12 +107,19 @@ pub struct HostTenantConfig {
     /// table by migration 00135 so the agency_domains check constraint and
     /// this resolver agree on what "the platform" is.
     pub platform_hosts: Arc<Vec<String>>,
+    /// Phase 5.5: per-tenant rate limiter set used at the `SEAM(leak#15)`
+    /// hook. ONE process-wide instance — share the `Arc` across both
+    /// servers' main routers and any test fixtures so a flooding tenant is
+    /// detected regardless of which router served the request.
+    pub rate_limiters: Arc<TenantRateLimiterSet>,
 }
 
 impl HostTenantConfig {
     /// Build a config with a fresh cache (300s positive / 30s negative TTL,
-    /// 10k max entries), `dev_mode` derived from `RUST_ENV`, and the
-    /// `PLATFORM_HOST` env var parsed into the platform-host list.
+    /// 10k max entries), `dev_mode` derived from `RUST_ENV`, the
+    /// `PLATFORM_HOST` env var parsed into the platform-host list, and a
+    /// fresh per-tenant rate limiter set seeded with the default 600 rpm
+    /// baseline.
     pub fn new(pool: db::DbPool) -> Self {
         let dev_mode = std::env::var("RUST_ENV")
             .map(|v| v == "development")
@@ -121,10 +130,14 @@ impl HostTenantConfig {
             cache: Arc::new(TenantResolutionCache::new(300, 30, 10_000)),
             dev_mode,
             platform_hosts,
+            rate_limiters: Arc::new(TenantRateLimiterSet::new()),
         }
     }
 
-    /// Test/explicit constructor: caller chooses everything.
+    /// Test/explicit constructor: caller chooses everything except the
+    /// rate-limiter set, which defaults to a fresh instance with the default
+    /// rpm baseline. Use [`Self::with_rate_limiters`] to swap in a tighter
+    /// limiter for tests.
     pub fn with_parts(
         pool: db::DbPool,
         cache: Arc<TenantResolutionCache>,
@@ -136,7 +149,16 @@ impl HostTenantConfig {
             cache,
             dev_mode,
             platform_hosts: Arc::new(platform_hosts),
+            rate_limiters: Arc::new(TenantRateLimiterSet::new()),
         }
+    }
+
+    /// Builder hook: swap the per-tenant rate limiter set. Tests use this
+    /// to inject a tight limiter (e.g. a few rpm) so the 429 path is
+    /// reachable without flooding millions of requests.
+    pub fn with_rate_limiters(mut self, limiters: Arc<TenantRateLimiterSet>) -> Self {
+        self.rate_limiters = limiters;
+        self
     }
 }
 
@@ -437,7 +459,8 @@ pub async fn host_tenant_middleware(
 ) -> Result<Response, (StatusCode, &'static str)> {
     let path = request.uri().path().to_string();
 
-    // 1. Public-allowlist paths bypass resolution entirely.
+    // 1. Public-allowlist paths bypass resolution entirely. No rate limit,
+    //    no metering — these are infra/health endpoints.
     if is_public_allowlist_path(&path) {
         return Ok(next.run(request).await);
     }
@@ -478,9 +501,18 @@ pub async fn host_tenant_middleware(
             source: TenantSource::PlatformHost,
         };
         request.extensions_mut().insert(resolved);
-        // SEAM(leak#15): per-tenant rate limit hook (no-op for PlatformHost).
+        // SEAM(leak#15): PlatformHost intentionally bypasses per-tenant rate
+        // limiting. The nil UUID is a sentinel meaning "no specific tenant",
+        // so binding all platform traffic to a single bucket would be an
+        // artificial bottleneck. Edge / ingress layers (CDN + load balancer)
+        // already cap inbound platform-host volume; this middleware would
+        // duplicate that without adding tenant isolation.
         let response = next.run(request).await;
-        // SEAM(leak#19): per-tenant metering hook (counts platform-host hits).
+        // SEAM(leak#19): we still meter PlatformHost requests so platform-
+        // wide traffic shows up in `requests_total` (org_id = nil) for
+        // capacity planning. No per-tenant billing implication.
+        let bytes = response_content_length(&response);
+        meter_request(Uuid::nil(), bytes);
         return Ok(response);
     }
 
@@ -507,12 +539,7 @@ pub async fn host_tenant_middleware(
                         source: TenantSource::DevPath,
                     };
                     request.extensions_mut().insert(resolved);
-                    // SEAM(leak#15): per-tenant rate limit — a downstream layer can
-                    // read `ResolvedTenant` here and apply per-organization quotas.
-                    let response = next.run(request).await;
-                    // SEAM(leak#19): per-tenant metering — wrap `next.run` to record
-                    // per-organization request counts / billing units.
-                    return Ok(response);
+                    return Ok(rate_limit_and_meter(&cfg, organization_id, request, next).await);
                 }
                 None => {
                     tracing::warn!(slug = %slug, "dev-mode /a/{{slug}} did not resolve");
@@ -545,13 +572,9 @@ pub async fn host_tenant_middleware(
 
     match resolved {
         Some(resolved) => {
+            let org_id = resolved.organization_id;
             request.extensions_mut().insert(resolved);
-            // SEAM(leak#15): per-tenant rate limit — a downstream layer can read
-            // `ResolvedTenant` from extensions here and apply per-organization quotas.
-            let response = next.run(request).await;
-            // SEAM(leak#19): per-tenant metering — wrap `next.run` to record
-            // per-organization request counts / billing units.
-            Ok(response)
+            Ok(rate_limit_and_meter(&cfg, org_id, request, next).await)
         }
         None => {
             if soft {
@@ -567,6 +590,67 @@ pub async fn host_tenant_middleware(
             }
         }
     }
+}
+
+/// Combine the per-tenant rate-limit gate (defense leak #15) and the
+/// per-tenant metering counter (defense leak #19) around the downstream
+/// service call. Returns the response that should be sent to the caller —
+/// either the 429 we synthesized when the rate limiter denied, or the
+/// downstream service's response (with metering already recorded).
+///
+/// Exposed at crate visibility so the integration smoke tests in
+/// `tests/host_tenant_middleware_tests.rs` can drive the wiring without
+/// standing up a database for the host-resolution path.
+pub async fn rate_limit_and_meter(
+    cfg: &HostTenantConfig,
+    org_id: Uuid,
+    request: Request<Body>,
+    next: Next,
+) -> Response {
+    // SEAM(leak#15): per-tenant rate limit. A flooding tenant gets a 429
+    // here without affecting the latency of any other tenant — the
+    // limiter's state is per-org-id.
+    if let Err(retry_after) = cfg.rate_limiters.check_with_retry(org_id).await {
+        tracing::warn!(
+            org_id = %org_id,
+            retry_after_secs = retry_after.as_secs(),
+            "Per-tenant rate limit exceeded — returning 429"
+        );
+        // Round up so a sub-second retry-after still nudges clients to wait
+        // ≥1 second; HTTP `Retry-After` is integer seconds.
+        let retry_secs = retry_after.as_secs().max(1);
+        return Response::builder()
+            .status(StatusCode::TOO_MANY_REQUESTS)
+            .header("Retry-After", retry_secs.to_string())
+            .header(axum::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
+            .body(Body::from("rate limit exceeded for this tenant"))
+            .expect("static 429 response is valid");
+    }
+
+    let response = next.run(request).await;
+
+    // SEAM(leak#19): per-tenant metering. Best-effort body length from
+    // `Content-Length`. Streaming/chunked responses lack a known length up
+    // front; counting only the request itself (response_bytes = 0) still
+    // yields the request-rate signal needed for billing.
+    let bytes = response_content_length(&response);
+    meter_request(org_id, bytes);
+
+    response
+}
+
+/// Best-effort response body length from the `Content-Length` header.
+/// Returns 0 when the header is absent or unparseable (chunked transfer
+/// encoding, etc.). The metering counter still increments the request
+/// count via [`meter_request`]'s unconditional `requests_total` bump; only
+/// the byte counter is omitted.
+fn response_content_length(response: &Response) -> u64 {
+    response
+        .headers()
+        .get(axum::http::header::CONTENT_LENGTH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0)
 }
 
 // ============================================================================

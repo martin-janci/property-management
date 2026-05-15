@@ -30,3 +30,6 @@ metrics = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+# `util` enables ServiceExt::oneshot, used by the host-tenant middleware
+# smoke tests in tests/host_tenant_middleware_tests.rs (Phase 5.5).
+tower = { workspace = true, features = ["util"] }

@@ -14,7 +14,7 @@
 //!            `request_bytes_total` counter for the response body.
 
 use governor::{
-    clock::DefaultClock,
+    clock::{Clock, DefaultClock},
     state::{InMemoryState, NotKeyed},
     Quota, RateLimiter,
 };
@@ -97,14 +97,30 @@ impl TenantRateLimiterSet {
 
     /// Make one decision for one tenant.
     pub async fn check(&self, org_id: Uuid) -> RateLimitDecision {
+        match self.check_with_retry(org_id).await {
+            Ok(()) => RateLimitDecision::Allow,
+            Err(_) => RateLimitDecision::DenyTooManyRequests,
+        }
+    }
+
+    /// Same decision as [`Self::check`], but on deny returns the
+    /// minimum [`Duration`] the caller must wait before retrying. The
+    /// keystone middleware uses this to populate the `Retry-After` header
+    /// on 429 responses (defense leak #15).
+    ///
+    /// `Ok(())`  — request is allowed.
+    /// `Err(d)`  — request must be rejected with HTTP 429; advise the
+    /// client to retry no sooner than `d` from now.
+    pub async fn check_with_retry(&self, org_id: Uuid) -> Result<(), Duration> {
         // Fast path — read lock, hit existing limiter.
         {
             let limiters = self.limiters.read().await;
             if let Some(entry) = limiters.get(&org_id) {
-                let outcome = entry.limiter.check();
-                return match outcome {
-                    Ok(_) => RateLimitDecision::Allow,
-                    Err(_) => RateLimitDecision::DenyTooManyRequests,
+                return match entry.limiter.check() {
+                    Ok(_) => Ok(()),
+                    Err(not_until) => {
+                        Err(not_until.wait_time_from(DefaultClock::default().now()))
+                    }
                 };
             }
         }
@@ -130,8 +146,8 @@ impl TenantRateLimiterSet {
         );
 
         match outcome {
-            Ok(_) => RateLimitDecision::Allow,
-            Err(_) => RateLimitDecision::DenyTooManyRequests,
+            Ok(_) => Ok(()),
+            Err(not_until) => Err(not_until.wait_time_from(DefaultClock::default().now())),
         }
     }
 
