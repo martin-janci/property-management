@@ -1,13 +1,29 @@
 //! Admin tenant-lifecycle routes (Phase 5.5 — Tenant Lifecycle & Operability).
 //!
-//! Mounts under `/api/v1/admin/tenants/:id/{export,purge,restore}`. All paths
-//! are platform-admin only. Defenses #16 (no in-place restore), #17 (manifest-
-//! driven purge), #18 (per-tenant logical export). Capability gating + MFA
-//! enforcement is intentionally a thin platform-admin check here; the deeper
-//! capability-grant + MFA-challenge mechanism is Phase 5's `admin-core` and
-//! will replace `is_platform_admin()` once that crate lands.
+//! Mounts under `/api/v1/admin/tenants/:id/{export,purge,restore}`. Defenses
+//! #16 (no in-place restore), #17 (manifest-driven purge), #18 (per-tenant
+//! logical export).
+//!
+//! # Auth (Phase 5 — N4)
+//!
+//! Capability gating is wired via `admin-core::RequireCapability`. Each route
+//! declares its required capability at router-build time:
+//!
+//!   * `POST /tenants/{id}/export`  → `Capability::TenantExport`
+//!   * `POST /tenants/{id}/purge`   → `Capability::TenantPurge`
+//!   * `POST /tenants/restore`      → `Capability::TenantRestore`
+//!
+//! The extractor enforces platform-principal + active capability grant +
+//! recent MFA, and writes an audit row for both allowed and denied invocations.
+//! This replaces the previous `AuthUser::is_platform_admin()` check, which
+//! trusted the JWT `roles` claim — a token-claim-forgery risk (leak #11).
+//
+// TODO(N4-followup): expose lifecycle status polling under
+// /admin/tenants/{id}/operations/{job_id} so long-running export/purge/restore
+// jobs can be observed without holding the HTTP request open.
 
-use api_core::extractors::AuthUser;
+use admin_core::{require_capability, Capability, RequireCapability};
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -26,11 +42,24 @@ use uuid::Uuid;
 use crate::state::AppState;
 
 /// Tenant-lifecycle router.
+///
+/// Each route lives in its own one-route sub-router so the per-route tower
+/// layer (which carries the `RequiredCapabilityMarker` for that capability)
+/// stays scoped correctly when the routers are merged.
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/tenants/{id}/export", post(export_handler))
-        .route("/tenants/{id}/purge", post(purge_handler))
-        .route("/tenants/restore", post(restore_handler))
+    let export = Router::new().route(
+        "/tenants/{id}/export",
+        post(export_handler).layer(require_capability(Capability::TenantExport)),
+    );
+    let purge = Router::new().route(
+        "/tenants/{id}/purge",
+        post(purge_handler).layer(require_capability(Capability::TenantPurge)),
+    );
+    let restore = Router::new().route(
+        "/tenants/restore",
+        post(restore_handler).layer(require_capability(Capability::TenantRestore)),
+    );
+    export.merge(purge).merge(restore)
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,12 +88,12 @@ impl From<TenantExport> for ExportResponse {
 }
 
 async fn export_handler(
+    _cap: RequireCapability,
+    principal: RequestPrincipal,
     State(state): State<AppState>,
     Path(org_id): Path<Uuid>,
-    auth: AuthUser,
     body: Option<Json<ExportRequest>>,
 ) -> Result<Json<ExportResponse>, (StatusCode, String)> {
-    require_platform_admin(&auth)?;
     let manifest = load_manifest()?;
     let out_dir = body
         .and_then(|Json(b)| b.out_dir)
@@ -74,7 +103,7 @@ async fn export_handler(
         .await
         .map_err(internal)?;
     tracing::info!(
-        actor = %auth.user_id,
+        actor = %principal.user_id,
         org = %org_id,
         rows = report.rows_exported,
         bytes = report.bytes_written,
@@ -105,17 +134,17 @@ impl From<PurgeReport> for PurgeResponse {
 }
 
 async fn purge_handler(
+    _cap: RequireCapability,
+    principal: RequestPrincipal,
     State(state): State<AppState>,
     Path(org_id): Path<Uuid>,
-    auth: AuthUser,
 ) -> Result<Json<PurgeResponse>, (StatusCode, String)> {
-    require_platform_admin(&auth)?;
     let manifest = load_manifest()?;
     let report = purge_tenant(&state.db, org_id, &manifest)
         .await
         .map_err(internal)?;
     tracing::warn!(
-        actor = %auth.user_id,
+        actor = %principal.user_id,
         org = %org_id,
         rows = report.total_rows_deleted,
         org_dropped = report.organization_dropped,
@@ -147,12 +176,11 @@ impl From<RestoreReport> for RestoreResponse {
 /// route writes it to a tempfile and feeds it to `restore_tenant_export`.
 /// Defense #16 — restore *always* lands as a NEW org id, never in place.
 async fn restore_handler(
+    _cap: RequireCapability,
+    principal: RequestPrincipal,
     State(state): State<AppState>,
-    auth: AuthUser,
     mut multipart: Multipart,
 ) -> Result<Json<RestoreResponse>, (StatusCode, String)> {
-    require_platform_admin(&auth)?;
-
     // Pull the first file part — accept any field name.
     let mut bytes: Option<Vec<u8>> = None;
     while let Some(field) = multipart
@@ -184,7 +212,7 @@ async fn restore_handler(
     let _ = std::fs::remove_file(&tmpfile);
 
     tracing::warn!(
-        actor = %auth.user_id,
+        actor = %principal.user_id,
         original = %report.original_organization_id,
         new = %report.new_organization_id,
         rows = report.rows_restored,
@@ -196,17 +224,6 @@ async fn restore_handler(
 // ============================================================================
 // Helpers
 // ============================================================================
-
-fn require_platform_admin(auth: &AuthUser) -> Result<(), (StatusCode, String)> {
-    if auth.is_platform_admin() {
-        Ok(())
-    } else {
-        Err((
-            StatusCode::FORBIDDEN,
-            "platform-admin capability required (Phase 5 admin-core will tighten this)".into(),
-        ))
-    }
-}
 
 fn load_manifest() -> Result<TenantDataManifest, (StatusCode, String)> {
     // Allow override via env so a deploy can ship the manifest at any path.
