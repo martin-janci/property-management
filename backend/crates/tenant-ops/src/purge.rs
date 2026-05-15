@@ -205,7 +205,7 @@ where
     Ok(keys)
 }
 
-async fn set_super_admin_context<'c>(
+async fn set_super_admin_context(
     conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
 ) -> TenantOpsResult<()> {
     sqlx::query("SELECT set_request_context(NULL::uuid, NULL::uuid, TRUE)")

@@ -10,10 +10,10 @@
 //! A `.tar.gz` containing:
 //!
 //! * `manifest.json`      — copy of the tenant-data-manifest used to drive
-//!                          the export.
+//!   the export.
 //! * `metadata.json`      — `{ org_id, exported_at, manifest_version, ... }`.
 //! * `tables/<table>.ndjson` — one row per line, JSON, in primary-key order
-//!                            where possible.
+//!   where possible.
 //!
 //! No Avro/Parquet/columnar abstractions — this is a logical backup, not an
 //! analytics dump. Restore reads the same files in the same shape.

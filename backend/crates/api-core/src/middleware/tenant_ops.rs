@@ -60,6 +60,10 @@ pub struct TenantRateLimiterSet {
 
 struct LimiterEntry {
     limiter: Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock>>,
+    /// The configured rpm for this tenant. Captured at build-time for
+    /// future diagnostics (e.g. an admin endpoint reporting per-tenant
+    /// effective rates) — not currently read.
+    #[allow(dead_code)]
     rpm: u32,
     last_touched: Instant,
 }
