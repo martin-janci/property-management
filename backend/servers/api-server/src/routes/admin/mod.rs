@@ -37,13 +37,17 @@ use crate::state::AppState;
 /// `lib.rs::create_router`.
 pub fn router() -> Router<AppState> {
     Router::new()
-        // Pre-Phase-5 user-lifecycle endpoints (Epic 1, Story 1.6).
+        // Pre-Phase-5 user-lifecycle endpoints (Epic 1, Story 1.6) own
+        // `/users`, `/users/{id}`, `/users/{id}/{suspend,reactivate,delete}`.
         .merge(users_lifecycle::lifecycle_router())
         // Phase 2 membership invite/accept/revoke.
         .merge(memberships::router())
-        // Phase 5 admin tree (capability-gated).
+        // Phase 5 admin tree (capability-gated). The Phase 5 admin/users
+        // module owns global user search + principal_kind transitions —
+        // mounted under /principals to avoid colliding with the legacy
+        // /users routes from users_lifecycle above.
         .nest("/agencies", agencies::router())
-        .nest("/users", users::router())
+        .nest("/principals", users::router())
         .nest("/audit", audit::router())
         .nest("/capabilities", capabilities::router())
         .nest("/impersonation", impersonation::router())
