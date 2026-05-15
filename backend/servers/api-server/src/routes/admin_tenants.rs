@@ -29,9 +29,8 @@ use axum::{
 };
 use common::errors::ErrorResponse;
 use db::models::{
-    agency_branding::UpdateOrganizationBranding,
+    agency_branding::{AgencyBranding, UpdateOrganizationBranding},
     tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag},
-    AgencyBranding,
 };
 use db::repositories::{AgencyBrandingRepository, TenantFeatureFlagRepository};
 use serde::Serialize;
