@@ -23,10 +23,14 @@ CREATE TABLE IF NOT EXISTS user_memberships (
 -- Active-membership lookups (the hot path for `RequestPrincipal`):
 -- one row per (user, org) means an active grant exists. Filtered partial index
 -- keeps it small and fast.
+-- Partial index covering not-revoked memberships. Postgres requires the
+-- index predicate to be IMMUTABLE — `NOW()` is volatile and is rejected,
+-- so the freshness check (`expires_at > NOW()`) is enforced at query time
+-- in `MembershipRepository::is_active`. The index still narrows the
+-- candidate set to non-revoked rows.
 CREATE INDEX IF NOT EXISTS idx_user_memberships_active
     ON user_memberships (user_id, organization_id)
-    WHERE revoked_at IS NULL
-      AND (expires_at IS NULL OR expires_at > NOW());
+    WHERE revoked_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_user_memberships_org
     ON user_memberships (organization_id);
