@@ -294,7 +294,7 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
-      {isPlatformPrincipal ? <Link to="/admin">Admin</Link> : null}
+      {isPlatformPrincipal ? <Link to="/admin">{t('nav.admin')}</Link> : null}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />

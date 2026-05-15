@@ -7,26 +7,55 @@
 
 import { SettingsForm, type SettingsField } from '@ppt/admin-ui';
 import type React from 'react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface FeatureFlagValues extends Record<string, unknown> {
   'beta.new_listings_search': boolean;
   'beta.ai_fault_triage': boolean;
+  'building.disabled': boolean;
 }
-
-const fields: ReadonlyArray<SettingsField> = [
-  { kind: 'boolean', key: 'beta.new_listings_search', label: 'New listings search (beta)' },
-  { kind: 'boolean', key: 'beta.ai_fault_triage', label: 'AI fault triage (beta)' },
-];
 
 const initialValues: FeatureFlagValues = {
   'beta.new_listings_search': false,
   'beta.ai_fault_triage': false,
+  'building.disabled': false,
 };
 
 const FeatureFlagsPage: React.FC = () => {
+  const { t } = useTranslation();
+
+  const fields = useMemo<ReadonlyArray<SettingsField>>(
+    () => [
+      {
+        kind: 'boolean',
+        key: 'beta.new_listings_search',
+        label: t('admin.featureFlags.fields.newListingsSearch'),
+      },
+      {
+        kind: 'boolean',
+        key: 'beta.ai_fault_triage',
+        label: t('admin.featureFlags.fields.aiFaultTriage'),
+      },
+      {
+        kind: 'boolean',
+        key: 'building.disabled',
+        label: t('admin.featureFlags.fields.buildingDisabled'),
+      },
+    ],
+    [t],
+  );
+
   return (
     <section>
-      <h1>Feature Flags</h1>
+      <h1>{t('admin.featureFlags.title')}</h1>
+      <p
+        role="alert"
+        className="ppt-admin-warning"
+        style={{ color: '#b00020', fontWeight: 600 }}
+      >
+        {t('admin.featureFlags.warning')}
+      </p>
       <SettingsForm<FeatureFlagValues>
         fields={fields}
         initialValues={initialValues}

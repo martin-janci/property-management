@@ -8,23 +8,14 @@
 
 import { SettingsForm, type SettingsField } from '@ppt/admin-ui';
 import type React from 'react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PlatformValues extends Record<string, unknown> {
   'platform.maintenance_mode': boolean;
   'platform.signup_enabled': boolean;
   'platform.support_email': string;
 }
-
-const fields: ReadonlyArray<SettingsField> = [
-  { kind: 'boolean', key: 'platform.maintenance_mode', label: 'Maintenance mode' },
-  { kind: 'boolean', key: 'platform.signup_enabled', label: 'Signup enabled' },
-  {
-    kind: 'text',
-    key: 'platform.support_email',
-    label: 'Support email',
-    placeholder: 'support@example.com',
-  },
-];
 
 const initialValues: PlatformValues = {
   'platform.maintenance_mode': false,
@@ -33,9 +24,33 @@ const initialValues: PlatformValues = {
 };
 
 const PlatformPage: React.FC = () => {
+  const { t } = useTranslation();
+
+  const fields = useMemo<ReadonlyArray<SettingsField>>(
+    () => [
+      {
+        kind: 'boolean',
+        key: 'platform.maintenance_mode',
+        label: t('admin.platform.fields.maintenanceMode'),
+      },
+      {
+        kind: 'boolean',
+        key: 'platform.signup_enabled',
+        label: t('admin.platform.fields.signupEnabled'),
+      },
+      {
+        kind: 'text',
+        key: 'platform.support_email',
+        label: t('admin.platform.fields.supportEmail'),
+        placeholder: t('admin.platform.fields.supportEmailPlaceholder'),
+      },
+    ],
+    [t],
+  );
+
   return (
     <section>
-      <h1>Platform Settings</h1>
+      <h1>{t('admin.platform.title')}</h1>
       <SettingsForm<PlatformValues>
         fields={fields}
         initialValues={initialValues}
