@@ -54,7 +54,7 @@ import {
   CommandPaletteProvider,
   useNavigationCommands,
 } from './features/command-palette';
-import { AdminRouter, usePrincipalCapabilities } from './features/admin';
+import { AdminRouter, ImpersonationWrapper, usePrincipalCapabilities } from './features/admin';
 import { ManagerDashboardPage, ResidentDashboardPage } from './features/dashboard';
 import type {
   DisputeCategory,
@@ -382,6 +382,13 @@ function App() {
                       <SkipNavigation mainContentId="main-content" />
                       <OfflineIndicator />
                       <div className="app">
+                        {/* Phase 5 (E2): sticky banner whenever the
+                            current session is impersonating a tenant
+                            user. Mounted as a sibling of <MfaWrapper>
+                            and above <AppNavigation /> so leak #21
+                            ("impersonation must be impossible to
+                            hide") is satisfied across every route. */}
+                        <ImpersonationWrapper />
                         <AppNavigation />
                         <main id="main-content">
                           <Suspense fallback={<RouteLoading />}>
