@@ -203,17 +203,38 @@ impl TenantResolutionCache {
 // ============================================================================
 
 /// Paths that bypass tenant resolution entirely (infra / docs / health).
-const PUBLIC_ALLOWLIST: [&str; 5] = [
+///
+/// `/internal` is added in Phase 3 so the Caddy on-demand TLS ask-endpoint
+/// (`/internal/caddy-ask`) is reachable without a resolved tenant — that
+/// endpoint, by definition, runs BEFORE TLS / a host -> tenant mapping
+/// exists. The endpoint enforces its own auth (loopback + shared secret).
+const PUBLIC_ALLOWLIST: [&str; 6] = [
     "/health",
     "/readiness",
     "/metrics",
     "/swagger-ui",
     "/api-docs",
+    "/internal",
 ];
 
 /// Whether `path` is in the public allowlist (prefix match).
 fn is_public_allowlist_path(path: &str) -> bool {
     PUBLIC_ALLOWLIST
+        .iter()
+        .any(|p| path == *p || path.starts_with(&format!("{p}/")))
+}
+
+/// Phase 3: paths that participate in resolution (so the handler can read a
+/// `ResolvedTenant` when present) but DO NOT fail closed on an unresolved
+/// host. The platform host (no `agency_domains` row) is a legitimate caller
+/// for these — the handler returns platform defaults instead of 404.
+///
+/// Currently: `/tenant-config` (read by reality-web on every request,
+/// including from the global portal which has no tenant).
+const SOFT_RESOLVE_ALLOWLIST: [&str; 1] = ["/tenant-config"];
+
+fn is_soft_resolve_path(path: &str) -> bool {
+    SOFT_RESOLVE_ALLOWLIST
         .iter()
         .any(|p| path == *p || path.starts_with(&format!("{p}/")))
 }
@@ -335,9 +356,15 @@ pub async fn host_tenant_middleware(
     }
 
     // 2. Extract the trusted host.
+    let soft = is_soft_resolve_path(&path);
     let host = match extract_trusted_host(&request) {
         Some(h) => h,
         None => {
+            if soft {
+                // Soft path: no host means platform-default response.
+                tracing::debug!(path = %path, "Soft-resolve path with no Host header — pass through unresolved");
+                return Ok(next.run(request).await);
+            }
             tracing::warn!(path = %path, "Tenant resolution: missing/invalid Host header");
             return Err((StatusCode::NOT_FOUND, "Unknown tenant host"));
         }
@@ -413,9 +440,17 @@ pub async fn host_tenant_middleware(
             Ok(response)
         }
         None => {
-            // 6. Fail closed — an unknown host must never reach a handler.
-            tracing::warn!(host = %host, "Tenant resolution: unknown host, failing closed (404)");
-            Err((StatusCode::NOT_FOUND, "Unknown tenant host"))
+            if soft {
+                // Soft path: pass through with no `ResolvedTenant` extension
+                // — the handler returns platform defaults for the global
+                // portal case.
+                tracing::debug!(host = %host, "Soft-resolve path: unresolved host passes through");
+                Ok(next.run(request).await)
+            } else {
+                // 6. Fail closed — an unknown host must never reach a handler.
+                tracing::warn!(host = %host, "Tenant resolution: unknown host, failing closed (404)");
+                Err((StatusCode::NOT_FOUND, "Unknown tenant host"))
+            }
         }
     }
 }
