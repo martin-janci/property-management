@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -45,6 +48,7 @@ import three.two.bit.ppt.reality.inquiry.InquiryRepository
 import three.two.bit.ppt.reality.listing.*
 import three.two.bit.ppt.reality.ui.theme.BadgeColors
 import three.two.bit.ppt.reality.util.FormatUtils
+import three.two.bit.ppt.reality.util.isNetworkError
 
 /**
  * Listing Detail screen — KMP / Compose M3 redesign matching the design bundle
@@ -85,6 +89,9 @@ fun ListingDetailScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val authState by ssoService.authState.collectAsState()
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val genericErrorMsg = stringResource(R.string.error_generic)
+    fun friendlyError(e: Throwable) = if (e.isNetworkError()) networkErrorMsg else genericErrorMsg
 
     var listing by remember { mutableStateOf<ListingDetail?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -126,7 +133,7 @@ fun ListingDetailScreen(
                     isLoading = false
                 },
                 onFailure = {
-                    errorMessage = it.message
+                    errorMessage = friendlyError(it)
                     isLoading = false
                 },
             )
@@ -155,7 +162,7 @@ fun ListingDetailScreen(
                                 .getListingDetail(listingId)
                                 .fold(
                                     onSuccess = { listing = it },
-                                    onFailure = { errorMessage = it.message },
+                                    onFailure = { errorMessage = friendlyError(it) },
                                 )
                             isLoading = false
                         }
@@ -232,7 +239,7 @@ fun ListingDetailScreen(
                             },
                             onFailure = { error ->
                                 isInquirySubmitting = false
-                                inquiryError = error.message ?: "Failed to send inquiry"
+                                inquiryError = friendlyError(error)
                             },
                         )
                 }
@@ -292,7 +299,7 @@ private fun ListingContent(
                 }
                 1 -> item { BuildingPassportCard(listing = listing) }
                 2 -> item { NearbyPreviewCard() }
-                3 -> item { PlaceholderSection(stringResource(R.string.detail_tab_price_history)) }
+                3 -> item { PriceHistoryCard(listing = listing) }
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
@@ -893,6 +900,122 @@ private fun BuildingPassportCard(listing: ListingDetail) {
                 }
             }
         }
+    }
+}
+
+// ─── Price history tab ──────────────────────────────────────────────────────
+//
+// The reality-server listing payload exposes a single `previousPrice` alongside
+// `isPriceReduced` rather than a full change log, so we render the one known
+// transition when present and fall back to a proper empty state otherwise.
+
+@Composable
+private fun PriceHistoryCard(listing: ListingDetail) {
+    val previous = listing.previousPrice
+    if (!listing.isPriceReduced || previous == null) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ShowChart,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.price_history_empty_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.price_history_empty_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+        return
+    }
+
+    val delta = previous - listing.price
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            PriceHistoryRow(
+                label = stringResource(R.string.price_history_previous),
+                value = FormatUtils.formatPrice(previous, listing.currency),
+                muted = true,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            PriceHistoryRow(
+                label = stringResource(R.string.price_history_current),
+                value = FormatUtils.formatPrice(listing.price, listing.currency),
+                muted = false,
+            )
+            if (delta > 0) {
+                Spacer(modifier = Modifier.height(14.dp))
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = Color(0xFFD1FAE5),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.TrendingDown,
+                            contentDescription = null,
+                            tint = Color(0xFF065F46),
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.price_history_reduced_by,
+                                    FormatUtils.formatPrice(delta, listing.currency),
+                                ),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF065F46),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PriceHistoryRow(label: String, value: String, muted: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style =
+                if (muted) MaterialTheme.typography.bodyMedium
+                else MaterialTheme.typography.titleMedium,
+            fontWeight = if (muted) FontWeight.Normal else FontWeight.Bold,
+            color =
+                if (muted) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 

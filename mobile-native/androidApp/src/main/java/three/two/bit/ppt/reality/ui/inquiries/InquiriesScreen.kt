@@ -40,6 +40,7 @@ import three.two.bit.ppt.reality.ui.theme.Brand500
 import three.two.bit.ppt.reality.ui.theme.Brand800
 import three.two.bit.ppt.reality.ui.theme.InquiryStatusColors
 import three.two.bit.ppt.reality.ui.theme.ViewingStatusColors
+import three.two.bit.ppt.reality.util.isNetworkError
 
 private const val TAG = "InquiriesScreen"
 
@@ -79,6 +80,9 @@ fun InquiriesScreen(
 ) {
     val scope = rememberCoroutineScope()
     val authState by ssoService.authState.collectAsState()
+    val networkErrorMsg = stringResource(R.string.error_network)
+    val genericErrorMsg = stringResource(R.string.error_generic)
+    fun friendlyError(e: Throwable) = if (e.isNetworkError()) networkErrorMsg else genericErrorMsg
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var statusFilter by remember { mutableStateOf<InquiryStatus?>(null) }
@@ -101,7 +105,7 @@ fun InquiriesScreen(
                 .getInquiries()
                 .fold(
                     onSuccess = { inquiries = it.inquiries },
-                    onFailure = { errorMessage = it.message },
+                    onFailure = { errorMessage = friendlyError(it) },
                 )
             inquiryRepository
                 .getViewings()
@@ -172,7 +176,7 @@ fun InquiriesScreen(
                                             .getInquiries()
                                             .fold(
                                                 onSuccess = { inquiries = it.inquiries },
-                                                onFailure = { errorMessage = it.message },
+                                                onFailure = { errorMessage = friendlyError(it) },
                                             )
                                         isLoading = false
                                     }
@@ -201,7 +205,7 @@ fun InquiriesScreen(
                                                 },
                                                 onFailure = {
                                                     Log.e(TAG, "Failed to cancel viewing", it)
-                                                    errorMessage = it.message
+                                                    errorMessage = friendlyError(it)
                                                 },
                                             )
                                     }
