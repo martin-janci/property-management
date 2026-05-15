@@ -13,6 +13,9 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
+// Phase 2: membership invite/accept/revoke sub-router.
+pub mod memberships;
+
 /// Create admin router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -21,6 +24,7 @@ pub fn router() -> Router<AppState> {
         .route("/users/{id}/suspend", post(suspend_user))
         .route("/users/{id}/reactivate", post(reactivate_user))
         .route("/users/{id}/delete", post(delete_user))
+        .merge(memberships::router())
 }
 
 // ==================== Types ====================
