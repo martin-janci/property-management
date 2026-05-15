@@ -370,3 +370,10 @@ pub use marketplace::MarketplaceRepository;
 pub mod tenant_feature_flag;
 
 pub use tenant_feature_flag::TenantFeatureFlagRepository;
+
+// Phase 2.5 (N1): unified write path for portal/public users that mirrors
+// to BOTH `users` and `portal_users` so Phase 2's "one identity per human"
+// invariant actually holds for updates and SSO upserts (not just inserts).
+pub mod unified_portal_user;
+
+pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateProfile};
