@@ -80,7 +80,10 @@ impl TestApp {
         let jwt_service =
             JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");
 
-        let state = AppState::new(pool.clone(), email_service, jwt_service);
+        let tenant_cache = std::sync::Arc::new(
+            api_core::middleware::TenantResolutionCache::new(300, 30, 10_000),
+        );
+        let state = AppState::new(pool.clone(), email_service, jwt_service, tenant_cache);
 
         // Build the router with all routes
         let router = api_server::create_router(state);
