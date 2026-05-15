@@ -1,5 +1,6 @@
 //! Database models.
 
+pub mod agency_branding;
 pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
@@ -91,6 +92,10 @@ pub use workflow_templates::{
     WorkflowTemplateWithDetails,
 };
 
+// Note: `AgencyBranding` from `agency_branding` is intentionally NOT re-exported here
+// because `agency::AgencyBranding` already occupies that name at this scope. The new
+// per-tenant branding type is consumed via the module path: `crate::models::agency_branding::AgencyBranding`.
+pub use agency_branding::UpdateOrganizationBranding;
 pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
@@ -1112,3 +1117,8 @@ pub use api_ecosystem::{
     UpdateMarketplaceIntegration, UpdateOrganizationIntegration,
     UpdatePreBuiltIntegrationConnection, WebhookRetryPolicyConfig, XeroConfig,
 };
+
+// Phase 3: Hosting & Theming — per-tenant feature flags + kill switches.
+pub mod tenant_feature_flag;
+
+pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};

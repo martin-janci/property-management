@@ -631,6 +631,27 @@ async fn main() -> anyhow::Result<()> {
         )
         // API Ecosystem Expansion routes (Epic 150)
         .nest("/api/v1/ecosystem", routes::api_ecosystem::router())
+        // Phase 3: per-host tenant config (read by reality-web at request
+        // time). Mounted at the root because reality-web hits the same host
+        // Caddy serves the app on, and the path must match exactly.
+        .nest("/tenant-config", routes::tenant_config::router())
+        // Phase 3: per-tenant admin endpoints (branding + feature flags).
+        // Stub auth via `require_platform_principal`; Phase 5 swaps to a
+        // real capability registry.
+        .nest(
+            "/admin/tenants/{org_id}/branding",
+            routes::admin_tenants::branding_router(),
+        )
+        .nest(
+            "/admin/tenants/{org_id}/feature-flags",
+            routes::admin_tenants::feature_flags_router(),
+        )
+        // Phase 3: Caddy on-demand TLS ask-endpoint. Mounted at `/internal`,
+        // which is in PUBLIC_ALLOWLIST so host_tenant_middleware skips it
+        // entirely — by definition this endpoint runs BEFORE TLS / a
+        // host -> tenant mapping exists. Auth is enforced inside the handler
+        // (loopback bind in dev, X-Internal-Token shared secret in prod).
+        .nest("/internal/caddy-ask", routes::caddy_ask::router())
         // Swagger UI
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Middleware

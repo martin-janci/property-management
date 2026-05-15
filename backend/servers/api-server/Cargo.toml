@@ -81,9 +81,13 @@ regex = "1.10"
 # Epic 103: Redis Integration (for health check types)
 redis = { workspace = true }
 
+# Phase 3: Caddy ask-endpoint rate limiter (process-local Lazy<Mutex<HashMap>>).
+once_cell = "1.19"
+
 [dev-dependencies]
 # Testing infrastructure (Epic 99)
 tower = { workspace = true, features = ["util"] }
 http-body-util = "0.1"
 wiremock = "0.6"
 once_cell = "1.19"
+urlencoding = { workspace = true }

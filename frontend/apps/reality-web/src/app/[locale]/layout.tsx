@@ -4,7 +4,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { AuthProvider } from '@/lib/auth-context';
 import { ComparisonProvider } from '@/lib/comparison-context';
+import { FeatureFlags } from '@/lib/feature-flags';
 import { QueryProvider } from '@/lib/query-provider';
+import { brandingToStyleObject, getTenantConfig } from '@/lib/tenant-config';
 import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
@@ -112,15 +114,76 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Get messages for the current locale
   const messages = await getMessages();
 
+  // Phase 3: per-host tenant config drives branding + kill switches.
+  // `getTenantConfig` is React-cached so the layout, page, and any other
+  // server component on this request all share one fetch.
+  const tenantConfig = await getTenantConfig();
+
+  // Per-tenant kill switch: when `building_disabled` is enabled the entire
+  // app is replaced with a 503 page (defends operational leak #22). The
+  // exact 503 markup is intentionally minimal — we want it to render even
+  // when the rest of the app's data layer is what got disabled.
+  const killSwitch = tenantConfig.feature_flags[FeatureFlags.BUILDING_DISABLED];
+  if (killSwitch?.enabled) {
+    return (
+      <html lang={locale}>
+        <head>
+          <title>Service temporarily unavailable</title>
+          <meta name="robots" content="noindex" />
+        </head>
+        <body>
+          <main
+            style={{
+              fontFamily: 'system-ui, sans-serif',
+              padding: '2rem',
+              maxWidth: 600,
+              margin: '4rem auto',
+              textAlign: 'center',
+            }}
+          >
+            <h1>Service temporarily unavailable</h1>
+            <p>
+              {tenantConfig.name} is offline for maintenance. Please check back
+              shortly.
+            </p>
+          </main>
+        </body>
+      </html>
+    );
+  }
+
+  // React style object carrying `--ppt-*` CSS custom properties from the
+  // tenant config. Sanitized inside the helper — keys + values are
+  // allowlist-validated so no tenant-controlled blob can break out of the
+  // style attribute.
+  const brandingStyle = brandingToStyleObject(tenantConfig.branding);
+
+  // Embed a minimal projection of the tenant config so client-side
+  // `useFeatureFlag` works without a fetch.
+  const tenantBootstrap = JSON.stringify({
+    tenant_id: tenantConfig.tenant_id,
+    feature_flags: tenantConfig.feature_flags,
+  });
+
   return (
     <html
       lang={locale}
       className={inter.variable}
+      style={brandingStyle}
       // Apply system color scheme by default; JS in ColorSchemeScript can
       // override with a stored user preference at runtime.
       suppressHydrationWarning
     >
       <head>
+        {tenantConfig.branding.logo_url ? (
+          <link rel="icon" href={tenantConfig.branding.logo_url} />
+        ) : null}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: bootstrap must inline
+          dangerouslySetInnerHTML={{
+            __html: `window.__TENANT_CONFIG__=${tenantBootstrap};`,
+          }}
+        />
         {/*
          * Color-scheme bootstrap MUST be the first thing in <head> so it runs
          * before any layout paint. A previous version put this in <body> with
