@@ -53,13 +53,39 @@ pub enum TenantSource {
     CustomDomain,
     /// Resolved from a dev-mode `/a/{slug}` path prefix.
     DevPath,
+    /// Resolved as the platform-wide reality portal host (Phase 4).
+    ///
+    /// This variant means "no specific tenant — global read context": the
+    /// request hit the platform's public reality portal (e.g. `reality.example.com`
+    /// or any of the seeded-reserved hosts in `reserved_platform_hosts`). The
+    /// downstream `HostRlsConnection` extractor turns this into a database
+    /// session with `app.global_read = on` and `app.current_org_id` UNSET, so
+    /// the 4th RLS context on `listings` (see migration 00136) reveals the
+    /// union of `is_published = TRUE` rows across all orgs.
+    ///
+    /// `organization_id` for this variant is the nil UUID — a sentinel meaning
+    /// "no specific tenant." Code that branches on `source == PlatformHost`
+    /// MUST NOT use the `organization_id` field as a real tenant id; nothing
+    /// in the database has the nil UUID as its organization.
+    PlatformHost,
 }
 
 /// The tenant a request was resolved to, injected into request extensions.
 #[derive(Debug, Clone, Copy)]
 pub struct ResolvedTenant {
+    /// For `Subdomain`/`CustomDomain`/`DevPath`: the organization id from
+    /// `agency_domains`. For `PlatformHost`: the nil UUID — see the docs on
+    /// [`TenantSource::PlatformHost`]. Code that consumes this field MUST
+    /// branch on `source` first to know whether the id is meaningful.
     pub organization_id: Uuid,
     pub source: TenantSource,
+}
+
+impl ResolvedTenant {
+    /// True if this resolution is the platform-wide global-read context (Phase 4).
+    pub fn is_platform_host(&self) -> bool {
+        matches!(self.source, TenantSource::PlatformHost)
+    }
 }
 
 /// Shared configuration + state for [`host_tenant_middleware`].
@@ -69,21 +95,82 @@ pub struct HostTenantConfig {
     pub cache: Arc<TenantResolutionCache>,
     /// Driven by `RUST_ENV == "development"`. Enables `/a/{slug}` routing.
     pub dev_mode: bool,
+    /// Phase 4: hosts that resolve to [`TenantSource::PlatformHost`] (the
+    /// global reality portal). Lower-cased on construction; matched with
+    /// equality after [`normalize_host`].
+    ///
+    /// Sourced from the `PLATFORM_HOST` env var (comma-separated) plus a small
+    /// set of dev defaults (`localhost`, `127.0.0.1`) when `dev_mode` is on.
+    /// The same list is seeded into the DB-side `reserved_platform_hosts`
+    /// table by migration 00135 so the agency_domains check constraint and
+    /// this resolver agree on what "the platform" is.
+    pub platform_hosts: Arc<Vec<String>>,
 }
 
 impl HostTenantConfig {
     /// Build a config with a fresh cache (300s positive / 30s negative TTL,
-    /// 10k max entries) and `dev_mode` derived from `RUST_ENV`.
+    /// 10k max entries), `dev_mode` derived from `RUST_ENV`, and the
+    /// `PLATFORM_HOST` env var parsed into the platform-host list.
     pub fn new(pool: db::DbPool) -> Self {
         let dev_mode = std::env::var("RUST_ENV")
             .map(|v| v == "development")
             .unwrap_or(false);
+        let platform_hosts = Arc::new(load_platform_hosts(dev_mode));
         Self {
             pool,
             cache: Arc::new(TenantResolutionCache::new(300, 30, 10_000)),
             dev_mode,
+            platform_hosts,
         }
     }
+
+    /// Test/explicit constructor: caller chooses everything.
+    pub fn with_parts(
+        pool: db::DbPool,
+        cache: Arc<TenantResolutionCache>,
+        dev_mode: bool,
+        platform_hosts: Vec<String>,
+    ) -> Self {
+        Self {
+            pool,
+            cache,
+            dev_mode,
+            platform_hosts: Arc::new(platform_hosts),
+        }
+    }
+}
+
+/// Read `PLATFORM_HOST` from env (comma-separated, normalized) and tack on the
+/// dev fallbacks. The default `reality.example.com` mirrors the seed in
+/// migration 00135 so a zero-config dev box recognises the platform host.
+fn load_platform_hosts(dev_mode: bool) -> Vec<String> {
+    let mut hosts: Vec<String> = std::env::var("PLATFORM_HOST")
+        .ok()
+        .map(|raw| {
+            raw.split(',')
+                .filter_map(|h| normalize_host(h))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    // Always include the production placeholder so the seed in 00135 and the
+    // resolver agree without needing PLATFORM_HOST in dev.
+    if !hosts
+        .iter()
+        .any(|h| h == "reality.example.com")
+    {
+        hosts.push("reality.example.com".to_string());
+    }
+
+    if dev_mode {
+        for fallback in ["localhost", "127.0.0.1"] {
+            if !hosts.iter().any(|h| h == fallback) {
+                hosts.push(fallback.to_string());
+            }
+        }
+    }
+
+    hosts
 }
 
 // ============================================================================
@@ -342,6 +429,33 @@ pub async fn host_tenant_middleware(
             return Err((StatusCode::NOT_FOUND, "Unknown tenant host"));
         }
     };
+
+    // 2.5 Phase 4: PlatformHost short-circuit.
+    //
+    // If the inbound host matches a PLATFORM_HOST sentinel, we resolve to the
+    // 4th RLS context (global-read across all orgs) BEFORE consulting
+    // `agency_domains`. The schema-level `agency_domains_host_not_reserved`
+    // check constraint (migration 00135) prevents an agency from owning the
+    // same host, so this branch can never be wrong about ownership.
+    //
+    // PlatformHost requests carry the nil UUID as `organization_id` — a
+    // sentinel meaning "no specific tenant." Downstream code MUST branch on
+    // `source == PlatformHost` and not treat the id as a real org id.
+    if cfg
+        .platform_hosts
+        .iter()
+        .any(|ph| ph.as_str() == host.as_str())
+    {
+        let resolved = ResolvedTenant {
+            organization_id: Uuid::nil(),
+            source: TenantSource::PlatformHost,
+        };
+        request.extensions_mut().insert(resolved);
+        // SEAM(leak#15): per-tenant rate limit hook (no-op for PlatformHost).
+        let response = next.run(request).await;
+        // SEAM(leak#19): per-tenant metering hook (counts platform-host hits).
+        return Ok(response);
+    }
 
     // 3. Dev-mode `/a/{slug}` path routing.
     if cfg.dev_mode {
@@ -660,4 +774,56 @@ mod tests {
     // the full `host_tenant_middleware` request flow) are exercised by
     // integration tests in a later wave — they require a live Postgres with
     // migrations applied and `agency_domains` rows seeded.
+
+    // ============================================================================
+    // Phase 4: PlatformHost wiring.
+    // ============================================================================
+
+    #[test]
+    fn platform_host_default_includes_reality_example_com() {
+        // No env var set, no dev_mode: default fallback is `reality.example.com`
+        // (mirrors the seed in migration 00135).
+        let hosts = load_platform_hosts(false);
+        assert!(
+            hosts.iter().any(|h| h == "reality.example.com"),
+            "default platform host list missing reality.example.com: {hosts:?}"
+        );
+    }
+
+    #[test]
+    fn platform_host_dev_mode_adds_localhost_fallbacks() {
+        let hosts = load_platform_hosts(true);
+        for expected in ["reality.example.com", "localhost", "127.0.0.1"] {
+            assert!(
+                hosts.iter().any(|h| h == expected),
+                "dev-mode platform host list missing {expected}: {hosts:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn platform_host_env_overrides_are_normalized() {
+        // Standalone helper test — we don't `set_var` the global env because
+        // that races with parallel tests. We re-check `normalize_host` does
+        // the right thing, then trust `load_platform_hosts` which delegates.
+        assert_eq!(
+            normalize_host("Reality.Production.COM").as_deref(),
+            Some("reality.production.com")
+        );
+    }
+
+    #[test]
+    fn resolved_tenant_is_platform_host_helper() {
+        let agency = ResolvedTenant {
+            organization_id: Uuid::new_v4(),
+            source: TenantSource::Subdomain,
+        };
+        let platform = ResolvedTenant {
+            organization_id: Uuid::nil(),
+            source: TenantSource::PlatformHost,
+        };
+        assert!(!agency.is_platform_host());
+        assert!(platform.is_platform_host());
+        assert_eq!(platform.organization_id, Uuid::nil());
+    }
 }
