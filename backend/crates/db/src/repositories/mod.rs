@@ -17,6 +17,7 @@ pub mod financial;
 pub mod granular_notification;
 pub mod health_monitoring;
 pub mod help;
+pub mod membership;
 pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
@@ -30,6 +31,7 @@ pub mod platform_admin;
 pub mod portal_password_reset;
 pub mod role;
 pub mod session;
+pub mod user_invite;
 pub mod signature_request;
 pub mod system_announcement;
 pub mod two_factor_auth;
@@ -88,6 +90,7 @@ pub use health_monitoring::{
     MetricStats, MetricStatus,
 };
 pub use help::{FaqEntry, HelpArticle, HelpCategory, HelpRepository, Tooltip};
+pub use membership::MembershipRepository;
 pub use messaging::MessagingRepository;
 pub use meter::MeterRepository;
 pub use notification_preference::NotificationPreferenceRepository;
@@ -112,6 +115,7 @@ pub use two_factor_auth::TwoFactorAuthRepository;
 pub use unit::UnitRepository;
 pub use unit_resident::UnitResidentRepository;
 pub use user::UserRepository;
+pub use user_invite::{ConsumeInviteOutcome, UserInviteRepository};
 pub use vote::VoteRepository;
 
 // Epic 15: Property Listings & Multi-Portal Sync
