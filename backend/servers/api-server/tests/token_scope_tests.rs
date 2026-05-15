@@ -81,6 +81,7 @@ fn build_app(pool: PgPool) -> Router {
         pool,
         cache: Arc::new(TenantResolutionCache::new(300, 30, 100)),
         dev_mode: true,
+        platform_hosts: Arc::new(Vec::new()),
     };
     Router::new()
         .route("/echo", get(echo))
