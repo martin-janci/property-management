@@ -214,3 +214,61 @@ where
         })
     }
 }
+
+/// Optional variant of [`RequestPrincipal`] for endpoints that accept BOTH
+/// authenticated and anonymous traffic (e.g. a public listing detail that
+/// surfaces extra fields when the caller is logged in).
+///
+/// # Branching contract
+///
+/// Three explicit branches, encoded so the call-site can match on
+/// `Some`/`None` without juggling errors:
+///
+/// 1. **No `Authorization` header** → `Self(None)`. Truly anonymous request.
+/// 2. **`Authorization` present and resolves cleanly** → `Self(Some(principal))`.
+///    Hand the principal to the handler.
+/// 3. **`Authorization` present but JWT is invalid OR membership lookup
+///    yields a 403** → propagate the rejection. We MUST NOT swallow
+///    security failures here: an attacker presenting a stolen-but-revoked
+///    token, or a token for an org they no longer belong to, must be told
+///    "no", not silently demoted to "anonymous". (Defends leaks #10 and
+///    #11 in the brainstorming notes — same as the underlying extractor.)
+///
+/// In short: presence of the `Authorization` header is a *commitment* by
+/// the client to "I am authenticated"; the server honors that commitment
+/// strictly. Absence of the header is the only path to the `None` branch.
+#[derive(Debug, Clone, Copy)]
+pub struct OptionalRequestPrincipal(pub Option<RequestPrincipal>);
+
+impl<S> FromRequestParts<S> for OptionalRequestPrincipal
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Branch (1): no `Authorization` header → anonymous.
+        //
+        // We deliberately gate on the *presence* of the header rather than
+        // delegating to `RequestPrincipal::from_request_parts` and matching
+        // on its rejection: a missing-header rejection is conceptually the
+        // same as "not authenticated", but a malformed-header or invalid-
+        // token rejection is a security signal we must NOT swallow. Doing
+        // the check here lets us cleanly distinguish branch (1) from branch
+        // (3) without inspecting error strings.
+        if parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .is_none()
+        {
+            return Ok(Self(None));
+        }
+
+        // Branches (2) and (3): a header is present — let the underlying
+        // extractor do the work, and propagate any error it returns.
+        // 401 (invalid token), 403 (membership/principal mismatch), 500
+        // (DB lookup failure) all surface unchanged.
+        let principal = RequestPrincipal::from_request_parts(parts, state).await?;
+        Ok(Self(Some(principal)))
+    }
+}
