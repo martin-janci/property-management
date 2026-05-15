@@ -91,7 +91,10 @@ pub use workflow_templates::{
     WorkflowTemplateWithDetails,
 };
 
-pub use agency_branding::{AgencyBranding, UpdateOrganizationBranding};
+// Note: `AgencyBranding` from `agency_branding` is intentionally NOT re-exported here
+// because `agency::AgencyBranding` already occupies that name at this scope. The new
+// per-tenant branding type is consumed via the module path: `crate::models::agency_branding::AgencyBranding`.
+pub use agency_branding::UpdateOrganizationBranding;
 pub use agency_domain::{
     AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
