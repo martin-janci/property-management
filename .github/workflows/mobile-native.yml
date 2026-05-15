@@ -63,7 +63,7 @@ jobs:
         run: ./gradlew :androidApp:assembleDebug
 
       - name: Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-debug-apk
           path: mobile-native/androidApp/build/outputs/apk/debug/*.apk
@@ -89,7 +89,7 @@ jobs:
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
       - name: Upload iOS framework
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-framework
           path: mobile-native/shared/build/bin/iosSimulatorArm64/debugFramework/
