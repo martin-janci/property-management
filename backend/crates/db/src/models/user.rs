@@ -108,22 +108,17 @@ impl ProfileVisibility {
 /// rules (password policy, email verification, MFA) and authorization in the
 /// `RequestPrincipal` extractor. Mutating this field on a row goes ONLY through
 /// the `set_principal_kind()` SQL function (defends leaks #8 and #12).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum PrincipalKind {
     /// Public portal user (formerly the `portal_users` table).
     Public,
     /// Agency staff user (the historical default).
+    #[default]
     Staff,
     /// Platform / super-admin principal.
     Platform,
-}
-
-impl Default for PrincipalKind {
-    fn default() -> Self {
-        Self::Staff
-    }
 }
 
 impl PrincipalKind {
