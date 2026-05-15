@@ -13,9 +13,11 @@ pub enum TenantOpsError {
     #[error("manifest parse: {0}")]
     ManifestParse(String),
 
-    #[error("manifest is stale: table `{0}` was added to the schema but is not "
-        "in the manifest. Regenerate via `bash backend/scripts/check-rls-coverage.sh "
-        "--emit-manifest backend/manifests/tenant-data-manifest.json`.")]
+    #[error(
+        "manifest is stale: table `{0}` was added to the schema but is not in the manifest. \
+         Regenerate via `bash backend/scripts/check-rls-coverage.sh \
+         --emit-manifest backend/manifests/tenant-data-manifest.json`."
+    )]
     ManifestStale(String),
 
     #[error("database error: {0}")]

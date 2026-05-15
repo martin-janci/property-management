@@ -196,7 +196,7 @@ where
     //
     // We accept the trade-off and return an empty vec on the first
     // structural error.
-    let mut keys = Vec::<String>::new();
+    let keys = Vec::<String>::new();
     let _ = conn;
     let _ = org_id;
     let _ = candidates;

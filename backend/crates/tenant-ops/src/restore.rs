@@ -20,7 +20,7 @@
 
 use crate::errors::{TenantOpsError, TenantOpsResult};
 use crate::export::TenantExportMetadata;
-use crate::manifest::{TenantDataManifest, TenantTable};
+use crate::manifest::TenantDataManifest;
 use db::DbPool;
 use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};

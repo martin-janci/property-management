@@ -19,7 +19,7 @@
 //! analytics dump. Restore reads the same files in the same shape.
 
 use crate::errors::{TenantOpsError, TenantOpsResult};
-use crate::manifest::{TenantDataManifest, TenantTable};
+use crate::manifest::TenantDataManifest;
 use db::DbPool;
 use flate2::write::GzEncoder;
 use flate2::Compression;
