@@ -134,7 +134,7 @@ where
 
         let effective_org = match (resolved, kind) {
             // Host-resolved org + non-platform kind → require an active membership.
-            (Some(rt), kind) if kind != PrincipalKind::Platform => {
+            (Some(rt), PrincipalKind::Public) | (Some(rt), PrincipalKind::Staff) => {
                 let repo = MembershipRepository::new(pool.clone());
                 let active = repo
                     .is_active(user_id, rt.organization_id)
