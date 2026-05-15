@@ -2,10 +2,21 @@
 //!
 //! Mounted at `/api/v1/admin/memberships`. The endpoints here are the ONE
 //! sanctioned path to grant or revoke a `user_memberships` row (defends
-//! leak #9). Capability-based authorization proper lands in Phase 5; for now
-//! we gate on a stub `require_platform_principal` that requires the caller's
-//! `RequestPrincipal` to be of `PrincipalKind::Platform`.
+//! leak #9).
+//!
+//! # Auth
+//!
+//! Phase 5 capability gating is wired (N5). Each route declares the capability
+//! it needs via the `RequireCapability` extractor + `require_capability(...)`
+//! tower layer:
+//!
+//!   * `POST /memberships/invite`  → `Capability::MembershipsGrant`
+//!   * `POST /memberships/accept`  → no capability (the invitee accepts; only
+//!                                    `RequestPrincipal` is required for
+//!                                    defense-in-depth identity binding)
+//!   * `DELETE /memberships/{id}`  → `Capability::MembershipsRevoke`
 
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -25,22 +36,18 @@ use api_core::extractors::principal::RequestPrincipal;
 /// Sub-router. Merged into `super::router()`.
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/memberships/invite", post(invite))
+        .route(
+            "/memberships/invite",
+            post(invite).layer(require_capability(Capability::MembershipsGrant)),
+        )
+        // `accept` is performed by the invitee — gated only by `RequestPrincipal`
+        // identity binding (the handler verifies principal == named user_id).
+        // No capability is required here.
         .route("/memberships/accept", post(accept))
-        .route("/memberships/{user_id}", delete(revoke))
-}
-
-/// Phase 2 stub: capability gating proper lands in Phase 5. Until then, only
-/// `Platform` principals can mutate memberships from this endpoint surface.
-fn require_platform_principal(p: &RequestPrincipal) -> Result<(), (StatusCode, &'static str)> {
-    if p.is_platform() {
-        Ok(())
-    } else {
-        Err((
-            StatusCode::FORBIDDEN,
-            "platform principal required (Phase 5 capability gating not yet wired)",
-        ))
-    }
+        .route(
+            "/memberships/{user_id}",
+            delete(revoke).layer(require_capability(Capability::MembershipsRevoke)),
+        )
 }
 
 // ====================================================================
@@ -69,12 +76,11 @@ pub struct InviteResponse {
 }
 
 pub async fn invite(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Json(req): Json<InviteRequest>,
 ) -> Result<(StatusCode, Json<InviteResponse>), (StatusCode, &'static str)> {
-    require_platform_principal(&principal)?;
-
     if req.email.trim().is_empty() || !req.email.contains('@') {
         return Err((StatusCode::BAD_REQUEST, "invalid email"));
     }
@@ -218,13 +224,12 @@ pub struct RevokeResponse {
 }
 
 pub async fn revoke(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     principal: RequestPrincipal,
     Path(user_id): Path<Uuid>,
     Json(req): Json<RevokeRequest>,
 ) -> Result<Json<RevokeResponse>, (StatusCode, &'static str)> {
-    require_platform_principal(&principal)?;
-
     let mem_repo = MembershipRepository::new(state.db.clone());
     let revoked = mem_repo
         .revoke(user_id, req.organization_id, Some(principal.user_id))
