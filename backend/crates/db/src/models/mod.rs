@@ -1122,3 +1122,8 @@ pub use api_ecosystem::{
 pub mod tenant_feature_flag;
 
 pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};
+
+// Phase 2 — Defense N2: per-org auth policy (defends leak #13).
+pub mod auth_policy;
+
+pub use auth_policy::AuthPolicy;
