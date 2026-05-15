@@ -232,6 +232,11 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 function AppNavigation() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+  // Phase 5 (B6): mirror the predicate used by <RequirePlatformPrincipal>.
+  // Hidden (not just disabled) when the principal isn't platform-kind —
+  // surfacing the link to staff/public would be information disclosure
+  // (leak #21).
+  const { isPlatformPrincipal } = usePrincipalCapabilities();
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -242,6 +247,7 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
+      {isPlatformPrincipal ? <Link to="/admin">Admin</Link> : null}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
