@@ -473,13 +473,14 @@ impl UserHandler {
         {
             return Ok(uid);
         }
-        if let Some(uid) =
-            sqlx::query_scalar::<_, Uuid>("SELECT pm_user_id FROM portal_users WHERE id = $1")
-                .bind(portal_id)
-                .fetch_optional(pool)
-                .await
-                .map_err(|e| e.to_string())?
-                .flatten()
+        if let Some(uid) = sqlx::query_scalar::<_, Option<Uuid>>(
+            "SELECT pm_user_id FROM portal_users WHERE id = $1",
+        )
+        .bind(portal_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| e.to_string())?
+        .flatten()
         {
             return Ok(uid);
         }

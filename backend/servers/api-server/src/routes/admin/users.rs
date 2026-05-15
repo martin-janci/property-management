@@ -151,7 +151,7 @@ async fn set_principal_kind(
         .bind(&body.kind)
         .bind(principal.user_id)
         .bind(&body.reason)
-        .execute(rls.conn())
+        .execute(&mut **rls.conn())
         .await;
 
     rls.release().await;
