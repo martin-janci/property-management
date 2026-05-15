@@ -45,7 +45,7 @@ pub struct GrantMembership {
 }
 
 /// User invite (used by `user_invites` table; see migration 00130).
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize, Deserialize)]
 pub struct UserInvite {
     pub id: Uuid,
     pub email: String,
