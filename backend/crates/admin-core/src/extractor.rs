@@ -3,11 +3,11 @@
 //! Every admin route declares the capability it needs by adding
 //! `RequireCapability(Capability::X)` to its handler signature. The extractor:
 //!
-//! 1. Pulls the authenticated user via `api_core::AuthUser` (Phase 2 will
-//!    swap this for `RequestPrincipal` when it lands; the gate remains the
-//!    same).
-//! 2. Enforces `principal_kind == 'platform'` (currently via
-//!    `AuthUser::is_platform_admin()`).
+//! 1. Pulls the authenticated user via `api_core::RequestPrincipal` — Phase 2
+//!    contract: principal kind is re-derived from the trusted `users` table on
+//!    every request; JWT `roles` / `kind` claims are NEVER trusted server-side.
+//! 2. Enforces `principal_kind == Platform` via the strongly-typed
+//!    [`PrincipalKind::Platform`].
 //! 3. Looks up an active capability grant.
 //! 4. Verifies recent MFA (15-minute window).
 //! 5. Writes an audit row — successful or denied.
@@ -26,7 +26,8 @@ use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use std::sync::Arc;
 
-use api_core::AuthUser;
+use api_core::extractors::principal::RequestPrincipal;
+use api_core::extractors::tenant::TenantMembershipProvider;
 
 use crate::{AdminError, AuditOutcome, AuditWriter, Capability, CapabilityGrantsRepository, MfaRecency};
 
@@ -60,7 +61,7 @@ pub struct RequireCapability(pub Capability);
 
 impl<S> FromRequestParts<S> for RequireCapability
 where
-    S: Send + Sync,
+    S: TenantMembershipProvider,
 {
     type Rejection = AdminError;
 
@@ -102,18 +103,25 @@ where
             .and_then(|h| h.to_str().ok())
             .map(|s| s.to_string());
 
-        // Step 1: authenticated user.
-        let auth = AuthUser::from_request_parts(parts, state).await.map_err(
-            |(_status, _msg)| AdminError::Unauthenticated,
-        )?;
+        // Step 1: authenticated principal — Phase 2 contract.
+        //
+        // `RequestPrincipal` re-derives `principal_kind` from the trusted
+        // `users` table on every request. JWT `roles` / `kind` claims are
+        // accepted only as informational hints; they are NEVER trusted as
+        // authority server-side (defends leaks #10/#11).
+        let principal = RequestPrincipal::from_request_parts(parts, state)
+            .await
+            .map_err(|(_status, _msg)| AdminError::Unauthenticated)?;
 
         // Step 2: platform principal.
-        // Phase 2 will introduce `principal_kind`; for now `is_platform_admin`
-        // is the closest existing check (super_admin / platform_admin role).
-        if !auth.is_platform_admin() {
+        //
+        // Strongly-typed: `PrincipalKind::Platform` from the `users.principal_kind`
+        // column. Replaces the previous `AuthUser::is_platform_admin()` check
+        // which trusted the JWT `roles` claim — a token-claim-forgery risk.
+        if !principal.is_platform() {
             audit_denied(
                 &deps,
-                Some(auth.user_id),
+                Some(principal.user_id),
                 required,
                 ip.as_deref(),
                 user_agent.as_deref(),
@@ -123,11 +131,11 @@ where
         }
 
         // Step 3: capability grant.
-        let has = deps.grants.user_has(auth.user_id, required).await?;
+        let has = deps.grants.user_has(principal.user_id, required).await?;
         if !has {
             audit_denied(
                 &deps,
-                Some(auth.user_id),
+                Some(principal.user_id),
                 required,
                 ip.as_deref(),
                 user_agent.as_deref(),
@@ -139,13 +147,16 @@ where
         // Step 4: recent MFA. We re-check `mfa_required_for(user, cap)` so a
         // narrowly-scoped grant (e.g. an automation user) can opt out. The
         // default is TRUE; never opt out without an explicit, audited reason.
-        let mfa_required = deps.grants.mfa_required_for(auth.user_id, required).await?;
+        let mfa_required = deps
+            .grants
+            .mfa_required_for(principal.user_id, required)
+            .await?;
         if mfa_required {
-            let fresh = deps.mfa.recent_mfa(auth.user_id).await?;
+            let fresh = deps.mfa.recent_mfa(principal.user_id).await?;
             if !fresh {
                 audit_denied(
                     &deps,
-                    Some(auth.user_id),
+                    Some(principal.user_id),
                     required,
                     ip.as_deref(),
                     user_agent.as_deref(),
@@ -159,7 +170,7 @@ where
         let _ = deps
             .audit
             .record(
-                Some(auth.user_id),
+                Some(principal.user_id),
                 required,
                 AuditOutcome::Allowed,
                 None,
