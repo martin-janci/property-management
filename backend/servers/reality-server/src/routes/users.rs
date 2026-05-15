@@ -3,6 +3,7 @@
 //! Supports SSO with Property Management via OAuth 2.0.
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
+use crate::extractors::auth::extract_session_token;
 use crate::handlers::users::{
     PasswordResetConfirmResult, PasswordResetRequestResult, RegistrationResult, UserHandler,
 };
@@ -233,27 +234,13 @@ pub async fn logout(
     headers: axum::http::HeaderMap,
     principal: RequestPrincipal,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    // Extract the token from Authorization header
-    let token = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|auth| auth.strip_prefix("Bearer "))
-        .or_else(|| {
-            // Fall back to cookie
-            headers
-                .get(axum::http::header::COOKIE)
-                .and_then(|v| v.to_str().ok())
-                .and_then(|cookies| {
-                    cookies
-                        .split(';')
-                        .find(|c| c.trim().starts_with("portal_session="))
-                        .map(|c| c.trim().strip_prefix("portal_session=").unwrap())
-                })
-        });
-
-    if let Some(token) = token {
+    // Extract the token from Authorization header or portal_session cookie.
+    // Logout is the one place we still need the raw token (to compute the
+    // session-row hash for invalidation); RequestPrincipal carries the
+    // user id but not the token string.
+    if let Some(token) = extract_session_token(&headers) {
         // Invalidate the session
-        if let Err(e) = state.session_service.invalidate_session(token).await {
+        if let Err(e) = state.session_service.invalidate_session(&token).await {
             tracing::warn!(user_id = %principal.user_id, error = %e, "Failed to invalidate session");
         }
     }

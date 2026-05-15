@@ -13,6 +13,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::extractors::auth::{extract_session_cookie, extract_session_token};
 use crate::state::AppState;
 
 /// Create SSO router.
@@ -670,40 +671,6 @@ async fn introspect_pm_token(
     tracing::debug!(active = result.active, "SSO token validated and cached");
 
     Ok(result)
-}
-
-/// Extract session cookie from headers.
-fn extract_session_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
-    headers
-        .get(axum::http::header::COOKIE)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|cookies| {
-            cookies
-                .split(';')
-                .find(|c| c.trim().starts_with("portal_session="))
-                .map(|c| {
-                    c.trim()
-                        .strip_prefix("portal_session=")
-                        .unwrap()
-                        .to_string()
-                })
-        })
-}
-
-/// Extract session token from Authorization header or cookie.
-fn extract_session_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    // Try Authorization header first
-    if let Some(auth) = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-    {
-        if let Some(token) = auth.strip_prefix("Bearer ") {
-            return Some(token.to_string());
-        }
-    }
-
-    // Fall back to cookie
-    extract_session_cookie(headers)
 }
 
 // ==================== Story 96.3: SSO Token Exchange & Session Sync ====================
