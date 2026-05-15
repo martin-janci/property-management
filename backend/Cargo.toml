@@ -5,6 +5,7 @@ members = [
     "crates/api-core",
     "crates/db",
     "crates/integrations",
+    "crates/tenant-ops",
     "servers/api-server",
     "servers/reality-server",
     "servers/deploy-server",
@@ -105,6 +106,7 @@ common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
+tenant-ops = { path = "crates/tenant-ops" }
 
 # Phase 1: deploy-server
 bollard = "0.16"
