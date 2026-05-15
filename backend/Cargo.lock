@@ -170,7 +170,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "axum 0.8.9",
  "axum-extra",
@@ -182,6 +182,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror 1.0.69",
+ "tokio",
  "tower 0.5.3",
  "tower-http",
  "tracing",
@@ -192,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "aes-gcm",
  "ammonia",
@@ -1600,7 +1601,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "axum 0.8.9",
  "chrono",
@@ -1935,7 +1936,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "argon2",
  "chrono",
@@ -1987,7 +1988,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3432,7 +3433,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -5051,7 +5052,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.367"
+version = "0.2.375"
 dependencies = [
  "anyhow",
  "api-core",

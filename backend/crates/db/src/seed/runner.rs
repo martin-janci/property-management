@@ -215,7 +215,6 @@ impl SeedRunner {
                 "System Administrator",
                 &admin_hash,
                 None,
-                true, // is_super_admin
                 "sk",
             )
             .await
@@ -252,7 +251,6 @@ impl SeedRunner {
                         user.name,
                         &default_hash,
                         user.phone,
-                        false,
                         user.locale,
                     )
                     .await

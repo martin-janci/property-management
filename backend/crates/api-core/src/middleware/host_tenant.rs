@@ -1,0 +1,663 @@
+//! Host-resolution (tenant-resolution) middleware — Phase 1 keystone.
+//!
+//! This middleware runs FIRST on the request pipeline. It inspects the inbound
+//! `Host` header (or HTTP/2 `:authority`), maps it to exactly one organization
+//! (the RLS tenant) via the `agency_domains` table, and injects a
+//! [`ResolvedTenant`] into the request extensions. Downstream extractors (e.g.
+//! `HostRlsConnection`) read that extension to open an RLS-scoped connection.
+//!
+//! # Why this is NOT the old `rls_context` middleware
+//!
+//! The deprecated `middleware/rls_context.rs` set RLS context on the *pool*,
+//! which does nothing useful — PostgreSQL session settings are connection-
+//! scoped. This middleware deliberately **never touches a DB connection's RLS
+//! context**. It only resolves host -> org and injects an extension. The
+//! `HostRlsConnection` extractor is what acquires a connection and sets context
+//! on that exact connection.
+//!
+//! # Resolution algorithm (`host_tenant_middleware`)
+//!
+//! 1. Public-allowlist paths (`/health`, `/readiness`, `/metrics`,
+//!    `/swagger-ui`, `/api-docs`) pass through with no resolution.
+//! 2. Extract the TRUSTED host: the HTTP `Host` header / HTTP/2 `:authority`.
+//!    `X-Forwarded-Host` is ignored unless `TRUST_FORWARDED_HOST=true`.
+//!    The host is normalized (lowercase, port stripped, trailing dot stripped)
+//!    and rejected if it contains whitespace/control chars or exceeds 253 chars.
+//! 3. Dev-mode only: a `/a/{slug}` path prefix resolves the slug to an org and
+//!    the request URI is rewritten to strip the prefix (`source = DevPath`).
+//! 4. Otherwise: cache lookup, then `AgencyDomainRepository::resolve_host_system`
+//!    on miss, caching the (possibly negative) result.
+//! 5. Resolved -> inject [`ResolvedTenant`] into extensions, continue.
+//! 6. Unresolved -> **fail closed with HTTP 404** `"Unknown tenant host"`.
+
+use axum::{
+    body::Body,
+    extract::{Request, State},
+    http::{StatusCode, Uri},
+    middleware::Next,
+    response::Response,
+};
+use db::repositories::AgencyDomainRepository;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
+use uuid::Uuid;
+
+/// How a request's tenant was determined.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TenantSource {
+    /// Resolved from a platform subdomain (e.g. `acme.app.example.com`).
+    Subdomain,
+    /// Resolved from a customer-owned custom domain (e.g. `realty.acme.com`).
+    CustomDomain,
+    /// Resolved from a dev-mode `/a/{slug}` path prefix.
+    DevPath,
+}
+
+/// The tenant a request was resolved to, injected into request extensions.
+#[derive(Debug, Clone, Copy)]
+pub struct ResolvedTenant {
+    pub organization_id: Uuid,
+    pub source: TenantSource,
+}
+
+/// Shared configuration + state for [`host_tenant_middleware`].
+#[derive(Clone)]
+pub struct HostTenantConfig {
+    pub pool: db::DbPool,
+    pub cache: Arc<TenantResolutionCache>,
+    /// Driven by `RUST_ENV == "development"`. Enables `/a/{slug}` routing.
+    pub dev_mode: bool,
+}
+
+impl HostTenantConfig {
+    /// Build a config with a fresh cache (300s positive / 30s negative TTL,
+    /// 10k max entries) and `dev_mode` derived from `RUST_ENV`.
+    pub fn new(pool: db::DbPool) -> Self {
+        let dev_mode = std::env::var("RUST_ENV")
+            .map(|v| v == "development")
+            .unwrap_or(false);
+        Self {
+            pool,
+            cache: Arc::new(TenantResolutionCache::new(300, 30, 10_000)),
+            dev_mode,
+        }
+    }
+}
+
+// ============================================================================
+// TenantResolutionCache
+// ============================================================================
+
+/// A cached host-resolution entry with its own expiry instant.
+#[derive(Clone)]
+struct CachedResolution {
+    /// `None` means a *negative* cache entry (host did not resolve).
+    value: Option<ResolvedTenant>,
+    expires_at: Instant,
+}
+
+/// In-memory host -> resolution cache.
+///
+/// Mirrors the `TokenValidationCache` pattern in `reality-server/src/state.rs`:
+/// `Arc<RwLock<HashMap<..>>>`, per-entry `Instant` expiry, `max_entries`
+/// eviction. Positive and negative results have separate TTLs (negative
+/// entries expire faster so a newly-verified domain becomes reachable sooner).
+pub struct TenantResolutionCache {
+    cache: Arc<RwLock<HashMap<String, CachedResolution>>>,
+    ttl: Duration,
+    negative_ttl: Duration,
+    max_entries: usize,
+}
+
+impl TenantResolutionCache {
+    /// Create a new cache.
+    ///
+    /// * `ttl_secs` — TTL for positive (resolved) entries.
+    /// * `negative_ttl_secs` — TTL for negative (unresolved) entries.
+    /// * `max_entries` — soft cap; expired entries are evicted first, then
+    ///   oldest entries if still over cap.
+    pub fn new(ttl_secs: u64, negative_ttl_secs: u64, max_entries: usize) -> Self {
+        Self {
+            cache: Arc::new(RwLock::new(HashMap::new())),
+            ttl: Duration::from_secs(ttl_secs),
+            negative_ttl: Duration::from_secs(negative_ttl_secs),
+            max_entries,
+        }
+    }
+
+    /// Look up a host.
+    ///
+    /// Returns:
+    /// * `None` — cache miss (caller must resolve).
+    /// * `Some(None)` — negative cache hit (host known-unresolved).
+    /// * `Some(Some(tenant))` — positive cache hit.
+    pub async fn get(&self, host: &str) -> Option<Option<ResolvedTenant>> {
+        let cache = self.cache.read().await;
+        if let Some(entry) = cache.get(host) {
+            if Instant::now() < entry.expires_at {
+                return Some(entry.value);
+            }
+        }
+        None
+    }
+
+    /// Store a resolution result (positive or negative) for a host.
+    pub async fn set(&self, host: &str, value: Option<ResolvedTenant>) {
+        let ttl = if value.is_some() {
+            self.ttl
+        } else {
+            self.negative_ttl
+        };
+        let mut cache = self.cache.write().await;
+
+        // Evict if at capacity: expired entries first, then oldest-by-expiry.
+        if cache.len() >= self.max_entries {
+            let now = Instant::now();
+            let expired: Vec<String> = cache
+                .iter()
+                .filter(|(_, v)| v.expires_at < now)
+                .map(|(k, _)| k.clone())
+                .collect();
+            for key in expired {
+                cache.remove(&key);
+            }
+            if cache.len() >= self.max_entries {
+                let to_remove = cache.len() - self.max_entries + 1;
+                let mut entries: Vec<(String, Instant)> = cache
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.expires_at))
+                    .collect();
+                entries.sort_by_key(|(_, exp)| *exp);
+                for (key, _) in entries.into_iter().take(to_remove) {
+                    cache.remove(&key);
+                }
+            }
+        }
+
+        cache.insert(
+            host.to_string(),
+            CachedResolution {
+                value,
+                expires_at: Instant::now() + ttl,
+            },
+        );
+    }
+
+    /// Drop a single host's cache entry (e.g. after a domain is verified).
+    pub async fn invalidate(&self, host: &str) {
+        let mut cache = self.cache.write().await;
+        cache.remove(host);
+    }
+
+    /// Drop every cache entry.
+    pub async fn clear(&self) {
+        let mut cache = self.cache.write().await;
+        cache.clear();
+    }
+}
+
+// ============================================================================
+// Host normalization + path helpers
+// ============================================================================
+
+/// Paths that bypass tenant resolution entirely (infra / docs / health).
+const PUBLIC_ALLOWLIST: [&str; 5] = [
+    "/health",
+    "/readiness",
+    "/metrics",
+    "/swagger-ui",
+    "/api-docs",
+];
+
+/// Whether `path` is in the public allowlist (prefix match).
+fn is_public_allowlist_path(path: &str) -> bool {
+    PUBLIC_ALLOWLIST
+        .iter()
+        .any(|p| path == *p || path.starts_with(&format!("{p}/")))
+}
+
+/// Normalize a raw host string into a canonical form, or `None` if invalid.
+///
+/// * lowercases
+/// * strips an `:port` suffix
+/// * strips a single trailing dot
+/// * rejects empty hosts, hosts with whitespace/control chars, or length > 253
+pub fn normalize_host(raw: &str) -> Option<String> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    // Reject control chars / whitespace anywhere in the host.
+    if raw.chars().any(|c| c.is_whitespace() || c.is_control()) {
+        return None;
+    }
+
+    // Strip port. Note: IPv6 literals (`[::1]:8080`) are not expected for tenant
+    // hosts; a bracketed host without a port still works, and `[::1]:8080`
+    // would split on the last colon leaving `[::1]` which simply won't resolve.
+    let without_port = match raw.rsplit_once(':') {
+        Some((host, port)) if port.chars().all(|c| c.is_ascii_digit()) && !port.is_empty() => host,
+        _ => raw,
+    };
+
+    // Strip a single trailing dot (FQDN root).
+    let trimmed = without_port.strip_suffix('.').unwrap_or(without_port);
+
+    let normalized = trimmed.to_ascii_lowercase();
+    if normalized.is_empty() || normalized.len() > 253 {
+        return None;
+    }
+    Some(normalized)
+}
+
+/// If `path` is a dev-mode `/a/{slug}` path, return `(slug, rest)` where `rest`
+/// is the remainder of the path to rewrite to (always starts with `/`).
+///
+/// Equivalent to the regex `^/a/([a-z0-9-]+)(/.*)?$`.
+pub fn parse_dev_slug_path(path: &str) -> Option<(&str, &str)> {
+    let after = path.strip_prefix("/a/")?;
+    // slug runs until the next '/' or end of string.
+    let (slug, rest) = match after.find('/') {
+        Some(idx) => (&after[..idx], &after[idx..]),
+        None => (after, ""),
+    };
+    if slug.is_empty()
+        || !slug
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+    {
+        return None;
+    }
+    let rest = if rest.is_empty() { "/" } else { rest };
+    Some((slug, rest))
+}
+
+/// Extract the trusted host from request headers.
+///
+/// Uses the `Host` header (HTTP/1.1) / `:authority` (HTTP/2 — axum surfaces it
+/// via the `Host` header too). `X-Forwarded-Host` is consulted ONLY when
+/// `TRUST_FORWARDED_HOST=true`.
+fn extract_trusted_host(request: &Request<Body>) -> Option<String> {
+    let trust_forwarded = std::env::var("TRUST_FORWARDED_HOST")
+        .map(|v| v == "true")
+        .unwrap_or(false);
+
+    if trust_forwarded {
+        if let Some(fwd) = request
+            .headers()
+            .get("x-forwarded-host")
+            .and_then(|v| v.to_str().ok())
+        {
+            // X-Forwarded-Host may contain a comma-separated list; take the first.
+            let first = fwd.split(',').next().unwrap_or(fwd);
+            if let Some(host) = normalize_host(first) {
+                return Some(host);
+            }
+        }
+    }
+
+    request
+        .headers()
+        .get(axum::http::header::HOST)
+        .and_then(|v| v.to_str().ok())
+        .and_then(normalize_host)
+}
+
+/// Rewrite a request URI, replacing the path while preserving the query string.
+fn rewrite_uri_path(uri: &Uri, new_path: &str) -> Result<Uri, ()> {
+    let path_and_query = match uri.query() {
+        Some(q) => format!("{new_path}?{q}"),
+        None => new_path.to_string(),
+    };
+    // Rebuild from parts so scheme/authority (if any) are preserved.
+    let mut parts = uri.clone().into_parts();
+    parts.path_and_query = Some(path_and_query.parse().map_err(|_| ())?);
+    Uri::from_parts(parts).map_err(|_| ())
+}
+
+// ============================================================================
+// Middleware
+// ============================================================================
+
+/// Host-resolution middleware. See module docs for the full algorithm.
+pub async fn host_tenant_middleware(
+    State(cfg): State<HostTenantConfig>,
+    mut request: Request<Body>,
+    next: Next,
+) -> Result<Response, (StatusCode, &'static str)> {
+    let path = request.uri().path().to_string();
+
+    // 1. Public-allowlist paths bypass resolution entirely.
+    if is_public_allowlist_path(&path) {
+        return Ok(next.run(request).await);
+    }
+
+    // 2. Extract the trusted host.
+    let host = match extract_trusted_host(&request) {
+        Some(h) => h,
+        None => {
+            tracing::warn!(path = %path, "Tenant resolution: missing/invalid Host header");
+            return Err((StatusCode::NOT_FOUND, "Unknown tenant host"));
+        }
+    };
+
+    // 3. Dev-mode `/a/{slug}` path routing.
+    if cfg.dev_mode {
+        if let Some((slug, rest)) = parse_dev_slug_path(&path) {
+            let repo = AgencyDomainRepository::new(cfg.pool.clone());
+            let org_id = repo.resolve_slug_system(slug).await.map_err(|e| {
+                tracing::error!(error = %e, slug = %slug, "resolve_slug_system failed");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Tenant resolution error")
+            })?;
+
+            match org_id {
+                Some(organization_id) => {
+                    // Rewrite the URI to strip the `/a/{slug}` prefix.
+                    let new_uri = rewrite_uri_path(request.uri(), rest).map_err(|_| {
+                        tracing::error!(slug = %slug, "failed to rewrite dev-slug URI");
+                        (StatusCode::INTERNAL_SERVER_ERROR, "Tenant resolution error")
+                    })?;
+                    *request.uri_mut() = new_uri;
+
+                    let resolved = ResolvedTenant {
+                        organization_id,
+                        source: TenantSource::DevPath,
+                    };
+                    request.extensions_mut().insert(resolved);
+                    // SEAM(leak#15): per-tenant rate limit — a downstream layer can
+                    // read `ResolvedTenant` here and apply per-organization quotas.
+                    let response = next.run(request).await;
+                    // SEAM(leak#19): per-tenant metering — wrap `next.run` to record
+                    // per-organization request counts / billing units.
+                    return Ok(response);
+                }
+                None => {
+                    tracing::warn!(slug = %slug, "dev-mode /a/{{slug}} did not resolve");
+                    return Err((StatusCode::NOT_FOUND, "Unknown tenant host"));
+                }
+            }
+        }
+    }
+
+    // 4. Host-based resolution: cache, then system lookup on miss.
+    let resolved = match cfg.cache.get(&host).await {
+        Some(cached) => cached,
+        None => {
+            let repo = AgencyDomainRepository::new(cfg.pool.clone());
+            let org_id = repo.resolve_host_system(&host).await.map_err(|e| {
+                tracing::error!(error = %e, host = %host, "resolve_host_system failed");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Tenant resolution error")
+            })?;
+            // `source` is Subdomain by default. Fetching `kind` to distinguish
+            // CustomDomain is intentionally deferred — Wave 3 does not branch on
+            // it. See the contract note in the Phase 1 spec.
+            let value = org_id.map(|organization_id| ResolvedTenant {
+                organization_id,
+                source: TenantSource::Subdomain,
+            });
+            cfg.cache.set(&host, value).await;
+            value
+        }
+    };
+
+    match resolved {
+        Some(resolved) => {
+            request.extensions_mut().insert(resolved);
+            // SEAM(leak#15): per-tenant rate limit — a downstream layer can read
+            // `ResolvedTenant` from extensions here and apply per-organization quotas.
+            let response = next.run(request).await;
+            // SEAM(leak#19): per-tenant metering — wrap `next.run` to record
+            // per-organization request counts / billing units.
+            Ok(response)
+        }
+        None => {
+            // 6. Fail closed — an unknown host must never reach a handler.
+            tracing::warn!(host = %host, "Tenant resolution: unknown host, failing closed (404)");
+            Err((StatusCode::NOT_FOUND, "Unknown tenant host"))
+        }
+    }
+}
+
+// ============================================================================
+// ResolvedTenantExtractor
+// ============================================================================
+
+/// Extractor that pulls the [`ResolvedTenant`] injected by
+/// [`host_tenant_middleware`] out of the request extensions.
+///
+/// Returns `500` if absent — that means the middleware did not run, which is a
+/// server misconfiguration (the middleware fails closed for unresolved hosts,
+/// so a missing extension is never a client error).
+pub struct ResolvedTenantExtractor(pub ResolvedTenant);
+
+impl<S> axum::extract::FromRequestParts<S> for ResolvedTenantExtractor
+where
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<ResolvedTenant>()
+            .copied()
+            .map(ResolvedTenantExtractor)
+            .ok_or((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Tenant not resolved (host_tenant_middleware did not run)",
+            ))
+    }
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_host_lowercases() {
+        assert_eq!(
+            normalize_host("ACME.Example.COM").as_deref(),
+            Some("acme.example.com")
+        );
+    }
+
+    #[test]
+    fn normalize_host_strips_port() {
+        assert_eq!(
+            normalize_host("acme.example.com:8080").as_deref(),
+            Some("acme.example.com")
+        );
+        assert_eq!(
+            normalize_host("acme.example.com:443").as_deref(),
+            Some("acme.example.com")
+        );
+    }
+
+    #[test]
+    fn normalize_host_strips_trailing_dot() {
+        assert_eq!(
+            normalize_host("acme.example.com.").as_deref(),
+            Some("acme.example.com")
+        );
+    }
+
+    #[test]
+    fn normalize_host_strips_port_and_trailing_dot() {
+        assert_eq!(
+            normalize_host("ACME.example.com.:8080").as_deref(),
+            Some("acme.example.com")
+        );
+    }
+
+    #[test]
+    fn normalize_host_rejects_empty() {
+        assert_eq!(normalize_host(""), None);
+        assert_eq!(normalize_host("   "), None);
+    }
+
+    #[test]
+    fn normalize_host_rejects_whitespace_and_control() {
+        assert_eq!(normalize_host("acme .example.com"), None);
+        assert_eq!(normalize_host("acme\texample.com"), None);
+        assert_eq!(normalize_host("acme\nexample.com"), None);
+        assert_eq!(normalize_host("acme\u{0007}.com"), None);
+    }
+
+    #[test]
+    fn normalize_host_rejects_too_long() {
+        let long = format!("{}.com", "a".repeat(260));
+        assert_eq!(normalize_host(&long), None);
+        // exactly 253 is allowed
+        let ok = "a".repeat(253);
+        assert_eq!(normalize_host(&ok).as_deref(), Some(ok.as_str()));
+    }
+
+    #[test]
+    fn normalize_host_non_numeric_port_suffix_kept() {
+        // A trailing `:something` that is not all digits is NOT a port; the
+        // resulting host just won't resolve, but we don't strip it.
+        assert_eq!(
+            normalize_host("acme.example.com:abc").as_deref(),
+            Some("acme.example.com:abc")
+        );
+    }
+
+    #[test]
+    fn parse_dev_slug_path_basic() {
+        assert_eq!(parse_dev_slug_path("/a/acme"), Some(("acme", "/")));
+    }
+
+    #[test]
+    fn parse_dev_slug_path_with_rest() {
+        assert_eq!(
+            parse_dev_slug_path("/a/acme/listings/123"),
+            Some(("acme", "/listings/123"))
+        );
+        assert_eq!(parse_dev_slug_path("/a/acme/"), Some(("acme", "/")));
+    }
+
+    #[test]
+    fn parse_dev_slug_path_allows_digits_and_hyphens() {
+        assert_eq!(parse_dev_slug_path("/a/acme-2/x"), Some(("acme-2", "/x")));
+    }
+
+    #[test]
+    fn parse_dev_slug_path_rejects_non_matching() {
+        assert_eq!(parse_dev_slug_path("/api/v1/listings"), None);
+        assert_eq!(parse_dev_slug_path("/a/"), None);
+        assert_eq!(parse_dev_slug_path("/a"), None);
+        // uppercase / underscores / dots are not valid slug chars
+        assert_eq!(parse_dev_slug_path("/a/Acme"), None);
+        assert_eq!(parse_dev_slug_path("/a/ac_me"), None);
+        assert_eq!(parse_dev_slug_path("/a/ac.me"), None);
+    }
+
+    #[test]
+    fn public_allowlist_paths_match() {
+        assert!(is_public_allowlist_path("/health"));
+        assert!(is_public_allowlist_path("/readiness"));
+        assert!(is_public_allowlist_path("/metrics"));
+        assert!(is_public_allowlist_path("/swagger-ui"));
+        assert!(is_public_allowlist_path("/swagger-ui/index.html"));
+        assert!(is_public_allowlist_path("/api-docs"));
+        assert!(is_public_allowlist_path("/api-docs/openapi.json"));
+    }
+
+    #[test]
+    fn public_allowlist_paths_no_false_positives() {
+        assert!(!is_public_allowlist_path("/api/v1/listings"));
+        assert!(!is_public_allowlist_path("/healthcheck"));
+        assert!(!is_public_allowlist_path("/metricsx"));
+        assert!(!is_public_allowlist_path("/"));
+    }
+
+    #[tokio::test]
+    async fn cache_miss_then_hit() {
+        let cache = TenantResolutionCache::new(300, 30, 100);
+        assert!(cache.get("acme.example.com").await.is_none());
+
+        let tenant = ResolvedTenant {
+            organization_id: Uuid::new_v4(),
+            source: TenantSource::Subdomain,
+        };
+        cache.set("acme.example.com", Some(tenant)).await;
+
+        let hit = cache.get("acme.example.com").await;
+        assert!(matches!(hit, Some(Some(_))));
+        assert_eq!(
+            hit.unwrap().unwrap().organization_id,
+            tenant.organization_id
+        );
+    }
+
+    #[tokio::test]
+    async fn cache_negative_entry() {
+        let cache = TenantResolutionCache::new(300, 30, 100);
+        cache.set("unknown.example.com", None).await;
+        // Negative hit: Some(None).
+        assert!(matches!(cache.get("unknown.example.com").await, Some(None)));
+    }
+
+    #[tokio::test]
+    async fn cache_ttl_expiry() {
+        // 0-second TTL => entries are immediately expired.
+        let cache = TenantResolutionCache::new(0, 0, 100);
+        let tenant = ResolvedTenant {
+            organization_id: Uuid::new_v4(),
+            source: TenantSource::Subdomain,
+        };
+        cache.set("acme.example.com", Some(tenant)).await;
+        // Allow the Instant to advance past the 0s TTL.
+        tokio::time::sleep(Duration::from_millis(5)).await;
+        assert!(cache.get("acme.example.com").await.is_none());
+    }
+
+    #[tokio::test]
+    async fn cache_invalidate_and_clear() {
+        let cache = TenantResolutionCache::new(300, 30, 100);
+        let tenant = ResolvedTenant {
+            organization_id: Uuid::new_v4(),
+            source: TenantSource::Subdomain,
+        };
+        cache.set("a.example.com", Some(tenant)).await;
+        cache.set("b.example.com", Some(tenant)).await;
+
+        cache.invalidate("a.example.com").await;
+        assert!(cache.get("a.example.com").await.is_none());
+        assert!(cache.get("b.example.com").await.is_some());
+
+        cache.clear().await;
+        assert!(cache.get("b.example.com").await.is_none());
+    }
+
+    #[tokio::test]
+    async fn cache_eviction_respects_max_entries() {
+        let cache = TenantResolutionCache::new(300, 30, 3);
+        let tenant = ResolvedTenant {
+            organization_id: Uuid::new_v4(),
+            source: TenantSource::Subdomain,
+        };
+        // Insert more than max_entries; cache must not grow unbounded.
+        for i in 0..10 {
+            cache
+                .set(&format!("host-{i}.example.com"), Some(tenant))
+                .await;
+        }
+        let len = cache.cache.read().await.len();
+        assert!(len <= 3, "cache grew beyond max_entries: {len}");
+    }
+
+    // NOTE: DB-dependent paths (resolve_host_system / resolve_slug_system and
+    // the full `host_tenant_middleware` request flow) are exercised by
+    // integration tests in a later wave — they require a live Postgres with
+    // migrations applied and `agency_domains` rows seeded.
+}

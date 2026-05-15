@@ -340,8 +340,20 @@ async fn main() -> anyhow::Result<()> {
 
     let jwt_service = JwtService::new(&jwt_secret).expect("Failed to create JWT service");
 
+    // Phase 1: Build the host-resolution config + shared tenant-resolution
+    // cache ONCE, then clone the `Arc` into both the middleware config and the
+    // AppState so domain-management handlers can invalidate cache entries via
+    // `state.tenant_resolution_cache`.
+    let host_tenant_config = api_core::middleware::HostTenantConfig::new(db_pool.clone());
+    let tenant_resolution_cache = host_tenant_config.cache.clone();
+
     // Create application state
-    let state = AppState::new(db_pool.clone(), email_service, jwt_service);
+    let state = AppState::new(
+        db_pool.clone(),
+        email_service,
+        jwt_service,
+        tenant_resolution_cache,
+    );
 
     // Start background scheduler for scheduled announcements
     let scheduler_enabled = std::env::var("SCHEDULER_ENABLED")
@@ -623,6 +635,15 @@ async fn main() -> anyhow::Result<()> {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Middleware
         .layer(TraceLayer::new_for_http())
+        // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST
+        // on the request pipeline (layers execute outside-in), inspecting the
+        // Host header to inject a `ResolvedTenant` extension before any
+        // handler/extractor runs. Public-allowlist paths (`/health`, etc.)
+        // bypass resolution; unknown hosts fail closed with 404.
+        .layer(axum::middleware::from_fn_with_state(
+            host_tenant_config.clone(),
+            api_core::middleware::host_tenant_middleware,
+        ))
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var
         .layer(
             CorsLayer::new()

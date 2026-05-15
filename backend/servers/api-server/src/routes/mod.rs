@@ -4,6 +4,9 @@
 
 pub mod admin;
 pub mod agencies;
+// Phase 1: Tenant Resolution — agency-create provisioning sliver.
+// Merged into `platform_admin::router()`; not nested directly in `lib.rs`.
+pub mod agency_provisioning;
 pub mod ai;
 pub mod announcements;
 pub mod auth;

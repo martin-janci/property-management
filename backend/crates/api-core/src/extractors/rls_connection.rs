@@ -432,6 +432,154 @@ where
     }
 }
 
+/// An RLS connection whose tenant context comes from host resolution, NOT from
+/// a JWT.
+///
+/// Unlike [`RlsConnection`] / [`SimpleRlsConnection`] (which derive the tenant
+/// from an authenticated token), this extractor reads the `ResolvedTenant` that
+/// `host_tenant_middleware` injected into the request extensions. It is the
+/// bridge between Phase 1 host resolution and RLS-scoped queries: use it on
+/// routes that are tenant-scoped by *host* rather than by *login* (e.g. public
+/// per-agency listing pages on the reality portal).
+///
+/// It carries the SAME `release()` + `Drop`/`spawn_clear_context` discipline as
+/// [`SimpleRlsConnection`] — always call `release().await` before the handler
+/// returns to clear RLS context before the connection returns to the pool.
+///
+/// # Rejection
+///
+/// Rejects with `500` if no `ResolvedTenant` extension is present — that means
+/// `host_tenant_middleware` did not run (or the host was unresolved, in which
+/// case the middleware itself already returned `404`).
+pub struct HostRlsConnection {
+    conn: Option<PoolConnection<Postgres>>,
+    organization_id: Uuid,
+    released: bool,
+}
+
+impl HostRlsConnection {
+    /// Get a mutable reference to the underlying connection.
+    pub fn conn(&mut self) -> &mut PoolConnection<Postgres> {
+        self.conn
+            .as_mut()
+            .expect("HostRlsConnection already released")
+    }
+
+    /// Get the resolved organization (tenant) ID for this request.
+    pub fn organization_id(&self) -> Uuid {
+        self.organization_id
+    }
+
+    /// Release the connection back to the pool after clearing RLS context.
+    ///
+    /// See [`RlsConnection::release()`] for details.
+    pub async fn release(&mut self) {
+        if self.released {
+            return;
+        }
+
+        if let Some(mut conn) = self.conn.take() {
+            if let Err(e) = db::tenant_context::clear_request_context(&mut *conn).await {
+                tracing::warn!(
+                    error = %e,
+                    organization_id = %self.organization_id,
+                    "Failed to clear RLS context on release"
+                );
+            }
+        }
+
+        self.released = true;
+    }
+}
+
+impl Deref for HostRlsConnection {
+    type Target = PoolConnection<Postgres>;
+
+    fn deref(&self) -> &Self::Target {
+        self.conn
+            .as_ref()
+            .expect("HostRlsConnection already released")
+    }
+}
+
+impl DerefMut for HostRlsConnection {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.conn
+            .as_mut()
+            .expect("HostRlsConnection already released")
+    }
+}
+
+impl Drop for HostRlsConnection {
+    fn drop(&mut self) {
+        if !self.released {
+            if let Some(conn) = self.conn.take() {
+                tracing::warn!(
+                    organization_id = %self.organization_id,
+                    "HostRlsConnection dropped without calling release() - spawning cleanup task"
+                );
+
+                db::tenant_context::spawn_clear_context(
+                    conn,
+                    format!("HostRlsConnection(org={})", self.organization_id),
+                );
+            }
+        }
+    }
+}
+
+impl<S> FromRequestParts<S> for HostRlsConnection
+where
+    S: TenantMembershipProvider,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Step 1: Read the tenant resolved by host_tenant_middleware.
+        let resolved = parts
+            .extensions
+            .get::<crate::middleware::host_tenant::ResolvedTenant>()
+            .copied()
+            .ok_or((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Tenant not resolved (host_tenant_middleware did not run)",
+            ))?;
+
+        let organization_id = resolved.organization_id;
+
+        // Step 2: Acquire a dedicated connection from the pool.
+        let mut conn = state.db_pool().acquire().await.map_err(|e| {
+            tracing::error!(error = %e, "Failed to acquire database connection for host RLS");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database connection unavailable",
+            )
+        })?;
+
+        // Step 3: Set RLS context on THIS specific connection. No user, not a
+        // super-admin — host-resolved requests are scoped strictly to one org.
+        db::tenant_context::set_request_context(&mut *conn, Some(organization_id), None, false)
+            .await
+            .map_err(|e| {
+                tracing::error!(
+                    error = %e,
+                    organization_id = %organization_id,
+                    "Failed to set RLS context for host-resolved tenant"
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to set security context",
+                )
+            })?;
+
+        Ok(HostRlsConnection {
+            conn: Some(conn),
+            organization_id,
+            released: false,
+        })
+    }
+}
+
 /// Helper macro to ensure RLS connection is released even on early returns.
 ///
 /// Usage:

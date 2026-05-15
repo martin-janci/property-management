@@ -83,6 +83,11 @@ pub fn router() -> Router<AppState> {
             post(revoke_user_sessions),
         )
         .route("/support/users/{id}/activity", get(get_user_activity))
+        // Agency provisioning (Phase 1: Tenant Resolution).
+        // Merged in from `agency_provisioning` so the new
+        // `POST /api/v1/platform-admin/agencies` endpoint is picked up by the
+        // existing `.nest("/api/v1/platform-admin", ...)` in `lib.rs`.
+        .merge(super::agency_provisioning::router())
 }
 
 /// Create public announcements router (for regular users).
@@ -178,7 +183,10 @@ fn has_super_admin_role(roles: &Option<Vec<String>>) -> bool {
 }
 
 /// Extract and validate super admin access token.
-fn extract_super_admin_token(
+///
+/// `pub(crate)` so sibling route modules (e.g. `agency_provisioning`) that are
+/// merged into [`router`] can reuse the exact same platform-admin auth gate.
+pub(crate) fn extract_super_admin_token(
     headers: &axum::http::HeaderMap,
     state: &AppState,
 ) -> Result<(Uuid, String), (StatusCode, Json<ErrorResponse>)> {

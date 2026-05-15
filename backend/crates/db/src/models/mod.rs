@@ -1,5 +1,6 @@
 //! Database models.
 
+pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
 pub mod building;
@@ -87,6 +88,10 @@ pub use workflow_templates::{
     TemplateSearchQuery, UpdateWorkflowTemplate, WorkflowTemplate, WorkflowTemplateAction,
     WorkflowTemplateRating, WorkflowTemplateSummary, WorkflowTemplateVariable,
     WorkflowTemplateWithDetails,
+};
+
+pub use agency_domain::{
+    AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
 
 pub use announcement::{
