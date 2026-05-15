@@ -337,6 +337,70 @@ impl ListingRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    // ========================================================================
+    // Phase 4: Global Portal Publish State (is_published)
+    // ========================================================================
+    //
+    // These methods control whether a listing appears in the platform-wide
+    // reality portal (4th RLS context). They are orthogonal to the existing
+    // workflow `status` and to the syndication-to-external-portals flow
+    // (Epic 105). The pattern is binary first per ROADMAP.md Phase 4; a
+    // future migration can evolve `is_published` into a channel set without
+    // breaking this API.
+
+    /// Mark a listing as published to the global reality portal.
+    /// Sets `is_published = TRUE` and (re)stamps `published_at = NOW()`.
+    /// Org-scoped — only the owning agency can flip its own listings.
+    pub async fn set_published(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Listing>, SqlxError> {
+        let listing = sqlx::query_as::<_, Listing>(
+            r#"
+            UPDATE listings SET
+                is_published = TRUE,
+                published_at = NOW(),
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(listing)
+    }
+
+    /// Withdraw a listing from the global reality portal.
+    /// Sets `is_published = FALSE` and clears `published_at`.
+    /// The listing row itself is preserved (invariant I-D — a listing exists
+    /// once; un-publishing only flips the global-read OR-clause off).
+    pub async fn set_unpublished(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Listing>, SqlxError> {
+        let listing = sqlx::query_as::<_, Listing>(
+            r#"
+            UPDATE listings SET
+                is_published = FALSE,
+                published_at = NULL,
+                updated_at = NOW()
+            WHERE id = $1 AND organization_id = $2
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(listing)
+    }
+
     /// Get listing statistics for organization.
     pub async fn get_statistics(&self, org_id: Uuid) -> Result<ListingStatistics, SqlxError> {
         let total_listings: (i64,) =

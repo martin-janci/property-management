@@ -3,22 +3,23 @@
 
 use crate::services::SyndicationService;
 use crate::state::AppState;
-use api_core::extractors::{RlsConnection, TenantExtractor};
+use api_core::extractors::{AuthUser, RlsConnection, TenantExtractor};
 use axum::{
     extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
 use db::models::{
-    listing_status, property_type as prop_type, CreateListing, CreateListingFromUnit,
-    CreateListingPhoto, CreateSyndication, Listing, ListingListQuery, ListingPhoto,
-    ListingStatistics, ListingSummary, ListingSyndication, ListingWithDetails,
+    listing_status, property_type as prop_type, AuditAction, CreateAuditLog, CreateListing,
+    CreateListingFromUnit, CreateListingPhoto, CreateSyndication, Listing, ListingListQuery,
+    ListingPhoto, ListingStatistics, ListingSummary, ListingSyndication, ListingWithDetails,
     OrganizationSyndicationStats, PublishListingResponse, ReorderPhotos, SyndicationDashboardQuery,
     SyndicationDashboardResponse, SyndicationResult, SyndicationStatusDashboard, UpdateListing,
     UpdateListingStatus,
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -40,6 +41,16 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", delete(delete_listing))
         .route("/{id}/status", put(update_status))
         .route("/{id}/publish", post(publish_listing))
+        // Phase 4: Global Portal publish state (`is_published`).
+        //
+        // Distinct from `/{id}/publish` above (which creates external-portal
+        // syndications and flips `status` to active — Epic 105 wiring). These
+        // routes flip the platform-wide `is_published` flag that gates the
+        // 4th RLS context (PlatformHost). Naming is `global-publish` /
+        // `global-unpublish` to keep the difference unambiguous in logs and
+        // SDKs. See ROADMAP.md Phase 4 and migrations 00135/00136.
+        .route("/{id}/global-publish", post(global_publish))
+        .route("/{id}/global-unpublish", post(global_unpublish))
         .route("/{id}/photos", get(get_photos))
         .route("/{id}/photos", post(add_photo))
         .route("/{id}/photos/reorder", post(reorder_photos))
@@ -1066,4 +1077,197 @@ pub async fn get_organization_syndication_stats(
         })?;
 
     Ok(Json(stats))
+}
+
+// ============================================================================
+// Phase 4: Global Portal Publish State (`is_published`)
+// ============================================================================
+//
+// These two endpoints flip the `is_published` flag that opens the 4th RLS
+// context (PlatformHost / global-read across all orgs — see migrations 00135
+// and 00136). They are deliberately separate from `/{id}/publish` (which
+// queues external-portal syndication jobs — Epic 105).
+//
+// Auth: stub gate — `AuthUser` extractor + an org-id ownership check via the
+// repository (UPDATE WHERE organization_id = $caller_org). Real capability
+// gating (`Capability::ListingsPublish`) lands in Phase 5.
+
+/// Mark a listing as published to the global reality portal.
+///
+/// Sets `is_published = TRUE` and `published_at = NOW()`. The listing then
+/// appears in queries served by the platform-host (PlatformHost) connection
+/// context, alongside published listings from every other agency.
+#[utoipa::path(
+    post,
+    path = "/api/v1/listings/{id}/global-publish",
+    tag = "Listings",
+    params(("id" = Uuid, Path, description = "Listing ID")),
+    responses(
+        (status = 200, description = "Listing published to global portal", body = Listing),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Listing belongs to another organization"),
+        (status = 404, description = "Listing not found")
+    )
+)]
+pub async fn global_publish(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    // Stub auth gate (Phase 5 replaces this with capability-based authz):
+    // the user must be authenticated AND must have a tenant in their token.
+    // The repository UPDATE is org-scoped (WHERE organization_id = $org), so
+    // an attempt to publish another org's listing returns Ok(None) → 404,
+    // not 200. We rely on that as the second defensive layer.
+    let org_id = auth
+        .tenant_id
+        .ok_or((axum::http::StatusCode::FORBIDDEN, "No tenant context".to_string()))?;
+
+    let previous = state
+        .listing_repo
+        .find_by_id_and_org(id, org_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch listing: {}", e),
+            )
+        })?
+        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+
+    let listing = state
+        .listing_repo
+        .set_published(id, org_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to publish listing: {}", e),
+            )
+        })?
+        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+
+    // Audit. Best-effort: a logging failure must not surface a 500 on the
+    // happy path (the publish itself succeeded). We log but don't propagate.
+    let audit_result = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(auth.user_id),
+            action: AuditAction::ResourceUpdated,
+            resource_type: Some("listing".to_string()),
+            resource_id: Some(id),
+            org_id: Some(org_id),
+            details: Some(json!({
+                "operation": "global_publish",
+                "phase": "phase-4",
+            })),
+            old_values: Some(json!({
+                "is_published": previous.is_published,
+                "published_at": previous.published_at,
+            })),
+            new_values: Some(json!({
+                "is_published": listing.is_published,
+                "published_at": listing.published_at,
+            })),
+            ip_address: None,
+            user_agent: None,
+        })
+        .await;
+    if let Err(e) = audit_result {
+        tracing::warn!(
+            error = %e,
+            listing_id = %id,
+            org_id = %org_id,
+            "Failed to write audit log for global_publish"
+        );
+    }
+
+    Ok(Json(listing))
+}
+
+/// Withdraw a listing from the global reality portal.
+///
+/// Sets `is_published = FALSE` and clears `published_at`. The listing row
+/// itself is preserved on the agency's own subdomain (invariant I-D — a
+/// listing exists once; un-publishing only flips the global-read OR-clause
+/// off).
+#[utoipa::path(
+    post,
+    path = "/api/v1/listings/{id}/global-unpublish",
+    tag = "Listings",
+    params(("id" = Uuid, Path, description = "Listing ID")),
+    responses(
+        (status = 200, description = "Listing withdrawn from global portal", body = Listing),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Listing belongs to another organization"),
+        (status = 404, description = "Listing not found")
+    )
+)]
+pub async fn global_unpublish(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Listing>, (axum::http::StatusCode, String)> {
+    let org_id = auth
+        .tenant_id
+        .ok_or((axum::http::StatusCode::FORBIDDEN, "No tenant context".to_string()))?;
+
+    let previous = state
+        .listing_repo
+        .find_by_id_and_org(id, org_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch listing: {}", e),
+            )
+        })?
+        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+
+    let listing = state
+        .listing_repo
+        .set_unpublished(id, org_id)
+        .await
+        .map_err(|e| {
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to unpublish listing: {}", e),
+            )
+        })?
+        .ok_or((axum::http::StatusCode::NOT_FOUND, "Listing not found".to_string()))?;
+
+    let audit_result = state
+        .audit_log_repo
+        .create(CreateAuditLog {
+            user_id: Some(auth.user_id),
+            action: AuditAction::ResourceUpdated,
+            resource_type: Some("listing".to_string()),
+            resource_id: Some(id),
+            org_id: Some(org_id),
+            details: Some(json!({
+                "operation": "global_unpublish",
+                "phase": "phase-4",
+            })),
+            old_values: Some(json!({
+                "is_published": previous.is_published,
+                "published_at": previous.published_at,
+            })),
+            new_values: Some(json!({
+                "is_published": listing.is_published,
+                "published_at": listing.published_at,
+            })),
+            ip_address: None,
+            user_agent: None,
+        })
+        .await;
+    if let Err(e) = audit_result {
+        tracing::warn!(
+            error = %e,
+            listing_id = %id,
+            org_id = %org_id,
+            "Failed to write audit log for global_unpublish"
+        );
+    }
+
+    Ok(Json(listing))
 }

@@ -85,6 +85,27 @@ where
     Ok(())
 }
 
+/// Phase 4: opt the current connection into (or out of) the 4th RLS context
+/// (PlatformHost / global-read).
+///
+/// Always pair this with [`set_request_context`] (with no org / no user / not
+/// super-admin) so the connection's state is fully explicit. The migrations
+/// extend [`clear_request_context`] to also reset this flag — defense for
+/// leak #2 (context bleeding between requests).
+pub async fn set_global_read_context<'e, E>(
+    executor: E,
+    enabled: bool,
+) -> Result<(), SqlxError>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    sqlx::query("SELECT set_global_read_context($1)")
+        .bind(enabled)
+        .execute(executor)
+        .await?;
+    Ok(())
+}
+
 /// Check if a user has a specific permission in an organization.
 pub async fn user_has_permission<'e, E>(
     executor: E,
