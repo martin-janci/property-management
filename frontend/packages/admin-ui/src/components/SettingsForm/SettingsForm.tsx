@@ -7,7 +7,7 @@
  * settings and platform-wide settings until that wave lands.
  */
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { type FormEvent, type ReactNode, useState } from 'react';
 import type { Capability } from '../../capabilities';
 import { useCapability } from '../../hooks/useCapability';
 
@@ -77,7 +77,11 @@ export function SettingsForm<T extends Record<string, unknown>>({
           disabled={!canWrite || submitting}
         />
       ))}
-      {error ? <div role="alert" className="ppt-admin-form-error">{error}</div> : null}
+      {error ? (
+        <div role="alert" className="ppt-admin-form-error">
+          {error}
+        </div>
+      ) : null}
       <div className="ppt-admin-form-actions">
         <button type="submit" disabled={!canWrite || submitting}>
           {canWrite ? (submitting ? 'Saving…' : 'Save') : 'Read-only'}
@@ -112,7 +116,7 @@ function renderInput(
   id: string,
   value: unknown,
   onChange: (v: unknown) => void,
-  disabled: boolean,
+  disabled: boolean
 ): ReactNode {
   switch (field.kind) {
     case 'text':

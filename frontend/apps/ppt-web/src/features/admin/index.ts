@@ -7,7 +7,11 @@
  * them in.
  */
 
-export { AdminRouter } from './router';
+export type {
+  ImpersonationWrapperProps,
+  StoredImpersonation,
+} from './ImpersonationWrapper';
+export { ImpersonationWrapper } from './ImpersonationWrapper';
 export {
   AgenciesPage,
   AuditPage,
@@ -15,10 +19,6 @@ export {
   PlatformPage,
   UsersPage,
 } from './pages';
-export { usePrincipalCapabilities } from './usePrincipalCapabilities';
+export { AdminRouter } from './router';
 export type { PrincipalCapabilitiesResult } from './usePrincipalCapabilities';
-export { ImpersonationWrapper } from './ImpersonationWrapper';
-export type {
-  ImpersonationWrapperProps,
-  StoredImpersonation,
-} from './ImpersonationWrapper';
+export { usePrincipalCapabilities } from './usePrincipalCapabilities';

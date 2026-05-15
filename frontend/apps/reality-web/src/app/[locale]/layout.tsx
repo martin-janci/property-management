@@ -148,10 +148,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             }}
           >
             <h1>Service temporarily unavailable</h1>
-            <p>
-              {tenantConfig.name} is offline for maintenance. Please check back
-              shortly.
-            </p>
+            <p>{tenantConfig.name} is offline for maintenance. Please check back shortly.</p>
           </main>
         </body>
       </html>

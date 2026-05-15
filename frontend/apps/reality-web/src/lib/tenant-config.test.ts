@@ -64,7 +64,7 @@ describe('sanitizeCssValue', () => {
     expect(sanitizeCssValue('rgba(0,0,0,0.5)', '--ppt-color-accent')).toBe('rgba(0,0,0,0.5)');
     expect(sanitizeCssValue('hsl(200,50%,40%)', '--ppt-color-accent')).toBe('hsl(200,50%,40%)');
     expect(sanitizeCssValue('hsla(200,50%,40%,0.8)', '--ppt-border-light')).toBe(
-      'hsla(200,50%,40%,0.8)',
+      'hsla(200,50%,40%,0.8)'
     );
   });
 

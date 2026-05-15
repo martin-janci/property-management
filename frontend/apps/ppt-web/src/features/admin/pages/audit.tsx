@@ -5,8 +5,8 @@
  * `audit_read`).
  */
 
-import { AuditViewer, type AuditEntry, type AuditFilter } from '@ppt/admin-ui';
-import { useState, type FC } from 'react';
+import { type AuditEntry, type AuditFilter, AuditViewer } from '@ppt/admin-ui';
+import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const AuditPage: FC = () => {

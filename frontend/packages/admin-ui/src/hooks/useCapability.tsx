@@ -11,7 +11,7 @@
  * disclosure.
  */
 
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import type { Capability } from '../capabilities';
 
 export interface CapabilityCheckerOptions {
@@ -46,7 +46,7 @@ export function CapabilityProvider({
       capabilities: value.capabilities,
       isPlatformPrincipal: value.isPlatformPrincipal,
     }),
-    [value.capabilities, value.isPlatformPrincipal],
+    [value.capabilities, value.isPlatformPrincipal]
   );
   return <CapabilityContext.Provider value={memo}>{children}</CapabilityContext.Provider>;
 }

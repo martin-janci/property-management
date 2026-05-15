@@ -6,7 +6,7 @@
  * runtime feature toggles, and capability-grant management.
  */
 
-import { SettingsForm, type SettingsField } from '@ppt/admin-ui';
+import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
 import type React from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +45,7 @@ const PlatformPage: React.FC = () => {
         placeholder: t('admin.platform.fields.supportEmailPlaceholder'),
       },
     ],
-    [t],
+    [t]
   );
 
   return (

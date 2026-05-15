@@ -17,8 +17,7 @@ import type { ListAgenciesParams } from './types';
 export const adminKeys = {
   all: ['admin'] as const,
   agencies: () => [...adminKeys.all, 'agencies'] as const,
-  agencyList: (params?: ListAgenciesParams) =>
-    [...adminKeys.agencies(), 'list', params] as const,
+  agencyList: (params?: ListAgenciesParams) => [...adminKeys.agencies(), 'list', params] as const,
 };
 
 // ============================================

@@ -65,9 +65,7 @@ export const ImpersonationBanner: React.FC<ImpersonationBannerProps> = ({
 }) => {
   if (!active) return null;
   const l: Required<ImpersonationBannerLabels> = { ...defaultLabels, ...(labels ?? {}) };
-  const asUserText = targetUserLabel
-    ? l.asUser.replace('{name}', targetUserLabel)
-    : null;
+  const asUserText = targetUserLabel ? l.asUser.replace('{name}', targetUserLabel) : null;
   const expiresText = expiresAt
     ? l.expires.replace('{time}', new Date(expiresAt).toLocaleTimeString())
     : null;

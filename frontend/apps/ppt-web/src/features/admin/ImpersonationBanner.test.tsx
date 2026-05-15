@@ -16,10 +16,10 @@
  *      on accidental rendering.
  */
 
+import { ImpersonationBanner } from '@ppt/admin-ui';
 /// <reference types="vitest/globals" />
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ImpersonationBanner } from '@ppt/admin-ui';
 import type { ReactNode } from 'react';
 import { ImpersonationWrapper } from './ImpersonationWrapper';
 
@@ -48,7 +48,7 @@ describe('ImpersonationBanner (raw component)', () => {
         targetUserLabel="alice@example.com"
         labels={{ label: 'IMPERSONATING', asUser: 'as {name}', stop: 'End impersonation' }}
         onEnd={() => undefined}
-      />,
+      />
     );
     expect(screen.getByTestId('impersonation-banner')).toBeInTheDocument();
     expect(screen.getByText(/IMPERSONATING/)).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('ImpersonationWrapper', () => {
           expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
           targetUserLabel: 'alice@example.com',
         }}
-      />,
+      />
     );
     expect(screen.getByTestId('impersonation-banner')).toBeInTheDocument();
     expect(screen.getByText(/alice@example.com/)).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('ImpersonationWrapper', () => {
           targetUserLabel: 'bob@example.com',
         }}
         stopOverride={stopOverride}
-      />,
+      />
     );
     expect(screen.getByTestId('impersonation-banner')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /end impersonation|stop/i }));

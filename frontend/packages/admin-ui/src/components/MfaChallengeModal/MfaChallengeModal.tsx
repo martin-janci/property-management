@@ -19,7 +19,7 @@
  * i18n still get a working modal.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface MfaChallengeLabels {
   /** Modal title. */
@@ -99,7 +99,7 @@ export function MfaChallengeModal({
   // in three places below.
   const l = useMemo<Required<MfaChallengeLabels>>(
     () => ({ ...defaultLabels, ...(labels ?? {}) }),
-    [labels],
+    [labels]
   );
 
   // Reset every time we open — leaving stale codes around is a footgun
@@ -150,7 +150,7 @@ export function MfaChallengeModal({
         setBusy(false);
       }
     },
-    [code, onVerify, onSuccess, l],
+    [code, onVerify, onSuccess, l]
   );
 
   if (!open) return null;
@@ -162,12 +162,7 @@ export function MfaChallengeModal({
     : l.description;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="ppt-mfa-modal-title"
-      style={overlayStyle}
-    >
+    <div role="dialog" aria-modal="true" aria-labelledby="ppt-mfa-modal-title" style={overlayStyle}>
       <div style={dialogStyle}>
         <h2 id="ppt-mfa-modal-title" style={{ margin: '0 0 0.5rem', fontSize: '1.125rem' }}>
           {l.title}
@@ -200,12 +195,7 @@ export function MfaChallengeModal({
             </p>
           )}
           <div style={actionsStyle}>
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={busy}
-              style={secondaryBtnStyle}
-            >
+            <button type="button" onClick={onCancel} disabled={busy} style={secondaryBtnStyle}>
               {l.cancel}
             </button>
             <button type="submit" disabled={busy} style={primaryBtnStyle}>

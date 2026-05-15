@@ -13,13 +13,7 @@
 import { CapabilityProvider, useCapabilityChecker } from '@ppt/admin-ui';
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import {
-  AgenciesPage,
-  AuditPage,
-  FeatureFlagsPage,
-  PlatformPage,
-  UsersPage,
-} from './pages';
+import { AgenciesPage, AuditPage, FeatureFlagsPage, PlatformPage, UsersPage } from './pages';
 
 interface AdminRouterProps {
   /** Capabilities the current principal holds (loaded at app boot). */

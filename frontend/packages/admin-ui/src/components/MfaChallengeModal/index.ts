@@ -1,10 +1,10 @@
 export {
+  type MfaChallengeLabels,
   MfaChallengeModal,
   type MfaChallengeModalProps,
-  type MfaChallengeLabels,
 } from './MfaChallengeModal';
 export {
   MfaChallengeProvider,
-  useMfaChallenge,
   type MfaChallengeProviderProps,
+  useMfaChallenge,
 } from './MfaChallengeProvider';

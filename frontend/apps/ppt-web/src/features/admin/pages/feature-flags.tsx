@@ -5,7 +5,7 @@
  * the per-tenant `tenant_feature_flags` table; Phase 5 only exposes the UI.
  */
 
-import { SettingsForm, type SettingsField } from '@ppt/admin-ui';
+import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
 import type React from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,17 +43,13 @@ const FeatureFlagsPage: React.FC = () => {
         label: t('admin.featureFlags.fields.buildingDisabled'),
       },
     ],
-    [t],
+    [t]
   );
 
   return (
     <section>
       <h1>{t('admin.featureFlags.title')}</h1>
-      <p
-        role="alert"
-        className="ppt-admin-warning"
-        style={{ color: '#b00020', fontWeight: 600 }}
-      >
+      <p role="alert" className="ppt-admin-warning" style={{ color: '#b00020', fontWeight: 600 }}>
         {t('admin.featureFlags.warning')}
       </p>
       <SettingsForm<FeatureFlagValues>

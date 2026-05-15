@@ -37,15 +37,15 @@
 
 import {
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react';
-import { MfaChallengeModal, type MfaChallengeLabels } from './MfaChallengeModal';
+import { type MfaChallengeLabels, MfaChallengeModal } from './MfaChallengeModal';
 
 type MfaChallengeHandler = () => Promise<boolean>;
 type RegisterFn = (handler: MfaChallengeHandler | null) => void;
@@ -105,23 +105,20 @@ export function MfaChallengeProvider({
   // modal is open, both callers wait on the same Promise.
   const inFlightRef = useRef<Promise<boolean> | null>(null);
 
-  const prompt = useCallback<MfaChallengeContextValue['prompt']>(
-    (actionLabel) => {
-      if (inFlightRef.current) return inFlightRef.current;
-      const promise = new Promise<boolean>((resolve) => {
-        setPendingRef.current({
-          resolve: (ok) => {
-            inFlightRef.current = null;
-            resolve(ok);
-          },
-          actionLabel,
-        });
+  const prompt = useCallback<MfaChallengeContextValue['prompt']>((actionLabel) => {
+    if (inFlightRef.current) return inFlightRef.current;
+    const promise = new Promise<boolean>((resolve) => {
+      setPendingRef.current({
+        resolve: (ok) => {
+          inFlightRef.current = null;
+          resolve(ok);
+        },
+        actionLabel,
       });
-      inFlightRef.current = promise;
-      return promise;
-    },
-    [],
-  );
+    });
+    inFlightRef.current = promise;
+    return promise;
+  }, []);
 
   // Register the api-client seam exactly once per `registerHandler` ref.
   useEffect(() => {

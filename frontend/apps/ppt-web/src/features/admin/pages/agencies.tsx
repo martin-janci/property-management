@@ -13,8 +13,8 @@
  * fires on failure so QA can see what happened.
  */
 
-import { type Agency, suspendAgency, useAgencies, adminKeys } from '@ppt/api-client';
 import { ResourceTable, type ResourceTableColumn } from '@ppt/admin-ui';
+import { type Agency, adminKeys, suspendAgency, useAgencies } from '@ppt/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
@@ -38,7 +38,7 @@ const AgenciesPage: React.FC = () => {
         render: (a) => String(a.member_count),
       },
     ],
-    [t],
+    [t]
   );
 
   // N9: the suspend handler is the canonical "this works under MFA"
@@ -55,7 +55,8 @@ const AgenciesPage: React.FC = () => {
         });
         await queryClient.invalidateQueries({ queryKey: adminKeys.agencies() });
       } catch (e) {
-        const message = e instanceof Error ? e.message : t('admin.agencies.toast.suspendFailedMessage');
+        const message =
+          e instanceof Error ? e.message : t('admin.agencies.toast.suspendFailedMessage');
         showToast({
           type: 'error',
           title: t('admin.agencies.toast.suspendFailedTitle'),
@@ -63,7 +64,7 @@ const AgenciesPage: React.FC = () => {
         });
       }
     },
-    [queryClient, showToast, t],
+    [queryClient, showToast, t]
   );
 
   if (query.isLoading) {

@@ -93,7 +93,7 @@ export function ImpersonationWrapper({
   const { t } = useTranslation();
   const { getAccessToken } = useAuth();
   const [state, setState] = useState<StoredImpersonation | null>(
-    initialState !== undefined ? initialState : readStored(),
+    initialState !== undefined ? initialState : readStored()
   );
 
   // Re-sync when storage changes from another tab — covers the case

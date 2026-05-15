@@ -17,11 +17,7 @@
 
 import { getToken } from '../auth';
 import { requestMfaChallenge } from './mfa-handler';
-import type {
-  AdminPaginatedResponse,
-  Agency,
-  ListAgenciesParams,
-} from './types';
+import type { AdminPaginatedResponse, Agency, ListAgenciesParams } from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/admin`;
@@ -41,7 +37,7 @@ function getAuthHeaders(): HeadersInit {
 async function apiRequest<T>(
   url: string,
   options: RequestInit = {},
-  _alreadyRetried = false,
+  _alreadyRetried = false
 ): Promise<T> {
   const response = await fetch(url, {
     ...options,
@@ -60,11 +56,7 @@ async function apiRequest<T>(
       message?: string;
     };
 
-    if (
-      response.status === 401 &&
-      error?.error === 'mfa_required' &&
-      !_alreadyRetried
-    ) {
+    if (response.status === 401 && error?.error === 'mfa_required' && !_alreadyRetried) {
       const ok = await requestMfaChallenge();
       if (ok) {
         return apiRequest<T>(url, options, true);
@@ -97,7 +89,7 @@ function buildQueryString(params: object): string {
  */
 export async function listAgencies(
   params?: ListAgenciesParams,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<AdminPaginatedResponse<Agency>> {
   const qs = buildQueryString(params || {});
   return apiRequest<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, { signal });

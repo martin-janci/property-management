@@ -102,13 +102,7 @@ export function ResourceTable<T>({
 /** Capability-gated action button. Returns null (hides UI) when the user
  *  lacks the capability — never renders a disabled button (information
  *  disclosure, leak #21). */
-function ActionButton<T>({
-  action,
-  item,
-}: {
-  action: ResourceTableAction<T>;
-  item: T;
-}) {
+function ActionButton<T>({ action, item }: { action: ResourceTableAction<T>; item: T }) {
   const allowed = useCapability(action.capability);
   if (!allowed) return null;
   return (

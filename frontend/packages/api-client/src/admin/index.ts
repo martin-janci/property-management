@@ -9,9 +9,9 @@
 export { listAgencies, suspendAgency } from './api';
 export { adminKeys, useAgencies } from './hooks';
 export {
-  setMfaChallengeHandler,
   hasMfaChallengeHandler,
   type MfaChallengeHandler,
+  setMfaChallengeHandler,
 } from './mfa-handler';
 export type {
   AdminPaginatedResponse,

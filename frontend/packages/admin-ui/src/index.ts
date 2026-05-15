@@ -8,40 +8,39 @@
 
 export type { Capability } from './capabilities';
 export { CAPABILITIES } from './capabilities';
-
 export type {
-  ResourceTableProps,
-  ResourceTableColumn,
-  ResourceTableAction,
-} from './components/ResourceTable/ResourceTable';
-export { ResourceTable } from './components/ResourceTable/ResourceTable';
-
-export type { SettingsFormProps, SettingsField } from './components/SettingsForm/SettingsForm';
-export { SettingsForm } from './components/SettingsForm/SettingsForm';
-
-export type { AuditViewerProps, AuditEntry, AuditFilter } from './components/AuditViewer/AuditViewer';
+  AuditEntry,
+  AuditFilter,
+  AuditViewerProps,
+} from './components/AuditViewer/AuditViewer';
 export { AuditViewer } from './components/AuditViewer/AuditViewer';
-
 export type {
-  ImpersonationBannerProps,
   ImpersonationBannerLabels,
+  ImpersonationBannerProps,
 } from './components/ImpersonationBanner/ImpersonationBanner';
 export { ImpersonationBanner } from './components/ImpersonationBanner/ImpersonationBanner';
-
 export type {
+  MfaChallengeLabels,
   MfaChallengeModalProps,
   MfaChallengeProviderProps,
-  MfaChallengeLabels,
 } from './components/MfaChallengeModal';
 export {
   MfaChallengeModal,
   MfaChallengeProvider,
   useMfaChallenge,
 } from './components/MfaChallengeModal';
+export type {
+  ResourceTableAction,
+  ResourceTableColumn,
+  ResourceTableProps,
+} from './components/ResourceTable/ResourceTable';
+export { ResourceTable } from './components/ResourceTable/ResourceTable';
+export type { SettingsField, SettingsFormProps } from './components/SettingsForm/SettingsForm';
+export { SettingsForm } from './components/SettingsForm/SettingsForm';
 
 export type { CapabilityCheckerOptions } from './hooks/useCapability';
 export {
-  useCapability,
   CapabilityProvider,
+  useCapability,
   useCapabilityChecker,
 } from './hooks/useCapability';

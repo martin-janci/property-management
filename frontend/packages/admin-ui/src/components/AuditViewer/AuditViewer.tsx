@@ -57,9 +57,7 @@ export function AuditViewer({
           <input
             type="text"
             value={filter.actor_id ?? ''}
-            onChange={(e) =>
-              onFilterChange({ ...filter, actor_id: e.target.value || undefined })
-            }
+            onChange={(e) => onFilterChange({ ...filter, actor_id: e.target.value || undefined })}
           />
         </label>
         <label>

@@ -26,9 +26,9 @@
  *   branding change.
  */
 
+import { headers } from 'next/headers';
 import type React from 'react';
 import { cache } from 'react';
-import { headers } from 'next/headers';
 
 export type FeatureFlagState = {
   enabled: boolean;
@@ -175,9 +175,7 @@ export async function getFeatureFlag(key: string): Promise<FeatureFlagState> {
  * Returns `undefined` when there is nothing to set, so callers can safely
  * spread without emitting `style=""` on every page render.
  */
-export function brandingToStyleObject(
-  branding: TenantBranding,
-): React.CSSProperties | undefined {
+export function brandingToStyleObject(branding: TenantBranding): React.CSSProperties | undefined {
   const style: Record<string, string> = {};
   if (branding.font_family) {
     const safeFont = sanitizeCssValue(branding.font_family, '--ppt-font-family');

@@ -15,10 +15,10 @@
  * fetch directly.
  */
 
+import { MfaChallengeModal } from '@ppt/admin-ui';
 /// <reference types="vitest/globals" />
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MfaChallengeModal } from '@ppt/admin-ui';
 
 describe('MfaChallengeModal', () => {
   it('does not render when closed', () => {
@@ -28,7 +28,7 @@ describe('MfaChallengeModal', () => {
         onVerify={async () => true}
         onSuccess={() => undefined}
         onCancel={() => undefined}
-      />,
+      />
     );
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -44,7 +44,7 @@ describe('MfaChallengeModal', () => {
         onSuccess={onSuccess}
         onCancel={() => undefined}
         actionLabel="Suspend agency"
-      />,
+      />
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/Suspend agency/)).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('MfaChallengeModal', () => {
         onVerify={onVerify}
         onSuccess={onSuccess}
         onCancel={() => undefined}
-      />,
+      />
     );
     await user.type(screen.getByLabelText(/verification code/i), '999999');
     await user.click(screen.getByRole('button', { name: /verify/i }));
@@ -84,7 +84,7 @@ describe('MfaChallengeModal', () => {
         onVerify={onVerify}
         onSuccess={() => undefined}
         onCancel={() => undefined}
-      />,
+      />
     );
     await user.type(screen.getByLabelText(/verification code/i), '12');
     await user.click(screen.getByRole('button', { name: /verify/i }));
@@ -102,7 +102,7 @@ describe('MfaChallengeModal', () => {
         onVerify={async () => true}
         onSuccess={() => undefined}
         onCancel={onCancel}
-      />,
+      />
     );
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onCancel).toHaveBeenCalledTimes(1);

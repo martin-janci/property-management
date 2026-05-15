@@ -1,5 +1,5 @@
+import { type NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
-import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
 import { renderKillSwitchHtml } from './lib/kill-switch';
 
@@ -67,9 +67,7 @@ export default async function middleware(request: NextRequest) {
  */
 function getApiInternalUrl(): string {
   const raw =
-    process.env.API_INTERNAL_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8080';
+    process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   return raw.replace(/\/+$/, '');
 }
 

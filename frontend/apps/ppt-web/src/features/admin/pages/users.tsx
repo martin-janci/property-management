@@ -27,7 +27,7 @@ const UsersPage: React.FC = () => {
         render: (u) => u.display_name ?? '',
       },
     ],
-    [t],
+    [t]
   );
 
   // TODO(phase-5-followup): wire to GET /api/v1/admin/users?q=...
