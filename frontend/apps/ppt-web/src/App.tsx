@@ -234,9 +234,25 @@ function transformDisputeToSummary(dispute: ApiDispute): DisputeSummary {
  */
 function MfaWrapper({ children }: { children: ReactNode }) {
   const { getAccessToken } = useAuth();
+  const { t } = useTranslation();
+  // Resolve labels once per render so the modal sees stable strings even
+  // when the active locale changes (the next render swaps them out).
+  const mfaLabels = {
+    title: t('admin.mfa.title'),
+    description: t('admin.mfa.description'),
+    descriptionForAction: t('admin.mfa.descriptionForAction', { action: '{action}' }),
+    codeLabel: t('admin.mfa.label'),
+    verify: t('admin.mfa.verify'),
+    verifying: t('admin.mfa.verifying'),
+    cancel: t('admin.mfa.cancel'),
+    invalidFormat: t('admin.mfa.invalidFormat'),
+    invalidCode: t('admin.mfa.invalidCode'),
+    verificationFailed: t('admin.mfa.verificationFailed'),
+  };
   return (
     <MfaChallengeProvider
       registerHandler={setMfaChallengeHandler}
+      labels={mfaLabels}
       verify={async (code: string) => {
         const token = getAccessToken();
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
