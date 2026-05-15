@@ -23,7 +23,7 @@
     "cli": "tsx src/cli.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.0",
+    "@hono/node-server": "^2.0.2",
     "@ppt/sitemap": "workspace:*",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3",
