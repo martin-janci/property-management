@@ -52,6 +52,7 @@ import {
   CommandPaletteProvider,
   useNavigationCommands,
 } from './features/command-palette';
+import { AdminRouter, usePrincipalCapabilities } from './features/admin';
 import { ManagerDashboardPage, ResidentDashboardPage } from './features/dashboard';
 import type {
   DisputeCategory,
@@ -246,6 +247,22 @@ function AppNavigation() {
         <LanguageSwitcher />
       </div>
     </nav>
+  );
+}
+
+/**
+ * Route wrapper for the Phase 5 admin section.
+ *
+ * `<AdminRouter>` expects the host app to feed it the current principal's
+ * capability set + platform-kind flag. We resolve that via
+ * `usePrincipalCapabilities` (interim hook — see its docstring) and pass it
+ * through. The router itself handles the platform-only gate and inner
+ * sub-routing.
+ */
+function AdminRouterRoute() {
+  const { capabilities, isPlatformPrincipal } = usePrincipalCapabilities();
+  return (
+    <AdminRouter capabilities={capabilities} isPlatformPrincipal={isPlatformPrincipal} />
   );
 }
 
@@ -451,6 +468,14 @@ function App() {
                                 path="/financial/budgets"
                                 element={<BudgetManagementPageRoute />}
                               />
+
+                              {/* Phase 5 — Super-admin Control Plane (B6).
+                                  AdminRouter is platform-principal-gated
+                                  internally via <RequirePlatformPrincipal>;
+                                  the gate redirects non-platform users to
+                                  `/` rather than rendering "forbidden"
+                                  (information disclosure, leak #21). */}
+                              <Route path="/admin/*" element={<AdminRouterRoute />} />
 
                               {/* Error / state surfaces */}
                               <Route path="/forbidden" element={<ForbiddenPage />} />

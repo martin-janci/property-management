@@ -15,3 +15,5 @@ export {
   PlatformPage,
   UsersPage,
 } from './pages';
+export { usePrincipalCapabilities } from './usePrincipalCapabilities';
+export type { PrincipalCapabilitiesResult } from './usePrincipalCapabilities';
