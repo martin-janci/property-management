@@ -206,9 +206,27 @@ pub fn build_service_envs(
         "RUST_LOG=info".into(),
     ];
 
+    // PLATFORM_HOST: comma-separated list of hosts the api-core
+    // `host_tenant_middleware` should resolve to `TenantSource::PlatformHost`
+    // (global-read context, no specific tenant). Both backends use the same
+    // resolver, so this list goes on api-server AND reality-server.
+    //
+    // Includes both the Reality Portal apex tree (`<reality_apex>`,
+    // `www.<reality_apex>`, `api.<reality_apex>`), the Property Management
+    // apex tree (`<ppt_apex>`, `api.<ppt_apex>`), and the super-admin
+    // control plane (`admin.<reality_apex>`). Without these the api-server
+    // rejects every request with 404 "Unknown tenant host", because
+    // `reserved_platform_hosts` is consulted by the agency_domains CHECK
+    // constraint but NOT by the resolver itself (see api-core
+    // middleware/host_tenant.rs `load_platform_hosts`).
+    let platform_hosts = format!(
+        "{0},www.{0},api.{0},{1},api.{1},admin.{0}",
+        target.reality_apex, target.ppt_apex
+    );
     let mut api_env = backend_env.clone();
     api_env.push(format!("TOTP_ENCRYPTION_KEY={totp_key}"));
     api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
+    api_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut reality_env = std::mem::take(&mut backend_env);
     reality_env.push(format!("PM_CLIENT_SECRET={pm_client_secret}"));
@@ -233,6 +251,7 @@ pub fn build_service_envs(
         "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
         target.reality_apex
     ));
+    reality_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
