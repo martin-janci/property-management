@@ -944,10 +944,19 @@ impl PortalRepository {
                 created_at, updated_at
             )
             VALUES ($1, $2, '!sso-only-no-password', 'en', 'active', NOW(), 'public', $3, NOW(), NOW())
+            -- Guard against overwriting a staff/platform principal that
+            -- happens to share this email — only update when the existing
+            -- row is also `public`. If it's another kind, the CONFLICT
+            -- branch silently does no-op (DO UPDATE WHERE false), the
+            -- RETURNING is empty, and fetch_one fails — the caller should
+            -- treat that as a collision and route to manual review (the
+            -- same invariant the merge migration enforces). (Copilot
+            -- 3252731628)
             ON CONFLICT (email) DO UPDATE SET
                 name              = EXCLUDED.name,
                 profile_image_url = COALESCE(EXCLUDED.profile_image_url, users.profile_image_url),
                 updated_at        = NOW()
+            WHERE users.principal_kind = 'public'
             RETURNING
                 id,
                 email,

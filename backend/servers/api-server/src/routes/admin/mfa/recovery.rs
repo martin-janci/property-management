@@ -142,16 +142,21 @@ pub async fn use_recovery(
 
     let matched_id = rows[idx].0;
 
-    // Mark as used — single-use enforced. We must check rows_affected: under
-    // concurrent recovery-code submission a competing request may have already
-    // flipped used_at between our SELECT and this UPDATE. The WHERE clause
-    // includes AND used_at IS NULL so the UPDATE is a no-op in that case;
-    // rows_affected == 0 means we lost the race and the code is already spent.
+    // Mark as used + open the 15-minute MFA recency window atomically: a
+    // crash between the UPDATE and the verifications INSERT would burn the
+    // recovery code without giving the user their MFA window, locking them
+    // out (review follow-up — Copilot 3252731625). Single-use is still
+    // enforced by the AND used_at IS NULL guard + rows_affected check.
+    let mut tx = state.db.begin().await.map_err(|e| {
+        tracing::error!(error = %e, "recovery/use: begin tx failed");
+        internal()
+    })?;
+
     let upd = sqlx::query(
         "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
     )
     .bind(matched_id)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/use: mark used failed");
@@ -188,21 +193,27 @@ pub async fn use_recovery(
         "INSERT INTO two_factor_auth_verifications (user_id, method) VALUES ($1, 'recovery_code')",
     )
     .bind(user_id)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "recovery/use: insert verification failed");
         internal()
     })?;
 
-    // Count remaining codes.
+    // Count remaining codes inside the tx so the response reflects the
+    // post-commit state without a race against another caller's UPDATE.
     let remaining: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
     )
     .bind(user_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut *tx)
     .await
     .unwrap_or(0);
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "recovery/use: commit tx failed");
+        internal()
+    })?;
 
     // Audit success.
     let _ = audit

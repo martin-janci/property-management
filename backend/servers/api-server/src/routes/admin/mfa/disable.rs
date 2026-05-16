@@ -91,10 +91,14 @@ pub async fn disable_mfa(
         .verify_code(&secret, req.code.trim())
         .unwrap_or(false);
 
-    let code_ok = if totp_ok {
-        true
+    // Resolve which recovery-code row (if any) the input matched, BEFORE
+    // we open a transaction. The hash-compare is in-memory; nothing is
+    // written here. We delay the UPDATE until inside the tx so a crash
+    // between "consume code" and "disable user_2fa" cannot strand the
+    // user with MFA enabled but a code spent (Copilot 3252731626).
+    let recovery_match: Option<uuid::Uuid> = if totp_ok {
+        None
     } else {
-        // Fall back to recovery code.
         let rows: Vec<(uuid::Uuid, String)> = sqlx::query_as(
             "SELECT id, code_hash FROM mfa_recovery_codes WHERE user_id = $1 AND used_at IS NULL",
         )
@@ -107,7 +111,7 @@ pub async fn disable_mfa(
         })?;
 
         if rows.is_empty() {
-            false
+            None
         } else {
             let normalized = req.code.trim().replace(['-', ' '], "").to_uppercase();
             let hashes: Vec<String> = rows.iter().map(|(_, h)| h.clone()).collect();
@@ -118,31 +122,13 @@ pub async fn disable_mfa(
                     tracing::error!(error = %e, "mfa/disable: verify_backup_code failed");
                     internal()
                 })? {
-                Some(idx) => {
-                    // Mark the recovery code used. The WHERE clause must
-                    // include `AND used_at IS NULL` so a concurrent recovery
-                    // submission cannot also accept this code; treat
-                    // rows_affected == 0 as "another caller already spent it"
-                    // and fall through to "no match" — disable is rejected
-                    // and the legitimate winner retains the verification.
-                    let rid = rows[idx].0;
-                    let upd = sqlx::query(
-                        "UPDATE mfa_recovery_codes SET used_at = NOW() \
-                         WHERE id = $1 AND used_at IS NULL",
-                    )
-                    .bind(rid)
-                    .execute(&state.db)
-                    .await
-                    .map_err(|e| {
-                        tracing::error!(error = %e, "mfa/disable: mark used failed");
-                        internal()
-                    })?;
-                    upd.rows_affected() == 1
-                }
-                None => false,
+                Some(idx) => Some(rows[idx].0),
+                None => None,
             }
         }
     };
+
+    let code_ok = totp_ok || recovery_match.is_some();
 
     if !code_ok {
         let _ = audit
@@ -166,27 +152,66 @@ pub async fn disable_mfa(
         ));
     }
 
-    // Disable enrollment.
+    // Atomic: mark recovery code used (if that was the verification method),
+    // disable user_2fa, and purge all recovery codes — all-or-nothing so a
+    // crash mid-flow cannot strand the user.
+    let mut tx = state.db.begin().await.map_err(|e| {
+        tracing::error!(error = %e, "mfa/disable: begin tx failed");
+        internal()
+    })?;
+
+    if let Some(rid) = recovery_match {
+        // Single-use guard: AND used_at IS NULL ensures a concurrent caller
+        // racing the same code is rejected here too. rows_affected == 0
+        // means another request already consumed it — treat as invalid
+        // (rollback) and ask the user to retry.
+        let upd = sqlx::query(
+            "UPDATE mfa_recovery_codes SET used_at = NOW() \
+             WHERE id = $1 AND used_at IS NULL",
+        )
+        .bind(rid)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "mfa/disable: mark recovery used failed");
+            internal()
+        })?;
+        if upd.rows_affected() != 1 {
+            // Tx will roll back on drop. Surface as invalid code.
+            return Err((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(serde_json::json!({
+                    "error": "invalid_code",
+                    "message": "Recovery code was used concurrently. Try again with a different code."
+                })),
+            ));
+        }
+    }
+
     sqlx::query(
         "UPDATE user_2fa SET enabled = false, enabled_at = NULL, updated_at = NOW() WHERE user_id = $1",
     )
     .bind(user_id)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "mfa/disable: update user_2fa failed");
         internal()
     })?;
 
-    // Purge all recovery codes.
     sqlx::query("DELETE FROM mfa_recovery_codes WHERE user_id = $1")
         .bind(user_id)
-        .execute(&state.db)
+        .execute(&mut *tx)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "mfa/disable: delete recovery codes failed");
             internal()
         })?;
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "mfa/disable: commit tx failed");
+        internal()
+    })?;
 
     // Audit.
     let _ = audit

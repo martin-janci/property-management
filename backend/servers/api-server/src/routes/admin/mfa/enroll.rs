@@ -247,45 +247,55 @@ pub async fn verify_enroll(
         ));
     }
 
-    // Activate enrollment.
+    // Activate enrollment + rotate recovery codes atomically: enabling 2FA
+    // without persisting the codes would lock the operator out if anything
+    // fails mid-way (review follow-up — Copilot 3252731618).
+    let (plain_codes, hashed_codes) = state.totp_service.generate_backup_codes().map_err(|e| {
+        tracing::error!(error = %e, "enroll/verify: generate_backup_codes failed");
+        internal()
+    })?;
+
+    let mut tx = state.db.begin().await.map_err(|e| {
+        tracing::error!(error = %e, "enroll/verify: begin tx failed");
+        internal()
+    })?;
+
     sqlx::query(
         "UPDATE user_2fa SET enabled = true, enabled_at = NOW(), updated_at = NOW() WHERE user_id = $1",
     )
     .bind(user_id)
-    .execute(&state.db)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!(error = %e, "enroll/verify: enable user_2fa failed");
         internal()
     })?;
 
-    // Delete any existing (possibly stale) recovery codes for this user.
     sqlx::query("DELETE FROM mfa_recovery_codes WHERE user_id = $1")
         .bind(user_id)
-        .execute(&state.db)
+        .execute(&mut *tx)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "enroll/verify: delete old recovery codes failed");
             internal()
         })?;
 
-    // Generate 10 recovery codes.
-    let (plain_codes, hashed_codes) = state.totp_service.generate_backup_codes().map_err(|e| {
-        tracing::error!(error = %e, "enroll/verify: generate_backup_codes failed");
-        internal()
-    })?;
-
     for hash in &hashed_codes {
         sqlx::query("INSERT INTO mfa_recovery_codes (user_id, code_hash) VALUES ($1, $2)")
             .bind(user_id)
             .bind(hash)
-            .execute(&state.db)
+            .execute(&mut *tx)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e, "enroll/verify: insert recovery code failed");
                 internal()
             })?;
     }
+
+    tx.commit().await.map_err(|e| {
+        tracing::error!(error = %e, "enroll/verify: commit tx failed");
+        internal()
+    })?;
 
     // Audit success.
     let _ = audit
