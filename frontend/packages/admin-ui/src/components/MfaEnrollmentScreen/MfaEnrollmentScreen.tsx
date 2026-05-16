@@ -60,6 +60,15 @@ export interface MfaEnrollmentLabels {
   stepCodesDescription?: string;
   /** Step 3 confirm button */
   savedCodes?: string;
+
+  /** Shown while onStart() is in flight (initial mount + retry). */
+  loading?: string;
+  /** Retry button shown when onStart() failed and left enrollData null. */
+  retry?: string;
+  /** "Back" button on the verify step (returns to scan step). */
+  back?: string;
+  /** Alt text for the QR-code image. */
+  qrAltText?: string;
 }
 
 const defaultLabels: Required<MfaEnrollmentLabels> = {
@@ -82,6 +91,11 @@ const defaultLabels: Required<MfaEnrollmentLabels> = {
   stepCodesDescription:
     'These 10 codes can each be used once if you lose access to your authenticator. Store them somewhere safe — they will not be shown again.',
   savedCodes: "I've saved these codes",
+
+  loading: 'Setting up enrollment…',
+  retry: 'Retry',
+  back: 'Back',
+  qrAltText: 'TOTP QR code',
 };
 
 // ── Prop types ────────────────────────────────────────────────────────────────
@@ -220,7 +234,7 @@ export function MfaEnrollmentScreen({
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        {step === 'loading' && <p style={mutedText}>Setting up enrollment…</p>}
+        {step === 'loading' && <p style={mutedText}>{l.loading}</p>}
 
         {(step === 'scan' || step === 'start') && (
           <>
@@ -237,7 +251,7 @@ export function MfaEnrollmentScreen({
             {!enrollData && error && (
               <div style={{ marginTop: '0.5rem' }}>
                 <button type="button" onClick={retryStart} style={primaryBtnStyle}>
-                  Retry
+                  {l.retry}
                 </button>
               </div>
             )}
@@ -249,7 +263,7 @@ export function MfaEnrollmentScreen({
                 <div style={{ textAlign: 'center', margin: '1rem 0' }}>
                   <img
                     src={`data:image/png;base64,${enrollData.qr_png_base64}`}
-                    alt="TOTP QR code"
+                    alt={l.qrAltText}
                     width={200}
                     height={200}
                     style={{ border: '1px solid #eee', borderRadius: 4 }}
@@ -311,7 +325,7 @@ export function MfaEnrollmentScreen({
                   disabled={busy}
                   style={secondaryBtnStyle}
                 >
-                  Back
+                  {l.back}
                 </button>
                 <button type="submit" disabled={busy} style={primaryBtnStyle}>
                   {busy ? l.verifying : l.verify}

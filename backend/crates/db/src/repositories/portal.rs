@@ -62,7 +62,11 @@ impl PortalRepository {
     ///
     /// Column mapping:
     ///  - `pm_user_id`   → NULL (back-pointer is now `users.portal_origin_id`)
-    ///  - `provider`     → 'local' (SSO is recorded in `users.principal_kind`)
+    ///  - `provider`     → 'local' (the unified schema no longer tracks the
+    ///    auth provider; SSO accounts are identified by the
+    ///    `!sso-only-no-password` sentinel in `password_hash`, NOT by
+    ///    `principal_kind` which is the user-kind discriminator
+    ///    public/staff/platform)
     ///  - `email_verified` → derived from `email_verified_at IS NOT NULL`
     ///  - `password_hash` → NULL when the sentinel value is stored (SSO-only)
     fn portal_user_projection() -> &'static str {

@@ -97,7 +97,35 @@ pub async fn start_enroll(
             internal()
         })?;
 
+    // Reject re-enrollment if MFA is already enabled. Allowing an
+    // unauthenticated re-enroll would let a stolen bearer token reset the
+    // legitimate user's TOTP secret and lock them out (Copilot 3252772624).
+    // To rotate an existing enrollment the user must disable first (which
+    // requires the current TOTP code or a recovery code).
+    let already_enabled: Option<bool> =
+        sqlx::query_scalar("SELECT enabled FROM user_2fa WHERE user_id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, "enroll/start: fetch existing enrollment failed");
+                internal()
+            })?;
+
+    if matches!(already_enabled, Some(true)) {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(serde_json::json!({
+                "error": "already_enrolled",
+                "message": "MFA is already enabled for this user. Disable existing MFA (with a current TOTP or recovery code) before starting a new enrollment."
+            })),
+        ));
+    }
+
     // Encrypt and upsert into user_2fa (enabled = false).
+    // The CONFLICT branch only fires when an existing pending (non-enabled)
+    // setup is being retried — the enabled=true guard above ensures we
+    // never silently overwrite an active secret.
     let encrypted = state.totp_service.encrypt_secret(&secret).map_err(|e| {
         tracing::error!(error = %e, "enroll/start: encrypt_secret failed");
         internal()
@@ -114,6 +142,7 @@ pub async fn start_enroll(
                 backup_codes = '[]'::jsonb,
                 backup_codes_remaining = 0,
                 updated_at = NOW()
+            WHERE user_2fa.enabled = false
         "#,
     )
     .bind(user_id)
