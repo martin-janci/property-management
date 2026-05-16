@@ -43,16 +43,47 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
    any new plans on `main` (requires "Allow unrestricted branch pushes" on
    this repo for the routine).
 
+## Activating the cloud routine
+
+Setup at https://claude.ai/code/routines → **New routine**.
+
+| Field | Value |
+|---|---|
+| **Name** | `ppt-research` |
+| **Instructions** | full contents of `routine-prompt.md` |
+| **Repository** | `martin-janci/property-management`, branch `main`, ✅ *Allow unrestricted branch pushes* |
+| **Model** | Sonnet 4.6 (or Opus 4.7 for higher-quality analyses; Opus costs more) |
+| **Connectors** | **None.** The routine uses `gh` CLI via Bash. |
+| **Schedule** | Daily 05:00 local |
+| **API trigger** | Optional — handy for ad-hoc `text: "deep"` or `text: "reset"` runs |
+
+### Environment
+
+Use a dedicated environment (don't share with other routines).
+
+- **Network access:** Trusted is enough — GitHub is on the default allowlist. No extra *Allowed domains* needed.
+- **Setup script:** paste the body of `.research/cloud-setup.sh`. Runs once per env build, cached ~7 days. Installs `gh` (not in the default sandbox image), `jq`, `yq`; configures git identity; sanity-checks `gh auth`.
+- **Variables:**
+  - `GH_TOKEN` (secret) — fine-grained PAT with read PRs/issues/contents on `martin-janci/property-management` plus **write contents** (for committing under `.research/`).
+  - `GIT_AUTHOR_NAME` — optional, defaults to `ppt-research-routine`
+  - `GIT_AUTHOR_EMAIL` — optional, defaults to `ppt-research-routine@martin-janci.dev`
+
+### What the cloud routine cannot do
+
+The cloud sandbox **cannot** reach your LAN, **cannot** SSH out, **cannot** see physical devices, **cannot** use stdio MCPs. That's fine — this routine is purely read-only over GitHub + writes to `.research/`. Implementation runs elsewhere (see below).
+
 ## Picking a plan to ship
 
 When you have an implementation slot, open the **manual implementation
-agent** by starting a Claude Code session with `--append-system-prompt-file
-.research/implementer-prompt.md` (or paste that file's contents into the
-first user message), then prompt:
+agent** by starting a local Claude Code session with
+`--append-system-prompt-file .research/implementer-prompt.md` (or paste that
+file's contents into the first user message), then prompt:
 
 ```
 Implement .research/plans/<slug>.md.
 ```
+
+The implementer needs the full local toolset (Docker, Chrome, ADB if mobile-touching) — none of which the cloud sandbox has. **Don't try to make the implementer a cloud routine** unless you've stood up a bridge MCP (see *Future: ppt-bridge-mcp* below).
 
 The implementer prompt declares **seven capabilities** (C1–C7) covering
 systematic debugging, seed data, dev-stack startup, browser automation
@@ -64,6 +95,22 @@ exactly those, no more.
 It opens a PR, verifies, and on merge moves the plan to `_archive/` and
 marks the backlog row `done`. The next daily research run sees the
 shipment in the brief.
+
+## Future: ppt-bridge-mcp
+
+If you want the implementation agent to also run in cloud routines (truly autonomous overnight workflow), stand up a **bridge MCP server** on `mefistos` or NAS:
+
+```
+property-management.dev (running on mefistos / NAS, via docker compose)
+  └── ppt-bridge-mcp  (Streamable HTTP MCP, OAuth via Anthropic proxy)
+        ├── ppt_dev_up / down / logs        — ssh → mefistos → stack up pm-local …
+        ├── ppt_seed / ppt_db_query         — ssh → psql / just seed
+        ├── ppt_run_test <crate>            — ssh → cargo/pnpm test, returns output
+        ├── ppt_browser_open <url>          — headless Chrome on the bridge box → DOM + screenshot
+        └── ppt_adb_*                       — adb to a USB-attached emulator on the bridge box
+```
+
+Architecture mirrors `nas-mcp`: bearer auth, htpasswd registry, OAuth proxy via Anthropic. Build effort ≈ 1–2 days for v1; reuses the schema sanitizer from `nas-mcp`. Track on the backlog as a vector once this repo's daily routine starts producing them.
 
 ## Hand-edits
 
