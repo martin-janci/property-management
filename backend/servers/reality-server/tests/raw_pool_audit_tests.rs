@@ -79,7 +79,7 @@ fn build_test_router(pool: PgPool) -> Router {
     );
 
     Router::new()
-        .route("/api/v1/listings/:id", get(stub_listing_handler))
+        .route("/api/v1/listings/{id}", get(stub_listing_handler))
         .route("/api/v1/listings", get(stub_listing_handler))
         .layer(from_fn_with_state(cfg, host_tenant_middleware))
 }
@@ -209,7 +209,7 @@ async fn listing_route_reachable_with_platform_host(pool: PgPool) {
     );
 
     let app = Router::new()
-        .route("/api/v1/listings/:id", get(stub_listing_handler))
+        .route("/api/v1/listings/{id}", get(stub_listing_handler))
         .layer(from_fn_with_state(cfg, host_tenant_middleware));
 
     let listing_id = uuid::Uuid::new_v4();
