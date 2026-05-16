@@ -115,16 +115,14 @@ pub async fn disable_mfa(
         } else {
             let normalized = req.code.trim().replace(['-', ' '], "").to_uppercase();
             let hashes: Vec<String> = rows.iter().map(|(_, h)| h.clone()).collect();
-            match state
+            state
                 .totp_service
                 .verify_backup_code(&normalized, &hashes)
                 .map_err(|e| {
                     tracing::error!(error = %e, "mfa/disable: verify_backup_code failed");
                     internal()
-                })? {
-                Some(idx) => Some(rows[idx].0),
-                None => None,
-            }
+                })?
+                .map(|idx| rows[idx].0)
         }
     };
 
