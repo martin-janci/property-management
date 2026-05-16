@@ -440,8 +440,12 @@ impl UserHandler {
     /// owned the issuance) to a `users.id`. If the id already maps to a
     /// `users` row, return it; otherwise, look it up through the
     /// portal_origin_id back-pointer.
+    // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
+    // The `users` identity table is shared across tenants; resolving an id to a
+    // canonical users.id row is a cross-tenant identity operation by design.
     async fn resolve_users_id(&self, id: Uuid) -> Result<Uuid, String> {
         let pool = self.repo.pool();
+        // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
         if let Some(uid) = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(pool)
@@ -468,8 +472,11 @@ impl UserHandler {
     /// `portal_users.id` itself as a last resort so the unified update
     /// degrades gracefully on rows the merge migration could not touch
     /// (e.g. an unmerged collision).
+    // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
+    // Cross-tenant identity lookup: portal_users.id → users.id mapping is global.
     async fn lookup_users_id_for_portal_id(&self, portal_id: Uuid) -> Result<Uuid, String> {
         let pool = self.repo.pool();
+        // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
         if let Some(uid) =
             sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE portal_origin_id = $1")
                 .bind(portal_id)
@@ -499,8 +506,11 @@ impl UserHandler {
     }
 
     /// Resolve `users.id` to its `portal_users.id`, if any.
+    // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
+    // Resolves users.id → portal_users.id; the users table is a global identity table.
     async fn resolve_portal_id(&self, users_id: Uuid) -> Result<Option<Uuid>, String> {
         let pool = self.repo.pool();
+        // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
         if let Some(pid) = sqlx::query_scalar::<_, Option<Uuid>>(
             "SELECT portal_origin_id FROM users WHERE id = $1",
         )
