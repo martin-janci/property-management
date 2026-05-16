@@ -248,7 +248,8 @@ pub async fn authorize_post(
     responses(
         (status = 200, description = "Tokens issued", body = TokenResponse),
         (status = 400, description = "Invalid request", body = OAuthError),
-        (status = 401, description = "Invalid client", body = OAuthError)
+        (status = 401, description = "Invalid client", body = OAuthError),
+        (status = 403, description = "principal_kind not allowed for this client", body = OAuthError)
     )
 )]
 pub async fn token(
@@ -269,7 +270,21 @@ pub async fn token(
             .oauth_service
             .exchange_code_for_tokens(&request)
             .await
-            .map_err(|e| (StatusCode::BAD_REQUEST, Json(e.into())))?,
+            .map_err(|e| {
+                use crate::services::OAuthServiceError;
+                let status = match &e {
+                    OAuthServiceError::PrincipalKindNotAllowed => StatusCode::FORBIDDEN,
+                    _ => StatusCode::BAD_REQUEST,
+                };
+                // Phase 6 C17: audit the rejection for principal_kind mismatch
+                if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
+                    tracing::warn!(
+                        client_id = ?request.client_id,
+                        "OAuth token denied: principal_kind_not_allowed_for_client"
+                    );
+                }
+                (status, Json(e.into()))
+            })?,
         "refresh_token" => {
             let refresh_token = request.refresh_token.as_ref().ok_or_else(|| {
                 (
