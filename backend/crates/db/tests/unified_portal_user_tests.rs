@@ -8,7 +8,7 @@
 
 use db::models::user::Locale;
 use db::repositories::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateProfile};
-use sqlx::{PgPool, Row};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Insert a `users` row with the given email + principal_kind directly so
