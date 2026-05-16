@@ -1,4 +1,16 @@
-import type { TokenStore } from '../api/client';
+/**
+ * sessionStorage-backed access-token store for admin-web.
+ *
+ * `sessionStorage` (not `localStorage`) is intentional: closing the tab
+ * logs the admin out. Namespaced key prevents collisions with other apps
+ * that happen to share an origin.
+ */
+
+export interface TokenStore {
+  get(): string | null;
+  set(token: string): void;
+  clear(): void;
+}
 
 const STORAGE_KEY = 'ppt.admin.access_token';
 
