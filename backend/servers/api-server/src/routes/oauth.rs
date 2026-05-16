@@ -266,46 +266,48 @@ pub async fn token(
     }
 
     let response = match request.grant_type.as_str() {
-        "authorization_code" => match state.oauth_service.exchange_code_for_tokens(&request).await {
-            Ok(r) => r,
-            Err(e) => {
-                use crate::services::OAuthServiceError;
-                let status = match &e {
-                    OAuthServiceError::PrincipalKindNotAllowed => StatusCode::FORBIDDEN,
-                    _ => StatusCode::BAD_REQUEST,
-                };
-                // Phase 6 C17 + review R5: audit the principal_kind rejection
-                // as a real audit_log row (not just a tracing line) so it
-                // surfaces in the unified audit viewer and triggers any
-                // platform-admin alerts (leak #21 defense).
-                if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
-                    let _ = state
-                        .audit_log_repo
-                        .create(CreateAuditLog {
-                            user_id: None,
-                            action: AuditAction::OAuthTokenDeniedPrincipalKind,
-                            resource_type: Some("oauth_token".to_string()),
-                            resource_id: None,
-                            org_id: None,
-                            details: Some(serde_json::json!({
-                                "client_id": request.client_id,
-                                "grant_type": "authorization_code",
-                                "reason": "principal_kind_not_allowed_for_client",
-                            })),
-                            old_values: None,
-                            new_values: None,
-                            ip_address: None,
-                            user_agent: None,
-                        })
-                        .await;
-                    tracing::warn!(
-                        client_id = ?request.client_id,
-                        "OAuth token denied: principal_kind_not_allowed_for_client"
-                    );
+        "authorization_code" => {
+            match state.oauth_service.exchange_code_for_tokens(&request).await {
+                Ok(r) => r,
+                Err(e) => {
+                    use crate::services::OAuthServiceError;
+                    let status = match &e {
+                        OAuthServiceError::PrincipalKindNotAllowed => StatusCode::FORBIDDEN,
+                        _ => StatusCode::BAD_REQUEST,
+                    };
+                    // Phase 6 C17 + review R5: audit the principal_kind rejection
+                    // as a real audit_log row (not just a tracing line) so it
+                    // surfaces in the unified audit viewer and triggers any
+                    // platform-admin alerts (leak #21 defense).
+                    if matches!(e, OAuthServiceError::PrincipalKindNotAllowed) {
+                        let _ = state
+                            .audit_log_repo
+                            .create(CreateAuditLog {
+                                user_id: None,
+                                action: AuditAction::OAuthTokenDeniedPrincipalKind,
+                                resource_type: Some("oauth_token".to_string()),
+                                resource_id: None,
+                                org_id: None,
+                                details: Some(serde_json::json!({
+                                    "client_id": request.client_id,
+                                    "grant_type": "authorization_code",
+                                    "reason": "principal_kind_not_allowed_for_client",
+                                })),
+                                old_values: None,
+                                new_values: None,
+                                ip_address: None,
+                                user_agent: None,
+                            })
+                            .await;
+                        tracing::warn!(
+                            client_id = ?request.client_id,
+                            "OAuth token denied: principal_kind_not_allowed_for_client"
+                        );
+                    }
+                    return Err((status, Json(e.into())));
                 }
-                return Err((status, Json(e.into())));
             }
-        },
+        }
         "refresh_token" => {
             let refresh_token = request.refresh_token.as_ref().ok_or_else(|| {
                 (
