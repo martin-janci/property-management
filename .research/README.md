@@ -11,6 +11,7 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 .research/
 ├── README.md                 # this file
 ├── routine-prompt.md         # the routine's Instructions field
+├── implementer-prompt.md     # manual implementation agent's system prompt
 ├── state.json                # rolling cursors + seen_signals + hotspot_history
 ├── backlog.json              # CANONICAL ranked vectors (machine-friendly)
 ├── backlog.md                # rendered human view, regenerated each run
@@ -44,13 +45,25 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 
 ## Picking a plan to ship
 
-When you have an implementation slot, open the **manual agent** with:
+When you have an implementation slot, open the **manual implementation
+agent** by starting a Claude Code session with `--append-system-prompt-file
+.research/implementer-prompt.md` (or paste that file's contents into the
+first user message), then prompt:
 
 ```
-Implement the plan at .research/plans/<slug>.md. Read it cold — it's
-self-contained. Open a PR when done. After merge, move the plan to
-.research/plans/_archive/<slug>.md and mark its backlog row as done.
+Implement .research/plans/<slug>.md.
 ```
+
+The implementer prompt declares **seven capabilities** (C1–C7) covering
+systematic debugging, seed data, dev-stack startup, browser automation
+(Chrome MCP / Preview / playwright), ADB control, verification-before-
+completion, and code-review reception. Each plan ticks the capabilities it
+needs under *Required capabilities* — the implementation agent sets up
+exactly those, no more.
+
+It opens a PR, verifies, and on merge moves the plan to `_archive/` and
+marks the backlog row `done`. The next daily research run sees the
+shipment in the brief.
 
 ## Hand-edits
 

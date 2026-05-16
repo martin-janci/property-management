@@ -51,7 +51,8 @@ is recorded, not hidden), but the brief makes it visible.
 
 - **Pass when:** ≤2 new plans this run; each contains all 12 required headings; each names ≥1 concrete file under `files`.
 - **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '\.md$'` ≤ 2.
-- **Check (headings):** for each new plan, all of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings.
+- **Check (headings):** for each new plan, all of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings.
+- **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
 
 ### G8 — No application code touched
 
@@ -283,7 +284,7 @@ Run these and verify each passes:
 4. `.research/backlog.md` content matches what regenerating from `backlog.json` would produce (don't have stale rows).
 5. Today's brief exists with all required sections.
 6. **At most 2** new files added under `.research/plans/`.
-7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge).
+7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Required capabilities, Repro steps, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge). At least one capability box must be ticked.
 8. No secrets or private infrastructure hostnames (anything `*.rlt.sk`, internal IPs, API tokens, OAuth tokens, htpasswd hashes) anywhere in the committed text.
 9. Backlog entries deduplicated by `id` (no two items with the same id).
 10. No score above 8. No score below 0 (those should be `dropped`).
@@ -349,6 +350,25 @@ Run these and verify each passes:
 <Max 5 bullets. Each names a concrete artifact.>
 - <PR url, commit sha, or file:line>
 - <…>
+
+## Required capabilities
+<Tick the ones the implementation agent needs. See implementer-prompt.md
+for what each provides. Be honest — over-asking wastes setup time,
+under-asking blocks the agent mid-flight.>
+- [ ] C1 — Systematic debugging (always tick for bug / revert / risky-churn)
+- [ ] C2 — Seed data
+- [ ] C3 — Dev instance running (`stack up pm-local …`)
+- [ ] C4 — Browser (Chrome MCP / Preview / playwright)
+- [ ] C5 — ADB device (only for mobile-touching plans)
+- [ ] C6 — Verification before completion (always tick)
+- [ ] C7 — Code-review reception (tick if you expect controversy)
+
+## Repro steps
+<Smallest deterministic sequence that reproduces the problem the plan
+solves. The implementation agent uses this to author the failing-on-main
+test (IG3). One numbered list, each step concrete enough to paste.>
+1. <…>
+2. <expected vs actual at the end>
 
 ## Suggested approach
 <Max 7 numbered steps. Reference files by path with line numbers when known.>
