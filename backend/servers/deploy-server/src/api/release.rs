@@ -139,7 +139,7 @@ pub async fn deploy_handler(
         reality_image: images["reality-server"].clone(),
         ppt_web_image: images["ppt-web"].clone(),
         reality_web_image: images["reality-web"].clone(),
-        admin_web_image: images["admin-web"].clone(),
+        admin_web_image: Some(images["admin-web"].clone()),
         reality_apex: target_cfg.reality_apex.clone(),
         ppt_apex: target_cfg.ppt_apex.clone(),
         target_name: target.as_str().into(),

@@ -36,7 +36,19 @@ pub struct BlueGreenSpec {
     pub reality_web_image: String,
     /// Super-admin SPA image (`ghcr.io/martin-janci/ppt-admin-web:<tag>`).
     /// Phase 5 control plane served at `admin.<reality_apex>`.
-    pub admin_web_image: String,
+    ///
+    /// Optional for backwards compatibility: Release rows persisted BEFORE
+    /// admin-web was added (registered through `build_staging_images` < #268)
+    /// don't carry an `admin-web` image. Rollback via `pmctl rollback prod`
+    /// builds the prev_color spec from one of those older Release rows; if
+    /// this field were required, rollback would 400 with "missing image for
+    /// service 'admin-web'" and leave the operator without a recovery path.
+    ///
+    /// When `None`, `deploy()` skips the admin-web pull/run/wait/register
+    /// steps entirely (no admin-web container is created for that color and
+    /// no `admin.<apex>` route is registered). The other four services are
+    /// still deployed atomically.
+    pub admin_web_image: Option<String>,
     /// Reality Portal apex (e.g. `rlt.sk`, `staging.rlt.sk`). reality-web is
     /// served at this exact host; reality-server at `api.<reality_apex>`.
     pub reality_apex: String,
@@ -80,7 +92,9 @@ impl BlueGreenSpec {
             reality_image: require(rel, "reality-server")?,
             ppt_web_image: require(rel, "ppt-web")?,
             reality_web_image: require(rel, "reality-web")?,
-            admin_web_image: require(rel, "admin-web")?,
+            // admin-web missing on older Release rows (pre #268) is fine —
+            // skip it during deploy() instead of refusing the rollback.
+            admin_web_image: rel.images.get("admin-web").cloned(),
             reality_apex: target.reality_apex.clone(),
             ppt_apex: target.ppt_apex.clone(),
             service_envs,
@@ -292,9 +306,11 @@ impl BlueGreenDeployer {
             &spec.reality_image,
             &spec.ppt_web_image,
             &spec.reality_web_image,
-            &spec.admin_web_image,
         ] {
             self.pull_image(docker, img).await?;
+        }
+        if let Some(admin_img) = &spec.admin_web_image {
+            self.pull_image(docker, admin_img).await?;
         }
 
         let target_name = &spec.target_name;
@@ -440,14 +456,22 @@ impl BlueGreenDeployer {
         // admin-web: same nginx-on-8080 pattern as ppt-web. The Dockerfile
         // EXPOSEs 8080 and renders its /api/* proxy upstream from BG_TARGET
         // and BG_COLOR at start.
-        self.run_service(
-            &format!("{target_name}-admin-web-{next_color}"),
-            &spec.admin_web_image,
-            8080,
-            target_name,
-            admin_web_env,
-        )
-        .await?;
+        //
+        // Optional: missing on rollback specs built from pre-#268 Release rows
+        // (see `BlueGreenSpec::admin_web_image` rationale). When absent, we
+        // skip the container — the corresponding `admin.<apex>` Caddy route
+        // (registered below) is also skipped so requests to that host fall
+        // through to onyx / 404 instead of routing to a dead upstream.
+        if let Some(admin_img) = spec.admin_web_image.as_deref() {
+            self.run_service(
+                &format!("{target_name}-admin-web-{next_color}"),
+                admin_img,
+                8080,
+                target_name,
+                admin_web_env,
+            )
+            .await?;
+        }
 
         // Wait for each container to reach a ready state before flipping Caddy upstream.
         // Backends (api / reality) get a longer timeout because they run all DB
@@ -462,8 +486,10 @@ impl BlueGreenDeployer {
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
-        self.wait_until_ready(&format!("{target_name}-admin-web-{next_color}"), 8080, 30)
-            .await?;
+        if spec.admin_web_image.is_some() {
+            self.wait_until_ready(&format!("{target_name}-admin-web-{next_color}"), 8080, 30)
+                .await?;
+        }
 
         // Per-service Caddy routes use the dual-apex layout:
         //   <reality_apex>           → reality-web   (Reality Portal UI, bare apex)
@@ -517,15 +543,26 @@ impl BlueGreenDeployer {
         // path-based split needed at the edge.
         //
         // Prod: admin.rlt.sk. Staging: admin.staging.rlt.sk. Both rely on
-        // Cloudflare Universal SSL (`*.rlt.sk`) and a row in
-        // `reserved_platform_hosts` (migration 00151) so api-server's
-        // host_tenant middleware resolves the host as `PlatformHost`.
-        self.caddy
-            .register_route(
-                &format!("admin.{reality_apex}"),
-                &format!("{target_name}-admin-web-{next_color}:8080"),
-            )
-            .await?;
+        // Cloudflare Universal SSL (`*.rlt.sk`) for TLS, and on `PLATFORM_HOST`
+        // env var injected by `build_service_envs` so api-server's
+        // host_tenant_middleware resolves the host as `PlatformHost`.
+        // (Migration 00151 adds the host to `reserved_platform_hosts` for
+        // the agency_domains CHECK constraint — it prevents an agency from
+        // claiming `admin.<apex>` — but that table is NOT consulted by the
+        // resolver itself; see api-core middleware/host_tenant.rs
+        // `load_platform_hosts`.)
+        //
+        // Skipped when `admin_web_image` is None (rollback to pre-#268
+        // release); no admin-web container exists in that color and an
+        // `admin.<apex>` route here would just 502.
+        if spec.admin_web_image.is_some() {
+            self.caddy
+                .register_route(
+                    &format!("admin.{reality_apex}"),
+                    &format!("{target_name}-admin-web-{next_color}:8080"),
+                )
+                .await?;
+        }
 
         let prev_containers: Vec<String> = BG_SERVICES
             .iter()
