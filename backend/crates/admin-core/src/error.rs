@@ -27,6 +27,11 @@ pub enum AdminError {
     #[error("forbidden: missing capability {0:?}")]
     MissingCapability(crate::Capability),
 
+    /// Authenticated platform principal, but has never enrolled in MFA.
+    /// The frontend routes to the enrollment screen.
+    #[error("mfa not enrolled")]
+    MfaNotEnrolled,
+
     /// Authenticated, but no MFA verification within `RECENT_MFA_WINDOW`.
     /// The frontend re-prompts for the user's TOTP and retries.
     #[error("mfa required")]
@@ -85,6 +90,14 @@ impl IntoResponse for AdminError {
                 Json(ErrorBody {
                     error: "missing_capability",
                     message: format!("Missing capability: {:?}", cap),
+                }),
+            )
+                .into_response(),
+            AdminError::MfaNotEnrolled => (
+                StatusCode::FORBIDDEN,
+                Json(ErrorBody {
+                    error: "mfa_not_enrolled",
+                    message: "Platform principals must enroll in MFA before using capability-gated actions. Visit /admin/mfa/enroll/start.".into(),
                 }),
             )
                 .into_response(),

@@ -22,9 +22,10 @@ use crate::state::AppState;
 
 // Phase 5 — Admin extension wiring.
 use admin_core::{
-    AdminDeps, AuditWriter, CapabilityGrantsRepository, CapabilityRegistry, ImpersonationService,
-    MfaRecency, NoopAuditWriter, NoopMfaRecency, PgAuditWriter, PgCapabilityGrantsRepository,
-    PgImpersonationService, PgMfaRecency,
+    AdminDeps, AlwaysEnrolledMfa, AuditWriter, CapabilityGrantsRepository, CapabilityRegistry,
+    ImpersonationService, MfaEnrollment, MfaRecency, NoopAuditWriter, NoopMfaRecency,
+    PgAuditWriter, PgCapabilityGrantsRepository, PgImpersonationService, PgMfaEnrollment,
+    PgMfaRecency,
 };
 
 /// Phase 5 — admin dependency injection bundle.
@@ -39,6 +40,7 @@ pub struct AdminExtensions {
     pub deps: AdminDeps,
     pub grants: Arc<dyn CapabilityGrantsRepository>,
     pub mfa: Arc<dyn MfaRecency>,
+    pub enrollment: Arc<dyn MfaEnrollment>,
     pub audit: Arc<dyn AuditWriter>,
     pub impersonation: Arc<dyn ImpersonationService>,
 }
@@ -52,17 +54,19 @@ pub fn build_admin_extensions(pool: db::DbPool) -> AdminExtensions {
     let grants: Arc<dyn CapabilityGrantsRepository> =
         Arc::new(PgCapabilityGrantsRepository::new(pool.clone()));
     let mfa: Arc<dyn MfaRecency> = Arc::new(PgMfaRecency::new(pool.clone()));
+    let enrollment: Arc<dyn MfaEnrollment> = Arc::new(PgMfaEnrollment::new(pool.clone()));
     let audit: Arc<dyn AuditWriter> = Arc::new(PgAuditWriter::new(pool.clone()));
-    let deps = AdminDeps::new(grants.clone(), mfa.clone(), audit.clone());
+    let deps = AdminDeps::new(grants.clone(), mfa.clone(), enrollment.clone(), audit.clone());
     let impersonation: Arc<dyn ImpersonationService> =
         Arc::new(PgImpersonationService::new(pool, audit.clone()));
     // Suppress unused warnings for noop fixtures (used by tests, not by the
     // production binary).
-    let _ = (NoopAuditWriter, NoopMfaRecency);
+    let _ = (NoopAuditWriter, NoopMfaRecency, AlwaysEnrolledMfa);
     AdminExtensions {
         deps,
         grants,
         mfa,
+        enrollment,
         audit,
         impersonation,
     }
@@ -82,6 +86,7 @@ where
         .layer(Extension(ext.deps.clone()))
         .layer(Extension(ext.grants.clone()))
         .layer(Extension(ext.mfa.clone()))
+        .layer(Extension(ext.enrollment.clone()))
         .layer(Extension(ext.audit.clone()))
         .layer(Extension(ext.impersonation.clone()))
 }

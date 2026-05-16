@@ -12,6 +12,8 @@ export type {
   StoredImpersonation,
 } from './ImpersonationWrapper';
 export { ImpersonationWrapper } from './ImpersonationWrapper';
+export type { MfaWrapperProps } from './MfaWrapper';
+export { MfaWrapper } from './MfaWrapper';
 export {
   AgenciesPage,
   AuditPage,

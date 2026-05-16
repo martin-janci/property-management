@@ -30,6 +30,11 @@ export {
   useMfaChallenge,
 } from './components/MfaChallengeModal';
 export type {
+  MfaEnrollmentLabels,
+  MfaEnrollmentScreenProps,
+} from './components/MfaEnrollmentScreen';
+export { MfaEnrollmentScreen } from './components/MfaEnrollmentScreen';
+export type {
   ResourceTableAction,
   ResourceTableColumn,
   ResourceTableProps,

@@ -30,7 +30,8 @@ use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::tenant::TenantMembershipProvider;
 
 use crate::{
-    AdminError, AuditOutcome, AuditWriter, Capability, CapabilityGrantsRepository, MfaRecency,
+    AdminError, AuditOutcome, AuditWriter, Capability, CapabilityGrantsRepository, MfaEnrollment,
+    MfaRecency,
 };
 
 /// Bundle of dependencies the extractor needs. Stored in axum's request
@@ -39,6 +40,9 @@ use crate::{
 pub struct AdminDeps {
     pub grants: Arc<dyn CapabilityGrantsRepository>,
     pub mfa: Arc<dyn MfaRecency>,
+    /// Phase 6 (B6): enrollment check — gates capability use on the principal
+    /// having completed `/admin/mfa/enroll/verify`.
+    pub enrollment: Arc<dyn MfaEnrollment>,
     pub audit: Arc<dyn AuditWriter>,
 }
 
@@ -46,9 +50,10 @@ impl AdminDeps {
     pub fn new(
         grants: Arc<dyn CapabilityGrantsRepository>,
         mfa: Arc<dyn MfaRecency>,
+        enrollment: Arc<dyn MfaEnrollment>,
         audit: Arc<dyn AuditWriter>,
     ) -> Self {
-        Self { grants, mfa, audit }
+        Self { grants, mfa, enrollment, audit }
     }
 }
 
@@ -127,6 +132,26 @@ where
             )
             .await;
             return Err(AdminError::NotPlatformPrincipal);
+        }
+
+        // Step 2.5: MFA enrollment (Phase 6 B6).
+        //
+        // A platform principal who has never enrolled cannot possibly satisfy the
+        // MFA recency check. Without this gate, an operator arriving before
+        // completing enrollment would hit a confusing "mfa_required" denial
+        // loop with no escape. We surface a distinct `mfa_not_enrolled` 403 so
+        // the frontend can route to the enrollment screen instead.
+        let enrolled = deps.enrollment.is_enrolled(principal.user_id).await?;
+        if !enrolled {
+            audit_denied(
+                &deps,
+                Some(principal.user_id),
+                required,
+                ip.as_deref(),
+                user_agent.as_deref(),
+            )
+            .await;
+            return Err(AdminError::MfaNotEnrolled);
         }
 
         // Step 3: capability grant.
