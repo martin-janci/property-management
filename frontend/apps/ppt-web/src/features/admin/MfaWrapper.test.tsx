@@ -23,8 +23,7 @@ vi.mock('../../contexts', () => ({
 // ---------- Mock react-i18next -------------------------------------------
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, opts?: { defaultValue?: string }) =>
-      opts?.defaultValue ?? _key,
+    t: (_key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? _key,
   }),
 }));
 
@@ -50,8 +49,16 @@ function codesResponse(): Response {
   return makeResponse({
     message: 'Enrolled',
     recovery_codes: [
-      'AAAA1111', 'BBBB2222', 'CCCC3333', 'DDDD4444', 'EEEE5555',
-      'FFFF6666', 'GGGG7777', 'HHHH8888', 'IIII9999', 'JJJJ0000',
+      'AAAA1111',
+      'BBBB2222',
+      'CCCC3333',
+      'DDDD4444',
+      'EEEE5555',
+      'FFFF6666',
+      'GGGG7777',
+      'HHHH8888',
+      'IIII9999',
+      'JJJJ0000',
     ],
   });
 }
@@ -70,19 +77,22 @@ describe('MfaWrapper', () => {
   it('shows a loading state initially', () => {
     // fetch never resolves — keeps component in loading state.
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
-    render(<MfaWrapper><span>admin content</span></MfaWrapper>);
+    render(
+      <MfaWrapper>
+        <span>admin content</span>
+      </MfaWrapper>
+    );
     expect(screen.getByText(/Loading/i)).toBeInTheDocument();
   });
 
   it('renders children when MFA is enrolled', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(makeResponse({ enabled: true }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(makeResponse({ enabled: true })));
+    render(
+      <MfaWrapper>
+        <span>admin content</span>
+      </MfaWrapper>
     );
-    render(<MfaWrapper><span>admin content</span></MfaWrapper>);
-    await waitFor(() =>
-      expect(screen.getByText('admin content')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText('admin content')).toBeInTheDocument());
     expect(screen.queryByText(/two-factor/i)).toBeNull();
   });
 
@@ -90,17 +100,20 @@ describe('MfaWrapper', () => {
     // 1st call → status; 2nd call → enroll/start (from MfaEnrollmentScreen on mount)
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         .mockResolvedValueOnce(makeResponse({ enabled: false }))
         .mockResolvedValue(enrollStartResponse())
     );
 
-    render(<MfaWrapper><span>admin content</span></MfaWrapper>);
+    render(
+      <MfaWrapper>
+        <span>admin content</span>
+      </MfaWrapper>
+    );
 
     await waitFor(() =>
-      expect(
-        screen.getByText(/Set up two-factor authentication/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Set up two-factor authentication/i)).toBeInTheDocument()
     );
 
     expect(screen.queryByText('admin content')).toBeNull();
@@ -110,7 +123,8 @@ describe('MfaWrapper', () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         // 1) status → not enrolled
         .mockResolvedValueOnce(makeResponse({ enabled: false }))
         // 2) enroll/start
@@ -119,12 +133,14 @@ describe('MfaWrapper', () => {
         .mockResolvedValueOnce(codesResponse())
     );
 
-    render(<MfaWrapper><span>admin content</span></MfaWrapper>);
+    render(
+      <MfaWrapper>
+        <span>admin content</span>
+      </MfaWrapper>
+    );
 
     // Wait for enrollment screen AND the Next button (only visible after enroll/start loads).
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /Next/i })).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByRole('button', { name: /Next/i })).toBeInTheDocument());
 
     // Advance to verify step.
     await user.click(screen.getByRole('button', { name: /Next/i }));
@@ -134,37 +150,34 @@ describe('MfaWrapper', () => {
     await user.click(screen.getByRole('button', { name: /Verify/i }));
 
     // Recovery codes step.
-    await waitFor(() =>
-      expect(screen.getByText(/Save your recovery codes/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/Save your recovery codes/i)).toBeInTheDocument());
 
     // Confirm codes saved.
-    await user.click(
-      screen.getByRole('button', { name: /I've saved these codes/i })
-    );
+    await user.click(screen.getByRole('button', { name: /I've saved these codes/i }));
 
     // Children now visible.
-    await waitFor(() =>
-      expect(screen.getByText('admin content')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText('admin content')).toBeInTheDocument());
   });
 
   it('defaults to showing enrollment when the status fetch rejects', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn()
+      vi
+        .fn()
         // 1) status → rejects
         .mockRejectedValueOnce(new Error('network'))
         // 2) enroll/start → succeeds (rendered after fallback)
         .mockResolvedValue(enrollStartResponse())
     );
 
-    render(<MfaWrapper><span>admin content</span></MfaWrapper>);
+    render(
+      <MfaWrapper>
+        <span>admin content</span>
+      </MfaWrapper>
+    );
 
     await waitFor(() =>
-      expect(
-        screen.getByText(/Set up two-factor authentication/i)
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Set up two-factor authentication/i)).toBeInTheDocument()
     );
     expect(screen.queryByText('admin content')).toBeNull();
   });

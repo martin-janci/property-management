@@ -15,7 +15,7 @@
  * hook this can be swapped out.
  */
 
-import { MfaEnrollmentScreen, type MfaEnrollmentLabels } from '@ppt/admin-ui';
+import { type MfaEnrollmentLabels, MfaEnrollmentScreen } from '@ppt/admin-ui';
 import { type ReactElement, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts';
@@ -54,7 +54,9 @@ export function MfaWrapper({ children }: MfaWrapperProps): ReactElement {
           setState('not_enrolled');
         }
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [authHeaders]);
 
   // ── Enrollment callbacks ──────────────────────────────────────────────────

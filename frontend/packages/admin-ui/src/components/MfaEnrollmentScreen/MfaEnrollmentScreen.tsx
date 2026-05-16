@@ -196,15 +196,17 @@ export function MfaEnrollmentScreen({
   return (
     <div style={containerStyle}>
       <div style={cardStyle}>
-        {step === 'loading' && (
-          <p style={mutedText}>Setting up enrollment…</p>
-        )}
+        {step === 'loading' && <p style={mutedText}>Setting up enrollment…</p>}
 
         {(step === 'scan' || step === 'start') && (
           <>
             <h2 style={headingStyle}>{l.stepScanTitle}</h2>
             <p style={mutedText}>{l.stepScanDescription}</p>
-            {error && <p role="alert" style={errorText}>{error}</p>}
+            {error && (
+              <p role="alert" style={errorText}>
+                {error}
+              </p>
+            )}
             {enrollData && (
               <>
                 {/* QR code via Google Charts — no external runtime dependency */}
@@ -224,7 +226,11 @@ export function MfaEnrollmentScreen({
                 <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     type="button"
-                    onClick={() => { setError(null); setCode(''); setStep('verify'); }}
+                    onClick={() => {
+                      setError(null);
+                      setCode('');
+                      setStep('verify');
+                    }}
                     style={primaryBtnStyle}
                   >
                     {l.next}
@@ -257,9 +263,18 @@ export function MfaEnrollmentScreen({
                 aria-invalid={error ? 'true' : 'false'}
                 style={codeInputStyle}
               />
-              {error && <p role="alert" style={errorText}>{error}</p>}
+              {error && (
+                <p role="alert" style={errorText}>
+                  {error}
+                </p>
+              )}
               <div style={actionsStyle}>
-                <button type="button" onClick={() => setStep('scan')} disabled={busy} style={secondaryBtnStyle}>
+                <button
+                  type="button"
+                  onClick={() => setStep('scan')}
+                  disabled={busy}
+                  style={secondaryBtnStyle}
+                >
                   Back
                 </button>
                 <button type="submit" disabled={busy} style={primaryBtnStyle}>
@@ -277,7 +292,9 @@ export function MfaEnrollmentScreen({
             <div style={codesGridStyle}>
               {recoveryCodes.map((c, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: index is stable for a fixed list
-                <code key={i} style={codeChipStyle}>{c}</code>
+                <code key={i} style={codeChipStyle}>
+                  {c}
+                </code>
               ))}
             </div>
             <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>

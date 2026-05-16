@@ -5,7 +5,7 @@
 
 use chrono::{Duration, Utc};
 use db::models::user::Locale;
-use db::models::{CreatePortalPasswordResetToken, PortalUser, UpdatePortalUser};
+use db::models::{CreatePortalPasswordResetToken, PortalUser};
 use db::repositories::{
     PortalPasswordResetRepository, PortalRepository, UnifiedPortalError, UnifiedPortalUserRepo,
     UpdateProfile,
