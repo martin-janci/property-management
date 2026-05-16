@@ -16,8 +16,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // ---------- Mock useAuth --------------------------------------------------
+// IMPORTANT: useAuth must return a STABLE object reference across renders.
+// MfaWrapper memoizes authHeaders with [getAccessToken] as a dep, and uses
+// it in useEffect's deps. If the mock returns a new object every call,
+// authHeaders becomes a new ref each render → useEffect re-fires → the
+// status check fetches in a loop, exhausting the mockResolvedValueOnce
+// queue and getting undefined back.
+const stableAuthContext = vi.hoisted(() => ({
+  getAccessToken: (): string => 'test-token',
+}));
 vi.mock('../../contexts', () => ({
-  useAuth: () => ({ getAccessToken: () => 'test-token' }),
+  useAuth: () => stableAuthContext,
 }));
 
 // ---------- Mock react-i18next -------------------------------------------
