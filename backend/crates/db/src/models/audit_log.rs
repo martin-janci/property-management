@@ -54,6 +54,8 @@ pub enum AuditAction {
     OAuthClientCreate,
     OAuthClientRevoke,
     OAuthClientSecretRegenerate,
+    // Phase 6 C17: principal_kind enforcement at token issuance
+    OAuthTokenDeniedPrincipalKind,
 }
 
 /// An audit log entry.

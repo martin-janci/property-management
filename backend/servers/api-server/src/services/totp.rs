@@ -255,6 +255,32 @@ impl TotpService {
         Ok(totp.get_url())
     }
 
+    /// Generate a base64-encoded PNG QR code for the otpauth URI.
+    ///
+    /// Returns the QR rendered server-side so the otpauth URI (which embeds
+    /// the TOTP secret) never leaves the trust boundary — defends against
+    /// the QR-via-Google-Charts leak (Phase 6 review R1). The frontend
+    /// renders the result directly via `<img src="data:image/png;base64,...">`.
+    pub fn generate_qr_base64(&self, email: &str, secret: &str) -> Result<String, TotpError> {
+        let secret_bytes = Secret::Encoded(secret.to_string())
+            .to_bytes()
+            .map_err(|e| TotpError::TotpCreationError(e.to_string()))?;
+
+        let totp = TOTP::new(
+            Algorithm::SHA1,
+            6,
+            1,
+            30,
+            secret_bytes,
+            Some(self.issuer.clone()),
+            email.to_string(),
+        )
+        .map_err(|e| TotpError::TotpCreationError(e.to_string()))?;
+
+        totp.get_qr_base64()
+            .map_err(|e| TotpError::TotpCreationError(e.to_string()))
+    }
+
     /// Generate backup codes.
     /// Returns a tuple of (plain codes for display, hashed codes for storage).
     pub fn generate_backup_codes(&self) -> Result<(Vec<String>, Vec<String>), TotpError> {

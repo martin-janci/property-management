@@ -139,41 +139,28 @@ impl UserService {
     }
 
     /// Create or update a portal user from SSO user info.
+    ///
+    /// Phase 6: `portal_users` has been dropped (migration 00148). The unified
+    /// write now goes only to `users`; `find_user_by_id` reads from `users` too.
     pub async fn upsert_sso_user(
         &self,
         info: &SsoUserInfo,
     ) -> Result<db::models::portal::PortalUser, anyhow::Error> {
-        // Parse PM user ID as UUID
         let pm_user_id = uuid::Uuid::parse_str(&info.user_id)
             .map_err(|e| anyhow::anyhow!("Invalid PM user ID: {}", e))?;
 
-        // N1 dual-write: write the unified `users` row first (collision-safe)
-        // then fetch the corresponding `portal_users` row to keep the public
-        // return shape unchanged.
         match self
             .unified
             .sso_upsert("pm_sso", Some(pm_user_id), &info.email, &info.name)
             .await
         {
             Ok(user) => {
-                // The unified write set portal_origin_id; read the matching
-                // portal_users row back. If a profile_image_url was supplied
-                // by the IdP, mirror it through the legacy update path so
-                // existing read paths see it.
-                let portal_id = user.portal_origin_id.unwrap_or(pm_user_id);
-                let portal_user = self
-                    .repo
-                    .find_user_by_id(portal_id)
-                    .await
-                    .map_err(|e| anyhow::anyhow!("Database error: {}", e))?
-                    .ok_or_else(|| {
-                        anyhow::anyhow!("dual-write succeeded but portal_users mirror not found")
-                    })?;
+                // Optionally update profile_image_url if supplied by the IdP.
                 if let Some(avatar) = info.avatar_url.as_deref() {
                     let _ = self
                         .repo
                         .update_user(
-                            portal_id,
+                            user.id,
                             db::models::UpdatePortalUser {
                                 name: None,
                                 profile_image_url: Some(avatar.to_string()),
@@ -182,12 +169,19 @@ impl UserService {
                         )
                         .await;
                 }
+                // Re-read through PortalRepository (now reads from users) to
+                // get the PortalUser-shaped response expected by callers.
+                let portal_user = self
+                    .repo
+                    .find_user_by_id(user.id)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Database error: {}", e))?
+                    .ok_or_else(|| {
+                        anyhow::anyhow!("upsert succeeded but users row not found immediately")
+                    })?;
                 Ok(portal_user)
             }
             Err(UnifiedPortalError::Collision { existing_user_id }) => {
-                // The user identity already belongs to a non-public
-                // principal (staff or platform). Refuse rather than
-                // silently overwrite. The collision row is already queued.
                 Err(anyhow::anyhow!(
                     "SSO upsert refused: email '{}' already belongs to non-public principal {} (collision queued)",
                     info.email,

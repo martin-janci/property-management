@@ -1,5 +1,7 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, 5]
+session_continued: true
+continuation_date: 2026-05-16
 inputDocuments: []
 session_topic: 'Multitenant SaaS for property-management agencies — super-admin control plane, agency tenancy, per-agency subdomain/custom-domain hosting (shared frontend now, customizable later), shared super-admin across Reality Portal + PPT'
 session_goals: 'Architecture options and roadmap sequencing, MVP-first'
@@ -346,3 +348,95 @@ The roadmap **is** the prioritization — dependency-ordered, MVP-first:
 - Cross-product reuse (A7) and the keystone middleware both pointed at the same conclusion: invest in shared crates early, and many axes light up at once.
 
 **Open thread (paused, not lost):** the per-org password/verification work on branch `feature/per-org-auth-policy` (tasks #89–92) maps directly into **Phase 2** — Phase 1 (`AuthPolicy` type + reality-server wiring) is done and compiles; Phase 2 (email-verification toggle) is partially built.
+
+---
+
+## Continuation — 2026-05-16
+
+**Trigger:** Phases 0–5.5 implemented (PR #260 ready). User's question: _"finish missing pieces and gaps in multitenant"_ — enumerate every gap, triage P0/P1/parked, dispatch P0 fixes immediately.
+
+**Scope:** all four lenses — (a) deferred Phase 2–5.5 follow-ups, (b) operational gaps not yet built, (c) cross-cutting integration gaps across reality-web/server + mobile + admin-ui, (d) parked future-horizon items.
+
+**Technique:** Reverse Brainstorming v2 — same lens as the original 22-leak hunt, applied to "claimed completeness" of each phase. Anti-bias enforced by rotating creative domain every cluster (deferral → operational → integration → horizon).
+
+### Phase 5.6 — Reverse Brainstorming v2 (gap hunt)
+
+#### Cluster A — Deferred Phase 2–5.5 follow-ups (named in code/docs)
+
+- **A1 portal_users still alive at write paths.** Phase 2 unification stopped at the read layer — `listing_inquiries.realtor_id_fkey → portal_users` forced the smoke-test helper to dual-write; ~8 write call-sites + 16 FK columns remain. _Identity is bifurcated under the hood — the unification claim is partial._
+- **A2 token_scope_tests #[ignore] ×3.** The defining test for leak #11 (token = user only, authority = host ∩ memberships) does not run in CI. Local-only verification is not verification. _Phase 2's keystone invariant is unproven end-to-end._
+- **A3 smoke_test_phase0_rls_cross_tenant_isolation skipped.** Legacy `rfqs` FK forced a `--skip`. The test that asserts the entire Phase 0 promise (cross-tenant isolation) has a deliberate hole.
+- **A4 caddy_ask prod_mode tests #[ignore].** Env-var race. The ask-endpoint's prod-only "reject unknown host" behavior — the leak #4 defense — is unverified.
+- **A5 reality-server endpoint sweep partially finished.** Some routes still acquire raw pool. _Leak #5 is closed where audited, open everywhere else; the CI gate covers the static check but not behaviour._
+- **A6 perf_portfolios was the canary, not the only case.** Migration 00146 fixed one pre-Phase-0 policy that crashed on empty UUID GUC. No systematic audit has been done for other policies that predate the `is_super_admin() OR NULLIF(...)` convention.
+
+#### Cluster B — Operational gaps (Phase 5.5 landed as schema/library, not as run-it operability)
+
+- **B1 GDPR purge routine not E2E tested.** Manifest exists; CI checks the manifest stays in sync. But "delete tenant N from postgres + S3 + Redis + audit" has no green integration test. Leak #17 defense is theoretical.
+- **B2 Per-tenant restore drill missing.** `tenant-ops::export` and `tenant-ops::restore` exist as code; no scheduled drill, no "we restored a real tenant from a real export in staging" record. _Backup that hasn't been restored is a wish._
+- **B3 Backup-restore drill cadence.** Even encrypted backups (#18 defense) untested in restore. No staging-restore runbook in `docs/multitenancy/operability.md`.
+- **B4 Per-tenant rate limiter has one tier.** `governor` wired in middleware, default 600 rpm uniformly. No tier table, no per-tenant override, no "starter vs pro vs enterprise" budgets. Hook exists, policy doesn't.
+- **B5 Metering pipeline has no consumer.** `meter_request` emits Prometheus counters. Nothing aggregates them per-tenant per-day. Can't bill, can't spot abuse — leak #19 partially closed.
+- **B6 MFA enforcement without enrollment flow.** `admin-core::mfa` enforces challenge on capability use; no enrollment flow for new platform principals, no recovery-code generation, no "step-up before sensitive op" UX. Leak #21 defense incomplete.
+- **B7 Per-tenant feature flags table has no admin UI.** Migration 00134 created `tenant_feature_flags`; admin-ui has a `feature-flags` page (per summary), but the kill-switch (#22) needs flip-and-invalidate-cache wiring + audit-log entry per flip.
+- **B8 Caddy on-demand TLS prod config missing.** Ask-endpoint exists in code; no committed Caddyfile, no cert-storage location decided, no cert-renewal monitoring, no cert-storage backup procedure.
+- **B9 Soft-delete grace-period scheduler not wired.** Tables tagged `deleted_at`; no scheduled job that purges (or warns about) records past their grace window. Soft-delete without a sweeper = unbounded soft-delete table growth + unfulfilled GDPR clock.
+- **B10 Audit-log retention/rotation missing.** `audit_logs` + `SupportActivityLog` grow unbounded. No archive policy, no time-partition. The compliance lever becomes the cost lever.
+- **B11 Alerting on platform-admin actions absent.** Audit row written → no alerting pipeline. An impersonation goes unobserved unless someone reads the table. Leak #21's "audit + alerting" pair is half-done.
+- **B12 Break-glass procedure undocumented.** Single super-admin lock-out scenario has no runbook in `docs/multitenancy/operability.md`.
+- **B13 Connection-pool RLS context bleed test missing.** Leak #2 defense relied on `Drop` + `clear_request_context()`. No property test that injects panic mid-request and asserts the next checkout has a clear GUC. Defense exists in code; absence-of-bleed is an assertion-free claim.
+- **B14 agency_domains cache invalidation on domain release untested.** Leak #3 defense was "TTL + invalidation on release." TTL is in code (`TenantResolutionCache::new(300, ...)`); the invalidation-on-release path needs a test that releasing a domain immediately revokes resolution, not eventually.
+
+#### Cluster C — Cross-cutting integration gaps
+
+- **C1 reality-web `/tenant-config` not consumed.** Phase 3 shipped the endpoint + design tokens; Next.js middleware for Host → tenant → branding injection has no integration test, possibly no implementation in reality-web. _The user-facing payoff of Phase 3 is unrealised on the public portal._
+- **C2 reality-web SSR/ISR cache not tenant-keyed.** Explicit "gotcha to manage" from the original session — and the most likely production-breach vector after rollout. `revalidate` keys, edge cache, image cache must all encode the resolved host.
+- **C3 Mobile RN (PPT mgmt) tenant context not addressed.** App targets one api-server URL today. With per-agency hosts, does the mobile pick a base URL? Auth-domain selector at first launch? No design exists.
+- **C4 Mobile KMP (Reality) — same gap.** White-label readiness undefined; current app = global portal only (per session decision), but per-agency mobile has no path.
+- **C5 admin-ui coverage gaps.** Phase 5 console covers agencies/users/feature-flags/audit/platform. `site_settings:write` and `mobile_config:write` capabilities exist with no UI to exercise them. Capabilities without UI = unused capabilities.
+- **C6 reality-server admin endpoints — A6 said reality-server owns portal/agency admin; nothing actually mounted.** Whole admin surface lives in api-server today.
+- **C7 Cross-server super-admin context propagation untested.** When admin clicks a reality-server-backed action from the unified console, does the super-admin context flow? Shared JWT suggests yes, but no test asserts it.
+- **C8 SDK regen for new admin surface.** `@hey-api/openapi-ts` consumes utoipa output. memberships, invites, capabilities, audit, settings, impersonation, MFA-challenge endpoints — all need annotations + regen committed; otherwise the frontend hand-writes types and drifts.
+- **C9 WebSocket tenant context.** WS connections may bypass `host_tenant_middleware` (axum WS handlers are in a separate route layer). Every other request enforces; one unenforced path = full breach class for any tenant-scoped pub/sub.
+- **C10 Redis pub/sub tenant prefixing.** `TenantedRedis` wraps the GET/SET path; pub/sub channels likely raw. Leak #20 partially closed.
+- **C11 admin-ui i18n consumer.** Package is i18n-agnostic via `labels` prop; ppt-web needs to actually pass localized strings. Untranslated admin-ui = English-only super-admin in a `sk/cs/de/en` product.
+- **C12 OpenAPI annotations for new admin endpoints.** utoipa coverage check — every new route present in spec? Drives C8.
+- **C13 CORS for new admin routes.** If admin-ui ever moves off ppt-web (subdomain split for security), CORS allowlist needs to know.
+- **C14 Per-tenant CSP allowlist.** Subdomains may load tenant logos / fonts from per-tenant CDNs; one global CSP either blocks them or whitelists everything.
+- **C15 Tenant-branded email sender.** lettre 0.11.22; invites currently `noreply@platform`. Spec implies tenant-branded sender — and DKIM/SPF per tenant domain — is unaddressed.
+- **C16 `/tenant-config` cacheability.** No `Cache-Control` strategy. Either every page-load makes a DB hit through middleware, or a stale config persists past a flag flip.
+- **C17 OAuth provider principal_kind enforcement.** api-server is the OAuth provider (per CLAUDE.md). Login path needs to enforce `principal_kind` in the token-issuance step, not only at the request middleware.
+- **C18 UC-01..UC-32 regression sweep.** Phase 2 changed identity shape (added `principal_kind`, membership rows). No systematic check that the 32 documented UCs still pass. _Likely silent breakage._
+
+#### Cluster D — Parked future-horizon items (with explicit unparking triggers — current gap is that no trigger is defined)
+
+- **D1 A5-2 multi-zone / per-agency builds** — Trigger? "Pilot agency demands code-level UI fork" — capture as a written threshold so the team doesn't drift into ad-hoc forking earlier.
+- **D2 A5-5 per-agency component slots** — extension API not designed. Trigger: 3 agencies request the same custom widget.
+- **D3 A2-4 Federated IdP for staff principals** — SAML/OIDC adapter not started. Trigger: first enterprise prospect with SSO mandate.
+- **D4 A3-3 DB-per-tenant for whales** — promotion path missing. Trigger: signed enterprise contract with data-residency clause.
+- **D5 A6-2 Separate super-admin service** — hardening; trigger: first compliance audit asks for blast-radius separation.
+- **D6 A4-4 Derived search index** — trigger: global-portal P95 search latency exceeds X (define X).
+- **D7 A7-3 Schema-driven admin** — only when ≥10 trivial CRUD resources in the unified console; today we have 5.
+- **D8 Mobile per-agency builds (white-label)** — vs in-app agency selection. Decide before C3/C4 is built — they branch here.
+
+#### Triage — three tiers
+
+**P0 (architectural / breach-class — must close before declaring multitenant production-ready):**
+A1 · A5 · C1 · C2 · B6 · B13 · B14 · C9 · C17
+
+**P1 (discrete control / pre-launch must-have):**
+A2 · A3 · A4 · A6 · B1 · B2 · B7 · B8 · B9 · B11 · B12 · C5 · C8 · C10 · C12
+
+**P2 / Phase 6 backlog (operability + nice-to-have):**
+B3 · B4 · B5 · B10 · C3 · C4 · C6 · C7 · C11 · C13 · C14 · C15 · C16 · C18
+
+**Parked (with the gap = no defined unpark trigger):**
+D1 · D2 · D3 · D4 · D5 · D6 · D7 · D8
+
+#### Pattern observation
+
+- **Phase 5.5 has the most "schema-but-not-operability" gaps** (B1, B2, B3, B5, B6, B9, B10, B11) — the library landed; the run-it muscle did not.
+- **Cross-product surfaces lag the backend** (C1, C3, C4, C6, C11, C18) — Phase 3's branding contract has no consumer; mobile is unaddressed.
+- **Verification gaps cluster on the highest-stakes invariants** (A2 = leak #11; A3 = Phase 0 promise; B13 = leak #2; B14 = leak #3; C9 = leak #5/#20). _Code without test ≈ code without commitment._
+
+

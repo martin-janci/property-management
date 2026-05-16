@@ -51,6 +51,10 @@ pub struct Claims {
     /// User roles in the organization (optional)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<String>>,
+    /// Phase 6 C17: principal_kind of the user (public | staff | platform).
+    /// Embedded at issuance so downstream middleware can read it cheaply.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
 }
 
 /// Token pair returned after successful authentication.
@@ -101,6 +105,21 @@ impl JwtService {
         org_id: Option<Uuid>,
         roles: Option<Vec<String>>,
     ) -> Result<String, JwtError> {
+        self.generate_access_token_with_kind(user_id, email, name, org_id, roles, None)
+    }
+
+    /// Generate an access token with an explicit `kind` (principal_kind) claim.
+    /// Phase 6 C17: used when the kind is known at issuance time so downstream
+    /// middleware can read it from the token without a DB round-trip.
+    pub fn generate_access_token_with_kind(
+        &self,
+        user_id: Uuid,
+        email: &str,
+        name: &str,
+        org_id: Option<Uuid>,
+        roles: Option<Vec<String>>,
+        kind: Option<String>,
+    ) -> Result<String, JwtError> {
         let now = Utc::now();
         let exp = now + Duration::seconds(self.access_token_lifetime);
 
@@ -114,6 +133,7 @@ impl JwtService {
             token_type: "access".to_string(),
             org_id: org_id.map(|id| id.to_string()),
             roles,
+            kind,
         };
 
         encode(&Header::default(), &claims, &self.encoding_key)
@@ -141,6 +161,7 @@ impl JwtService {
             token_type: "refresh".to_string(),
             org_id: None,
             roles: None,
+            kind: None,
         };
 
         let token = encode(&Header::default(), &claims, &self.encoding_key)
