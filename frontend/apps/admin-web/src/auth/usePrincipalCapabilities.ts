@@ -1,56 +1,66 @@
 /**
- * Phase 5 (B6) — interim platform-principal predicate (admin-web port).
+ * Phase 5 (B6) — platform-principal predicate for admin-web.
  *
- * Original lives in `ppt-web/src/features/admin/usePrincipalCapabilities.ts`
- * and reads from ppt-web's `AuthContext`. This port reads from `useAdminAuth`
- * (sessionStorage-backed access token) instead.
+ * Source of truth: `GET /api/v1/admin/capabilities/me`. The endpoint
+ * returns the principal's resolved capability set + a flag indicating
+ * whether the principal is platform-scoped (super-admin) or org-scoped
+ * (tenant member). Backend access tokens don't include these fields
+ * directly, so we fetch them once after login and cache via TanStack
+ * Query.
  *
- * TODO(phase-5-followup): replace with a TanStack-Query hook backed by
- * `GET /api/v1/admin/capabilities/me` once the admin client surfaces it.
- *
- * Capabilities default to the empty array; the admin pages render but the
- * `<ResourceTable>` actions stay hidden until real capabilities arrive.
+ * Pages call this hook anywhere; `CapabilityProvider` (in App.tsx)
+ * consumes it to feed `useCapability` for the per-control gating used
+ * by `<ResourceTable>` and `<SettingsForm>`.
  */
 
 import type { Capability } from '@ppt/admin-ui';
-import { decodeJwt } from '@ppt/shared';
-import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { useAdminAuth } from './AdminAuthContext';
 
-interface ExtendedJwtPayload {
-  principal_kind?: string;
-  capabilities?: ReadonlyArray<string>;
-  role?: string;
+/** Shape returned by `/admin/capabilities/me`. */
+interface MeCapabilitiesResponse {
+  principal_kind: 'platform' | 'org' | 'service';
+  capabilities: ReadonlyArray<Capability>;
 }
-
-const PLATFORM_ROLE_FALLBACKS: ReadonlySet<string> = new Set([
-  'platform',
-  'platform_admin',
-  'superadmin',
-]);
 
 export interface PrincipalCapabilitiesResult {
   isPlatformPrincipal: boolean;
   capabilities: ReadonlyArray<Capability>;
+  /** True while the /me request is in flight; UI should treat as loading. */
+  isLoading: boolean;
+}
+
+async function fetchMeCapabilities(token: string): Promise<MeCapabilitiesResponse> {
+  const resp = await fetch('/api/v1/admin/capabilities/me', {
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+  });
+  if (!resp.ok) {
+    // 401 / 403 → return defaults (gated UI stays hidden). Any other
+    // status throws and bubbles to the React Query error surface.
+    if (resp.status === 401 || resp.status === 403) {
+      return { principal_kind: 'org', capabilities: [] };
+    }
+    throw new Error(`/admin/capabilities/me failed: ${resp.status}`);
+  }
+  return (await resp.json()) as MeCapabilitiesResponse;
 }
 
 export function usePrincipalCapabilities(): PrincipalCapabilitiesResult {
   const { token } = useAdminAuth();
 
-  return useMemo<PrincipalCapabilitiesResult>(() => {
-    const payload = (token ? decodeJwt(token) : null) as
-      | (ReturnType<typeof decodeJwt> & ExtendedJwtPayload)
-      | null;
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin', 'capabilities', 'me', token],
+    queryFn: () => fetchMeCapabilities(token as string),
+    enabled: token !== null,
+    staleTime: 60_000,
+    retry: 1,
+  });
 
-    const claimKind = payload?.principal_kind?.toLowerCase();
-    const role = payload?.role?.toLowerCase();
-
-    const isPlatformPrincipal =
-      claimKind === 'platform' || (role !== undefined && PLATFORM_ROLE_FALLBACKS.has(role));
-
-    const capabilities = (payload?.capabilities ?? []) as ReadonlyArray<Capability>;
-
-    return { isPlatformPrincipal, capabilities };
-  }, [token]);
+  return {
+    isPlatformPrincipal: data?.principal_kind === 'platform',
+    capabilities: data?.capabilities ?? [],
+    isLoading: isLoading && token !== null,
+  };
 }
