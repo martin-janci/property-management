@@ -282,10 +282,11 @@ impl UserHandler {
     /// for human review (defends leak #7 the same way the merge migration
     /// does).
     pub async fn upsert_sso_user(&self, pm_user_id: Uuid, email: &str, name: &str) -> SsoResult {
-        // Existed-by-pm_user_id case (legacy SSO link). We still invoke the
-        // unified path so a stale name in `users` is updated alongside
-        // `portal_users`.
-        let was_existing = matches!(self.repo.find_user_by_pm_id(pm_user_id).await, Ok(Some(_)));
+        // Phase 6 (review follow-up): the legacy portal_users.pm_user_id
+        // back-pointer is gone. The unified `sso_upsert` keys on email,
+        // so the only meaningful "is this a returning user?" signal is
+        // whether a `users` row already exists for this email.
+        let was_existing = matches!(self.repo.find_user_by_email(email).await, Ok(Some(_)));
 
         match self
             .unified

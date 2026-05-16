@@ -140,7 +140,7 @@ scan_ws_files() {
             echo "  Missing         : '$MIDDLEWARE_ANCHOR' (via from_fn_with_state)"
             echo "  Fix             : Ensure this WS route is mounted under the"
             echo "                    host_tenant_middleware layer.  See:"
-            echo "                    backend/crates/api-core/src/middleware/host_tenant_middleware.rs"
+            echo "                    backend/crates/api-core/src/middleware/host_tenant.rs"
             echo ""
         done < <(rg -n --with-filename "$pattern" "$servers_dir" \
             --glob='!*_test.rs' \

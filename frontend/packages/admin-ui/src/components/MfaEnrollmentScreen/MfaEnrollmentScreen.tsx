@@ -166,7 +166,9 @@ export function MfaEnrollmentScreen({
   const retryStart = useCallback(() => {
     setError(null);
     setEnrollData(null);
-    setStep('start');
+    // Show the loading UI during retry so the user has clear feedback that
+    // the retry is in-flight, instead of the empty scan screen.
+    setStep('loading');
     onStart()
       .then((data) => {
         setEnrollData(data);

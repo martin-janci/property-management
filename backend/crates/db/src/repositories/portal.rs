@@ -157,30 +157,23 @@ impl PortalRepository {
     /// Phase 6: `pm_user_id` was `portal_users.pm_user_id`; after unification
     /// the equivalent concept is `users.portal_origin_id` pointing at the old
     /// portal_users.id, but for SSO the PM user link is expressed as the PM
-    /// users.id stored in `users` with `principal_kind = 'staff'`. Since the
-    /// reality-server login uses email as the lookup key and the SSO flow now
-    /// goes through `UnifiedPortalUserRepo`, this path is only hit by the
-    /// SSO upsert helper, which uses the result to distinguish a
-    /// `Created` (first-time SSO) from a `LoggedIn` (returning) event.
+    /// users.id stored in `users` with `principal_kind = 'staff'`. The
+    /// original `portal_users.pm_user_id` column was dropped along with
+    /// the table (migration 00148), and the unified `users` schema does
+    /// NOT carry a `pm_user_id` back-pointer (only `portal_origin_id`
+    /// which points to the LEGACY portal_users.id, not a PM user.id).
     ///
-    /// Phase 6: portal_users was dropped (migration 00148) but
-    /// `users.portal_origin_id` is retained as the back-pointer for any
-    /// row that originated from a legacy portal_user. We lookup against it
-    /// so the SSO upsert can correctly classify legacy returning users.
-    /// Rows with no portal_origin_id (created after Phase 2.5) won't match
-    /// here — callers should fall back to email/SSO-key lookup for those.
+    /// Returning `Ok(None)` keeps the method's signature compatible for
+    /// the few legacy callers but encourages them to switch to
+    /// `find_user_by_email`. Reality-server's SSO upsert already keys on
+    /// email, so the "was_existing" classification should be derived from
+    /// an email lookup, not from this method — see
+    /// `handlers/users::UserHandler::upsert_sso_user`.
     pub async fn find_user_by_pm_id(
         &self,
-        pm_user_id: Uuid,
+        _pm_user_id: Uuid,
     ) -> Result<Option<PortalUser>, SqlxError> {
-        let sql = format!(
-            "{} AND u.portal_origin_id = $1",
-            Self::portal_user_projection()
-        );
-        sqlx::query_as::<_, PortalUser>(&sql)
-            .bind(pm_user_id)
-            .fetch_optional(&self.pool)
-            .await
+        Ok(None)
     }
 
     /// Update portal user profile fields.

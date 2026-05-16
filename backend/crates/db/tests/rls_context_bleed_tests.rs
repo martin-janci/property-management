@@ -31,17 +31,18 @@ use uuid::Uuid;
 /// Read a GUC from the current connection session.  Returns `None` when the
 /// setting is absent or is the empty string (both indicate "not set").
 async fn read_guc(pool: &PgPool, name: &str) -> Option<String> {
-    // `current_setting(name, true)` is the missok form — returns '' rather
-    // than raising an error when the setting has never been set.
-    let raw: String = sqlx::query_scalar(&format!("SELECT current_setting('{name}', true)"))
-        .fetch_one(pool)
-        .await
-        .expect("read_guc query");
+    // `current_setting(name, true)` is the missing_ok form — returns NULL
+    // (NOT '') when the setting has never been set on this session, so the
+    // scalar must be decoded as Option<String>.
+    let raw: Option<String> =
+        sqlx::query_scalar(&format!("SELECT current_setting('{name}', true)"))
+            .fetch_one(pool)
+            .await
+            .expect("read_guc query");
 
-    if raw.is_empty() {
-        None
-    } else {
-        Some(raw)
+    match raw {
+        Some(s) if !s.is_empty() => Some(s),
+        _ => None,
     }
 }
 

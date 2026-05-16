@@ -279,7 +279,9 @@ ALTER TABLE viewing_schedules
 
 -- ===========================================================================
 -- 12. portal_password_reset_tokens  (portal_user_id → portal_users(id) CASCADE)
---     Rename column to user_id as part of the retarget.
+--     Column name kept as `portal_user_id` for back-compat; only the FK is
+--     repointed at users(id). A rename can be done in a later migration if
+--     desired but isn't required by the unification.
 -- ===========================================================================
 
 UPDATE portal_password_reset_tokens pprt
