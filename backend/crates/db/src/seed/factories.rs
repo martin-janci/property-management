@@ -376,30 +376,37 @@ impl<'a> SeedFactories<'a> {
         Ok(row.get("id"))
     }
 
-    /// Create a portal user (Reality Portal, separate from PPT users).
+    /// Create a portal / public user (Reality Portal identity).
     ///
-    /// Returns the portal user's UUID.
+    /// Phase 6: writes to `users` with `principal_kind='public'` instead of
+    /// the retired `portal_users` table. The `pm_user_id` parameter is kept
+    /// for call-site compatibility but is no longer stored (portal_users.pm_user_id
+    /// was the reverse-link from the legacy table; the unified model uses
+    /// `users.portal_origin_id` instead, which is NULL for factory-created rows
+    /// because they are directly authoritative).
+    ///
+    /// Returns the new user's UUID.
     pub async fn create_portal_user(
         &self,
         email: &str,
         name: &str,
         password_hash: &str,
-        pm_user_id: Option<Uuid>,
+        _pm_user_id: Option<Uuid>,
     ) -> Result<Uuid, sqlx::Error> {
         let row = sqlx::query(
             r#"
-            INSERT INTO portal_users (
-                email, name, password_hash, pm_user_id,
-                provider, email_verified, locale
+            INSERT INTO users (
+                email, password_hash, name,
+                principal_kind, status, email_verified_at,
+                locale, created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, 'local', TRUE, 'sk')
+            VALUES ($1, $2, $3, 'public', 'active', NOW(), 'sk', NOW(), NOW())
             RETURNING id
             "#,
         )
         .bind(email)
-        .bind(name)
         .bind(password_hash)
-        .bind(pm_user_id)
+        .bind(name)
         .fetch_one(self.pool)
         .await?;
 
@@ -959,35 +966,28 @@ impl<'a> SeedFactories<'a> {
         .execute(&mut *tx)
         .await?;
 
-        // 8. Delete seed users
-        let users_result = sqlx::query(
-            r#"
-            DELETE FROM users WHERE email LIKE $1
-            "#,
-        )
-        .bind(&pattern)
-        .execute(&mut *tx)
-        .await?;
-
-        // 9. Delete listing_inquiries where the seed portal user is the realtor.
-        //    listing_inquiries.realtor_id has no ON DELETE CASCADE, so this must be explicit.
+        // 8. Delete listing_inquiries where the seed portal user (now a users row) is the realtor.
+        //    listing_inquiries.realtor_id references users(id) after migration 00148 but has no
+        //    ON DELETE CASCADE, so this must be explicit before deleting users rows.
         //    inquiry_messages cascade-delete automatically when listing_inquiries is deleted.
         sqlx::query(
             r#"
             DELETE FROM listing_inquiries
-            WHERE realtor_id IN (SELECT id FROM portal_users WHERE email LIKE $1)
+            WHERE realtor_id IN (SELECT id FROM users WHERE email LIKE $1)
             "#,
         )
         .bind(&portal_pattern)
         .execute(&mut *tx)
         .await?;
 
-        // 10. Delete portal_users (remaining cascade children are handled by ON DELETE CASCADE)
-        let portal_users_result = sqlx::query(
+        // 9. Delete all seed users — PPT staff users and public/portal users
+        //    (portal users are now rows in `users` with principal_kind='public').
+        let users_result = sqlx::query(
             r#"
-            DELETE FROM portal_users WHERE email LIKE $1
+            DELETE FROM users WHERE email LIKE $1 OR email LIKE $2
             "#,
         )
+        .bind(&pattern)
         .bind(&portal_pattern)
         .execute(&mut *tx)
         .await?;
@@ -1002,7 +1002,6 @@ impl<'a> SeedFactories<'a> {
             units_deleted,
             members_deleted: members_result.rows_affected(),
             residents_deleted: residents_result.rows_affected(),
-            portal_users_deleted: portal_users_result.rows_affected(),
         })
     }
 
@@ -1031,5 +1030,5 @@ pub struct CleanupStats {
     pub units_deleted: u64,
     pub members_deleted: u64,
     pub residents_deleted: u64,
-    pub portal_users_deleted: u64,
+    // Phase 6: portal_users_deleted removed — portal users are now `users` rows.
 }

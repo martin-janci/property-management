@@ -52,73 +52,86 @@ impl PortalRepository {
     // Portal Users
     // ========================================================================
 
+    /// SQL fragment that projects `users` columns to the `PortalUser` shape.
+    ///
+    /// Phase 6: `portal_users` has been dropped (migration 00148). All portal
+    /// user records now live in `users` with `principal_kind = 'public'`. This
+    /// helper allows `query_as::<_, PortalUser>` calls to work against `users`
+    /// without changing the `PortalUser` struct (which is still referenced by
+    /// handler return types).
+    ///
+    /// Column mapping:
+    ///  - `pm_user_id`   → NULL (back-pointer is now `users.portal_origin_id`)
+    ///  - `provider`     → 'local' (SSO is recorded in `users.principal_kind`)
+    ///  - `email_verified` → derived from `email_verified_at IS NOT NULL`
+    ///  - `password_hash` → NULL when the sentinel value is stored (SSO-only)
+    fn portal_user_projection() -> &'static str {
+        r#"
+        SELECT
+            u.id,
+            u.email,
+            u.name,
+            CASE WHEN u.password_hash = '!sso-only-no-password'
+                 THEN NULL
+                 ELSE u.password_hash
+            END AS password_hash,
+            NULL::uuid               AS pm_user_id,
+            'local'                  AS provider,
+            (u.email_verified_at IS NOT NULL) AS email_verified,
+            u.profile_image_url,
+            u.locale,
+            u.created_at,
+            u.updated_at
+        FROM users u
+        WHERE u.principal_kind = 'public'
+          AND u.status != 'deleted'
+        "#
+    }
+
     /// Create a new portal user.
     ///
-    /// Phase 2 (Identity Unification): in the same transaction as the
-    /// `portal_users` insert, we also write a unified `users` row with
-    /// `principal_kind = 'public'` and `portal_origin_id` pointing back at
-    /// the new portal_user. This is the forward-going invariant that every
-    /// human has a `users` row (the historical merge runs in migration 00132).
-    /// The `portal_users` row is preserved so existing FKs (sessions,
-    /// favorites, saved searches) keep working until a future cleanup phase
-    /// physically retires the table.
+    /// Phase 6: writes directly to `users` (principal_kind='public').
+    /// `portal_users` has been dropped by migration 00148.
     pub async fn create_user(&self, data: CreatePortalUser) -> Result<PortalUser, SqlxError> {
-        let mut tx = self.pool.begin().await?;
-
-        let portal_user = sqlx::query_as::<_, PortalUser>(
+        let user = sqlx::query_as::<_, PortalUser>(
             r#"
-            INSERT INTO portal_users (email, name, password_hash, pm_user_id, provider)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *
+            INSERT INTO users (
+                email, password_hash, name, locale, status,
+                principal_kind, created_at, updated_at
+            )
+            VALUES ($1, COALESCE($2, '!sso-only-no-password'), $3, 'en', 'active', 'public', NOW(), NOW())
+            RETURNING
+                id,
+                email,
+                name,
+                CASE WHEN password_hash = '!sso-only-no-password' THEN NULL ELSE password_hash END AS password_hash,
+                NULL::uuid AS pm_user_id,
+                'local' AS provider,
+                (email_verified_at IS NOT NULL) AS email_verified,
+                profile_image_url,
+                locale,
+                created_at,
+                updated_at
             "#,
         )
         .bind(&data.email)
+        .bind(&data.password)
         .bind(&data.name)
-        .bind(&data.password)
-        .bind(data.pm_user_id)
-        .bind(&data.provider)
-        .fetch_one(&mut *tx)
+        .fetch_one(&self.pool)
         .await?;
 
-        // Phase 2 mirror: also create a `users` row with principal_kind='public'.
-        // Skip silently if a users row already exists for this email — that's
-        // either the legacy merge collision (queued for human review) or the
-        // user is also a staff/PM principal.
-        let _ = sqlx::query(
-            r#"
-            INSERT INTO users (
-                email, password_hash, name, locale, status, email_verified_at,
-                principal_kind, portal_origin_id, created_at, updated_at
-            )
-            VALUES (
-                $1,
-                COALESCE($2, '!sso-only-no-password'),
-                $3,
-                'en',
-                'active',
-                NULL,
-                'public',
-                $4,
-                NOW(),
-                NOW()
-            )
-            ON CONFLICT (email) DO NOTHING
-            "#,
-        )
-        .bind(&portal_user.email)
-        .bind(&data.password)
-        .bind(&portal_user.name)
-        .bind(portal_user.id)
-        .execute(&mut *tx)
-        .await?;
-
-        tx.commit().await?;
-        Ok(portal_user)
+        Ok(user)
     }
 
     /// Find portal user by ID.
+    ///
+    /// Phase 6: reads from `users` (principal_kind='public').
     pub async fn find_user_by_id(&self, id: Uuid) -> Result<Option<PortalUser>, SqlxError> {
-        let user = sqlx::query_as::<_, PortalUser>(r#"SELECT * FROM portal_users WHERE id = $1"#)
+        let sql = format!(
+            "{} AND u.id = $1",
+            Self::portal_user_projection()
+        );
+        let user = sqlx::query_as::<_, PortalUser>(&sql)
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
@@ -127,31 +140,43 @@ impl PortalRepository {
     }
 
     /// Find portal user by email.
+    ///
+    /// Phase 6: reads from `users` (principal_kind='public').
     pub async fn find_user_by_email(&self, email: &str) -> Result<Option<PortalUser>, SqlxError> {
-        let user =
-            sqlx::query_as::<_, PortalUser>(r#"SELECT * FROM portal_users WHERE email = $1"#)
-                .bind(email)
-                .fetch_optional(&self.pool)
-                .await?;
+        let sql = format!(
+            "{} AND LOWER(u.email) = LOWER($1)",
+            Self::portal_user_projection()
+        );
+        let user = sqlx::query_as::<_, PortalUser>(&sql)
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(user)
     }
 
     /// Find portal user by PM user ID (for SSO).
+    ///
+    /// Phase 6: `pm_user_id` was `portal_users.pm_user_id`; after unification
+    /// the equivalent concept is `users.portal_origin_id` pointing at the old
+    /// portal_users.id, but for SSO the PM user link is expressed as the PM
+    /// users.id stored in `users` with `principal_kind = 'staff'`. Since the
+    /// reality-server login uses email as the lookup key and the SSO flow now
+    /// goes through `UnifiedPortalUserRepo`, this path is only hit by the
+    /// legacy `state.rs` helper. Return `None` — callers should use
+    /// `find_user_by_email` or `UnifiedPortalUserRepo` instead.
     pub async fn find_user_by_pm_id(
         &self,
-        pm_user_id: Uuid,
+        _pm_user_id: Uuid,
     ) -> Result<Option<PortalUser>, SqlxError> {
-        let user =
-            sqlx::query_as::<_, PortalUser>(r#"SELECT * FROM portal_users WHERE pm_user_id = $1"#)
-                .bind(pm_user_id)
-                .fetch_optional(&self.pool)
-                .await?;
-
-        Ok(user)
+        // Phase 6: pm_user_id concept retired with portal_users table.
+        // The state.rs callers fall back to email-based lookup anyway.
+        Ok(None)
     }
 
-    /// Update portal user.
+    /// Update portal user profile fields.
+    ///
+    /// Phase 6: updates `users` directly (principal_kind='public').
     pub async fn update_user(
         &self,
         id: Uuid,
@@ -159,13 +184,26 @@ impl PortalRepository {
     ) -> Result<PortalUser, SqlxError> {
         let user = sqlx::query_as::<_, PortalUser>(
             r#"
-            UPDATE portal_users SET
-                name = COALESCE($2, name),
+            UPDATE users SET
+                name              = COALESCE($2, name),
                 profile_image_url = COALESCE($3, profile_image_url),
-                locale = COALESCE($4, locale),
-                updated_at = NOW()
+                locale            = COALESCE($4, locale),
+                updated_at        = NOW()
             WHERE id = $1
-            RETURNING *
+              AND principal_kind = 'public'
+              AND status != 'deleted'
+            RETURNING
+                id,
+                email,
+                name,
+                CASE WHEN password_hash = '!sso-only-no-password' THEN NULL ELSE password_hash END AS password_hash,
+                NULL::uuid AS pm_user_id,
+                'local' AS provider,
+                (email_verified_at IS NOT NULL) AS email_verified,
+                profile_image_url,
+                locale,
+                created_at,
+                updated_at
             "#,
         )
         .bind(id)
@@ -178,8 +216,9 @@ impl PortalRepository {
         Ok(user)
     }
 
-    /// Replace a portal user's password hash. Used by the
-    /// `confirm_password_reset` flow after a token is verified.
+    /// Replace a portal user's password hash.
+    ///
+    /// Phase 6: updates `users` directly (principal_kind='public').
     pub async fn update_password_hash(
         &self,
         id: Uuid,
@@ -187,11 +226,24 @@ impl PortalRepository {
     ) -> Result<PortalUser, SqlxError> {
         let user = sqlx::query_as::<_, PortalUser>(
             r#"
-            UPDATE portal_users SET
+            UPDATE users SET
                 password_hash = $2,
-                updated_at = NOW()
+                updated_at    = NOW()
             WHERE id = $1
-            RETURNING *
+              AND principal_kind = 'public'
+              AND status != 'deleted'
+            RETURNING
+                id,
+                email,
+                name,
+                CASE WHEN password_hash = '!sso-only-no-password' THEN NULL ELSE password_hash END AS password_hash,
+                NULL::uuid AS pm_user_id,
+                'local' AS provider,
+                (email_verified_at IS NOT NULL) AS email_verified,
+                profile_image_url,
+                locale,
+                created_at,
+                updated_at
             "#,
         )
         .bind(id)
@@ -779,15 +831,35 @@ impl PortalRepository {
     }
 
     /// Get user for a session by token hash.
+    ///
+    /// Phase 6: reads from `users` instead of `portal_users` (dropped in 00148).
+    /// `portal_sessions.user_id` now references `users(id)` after migration 00148.
     pub async fn get_session_user(
         &self,
         token_hash: &str,
     ) -> Result<Option<PortalUser>, SqlxError> {
         let user = sqlx::query_as::<_, PortalUser>(
             r#"
-            SELECT u.* FROM portal_users u
+            SELECT
+                u.id,
+                u.email,
+                u.name,
+                CASE WHEN u.password_hash = '!sso-only-no-password'
+                     THEN NULL
+                     ELSE u.password_hash
+                END AS password_hash,
+                NULL::uuid AS pm_user_id,
+                'local' AS provider,
+                (u.email_verified_at IS NOT NULL) AS email_verified,
+                u.profile_image_url,
+                u.locale,
+                u.created_at,
+                u.updated_at
+            FROM users u
             JOIN portal_sessions s ON s.user_id = u.id
             WHERE s.token_hash = $1 AND s.expires_at > NOW()
+              AND u.principal_kind = 'public'
+              AND u.status != 'deleted'
             "#,
         )
         .bind(token_hash)
@@ -849,28 +921,47 @@ impl PortalRepository {
     }
 
     /// Upsert a user from SSO provider (create if not exists, update if exists).
+    ///
+    /// Phase 6: writes to `users` (principal_kind='public'). The `pm_user_id`
+    /// parameter is no longer stored — SSO linkage is now via the PM-side
+    /// `users.id` being the same user with `principal_kind='staff'`; the
+    /// reality-server `UnifiedPortalUserRepo::sso_upsert` is the authoritative
+    /// path. This method is kept for call-site compatibility.
     pub async fn upsert_sso_user(
         &self,
-        pm_user_id: Uuid,
+        _pm_user_id: Uuid,
         email: &str,
         name: &str,
         avatar_url: Option<&str>,
     ) -> Result<PortalUser, SqlxError> {
         let user = sqlx::query_as::<_, PortalUser>(
             r#"
-            INSERT INTO portal_users (email, name, pm_user_id, provider, email_verified, profile_image_url)
-            VALUES ($1, $2, $3, 'pm_sso', true, $4)
+            INSERT INTO users (
+                email, name, password_hash, locale, status,
+                email_verified_at, principal_kind, profile_image_url,
+                created_at, updated_at
+            )
+            VALUES ($1, $2, '!sso-only-no-password', 'en', 'active', NOW(), 'public', $3, NOW(), NOW())
             ON CONFLICT (email) DO UPDATE SET
-                name = EXCLUDED.name,
-                pm_user_id = EXCLUDED.pm_user_id,
-                profile_image_url = COALESCE(EXCLUDED.profile_image_url, portal_users.profile_image_url),
-                updated_at = NOW()
-            RETURNING *
+                name              = EXCLUDED.name,
+                profile_image_url = COALESCE(EXCLUDED.profile_image_url, users.profile_image_url),
+                updated_at        = NOW()
+            RETURNING
+                id,
+                email,
+                name,
+                NULL::text AS password_hash,
+                NULL::uuid AS pm_user_id,
+                'local' AS provider,
+                TRUE AS email_verified,
+                profile_image_url,
+                locale,
+                created_at,
+                updated_at
             "#,
         )
         .bind(email)
         .bind(name)
-        .bind(pm_user_id)
         .bind(avatar_url)
         .fetch_one(&self.pool)
         .await?;

@@ -89,6 +89,9 @@ impl TestDb {
     }
 
     async fn create_test_user(&self, email: &str, name: &str) -> Result<Uuid, sqlx::Error> {
+        // Phase 6: portal_users has been dropped (migration 00148). All FK columns
+        // that previously referenced portal_users(id) now reference users(id).
+        // Writing to users alone is sufficient.
         let row = sqlx::query(
             r#"
             INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
@@ -101,22 +104,6 @@ impl TestDb {
         .fetch_one(&self.pool)
         .await?;
         let id: Uuid = row.get("id");
-
-        // Mirror the row into portal_users so FKs that still target the
-        // legacy table (e.g. listing_inquiries.realtor_id_fkey) are
-        // satisfied. Phase 2.5 / 3.0 will repoint those FKs to users(id);
-        // until then this dual-write keeps Phase 0 RLS smoke tests green.
-        sqlx::query(
-            r#"
-            INSERT INTO portal_users (id, email, name, password_hash, provider, email_verified)
-            VALUES ($1, $2, $3, 'test_hash', 'local', TRUE)
-            "#,
-        )
-        .bind(id)
-        .bind(email)
-        .bind(name)
-        .execute(&self.pool)
-        .await?;
 
         Ok(id)
     }
@@ -134,9 +121,7 @@ impl TestDb {
         let _ = sqlx::query("DELETE FROM organization_members WHERE user_id IN (SELECT id FROM users WHERE email LIKE 'smoke%@test.com')")
             .execute(&self.pool)
             .await;
-        let _ = sqlx::query("DELETE FROM portal_users WHERE email LIKE 'smoke%@test.com'")
-            .execute(&self.pool)
-            .await;
+        // Phase 6: portal_users dropped; users rows cover both staff and public principals.
         let _ = sqlx::query("DELETE FROM users WHERE email LIKE 'smoke%@test.com'")
             .execute(&self.pool)
             .await;
@@ -176,9 +161,7 @@ impl TestDb {
         let _ = sqlx::query("DELETE FROM feature_flags WHERE key LIKE 'flag-%'")
             .execute(&self.pool)
             .await;
-        let _ = sqlx::query("DELETE FROM portal_users WHERE email LIKE 'smoke_p0_%@test.com'")
-            .execute(&self.pool)
-            .await;
+        // Phase 6: portal_users dropped.
         let _ = sqlx::query("DELETE FROM users WHERE email LIKE 'smoke_p0_%@test.com'")
             .execute(&self.pool)
             .await;
