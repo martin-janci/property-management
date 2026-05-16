@@ -6,6 +6,95 @@ write structured artifacts a separate **manual implementation agent** picks
 up. You do **not** open PRs against application code — only commit inside
 the `.research/` directory.
 
+## Goals (verifiable)
+
+Each goal lists the **success criterion** in plain language and the **exact
+check** the routine itself runs to verify it. Run every check after Phase 4.
+Include the result of every check in `signals/<date>.json` under a top-level
+`goal_checks` array — `{ goal, passed, command, observed, expected }`. If
+**any** goal check fails, the brief's "Quiet day?" section becomes a `Goal
+violations` section listing each failure; the routine still commits (failure
+is recorded, not hidden), but the brief makes it visible.
+
+### G1 — Exactly one brief per day, and it covers today
+
+- **Pass when:** `briefs/<today>.md` exists *and* its first line matches `# <YYYY-MM-DD>` for today's date.
+- **Check:** `test -f .research/briefs/$(date -u +%F).md && head -1 .research/briefs/$(date -u +%F).md | grep -q "^# $(date -u +%F)$"`
+
+### G2 — Every run advances state
+
+- **Pass when:** at least one of these changed since the previous run: any cursor (`last_pr_seen`, `last_issue_seen`, `last_commit_sha`), `seen_signals.length`, `hotspot_history` keys, or `stats.quiet_days` (true quiet day still counts as progress).
+- **Check:** `jq --argfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{}') '(.last_pr_seen != ($prev.last_pr_seen // 0)) or (.last_issue_seen != ($prev.last_issue_seen // 0)) or (.last_commit_sha != ($prev.last_commit_sha // null)) or ((.seen_signals | length) != (($prev.seen_signals // []) | length)) or ((.hotspot_history | length) != (($prev.hotspot_history // {}) | length)) or (.stats.quiet_days != ($prev.stats.quiet_days // 0))' .research/state.json` → expect `true`.
+
+### G3 — Backlog ids are unique
+
+- **Pass when:** no duplicate `id` across `backlog.json` items.
+- **Check:** `jq '[.items[].id] | (length == (unique | length))' .research/backlog.json` → expect `true`.
+
+### G4 — Every signal counted once
+
+- **Pass when:** no signal id from this run's `signals/<date>.json` was already in the previous run's `state.seen_signals` (re-scoring forbidden).
+- **Check:** `jq -s --slurpfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{"seen_signals":[]}') '.[0].signals as $s | [$s[].id] | map(. as $i | $prev[0].seen_signals | index($i) // empty) | length == 0' .research/signals/$(date -u +%F).json` → expect `true`.
+
+### G5 — Score discipline (cap + decay actually applied)
+
+- **Pass when:** no item's score exceeds 8; every `open` item with `updated_at` older than 14 days lost ≥1 point this run *or* moved to `dropped`.
+- **Check (cap):** `jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json` → expect `true`.
+- **Check (decay):** for each open item with `updated_at <= today-14`, verify `(prev.score - 1) <= current.score < prev.score` OR `current.status == "dropped"`. Encode as one jq pipeline against `git show HEAD~1:.research/backlog.json`.
+
+### G6 — Promoted plans actually got the adversarial pass
+
+- **Pass when:** every new file under `plans/` created this run has a matching brief annotation `adversarial pass: passed | fixed-in-place | rolled-back`.
+- **Check:** for each `plans/<slug>.md` in `git diff --cached --name-only --diff-filter=A`, grep the brief for `plans/<slug>.md` and `adversarial pass:` on the same line.
+
+### G7 — At most 2 new plans, each meets all readiness gates
+
+- **Pass when:** ≤2 new plans this run; each contains all 12 required headings; each names ≥1 concrete file under `files`.
+- **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '\.md$'` ≤ 2.
+- **Check (headings):** for each new plan, all of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings.
+
+### G8 — No application code touched
+
+- **Pass when:** `git diff --cached --name-only` contains only paths starting with `.research/`.
+- **Check:** `git diff --cached --name-only | grep -v '^\.research/' | wc -l` → expect `0`.
+
+### G9 — No secrets or private hostnames
+
+- **Pass when:** the staged diff contains none of: `sk-ant-`, `ANTHROPIC_API_KEY`, `Authorization: Bearer`, `\.rlt\.sk`, `192\.168\.13\.`, `10\.8\.0\.`, `\$2y\$05\$` (htpasswd), known OAuth client secrets.
+- **Check:** `git diff --cached | grep -E 'sk-ant-|ANTHROPIC_API_KEY|Authorization: Bearer|\.rlt\.sk|192\.168\.13\.|10\.8\.0\.|\$2y\$05\$' | wc -l` → expect `0`. If non-zero, **abort the commit** — secrets are not "log and continue".
+
+### G10 — Backlog markdown matches JSON
+
+- **Pass when:** regenerating `backlog.md` from `backlog.json` produces a byte-identical file to what's staged.
+- **Check:** materialize the rendered view to `/tmp/backlog.regen.md`, then `diff -q .research/backlog.md /tmp/backlog.regen.md` → expect exit 0.
+
+### G11 — Phase-failure honesty
+
+- **Pass when:** if any phase reported failure, the brief lists it under "Phases that failed" *and* the corresponding cursor was not advanced.
+- **Check:** parse the brief's "Phases that failed" line; for each failed phase, verify the corresponding cursor in `state.json` equals the previous run's value.
+
+### G12 — Plan promotions converge (no thrashing)
+
+- **Pass when:** a plan promoted in run N-1 is either still in `plans/` *or* in `plans/_archive/` in run N — never silently deleted.
+- **Check:** `git show HEAD~1:.research/plans/` (recurse) — every `<slug>.md` from prior run must appear in either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md` this run.
+
+---
+
+**Goal-check report format** (in `signals/<date>.json`):
+
+```json
+{
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f …", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": false, "command": "jq …",      "observed": "false",  "expected": "true",
+      "remediation": "state.json identical to previous run; routine didn't actually advance" }
+  ],
+  "signals": [ … ]
+}
+```
+
+If **G8 or G9 fails, abort before commit.** All other failures are recorded and surfaced in the brief but do not block the commit — the failure log itself is value.
+
 ## Inputs you read
 
 - `.research/state.json` — what you've already seen (cursors + `seen_signals`
