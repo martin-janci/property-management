@@ -34,7 +34,6 @@ use uuid::Uuid;
 use api_core::middleware::host_tenant::{
     host_tenant_middleware, HostTenantConfig, TenantResolutionCache,
 };
-use db::models::agency_domain::{AgencyDomainKind, CreateAgencyDomain};
 use db::repositories::AgencyDomainRepository;
 
 // ---------------------------------------------------------------------------
@@ -202,7 +201,6 @@ async fn delete_invalidates_cache_immediately(pool: PgPool) {
 async fn tenant_resolution_cache_invalidate_removes_positive_entry() {
     use api_core::middleware::host_tenant::TenantResolutionCache;
     use api_core::middleware::host_tenant::{ResolvedTenant, TenantSource};
-    use db::repositories::agency_domain::AgencyDomainCacheInvalidator;
 
     let cache = TenantResolutionCache::new(300, 30, 100);
 

@@ -962,7 +962,11 @@ impl PortalRepository {
                 NULL::text AS password_hash,
                 NULL::uuid AS pm_user_id,
                 'local' AS provider,
-                TRUE AS email_verified,
+                -- Derive email_verified from the timestamp the same way the
+                -- rest of the repository does, so SSO upserts don't claim
+                -- "verified" for rows whose email_verified_at was cleared
+                -- elsewhere (review R-followup / Copilot comment 3252615108).
+                (email_verified_at IS NOT NULL) AS email_verified,
                 profile_image_url,
                 locale,
                 created_at,

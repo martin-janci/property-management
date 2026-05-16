@@ -17,9 +17,10 @@
 #
 #   Convention: every WS handler file MUST either (a) live under a router that
 #   applies host_tenant_middleware via from_fn_with_state, or (b) import a
-#   module that does.  The check looks for a host_tenant_middleware / from_fn_with_state
-#   reference within ±200 lines of the WS upgrade in the same file, OR in any
-#   use/mod path visible from the crate root (super-module scan).
+#   module that does.  The check looks for a host_tenant_middleware reference
+#   anywhere in the SAME file as the WS upgrade, OR — failing that — anywhere
+#   in the crate's src/ tree (whole-crate scan, not a windowed line range).
+#   The previous ±200-line wording was a doc bug; we never windowed.
 
 set -euo pipefail
 
