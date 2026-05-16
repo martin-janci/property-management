@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
 import { AdminAuthProvider } from '../auth/AdminAuthContext';
 import { LoginPage } from './LoginPage';
@@ -15,7 +15,7 @@ describe('LoginPage', () => {
         <AdminAuthProvider>
           <LoginPage loginFn={login} />
         </AdminAuthProvider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     await user.type(screen.getByLabelText(/email/i), 'admin@example.com');
     await user.type(screen.getByLabelText(/password/i), 'secret');

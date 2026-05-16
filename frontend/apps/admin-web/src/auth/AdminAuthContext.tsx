@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
 import { sessionTokenStore } from './tokenStore';
 
@@ -26,7 +26,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AdminAuthValue>(
     () => ({ isAuthenticated: token !== null, token, setToken, logout }),
-    [token, setToken, logout],
+    [token, setToken, logout]
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

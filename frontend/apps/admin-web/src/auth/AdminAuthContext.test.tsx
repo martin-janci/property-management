@@ -8,8 +8,12 @@ function Probe() {
   return (
     <div>
       <span data-testid="authed">{String(auth.isAuthenticated)}</span>
-      <button onClick={() => auth.setToken('t')}>login</button>
-      <button onClick={() => auth.logout()}>logout</button>
+      <button type="button" onClick={() => auth.setToken('t')}>
+        login
+      </button>
+      <button type="button" onClick={() => auth.logout()}>
+        logout
+      </button>
     </div>
   );
 }
@@ -21,7 +25,7 @@ describe('AdminAuthContext', () => {
     render(
       <AdminAuthProvider>
         <Probe />
-      </AdminAuthProvider>,
+      </AdminAuthProvider>
     );
     expect(screen.getByTestId('authed').textContent).toBe('false');
   });
@@ -30,7 +34,7 @@ describe('AdminAuthContext', () => {
     render(
       <AdminAuthProvider>
         <Probe />
-      </AdminAuthProvider>,
+      </AdminAuthProvider>
     );
     await act(async () => screen.getByText('login').click());
     expect(screen.getByTestId('authed').textContent).toBe('true');
@@ -40,7 +44,7 @@ describe('AdminAuthContext', () => {
     render(
       <AdminAuthProvider>
         <Probe />
-      </AdminAuthProvider>,
+      </AdminAuthProvider>
     );
     await act(async () => screen.getByText('login').click());
     await act(async () => screen.getByText('logout').click());

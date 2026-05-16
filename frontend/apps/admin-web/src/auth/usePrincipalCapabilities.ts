@@ -47,8 +47,7 @@ export function usePrincipalCapabilities(): PrincipalCapabilitiesResult {
     const role = payload?.role?.toLowerCase();
 
     const isPlatformPrincipal =
-      claimKind === 'platform' ||
-      (role !== undefined && PLATFORM_ROLE_FALLBACKS.has(role));
+      claimKind === 'platform' || (role !== undefined && PLATFORM_ROLE_FALLBACKS.has(role));
 
     const capabilities = (payload?.capabilities ?? []) as ReadonlyArray<Capability>;
 

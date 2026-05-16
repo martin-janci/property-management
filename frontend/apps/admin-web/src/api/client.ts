@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { type AxiosError, type AxiosInstance } from 'axios';
 
 export interface TokenStore {
   get(): string | null;
@@ -34,7 +34,11 @@ export function createApiClient(opts: ApiClientOptions): AdminApiClient {
 
   const handle401 = async (error: unknown): Promise<never> => {
     const err = error as AxiosError<{ error?: string }>;
-    if (err?.response?.status === 401 && err.response.data?.error === 'mfa_required' && opts.onMfaRequired) {
+    if (
+      err?.response?.status === 401 &&
+      err.response.data?.error === 'mfa_required' &&
+      opts.onMfaRequired
+    ) {
       await opts.onMfaRequired();
       // After MFA, the caller is expected to retry; we still reject so caller can decide.
     }
@@ -50,7 +54,7 @@ export function createApiClient(opts: ApiClientOptions): AdminApiClient {
         return handle401(error);
       }
       throw error;
-    },
+    }
   );
 
   return { axios: instance, handle401 };

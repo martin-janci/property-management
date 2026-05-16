@@ -57,7 +57,7 @@ export function ImpersonationWrapper({
   const { t } = useTranslation();
   const { token } = useAdminAuth();
   const [state, setState] = useState<StoredImpersonation | null>(
-    initialState !== undefined ? initialState : readStored(),
+    initialState !== undefined ? initialState : readStored()
   );
 
   useEffect(() => {

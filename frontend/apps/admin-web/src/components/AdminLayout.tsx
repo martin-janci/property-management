@@ -19,12 +19,8 @@ export function AdminLayout() {
           {has('agencies_read') && (
             <Link to="/agencies">{t('admin.agencies.title', 'Agencies')}</Link>
           )}
-          {has('users_read') && (
-            <Link to="/users">{t('admin.users.title', 'Users')}</Link>
-          )}
-          {has('audit_read') && (
-            <Link to="/audit">{t('admin.audit.title', 'Audit')}</Link>
-          )}
+          {has('users_read') && <Link to="/users">{t('admin.users.title', 'Users')}</Link>}
+          {has('audit_read') && <Link to="/audit">{t('admin.audit.title', 'Audit')}</Link>}
           {has('feature_flags_write') && (
             <Link to="/feature-flags">{t('admin.featureFlags.title', 'Feature flags')}</Link>
           )}
