@@ -165,7 +165,7 @@ async fn listing_route_with_unknown_host_is_rejected(pool: PgPool) {
     assert_eq!(
         status,
         StatusCode::NOT_FOUND,
-        "Expected 404 for unknown-host request; got {}. \
+        "Expected 404 for unknown-host request; got {status}. \
          If this is 200, the middleware was bypassed — cross-tenant data leak.",
     );
 }

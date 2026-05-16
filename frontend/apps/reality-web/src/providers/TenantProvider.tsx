@@ -71,9 +71,10 @@ export function TenantProvider({ children, initial }: TenantProviderProps) {
     }),
     // Stable after hydration — the bootstrap blob never changes during the
     // client session. If the tenant branding is updated the page must be
-    // refreshed to pick up a new SSR render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config.tenant_id, JSON.stringify(config.feature_flags)]
+    // refreshed to pick up a new SSR render. Use the object ref of
+    // feature_flags instead of JSON.stringify (avoids re-serialization on
+    // every render and key-order false-positives — review R7).
+    [config.tenant_id, config.feature_flags]
   );
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;

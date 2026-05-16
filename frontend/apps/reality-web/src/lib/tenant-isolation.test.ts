@@ -13,10 +13,10 @@
  *    tag strings, Next.js data-cache invalidation is scoped correctly.
  *
  * Note: Playwright / next/test integration for full SSR HTML diffing is
- * not available in the vitest+jsdom environment. The SSR HTML test lives
- * in `e2e/tenant-branding.spec.ts` (Playwright, requires a running server).
- * These unit tests cover the logic layer (config fetching + tag naming)
- * that makes the SSR guarantee hold.
+ * not available in the vitest+jsdom environment. A future end-to-end test
+ * (TBD path under `e2e/`) will cover the full SSR HTML diff once the
+ * Playwright harness exists. These unit tests cover the logic layer (config
+ * fetching + tag naming) that makes the SSR guarantee hold.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -181,11 +181,12 @@ describe('getTenantConfig — per-host fetch isolation', () => {
       });
     });
 
-    // Import after mocking so the module-level cache() is fresh.
-    const { getTenantConfig } = await import('./tenant-config');
-
-    // Mock next/headers to return different hosts.
-    vi.mock('next/headers', () => ({
+    // vi.doMock (not vi.mock) ensures the mock is registered for THIS
+    // dynamic import only, instead of being hoisted to top-of-file. The
+    // previous vi.mock call ran AFTER `./tenant-config` was already
+    // module-evaluated (which captures `headers` at import time), so the
+    // mock never took effect — see review R7.
+    vi.doMock('next/headers', () => ({
       headers: vi.fn().mockResolvedValue({
         get: (key: string) => {
           if (key === 'x-forwarded-host' || key === 'host') return 'agency-a.test';
@@ -193,6 +194,10 @@ describe('getTenantConfig — per-host fetch isolation', () => {
         },
       }),
     }));
+
+    // Import after mocking so the dynamic import picks up the doMock'd
+    // `next/headers` and the module-level cache() is fresh.
+    const { getTenantConfig } = await import('./tenant-config');
 
     const configA = await getTenantConfig();
 

@@ -39,9 +39,15 @@ CREATE POLICY mfa_recovery_codes_super_admin ON mfa_recovery_codes
 -- Self-read: a platform principal can read their own unused codes (e.g. for
 -- "how many codes remain?" UI). They cannot read code_hash — that is enforced
 -- at the application layer.
+--
+-- NULLIF guard matches the Phase 0 convention (see migration 00146): when no
+-- user_id is set on the session, current_setting('app.current_user_id', true)
+-- returns '' which would crash on ::uuid. NULLIF normalizes that to NULL —
+-- no row matches via this policy. The is_super_admin() bypass above still
+-- serves admin-context callers without needing the GUC set.
 CREATE POLICY mfa_recovery_codes_select_own ON mfa_recovery_codes
     FOR SELECT
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    USING (user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid);
 
 -- Insert policy: application layer inserts on enrollment.
 CREATE POLICY mfa_recovery_codes_insert ON mfa_recovery_codes
@@ -51,7 +57,7 @@ CREATE POLICY mfa_recovery_codes_insert ON mfa_recovery_codes
 -- Update policy: mark used_at when consuming a code.
 CREATE POLICY mfa_recovery_codes_update_own ON mfa_recovery_codes
     FOR UPDATE
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    USING (user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid);
 
 COMMENT ON TABLE mfa_recovery_codes IS
     'Phase 6 (B6): per-code recovery codes for platform principals. Each row is a single-use code; used_at IS NULL means available.';

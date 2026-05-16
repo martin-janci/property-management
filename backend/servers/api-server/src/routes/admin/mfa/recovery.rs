@@ -142,15 +142,47 @@ pub async fn use_recovery(
 
     let matched_id = rows[idx].0;
 
-    // Mark as used — single-use enforced.
-    sqlx::query("UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL")
-        .bind(matched_id)
-        .execute(&state.db)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "recovery/use: mark used failed");
-            internal()
-        })?;
+    // Mark as used — single-use enforced. We must check rows_affected: under
+    // concurrent recovery-code submission a competing request may have already
+    // flipped used_at between our SELECT and this UPDATE. The WHERE clause
+    // includes AND used_at IS NULL so the UPDATE is a no-op in that case;
+    // rows_affected == 0 means we lost the race and the code is already spent.
+    let upd = sqlx::query(
+        "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL",
+    )
+    .bind(matched_id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!(error = %e, "recovery/use: mark used failed");
+        internal()
+    })?;
+
+    if upd.rows_affected() == 0 {
+        // Lost the race to a concurrent caller. Treat as invalid to keep the
+        // single-use guarantee — the legitimate winner already opened their
+        // recency window, this duplicate must fail closed.
+        let _ = audit
+            .record(
+                Some(user_id),
+                Capability::UsersWrite,
+                "mfa.recovery.use",
+                Some("mfa_recovery_codes".into()),
+                Some(matched_id),
+                AuditOutcome::Failure,
+                Some(serde_json::json!({ "reason": "race_lost_already_used" })),
+                None,
+                None,
+            )
+            .await;
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(serde_json::json!({
+                "error": "invalid_recovery_code",
+                "message": "Recovery code did not match. Check the code and try again."
+            })),
+        ));
+    }
 
     // Open the 15-minute MFA recency window (same as a TOTP verify).
     sqlx::query(

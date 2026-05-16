@@ -160,15 +160,27 @@ impl PortalRepository {
     /// users.id stored in `users` with `principal_kind = 'staff'`. Since the
     /// reality-server login uses email as the lookup key and the SSO flow now
     /// goes through `UnifiedPortalUserRepo`, this path is only hit by the
-    /// legacy `state.rs` helper. Return `None` — callers should use
-    /// `find_user_by_email` or `UnifiedPortalUserRepo` instead.
+    /// SSO upsert helper, which uses the result to distinguish a
+    /// `Created` (first-time SSO) from a `LoggedIn` (returning) event.
+    ///
+    /// Phase 6: portal_users was dropped (migration 00148) but
+    /// `users.portal_origin_id` is retained as the back-pointer for any
+    /// row that originated from a legacy portal_user. We lookup against it
+    /// so the SSO upsert can correctly classify legacy returning users.
+    /// Rows with no portal_origin_id (created after Phase 2.5) won't match
+    /// here — callers should fall back to email/SSO-key lookup for those.
     pub async fn find_user_by_pm_id(
         &self,
-        _pm_user_id: Uuid,
+        pm_user_id: Uuid,
     ) -> Result<Option<PortalUser>, SqlxError> {
-        // Phase 6: pm_user_id concept retired with portal_users table.
-        // The state.rs callers fall back to email-based lookup anyway.
-        Ok(None)
+        let sql = format!(
+            "{} AND u.portal_origin_id = $1",
+            Self::portal_user_projection()
+        );
+        sqlx::query_as::<_, PortalUser>(&sql)
+            .bind(pm_user_id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
     /// Update portal user profile fields.

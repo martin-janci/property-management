@@ -51,6 +51,8 @@ function enrollStartResponse(): Response {
   return makeResponse({
     uri: 'otpauth://totp/test%40example.com?secret=ABC&issuer=Test',
     secret: 'ABC123',
+    qr_png_base64:
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   });
 }
 

@@ -62,9 +62,14 @@ VIOLATIONS=0
 
 # has_middleware_in_file <file>
 # Returns 0 when the file itself references the middleware anchor.
+#
+# Require the actual MIDDLEWARE_ANCHOR (`host_tenant_middleware`) — not just
+# any `from_fn_with_state` — so a WS handler file with an unrelated
+# middleware wired via from_fn_with_state cannot silently pass this gate
+# (Phase 6 review R7 / Copilot comment 3252565690).
 has_middleware_in_file() {
     local file="$1"
-    grep -qE "$MIDDLEWARE_ANCHOR|$LAYER_ANCHOR" "$file" 2>/dev/null
+    grep -q "$MIDDLEWARE_ANCHOR" "$file" 2>/dev/null
 }
 
 # has_middleware_in_crate <file>

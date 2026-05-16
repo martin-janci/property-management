@@ -3,7 +3,7 @@
 //! Platform principals call `start` to get a QR code, then `verify` to
 //! activate enrollment and receive their 10 one-time recovery codes.
 //! The TOTP secret is stored in the existing `user_2fa` table (migration 00024).
-//! Recovery codes are stored in `mfa_recovery_codes` (migration 00147).
+//! Recovery codes are stored in `mfa_recovery_codes` (migration 00149).
 
 use std::sync::Arc;
 
@@ -24,6 +24,10 @@ pub struct EnrollStartResponse {
     pub uri: String,
     /// Base32 TOTP secret — for users who prefer manual entry.
     pub secret: String,
+    /// Base64-encoded PNG of the QR code, generated server-side so the
+    /// otpauth URI (which embeds the TOTP secret) never leaves the trust
+    /// boundary. Frontend renders via `<img src="data:image/png;base64,...">`.
+    pub qr_png_base64: String,
 }
 
 /// Generate a fresh TOTP secret and return the enrollment URI.
@@ -85,6 +89,14 @@ pub async fn start_enroll(
             internal()
         })?;
 
+    let qr_png_base64 = state
+        .totp_service
+        .generate_qr_base64(&email, &secret)
+        .map_err(|e| {
+            tracing::error!(error = %e, "enroll/start: generate_qr_base64 failed");
+            internal()
+        })?;
+
     // Encrypt and upsert into user_2fa (enabled = false).
     let encrypted = state.totp_service.encrypt_secret(&secret).map_err(|e| {
         tracing::error!(error = %e, "enroll/start: encrypt_secret failed");
@@ -128,7 +140,11 @@ pub async fn start_enroll(
         .await;
 
     tracing::info!(user_id = %user_id, "admin mfa enroll/start");
-    Ok(Json(EnrollStartResponse { uri, secret }))
+    Ok(Json(EnrollStartResponse {
+        uri,
+        secret,
+        qr_png_base64,
+    }))
 }
 
 // ── Verify enrollment ─────────────────────────────────────────────────────────

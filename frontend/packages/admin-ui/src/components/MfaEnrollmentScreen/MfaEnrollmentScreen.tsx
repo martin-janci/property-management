@@ -89,9 +89,9 @@ const defaultLabels: Required<MfaEnrollmentLabels> = {
 export interface MfaEnrollmentScreenProps {
   /**
    * Async callback: calls `POST /admin/mfa/enroll/start`.
-   * Returns `{ uri: string; secret: string }` on success, throws on failure.
+   * Returns `{ uri: string; secret: string; qr_png_base64: string }` on success, throws on failure.
    */
-  onStart: () => Promise<{ uri: string; secret: string }>;
+  onStart: () => Promise<{ uri: string; secret: string; qr_png_base64: string }>;
 
   /**
    * Async callback: calls `POST /admin/mfa/enroll/verify`.
@@ -126,7 +126,11 @@ export function MfaEnrollmentScreen({
   );
 
   const [step, setStep] = useState<Step>('start');
-  const [enrollData, setEnrollData] = useState<{ uri: string; secret: string } | null>(null);
+  const [enrollData, setEnrollData] = useState<{
+    uri: string;
+    secret: string;
+    qr_png_base64: string;
+  } | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +159,24 @@ export function MfaEnrollmentScreen({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-trigger onStart from the UI when the initial attempt failed and we
+  // landed in the scan step with no enrollData. Without this the user has
+  // no way to retry — they'd have to navigate away and back (review R7).
+  const retryStart = useCallback(() => {
+    setError(null);
+    setEnrollData(null);
+    setStep('start');
+    onStart()
+      .then((data) => {
+        setEnrollData(data);
+        setStep('scan');
+      })
+      .catch((e) => {
+        setError(e instanceof Error ? e.message : 'Failed to start enrollment.');
+        setStep('scan');
+      });
+  }, [onStart]);
 
   // Auto-focus the code input when we enter the verify step.
   useEffect(() => {
@@ -207,12 +229,24 @@ export function MfaEnrollmentScreen({
                 {error}
               </p>
             )}
+            {/* Retry option when the initial onStart failed — without this,
+                a transient enroll-start error stranded the user with no
+                way to recover (review R7). */}
+            {!enrollData && error && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <button type="button" onClick={retryStart} style={primaryBtnStyle}>
+                  Retry
+                </button>
+              </div>
+            )}
             {enrollData && (
               <>
-                {/* QR code via Google Charts — no external runtime dependency */}
+                {/* QR code rendered server-side as a base64 PNG; the otpauth
+                    URI (which embeds the TOTP secret) never leaves the trust
+                    boundary. */}
                 <div style={{ textAlign: 'center', margin: '1rem 0' }}>
                   <img
-                    src={`https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=${encodeURIComponent(enrollData.uri)}`}
+                    src={`data:image/png;base64,${enrollData.qr_png_base64}`}
                     alt="TOTP QR code"
                     width={200}
                     height={200}

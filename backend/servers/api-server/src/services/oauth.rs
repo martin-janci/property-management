@@ -539,6 +539,25 @@ impl OAuthService {
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
 
+        // Phase 6 C17 + review R6: re-check principal_kind on refresh so a
+        // user whose kind is no longer permitted by this client (e.g. after
+        // a config change) cannot mint new tokens via an existing refresh
+        // grant. Mirrors the check in exchange_code_for_tokens.
+        let user = self
+            .user_repo
+            .find_by_id(refresh_token.user_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
+        if !client.is_principal_kind_allowed(&user.principal_kind) {
+            tracing::warn!(
+                user_id = %refresh_token.user_id,
+                principal_kind = %user.principal_kind,
+                client_id = %client_id,
+                "Refresh denied: principal_kind not allowed for OAuth client"
+            );
+            return Err(OAuthServiceError::PrincipalKindNotAllowed);
+        }
+
         // Revoke old refresh token
         self.repo.revoke_refresh_token(refresh_token.id).await?;
 

@@ -70,7 +70,7 @@ export function MfaWrapper({ children }: MfaWrapperProps): ReactElement {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(body.error ?? `Enroll start failed (${res.status})`);
     }
-    return res.json() as Promise<{ uri: string; secret: string }>;
+    return res.json() as Promise<{ uri: string; secret: string; qr_png_base64: string }>;
   }, [authHeaders]);
 
   const handleVerify = useCallback(

@@ -119,14 +119,25 @@ pub async fn disable_mfa(
                     internal()
                 })? {
                 Some(idx) => {
-                    // Mark the recovery code used even though we're disabling.
+                    // Mark the recovery code used. The WHERE clause must
+                    // include `AND used_at IS NULL` so a concurrent recovery
+                    // submission cannot also accept this code; treat
+                    // rows_affected == 0 as "another caller already spent it"
+                    // and fall through to "no match" — disable is rejected
+                    // and the legitimate winner retains the verification.
                     let rid = rows[idx].0;
-                    let _ =
-                        sqlx::query("UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1")
-                            .bind(rid)
-                            .execute(&state.db)
-                            .await;
-                    true
+                    let upd = sqlx::query(
+                        "UPDATE mfa_recovery_codes SET used_at = NOW() \
+                         WHERE id = $1 AND used_at IS NULL",
+                    )
+                    .bind(rid)
+                    .execute(&state.db)
+                    .await
+                    .map_err(|e| {
+                        tracing::error!(error = %e, "mfa/disable: mark used failed");
+                        internal()
+                    })?;
+                    upd.rows_affected() == 1
                 }
                 None => false,
             }

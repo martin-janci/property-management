@@ -97,7 +97,7 @@ impl IntoResponse for AdminError {
                 StatusCode::FORBIDDEN,
                 Json(ErrorBody {
                     error: "mfa_not_enrolled",
-                    message: "Platform principals must enroll in MFA before using capability-gated actions. Visit /admin/mfa/enroll/start.".into(),
+                    message: "Platform principals must enroll in MFA before using capability-gated actions. Start enrollment from the admin UI.".into(),
                 }),
             )
                 .into_response(),
