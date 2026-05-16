@@ -518,7 +518,7 @@ impl BlueGreenDeployer {
         //
         // Prod: admin.rlt.sk. Staging: admin.staging.rlt.sk. Both rely on
         // Cloudflare Universal SSL (`*.rlt.sk`) and a row in
-        // `reserved_platform_hosts` (migration 00147) so api-server's
+        // `reserved_platform_hosts` (migration 00151) so api-server's
         // host_tenant middleware resolves the host as `PlatformHost`.
         self.caddy
             .register_route(

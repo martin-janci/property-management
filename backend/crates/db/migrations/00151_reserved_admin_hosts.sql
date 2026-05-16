@@ -1,4 +1,6 @@
--- 00147 — Reserve admin.rlt.sk hosts for the super-admin control plane.
+-- 00151 — Reserve admin.rlt.sk hosts for the super-admin control plane.
+-- (Originally numbered 00147; Phase 6 PR #265 landed first and used 147+148,
+--  so this file is renumbered to 00151 — the next free slot after 00150.)
 --
 -- Phase 5 of the multitenancy roadmap moved super-admin into a dedicated
 -- frontend app served at admin.rlt.sk (staging: admin.staging.rlt.sk). The
