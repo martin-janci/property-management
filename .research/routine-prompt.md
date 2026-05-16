@@ -92,7 +92,15 @@ VERSION
 *.lock, *.lockb
 ```
 
-Write the full signal list to `.research/signals/<YYYY-MM-DD>.json`. This is the audit trail.
+Each signal also carries a `confidence` field:
+
+- `high` — fact (the diff, the PR being merged, the commit existing)
+- `medium` — analysis (your inference from those facts, e.g. "this PR is risky-churn")
+- `low` — speculation (PR-body claims you haven't yet verified against the diff)
+
+Upgrade `low` → `medium`/`high` by opening the diff *during this run*. When promoting later, an item built entirely from `low` signals cannot be `ready` regardless of score.
+
+Write the full signal list to `.research/signals/<YYYY-MM-DD>.json`. Each entry must include `id`, `type`, `source`, `score_delta`, `evidence`, `confidence`, and `candidate_vector`. This is the audit trail.
 
 **Don't rely only on PR title/body.** When deriving a signal that names a file, *open the file or read the diff via `gh pr diff <num>`* and confirm the evidence exists. If the code doesn't back up the PR body, keep the item in backlog at low score instead of promoting later.
 
@@ -145,6 +153,19 @@ For each ready item not already in `plans/`, write `plans/<slug>.md` from the te
 
 When you write a plan: set `item.status = "ready"` and `item.plan = "plans/<slug>.md"` in `backlog.json`.
 
+### Phase 3.5 — Adversarial readiness pass
+
+Before locking in the promotions, re-read each newly-written plan **as a skeptic**. For each:
+
+1. Walk **source → hypothesis → suggested approach → test plan** and verify the chain is unbroken:
+   - Does every claim in *Hypothesis* trace back to something in *Evidence*?
+   - Does the *Suggested approach* address what *Hypothesis* claims, or does it solve a different problem?
+   - Will the *Test plan* actually fail today and pass after the change? (If the test would pass before the change, it's not a regression test.)
+2. Check for **placeholder rot** — see Quality Gate 11.
+3. If anything fails: either fix the plan in place, or revert the promotion (delete `plans/<slug>.md`, set `item.status = "open"`, append an evidence line "promotion rolled back: <reason>"). Don't commit a half-baked plan.
+
+This pass is mandatory — it's the difference between "passes mechanical gates" and "actually ready". Note the result for each plan in the brief under *Plans promoted*.
+
 ### Phase 4 — Write & commit
 
 1. Write the brief at `.research/briefs/<YYYY-MM-DD>.md`. If a brief for today exists, **overwrite** (idempotent rerun should converge).
@@ -173,10 +194,18 @@ Run these and verify each passes:
 4. `.research/backlog.md` content matches what regenerating from `backlog.json` would produce (don't have stale rows).
 5. Today's brief exists with all required sections.
 6. **At most 2** new files added under `.research/plans/`.
-7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Suggested approach, Test plan, Out of scope, After-merge).
+7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge).
 8. No secrets or private infrastructure hostnames (anything `*.rlt.sk`, internal IPs, API tokens, OAuth tokens, htpasswd hashes) anywhere in the committed text.
 9. Backlog entries deduplicated by `id` (no two items with the same id).
 10. No score above 8. No score below 0 (those should be `dropped`).
+11. **No placeholder rot** in any committed plan or brief. Grep each newly-written `plans/<slug>.md` and the brief for these substrings (case-insensitive); fail the gate if any match:
+    - `TBD`, `TODO:` (in your *own* writing — TODOs you *quote from source code* are evidence, not rot), `FIXME:`, `XXX:`
+    - `add appropriate <…>`, `proper error handling`, `as needed`
+    - `similar to task <N>`, `like the other one`, `see above` (without a real anchor)
+    - `<insert <…>>`, `<replace with <…>>`, `<your <…> here>`
+    - `…` standalone on a line (the literal ellipsis as a placeholder)
+
+    Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
 
 ## Brief template
 
@@ -205,7 +234,7 @@ Run these and verify each passes:
 - **Dropped:** <title> — <reason>
 
 ## Plans promoted
-- `plans/<slug>.md` — <one-line summary>
+- `plans/<slug>.md` — <one-line summary> · adversarial pass: <passed | fixed-in-place | rolled-back>
 
 ## Open questions
 - <anything that needs human judgement before promoting to a plan>
@@ -236,6 +265,23 @@ Run these and verify each passes:
 <Max 7 numbered steps. Reference files by path with line numbers when known.>
 1. <…>
 2. <…>
+
+## Alternatives considered
+<Exactly 2 bullets. Each names another approach you weighed and the concrete reason you rejected it.>
+- **<alt name>** — rejected because <…>
+- **<alt name>** — rejected because <…>
+
+## Root-cause trace
+<Required for vectors `revert`, `risky-churn`, `bug` with confidence ≥ medium.
+Otherwise: write `N/A — <vector> doesn't need backward tracing.`
+Trace data flow from the failure symptom backward through layers: which
+boundary leaked, which assumption broke, which contract was implicit. Name
+the file:line for each step.>
+
+1. Symptom: <observed behavior / failing test / stack-trace tip>
+2. ← <immediate cause at <file:line>>
+3. ← <upstream cause at <file:line>>
+4. Origin: <commit sha or PR # that introduced the latent issue>
 
 ## Test plan
 - [ ] <unit/integration test that would have caught this — file path or test name>
