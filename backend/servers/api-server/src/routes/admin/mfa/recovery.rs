@@ -166,11 +166,10 @@ pub async fn use_recovery(
             .record(
                 Some(user_id),
                 Capability::UsersWrite,
-                "mfa.recovery.use",
-                Some("mfa_recovery_codes".into()),
+                AuditOutcome::Denied,
+                Some("mfa_recovery_codes"),
                 Some(matched_id),
-                AuditOutcome::Failure,
-                Some(serde_json::json!({ "reason": "race_lost_already_used" })),
+                Some(&serde_json::json!({ "reason": "race_lost_already_used" })),
                 None,
                 None,
             )
