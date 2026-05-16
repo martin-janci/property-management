@@ -171,7 +171,7 @@ export function usePerformanceMetrics(
  * Utility to log performance metrics to console in development.
  */
 export function logPerformanceMetrics(metrics: PerformanceMetrics) {
-  if (process.env.NODE_ENV !== 'development') return;
+  if (!import.meta.env.DEV) return;
 
   const formatMs = (ms?: number) => (ms !== undefined ? `${ms.toFixed(2)}ms` : 'N/A');
 
