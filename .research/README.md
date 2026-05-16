@@ -11,14 +11,19 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 .research/
 ├── README.md                 # this file
 ├── routine-prompt.md         # the routine's Instructions field
-├── state.json                # rolling state, committed each run
-├── backlog.md                # ranked vectors (single source of truth for picks)
+├── state.json                # rolling cursors + seen_signals + hotspot_history
+├── backlog.json              # CANONICAL ranked vectors (machine-friendly)
+├── backlog.md                # rendered human view, regenerated each run
+├── signals/
+│   └── YYYY-MM-DD.json       # debug trail of raw signals derived this run
 ├── briefs/
-│   └── YYYY-MM-DD.md         # daily report (one per run)
+│   └── YYYY-MM-DD.md         # daily report (one per run, overwritten on rerun)
 └── plans/
     ├── <slug>.md             # self-contained brief for the implementation agent
     └── _archive/             # plans the implementation agent has shipped
 ```
+
+**Editing the backlog by hand:** edit `backlog.json` only. `backlog.md` is regenerated each run; hand-edits there will be lost.
 
 ## Flow
 
