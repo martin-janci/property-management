@@ -60,6 +60,10 @@ pub fn build_staging_images(image_prefix: &str, tag: &str) -> HashMap<String, St
         "reality-web".into(),
         format!("{image_prefix}/ppt-reality-web:{tag}"),
     );
+    images.insert(
+        "admin-web".into(),
+        format!("{image_prefix}/ppt-admin-web:{tag}"),
+    );
     images
 }
 
@@ -135,6 +139,7 @@ pub async fn deploy_handler(
         reality_image: images["reality-server"].clone(),
         ppt_web_image: images["ppt-web"].clone(),
         reality_web_image: images["reality-web"].clone(),
+        admin_web_image: images["admin-web"].clone(),
         reality_apex: target_cfg.reality_apex.clone(),
         ppt_apex: target_cfg.ppt_apex.clone(),
         target_name: target.as_str().into(),
@@ -231,9 +236,10 @@ mod tests {
     fn staging_image_map_uses_ppt_prefix_for_all_images() {
         // Pinned invariant: every backend AND frontend image is published under
         // the `ppt-` prefix in GHCR (`ppt-api-server`, `ppt-reality-server`,
-        // `ppt-web`, `ppt-reality-web`). The **service key** stays `reality-web`
-        // (so promote/wake/release callers don't churn) but the **image** path
-        // matches docker-frontend.yml's `target: ppt-reality-web` matrix entry.
+        // `ppt-web`, `ppt-reality-web`, `ppt-admin-web`). The **service key**
+        // stays `reality-web` / `admin-web` (so promote/wake/release callers
+        // don't churn) but the **image** path matches docker-frontend.yml's
+        // `target: ppt-*` matrix entry.
         let images = build_staging_images("ghcr.io/test", "abc1234");
         assert_eq!(images["api-server"], "ghcr.io/test/ppt-api-server:abc1234");
         assert_eq!(
@@ -245,6 +251,7 @@ mod tests {
             images["reality-web"],
             "ghcr.io/test/ppt-reality-web:abc1234"
         );
-        assert_eq!(images.len(), 4);
+        assert_eq!(images["admin-web"], "ghcr.io/test/ppt-admin-web:abc1234");
+        assert_eq!(images.len(), 5);
     }
 }

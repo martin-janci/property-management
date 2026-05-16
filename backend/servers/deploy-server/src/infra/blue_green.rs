@@ -14,7 +14,13 @@ use std::sync::Arc;
 /// Service names participating in blue/green deploys.
 /// Used by the deployer itself and by lifecycle code (gc, etc.) that needs to
 /// enumerate per-target containers without hardcoding the list.
-pub const BG_SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web"];
+///
+/// `admin-web` was added in Phase 5 (2026-05) when the super-admin control
+/// plane moved out of `ppt-web` into its own SPA served at `admin.<reality_apex>`
+/// (`admin.rlt.sk` in prod, `admin.staging.rlt.sk` in staging). It joins the
+/// existing four services as a 5th atomic-flip member so `pmctl promote` and
+/// `pmctl rollback` cover the admin app too.
+pub const BG_SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web", "admin-web"];
 
 pub struct BlueGreenDeployer {
     pub docker: Arc<DockerClient>,
@@ -28,6 +34,9 @@ pub struct BlueGreenSpec {
     pub reality_image: String,
     pub ppt_web_image: String,
     pub reality_web_image: String,
+    /// Super-admin SPA image (`ghcr.io/martin-janci/ppt-admin-web:<tag>`).
+    /// Phase 5 control plane served at `admin.<reality_apex>`.
+    pub admin_web_image: String,
     /// Reality Portal apex (e.g. `rlt.sk`, `staging.rlt.sk`). reality-web is
     /// served at this exact host; reality-server at `api.<reality_apex>`.
     pub reality_apex: String,
@@ -71,6 +80,7 @@ impl BlueGreenSpec {
             reality_image: require(rel, "reality-server")?,
             ppt_web_image: require(rel, "ppt-web")?,
             reality_web_image: require(rel, "reality-web")?,
+            admin_web_image: require(rel, "admin-web")?,
             reality_apex: target.reality_apex.clone(),
             ppt_apex: target.ppt_apex.clone(),
             service_envs,
@@ -245,6 +255,13 @@ pub fn build_service_envs(
     // the color is only known after the next-color decision; this entry
     // stays empty here.
     envs.insert("ppt".into(), vec![]);
+    // admin-web is the same shape as ppt-web: a static Vite SPA served by
+    // nginx. Its build-time `VITE_API_URL=/api` is baked into the bundle,
+    // so the SPA fetches `/api/*` against its own origin. The container's
+    // nginx then proxies `/api/` to `${BG_TARGET}-api-${BG_COLOR}:8080`
+    // via envsubst at startup — `BG_TARGET` / `BG_COLOR` are appended in
+    // `BlueGreenDeployer::deploy` once the next color is known.
+    envs.insert("admin-web".into(), vec![]);
     Ok(envs)
 }
 
@@ -256,6 +273,7 @@ impl BlueGreenDeployer {
             &spec.reality_image,
             &spec.ppt_web_image,
             &spec.reality_web_image,
+            &spec.admin_web_image,
         ] {
             self.pull_image(docker, img).await?;
         }
@@ -332,6 +350,11 @@ impl BlueGreenDeployer {
         let mut ppt_env = env_for("ppt");
         ppt_env.push(format!("BG_TARGET={target_name}"));
         ppt_env.push(format!("BG_COLOR={next_color}"));
+        // admin-web's nginx renders the /api/* proxy upstream from the same
+        // two vars at container start (envsubst). Pattern mirrors ppt-web.
+        let mut admin_web_env = env_for("admin-web");
+        admin_web_env.push(format!("BG_TARGET={target_name}"));
+        admin_web_env.push(format!("BG_COLOR={next_color}"));
 
         // reality-server's `/health` periodically pings the PM API. Without
         // an override it uses `${PM_API_URL}/health` — which is the public
@@ -395,6 +418,17 @@ impl BlueGreenDeployer {
             env_for("reality-web"),
         )
         .await?;
+        // admin-web: same nginx-on-8080 pattern as ppt-web. The Dockerfile
+        // EXPOSEs 8080 and renders its /api/* proxy upstream from BG_TARGET
+        // and BG_COLOR at start.
+        self.run_service(
+            &format!("{target_name}-admin-web-{next_color}"),
+            &spec.admin_web_image,
+            8080,
+            target_name,
+            admin_web_env,
+        )
+        .await?;
 
         // Wait for each container to reach a ready state before flipping Caddy upstream.
         // Backends (api / reality) get a longer timeout because they run all DB
@@ -408,6 +442,8 @@ impl BlueGreenDeployer {
         self.wait_until_ready(&format!("{target_name}-ppt-{next_color}"), 8080, 30)
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
+            .await?;
+        self.wait_until_ready(&format!("{target_name}-admin-web-{next_color}"), 8080, 30)
             .await?;
 
         // Per-service Caddy routes use the dual-apex layout:
@@ -454,6 +490,21 @@ impl BlueGreenDeployer {
             .register_route(
                 &format!("www.{reality_apex}"),
                 &format!("{target_name}-reality-web-{next_color}:3000"),
+            )
+            .await?;
+        // admin.<reality_apex> → admin-web. The admin-web nginx itself
+        // proxies /api/* to api-server in the same color (same way ppt-web
+        // does), so Caddy registers a single upstream per host — no
+        // path-based split needed at the edge.
+        //
+        // Prod: admin.rlt.sk. Staging: admin.staging.rlt.sk. Both rely on
+        // Cloudflare Universal SSL (`*.rlt.sk`) and a row in
+        // `reserved_platform_hosts` (migration 00147) so api-server's
+        // host_tenant middleware resolves the host as `PlatformHost`.
+        self.caddy
+            .register_route(
+                &format!("admin.{reality_apex}"),
+                &format!("{target_name}-admin-web-{next_color}:8080"),
             )
             .await?;
 
