@@ -37,7 +37,7 @@ tokio-util = { workspace = true }
 futures-util = { workspace = true }
 async-trait = { workspace = true }
 which = { workspace = true }
-dirs = "5.0"
+dirs = "6.0"
 reqwest = { workspace = true, features = ["stream"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

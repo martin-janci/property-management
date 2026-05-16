@@ -184,11 +184,26 @@ pub struct AppState {
     pub pubsub_service: Option<PubSubService>,
     // Epic 103: S3 Storage Service
     pub storage_service: Option<StorageService>,
+    /// Phase 1: Host-resolution cache shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses, so domain-management handlers
+    /// can invalidate entries (e.g. after a domain is verified).
+    pub tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+    /// Phase 5.5: per-tenant rate limiter set shared with `host_tenant_middleware`.
+    /// Holds the SAME `Arc` the middleware uses; admin handlers can install
+    /// per-tenant overrides via `tenant_rate_limiters.set_override(org, rpm)`
+    /// (e.g. after `tenant_settings.rate_limit_rpm` is updated).
+    pub tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
 }
 
 impl AppState {
     /// Create a new AppState.
-    pub fn new(db: DbPool, email_service: EmailService, jwt_service: JwtService) -> Self {
+    pub fn new(
+        db: DbPool,
+        email_service: EmailService,
+        jwt_service: JwtService,
+        tenant_resolution_cache: std::sync::Arc<api_core::middleware::TenantResolutionCache>,
+        tenant_rate_limiters: std::sync::Arc<api_core::middleware::TenantRateLimiterSet>,
+    ) -> Self {
         let user_repo = UserRepository::new(db.clone());
         let session_repo = SessionRepository::new(db.clone());
         let password_reset_repo = PasswordResetRepository::new(db.clone());
@@ -424,6 +439,10 @@ impl AppState {
             pubsub_service: None,
             // Epic 103: S3 Storage Service
             storage_service: None,
+            // Phase 1: shared host-resolution cache
+            tenant_resolution_cache,
+            // Phase 5.5: shared per-tenant rate limiter set (defense leak #15)
+            tenant_rate_limiters,
         }
     }
 

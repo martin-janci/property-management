@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Check formatting (Spotless)
         working-directory: mobile-native
@@ -42,7 +42,7 @@ jobs:
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -63,7 +63,7 @@ jobs:
         run: ./gradlew :androidApp:assembleDebug
 
       - name: Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-debug-apk
           path: mobile-native/androidApp/build/outputs/apk/debug/*.apk
@@ -82,14 +82,14 @@ jobs:
           java-version: '17'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build iOS framework
         working-directory: mobile-native
         run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
 
       - name: Upload iOS framework
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-framework
           path: mobile-native/shared/build/bin/iosSimulatorArm64/debugFramework/

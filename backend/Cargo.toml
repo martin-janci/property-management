@@ -3,15 +3,17 @@ resolver = "2"
 members = [
     "crates/common",
     "crates/api-core",
+    "crates/admin-core",
     "crates/db",
     "crates/integrations",
+    "crates/tenant-ops",
     "servers/api-server",
     "servers/reality-server",
     "servers/deploy-server",
 ]
 
 [workspace.package]
-version = "0.2.375"
+version = "0.2.379"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -36,7 +38,7 @@ utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono", "decimal"
 utoipa-swagger-ui = { version = "9", features = ["axum"] }
 
 # Validation
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.20", features = ["derive"] }
 
 # Database
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "migrate", "rust_decimal"] }
@@ -62,13 +64,13 @@ hex = "0.4"
 # Crypto
 sha2 = "0.11"
 hmac = "0.13"
-base64 = "0.21"
+base64 = "0.22"
 
 # URL encoding
 urlencoding = "2.1"
 
 # HTTP client (for integrations)
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.12", features = ["json"] }
 
 # Observability (Epic 95)
 opentelemetry = { version = "0.21", features = ["metrics", "trace"] }
@@ -103,8 +105,10 @@ intl-memoizer = "0.5"
 # Internal crates
 common = { path = "crates/common" }
 api-core = { path = "crates/api-core" }
+admin-core = { path = "crates/admin-core" }
 db = { path = "crates/db" }
 integrations = { path = "crates/integrations" }
+tenant-ops = { path = "crates/tenant-ops" }
 
 # Phase 1: deploy-server
 bollard = "0.16"
@@ -113,7 +117,7 @@ tokio-util = { version = "0.7", features = ["io"] }
 futures-util = "0.3"
 async-trait = "0.1"
 tempfile = "3.10"
-which = "6.0"
+which = "8.0"
 
 [profile.release]
 strip = "symbols"

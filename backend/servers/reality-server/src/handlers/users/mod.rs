@@ -4,8 +4,12 @@
 //! and account linking functionality.
 
 use chrono::{Duration, Utc};
-use db::models::{CreatePortalPasswordResetToken, CreatePortalUser, PortalUser, UpdatePortalUser};
-use db::repositories::{PortalPasswordResetRepository, PortalRepository};
+use db::models::user::Locale;
+use db::models::{CreatePortalPasswordResetToken, PortalUser, UpdatePortalUser};
+use db::repositories::{
+    PortalPasswordResetRepository, PortalRepository, UnifiedPortalError, UnifiedPortalUserRepo,
+    UpdateProfile,
+};
 use rand::TryRng;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -81,15 +85,24 @@ pub enum LinkResult {
 }
 
 /// User service for handling user-related business logic.
+///
+/// N1 (Phase 2.5): every write path goes through [`UnifiedPortalUserRepo`]
+/// so `users` (the source of truth) and `portal_users` (back-compat) stay
+/// in sync transactionally. Reads keep using [`PortalRepository`] —
+/// dual-write means the portal_users row reflects the latest state.
 #[derive(Clone)]
 pub struct UserHandler {
     repo: PortalRepository,
+    unified: UnifiedPortalUserRepo,
 }
 
 impl UserHandler {
     /// Create a new UserHandler.
     pub fn new(repo: PortalRepository) -> Self {
-        Self { repo }
+        // The unified repo borrows the same DbPool. We get it back from the
+        // portal repo so call-sites don't have to thread a second handle.
+        let unified = UnifiedPortalUserRepo::new(repo.pool().clone());
+        Self { repo, unified }
     }
 
     /// Validate email format.
@@ -164,6 +177,12 @@ impl UserHandler {
     }
 
     /// Register a new portal user with email/password.
+    ///
+    /// N1: writes both `users` (source of truth, principal_kind='public')
+    /// and `portal_users` (back-compat) inside a single transaction via
+    /// [`UnifiedPortalUserRepo::create`]. Returns the resulting `PortalUser`
+    /// so the existing response shape is preserved — we read it back from
+    /// `portal_users` after the dual-write commits.
     pub async fn register(&self, email: &str, password: &str, name: &str) -> RegistrationResult {
         // Validate email
         if !Self::validate_email(email) {
@@ -175,10 +194,21 @@ impl UserHandler {
             return RegistrationResult::WeakPassword(issues);
         }
 
-        // Check if email already exists
-        match self.repo.find_user_by_email(email).await {
+        // Check if email already exists. We look in `users` (the unified
+        // source of truth) — the unified repo's find_by_email also falls
+        // back to portal_users for the unmerged-collision case, so this
+        // detects a legacy portal-only row too.
+        match self.unified.find_by_email(email).await {
             Ok(Some(_)) => return RegistrationResult::EmailExists,
-            Err(e) => return RegistrationResult::DatabaseError(e.to_string()),
+            Err(UnifiedPortalError::Db(e)) => {
+                return RegistrationResult::DatabaseError(e.to_string())
+            }
+            Err(UnifiedPortalError::Collision { .. }) => {
+                // Cannot happen on a read; defensive arm.
+                return RegistrationResult::DatabaseError(
+                    "unexpected collision on email lookup".to_string(),
+                );
+            }
             Ok(None) => {}
         }
 
@@ -188,19 +218,44 @@ impl UserHandler {
             Err(e) => return RegistrationResult::CryptoError(e.to_string()),
         };
 
-        // Create user
-        let create_user = CreatePortalUser {
-            email: email.to_string(),
-            name: name.to_string(),
-            password: Some(password_hash),
-            provider: "local".to_string(),
-            pm_user_id: None,
+        // Dual-write to users + portal_users in one tx.
+        let unified_user = match self
+            .unified
+            .create(email, name, Some(&password_hash), Locale::default())
+            .await
+        {
+            Ok(u) => u,
+            Err(UnifiedPortalError::Db(e)) => {
+                return RegistrationResult::DatabaseError(e.to_string())
+            }
+            Err(UnifiedPortalError::Collision { .. }) => {
+                // create() does not currently surface Collision but the type
+                // permits it — treat as EmailExists.
+                return RegistrationResult::EmailExists;
+            }
         };
 
-        match self.repo.create_user(create_user).await {
-            Ok(user) => RegistrationResult::Success(user),
-            Err(e) => RegistrationResult::DatabaseError(e.to_string()),
-        }
+        // Read back the portal_users row by the back-pointer so the response
+        // shape matches the legacy contract. portal_origin_id was set inside
+        // the same tx, so this lookup is guaranteed to find the row.
+        let portal_user = match unified_user.portal_origin_id {
+            Some(pid) => match self.repo.find_user_by_id(pid).await {
+                Ok(Some(p)) => p,
+                Ok(None) => {
+                    return RegistrationResult::DatabaseError(
+                        "dual-write left no portal_users row".to_string(),
+                    )
+                }
+                Err(e) => return RegistrationResult::DatabaseError(e.to_string()),
+            },
+            None => {
+                return RegistrationResult::DatabaseError(
+                    "dual-write did not set portal_origin_id".to_string(),
+                )
+            }
+        };
+
+        RegistrationResult::Success(portal_user)
     }
 
     /// Login with email/password.
@@ -227,46 +282,56 @@ impl UserHandler {
 
     /// Create or update user from PM SSO.
     /// This is called after successful OAuth callback.
+    ///
+    /// N1: dual-writes via [`UnifiedPortalUserRepo::sso_upsert`]. Email
+    /// collisions with non-public principals are NOT silently overwritten —
+    /// they surface as [`SsoResult::ProviderError`] with a "collision"
+    /// message after the unified repo queues a `user_merge_collisions` row
+    /// for human review (defends leak #7 the same way the merge migration
+    /// does).
     pub async fn upsert_sso_user(&self, pm_user_id: Uuid, email: &str, name: &str) -> SsoResult {
-        // Check if user with this PM ID already exists
-        match self.repo.find_user_by_pm_id(pm_user_id).await {
-            Ok(Some(user)) => {
-                // Update user info if needed
-                let update = UpdatePortalUser {
-                    name: Some(name.to_string()),
-                    profile_image_url: None,
-                    locale: None,
-                };
-                match self.repo.update_user(user.id, update).await {
-                    Ok(updated) => SsoResult::LoggedIn(updated),
-                    Err(_) => SsoResult::LoggedIn(user), // Use existing user on update failure
-                }
-            }
-            Ok(None) => {
-                // Check if user with this email exists (might want to link)
-                if let Ok(Some(existing)) = self.repo.find_user_by_email(email).await {
-                    // User exists with this email but different SSO - update to link
-                    if existing.pm_user_id.is_none() {
-                        // Could link here, but for now just return existing user
-                        return SsoResult::LoggedIn(existing);
+        // Existed-by-pm_user_id case (legacy SSO link). We still invoke the
+        // unified path so a stale name in `users` is updated alongside
+        // `portal_users`.
+        let was_existing = matches!(self.repo.find_user_by_pm_id(pm_user_id).await, Ok(Some(_)));
+
+        match self
+            .unified
+            .sso_upsert("pm_sso", Some(pm_user_id), email, name)
+            .await
+        {
+            Ok(user) => {
+                let portal_id = user.portal_origin_id.unwrap_or(pm_user_id);
+                match self.repo.find_user_by_id(portal_id).await {
+                    Ok(Some(p)) => {
+                        if was_existing {
+                            SsoResult::LoggedIn(p)
+                        } else {
+                            SsoResult::Created(p)
+                        }
                     }
-                }
-
-                // Create new SSO user
-                let create_user = CreatePortalUser {
-                    email: email.to_string(),
-                    name: name.to_string(),
-                    password: None, // SSO users don't have local password
-                    provider: "pm_sso".to_string(),
-                    pm_user_id: Some(pm_user_id),
-                };
-
-                match self.repo.create_user(create_user).await {
-                    Ok(user) => SsoResult::Created(user),
+                    Ok(None) => {
+                        // Synthesize a portal user payload; the dual-write
+                        // committed but the back-pointer projection isn't
+                        // visible yet (race against another reader).
+                        SsoResult::ProviderError(
+                            "dual-write succeeded but portal_users mirror not found".to_string(),
+                        )
+                    }
                     Err(e) => SsoResult::ProviderError(e.to_string()),
                 }
             }
-            Err(e) => SsoResult::ProviderError(e.to_string()),
+            Err(UnifiedPortalError::Collision { existing_user_id }) => {
+                tracing::warn!(
+                    email = %email,
+                    existing_user_id = %existing_user_id,
+                    "SSO upsert refused: email belongs to a non-public principal (collision queued)"
+                );
+                SsoResult::ProviderError(format!(
+                    "email collides with existing non-public principal (collision queued for review): {existing_user_id}"
+                ))
+            }
+            Err(UnifiedPortalError::Db(e)) => SsoResult::ProviderError(e.to_string()),
         }
     }
 
@@ -315,6 +380,11 @@ impl UserHandler {
     }
 
     /// Update user profile.
+    ///
+    /// N1: dual-writes via [`UnifiedPortalUserRepo::update_profile`] so the
+    /// unified `users` row is updated first and `portal_users` is mirrored
+    /// in the same transaction. Returns the resulting `PortalUser` (read
+    /// back from `portal_users`) to keep the existing response shape.
     pub async fn update_profile(
         &self,
         user_id: Uuid,
@@ -322,14 +392,129 @@ impl UserHandler {
         profile_image_url: Option<String>,
         locale: Option<String>,
     ) -> Result<PortalUser, String> {
-        let update = UpdatePortalUser {
+        // The unified repo is keyed by `users.id`. Resolve a portal-side id
+        // to the matching users id when the legacy caller passes a portal
+        // user id (the registration flow above returns portal_users.id in
+        // its UserInfo, so legacy clients hit /users/me with that id).
+        let users_id = self
+            .resolve_users_id(user_id)
+            .await
+            .map_err(|e| e.to_string())?;
+        let update = UpdateProfile {
+            name: name.clone(),
+            profile_image_url: profile_image_url.clone(),
+            locale: locale.clone(),
+        };
+        let _ = self
+            .unified
+            .update_profile(users_id, update)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Read back the portal_users row so the response shape is
+        // unchanged. Lookup by users.id → portal_origin_id, falling back to
+        // pm_user_id for legacy rows.
+        let portal_id = self
+            .resolve_portal_id(users_id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "no portal_users row for this user".to_string())?;
+
+        // Mirror the requested fields through the legacy update path so any
+        // portal-only column (e.g. profile_image_url for a row that lacked a
+        // back-pointer) still gets updated. This is a no-op when the unified
+        // repo already wrote the same fields.
+        let legacy_update = UpdatePortalUser {
             name,
             profile_image_url,
             locale,
         };
-
         self.repo
-            .update_user(user_id, update)
+            .update_user(portal_id, legacy_update)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Resolve a caller-supplied user id (could be either `users.id` or
+    /// `portal_users.id` depending on whether the legacy or unified path
+    /// owned the issuance) to a `users.id`. If the id already maps to a
+    /// `users` row, return it; otherwise, look it up through the
+    /// portal_origin_id back-pointer.
+    async fn resolve_users_id(&self, id: Uuid) -> Result<Uuid, String> {
+        let pool = self.repo.pool();
+        if let Some(uid) = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| e.to_string())?
+        {
+            return Ok(uid);
+        }
+        if let Some(uid) =
+            sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE portal_origin_id = $1")
+                .bind(id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| e.to_string())?
+        {
+            return Ok(uid);
+        }
+        Err(format!("no users row for id {id}"))
+    }
+
+    /// Resolve a `portal_users.id` to its corresponding `users.id`. Looks
+    /// up via `users.portal_origin_id` first; falls back to
+    /// `portal_users.pm_user_id` for legacy SSO links. Returns the
+    /// `portal_users.id` itself as a last resort so the unified update
+    /// degrades gracefully on rows the merge migration could not touch
+    /// (e.g. an unmerged collision).
+    async fn lookup_users_id_for_portal_id(&self, portal_id: Uuid) -> Result<Uuid, String> {
+        let pool = self.repo.pool();
+        if let Some(uid) =
+            sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE portal_origin_id = $1")
+                .bind(portal_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| e.to_string())?
+        {
+            return Ok(uid);
+        }
+        if let Some(uid) = sqlx::query_scalar::<_, Option<Uuid>>(
+            "SELECT pm_user_id FROM portal_users WHERE id = $1",
+        )
+        .bind(portal_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| e.to_string())?
+        .flatten()
+        {
+            return Ok(uid);
+        }
+        // Unmerged-collision case: no matching users row. The password
+        // change still has to land on portal_users so the legacy auth path
+        // works; we fall back to writing through PortalRepository directly.
+        // The caller (confirm_password_reset) already does that legacy
+        // write below the unified call as a defense in depth.
+        Ok(portal_id)
+    }
+
+    /// Resolve `users.id` to its `portal_users.id`, if any.
+    async fn resolve_portal_id(&self, users_id: Uuid) -> Result<Option<Uuid>, String> {
+        let pool = self.repo.pool();
+        if let Some(pid) = sqlx::query_scalar::<_, Option<Uuid>>(
+            "SELECT portal_origin_id FROM users WHERE id = $1",
+        )
+        .bind(users_id)
+        .fetch_optional(pool)
+        .await
+        .map_err(|e| e.to_string())?
+        .flatten()
+        {
+            return Ok(Some(pid));
+        }
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM portal_users WHERE pm_user_id = $1")
+            .bind(users_id)
+            .fetch_optional(pool)
             .await
             .map_err(|e| e.to_string())
     }
@@ -410,10 +595,33 @@ impl UserHandler {
         };
 
         let new_hash = Self::hash_password(new_password).map_err(|e| e.to_string())?;
-        self.repo
-            .update_password_hash(token.portal_user_id, &new_hash)
+
+        // N1: dual-write through the unified repo so the password hash on
+        // `users` (used by future RequestPrincipal-based authn) stays in
+        // sync with `portal_users` (used by today's session-based authn).
+        // The token carries `portal_user_id`; resolve to the matching
+        // `users.id` first.
+        let users_id = self
+            .lookup_users_id_for_portal_id(token.portal_user_id)
             .await
             .map_err(|e| e.to_string())?;
+        let unified_ok = self
+            .unified
+            .update_password_hash(users_id, &new_hash)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Fallback path: when no unified `users` row matched (the
+        // unmerged-collision case where users_id is actually a
+        // portal_users id without a back-pointer), the unified write is a
+        // no-op — write through the legacy path so the legacy auth flow
+        // still picks up the new hash.
+        if !unified_ok {
+            self.repo
+                .update_password_hash(token.portal_user_id, &new_hash)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
 
         // Single-use: mark the token consumed and invalidate any other
         // outstanding tokens for the same user (a stolen-but-unused token

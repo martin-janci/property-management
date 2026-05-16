@@ -57,7 +57,8 @@
     "settings": "Einstellungen",
     "profile": "Profil",
     "accessibility": "Barrierefreiheit",
-    "privacy": "Datenschutz"
+    "privacy": "Datenschutz",
+    "admin": "Administration"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -452,6 +453,155 @@
       "closeFilters": "Filter schließen",
       "showHelp": "Diese Hilfe anzeigen",
       "hint": "Fokussieren Sie die Aufgabenliste, um diese Tastenkombinationen zu verwenden"
+    }
+  },
+  "admin": {
+    "common": {
+      "actions": "Aktionen",
+      "save": "Speichern",
+      "saving": "Speichern…",
+      "cancel": "Abbrechen",
+      "readOnly": "Schreibgeschützt",
+      "saveFailed": "Speichern fehlgeschlagen.",
+      "loading": "Laden…",
+      "retry": "Wiederholen",
+      "noResults": "Keine Ergebnisse.",
+      "confirm": "Sind Sie sicher?"
+    },
+    "agencies": {
+      "title": "Agenturen",
+      "loading": "Agenturen werden geladen…",
+      "loadError": "Agenturen konnten nicht geladen werden: {{message}}",
+      "unknownError": "Unbekannter Fehler",
+      "empty": "Keine Agenturen gefunden.",
+      "columns": {
+        "name": "Name",
+        "slug": "Kennung",
+        "status": "Status",
+        "members": "Mitglieder"
+      },
+      "actions": {
+        "suspend": "Sperren",
+        "edit": "Bearbeiten",
+        "addDomain": "Domain hinzufügen"
+      },
+      "toast": {
+        "suspendedTitle": "Agentur gesperrt",
+        "suspendedMessage": "{{name}} wurde gesperrt.",
+        "suspendFailedTitle": "Sperrung fehlgeschlagen",
+        "suspendFailedMessage": "Sperrung fehlgeschlagen",
+        "notWiredTitle": "Noch nicht verbunden",
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add"
+      }
+    },
+    "users": {
+      "title": "Benutzer",
+      "searchPlaceholder": "Benutzer nach E-Mail oder Name suchen…",
+      "empty": "Suchen, um Benutzer zu laden.",
+      "columns": {
+        "email": "E-Mail",
+        "displayName": "Anzeigename",
+        "principalKind": "Principal-Typ"
+      },
+      "principalKinds": {
+        "platform": "Plattform",
+        "agency": "Agentur",
+        "tenant": "Mieter",
+        "service": "Dienst"
+      },
+      "actions": {
+        "impersonate": "Identität annehmen",
+        "edit": "Bearbeiten",
+        "transition": "Typ ändern"
+      },
+      "transition": {
+        "title": "Principal-Typ ändern",
+        "description": "Dies ändert die Authentifizierungsweise von {{name}} und die zugewiesenen Berechtigungen. Fortfahren?",
+        "confirm": "Typ ändern",
+        "cancel": "Abbrechen"
+      }
+    },
+    "featureFlags": {
+      "title": "Feature-Flags",
+      "warning": "Notausschalter pro Mieter — Änderungen werden sofort für alle Benutzer dieses Mieters wirksam.",
+      "fields": {
+        "newListingsSearch": "Neue Inseratssuche (Beta)",
+        "aiFaultTriage": "KI-Störungstriage (Beta)",
+        "buildingDisabled": "Dieses Gebäude deaktivieren (Notausschalter)"
+      }
+    },
+    "audit": {
+      "title": "Audit-Log",
+      "filters": {
+        "legend": "Filter",
+        "actor": "Akteur",
+        "actorId": "Akteur-ID",
+        "action": "Aktion",
+        "target": "Ziel",
+        "targetType": "Zieltyp",
+        "since": "Von",
+        "until": "Bis",
+        "outcome": "Ergebnis"
+      },
+      "columns": {
+        "time": "Zeit",
+        "actor": "Akteur",
+        "action": "Aktion",
+        "target": "Ziel",
+        "ip": "IP",
+        "outcome": "Ergebnis"
+      },
+      "system": "(System)",
+      "loading": "Laden…",
+      "empty": "Keine Audit-Ereignisse entsprechen den aktuellen Filtern.",
+      "pagination": {
+        "showing": "{{from}}–{{to}} von {{total}} angezeigt",
+        "previous": "Zurück",
+        "next": "Weiter",
+        "page": "Seite {{page}}"
+      },
+      "timeAgo": {
+        "justNow": "gerade eben",
+        "minutes": "vor {{count}} Min.",
+        "minutes_one": "vor {{count}} Min.",
+        "hours": "vor {{count}} Std.",
+        "hours_one": "vor {{count}} Std.",
+        "days": "vor {{count}} Tagen",
+        "days_one": "vor {{count}} Tag"
+      }
+    },
+    "platform": {
+      "title": "Plattform-Einstellungen",
+      "fields": {
+        "maintenanceMode": "Wartungsmodus",
+        "signupEnabled": "Registrierung aktiviert",
+        "supportEmail": "Support-E-Mail",
+        "supportEmailPlaceholder": "support@example.com"
+      }
+    },
+    "impersonation": {
+      "label": "IDENTITÄTSÜBERNAHME",
+      "asUser": "als {{name}}",
+      "expires": "läuft ab um {{time}}",
+      "stop": "Identitätsübernahme beenden",
+      "youAreImpersonating": "Sie geben sich als {{name}} aus"
+    },
+    "mfa": {
+      "title": "Identität bestätigen",
+      "description": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.",
+      "descriptionForAction": "{{action}} erfordert einen frischen Authentifizierungscode.",
+      "label": "Bestätigungscode",
+      "verify": "Bestätigen",
+      "verifying": "Bestätigung läuft…",
+      "cancel": "Abbrechen",
+      "invalidFormat": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.",
+      "invalidCode": "Dieser Code hat nicht funktioniert. Erneut versuchen.",
+      "verificationFailed": "Bestätigung fehlgeschlagen.",
+      "expired": "MFA-Bestätigung abgelaufen",
+      "requiredToast": {
+        "title": "Zwei-Faktor-Bestätigung erforderlich",
+        "message": "Bitte bestätigen Sie über Ihre Authenticator-App, um fortzufahren."
+      }
     }
   }
 }

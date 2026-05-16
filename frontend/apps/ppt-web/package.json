@@ -16,6 +16,7 @@
     "test:a11y": "vitest run src/**/*.a11y.test.tsx"
   },
   "dependencies": {
+    "@ppt/admin-ui": "workspace:*",
     "@ppt/api-client": "workspace:*",
     "@ppt/shared": "workspace:*",
     "@ppt/sitemap": "workspace:*",
@@ -46,7 +47,7 @@
     "autoprefixer": "^10.4.20",
     "axe-core": "^4.11.1",
     "jsdom": "^25.0.1",
-    "msw": "^2.3.0",
+    "msw": "^2.14.6",
     "@tailwindcss/postcss": "^4.3.0",
     "postcss": "^8.4.49",
     "rollup-plugin-visualizer": "^6.0.5",
@@ -56,5 +57,5 @@
     "vitest": "^4.1.5",
     "vitest-axe": "^0.1.0"
   },
-  "version": "0.2.375"
+  "version": "0.2.379"
 }

@@ -45,16 +45,15 @@ impl<'a> SeedFactories<'a> {
         name: &str,
         password_hash: &str,
         phone: Option<&str>,
-        is_super_admin: bool,
         locale: &str,
     ) -> Result<Uuid, sqlx::Error> {
         let row = sqlx::query(
             r#"
             INSERT INTO users (
                 email, password_hash, name, phone, status,
-                email_verified_at, is_super_admin, locale
+                email_verified_at, locale
             )
-            VALUES ($1, $2, $3, $4, 'active', NOW(), $5, $6)
+            VALUES ($1, $2, $3, $4, 'active', NOW(), $5)
             RETURNING id
             "#,
         )
@@ -62,7 +61,6 @@ impl<'a> SeedFactories<'a> {
         .bind(password_hash)
         .bind(name)
         .bind(phone)
-        .bind(is_super_admin)
         .bind(locale)
         .fetch_one(self.pool)
         .await?;

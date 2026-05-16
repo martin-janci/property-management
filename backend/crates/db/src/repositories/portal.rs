@@ -39,13 +39,33 @@ impl PortalRepository {
         Self { pool }
     }
 
+    /// Borrow the underlying connection pool.
+    ///
+    /// N1: callers that need to construct a sibling repository (e.g.
+    /// `UnifiedPortalUserRepo` for dual-write) can clone the pool from here
+    /// instead of being passed a separate handle.
+    pub fn pool(&self) -> &DbPool {
+        &self.pool
+    }
+
     // ========================================================================
     // Portal Users
     // ========================================================================
 
     /// Create a new portal user.
+    ///
+    /// Phase 2 (Identity Unification): in the same transaction as the
+    /// `portal_users` insert, we also write a unified `users` row with
+    /// `principal_kind = 'public'` and `portal_origin_id` pointing back at
+    /// the new portal_user. This is the forward-going invariant that every
+    /// human has a `users` row (the historical merge runs in migration 00132).
+    /// The `portal_users` row is preserved so existing FKs (sessions,
+    /// favorites, saved searches) keep working until a future cleanup phase
+    /// physically retires the table.
     pub async fn create_user(&self, data: CreatePortalUser) -> Result<PortalUser, SqlxError> {
-        let user = sqlx::query_as::<_, PortalUser>(
+        let mut tx = self.pool.begin().await?;
+
+        let portal_user = sqlx::query_as::<_, PortalUser>(
             r#"
             INSERT INTO portal_users (email, name, password_hash, pm_user_id, provider)
             VALUES ($1, $2, $3, $4, $5)
@@ -57,10 +77,43 @@ impl PortalRepository {
         .bind(&data.password)
         .bind(data.pm_user_id)
         .bind(&data.provider)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await?;
 
-        Ok(user)
+        // Phase 2 mirror: also create a `users` row with principal_kind='public'.
+        // Skip silently if a users row already exists for this email — that's
+        // either the legacy merge collision (queued for human review) or the
+        // user is also a staff/PM principal.
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO users (
+                email, password_hash, name, locale, status, email_verified_at,
+                principal_kind, portal_origin_id, created_at, updated_at
+            )
+            VALUES (
+                $1,
+                COALESCE($2, '!sso-only-no-password'),
+                $3,
+                'en',
+                'active',
+                NULL,
+                'public',
+                $4,
+                NOW(),
+                NOW()
+            )
+            ON CONFLICT (email) DO NOTHING
+            "#,
+        )
+        .bind(&portal_user.email)
+        .bind(&data.password)
+        .bind(&portal_user.name)
+        .bind(portal_user.id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(portal_user)
     }
 
     /// Find portal user by ID.

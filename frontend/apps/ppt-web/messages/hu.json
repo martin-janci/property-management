@@ -57,7 +57,8 @@
     "settings": "Beállítások",
     "profile": "Profil",
     "accessibility": "Akadálymentesítés",
-    "privacy": "Adatvédelem"
+    "privacy": "Adatvédelem",
+    "admin": "Adminisztráció"
   },
   "auth": {
     "signIn": "Bejelentkezés",
@@ -452,6 +453,155 @@
       "closeFilters": "Szűrők bezárása",
       "showHelp": "Súgó megjelenítése",
       "hint": "Fókuszáljon a feladatlistára a billentyűparancsok használatához"
+    }
+  },
+  "admin": {
+    "common": {
+      "actions": "Műveletek",
+      "save": "Mentés",
+      "saving": "Mentés…",
+      "cancel": "Mégse",
+      "readOnly": "Csak olvasható",
+      "saveFailed": "A mentés sikertelen.",
+      "loading": "Betöltés…",
+      "retry": "Újra",
+      "noResults": "Nincs találat.",
+      "confirm": "Biztosan?"
+    },
+    "agencies": {
+      "title": "Ügynökségek",
+      "loading": "Ügynökségek betöltése…",
+      "loadError": "Az ügynökségek betöltése sikertelen: {{message}}",
+      "unknownError": "Ismeretlen hiba",
+      "empty": "Nem található ügynökség.",
+      "columns": {
+        "name": "Név",
+        "slug": "Azonosító",
+        "status": "Állapot",
+        "members": "Tagok"
+      },
+      "actions": {
+        "suspend": "Felfüggesztés",
+        "edit": "Szerkesztés",
+        "addDomain": "Domain hozzáadása"
+      },
+      "toast": {
+        "suspendedTitle": "Ügynökség felfüggesztve",
+        "suspendedMessage": "{{name}} fel lett függesztve.",
+        "suspendFailedTitle": "Felfüggesztés sikertelen",
+        "suspendFailedMessage": "Felfüggesztés sikertelen",
+        "notWiredTitle": "Még nincs bekötve",
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add"
+      }
+    },
+    "users": {
+      "title": "Felhasználók",
+      "searchPlaceholder": "Felhasználók keresése e-mail vagy név alapján…",
+      "empty": "Keressen felhasználók betöltéséhez.",
+      "columns": {
+        "email": "E-mail",
+        "displayName": "Megjelenített név",
+        "principalKind": "Principal típusa"
+      },
+      "principalKinds": {
+        "platform": "Platform",
+        "agency": "Ügynökség",
+        "tenant": "Bérlő",
+        "service": "Szolgáltatás"
+      },
+      "actions": {
+        "impersonate": "Megszemélyesítés",
+        "edit": "Szerkesztés",
+        "transition": "Típus módosítása"
+      },
+      "transition": {
+        "title": "Principal típusának módosítása",
+        "description": "Ez megváltoztatja {{name}} hitelesítési módját és az engedélyeit. Folytatja?",
+        "confirm": "Típus módosítása",
+        "cancel": "Mégse"
+      }
+    },
+    "featureFlags": {
+      "title": "Funkciókapcsolók",
+      "warning": "Bérlőnkénti vészkapcsoló — a változtatások azonnal érvénybe lépnek a bérlő minden felhasználójánál.",
+      "fields": {
+        "newListingsSearch": "Új hirdetéskeresés (béta)",
+        "aiFaultTriage": "MI hibaosztályozás (béta)",
+        "buildingDisabled": "Épület letiltása (vészkapcsoló)"
+      }
+    },
+    "audit": {
+      "title": "Audit napló",
+      "filters": {
+        "legend": "Szűrők",
+        "actor": "Végrehajtó",
+        "actorId": "Végrehajtó azonosítója",
+        "action": "Művelet",
+        "target": "Cél",
+        "targetType": "Cél típusa",
+        "since": "Kezdő",
+        "until": "Befejező",
+        "outcome": "Eredmény"
+      },
+      "columns": {
+        "time": "Idő",
+        "actor": "Végrehajtó",
+        "action": "Művelet",
+        "target": "Cél",
+        "ip": "IP",
+        "outcome": "Eredmény"
+      },
+      "system": "(rendszer)",
+      "loading": "Betöltés…",
+      "empty": "Nincs az aktuális szűrőknek megfelelő audit esemény.",
+      "pagination": {
+        "showing": "{{from}}–{{to}} / {{total}} megjelenítve",
+        "previous": "Előző",
+        "next": "Következő",
+        "page": "{{page}}. oldal"
+      },
+      "timeAgo": {
+        "justNow": "épp most",
+        "minutes": "{{count}} perce",
+        "minutes_one": "{{count}} perce",
+        "hours": "{{count}} órája",
+        "hours_one": "{{count}} órája",
+        "days": "{{count}} napja",
+        "days_one": "{{count}} napja"
+      }
+    },
+    "platform": {
+      "title": "Platform-beállítások",
+      "fields": {
+        "maintenanceMode": "Karbantartási mód",
+        "signupEnabled": "Regisztráció engedélyezve",
+        "supportEmail": "Ügyfélszolgálat e-mail",
+        "supportEmailPlaceholder": "support@example.com"
+      }
+    },
+    "impersonation": {
+      "label": "MEGSZEMÉLYESÍTÉS",
+      "asUser": "mint {{name}}",
+      "expires": "lejár: {{time}}",
+      "stop": "Megszemélyesítés befejezése",
+      "youAreImpersonating": "Ön {{name}} felhasználót személyesíti meg"
+    },
+    "mfa": {
+      "title": "Igazolja személyazonosságát",
+      "description": "Adja meg a hitelesítő alkalmazás 6 számjegyű kódját.",
+      "descriptionForAction": "{{action}} friss hitelesítési kódot igényel.",
+      "label": "Ellenőrző kód",
+      "verify": "Ellenőrzés",
+      "verifying": "Ellenőrzés…",
+      "cancel": "Mégse",
+      "invalidFormat": "Adja meg a hitelesítő alkalmazás 6 számjegyű kódját.",
+      "invalidCode": "Ez a kód nem működött. Próbálja újra.",
+      "verificationFailed": "Az ellenőrzés sikertelen.",
+      "expired": "Az MFA-ellenőrzés lejárt",
+      "requiredToast": {
+        "title": "Kétfaktoros megerősítés szükséges",
+        "message": "A folytatáshoz erősítse meg a hitelesítő alkalmazásban."
+      }
     }
   }
 }

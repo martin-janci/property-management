@@ -582,6 +582,12 @@ pub async fn login(
         ));
     }
 
+    // Track whether the user has supplied & verified an MFA factor in this
+    // request. Used by the per-org `AuthPolicyEnforcer::check_login` gate
+    // below — an org policy can demand MFA-at-login for a role even if the
+    // user has not yet enrolled a TOTP secret.
+    let mut mfa_presented = false;
+
     // Check 2FA if enabled (Epic 9, Story 9.1)
     // Note: Login happens before RLS context is established. 2FA is user-level, not tenant-scoped.
     #[allow(deprecated)]
@@ -639,6 +645,9 @@ pub async fn login(
                         ));
                     }
 
+                    // MFA factor verified (TOTP or backup code).
+                    mfa_presented = true;
+
                     // If backup code was used, consume it and log it
                     if let Some(code_index) = backup_result {
                         // Note: Login happens before RLS context is established.
@@ -683,6 +692,39 @@ pub async fn login(
                         mfa_token: None,
                     }));
                 }
+            }
+        }
+    }
+
+    // D2.2: enforce per-org auth policy at login. If ANY org the user has an
+    // active membership in requires MFA for the user's role in that org and
+    // the user has not presented an MFA factor in this request, refuse the
+    // login with the same `mfa_required` 401 response shape the existing 2FA
+    // path uses. Email verification is already enforced above by
+    // `User::is_verified` so we map only `MfaRequired` here.
+    let enforcer = crate::services::AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer.check_login(user.id, mfa_presented).await {
+        let _ = state
+            .session_repo
+            .record_login_attempt(&req.email, &ip_address, false)
+            .await;
+        match err {
+            crate::services::AuthPolicyError::MfaRequired(role) => {
+                tracing::info!(user_id = %user.id, role = %role, "Login blocked: org policy demands MFA for role");
+                return Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(ErrorResponse::new(
+                        "MFA_REQUIRED",
+                        format!("MFA required by org policy for role '{}'", role),
+                    )),
+                ));
+            }
+            other => {
+                tracing::error!(error = %other, user_id = %user.id, "Auth policy check at login failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("AUTH_POLICY_ERROR", "Login failed")),
+                ));
             }
         }
     }
@@ -1253,6 +1295,50 @@ pub async fn reset_password(
                 "Cannot reset password for inactive account",
             )),
         ));
+    }
+
+    // D2.2: validate the new password against the user's effective per-org
+    // auth policy (strictest across active memberships; falls back to the
+    // platform default for users with no orgs). The `AuthService::validate_password`
+    // call above enforces the platform-default rules; this enforcer call adds
+    // any per-org tightening (longer min length, required char classes).
+    let enforcer = crate::services::AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer
+        .check_password_change(user.id, &req.new_password)
+        .await
+    {
+        match err {
+            crate::services::AuthPolicyError::PasswordPolicy(violations) => {
+                let details: Vec<ValidationError> = violations
+                    .into_iter()
+                    .map(|msg| ValidationError {
+                        field: "new_password".to_string(),
+                        message: msg,
+                        code: "INVALID_PASSWORD".to_string(),
+                    })
+                    .collect();
+                return Err((
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(
+                        ErrorResponse::new(
+                            "PASSWORD_POLICY_VIOLATION",
+                            "Password does not satisfy org policy",
+                        )
+                        .with_details(details),
+                    ),
+                ));
+            }
+            other => {
+                tracing::error!(error = %other, user_id = %user.id, "Password policy check failed");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "AUTH_POLICY_ERROR",
+                        "Failed to validate password",
+                    )),
+                ));
+            }
+        }
     }
 
     // Hash new password

@@ -1,4 +1,14 @@
 //! Authentication extractor.
+//!
+//! # Phase 2 deprecation note
+//!
+//! `AuthUser` is **deprecated** in favor of `crate::extractors::principal::RequestPrincipal`.
+//! The `tenant_id` and `role` fields on `AuthUser` come from JWT claims and
+//! must NOT be trusted as authority — they are kept only so existing callers
+//! still compile during the one-phase Phase 2 transition window. The Phase 2
+//! identity model re-derives both authority and the principal kind from
+//! trusted server-side state on every request (see leak #10/#11 in the
+//! brainstorming session). New extractors should be `RequestPrincipal`-based.
 
 use axum::{
     extract::FromRequestParts,

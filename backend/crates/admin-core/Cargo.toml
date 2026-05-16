@@ -1,0 +1,37 @@
+[package]
+name = "admin-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# Phase 5 — Super-admin Control Plane.
+#
+# Shared crate consumed by both api-server and reality-server. Provides:
+#   * Capability enum + registry
+#   * RequireCapability axum extractor (platform-kind + recent-MFA + grant)
+#   * Audit writer (append-only, payload hashed)
+#   * Settings store (per-tenant key/value)
+#   * Impersonation tokens (15-min TTL, audited)
+
+[dependencies]
+common = { workspace = true }
+db = { workspace = true }
+api-core = { workspace = true }
+
+axum = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+sqlx = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

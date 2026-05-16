@@ -1,5 +1,6 @@
 //! Tenant context extractor.
 
+use crate::middleware::host_tenant::ResolvedTenant;
 use crate::AuthUser;
 use axum::{
     extract::FromRequestParts,
@@ -40,16 +41,23 @@ where
         // This ensures user_id and role are populated in extensions
         let auth_user = AuthUser::from_request_parts(parts, state).await?;
 
-        // Get X-Tenant-ID header
-        let tenant_id = parts
-            .headers
-            .get("X-Tenant-ID")
-            .and_then(|v| v.to_str().ok())
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .ok_or((
-                StatusCode::BAD_REQUEST,
-                "Missing or invalid X-Tenant-ID header",
-            ))?;
+        // Phase 1: prefer the tenant resolved by `host_tenant_middleware` from
+        // the inbound Host header. When present, it is authoritative — the
+        // host the request arrived on already pins exactly one organization.
+        // Otherwise fall back to the legacy `X-Tenant-ID` header so existing
+        // header-based clients keep working unchanged (additive behavior).
+        let tenant_id = match parts.extensions.get::<ResolvedTenant>() {
+            Some(resolved) => resolved.organization_id,
+            None => parts
+                .headers
+                .get("X-Tenant-ID")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+                .ok_or((
+                    StatusCode::BAD_REQUEST,
+                    "Missing or invalid X-Tenant-ID header",
+                ))?,
+        };
 
         // User ID comes from authenticated JWT (validated above)
         let user_id = auth_user.user_id;
@@ -128,16 +136,61 @@ where
         // SECURITY: Always extract and validate JWT authentication first
         let auth_user = AuthUser::from_request_parts(parts, state).await?;
 
-        // Get X-Tenant-ID header
-        let tenant_id = parts
+        // Phase 1 — tenant-id resolution with leak-#11 cross-check.
+        //
+        // Three possible tenant sources:
+        //   1. `ResolvedTenant` extension — from `host_tenant_middleware`
+        //      (the Host header pins exactly one org).
+        //   2. `X-Tenant-ID` header — legacy header-based clients.
+        //   3. JWT `tenant_id` claim — the org the token was minted for.
+        //
+        // Rule: if a `ResolvedTenant` is present AND either the header or the
+        // JWT claim is ALSO present and DISAGREES with it, that's a cross-tenant
+        // confusion attempt — fail closed with 403. If only one source is
+        // present (or all present sources agree), use the resolved/header value.
+        let resolved_tenant = parts
+            .extensions
+            .get::<ResolvedTenant>()
+            .map(|r| r.organization_id);
+        let header_tenant = parts
             .headers
             .get("X-Tenant-ID")
             .and_then(|v| v.to_str().ok())
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .ok_or((
+            .and_then(|s| Uuid::parse_str(s).ok());
+        let jwt_tenant = auth_user.tenant_id;
+
+        let tenant_id = match resolved_tenant {
+            Some(resolved) => {
+                // Leak #11: a host-resolved tenant must not be contradicted by
+                // a header or JWT claim pointing at a different org.
+                if let Some(hdr) = header_tenant {
+                    if hdr != resolved {
+                        tracing::warn!(
+                            resolved = %resolved,
+                            header = %hdr,
+                            "Tenant mismatch: X-Tenant-ID disagrees with host-resolved tenant"
+                        );
+                        return Err((StatusCode::FORBIDDEN, "tenant mismatch"));
+                    }
+                }
+                if let Some(jwt) = jwt_tenant {
+                    if jwt != resolved {
+                        tracing::warn!(
+                            resolved = %resolved,
+                            jwt = %jwt,
+                            "Tenant mismatch: JWT tenant claim disagrees with host-resolved tenant"
+                        );
+                        return Err((StatusCode::FORBIDDEN, "tenant mismatch"));
+                    }
+                }
+                resolved
+            }
+            // No host resolution — fall back to the legacy header behavior.
+            None => header_tenant.ok_or((
                 StatusCode::BAD_REQUEST,
                 "Missing or invalid X-Tenant-ID header",
-            ))?;
+            ))?,
+        };
 
         let user_id = auth_user.user_id;
 

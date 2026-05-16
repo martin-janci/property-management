@@ -1,5 +1,7 @@
 //! Database models.
 
+pub mod agency_branding;
+pub mod agency_domain;
 pub mod announcement;
 pub mod audit_log;
 pub mod building;
@@ -13,6 +15,7 @@ pub mod fault;
 pub mod financial;
 
 pub mod granular_notification;
+pub mod membership;
 pub mod messaging;
 pub mod meter;
 pub mod notification_preference;
@@ -87,6 +90,14 @@ pub use workflow_templates::{
     TemplateSearchQuery, UpdateWorkflowTemplate, WorkflowTemplate, WorkflowTemplateAction,
     WorkflowTemplateRating, WorkflowTemplateSummary, WorkflowTemplateVariable,
     WorkflowTemplateWithDetails,
+};
+
+// Note: `AgencyBranding` from `agency_branding` is intentionally NOT re-exported here
+// because `agency::AgencyBranding` already occupies that name at this scope. The new
+// per-tenant branding type is consumed via the module path: `crate::models::agency_branding::AgencyBranding`.
+pub use agency_branding::UpdateOrganizationBranding;
+pub use agency_domain::{
+    AgencyDomain, AgencyDomainKind, AgencyDomainVerificationState, CreateAgencyDomain,
 };
 
 pub use announcement::{
@@ -241,9 +252,11 @@ pub use unit_resident::{
     UnitResidentWithUser, UpdateUnitResident,
 };
 pub use user::{
-    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrivacySettings,
-    ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
+    CreateUser, EmailVerificationToken, Locale, NeighborRow, NeighborView, PrincipalKind,
+    PrivacySettings, ProfileVisibility, UpdatePrivacySettings, UpdateUser, User, UserStatus,
 };
+
+pub use membership::{GrantMembership, UserInvite, UserMembership, UserMergeCollision};
 pub use vote::{
     audit_action, question_type, quorum_type, vote_status, CancelVote, CastVote, CreateVote,
     CreateVoteAuditLog, CreateVoteComment, CreateVoteQuestion, EligibleUnit, HideVoteComment,
@@ -1104,3 +1117,13 @@ pub use api_ecosystem::{
     UpdateMarketplaceIntegration, UpdateOrganizationIntegration,
     UpdatePreBuiltIntegrationConnection, WebhookRetryPolicyConfig, XeroConfig,
 };
+
+// Phase 3: Hosting & Theming — per-tenant feature flags + kill switches.
+pub mod tenant_feature_flag;
+
+pub use tenant_feature_flag::{TenantFeatureFlag, UpsertTenantFeatureFlag};
+
+// Phase 2 — Defense N2: per-org auth policy (defends leak #13).
+pub mod auth_policy;
+
+pub use auth_policy::AuthPolicy;

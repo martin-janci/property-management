@@ -1,7 +1,9 @@
 //! Realtor routes (Epic 33: Realtor Tools).
+//!
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -61,11 +63,11 @@ pub struct InquiriesQuery {
 )]
 pub async fn get_my_profile(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
-        .get_realtor_profile(auth.user_id)
+        .get_realtor_profile(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -132,12 +134,12 @@ pub async fn get_profile(
 )]
 pub async fn create_profile(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<CreateRealtorProfile>,
 ) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
-        .upsert_realtor_profile(auth.user_id, data)
+        .upsert_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -171,12 +173,12 @@ pub async fn create_profile(
 )]
 pub async fn update_profile(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<UpdateRealtorProfile>,
 ) -> Result<Json<ProfileResponse>, (axum::http::StatusCode, String)> {
     let profile = state
         .reality_portal_repo
-        .update_realtor_profile(auth.user_id, data)
+        .update_realtor_profile(principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -209,13 +211,13 @@ pub async fn update_profile(
 )]
 pub async fn list_inquiries(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Query(query): Query<InquiriesQuery>,
 ) -> Result<Json<InquiriesResponse>, (axum::http::StatusCode, String)> {
     let inquiries = state
         .reality_portal_repo
         .get_realtor_inquiries(
-            auth.user_id,
+            principal.user_id,
             query.status,
             query.limit.unwrap_or(20),
             query.offset.unwrap_or(0),
@@ -278,13 +280,13 @@ pub async fn mark_inquiry_read(
 )]
 pub async fn respond_to_inquiry(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<SendInquiryMessage>,
 ) -> Result<Json<InquiryMessage>, (axum::http::StatusCode, String)> {
     let message = state
         .reality_portal_repo
-        .respond_to_inquiry(id, auth.user_id, &data.message)
+        .respond_to_inquiry(id, principal.user_id, &data.message)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
