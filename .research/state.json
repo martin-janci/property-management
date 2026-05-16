@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "last_run_iso": null,
+  "last_run_ms": 0,
+  "last_pr_seen": 0,
+  "last_commit_sha": null,
+  "last_issue_seen": 0,
+  "processed_prs": {},
+  "processed_issues": {},
+  "stats": {
+    "total_runs": 0,
+    "briefs_written": 0,
+    "plans_written": 0,
+    "backlog_items_added": 0
+  }
+}
