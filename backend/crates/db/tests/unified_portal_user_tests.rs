@@ -258,5 +258,8 @@ async fn sso_upsert_creates_then_updates_for_public(pool: PgPool) {
         .fetch_one(&pool)
         .await
         .expect("name after second upsert");
-    assert_eq!(name, "Updated Display", "users.name updated on second sign-in");
+    assert_eq!(
+        name, "Updated Display",
+        "users.name updated on second sign-in"
+    );
 }

@@ -33,14 +33,16 @@ use uuid::Uuid;
 async fn read_guc(pool: &PgPool, name: &str) -> Option<String> {
     // `current_setting(name, true)` is the missok form — returns '' rather
     // than raising an error when the setting has never been set.
-    let raw: String = sqlx::query_scalar(&format!(
-        "SELECT current_setting('{name}', true)"
-    ))
-    .fetch_one(pool)
-    .await
-    .expect("read_guc query");
+    let raw: String = sqlx::query_scalar(&format!("SELECT current_setting('{name}', true)"))
+        .fetch_one(pool)
+        .await
+        .expect("read_guc query");
 
-    if raw.is_empty() { None } else { Some(raw) }
+    if raw.is_empty() {
+        None
+    } else {
+        Some(raw)
+    }
 }
 
 /// Read `app.current_org_id` from the given single-connection pool.
@@ -82,13 +84,12 @@ async fn normal_drop_clears_org_id_guc(pool: PgPool) {
             .expect("acquire guard");
 
         // The set_request_context call is internal; verify via direct query.
-        let val: Option<String> = sqlx::query_scalar(
-            "SELECT current_setting('app.current_org_id', true)",
-        )
-        .fetch_one(guard.conn())
-        .await
-        .ok()
-        .filter(|s: &String| !s.is_empty());
+        let val: Option<String> =
+            sqlx::query_scalar("SELECT current_setting('app.current_org_id', true)")
+                .fetch_one(guard.conn())
+                .await
+                .ok()
+                .filter(|s: &String| !s.is_empty());
 
         assert_eq!(
             val.as_deref(),
@@ -179,26 +180,23 @@ async fn normal_drop_clears_all_gucs(pool: PgPool) {
             .expect("acquire super-admin guard");
 
         // Confirm all three GUCs are live on the guard's connection.
-        let org_val: String = sqlx::query_scalar(
-            "SELECT current_setting('app.current_org_id', true)",
-        )
-        .fetch_one(guard.conn())
-        .await
-        .expect("read org");
+        let org_val: String =
+            sqlx::query_scalar("SELECT current_setting('app.current_org_id', true)")
+                .fetch_one(guard.conn())
+                .await
+                .expect("read org");
 
-        let user_val: String = sqlx::query_scalar(
-            "SELECT current_setting('app.current_user_id', true)",
-        )
-        .fetch_one(guard.conn())
-        .await
-        .expect("read user");
+        let user_val: String =
+            sqlx::query_scalar("SELECT current_setting('app.current_user_id', true)")
+                .fetch_one(guard.conn())
+                .await
+                .expect("read user");
 
-        let admin_val: String = sqlx::query_scalar(
-            "SELECT current_setting('app.is_super_admin', true)",
-        )
-        .fetch_one(guard.conn())
-        .await
-        .expect("read admin");
+        let admin_val: String =
+            sqlx::query_scalar("SELECT current_setting('app.is_super_admin', true)")
+                .fetch_one(guard.conn())
+                .await
+                .expect("read admin");
 
         assert!(!org_val.is_empty(), "org GUC must be set");
         assert!(!user_val.is_empty(), "user GUC must be set");

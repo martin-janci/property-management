@@ -89,13 +89,12 @@ impl PgMfaEnrollment {
 #[async_trait]
 impl MfaEnrollment for PgMfaEnrollment {
     async fn is_enrolled(&self, user_id: Uuid) -> Result<bool, AdminError> {
-        let row: Option<(bool,)> = sqlx::query_as(
-            "SELECT enabled FROM user_2fa WHERE user_id = $1",
-        )
-        .bind(user_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e: SqlxError| AdminError::Internal(format!("mfa_enrollment: {}", e)))?;
+        let row: Option<(bool,)> =
+            sqlx::query_as("SELECT enabled FROM user_2fa WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e: SqlxError| AdminError::Internal(format!("mfa_enrollment: {}", e)))?;
         Ok(row.map(|(b,)| b).unwrap_or(false))
     }
 }

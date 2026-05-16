@@ -122,12 +122,10 @@ pub async fn disable_mfa(
                     // Mark the recovery code used even though we're disabling.
                     let rid = rows[idx].0;
                     let _ =
-                        sqlx::query(
-                            "UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1",
-                        )
-                        .bind(rid)
-                        .execute(&state.db)
-                        .await;
+                        sqlx::query("UPDATE mfa_recovery_codes SET used_at = NOW() WHERE id = $1")
+                            .bind(rid)
+                            .execute(&state.db)
+                            .await;
                     true
                 }
                 None => false,

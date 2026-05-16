@@ -53,7 +53,12 @@ impl AdminDeps {
         enrollment: Arc<dyn MfaEnrollment>,
         audit: Arc<dyn AuditWriter>,
     ) -> Self {
-        Self { grants, mfa, enrollment, audit }
+        Self {
+            grants,
+            mfa,
+            enrollment,
+            audit,
+        }
     }
 }
 

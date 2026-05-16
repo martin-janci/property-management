@@ -145,7 +145,11 @@ pub struct OAuthService {
 
 impl OAuthService {
     /// Create a new OAuthService.
-    pub fn new(repo: OAuthRepository, user_repo: UserRepository, auth_service: AuthService) -> Self {
+    pub fn new(
+        repo: OAuthRepository,
+        user_repo: UserRepository,
+        auth_service: AuthService,
+    ) -> Self {
         Self {
             repo,
             user_repo,

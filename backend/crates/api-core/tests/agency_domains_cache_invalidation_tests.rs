@@ -58,8 +58,8 @@ fn test_router(pool: PgPool, cache: Arc<TenantResolutionCache>) -> Router {
     let cfg = HostTenantConfig::with_parts(
         pool,
         cache,
-        false,            // dev_mode off — only host-based resolution
-        Vec::new(),       // no platform_hosts
+        false,      // dev_mode off — only host-based resolution
+        Vec::new(), // no platform_hosts
     );
 
     Router::new()
@@ -159,8 +159,10 @@ async fn delete_invalidates_cache_immediately(pool: PgPool) {
 
     // Step 3: delete via repository with cache wired in.
     // The repository's `release_rls` calls `cache.invalidate(host)`.
-    let repo = AgencyDomainRepository::new(pool.clone())
-        .with_cache(cache.clone() as Arc<dyn db::repositories::agency_domain::AgencyDomainCacheInvalidator>);
+    let repo =
+        AgencyDomainRepository::new(pool.clone())
+            .with_cache(cache.clone()
+                as Arc<dyn db::repositories::agency_domain::AgencyDomainCacheInvalidator>);
 
     // release_rls needs a connection with super-admin RLS context.
     let mut conn = pool.acquire().await.expect("acquire conn");
@@ -245,8 +247,8 @@ async fn release_nonexistent_domain_returns_none(pool: PgPool) {
     }
 
     let invalidator = Arc::new(CountingInvalidator(AtomicUsize::new(0)));
-    let repo = AgencyDomainRepository::new(pool.clone())
-        .with_cache(invalidator.clone() as Arc<dyn db::repositories::agency_domain::AgencyDomainCacheInvalidator>);
+    let repo = AgencyDomainRepository::new(pool.clone()).with_cache(invalidator.clone()
+        as Arc<dyn db::repositories::agency_domain::AgencyDomainCacheInvalidator>);
 
     let mut conn = pool.acquire().await.expect("acquire");
     db::tenant_context::set_request_context(&mut *conn, None, None, true)
@@ -254,11 +256,19 @@ async fn release_nonexistent_domain_returns_none(pool: PgPool) {
         .expect("set ctx");
 
     let ghost_id = Uuid::new_v4(); // no matching row
-    let result = repo.release_rls(&mut *conn, ghost_id).await.expect("release");
+    let result = repo
+        .release_rls(&mut *conn, ghost_id)
+        .await
+        .expect("release");
 
-    db::tenant_context::clear_request_context(&mut *conn).await.ok();
+    db::tenant_context::clear_request_context(&mut *conn)
+        .await
+        .ok();
 
-    assert!(result.is_none(), "release of nonexistent domain must return None");
+    assert!(
+        result.is_none(),
+        "release of nonexistent domain must return None"
+    );
     assert_eq!(
         invalidator.0.load(Ordering::SeqCst),
         0,

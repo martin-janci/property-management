@@ -14,9 +14,9 @@ mod disable;
 mod enroll;
 mod recovery;
 
+pub use disable::disable_mfa;
 pub use enroll::{start_enroll, verify_enroll};
 pub use recovery::use_recovery;
-pub use disable::disable_mfa;
 
 use axum::{routing::post, Router};
 

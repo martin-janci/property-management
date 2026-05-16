@@ -273,20 +273,19 @@ pub async fn create_review(
     })?;
 
     // Phase 6: reads from `users` (portal_users dropped in migration 00148).
-    let reviewer_name: String = sqlx::query_scalar(
-        "SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'",
-    )
-    .bind(principal.user_id)
-    .fetch_optional(&mut *conn)
-    .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get reviewer name: {}", e),
-        )
-    })?
-    .flatten()
-    .unwrap_or_else(|| "Anonymous".to_string());
+    let reviewer_name: String =
+        sqlx::query_scalar("SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'")
+            .bind(principal.user_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to get reviewer name: {}", e),
+                )
+            })?
+            .flatten()
+            .unwrap_or_else(|| "Anonymous".to_string());
 
     // Insert review; unique constraint prevents duplicates
     let row = sqlx::query(

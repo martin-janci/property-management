@@ -943,23 +943,26 @@ pub async fn refresh_token(
     }
 
     // Generate new access token, re-embedding principal_kind (Phase 6 C17).
-    let access_token =
-        match state
-            .jwt_service
-            .generate_access_token_with_kind(user.id, &user.email, &user.name, None, None, Some(user.principal_kind.clone()))
-        {
-            Ok(token) => token,
-            Err(e) => {
-                tracing::error!(error = %e, "Failed to generate access token");
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "TOKEN_ERROR",
-                        "Failed to create session",
-                    )),
-                ));
-            }
-        };
+    let access_token = match state.jwt_service.generate_access_token_with_kind(
+        user.id,
+        &user.email,
+        &user.name,
+        None,
+        None,
+        Some(user.principal_kind.clone()),
+    ) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to generate access token");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "TOKEN_ERROR",
+                    "Failed to create session",
+                )),
+            ));
+        }
+    };
 
     // Generate new refresh token (rotation)
     let (new_refresh_token, new_token_hash, expires_at) = match state

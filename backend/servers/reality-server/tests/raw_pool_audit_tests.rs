@@ -54,7 +54,9 @@ async fn stub_listing_handler() -> axum::response::Response {
     axum::response::Response::builder()
         .status(StatusCode::OK)
         .header("x-reached-handler", "true")
-        .body(Body::from(r#"{"id":"00000000-0000-0000-0000-000000000001"}"#))
+        .body(Body::from(
+            r#"{"id":"00000000-0000-0000-0000-000000000001"}"#,
+        ))
         .unwrap()
 }
 
@@ -72,19 +74,13 @@ fn build_test_router(pool: PgPool) -> Router {
     let cfg = HostTenantConfig::with_parts(
         pool,
         Arc::new(TenantResolutionCache::new(300, 30, 100)),
-        false,          // dev_mode off — no /a/{slug} shortcuts
-        Vec::new(),     // no platform hosts — every host must resolve via DB
+        false,      // dev_mode off — no /a/{slug} shortcuts
+        Vec::new(), // no platform hosts — every host must resolve via DB
     );
 
     Router::new()
-        .route(
-            "/api/v1/listings/:id",
-            get(stub_listing_handler),
-        )
-        .route(
-            "/api/v1/listings",
-            get(stub_listing_handler),
-        )
+        .route("/api/v1/listings/:id", get(stub_listing_handler))
+        .route("/api/v1/listings", get(stub_listing_handler))
         .layer(from_fn_with_state(cfg, host_tenant_middleware))
 }
 
@@ -127,10 +123,7 @@ async fn listing_route_without_host_header_is_rejected(pool: PgPool) {
 
     let listing_id = uuid::Uuid::new_v4();
     let resp = app
-        .oneshot(get_req_no_host(&format!(
-            "/api/v1/listings/{}",
-            listing_id
-        )))
+        .oneshot(get_req_no_host(&format!("/api/v1/listings/{}", listing_id)))
         .await
         .expect("oneshot failed");
 
@@ -216,10 +209,7 @@ async fn listing_route_reachable_with_platform_host(pool: PgPool) {
     );
 
     let app = Router::new()
-        .route(
-            "/api/v1/listings/:id",
-            get(stub_listing_handler),
-        )
+        .route("/api/v1/listings/:id", get(stub_listing_handler))
         .layer(from_fn_with_state(cfg, host_tenant_middleware));
 
     let listing_id = uuid::Uuid::new_v4();

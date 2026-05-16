@@ -287,7 +287,9 @@ pub async fn verify_enroll(
 
     tracing::info!(user_id = %user_id, "admin mfa enrolled");
     Ok(Json(EnrollVerifyResponse {
-        message: "MFA enrollment complete. Store your recovery codes — they will not be shown again.".into(),
+        message:
+            "MFA enrollment complete. Store your recovery codes — they will not be shown again."
+                .into(),
         recovery_codes: plain_codes,
     }))
 }

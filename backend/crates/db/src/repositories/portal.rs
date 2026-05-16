@@ -127,10 +127,7 @@ impl PortalRepository {
     ///
     /// Phase 6: reads from `users` (principal_kind='public').
     pub async fn find_user_by_id(&self, id: Uuid) -> Result<Option<PortalUser>, SqlxError> {
-        let sql = format!(
-            "{} AND u.id = $1",
-            Self::portal_user_projection()
-        );
+        let sql = format!("{} AND u.id = $1", Self::portal_user_projection());
         let user = sqlx::query_as::<_, PortalUser>(&sql)
             .bind(id)
             .fetch_optional(&self.pool)

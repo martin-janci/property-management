@@ -478,20 +478,19 @@ pub async fn create_comment(
 
     // Get author info
     // Phase 6: reads from `users` (portal_users dropped in migration 00148).
-    let author_name: String = sqlx::query_scalar(
-        "SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'",
-    )
-    .bind(principal.user_id)
-    .fetch_optional(&mut *conn)
-    .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get author name: {}", e),
-        )
-    })?
-    .flatten()
-    .unwrap_or_else(|| "Anonymous".to_string());
+    let author_name: String =
+        sqlx::query_scalar("SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'")
+            .bind(principal.user_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to get author name: {}", e),
+                )
+            })?
+            .flatten()
+            .unwrap_or_else(|| "Anonymous".to_string());
 
     let author_avatar_url: Option<String> = sqlx::query_scalar(
         "SELECT profile_image_url FROM users WHERE id = $1 AND principal_kind = 'public'",

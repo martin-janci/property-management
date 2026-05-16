@@ -56,7 +56,12 @@ pub fn build_admin_extensions(pool: db::DbPool) -> AdminExtensions {
     let mfa: Arc<dyn MfaRecency> = Arc::new(PgMfaRecency::new(pool.clone()));
     let enrollment: Arc<dyn MfaEnrollment> = Arc::new(PgMfaEnrollment::new(pool.clone()));
     let audit: Arc<dyn AuditWriter> = Arc::new(PgAuditWriter::new(pool.clone()));
-    let deps = AdminDeps::new(grants.clone(), mfa.clone(), enrollment.clone(), audit.clone());
+    let deps = AdminDeps::new(
+        grants.clone(),
+        mfa.clone(),
+        enrollment.clone(),
+        audit.clone(),
+    );
     let impersonation: Arc<dyn ImpersonationService> =
         Arc::new(PgImpersonationService::new(pool, audit.clone()));
     // Suppress unused warnings for noop fixtures (used by tests, not by the
