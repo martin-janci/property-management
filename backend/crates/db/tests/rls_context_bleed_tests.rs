@@ -86,7 +86,7 @@ async fn normal_drop_clears_org_id_guc(pool: PgPool) {
         // The set_request_context call is internal; verify via direct query.
         let val: Option<String> =
             sqlx::query_scalar("SELECT current_setting('app.current_org_id', true)")
-                .fetch_one(guard.conn())
+                .fetch_one(&mut **guard.conn())
                 .await
                 .ok()
                 .filter(|s: &String| !s.is_empty());
@@ -182,19 +182,19 @@ async fn normal_drop_clears_all_gucs(pool: PgPool) {
         // Confirm all three GUCs are live on the guard's connection.
         let org_val: String =
             sqlx::query_scalar("SELECT current_setting('app.current_org_id', true)")
-                .fetch_one(guard.conn())
+                .fetch_one(&mut **guard.conn())
                 .await
                 .expect("read org");
 
         let user_val: String =
             sqlx::query_scalar("SELECT current_setting('app.current_user_id', true)")
-                .fetch_one(guard.conn())
+                .fetch_one(&mut **guard.conn())
                 .await
                 .expect("read user");
 
         let admin_val: String =
             sqlx::query_scalar("SELECT current_setting('app.is_super_admin', true)")
-                .fetch_one(guard.conn())
+                .fetch_one(&mut **guard.conn())
                 .await
                 .expect("read admin");
 
