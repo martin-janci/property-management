@@ -305,6 +305,8 @@ interface PurgeWizardProps {
 }
 
 function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
+  // Gate "Start export now" button on tenant_export capability
+  const canExportInWizard = useCapability('tenant_export');
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [slugTyped, setSlugTyped] = useState('');
   const [reason, setReason] = useState('');
@@ -425,27 +427,29 @@ function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
               An export less than 7 days old is required before purge. Last export was{' '}
               {exportAgeDays === Infinity ? 'never' : `${Math.floor(exportAgeDays)} days ago`}.
             </p>
-            <button
-              type="button"
-              className="lc-btn lc-btn--primary"
-              onClick={() => {
-                // Trigger export + advance
-                fetch(`/api/v1/admin/tenants/${tenant.id}/export`, {
-                  method: 'POST',
-                  headers: { Authorization: `Bearer ${token ?? ''}` },
-                })
-                  .then(() => setStep(2))
-                  .catch(() => {
-                    showToast({
-                      type: 'error',
-                      title: 'Export failed',
-                      message: 'Unable to start export.',
+            {canExportInWizard && (
+              <button
+                type="button"
+                className="lc-btn lc-btn--primary"
+                onClick={() => {
+                  // Trigger export + advance
+                  fetch(`/api/v1/admin/tenants/${tenant.id}/export`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token ?? ''}` },
+                  })
+                    .then(() => setStep(2))
+                    .catch(() => {
+                      showToast({
+                        type: 'error',
+                        title: 'Export failed',
+                        message: 'Unable to start export.',
+                      });
                     });
-                  });
-              }}
-            >
-              Start export now
-            </button>
+                }}
+              >
+                Start export now
+              </button>
+            )}
           </div>
         )}
 

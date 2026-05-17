@@ -15,7 +15,10 @@ import AuditPage from './pages/audit';
 import CapabilitiesAdminPage from './pages/CapabilitiesAdminPage';
 import { Dashboard } from './pages/Dashboard';
 import FeatureFlagsPage from './pages/feature-flags';
+import ImpersonationListPage from './pages/ImpersonationListPage';
 import { LoginPage } from './pages/LoginPage';
+import MembershipsPage from './pages/MembershipsPage';
+import MobileConfigPage from './pages/MobileConfigPage';
 import PlatformPage from './pages/platform';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
@@ -35,20 +38,6 @@ function AdminCapabilityScope({ children }: { children: ReactNode }) {
     <CapabilityProvider value={{ capabilities, isPlatformPrincipal }}>
       {children}
     </CapabilityProvider>
-  );
-}
-
-/** Placeholder for pages being implemented in Round 2. */
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section style={{ padding: '32px' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ppt-fg-primary, #111827)' }}>
-        {title}
-      </h1>
-      <p style={{ color: 'var(--ppt-fg-muted, #6b7280)', marginTop: '8px' }}>
-        {title} page coming in Round 2
-      </p>
-    </section>
   );
 }
 
@@ -108,7 +97,7 @@ export function App() {
                     <ProtectedRoute
                       requiredCapability={['memberships_grant', 'memberships_revoke']}
                     >
-                      <PlaceholderPage title="Memberships" />
+                      <MembershipsPage />
                     </ProtectedRoute>
                   }
                 />
@@ -134,7 +123,7 @@ export function App() {
                   path="ops/impersonation"
                   element={
                     <ProtectedRoute requiredCapability="users_impersonate">
-                      <PlaceholderPage title="Impersonation" />
+                      <ImpersonationListPage />
                     </ProtectedRoute>
                   }
                 />
@@ -160,7 +149,7 @@ export function App() {
                   path="platform/mobile"
                   element={
                     <ProtectedRoute requiredCapability="mobile_config_write">
-                      <PlaceholderPage title="Mobile config" />
+                      <MobileConfigPage />
                     </ProtectedRoute>
                   }
                 />
