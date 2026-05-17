@@ -4,14 +4,18 @@
 //! going through the `RequireCapability` gate. Uses existing
 //! `OrganizationRepository` and `AgencyDomainRepository` infra.
 
-use admin_core::{require_capability, Capability, RequireCapability};
+use admin_core::{require_capability, AuditOutcome, AuditWriter, Capability, RequireCapability};
+use api_core::AuthUser;
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
+use db::models::agency_domain::{AgencyDomain, AgencyDomainKind, CreateAgencyDomain};
+use db::repositories::AgencyDomainRepository;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::state::AppState;
@@ -167,15 +171,93 @@ pub struct AddDomainBody {
     pub kind: Option<String>,
 }
 
+/// Basic host validation — lowercase ASCII, dots / hyphens / digits only,
+/// no leading/trailing dot, length ≤ 253. Matches `is_valid_host` in
+/// `routes::agency_provisioning`. Rejects schemes (`http://…`) and paths.
+fn is_valid_host(host: &str) -> bool {
+    !host.is_empty()
+        && host.len() <= 253
+        && host
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+        && !host.starts_with('.')
+        && !host.ends_with('.')
+        && host.contains('.')
+}
+
 /// POST /admin/agencies/:id/domains
+///
+/// Attaches a custom domain to an agency (organization). The `RequireCapability`
+/// extractor (mounted via `require_capability(Capability::AgenciesWrite)`) has
+/// already enforced platform-principal + recent-MFA + active grant by the
+/// time we get here, so this handler can focus on validation + persistence.
 async fn add_domain(
     _cap: RequireCapability,
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_body): Json<AddDomainBody>,
-) -> Result<StatusCode, (StatusCode, String)> {
-    // Stub: full domain provisioning (with cert state, verification token,
-    // and cache invalidation) lives in `agency_provisioning`. Phase 5's
-    // job here is to expose a capability-gated handle for new admin UI.
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(body): Json<AddDomainBody>,
+) -> Result<(StatusCode, Json<AgencyDomain>), (StatusCode, String)> {
+    let host = body.host.trim().to_ascii_lowercase();
+    if !is_valid_host(&host) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "host must be a valid lowercase DNS host name (no scheme, no path)".into(),
+        ));
+    }
+
+    let kind = match body.kind.as_deref() {
+        Some("subdomain") => Some(AgencyDomainKind::Subdomain),
+        Some("custom") | None => Some(AgencyDomainKind::Custom),
+        Some(other) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                format!("invalid kind '{}': expected 'subdomain' or 'custom'", other),
+            ));
+        }
+    };
+
+    let repo = AgencyDomainRepository::new(state.db.clone())
+        .with_cache(state.tenant_resolution_cache.clone());
+
+    let domain = repo
+        .create_rls(
+            &state.db,
+            CreateAgencyDomain {
+                organization_id: id,
+                host: host.clone(),
+                kind,
+                is_primary: false,
+            },
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to attach domain to agency");
+            (StatusCode::BAD_REQUEST, e.to_string())
+        })?;
+
+    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    let payload = serde_json::json!({ "host": host, "kind": body.kind });
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::AgenciesWrite,
+            AuditOutcome::Allowed,
+            Some("agency_domain"),
+            Some(domain.id),
+            Some(&payload),
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for agency domain attach failed");
+    }
+
+    Ok((StatusCode::CREATED, Json(domain)))
 }
