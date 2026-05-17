@@ -4,7 +4,7 @@
 # Each smoke check is expected to complete in <30s. Total ~5 min worst case.
 # Run from the repo root. Captures per-skill pass/fail.
 #
-# Usage: ./.research/skills/verify-all.sh [--quick]
+# Usage: ./.claude/skills/verify-all.sh [--quick]
 #   --quick    skip checks that are known-slow on cold caches (currently:
 #              ppt-rust-backend full workspace check).
 
@@ -58,7 +58,7 @@ run() {
   fi
 }
 
-echo "== .research/skills smoke checks =="
+echo "== .claude/skills smoke checks =="
 
 run "ppt-research-flow"   10 'test -d .research/plans/_archive && test -f .research/implementer-prompt.md && echo ok'
 run "ppt-bridge-mcp"      15 'curl -fsS https://p.rlt.sk/healthz >/dev/null'

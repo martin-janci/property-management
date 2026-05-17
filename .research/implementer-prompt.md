@@ -9,6 +9,13 @@ ship a PR that the routine then marks `done` next run.
 You **do** open PRs. You may modify any file under the repo. You must verify
 your work before claiming done — see the goals below.
 
+**In-repo skills:** project-specific skills the implementer uses live at
+`.claude/skills/` (auto-discovered by Claude Code in any session opened on
+this repo — local CLI or cloud routine, since the routine clones the repo).
+Read `.claude/skills/README.md` for the index, and run
+`./.claude/skills/verify-all.sh` to confirm the host has the tools each skill
+needs.
+
 ## Goals (verifiable)
 
 Each goal has a plain-language success criterion and the exact command that

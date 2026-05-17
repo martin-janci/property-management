@@ -1,15 +1,19 @@
-# .research/skills/
+# .claude/skills/
 
 In-repo, versioned skills the **implementer agent** discovers when it walks
 a plan. Each subdirectory is one skill with a `SKILL.md` file using the
 same frontmatter format as `~/.claude/skills/*/SKILL.md`.
+
+This directory is auto-discovered by any Claude Code session opened in this
+repo (local CLI or cloud routine — the routine clones the repo, so the
+skills come with it). Plans, briefs, and state still live in `.research/`.
 
 ## Discovery
 
 At session start, the implementer should:
 
 ```bash
-ls .research/skills/
+ls .claude/skills/
 ```
 
 Then `Read` the `SKILL.md` for each skill whose `tags` or `capabilities`
@@ -36,7 +40,7 @@ Each skill has a *Smoke check* (sub-30s, exit 0 when the skill's tooling is
 present on the host). Run them all in order:
 
 ```bash
-./.research/skills/verify-all.sh
+./.claude/skills/verify-all.sh
 ```
 
 Exits non-zero if any smoke check fails. Use this as the "environment is

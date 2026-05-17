@@ -24,6 +24,13 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
     └── _archive/             # plans the implementation agent has shipped
 ```
 
+In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
+level up, at the repo root). `.claude/skills/` is auto-discovered by any
+Claude Code session opened in this repo — local CLI or cloud routine
+(the routine clones the repo, so the skills come with it). See
+`.claude/skills/README.md` for the index and `.claude/skills/verify-all.sh`
+for the environment smoke check.
+
 **Editing the backlog by hand:** edit `backlog.json` only. `backlog.md` is regenerated each run; hand-edits there will be lost.
 
 ## Flow

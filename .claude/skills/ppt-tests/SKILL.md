@@ -125,7 +125,7 @@ just check && just test    # quote tail of each in PR body (IG7)
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md)
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md)
   § *Verification before opening the PR* and IG3, IG7
 - [`ppt-rust-backend`](../ppt-rust-backend/SKILL.md), [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md),
   [`ppt-mobile-native`](../ppt-mobile-native/SKILL.md) — per-stack detail

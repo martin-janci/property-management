@@ -115,6 +115,6 @@ cd mobile-native && ./gradlew check test
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md) C5 — ADB
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md) C5 — ADB
 - `adb-app-control` skill (in `~/.claude/skills/`) — actual ADB driver
 - [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md) — separate RN app

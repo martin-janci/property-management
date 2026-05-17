@@ -38,7 +38,7 @@ what the exit criteria are.
    cat .research/plans/$SLUG.md
    ```
 2. **Match capabilities to skills.** The plan's *Required capabilities*
-   ticks one or more of C1–C7 (see [implementer-prompt.md](../../implementer-prompt.md)
+   ticks one or more of C1–C7 (see [implementer-prompt.md](../../../.research/implementer-prompt.md)
    §*Capabilities*). For each ticked capability:
    - C1 / C6 / C7 → `superpowers:*` skills, no extra setup
    - C2 → `ppt-db-migrations` (seed gap) + `ppt-bridge-mcp` for cloud seed
@@ -107,7 +107,7 @@ jq -e --arg s "$SLUG" '.items[] | select(.slug == $s) | .status == "done"' .rese
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md) — IG1–IG8
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md) — IG1–IG8
   definitions and the implementation loop (this skill does not duplicate them)
 - [`ppt-pr-create`](../ppt-pr-create/SKILL.md) — PR body template
 - [`ppt-tests`](../ppt-tests/SKILL.md) — picking the right test command

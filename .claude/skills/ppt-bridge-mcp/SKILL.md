@@ -125,7 +125,7 @@ audit log:
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md)
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md)
   § *ppt-bridge MCP — cloud-side toolset* — full capability matrix
 - [`ppt-dev-stack`](../ppt-dev-stack/SKILL.md) — local equivalent
 - [`ppt-db-migrations`](../ppt-db-migrations/SKILL.md) — note re: missing

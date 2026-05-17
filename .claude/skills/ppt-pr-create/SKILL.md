@@ -144,7 +144,7 @@ gh pr view "$PR_NUM" --json body --jq .body | grep -q "^Closes plan: .research/p
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md)
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md)
   § *Opening the PR* — canonical body template
 - [`ppt-research-flow`](../ppt-research-flow/SKILL.md) — full flow including
   after-merge archive

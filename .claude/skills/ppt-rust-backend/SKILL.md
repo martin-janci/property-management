@@ -131,7 +131,7 @@ just check-backend && just test-backend
 
 ## Cross-references
 
-- [`.research/implementer-prompt.md`](../../implementer-prompt.md)
+- [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md)
 - [`ppt-db-migrations`](../ppt-db-migrations/SKILL.md) — migrations + seed gap
 - [`ppt-typespec`](../ppt-typespec/SKILL.md) — when changing API contracts
 - [`ppt-tests`](../ppt-tests/SKILL.md) — narrower test filters
