@@ -20,11 +20,20 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Debug, Serialize)]
 pub struct MetricsSummary {
-    /// Organizations that are not soft-deleted.
+    /// Organizations whose `status` is not `'deleted'`.
+    ///
+    /// The `organizations` table tracks deletion via a `status` column
+    /// (with value `'deleted'` for soft-deleted rows) — there is no
+    /// `soft_deleted_at` column. The previous query against
+    /// `soft_deleted_at` would have failed with an undefined-column
+    /// error at runtime.
     pub tenants_active: i64,
-    /// Distinct users with an active session in the last 5 minutes.
-    /// TODO(N4-followup): wire to actual session tracking if sessions table
-    /// gains a `last_seen_at` column; currently returns a placeholder.
+    /// Heuristic: distinct users who emitted any audit-log row in the last
+    /// 5 minutes. There is no presence / heartbeat table yet, so this
+    /// is an approximation rather than a true "currently online" count.
+    /// `None` would be ideal but we keep `i64` so the frontend tile keeps
+    /// rendering; callers should treat this as a lower-bound activity
+    /// signal, not a live presence count.
     pub operators_online: i64,
     /// Unresolved portal-user merge collisions (from migration 00131).
     pub pending_merges: i64,
@@ -37,15 +46,30 @@ async fn metrics_summary(
     _cap: RequireCapability,
     State(state): State<AppState>,
 ) -> Result<Json<MetricsSummary>, (StatusCode, String)> {
+    // The organizations table tracks deletion via `status = 'deleted'`,
+    // not a `soft_deleted_at` column — see migrations / sibling queries in
+    // `routes/tenant_config.rs` and `routes/admin/mfa/enroll.rs`.
     let tenants_active: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM organizations WHERE soft_deleted_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM organizations WHERE status != 'deleted'")
             .fetch_one(&state.db)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    // TODO(N4-followup): sessions table does not yet have a `last_seen_at`
-    // column tracked per-request. Return 0 until that infrastructure lands.
-    let operators_online: i64 = 0;
+    // Heuristic "operators online" — counts distinct user_ids that produced
+    // an audit-log row in the last 5 minutes. There is no presence /
+    // heartbeat table yet, so this is a lower-bound activity proxy, not a
+    // true live-session count. When/if a presence table lands, swap this.
+    let operators_online: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(DISTINCT user_id)
+        FROM audit_logs
+        WHERE user_id IS NOT NULL
+          AND created_at > NOW() - INTERVAL '5 minutes'
+        "#,
+    )
+    .fetch_one(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     let pending_merges: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM user_merge_collisions WHERE resolved_at IS NULL")

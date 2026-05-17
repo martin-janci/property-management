@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
+import { useFocusTrap } from '../components/useFocusTrap';
 
 interface UserRow {
   id: string;
@@ -47,22 +48,12 @@ function ImpersonateDialog({
   const [reason, setReason] = useState('');
   const isValid = useAuditReasonValid(reason, 30);
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = 'impersonate-dialog-title';
 
-  useEffect(() => {
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    const node = dialogRef.current;
-    if (node) {
-      const focusable = node.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      (focusable ?? node).focus();
-    }
-    return () => {
-      previouslyFocusedRef.current?.focus?.();
-    };
-  }, []);
+  // Trap Tab focus inside the dialog and dismiss on Escape; restore focus on close.
+  useFocusTrap(dialogRef, () => {
+    if (!isPending) onCancel();
+  });
 
   return (
     <div
@@ -253,6 +244,29 @@ const UsersPage: React.FC = () => {
         if (!res.ok) {
           const text = await res.text().catch(() => '');
           throw new Error(text || `Impersonation failed: ${res.status}`);
+        }
+        // Persist the issued token so ImpersonationWrapper renders the banner
+        // and the operator's session has a way to look up / end the
+        // impersonation. Storage shape mirrors `StoredImpersonation` in
+        // components/ImpersonationWrapper.tsx.
+        const issued = (await res.json().catch(() => null)) as {
+          token_id?: string;
+          expires_at?: string;
+        } | null;
+        if (issued?.token_id && issued.expires_at) {
+          try {
+            localStorage.setItem(
+              'ppt_impersonation',
+              JSON.stringify({
+                tokenId: issued.token_id,
+                expiresAt: issued.expires_at,
+                targetUserLabel: user.email,
+              })
+            );
+          } catch {
+            // localStorage unavailable (private mode, quota) — fall through;
+            // the wrapper will simply not show the banner this session.
+          }
         }
         showToast({
           type: 'success',

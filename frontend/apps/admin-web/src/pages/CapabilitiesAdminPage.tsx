@@ -80,14 +80,34 @@ function timeAgo(iso: string | null): string {
 // Types
 // ---------------------------------------------------------------------------
 
-interface CapabilityGrant {
+/**
+ * Raw shape returned by the backend. NOTE: the backend `CapabilityGrant`
+ * struct does NOT carry a `status` field — it only persists `revoked_at`
+ * and `expires_at`. We derive status on the client (see `deriveGrantStatus`).
+ */
+interface BackendCapabilityGrant {
   id: string;
   capability: string;
   granted_at: string;
   granted_by: string;
   expires_at: string | null;
   revoked_at: string | null;
+}
+
+interface CapabilityGrant extends BackendCapabilityGrant {
+  /** Derived from `revoked_at` + `expires_at`, never sent by the server. */
   status: 'active' | 'expired' | 'revoked';
+}
+
+/**
+ * Derive a grant's lifecycle status from the raw backend fields. Without
+ * this the page treated every grant as `'active'` because the missing
+ * `status` field was always `undefined !== 'revoked'`.
+ */
+function deriveGrantStatus(g: BackendCapabilityGrant): CapabilityGrant['status'] {
+  if (g.revoked_at) return 'revoked';
+  if (g.expires_at && new Date(g.expires_at).getTime() < Date.now()) return 'expired';
+  return 'active';
 }
 
 /**
@@ -117,22 +137,26 @@ interface UserCapabilitiesResponse {
  * Tolerates a few synonyms (`grants` vs `capabilities`) so we don't break if
  * a future backend revision normalizes one to match the other.
  */
+function withDerivedStatus(grants: BackendCapabilityGrant[]): CapabilityGrant[] {
+  return grants.map((g) => ({ ...g, status: deriveGrantStatus(g) }));
+}
+
 function normalizeUserCapabilities(raw: unknown, userId: string): UserCapabilitiesResponse {
   if (Array.isArray(raw)) {
     return {
       user_id: userId,
       email: null,
-      grants: raw as CapabilityGrant[],
+      grants: withDerivedStatus(raw as BackendCapabilityGrant[]),
       last_change_at: null,
       last_change_by: null,
     };
   }
   const obj = (raw ?? {}) as Record<string, unknown>;
-  const grants = (obj.grants ?? obj.capabilities ?? []) as CapabilityGrant[];
+  const grants = (obj.grants ?? obj.capabilities ?? []) as BackendCapabilityGrant[];
   return {
     user_id: (obj.user_id as string) ?? userId,
     email: (obj.email as string | null) ?? null,
-    grants: Array.isArray(grants) ? grants : [],
+    grants: Array.isArray(grants) ? withDerivedStatus(grants) : [],
     last_change_at: (obj.last_change_at as string | null) ?? null,
     last_change_by: (obj.last_change_by as string | null) ?? null,
   };

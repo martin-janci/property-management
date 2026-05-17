@@ -14,6 +14,7 @@ import { CapabilityProvider } from '@ppt/admin-ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -52,7 +53,7 @@ interface RenderOptions {
 function Providers({
   capabilities = ['tenant_purge', 'tenant_export', 'tenant_restore'],
   children,
-}: RenderOptions & { children: React.ReactNode }) {
+}: RenderOptions & { children: ReactNode }) {
   sessionStorage.clear();
   sessionTokenStore.set('test-token');
   const qc = makeQueryClient();

@@ -78,13 +78,10 @@ export default function MembershipsPage() {
       // The admin memberships router only exposes invite/accept/revoke (no
       // list endpoint). Use the organizations router which returns the
       // member roster with role + identity info.
-      const res = await fetch(
-        `/api/v1/organizations/${encodeURIComponent(loadedOrgId)}/members`,
-        {
-          headers,
-          credentials: 'include',
-        }
-      );
+      const res = await fetch(`/api/v1/organizations/${encodeURIComponent(loadedOrgId)}/members`, {
+        headers,
+        credentials: 'include',
+      });
       if (!res.ok) {
         if (res.status === 404) {
           console.warn(

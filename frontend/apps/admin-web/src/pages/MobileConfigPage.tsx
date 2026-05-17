@@ -10,11 +10,12 @@
  */
 
 import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
+import { useFocusTrap } from '../components/useFocusTrap';
 
 interface ForceUpdateValues extends Record<string, unknown> {
   min_ios_version: string;
@@ -50,22 +51,11 @@ function AuditDialog({ onConfirm, onCancel, isPending }: AuditDialogProps) {
   const [reason, setReason] = useState('');
   const isValid = useAuditReasonValid(reason, 20);
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = 'mobile-config-audit-dialog-title';
 
-  useEffect(() => {
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    const node = dialogRef.current;
-    if (node) {
-      const focusable = node.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      (focusable ?? node).focus();
-    }
-    return () => {
-      previouslyFocusedRef.current?.focus?.();
-    };
-  }, []);
+  useFocusTrap(dialogRef, () => {
+    if (!isPending) onCancel();
+  });
 
   return (
     <div
