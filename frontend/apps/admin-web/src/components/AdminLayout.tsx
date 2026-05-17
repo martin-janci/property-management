@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
+import { ConnectedMfaWindowChip } from './MfaWindowChip';
 
 interface SidebarGroupProps {
   label: string;
@@ -157,7 +158,24 @@ export function AdminLayout() {
           {t('admin.actions.signOut', 'Sign out')}
         </button>
       </aside>
-      <main>
+      <main style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+        {/* Topbar */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px 22px',
+            borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
+            background: 'var(--ppt-bg-surface, #ffffff)',
+            gap: '8px',
+          }}
+        >
+          <span style={{ flex: 1 }} />
+          <ConnectedMfaWindowChip />
+          <button type="button" onClick={auth.logout} style={{ fontSize: '13px' }}>
+            {t('admin.actions.signOut', 'Sign out')}
+          </button>
+        </div>
         <Outlet />
       </main>
     </div>
