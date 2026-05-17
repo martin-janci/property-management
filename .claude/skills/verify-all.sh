@@ -8,11 +8,15 @@
 #   --quick    swap long-running smokes (cargo / pnpm / gradle / npx-tsp)
 #              for cheap file-presence checks. Still covers all skills;
 #              each prints PASS / SKIP / FAIL — never silent.
+# Env:
+#   SKIP_NETWORK=1   skip smokes that require outbound network
+#                    (currently: ppt-bridge-mcp curls https://p.rlt.sk/healthz).
 
 set -u
 
 QUICK=0
 [[ "${1:-}" == "--quick" ]] && QUICK=1
+SKIP_NETWORK="${SKIP_NETWORK:-0}"
 
 cd "$(git rev-parse --show-toplevel)" >/dev/null 2>&1 || {
   echo "FATAL: not inside a git repo" >&2
@@ -72,7 +76,11 @@ echo "== .claude/skills smoke checks =="
 run "ppt-research-flow"   10 'test -d .research/plans/_archive && test -f .research/implementer-prompt.md && echo ok'
 run "ppt-research-trigger" 10 'test -f .research/routine-prompt.md && grep -q "Special trigger payloads" .research/routine-prompt.md'
 run "ppt-next-plan"       10 'test -f .research/backlog.json && jq -e ".items" .research/backlog.json >/dev/null'
-run "ppt-bridge-mcp"      15 'curl -fsS https://p.rlt.sk/healthz >/dev/null'
+if [[ $SKIP_NETWORK -eq 1 ]]; then
+  skip "ppt-bridge-mcp" "SKIP_NETWORK=1"
+else
+  run "ppt-bridge-mcp"    15 'curl -fsS https://p.rlt.sk/healthz >/dev/null'
+fi
 if [[ $QUICK -eq 1 ]]; then
   # File-presence fallbacks: confirm the skill points at real workspace paths
   # without spinning up the toolchain (just / gh / cargo / pnpm / gradle /
@@ -94,9 +102,10 @@ else
   run "ppt-dev-stack"      10 'stack list 2>/dev/null | grep -qE "(^|\s)pm-local(\s|$)"'
 fi
 run "ppt-db-migrations"   10 'test -d backend/crates/db/migrations && test -d backend/servers/deploy-server/migrations && test -f backend/crates/db/src/seed/runner.rs'
-# ppt-deploy predates the research scaffold; we just verify the skill files
-# are wired up. Live pmctl / onyx checks are out of scope for a generic harness.
-run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test -d .claude/skills/ppt-deploy/commands && test -d .claude/skills/ppt-deploy/references'
+# ppt-deploy predates the research scaffold; we verify the skill files are
+# wired up and — when pmctl is on PATH — that it at least responds to --help.
+# Live onyx / deploy ops are out of scope for a generic harness.
+run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test -d .claude/skills/ppt-deploy/commands && test -d .claude/skills/ppt-deploy/references && { ! command -v pmctl >/dev/null 2>&1 || pmctl --help >/dev/null 2>&1; }'
 
 echo
 echo "== summary =="
