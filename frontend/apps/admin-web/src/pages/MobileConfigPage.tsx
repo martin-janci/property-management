@@ -10,7 +10,7 @@
  */
 
 import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
@@ -49,6 +49,23 @@ interface AuditDialogProps {
 function AuditDialog({ onConfirm, onCancel, isPending }: AuditDialogProps) {
   const [reason, setReason] = useState('');
   const isValid = useAuditReasonValid(reason, 20);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const titleId = 'mobile-config-audit-dialog-title';
+
+  useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const node = dialogRef.current;
+    if (node) {
+      const focusable = node.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      (focusable ?? node).focus();
+    }
+    return () => {
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, []);
 
   return (
     <div
@@ -64,6 +81,11 @@ function AuditDialog({ onConfirm, onCancel, isPending }: AuditDialogProps) {
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         style={{
           maxWidth: 480,
           width: '100%',
@@ -77,6 +99,7 @@ function AuditDialog({ onConfirm, onCancel, isPending }: AuditDialogProps) {
         }}
       >
         <h2
+          id={titleId}
           style={{
             margin: 0,
             fontSize: 16,

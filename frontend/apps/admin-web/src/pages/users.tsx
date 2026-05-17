@@ -12,7 +12,7 @@
 import { ResourceTable, type ResourceTableColumn } from '@ppt/admin-ui';
 import { useQuery } from '@tanstack/react-query';
 import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
@@ -46,6 +46,23 @@ function ImpersonateDialog({
 }: ImpersonateDialogProps) {
   const [reason, setReason] = useState('');
   const isValid = useAuditReasonValid(reason, 30);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const titleId = 'impersonate-dialog-title';
+
+  useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const node = dialogRef.current;
+    if (node) {
+      const focusable = node.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      (focusable ?? node).focus();
+    }
+    return () => {
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, []);
 
   return (
     <div
@@ -61,6 +78,11 @@ function ImpersonateDialog({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         style={{
           maxWidth: 480,
           width: '100%',
@@ -74,6 +96,7 @@ function ImpersonateDialog({
         }}
       >
         <h2
+          id={titleId}
           style={{
             margin: 0,
             fontSize: 16,
