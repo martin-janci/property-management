@@ -49,7 +49,6 @@ import {
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
-import { AdminRouter, ImpersonationWrapper, usePrincipalCapabilities } from './features/admin';
 import {
   CommandPaletteDialog,
   CommandPaletteProvider,
@@ -295,11 +294,6 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 function AppNavigation() {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  // Phase 5 (B6): mirror the predicate used by <RequirePlatformPrincipal>.
-  // Hidden (not just disabled) when the principal isn't platform-kind —
-  // surfacing the link to staff/public would be information disclosure
-  // (leak #21).
-  const { isPlatformPrincipal } = usePrincipalCapabilities();
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -310,27 +304,13 @@ function AppNavigation() {
       <Link to="/outages">{t('nav.outages')}</Link>
       <Link to="/settings/accessibility">{t('nav.accessibility')}</Link>
       <Link to="/settings/privacy">{t('nav.privacy')}</Link>
-      {isPlatformPrincipal ? <Link to="/admin">{t('nav.admin')}</Link> : null}
+      {/* Super-admin moved to admin.rlt.sk (separate SPA) — no nav link here. */}
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
       </div>
     </nav>
   );
-}
-
-/**
- * Route wrapper for the Phase 5 admin section.
- *
- * `<AdminRouter>` expects the host app to feed it the current principal's
- * capability set + platform-kind flag. We resolve that via
- * `usePrincipalCapabilities` (interim hook — see its docstring) and pass it
- * through. The router itself handles the platform-only gate and inner
- * sub-routing.
- */
-function AdminRouterRoute() {
-  const { capabilities, isPlatformPrincipal } = usePrincipalCapabilities();
-  return <AdminRouter capabilities={capabilities} isPlatformPrincipal={isPlatformPrincipal} />;
 }
 
 function RouteLoading() {
@@ -380,13 +360,9 @@ function App() {
                         <SkipNavigation mainContentId="main-content" />
                         <OfflineIndicator />
                         <div className="app">
-                          {/* Phase 5 (E2): sticky banner whenever the
-                            current session is impersonating a tenant
-                            user. Mounted as a sibling of <MfaWrapper>
-                            and above <AppNavigation /> so leak #21
-                            ("impersonation must be impossible to
-                            hide") is satisfied across every route. */}
-                          <ImpersonationWrapper />
+                          {/* Phase 5 impersonation banner moved with the
+                              admin SPA to admin.rlt.sk. ppt-web tenants
+                              never see impersonation tokens directly. */}
                           <AppNavigation />
                           <main id="main-content">
                             <Suspense fallback={<RouteLoading />}>
@@ -559,13 +535,8 @@ function App() {
                                   element={<BudgetManagementPageRoute />}
                                 />
 
-                                {/* Phase 5 — Super-admin Control Plane (B6).
-                                  AdminRouter is platform-principal-gated
-                                  internally via <RequirePlatformPrincipal>;
-                                  the gate redirects non-platform users to
-                                  `/` rather than rendering "forbidden"
-                                  (information disclosure, leak #21). */}
-                                <Route path="/admin/*" element={<AdminRouterRoute />} />
+                                {/* Phase 5 admin is at admin.rlt.sk now;
+                                  see frontend/apps/admin-web. */}
 
                                 {/* Error / state surfaces */}
                                 <Route path="/forbidden" element={<ForbiddenPage />} />
@@ -1126,7 +1097,7 @@ function ViewOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
@@ -1237,7 +1208,7 @@ function EditOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 

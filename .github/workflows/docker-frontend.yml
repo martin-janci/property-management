@@ -35,6 +35,8 @@ jobs:
             dockerfile: docker/frontend/ppt-web.Dockerfile
           - target: ppt-reality-web
             dockerfile: docker/frontend/reality-web.Dockerfile
+          - target: ppt-admin-web
+            dockerfile: docker/frontend/admin-web.Dockerfile
 
     steps:
       - uses: actions/checkout@v6

@@ -338,7 +338,8 @@ impl AppState {
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
         let totp_service = TotpService::new("Property Management".to_string());
-        let oauth_service = OAuthService::new(oauth_repo.clone(), auth_service.clone());
+        let oauth_service =
+            OAuthService::new(oauth_repo.clone(), user_repo.clone(), auth_service.clone());
 
         Self {
             boot_time: Instant::now(),

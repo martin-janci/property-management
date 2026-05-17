@@ -7,6 +7,7 @@ import { ComparisonProvider } from '@/lib/comparison-context';
 import { FeatureFlags } from '@/lib/feature-flags';
 import { QueryProvider } from '@/lib/query-provider';
 import { brandingToStyleObject, getTenantConfig } from '@/lib/tenant-config';
+import { TenantProvider } from '@/providers/TenantProvider';
 import { CookieConsentBanner } from '../../components/CookieConsentBanner';
 import { ComparisonTray } from '../../components/comparison';
 import { DevPanelMount } from '../../components/DevPanelMount';
@@ -162,11 +163,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   const brandingStyle = brandingToStyleObject(tenantConfig.branding);
 
   // Embed a minimal projection of the tenant config so client-side
-  // `useFeatureFlag` works without a fetch.
-  const tenantBootstrap = JSON.stringify({
+  // `useFeatureFlag` and `useTenantContext` work without a fetch.
+  const tenantBootstrapObj = {
     tenant_id: tenantConfig.tenant_id,
     feature_flags: tenantConfig.feature_flags,
-  });
+  };
+  const tenantBootstrap = JSON.stringify(tenantBootstrapObj);
 
   return (
     <html
@@ -240,18 +242,20 @@ export default async function LocaleLayout({ children, params }: Props) {
             so the styles get streamed into the SSR HTML rather than
             injected post-hydration (which caused a ~0.92 CLS shift). */}
         <StyledJsxRegistry>
-          <NextIntlClientProvider messages={messages}>
-            <QueryProvider>
-              <AuthProvider>
-                <ComparisonProvider>
-                  {children}
-                  <ComparisonTray />
-                  <CookieConsentBanner />
-                  <DevPanelMount />
-                </ComparisonProvider>
-              </AuthProvider>
-            </QueryProvider>
-          </NextIntlClientProvider>
+          <TenantProvider initial={tenantBootstrapObj}>
+            <NextIntlClientProvider messages={messages}>
+              <QueryProvider>
+                <AuthProvider>
+                  <ComparisonProvider>
+                    {children}
+                    <ComparisonTray />
+                    <CookieConsentBanner />
+                    <DevPanelMount />
+                  </ComparisonProvider>
+                </AuthProvider>
+              </QueryProvider>
+            </NextIntlClientProvider>
+          </TenantProvider>
         </StyledJsxRegistry>
       </body>
     </html>
