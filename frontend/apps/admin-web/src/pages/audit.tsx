@@ -10,8 +10,9 @@
 
 import { CAPABILITIES } from '@ppt/admin-ui';
 import { useQuery } from '@tanstack/react-query';
-import { type FC, useCallback, useEffect, useRef, useState } from 'react';
+import { type FC, Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
 
 // ---------------------------------------------------------------------------
@@ -224,7 +225,9 @@ function ExpandedRow({ row, onClose }: { row: AuditRow; onClose: () => void }) {
   const handleCopyCurl = useCallback(() => {
     const path = row.request?.path ?? '/unknown';
     const headers = row.request?.headers ?? {};
-    const body = row.request?.body ? JSON.stringify(row.request.body).slice(0, 4096) : '';
+    // `body` is already a string per the AuditRow type — do NOT re-stringify
+    // (extra JSON.stringify wraps it in quotes + escapes, breaking cURL replay).
+    const body = row.request?.body ? row.request.body.slice(0, 4096).replace(/'/g, "'\\''") : '';
     const headerFlags = Object.entries(headers)
       .map(([k, v]) => `  -H '${k}: ${v}'`)
       .join(' \\\n');
@@ -806,6 +809,7 @@ function FilterRail({ filters, onChange }: FilterRailProps) {
 const AuditPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useToast();
+  const { token } = useAdminAuth();
 
   // Read filter state from URL on mount
   const [filters, setFilters] = useState<Filters>(() => readFiltersFromParams(searchParams));
@@ -844,7 +848,10 @@ const AuditPage: FC = () => {
   const query = useQuery<AuditResponse>({
     queryKey: ['admin', 'audit', filters, cursor],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/admin/audit${qs ? `?${qs}` : ''}`);
+      const res = await fetch(`/api/v1/admin/audit${qs ? `?${qs}` : ''}`, {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.status === 404) {
         // TODO: endpoint not yet implemented
         console.warn(
@@ -1069,9 +1076,8 @@ const AuditPage: FC = () => {
                   </tr>
                 ) : (
                   visibleRows.map((row) => (
-                    <>
+                    <Fragment key={row.id}>
                       <tr
-                        key={row.id}
                         onClick={() => toggleRow(row.id)}
                         style={{
                           borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
@@ -1155,13 +1161,9 @@ const AuditPage: FC = () => {
                         </td>
                       </tr>
                       {expandedId === row.id && (
-                        <ExpandedRow
-                          key={`exp-${row.id}`}
-                          row={row}
-                          onClose={() => setExpandedId(null)}
-                        />
+                        <ExpandedRow row={row} onClose={() => setExpandedId(null)} />
                       )}
-                    </>
+                    </Fragment>
                   ))
                 )}
               </tbody>

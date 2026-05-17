@@ -16,7 +16,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
-import { ForbiddenPage } from '../components/ForbiddenPage';
 import { useToast } from '../components/Toast';
 
 // ---------------------------------------------------------------------------
@@ -586,12 +585,13 @@ export default function TenantLifecyclePage() {
   const { token } = useAdminAuth();
   const { showToast } = useToast();
 
-  // Capability gate — show ForbiddenPage when user holds none of the three
-  if (!canExport && !canPurge && !canRestore) {
-    return (
-      <ForbiddenPage requiredCapability={['tenant_export', 'tenant_purge', 'tenant_restore']} />
-    );
-  }
+  // Capability gating is enforced by `ProtectedRoute` in App.tsx (route is
+  // wrapped with requiredCapability=['tenant_export','tenant_purge','tenant_restore']
+  // which treats the array as ANY-of). A redundant in-page early return here
+  // would violate Rules of Hooks — it would skip the useEffect/useCallback
+  // declarations below on initial render and re-run them after a cap flip,
+  // throwing "Rendered fewer hooks than expected".
+  // Per-button caps still gate individual affordances inside each card.
 
   // Compute initial cooldown on tenant change
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional on tenant change
