@@ -18,7 +18,7 @@
  *     → DELETE /api/v1/admin/capabilities/users/:id/grant/:grantId
  */
 
-import { CAPABILITIES, useMfaChallenge } from '@ppt/admin-ui';
+import { CAPABILITIES, useCapability, useMfaChallenge } from '@ppt/admin-ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -478,6 +478,7 @@ interface UserViewProps {
 function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
   const queryClient = useQueryClient();
   const { prompt: promptMfa } = useMfaChallenge();
+  const canRevoke = useCapability('memberships_revoke');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [revokeState, setRevokeState] = useState<{
     grantId: string;
@@ -660,7 +661,7 @@ function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
                     <span className={`cap-pill cap-pill--${grant.status}`}>{grant.status}</span>
                   </td>
                   <td>
-                    {!isExpiredOrRevoked && (
+                    {!isExpiredOrRevoked && canRevoke && (
                       <button
                         type="button"
                         className="cap-btn cap-btn--danger"

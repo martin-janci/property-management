@@ -19,11 +19,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
 
 const AgenciesPage: React.FC = () => {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const { token } = useAdminAuth();
   const queryClient = useQueryClient();
   const query = useAgencies({ page: 1, page_size: 50 });
 
@@ -65,6 +67,60 @@ const AgenciesPage: React.FC = () => {
       }
     },
     [queryClient, showToast, t]
+  );
+
+  // N9+: Add Domain action — wired to POST /api/v1/admin/agencies/{id}/domains.
+  // The backend stub currently returns 501 NOT_IMPLEMENTED. The call is made
+  // so future delivery of the provisioning service auto-wires without a FE change.
+  const handleAddDomain = useCallback(
+    async (agency: Agency) => {
+      const host = window.prompt(`Enter domain to add to ${agency.name}:`);
+      if (!host) return;
+      try {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(`/api/v1/admin/agencies/${agency.id}/domains`, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ host }),
+        });
+        if (res.status === 501) {
+          showToast({
+            type: 'warning',
+            title: t('admin.agencies.toast.notWiredTitle'),
+            message: t('admin.agencies.toast.notWiredMessage', { id: agency.id }),
+          });
+        } else if (res.ok) {
+          showToast({
+            type: 'success',
+            title: t('admin.agencies.toast.domainAddedTitle', { defaultValue: 'Domain added' }),
+            message: t('admin.agencies.toast.domainAddedMessage', {
+              defaultValue: `Domain "${host}" added to ${agency.name}.`,
+            }),
+          });
+          await queryClient.invalidateQueries({ queryKey: adminKeys.agencies() });
+        } else {
+          const text = await res.text().catch(() => '');
+          showToast({
+            type: 'error',
+            title: t('admin.agencies.toast.domainFailedTitle', {
+              defaultValue: 'Failed to add domain',
+            }),
+            message: text || `HTTP ${res.status}`,
+          });
+        }
+      } catch (e) {
+        showToast({
+          type: 'error',
+          title: t('admin.agencies.toast.domainFailedTitle', {
+            defaultValue: 'Failed to add domain',
+          }),
+          message: e instanceof Error ? e.message : t('admin.agencies.unknownError'),
+        });
+      }
+    },
+    [token, queryClient, showToast, t]
   );
 
   if (query.isLoading) {
@@ -120,13 +176,12 @@ const AgenciesPage: React.FC = () => {
           {
             label: t('admin.agencies.actions.addDomain'),
             capability: 'agencies_write',
-            // TODO: separate endpoint not yet wired (out of scope for N9).
-            onClick: (a) =>
-              showToast({
-                type: 'warning',
-                title: t('admin.agencies.toast.notWiredTitle'),
-                message: t('admin.agencies.toast.notWiredMessage', { id: a.id }),
-              }),
+            // Calls POST /api/v1/admin/agencies/{id}/domains (returns 501 until
+            // domain provisioning service is delivered; shows "not yet implemented"
+            // toast in that case).
+            onClick: (a) => {
+              void handleAddDomain(a);
+            },
           },
         ]}
       />
