@@ -74,6 +74,9 @@ run "ppt-mobile-native"   60 'cd mobile-native && ./gradlew help -q >/dev/null 2
 run "ppt-typespec"        20 'cd docs/api/typespec && npx --no-install tsp --version >/dev/null 2>&1'
 run "ppt-dev-stack"       10 'stack list 2>/dev/null | grep -qE "(^|\s)pm-local(\s|$)"'
 run "ppt-db-migrations"   10 'test -d backend/crates/db/migrations && test -d backend/servers/deploy-server/migrations && test -f backend/crates/db/src/seed/runner.rs'
+# ppt-deploy predates the research scaffold; we just verify the skill files
+# are wired up. Live pmctl / onyx checks are out of scope for a generic harness.
+run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test -d .claude/skills/ppt-deploy/commands && test -d .claude/skills/ppt-deploy/references'
 
 echo
 echo "== summary =="

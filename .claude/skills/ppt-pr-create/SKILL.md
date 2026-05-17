@@ -28,7 +28,9 @@ plan* commands all exited 0. You're about to open the PR.
 ## Inputs
 
 - `SLUG` — plan slug
-- Plan vector (`bug`, `revert`, `risky-churn`, `test-gap`, `enhancement`, …)
+- Plan vector — one of the canonical eight: `bug`, `refactor`, `perf`,
+  `test-gap`, `dx`, `security`, `dep-update`, `triage` (`triage` is
+  never promoted to a plan; see `routine-prompt.md` Phase 3 gates).
 - Plan area (`backend`, `frontend`, `mobile`, `infra`, `docs`)
 
 ## Steps
