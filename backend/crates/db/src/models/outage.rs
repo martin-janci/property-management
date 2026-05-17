@@ -116,6 +116,7 @@ pub struct OutageSummary {
 pub struct OutageWithDetails {
     #[serde(flatten)]
     pub outage: Outage,
+    #[serde(rename = "creatorName")]
     pub creator_name: String,
     pub building_names: Vec<String>,
     pub notification_count: i64,
