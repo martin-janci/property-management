@@ -309,11 +309,7 @@ async fn main() -> anyhow::Result<()> {
                 println!("┌──────────────────────────────────────────────────────────┐");
                 println!("│ Cleanup (existing seed data removed)                     │");
                 println!("├──────────────────────────────────────────────────────────┤");
-                println!("│  PPT Users deleted:     {:>30} │", stats.users_deleted);
-                println!(
-                    "│  Portal Users deleted:  {:>30} │",
-                    stats.portal_users_deleted
-                );
+                println!("│  Users deleted:         {:>30} │", stats.users_deleted);
                 println!(
                     "│  Organizations deleted: {:>30} │",
                     stats.organizations_deleted

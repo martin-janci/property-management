@@ -125,7 +125,7 @@ pub async fn list_reviews(
             rr.created_at,
             rr.updated_at
         FROM realtor_reviews rr
-        LEFT JOIN portal_users pu ON pu.id = rr.reviewer_user_id
+        LEFT JOIN users pu ON pu.id = rr.reviewer_user_id AND pu.principal_kind = 'public'
         WHERE rr.realtor_id = $1
         ORDER BY rr.created_at DESC
         LIMIT $2 OFFSET $3
@@ -272,19 +272,20 @@ pub async fn create_review(
         )
     })?;
 
-    // Get reviewer name from portal_users
-    let reviewer_name: String = sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
-        .bind(principal.user_id)
-        .fetch_optional(&mut *conn)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get reviewer name: {}", e),
-            )
-        })?
-        .flatten()
-        .unwrap_or_else(|| "Anonymous".to_string());
+    // Phase 6: reads from `users` (portal_users dropped in migration 00148).
+    let reviewer_name: String =
+        sqlx::query_scalar("SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'")
+            .bind(principal.user_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to get reviewer name: {}", e),
+                )
+            })?
+            .flatten()
+            .unwrap_or_else(|| "Anonymous".to_string());
 
     // Insert review; unique constraint prevents duplicates
     let row = sqlx::query(

@@ -178,6 +178,10 @@ pub struct User {
     /// the portal_users → users merge migration. NULL otherwise.
     #[sqlx(default)]
     pub portal_origin_id: Option<Uuid>,
+    /// Phase 6: migrated from portal_users.profile_image_url (migration 00148).
+    /// NULL for users who never set a profile image.
+    #[sqlx(default)]
+    pub profile_image_url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

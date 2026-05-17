@@ -1,0 +1,209 @@
+{
+  "admin": {
+    "agencies": {
+      "actions": {
+        "addDomain": "Add domain",
+        "edit": "Edit",
+        "suspend": "Suspend"
+      },
+      "columns": {
+        "members": "Members",
+        "name": "Name",
+        "slug": "Slug",
+        "status": "Status"
+      },
+      "empty": "No agencies found.",
+      "loadError": "Failed to load agencies: {{message}}",
+      "loading": "Loading agencies…",
+      "title": "Agencies",
+      "toast": {
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add",
+        "notWiredTitle": "Not yet wired",
+        "suspendFailedMessage": "Suspend failed",
+        "suspendFailedTitle": "Suspend failed",
+        "suspendedMessage": "{{name}} has been suspended.",
+        "suspendedTitle": "Agency suspended"
+      },
+      "unknownError": "Unknown error"
+    },
+    "audit": {
+      "columns": {
+        "action": "Action",
+        "actor": "Actor",
+        "ip": "IP",
+        "outcome": "Outcome",
+        "target": "Target",
+        "time": "Time"
+      },
+      "empty": "No audit events match the current filters.",
+      "filters": {
+        "action": "Action",
+        "actor": "Actor",
+        "actorId": "Actor ID",
+        "legend": "Filters",
+        "outcome": "Outcome",
+        "since": "From",
+        "target": "Target",
+        "targetType": "Target type",
+        "until": "Until"
+      },
+      "loading": "Loading…",
+      "pagination": {
+        "next": "Next",
+        "page": "Page {{page}}",
+        "previous": "Previous",
+        "showing": "Showing {{from}}–{{to}} of {{total}}"
+      },
+      "system": "(system)",
+      "timeAgo": {
+        "days": "{{count}} d ago",
+        "days_one": "{{count}} d ago",
+        "hours": "{{count}} h ago",
+        "hours_one": "{{count}} h ago",
+        "justNow": "just now",
+        "minutes": "{{count}} min ago",
+        "minutes_one": "{{count}} min ago"
+      },
+      "title": "Audit Log"
+    },
+    "common": {
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "confirm": "Are you sure?",
+      "loading": "Loading…",
+      "noResults": "No results.",
+      "readOnly": "Read-only",
+      "retry": "Retry",
+      "save": "Save",
+      "saveFailed": "Save failed.",
+      "saving": "Saving…"
+    },
+    "featureFlags": {
+      "fields": {
+        "aiFaultTriage": "AI fault triage (beta)",
+        "buildingDisabled": "Disable this building (kill switch)",
+        "newListingsSearch": "New listings search (beta)"
+      },
+      "title": "Feature Flags",
+      "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
+    },
+    "impersonation": {
+      "asUser": "as {{name}}",
+      "expires": "expires {{time}}",
+      "label": "IMPERSONATING",
+      "stop": "End impersonation",
+      "youAreImpersonating": "You are impersonating {{name}}"
+    },
+    "mfa": {
+      "cancel": "Cancel",
+      "description": "Enter the 6-digit code from your authenticator app.",
+      "descriptionForAction": "{{action}} requires a fresh authentication code.",
+      "expired": "MFA verification expired",
+      "invalidCode": "That code did not work. Try again.",
+      "invalidFormat": "Enter the 6-digit code from your authenticator app.",
+      "label": "Verification code",
+      "requiredToast": {
+        "message": "Please confirm with your authenticator app to continue.",
+        "title": "Two-factor confirmation required"
+      },
+      "title": "Verify your identity",
+      "verificationFailed": "Verification failed.",
+      "verify": "Verify",
+      "verifying": "Verifying…"
+    },
+    "platform": {
+      "fields": {
+        "maintenanceMode": "Maintenance mode",
+        "signupEnabled": "Signup enabled",
+        "supportEmail": "Support email",
+        "supportEmailPlaceholder": "support@example.com"
+      },
+      "title": "Platform Settings"
+    },
+    "users": {
+      "actions": {
+        "edit": "Edit",
+        "impersonate": "Impersonate",
+        "transition": "Change kind"
+      },
+      "columns": {
+        "displayName": "Display Name",
+        "email": "Email",
+        "principalKind": "Principal kind"
+      },
+      "empty": "Search to load users.",
+      "principalKinds": {
+        "agency": "Agency",
+        "platform": "Platform",
+        "service": "Service",
+        "tenant": "Tenant"
+      },
+      "searchPlaceholder": "Search users by email or name…",
+      "title": "Users",
+      "transition": {
+        "cancel": "Cancel",
+        "confirm": "Change kind",
+        "description": "This will change how {{name}} authenticates and which capabilities they hold. Continue?",
+        "title": "Change principal kind"
+      }
+    }
+  },
+  "common": {
+    "add": "Add",
+    "all": "All",
+    "back": "Back",
+    "backToBuildings": "Back to buildings",
+    "backToDispute": "Back to Dispute",
+    "backToDisputes": "Back to disputes",
+    "backToDocuments": "Back to documents",
+    "backToFaults": "Back to Faults",
+    "backToOutages": "Back to Outages",
+    "cancel": "Cancel",
+    "clearAll": "Clear All",
+    "close": "Close",
+    "collapse": "Collapse",
+    "confirm": "Confirm",
+    "copied": "Copied",
+    "copyErrorDetails": "Copy Error Details",
+    "copyErrorMessage": "Copy error message",
+    "create": "Create",
+    "delete": "Delete",
+    "dismiss": "Dismiss",
+    "dismissNotification": "Dismiss notification",
+    "edit": "Edit",
+    "error": "Error",
+    "expand": "Expand",
+    "loading": "Loading...",
+    "loadingDispute": "Loading dispute...",
+    "login": "Login",
+    "logout": "Logout",
+    "next": "Next",
+    "no": "No",
+    "none": "None",
+    "notifications": "Notifications",
+    "of": "of",
+    "optional": "Optional",
+    "pleaseWait": "Please wait while we fetch the details.",
+    "previous": "Previous",
+    "reloadPage": "Reload Page",
+    "required": "Required",
+    "retry": "Retry",
+    "save": "Save",
+    "saving": "Saving...",
+    "search": "Search",
+    "select": "Select",
+    "selectAll": "Select All",
+    "selectOrganization": "Please select an organization",
+    "showing": "Showing",
+    "submit": "Submit",
+    "success": "Success",
+    "to": "to",
+    "tryAgain": "Try Again",
+    "unknown": "Unknown",
+    "view": "View",
+    "yes": "Yes"
+  },
+  "nav": {
+    "admin": "Admin"
+  }
+}

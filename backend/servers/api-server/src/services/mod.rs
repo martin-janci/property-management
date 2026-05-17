@@ -24,7 +24,7 @@ pub use feature_service::FeatureService;
 pub use jwt::JwtService;
 #[allow(unused_imports)]
 pub use notification::{NotificationService, NotificationServiceConfig};
-pub use oauth::OAuthService;
+pub use oauth::{OAuthService, OAuthServiceError};
 pub use scheduler::{Scheduler, SchedulerConfig};
 pub use syndication::SyndicationService;
 pub use totp::TotpService;

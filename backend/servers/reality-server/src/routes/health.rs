@@ -117,9 +117,12 @@ pub struct CacheMetricsDetail {
 }
 
 /// Check database connectivity and measure latency.
+// SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
+// This is a pure connectivity probe (`SELECT 1`); it reads no tenant data.
 async fn check_database(pool: &sqlx::PgPool) -> DependencyHealth {
     let start = Instant::now();
 
+    // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
     let result = sqlx::query("SELECT 1 as health_check")
         .fetch_one(pool)
         .await;
@@ -259,6 +262,8 @@ pub async fn readiness(State(state): State<AppState>) -> (StatusCode, Json<Healt
     let region = std::env::var("REGION").unwrap_or_else(|_| "local".to_string());
 
     // Check all dependencies in parallel
+    // SAFETY: intentionally cross-tenant — see Phase 4 global-read RLS context.
+    // `check_database` runs `SELECT 1`; no tenant data is read.
     let (db_health, pm_api_health) = tokio::join!(check_database(&state.db), check_pm_api(&state));
 
     let dependencies = vec![db_health, pm_api_health];

@@ -11,7 +11,7 @@ use db::models::oauth::{
     OAuthClientSummary, OAuthError, OAuthScope, RegisterClientRequest, RegisterClientResponse,
     ScopeDisplay, TokenRequest, TokenResponse, UpdateOAuthClient, UserGrantWithClient,
 };
-use db::repositories::OAuthRepository;
+use db::repositories::{OAuthRepository, UserRepository};
 use rand::TryRng;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -61,6 +61,10 @@ pub enum OAuthServiceError {
     #[error("Client not found")]
     ClientNotFound,
 
+    /// Phase 6 C17: the user's principal_kind is not in the client's allowed list.
+    #[error("principal_kind not allowed for this client")]
+    PrincipalKindNotAllowed,
+
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
 
@@ -100,6 +104,9 @@ impl From<OAuthServiceError> for OAuthError {
                 OAuthError::invalid_request(&format!("Unsupported grant type: {}", gt))
             }
             OAuthServiceError::ClientNotFound => OAuthError::invalid_client("Client not found"),
+            OAuthServiceError::PrincipalKindNotAllowed => {
+                OAuthError::access_denied("principal_kind_not_allowed_for_client")
+            }
             OAuthServiceError::DatabaseError(_) => OAuthError::server_error("Database error"),
             OAuthServiceError::InternalError => OAuthError::server_error("Internal error"),
         }
@@ -131,15 +138,21 @@ impl Default for OAuthConfig {
 #[derive(Clone)]
 pub struct OAuthService {
     repo: OAuthRepository,
+    user_repo: UserRepository,
     auth_service: AuthService,
     config: OAuthConfig,
 }
 
 impl OAuthService {
     /// Create a new OAuthService.
-    pub fn new(repo: OAuthRepository, auth_service: AuthService) -> Self {
+    pub fn new(
+        repo: OAuthRepository,
+        user_repo: UserRepository,
+        auth_service: AuthService,
+    ) -> Self {
         Self {
             repo,
+            user_repo,
             auth_service,
             config: OAuthConfig::default(),
         }
@@ -148,11 +161,13 @@ impl OAuthService {
     /// Create a new OAuthService with custom config.
     pub fn with_config(
         repo: OAuthRepository,
+        user_repo: UserRepository,
         auth_service: AuthService,
         config: OAuthConfig,
     ) -> Self {
         Self {
             repo,
+            user_repo,
             auth_service,
             config,
         }
@@ -434,12 +449,30 @@ impl OAuthService {
             }
         }
 
-        // Get client for rotation settings
+        // Get client for rotation settings and principal_kind enforcement (Phase 6 C17)
         let client = self
             .repo
             .find_active_client_by_client_id(&auth_code.client_id)
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+
+        // Phase 6 C17: enforce principal_kind at token issuance.
+        // Look up the user's kind and verify the client allows it.
+        let user = self
+            .user_repo
+            .find_by_id(auth_code.user_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
+
+        if !client.is_principal_kind_allowed(&user.principal_kind) {
+            tracing::warn!(
+                user_id = %auth_code.user_id,
+                principal_kind = %user.principal_kind,
+                client_id = %auth_code.client_id,
+                "Token issuance denied: principal_kind not allowed for OAuth client"
+            );
+            return Err(OAuthServiceError::PrincipalKindNotAllowed);
+        }
 
         // Generate tokens
         let (access_token, refresh_token) = self
@@ -505,6 +538,25 @@ impl OAuthService {
             .find_active_client_by_client_id(client_id)
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidClient("Client not found".to_string()))?;
+
+        // Phase 6 C17 + review R6: re-check principal_kind on refresh so a
+        // user whose kind is no longer permitted by this client (e.g. after
+        // a config change) cannot mint new tokens via an existing refresh
+        // grant. Mirrors the check in exchange_code_for_tokens.
+        let user = self
+            .user_repo
+            .find_by_id(refresh_token.user_id)
+            .await?
+            .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
+        if !client.is_principal_kind_allowed(&user.principal_kind) {
+            tracing::warn!(
+                user_id = %refresh_token.user_id,
+                principal_kind = %user.principal_kind,
+                client_id = %client_id,
+                "Refresh denied: principal_kind not allowed for OAuth client"
+            );
+            return Err(OAuthServiceError::PrincipalKindNotAllowed);
+        }
 
         // Revoke old refresh token
         self.repo.revoke_refresh_token(refresh_token.id).await?;

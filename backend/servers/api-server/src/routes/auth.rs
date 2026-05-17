@@ -735,13 +735,14 @@ pub async fn login(
         .record_login_attempt(&req.email, &ip_address, true)
         .await;
 
-    // Generate access token
-    let access_token = match state.jwt_service.generate_access_token(
+    // Generate access token, embedding principal_kind (Phase 6 C17).
+    let access_token = match state.jwt_service.generate_access_token_with_kind(
         user.id,
         &user.email,
         &user.name,
         None, // org_id - will be set when org context is selected
         None, // roles - will be set when org context is selected
+        Some(user.principal_kind.clone()),
     ) {
         Ok(token) => token,
         Err(e) => {
@@ -941,24 +942,27 @@ pub async fn refresh_token(
         // Continue anyway - better to issue new token than fail
     }
 
-    // Generate new access token
-    let access_token =
-        match state
-            .jwt_service
-            .generate_access_token(user.id, &user.email, &user.name, None, None)
-        {
-            Ok(token) => token,
-            Err(e) => {
-                tracing::error!(error = %e, "Failed to generate access token");
-                return Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new(
-                        "TOKEN_ERROR",
-                        "Failed to create session",
-                    )),
-                ));
-            }
-        };
+    // Generate new access token, re-embedding principal_kind (Phase 6 C17).
+    let access_token = match state.jwt_service.generate_access_token_with_kind(
+        user.id,
+        &user.email,
+        &user.name,
+        None,
+        None,
+        Some(user.principal_kind.clone()),
+    ) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to generate access token");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "TOKEN_ERROR",
+                    "Failed to create session",
+                )),
+            ));
+        }
+    };
 
     // Generate new refresh token (rotation)
     let (new_refresh_token, new_token_hash, expires_at) = match state
