@@ -18,8 +18,7 @@ use uuid::Uuid;
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
-    // `/csv` must come BEFORE `/` so axum's matcher doesn't try to treat
-    // `csv` as a path segment of the catch-all `/` route.
+    // Routes are siblings under the parent `/audit` nest.
     Router::new()
         .route(
             "/csv",
@@ -29,6 +28,25 @@ pub fn router() -> Router<AppState> {
             "/",
             get(list_audit_events).layer(require_capability(Capability::AuditRead)),
         )
+}
+
+/// Sanitize a string cell for CSV output to prevent spreadsheet formula
+/// injection. The `csv` crate already handles quoting/escaping of commas,
+/// quotes, and newlines — we only need to neutralize leading `=`, `+`,
+/// `-`, `@` characters that some spreadsheet apps interpret as formulas.
+///
+/// We prepend a single quote (`'`) which is the standard mitigation: it
+/// forces the cell to be treated as text without being visible in most
+/// spreadsheet UIs.
+fn sanitize_csv_cell(value: &str) -> String {
+    if matches!(value.chars().next(), Some('=' | '+' | '-' | '@')) {
+        let mut out = String::with_capacity(value.len() + 1);
+        out.push('\'');
+        out.push_str(value);
+        out
+    } else {
+        value.to_string()
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -108,10 +126,11 @@ async fn list_audit_events(
 
 /// GET /admin/audit/csv
 ///
-/// Same filter shape as the JSON endpoint. Streams a CSV body with one
-/// header row + one row per audit event. Default limit raised to 10_000
-/// because operators usually export the full filtered range; client can
-/// still narrow via `since` / `until` / `limit` query params.
+/// Same filter shape as the JSON endpoint. Builds the CSV in-memory and
+/// returns it as the response body (one header row + one row per audit
+/// event). Default limit raised to 10_000 because operators usually export
+/// the full filtered range; capped at 50_000 so memory stays bounded.
+/// Client can still narrow via `since` / `until` / `limit` query params.
 async fn export_csv(
     _cap: RequireCapability,
     State(state): State<AppState>,
@@ -140,19 +159,24 @@ async fn export_csv(
         ])
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
         for r in &rows {
+            // UUIDs and timestamps are well-formed and not attacker-controlled,
+            // but every free-form string column passes through `sanitize_csv_cell`
+            // to neutralize spreadsheet-formula injection.
             w.write_record([
                 r.id.to_string(),
                 r.user_id.map(|u| u.to_string()).unwrap_or_default(),
-                r.action.clone(),
-                r.resource_type.clone().unwrap_or_default(),
+                sanitize_csv_cell(&r.action),
+                sanitize_csv_cell(r.resource_type.as_deref().unwrap_or("")),
                 r.resource_id.map(|u| u.to_string()).unwrap_or_default(),
-                r.ip_address.clone().unwrap_or_default(),
-                r.user_agent.clone().unwrap_or_default(),
+                sanitize_csv_cell(r.ip_address.as_deref().unwrap_or("")),
+                sanitize_csv_cell(r.user_agent.as_deref().unwrap_or("")),
                 r.created_at.to_rfc3339(),
-                r.details
-                    .as_ref()
-                    .map(|j| j.to_string())
-                    .unwrap_or_default(),
+                sanitize_csv_cell(
+                    &r.details
+                        .as_ref()
+                        .map(|j| j.to_string())
+                        .unwrap_or_default(),
+                ),
             ])
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
         }

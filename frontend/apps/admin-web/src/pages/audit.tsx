@@ -893,7 +893,7 @@ const AuditPage: FC = () => {
 
   const handleExportCsv = async () => {
     const csvQs = buildQueryString(filters);
-    const url = `/api/v1/admin/audit.csv${csvQs ? `?${csvQs}` : ''}`;
+    const url = `/api/v1/admin/audit/csv${csvQs ? `?${csvQs}` : ''}`;
     try {
       const resp = await fetch(url, {
         credentials: 'include',
@@ -910,11 +910,15 @@ const AuditPage: FC = () => {
       const dlUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = dlUrl;
-      a.download = `audit-${new Date().toISOString().slice(0, 10)}.csv`;
+      // Match server's Content-Disposition filename format: YYYYMMDD (no dashes)
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      a.download = `audit-${today}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(dlUrl);
+      // Defer revoke so the browser has a tick to start the download before
+      // the object URL is invalidated.
+      setTimeout(() => URL.revokeObjectURL(dlUrl), 100);
     } catch (err) {
       showToast({
         type: 'error',
