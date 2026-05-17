@@ -1097,7 +1097,7 @@ function ViewOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
@@ -1208,7 +1208,7 @@ function EditOutagePageRoute() {
     cancelReason: outageData.cancelReason,
     createdAt: outageData.createdAt,
     updatedAt: outageData.updatedAt,
-    createdByName: outageData.createdBy, // TODO: Fetch user name
+    createdByName: outageData.creatorName ?? outageData.createdBy ?? 'Unknown',
     buildingNames: outageData.buildings?.map((b) => b.name) ?? [],
   };
 
