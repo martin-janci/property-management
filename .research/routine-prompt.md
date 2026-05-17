@@ -284,7 +284,7 @@ Run these and verify each passes:
 4. `.research/backlog.md` content matches what regenerating from `backlog.json` would produce (don't have stale rows).
 5. Today's brief exists with all required sections.
 6. **At most 2** new files added under `.research/plans/`.
-7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Required capabilities, Repro steps, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge). At least one capability box must be ticked.
+7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Required capabilities, Repro steps, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge). At least one capability box must be ticked. The *Required capabilities* section must declare `Mode: local-only` or `Mode: cloud-ok` on its own line (derived from whether C4/C5 are ticked).
 8. No secrets or private infrastructure hostnames (anything `*.rlt.sk`, internal IPs, API tokens, OAuth tokens, htpasswd hashes) anywhere in the committed text.
 9. Backlog entries deduplicated by `id` (no two items with the same id).
 10. No score above 8. No score below 0 (those should be `dropped`).
@@ -357,11 +357,18 @@ for what each provides. Be honest — over-asking wastes setup time,
 under-asking blocks the agent mid-flight.>
 - [ ] C1 — Systematic debugging (always tick for bug / revert / risky-churn)
 - [ ] C2 — Seed data
-- [ ] C3 — Dev instance running (`stack up pm-local …`)
-- [ ] C4 — Browser (Chrome MCP / Preview / playwright)
-- [ ] C5 — ADB device (only for mobile-touching plans)
+- [ ] C3 — Dev instance running (`stack up pm-local …` or `ppt_dev_up` via bridge)
+- [ ] C4 — Browser (Chrome MCP / Preview / playwright)  · **local-only**
+- [ ] C5 — ADB device (only for mobile-touching plans)  · **local-only**
 - [ ] C6 — Verification before completion (always tick)
 - [ ] C7 — Code-review reception (tick if you expect controversy)
+
+**Execution mode (auto-derived from the ticks):**
+- If C4 or C5 is ticked → `local` (implementer must run on the user's Mac)
+- Otherwise → `cloud-ok` (can run as a claude.ai routine via `ppt-bridge` MCP at `https://p.rlt.sk/mcp`)
+
+State the mode explicitly in this section under the checklist, e.g.
+`Mode: cloud-ok` or `Mode: local-only (reason: C4 — flow needs Chrome DOM inspection)`.
 
 ## Repro steps
 <Smallest deterministic sequence that reproduces the problem the plan

@@ -72,45 +72,52 @@ Use a dedicated environment (don't share with other routines).
 
 The cloud sandbox **cannot** reach your LAN, **cannot** SSH out, **cannot** see physical devices, **cannot** use stdio MCPs. That's fine — this routine is purely read-only over GitHub + writes to `.research/`. Implementation runs elsewhere (see below).
 
-## Picking a plan to ship
+## Picking a plan to ship — two execution modes
 
-When you have an implementation slot, open the **manual implementation
-agent** by starting a local Claude Code session with
-`--append-system-prompt-file .research/implementer-prompt.md` (or paste that
-file's contents into the first user message), then prompt:
+### Local mode (Mac, full toolset)
 
+When a plan needs **C4** (browser) or **C5** (ADB), only this mode works.
+
+```bash
+claude --append-system-prompt-file .research/implementer-prompt.md
+# then: "Implement .research/plans/<slug>.md."
 ```
-Implement .research/plans/<slug>.md.
-```
 
-The implementer needs the full local toolset (Docker, Chrome, ADB if mobile-touching) — none of which the cloud sandbox has. **Don't try to make the implementer a cloud routine** unless you've stood up a bridge MCP (see *Future: ppt-bridge-mcp* below).
+You get local Docker, Chrome MCP, ADB, your dotfiles `stack` CLI, everything.
+
+### Cloud mode (claude.ai routine or remote session, via ppt-bridge)
+
+When a plan doesn't need a browser or device, the **`ppt-bridge` MCP** at
+`https://p.rlt.sk/mcp` gives the implementer SSH-exec access to `mefistos`
+(dev) and `hetzner` (prod, gated) — no local Docker required.
+
+Setup:
+- Open claude.ai → Settings → Connectors → Add custom → URL `https://p.rlt.sk/mcp` → OAuth (Google).
+- Use the same `--append-system-prompt-file .research/implementer-prompt.md` (or paste it as the first user message) on the routine session.
+
+The bridge exposes 10 tools — `list_hosts`, `ppt_dev_up/down/logs`, `ppt_seed`,
+`ppt_db_query` (with DML guard + `db:mutate` capability), `ppt_run_test`,
+`ppt_docker_compose` (`ps`/`logs`/`up`/`down`/`restart`), `ppt_browser_open`
+(v2 skeleton), `set_primary_host`. Destructive ops on `hetzner` (marked
+`is_prod=true`) require `confirm: true` per call; a kill-switch env var
+disables all destructive ops globally. Audit at `https://p.rlt.sk/audit`.
+
+See `implementer-prompt.md` § *ppt-bridge MCP — cloud-side toolset* for the
+full capability matrix.
+
+### Capabilities
 
 The implementer prompt declares **seven capabilities** (C1–C7) covering
 systematic debugging, seed data, dev-stack startup, browser automation
 (Chrome MCP / Preview / playwright), ADB control, verification-before-
 completion, and code-review reception. Each plan ticks the capabilities it
 needs under *Required capabilities* — the implementation agent sets up
-exactly those, no more.
+exactly those, no more. C4/C5 imply local mode; everything else can run cloud
+or local.
 
 It opens a PR, verifies, and on merge moves the plan to `_archive/` and
 marks the backlog row `done`. The next daily research run sees the
 shipment in the brief.
-
-## Future: ppt-bridge-mcp
-
-If you want the implementation agent to also run in cloud routines (truly autonomous overnight workflow), stand up a **bridge MCP server** on `mefistos` or NAS:
-
-```
-property-management.dev (running on mefistos / NAS, via docker compose)
-  └── ppt-bridge-mcp  (Streamable HTTP MCP, OAuth via Anthropic proxy)
-        ├── ppt_dev_up / down / logs        — ssh → mefistos → stack up pm-local …
-        ├── ppt_seed / ppt_db_query         — ssh → psql / just seed
-        ├── ppt_run_test <crate>            — ssh → cargo/pnpm test, returns output
-        ├── ppt_browser_open <url>          — headless Chrome on the bridge box → DOM + screenshot
-        └── ppt_adb_*                       — adb to a USB-attached emulator on the bridge box
-```
-
-Architecture mirrors `nas-mcp`: bearer auth, htpasswd registry, OAuth proxy via Anthropic. Build effort ≈ 1–2 days for v1; reuses the schema sanitizer from `nas-mcp`. Track on the backlog as a vector once this repo's daily routine starts producing them.
 
 ## Hand-edits
 

@@ -72,7 +72,55 @@ If any goal fails and you can't fix it, **don't open the PR**. Instead leave
 a draft PR with a `[WIP]` title and document the blocker in the body —
 better an honest stall than a silent partial.
 
-## Capabilities
+## Two execution modes
+
+The implementer agent runs in **one of two modes** depending on where it's
+launched:
+
+| Mode | Where | Capability source |
+|---|---|---|
+| **Local** | `claude` CLI on your Mac, with `--append-system-prompt-file .research/implementer-prompt.md` | Local Docker, local Chrome MCP, local ADB, local `stack`/`just`. Full access. |
+| **Cloud** (routine or remote session) | claude.ai/code/routines with the **`ppt-bridge`** connector (`https://p.rlt.sk/mcp`) attached | Bridge MCP tools route SSH-exec to the configured host (`mefistos` for dev, `hetzner` for prod). No Chrome / no ADB. |
+
+The plan's *Required capabilities* (see routine-prompt.md) implicitly says
+which mode is required: if `C4` (browser) or `C5` (ADB) is ticked → local only.
+Anything else → both modes are fine; prefer cloud for speed of iteration.
+
+## ppt-bridge MCP — cloud-side toolset
+
+When attached as a connector, exposes these tools (capability-gated):
+
+| Tool | Capability needed | Notes |
+|---|---|---|
+| `list_hosts` / `set_primary_host` | none | discover + switch default host |
+| `ppt_dev_logs` | `dev` | tail-N for a stack service |
+| `ppt_dev_up` | `dev:write` | bring stack up |
+| `ppt_dev_down` | `dev:write` | tear stack down (destructive) |
+| `ppt_seed` | `seed` | runs `host_config.seed_command` |
+| `ppt_db_query` | `db` (+ `db:mutate` for DML, `confirm:true` to run DML) | always-on heredoc → no shell injection |
+| `ppt_run_test` | `test` | runs `just test-<area>` (or `cargo`/`pnpm`/`gradle` directly if a filter is set) |
+| `ppt_docker_compose` | `docker:compose` (read: ps/logs) / `docker:compose:write` (state-change) | wraps `docker compose -f <file> <action>` on configured workdir |
+| `ppt_browser_open` | `browser` | v2 skeleton; returns `not_implemented` today |
+
+Per-host config (set via `https://p.rlt.sk/accounts`):
+- `repo_path` — where the ppt repo lives on the host (required)
+- `stack_bin` / `stack_name` — for dev_* tools (defaults: `stack` / `pm-local`)
+- `db_command` — full psql invocation (e.g. `docker compose -f docker-compose.dev.yml exec -T postgres psql -U ppt -d ppt`)
+- `seed_command` — full seed invocation; if unset, `ppt_seed` errors cleanly
+- `docker_compose_file` / `docker_compose_workdir` — for `ppt_docker_compose`
+- `is_prod` (boolean) — when true, every destructive call requires `confirm: true`
+  in args. (Telegram approval is v1.4.1, in flight.)
+
+Destructive-op guards in effect (v1.4):
+1. **Capability split** — `dev:write` / `docker:compose:write` for state changes
+2. **`BRIDGE_DESTRUCTIVE_DISABLED=1`** kill switch in bridge env — global halt
+3. **`is_prod` + `confirm:true`** — explicit per-call confirmation
+4. **`preview: true`** — returns the would-execute command without running
+
+`hetzner` is marked `is_prod=true`. **Any destructive call against it requires
+`confirm: true` and is logged at https://p.rlt.sk/audit with prod-call badge.**
+
+## Capabilities (C1–C7 for the plan's Required-capabilities checklist)
 
 Each capability lists the trigger (when you need it), the tool/skill that
 provides it, and the smoke check that proves it's working. Set up only the
@@ -94,24 +142,40 @@ the whole world for a unit-test-only change.
 - **When:** the plan needs a populated DB to reproduce (anything touching
   reports, lists, multi-tenant boundaries, listing imports, …).
 - **Tools:**
+  - **`ppt-bridge` MCP (`https://p.rlt.sk/mcp`) — preferred in cloud routines.**
+    `ppt_seed` (when `host_config.seed_command` is set on the host) or
+    `ppt_db_query` for ad-hoc rows. Requires capability `seed` and/or `db`.
+    See *Capability matrix* below.
   - `papayapos-seeding` skill — pattern reference for shape of seed data.
   - `just seed` if present in the justfile; otherwise the seed scripts
     under `backend/scripts/seed/` or `backend/crates/*/src/test_data/`.
-  - `psql` directly against the local `postgres` service for ad-hoc rows.
-- **Smoke:** `just seed && psql -h localhost -U ppt -d ppt -c "select count(*) from <table>"` returns the expected row count.
+  - `psql` directly against the local `postgres` service for ad-hoc rows
+    (local-only sessions; cloud routines must go via the bridge).
+- **Smoke (local):** `just seed && psql -h localhost -U ppt -d ppt -c "select count(*) from <table>"`.
+- **Smoke (cloud, via bridge):** `ppt_seed host=mefistos` returns exit 0; then
+  `ppt_db_query sql="select count(*) from <table>"` matches expected.
 
 ### C3 — Run a dev instance
 
 - **When:** any UI-touching change, any change you can't fully verify with
   a unit test, integration-test fixtures missing.
-- **Skill:** `dev-stack` (declarative manifest at `~/dotfiles/dev-stacks/pm-local.yml`).
-  - Bring it up: `stack up pm-local` (or per-service: `stack up pm-local postgres redis minio api-server`).
-  - Logs: `stack logs pm-local <service>`.
-  - Tear down: `stack down pm-local`.
-- **Fallbacks:** `docker compose -f docker-compose.dev.yml up -d <service>`
-  directly, or `just dev` for the foreground frontend.
-- **Smoke:** `curl -fsS http://localhost:8080/health` → 200 for api-server;
-  `curl -fsS http://localhost:3000/` for web.
+- **Tools (in priority order):**
+  1. **`ppt-bridge` MCP — preferred in cloud routines.**
+     - `ppt_dev_up host=mefistos` brings the `pm-local` stack up
+     - `ppt_dev_logs service=<svc> tail=200` to inspect
+     - `ppt_dev_down host=mefistos` to tear down
+     - `ppt_docker_compose action=ps|up|down|restart|logs service=<svc>` for
+       finer control or for hosts that don't have the `stack` CLI (e.g.
+       `hetzner` prod). **`docker:compose:write` capability** required for
+       `up/down/restart` — gated by `is_prod` on prod hosts (`confirm:true`
+       required; eventually Telegram approval too).
+  2. **Local `dev-stack` skill** (declarative manifest at `~/dotfiles/dev-stacks/pm-local.yml`)
+     - `stack up pm-local` / `stack logs pm-local <svc>` / `stack down pm-local`
+  3. **Fallbacks:** `docker compose -f docker-compose.dev.yml up -d <service>`,
+     `just dev` for the foreground frontend.
+- **Smoke (local):** `curl -fsS http://localhost:8080/health` → 200.
+- **Smoke (cloud, via bridge):** `ppt_dev_up host=mefistos` exits 0, then
+  `ppt_docker_compose action=ps host=mefistos` lists running services.
 
 ### C4 — Browse the running site (web tests)
 
@@ -120,15 +184,16 @@ the whole world for a unit-test-only change.
 - **Tools (in priority order):**
   1. **Claude in Chrome MCP** (`mcp__Claude_in_Chrome__*`) — DOM-aware,
      fast, ideal for clicking through flows on `localhost:3000` /
-     `localhost:3001`. Use `list_connected_browsers` → `select_browser`
-     → `tabs_create_mcp` → `navigate`. Read with `get_page_text` /
-     `read_page` (accessibility tree) / `read_console_messages` /
-     `read_network_requests`.
+     `localhost:3001`. **Local sessions only** — Chrome MCP needs the
+     extension on your Mac.
   2. **Claude Preview MCP** (`mcp__Claude_Preview__*`) — for ephemeral
      previews without a real browser; good for screenshot/snapshot of
      a static URL.
   3. **playwright-cli** skill — when you need a scripted E2E and want to
      keep the trace. `npx playwright codegen <url>` for fast scaffolding.
+  4. **`ppt_browser_open` via ppt-bridge** — v2 (skeleton today; returns
+     `not_implemented`). Once wired, will give cloud routines headless
+     Chrome+screenshots on the bridge host.
 - **Smoke:** open `http://localhost:3000`, get the page title or h1 — if
   the title says "Property Management" you're in.
 
@@ -137,10 +202,10 @@ the whole world for a unit-test-only change.
 - **When:** any change to `frontend/apps/mobile/` or `mobile-native/`,
   any flow that's mobile-only.
 - **Skill:** `adb-app-control` — screenshot, dump UI hierarchy,
-  tap/swipe/type, navigate. Requires a connected emulator/device.
+  tap/swipe/type, navigate. **Local sessions only** — needs a USB / network
+  emulator visible to your Mac. No cloud bridge equivalent in v1.
 - **Smoke:** `adb devices` shows ≥1 `device` (not `unauthorized` or
-  `offline`). `adb shell input keyevent KEYCODE_HOME` returns home
-  screen — visible via screenshot.
+  `offline`).
 
 ### C6 — Verification before claiming done
 
