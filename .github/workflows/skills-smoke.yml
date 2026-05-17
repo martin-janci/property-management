@@ -1,0 +1,25 @@
+name: Skills Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude/skills/**'
+      - '.research/**'
+      - '.github/workflows/skills-smoke.yml'
+  pull_request:
+    paths:
+      - '.claude/skills/**'
+      - '.research/**'
+      - '.github/workflows/skills-smoke.yml'
+
+jobs:
+  smoke:
+    name: verify-all.sh --quick
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run skill smoke checks (quick mode)
+        run: ./.claude/skills/verify-all.sh --quick

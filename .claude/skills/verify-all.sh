@@ -2,11 +2,12 @@
 # verify-all.sh — run every skill's smoke check; exit non-zero on any failure.
 #
 # Each smoke check is expected to complete in <30s. Total ~5 min worst case.
-# Run from the repo root. Captures per-skill pass/fail.
+# Run from the repo root. Captures per-skill pass/fail/skip.
 #
 # Usage: ./.claude/skills/verify-all.sh [--quick]
-#   --quick    skip checks that are known-slow on cold caches (currently:
-#              ppt-rust-backend full workspace check).
+#   --quick    swap long-running smokes (cargo / pnpm / gradle / npx-tsp)
+#              for cheap file-presence checks. Still covers all skills;
+#              each prints PASS / SKIP / FAIL — never silent.
 
 set -u
 
@@ -31,6 +32,7 @@ fi
 
 PASS=0
 FAIL=0
+SKIPPED=0
 FAIL_NAMES=()
 
 run() {
@@ -58,21 +60,37 @@ run() {
   fi
 }
 
+skip() {
+  local name="$1"
+  local reason="$2"
+  printf "  %-22s ... SKIP (%s)\n" "$name" "$reason"
+  SKIPPED=$((SKIPPED + 1))
+}
+
 echo "== .claude/skills smoke checks =="
 
 run "ppt-research-flow"   10 'test -d .research/plans/_archive && test -f .research/implementer-prompt.md && echo ok'
 run "ppt-bridge-mcp"      15 'curl -fsS https://p.rlt.sk/healthz >/dev/null'
-run "ppt-tests"           10 'just --list 2>/dev/null | grep -qE "^\s+(test-backend|test-frontend|test-integration)\b"'
-run "ppt-pr-create"       10 'gh auth status >/dev/null 2>&1 && echo ok'
 if [[ $QUICK -eq 1 ]]; then
-  printf "  %-22s ... SKIP (quick mode)\n" "ppt-rust-backend"
+  # File-presence fallbacks: confirm the skill points at real workspace paths
+  # without spinning up the toolchain (just / gh / cargo / pnpm / gradle /
+  # npx-tsp / stack). Suitable for cold caches and offline CI runners.
+  run "ppt-tests"         10 'test -f justfile && grep -qE "^test(-(backend|frontend|integration))?:" justfile'
+  run "ppt-pr-create"     10 'test -d .github && test -f .github/workflows/ci.yml'
+  run "ppt-rust-backend"  10 'test -f backend/Cargo.toml && test -d backend/crates'
+  run "ppt-frontend"      10 'test -f frontend/pnpm-workspace.yaml || test -f frontend/package.json'
+  run "ppt-mobile-native" 10 'test -f mobile-native/build.gradle.kts || test -f mobile-native/settings.gradle.kts'
+  run "ppt-typespec"      10 'test -f docs/api/typespec/main.tsp'
+  run "ppt-dev-stack"     10 'test -f .claude/skills/ppt-dev-stack/SKILL.md'
 else
+  run "ppt-tests"          10 'just --list 2>/dev/null | grep -qE "^\s+(test-backend|test-frontend|test-integration)\b"'
+  run "ppt-pr-create"      10 'gh auth status >/dev/null 2>&1 && echo ok'
   run "ppt-rust-backend"  300 'cd backend && cargo check --workspace --message-format=short >/dev/null'
+  run "ppt-frontend"       30 'cd frontend && pnpm -r list --depth -1 --json >/dev/null 2>&1'
+  run "ppt-mobile-native"  60 'cd mobile-native && ./gradlew help -q >/dev/null 2>&1'
+  run "ppt-typespec"       20 'cd docs/api/typespec && npx --no-install tsp --version >/dev/null 2>&1'
+  run "ppt-dev-stack"      10 'stack list 2>/dev/null | grep -qE "(^|\s)pm-local(\s|$)"'
 fi
-run "ppt-frontend"   30 'cd frontend && pnpm -r list --depth -1 --json >/dev/null 2>&1'
-run "ppt-mobile-native"   60 'cd mobile-native && ./gradlew help -q >/dev/null 2>&1'
-run "ppt-typespec"        20 'cd docs/api/typespec && npx --no-install tsp --version >/dev/null 2>&1'
-run "ppt-dev-stack"       10 'stack list 2>/dev/null | grep -qE "(^|\s)pm-local(\s|$)"'
 run "ppt-db-migrations"   10 'test -d backend/crates/db/migrations && test -d backend/servers/deploy-server/migrations && test -f backend/crates/db/src/seed/runner.rs'
 # ppt-deploy predates the research scaffold; we just verify the skill files
 # are wired up. Live pmctl / onyx checks are out of scope for a generic harness.
@@ -81,6 +99,7 @@ run "ppt-deploy"          10 'test -f .claude/skills/ppt-deploy/SKILL.md && test
 echo
 echo "== summary =="
 echo "passed: $PASS"
+echo "skipped: $SKIPPED"
 echo "failed: $FAIL"
 if [[ $FAIL -gt 0 ]]; then
   echo "failed skills: ${FAIL_NAMES[*]}"
