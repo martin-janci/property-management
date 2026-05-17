@@ -1,0 +1,3 @@
+# Daily briefs land here as YYYY-MM-DD.md.
+# This .gitkeep ensures the directory exists on a fresh clone so the
+# routine's first run doesn't fail with "no such file or directory".

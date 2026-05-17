@@ -33,6 +33,7 @@ match the plan's *Required capabilities* section and area.
 | [`ppt-typespec`](ppt-typespec/SKILL.md) | both | backend, frontend, infra | TypeSpec contract authoring |
 | [`ppt-dev-stack`](ppt-dev-stack/SKILL.md) | local | infra | `stack up pm-local` declarative dev stack |
 | [`ppt-db-migrations`](ppt-db-migrations/SKILL.md) | both | backend, infra | SQLx migrations + seed gap |
+| [`ppt-deploy`](ppt-deploy/SKILL.md) | both | infra, deploy | `pmctl` worktree + staging/prod deploys (predates research routine; see IMPROVEMENT_IDEAS for frontmatter normalization) |
 
 ## Verifying the environment
 

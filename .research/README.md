@@ -83,6 +83,13 @@ The cloud sandbox **cannot** reach your LAN, **cannot** SSH out, **cannot** see 
 
 ## Picking a plan to ship — two execution modes
 
+**How to pick the next plan:** look at `backlog.md` (top of the table is
+highest score), find a row with `status: ready` whose `plan` field points
+to a file under `plans/`, then load that file. Or just `ls plans/*.md`
+(excluding `_archive/`) for everything ready to go. The implementer agent
+ships one plan per session — pick by priority, capability you can satisfy,
+and your appetite for the area.
+
 ### Local mode (Mac, full toolset)
 
 When a plan needs **C4** (browser) or **C5** (ADB), only this mode works.
@@ -137,6 +144,11 @@ shipment in the brief.
   there will be silently overwritten.
 - **Defer a vector:** edit its `updated_at` to today in `backlog.json` —
   resets the 14-day decay clock without other changes.
+- **Author a plan by hand:** write `plans/<slug>.md` following the plan
+  template in `routine-prompt.md` § *Plan template*. Quality Gate 7 still
+  applies — 4 metadata fields + 11 `##` headings + `Mode:` line + at least
+  one ticked capability. If your file misses one, the next routine run
+  flags it; nothing else blocks you.
 - **Pause the routine entirely:** go to claude.ai → Routines → `ppt-research`
   and toggle the schedule off. The routine instructions live in claude.ai,
   not in this file, so a file rename here has no effect.

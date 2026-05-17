@@ -34,9 +34,12 @@ output in the PR body.
 
 ### IG3 — Test that would have caught the bug exists and **fails on `main`**
 
-- **Pass when:** for `bug` / `revert` / `risky-churn` / `test-gap` vectors, the
-  PR adds at least one test that fails on `main` without the fix and passes
-  with it. (This is the TDD-cycle gate.)
+- **Pass when:** for vector `bug` or `test-gap`, **or** for any plan whose
+  *Source* line lists a `revert-…` or `risky-churn-…` signal (see
+  `routine-prompt.md` § *Phase 1 — Observe*, signal table), the PR adds at
+  least one test that fails on `main` without the fix and passes with it.
+  (Throughout this prompt, "revert" / "risky-churn" mean signal-type, not
+  vector — those plans are typically vector `bug`.)
 - **Check** — TDD discipline, two runs against the *same* test name:
   1. After authoring the failing test and the fix on `impl/<slug>`, commit
      them in **two separate commits** (`test:` first, `fix:` second) so each
@@ -155,8 +158,8 @@ the whole world for a unit-test-only change.
 
 ### C1 — Debug functionality (general)
 
-- **When:** any vector tagged `bug`, `revert`, `risky-churn`; any
-  unexpected behavior during implementation.
+- **When:** any plan with vector `bug` or whose source signal-type is
+  `revert` / `risky-churn`; any unexpected behavior during implementation.
 - **Skill:** `superpowers:systematic-debugging` — invoke before changing
   code. Trace data flow backward; isolate the failing layer with a binary
   search.
@@ -172,14 +175,21 @@ the whole world for a unit-test-only change.
     `ppt_seed` (when `host_config.seed_command` is set on the host) or
     `ppt_db_query` for ad-hoc rows. Requires capability `seed` and/or `db`.
     See *Capability matrix* below.
-  - `papayapos-seeding` skill — pattern reference for shape of seed data.
-  - `just seed` if present in the justfile; otherwise the seed scripts
-    under `backend/scripts/seed/` or `backend/crates/*/src/test_data/`.
+  - `papayapos-seeding` (user-level skill at `~/.claude/skills/`, local mode only) —
+    cross-project pattern reference for the *shape* of seed data; not directly
+    runnable against this repo.
+  - **In-crate seed module** at `backend/crates/db/src/seed/` (`data.rs`,
+    `factories.rs`, `runner.rs`, `mod.rs`). **There is NO `just seed` recipe**
+    — see `.claude/skills/ppt-db-migrations/SKILL.md` § *Seed gap*. Invoke the
+    factories directly from a test, or wrap `runner` in a small binary.
   - `psql` directly against the local `postgres` service for ad-hoc rows
     (local-only sessions; cloud routines must go via the bridge).
-- **Smoke (local):** `just seed && psql -h localhost -U ppt -d ppt -c "select count(*) from <table>"`.
-- **Smoke (cloud, via bridge):** `ppt_seed host=mefistos` returns exit 0; then
-  `ppt_db_query sql="select count(*) from <table>"` matches expected.
+- **Smoke (local):** invoke the in-crate seed factories from a Rust integration
+  test, then `psql -h localhost -U ppt -d ppt -c "select count(*) from <table>"`.
+  (No `just seed` exists; see `.claude/skills/ppt-db-migrations/SKILL.md`.)
+- **Smoke (cloud, via bridge):** `ppt_seed host=mefistos` returns exit 0 (only
+  when the host has `seed_command` configured at `https://p.rlt.sk/accounts`);
+  then `ppt_db_query sql="select count(*) from <table>"` matches expected.
 
 ### C3 — Run a dev instance
 

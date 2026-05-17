@@ -24,7 +24,7 @@ is recorded, not hidden), but the brief makes it visible.
 ### G2 — Every run advances state
 
 - **Pass when:** at least one of these changed since the previous run: any cursor (`last_pr_seen`, `last_issue_seen`, `last_commit_sha`), `seen_signals.length`, `hotspot_history` keys, or `stats.quiet_days` (true quiet day still counts as progress).
-- **Check:** `jq --argfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{}') '(.last_pr_seen != ($prev.last_pr_seen // 0)) or (.last_issue_seen != ($prev.last_issue_seen // 0)) or (.last_commit_sha != ($prev.last_commit_sha // null)) or ((.seen_signals | length) != (($prev.seen_signals // []) | length)) or ((.hotspot_history | length) != (($prev.hotspot_history // {}) | length)) or (.stats.quiet_days != ($prev.stats.quiet_days // 0))' .research/state.json` → expect `true`.
+- **Check:** `jq --slurpfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{}') '($prev[0] // {}) as $p | (.last_pr_seen != ($p.last_pr_seen // 0)) or (.last_issue_seen != ($p.last_issue_seen // 0)) or (.last_commit_sha != ($p.last_commit_sha // null)) or ((.seen_signals | length) != (($p.seen_signals // []) | length)) or ((.hotspot_history | length) != (($p.hotspot_history // {}) | length)) or (.stats.quiet_days != ($p.stats.quiet_days // 0))' .research/state.json` → expect `true`. *(Uses `--slurpfile`; jq ≥1.7 removed `--argfile`.)*
 
 ### G3 — Backlog ids are unique
 
@@ -49,11 +49,13 @@ is recorded, not hidden), but the brief makes it visible.
 
 ### G7 — At most 2 new plans, each meets all readiness gates
 
-- **Pass when:** ≤2 new plans this run; each contains all 15 required headings; each has at least one concrete file path under its **Files** heading.
-- **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '\.md$'` ≤ 2.
-- **Check (headings):** for each new plan, all 15 of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Files`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings. (Bump the count if you add another required section.)
+- **Pass when:** ≤2 new plans this run; each contains all 15 required sections (4 metadata fields + 11 headings); each names ≥1 concrete file under the `## Files` heading that resolves on disk.
+- **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '\.md$'` ≤ 2.
+- **Check (metadata, 4):** for each new plan, all of `**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**` appear at the top of the file (one per line, in the `**Key:**` form).
+- **Check (headings, 11):** for each new plan, all of `## Hypothesis`, `## Evidence`, `## Files`, `## Required capabilities`, `## Repro steps`, `## Suggested approach`, `## Alternatives considered`, `## Root-cause trace`, `## Test plan`, `## Out of scope`, `## After-merge` appear as `##` headings.
 - **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
-- **Check (files):** at least one bullet under the *Files* heading resolves to a path that exists: pipe the bullets into `xargs -I{} test -e {}`.
+- **Check (mode declared):** the *Required capabilities* section declares `Mode: local-only` or `Mode: cloud-ok` (derived from whether C4/C5 are ticked).
+- **Check (files exist on disk):** every bullet under `## Files` must resolve to an existing path. Pipe the bullets through `xargs -I{} test -e {}` and expect zero failures.
 
 ### G8 — No application code touched
 
@@ -79,7 +81,7 @@ is recorded, not hidden), but the brief makes it visible.
 ### G12 — Plan promotions converge (no thrashing)
 
 - **Pass when:** a plan promoted in run N-1 is either still in `plans/` *or* in `plans/_archive/` in run N — never silently deleted.
-- **Check:** `git show HEAD~1:.research/plans/` (recurse) — every `<slug>.md` from prior run must appear in either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md` this run.
+- **Check:** for every prior-run plan slug — `git ls-tree -r --name-only HEAD~1 -- .research/plans/ 2>/dev/null | grep -E '\.research/plans/[^/]+\.md$' | sed 's|^\.research/plans/||; s|\.md$||'` — assert each appears in the current tree as either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md`.
 
 ---
 
@@ -319,7 +321,7 @@ Run these and verify each passes:
 4. `.research/backlog.md` content matches what regenerating from `backlog.json` would produce (don't have stale rows).
 5. Today's brief exists with all required sections.
 6. **At most 2** new files added under `.research/plans/`.
-7. Every new plan contains all the required headings (Vector, Score, Source, Confidence, Hypothesis, Evidence, Required capabilities, Repro steps, Suggested approach, Alternatives considered, Root-cause trace, Test plan, Out of scope, After-merge). At least one capability box must be ticked. The *Required capabilities* section must declare `Mode: local-only` or `Mode: cloud-ok` on its own line (derived from whether C4/C5 are ticked).
+7. Every new plan contains all 14 required sections — 4 bold metadata fields at the top (`**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**`) and 10 `##` headings (`Hypothesis`, `Evidence`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge`). At least one capability box must be ticked. The *Required capabilities* section must declare `Mode: local-only` or `Mode: cloud-ok` on its own line (derived from whether C4/C5 are ticked).
 8. No secrets or private infrastructure hostnames (anything `*.rlt.sk`, internal IPs, API tokens, OAuth tokens, htpasswd hashes) anywhere in the committed text.
 9. Backlog entries deduplicated by `id` (no two items with the same id).
 10. No score above 8. No score below 0 (those should be `dropped`).
@@ -472,3 +474,54 @@ the file:line for each step.>
 - `text == ""` — normal run
 - `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset).
 - `text == "reset"` — write a brief noting state was reset, then set `last_pr_seen = 0`, `last_commit_sha = null`, `last_issue_seen = 0`, clear `seen_signals` and `hotspot_history`. Next run will do an initial 14-day sweep again.
+
+## Operational assumptions and failure modes
+
+These are out-of-band conditions the routine must handle gracefully — they
+are not goals or gates, but the routine prompt is the only place they're
+documented, so call them out when you hit them.
+
+### Concurrent runs
+
+There is **no lockfile** under `.research/`. The routine assumes a single
+concurrent invocation. The cloud routine scheduler enforces this in
+practice — only one routine instance runs at a time per repository — but if
+you ever launch a second instance manually (`text: "deep"` while the daily
+trigger is mid-flight, say), the two runs will race on `state.json`,
+`backlog.json`, and same-day `signals/<date>.json` / `briefs/<date>.md`.
+The second-finishing run's commit wins on push; the first run's work is
+silently lost. **If you suspect overlap, abort the second run before its
+commit step** and note this in the brief.
+
+### Same-day rerun (idempotent rewrite)
+
+If `briefs/<today>.md` and `signals/<today>.json` already exist when the
+routine starts, the routine **overwrites** them — the goal is convergence,
+not append. `seen_signals` and `hotspot_history` updates are *cumulative*,
+so a second run on the same day will not re-score signals from the first
+run (that's the point of stable signal IDs).
+
+### Malformed `state.json` or `backlog.json`
+
+If `jq . .research/state.json` or `jq . .research/backlog.json` fails on
+read, treat as a fatal precondition: write the brief with a single line
+"State malformed; routine refused to advance. Inspect HEAD." Do NOT
+truncate, reset, or "best-effort recover" the file. Leave the malformed
+file in place, commit only the brief, exit non-zero so the cloud routine
+surfaces a notification.
+
+### Pre-existing `briefs/<date>.md` / `signals/<date>.json` directories missing
+
+`briefs/` and `signals/` are tracked with `.gitkeep` placeholders. If a
+fresh clone is missing them anyway (e.g. operator deleted by hand), the
+routine should `mkdir -p .research/briefs .research/signals` as the first
+filesystem op in Phase 4 — silently, no warning needed. The placeholders
+are for repo-state hygiene, not runtime correctness.
+
+### Plan-author hand-edits
+
+The user occasionally hand-authors a plan under `.research/plans/<slug>.md`
+without going through the routine's Phase 3 promotion. That's allowed.
+Quality Gate 7's heading/metadata/mode checks still apply — if a hand-
+written plan misses one, the routine's *next* run will fail Gate 7 on it.
+Surface that failure in the brief; don't silently rewrite the file.

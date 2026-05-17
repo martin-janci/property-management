@@ -1,6 +1,10 @@
 ---
 name: ppt-deploy
 description: Manage worktree deployments to *.dev.ppt.rlt.sk and *.dev.rlt.sk via the ppt-deploy server. Use when the user wants to spin up, list, status, or close a worktree dev environment, or to deploy/promote staging or prod. Triggers on phrases like "open worktree", "deploy this branch", "promote v1.2.3", "close worktree".
+when_to_use: User says "open worktree" / "deploy this branch" / "promote vX.Y.Z" / "close worktree", or any pmctl-managed dev/staging/prod release flow.
+mode: both
+capabilities: [C6]
+tags: [infra, deploy]
 ---
 
 # ppt-deploy skill

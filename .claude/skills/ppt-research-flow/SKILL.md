@@ -58,8 +58,9 @@ what the exit criteria are.
    just check
    ```
 5. **Implementation loop** — follow `implementer-prompt.md` § *Implementation
-   loop (per Suggested-approach step)*. Write the failing test first when the
-   vector requires IG3 (`bug`, `revert`, `risky-churn`, `test-gap`).
+   loop (per Suggested-approach step)*. Write the failing test first when IG3
+   applies — vector `bug` / `test-gap`, or any plan sourced from a
+   `revert-…` / `risky-churn-…` signal.
 6. **Verify** — run `just check && just test && just build`, plus the plan's
    *Test plan* commands verbatim. See `ppt-tests` for stack-specific subsets.
 7. **Open the PR** — see `ppt-pr-create` for the body template and IG3

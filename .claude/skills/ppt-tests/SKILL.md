@@ -74,10 +74,13 @@ ADB-driven UI checks are C5, local-only — see `ppt-mobile-native`.
 
 ## IG3 — failing-on-main test (two-commit pattern)
 
-For `bug`, `revert`, `risky-churn`, `test-gap` vectors. **Do not use
-`git stash`** — it only isolates uncommitted work, so once the fix is
-committed (required to be in the PR) stash can't separate it from the test.
-See [`implementer-prompt.md`](../../../.research/implementer-prompt.md#ig3—test-that-would-have-caught-the-bug-exists-and-fails-on-main) for the canonical rule.
+For vector `bug` or `test-gap`, **or** any plan sourced from a `revert-…` /
+`risky-churn-…` signal (see `routine-prompt.md` Phase 1 signal table; the
+vector for such plans is typically `bug`). **Do not use `git stash`** —
+it only isolates uncommitted work, so once the fix is committed (required
+to be in the PR) stash can't separate it from the test. See
+[`implementer-prompt.md`](../../../.research/implementer-prompt.md#ig3—test-that-would-have-caught-the-bug-exists-and-fails-on-main)
+for the canonical rule.
 
 The pattern:
 
