@@ -893,7 +893,7 @@ const AuditPage: FC = () => {
 
   const handleExportCsv = async () => {
     const csvQs = buildQueryString(filters);
-    const url = `/api/v1/admin/audit/csv${csvQs ? `?${csvQs}` : ''}`;
+    const url = `/api/v1/admin/audit.csv${csvQs ? `?${csvQs}` : ''}`;
     try {
       const resp = await fetch(url, {
         credentials: 'include',
