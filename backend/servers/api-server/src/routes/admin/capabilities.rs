@@ -159,7 +159,10 @@ async fn list_for_me(
     //
     // Best-effort: a DB error here must NOT block the bootstrap response.
     // The chip falls back to `unverified` — acceptable degradation.
-    let mfa_verified_at: Option<DateTime<Utc>> = sqlx::query_scalar::<_, DateTime<Utc>>(
+    // TODO(refactor): move into MfaRecency trait to dedupe with
+    // PgMfaRecency::is_recent — add `latest_verification(user_id)` to the
+    // trait + Pg impl + tests so the raw SQL lives in one place.
+    let mfa_verified_at: Option<DateTime<Utc>> = match sqlx::query_scalar::<_, DateTime<Utc>>(
         r#"
         SELECT verified_at
         FROM two_factor_auth_verifications
@@ -172,7 +175,13 @@ async fn list_for_me(
     .bind(principal.user_id)
     .fetch_optional(state.db_pool())
     .await
-    .unwrap_or(None);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::warn!(user_id = %principal.user_id, error = %e, "failed to load latest MFA verification");
+            None
+        }
+    };
 
     // Audit the read-of-self best-effort. We swallow audit-store errors so
     // an audit-store outage cannot brick the bootstrap path itself — the
