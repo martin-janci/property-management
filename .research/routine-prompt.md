@@ -300,12 +300,16 @@ This pass is mandatory — it's the difference between "passes mechanical gates"
    - Append new signal IDs to `seen_signals`.
    - Bump `hotspot_history[file]` for each new hotspot: `{ runs_seen: n+1, last_seen: today, recent_churn: <this-run-churn> }`.
    - Increment relevant stats. If nothing new happened, increment `quiet_days`.
-3. Run the **Quality gates** (below) in order:
-   - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row, and commit that partial state.
-4. Commit + push:
+3. **Stage everything in `.research/`** so the quality gates have something to inspect:
    ```bash
    git add .research/
+   ```
+   Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
+4. Run the **Quality gates** (below) in order against the staged index:
+   - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+5. Commit + push (only when gates passed or partial-commit was approved):
+   ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans"
    git push origin main
    ```
@@ -321,8 +325,8 @@ Run these and verify each passes:
 4. `.research/backlog.md` content matches what regenerating from `backlog.json` would produce (don't have stale rows).
 5. Today's brief exists with all required sections.
 6. **At most 2** new files added under `.research/plans/`.
-7. Every new plan contains all 14 required sections — 4 bold metadata fields at the top (`**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**`) and 10 `##` headings (`Hypothesis`, `Evidence`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge`). At least one capability box must be ticked. The *Required capabilities* section must declare `Mode: local-only` or `Mode: cloud-ok` on its own line (derived from whether C4/C5 are ticked).
-8. No secrets or private infrastructure hostnames (anything `*.rlt.sk`, internal IPs, API tokens, OAuth tokens, htpasswd hashes) anywhere in the committed text.
+7. Every new plan contains all 15 required sections: **4 metadata fields** (`**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**`) and **11 `##` headings** (`Hypothesis`, `Evidence`, `Files`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge`). At least one capability box must be ticked. The *Required capabilities* section declares `Mode: local-only` or `Mode: cloud-ok`. The *Files* heading lists ≥1 path that resolves on disk.
+8. **Same scope rules as G9**, applied to the staged set: no secrets or private infrastructure hostnames (`sk-ant-`, `ANTHROPIC_API_KEY`, `Authorization: Bearer`, `*.rlt.sk`, internal IPs, OAuth client secrets, htpasswd hashes) in newly-added lines. The four baseline doc files (`.research/{README,routine-prompt,implementer-prompt,IMPROVEMENT_IDEAS}.md`) are **exempt** — they intentionally reference `p.rlt.sk` / `n.rlt.sk` as the bridge endpoint and are committed once. The grep applies to `git diff --cached` with those paths excluded.
 9. Backlog entries deduplicated by `id` (no two items with the same id).
 10. No score above 8. No score below 0 (those should be `dropped`).
 11. **No placeholder rot** in any committed plan or brief. Grep each newly-written `plans/<slug>.md` and the brief for these substrings (case-insensitive); fail the gate if any match:

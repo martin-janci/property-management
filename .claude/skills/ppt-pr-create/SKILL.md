@@ -22,7 +22,7 @@ plan* commands all exited 0. You're about to open the PR.
 
 - Title format
 - Full PR body template (verbatim from implementer prompt)
-- IG3 stash/pop transcript placement
+- IG3 two-commit TDD transcript placement (test commit → fix commit; no stash)
 - CI workflows that will fire — so you can preview their scope before push
 
 ## Inputs
@@ -75,11 +75,18 @@ plan* commands all exited 0. You're about to open the PR.
    $ git log --oneline impl/$SLUG ^main
    <fix-sha>   fix: <issue>
    <test-sha>  test: add regression for <issue>
-   $ git checkout <test-sha> -- <test-path> && cargo test <test_name>
+   # Full checkout at the test commit — detached HEAD, no fix yet:
+   $ git checkout <test-sha>
+   $ cargo test <test_name>
    <failure output proving the bug exists>
-   $ git checkout impl/$SLUG && cargo test <test_name>
+   # Back to the impl branch — both commits applied:
+   $ git checkout impl/$SLUG
+   $ cargo test <test_name>
    <pass output proving the fix works>
    ```
+   Don't `git checkout <test-sha> -- <test-path>` (partial) — that leaves the
+   fix files on disk, so the "pre-fix" run silently passes. Use a full
+   `git checkout <test-sha>` so the working tree matches the snapshot.
 
    ## Out-of-scope items I noticed
    - <one-liner — goes to next research scan>
@@ -124,9 +131,13 @@ the blocker in the body, per implementer prompt § *Goals*:
 gh --version >/dev/null && gh auth status >/dev/null 2>&1 && echo OK
 # expected: OK
 
-# 2. authenticated as the right user (read the user's CLAUDE notes — should be hanibalsk)
+# 2. authenticated as a user with PR-create permission on this repo.
+#    The personal default is `hanibalsk`; collaborators or automation
+#    tokens may differ. Just confirm `gh auth status` reports an account
+#    that GitHub recognises as a contributor.
 gh api user --jq .login
-# expected: hanibalsk
+gh repo view --json viewerCanAdminister --jq '.viewerCanAdminister'
+# expected: true (or any non-empty login that's listed as a collaborator)
 
 # 3. base branch main exists on origin
 git ls-remote --heads origin main | grep -q refs/heads/main && echo OK
@@ -153,4 +164,4 @@ gh pr view "$PR_NUM" --json body --jq .body | grep -q "^Closes plan: .research/p
   § *Opening the PR* — canonical body template
 - [`ppt-research-flow`](../ppt-research-flow/SKILL.md) — full flow including
   after-merge archive
-- [`ppt-tests`](../ppt-tests/SKILL.md) — IG3 stash/pop dance
+- [`ppt-tests`](../ppt-tests/SKILL.md) — IG3 two-commit TDD pattern

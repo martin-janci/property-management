@@ -15,13 +15,21 @@ picks from here.
 
 ## Scoring rubric
 
-- **+3** confirmed bug with reproduction
-- **+2** repeated churn in same file/area over multiple runs
-- **+2** unchecked TODO/FIXME in recently-merged code with author context still warm
-- **+1** stalled PR review (signal of unclear direction)
-- **+1** test gap exposed by a fix
-- **−1** speculative / cosmetic refactor with no concrete pain
-- **−2** already has an open ticket / in-flight PR
+Mirrors `routine-prompt.md` § *Phase 1 — Observe* signal table. **Canonical source** is the routine prompt; this is the human-readable summary.
+
+| Signal type | Δscore | Notes |
+|---|---|---|
+| `unchecked-todo` (PR body has `- [ ]` after merge) | **+2** | warm context |
+| `revert` (PR is a revert) | **+3** | dig into original |
+| `stalled-review` (open PR >7 days, no reviewDecision) | **+1** | process signal |
+| `churn-hotspot` (top-3 raw churn this run) | **+1** | filter exclusions first |
+| `repeated-churn` (hotspot file in `hotspot_history.runs_seen >= 2`) | **+1 (stacks)** | instability proxy |
+| `risky-churn` (churn alongside revert/bugfix-no-test) | **+2** | combine with churn |
+| `fixme-in-merged-code` (new TODO/FIXME in merged diff) | **+2** | report file:line |
+| `hotfix-no-test` (merged "fix"/"hotfix" PR with no test diff) | **+2** | classic test-gap |
+| `untriaged-issue` (new issue, no label) | **+1** | vector=`triage`; never promoted |
+| `closed-not-merged-pr` (PR closed unmerged) | **+1** | look at close reason |
+| `dep-update-noise` (dependabot/renovate PR) | **0** | log in brief, don't score |
 
 **Score cap:** 8. **Decay:** −1 per 14 days without new evidence on an `open` item.
 

@@ -97,14 +97,16 @@ cargo --version | grep -q '^cargo' && echo OK
 # expected: OK
 
 # 2. workspace resolves
-cd backend && cargo metadata --no-deps --format-version=1 >/dev/null && echo OK
+(cd backend && cargo metadata --no-deps --format-version=1 >/dev/null) && echo OK
 # expected: OK
+# (parens isolate the `cd` to a subshell — subsequent checks still run from
+#  the repo root regardless of where the cargo metadata call landed.)
 
 # 3. sqlx-cli available (for db-migrate / db-prepare)
 cargo sqlx --version >/dev/null 2>&1 || sqlx --version >/dev/null 2>&1
 # expected: zero exit (one of the two forms works)
 
-# 4. all declared members exist on disk
+# 4. all declared members exist on disk (paths from repo root)
 for m in common api-core admin-core db integrations tenant-ops; do
   test -f "backend/crates/$m/Cargo.toml" || { echo "missing: $m"; exit 1; }
 done

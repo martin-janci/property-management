@@ -12,9 +12,11 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 ├── README.md                 # this file
 ├── routine-prompt.md         # the routine's Instructions field
 ├── implementer-prompt.md     # manual implementation agent's system prompt
+├── cloud-setup.sh            # bash body for the claude.ai routine env setup script
 ├── state.json                # rolling cursors + seen_signals + hotspot_history
 ├── backlog.json              # CANONICAL ranked vectors (machine-friendly)
 ├── backlog.md                # rendered human view, regenerated each run
+├── IMPROVEMENT_IDEAS.md      # deferred follow-ups (added by the harden pass)
 ├── signals/
 │   └── YYYY-MM-DD.json       # debug trail of raw signals derived this run
 ├── briefs/

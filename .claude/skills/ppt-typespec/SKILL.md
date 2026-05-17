@@ -9,9 +9,18 @@ tags: [backend, frontend, infra]
 
 # PPT TypeSpec
 
-`docs/api/typespec/` is the contract source-of-truth. `just generate-api`
-emits the OpenAPI spec and regenerates the two TS API clients. Backend
-handlers consume the spec via utoipa annotations.
+`docs/api/typespec/` is the contract source-of-truth.
+
+Pipeline (two steps):
+
+1. **`cd docs/api/typespec && npx tsp compile .`** — compiles the TypeSpec
+   into the OpenAPI spec under `tsp-output/`. **This step is what regenerates
+   the spec; the justfile recipe doesn't currently run it for you.**
+2. **`just generate-api`** — wraps `pnpm generate-api` + `pnpm generate-reality-api`
+   inside `frontend/`, which consumes the spec to regenerate the two TS API
+   clients (`@ppt/api-client`, `@ppt/reality-api-client`).
+
+Run both. Backend handlers consume the spec via utoipa annotations.
 
 ## When to invoke
 
@@ -98,15 +107,15 @@ need a version bump.
 test -d docs/api/typespec/node_modules && echo OK
 # expected: OK after first run; if missing, `cd docs/api/typespec && npm install`
 
-# 2. tsp compiler reachable
-cd docs/api/typespec && npx --no-install tsp --version >/dev/null 2>&1 && echo OK
+# 2. tsp compiler reachable (subshell so cwd stays at repo root for later checks)
+(cd docs/api/typespec && npx --no-install tsp --version) >/dev/null 2>&1 && echo OK
 # expected: OK
 
-# 3. main entry present
+# 3. main entry present (path from repo root)
 test -f docs/api/typespec/main.tsp && echo OK
 # expected: OK
 
-# 4. expected domain files present
+# 4. expected domain files present (paths from repo root)
 for d in announcements auth buildings compliance documents faults listings organizations rentals units voting; do
   test -f "docs/api/typespec/domains/$d.tsp" || { echo "missing: $d"; exit 1; }
 done

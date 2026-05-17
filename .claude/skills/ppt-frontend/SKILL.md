@@ -100,10 +100,11 @@ pnpm --version >/dev/null && echo OK
 # expected: OK
 
 # 2. workspace resolves
-cd frontend && pnpm -r exec true >/dev/null 2>&1 && echo OK
+(cd frontend && pnpm -r exec true >/dev/null 2>&1) && echo OK
 # expected: OK (works even before install — exec true is a noop)
+# (subshell so the cwd stays at the repo root for the following checks)
 
-# 3. expected apps present
+# 3. expected apps present (paths from repo root)
 for a in ppt-web reality-web mobile; do
   test -f "frontend/apps/$a/package.json" || { echo "missing app: $a"; exit 1; }
 done

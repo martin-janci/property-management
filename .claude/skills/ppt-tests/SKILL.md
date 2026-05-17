@@ -21,7 +21,7 @@ You touched code and want to know "what's the fastest signal here?".
 
 - Stack → command lookup
 - Filter syntax per runner
-- IG3 stash/pop dance (failing test on `main` proof)
+- IG3 two-commit TDD pattern (failing-on-main proof; no `git stash`)
 
 ## Inputs
 
