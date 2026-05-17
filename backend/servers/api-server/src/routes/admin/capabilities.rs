@@ -18,9 +18,9 @@ use admin_core::{
     CapabilityGrantsRepository, RequireCapability,
 };
 use api_core::extractors::principal::RequestPrincipal;
-use api_core::AuthUser;
+use api_core::{AuthUser, TenantMembershipProvider};
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     routing::{delete, get, post},
     Extension, Json, Router,
@@ -100,7 +100,27 @@ pub struct MyCapabilitiesResponse {
     pub principal_kind: &'static str,
     /// Active (non-revoked, non-expired) capability grants for the caller.
     pub capabilities: Vec<CapabilityGrant>,
+    /// Timestamp of the caller's most recent MFA verification, if any and
+    /// still within the validity window. `null` means never verified or the
+    /// window has already expired.
+    ///
+    /// Frontend uses this (together with `mfa_window_seconds`) to compute the
+    /// live countdown on the `MfaWindowChip` header chip.
+    pub mfa_verified_at: Option<DateTime<Utc>>,
+    /// Length of the MFA validity window in seconds. Currently hardcoded to
+    /// 900 (15 min) — matching `RECENT_MFA_WINDOW` in `admin_core::mfa`.
+    ///
+    /// TODO(config): expose via `AppConfig::mfa_window_seconds` and thread it
+    /// into both `PgMfaRecency` and this field so a single value drives both.
+    pub mfa_window_seconds: i64,
 }
+
+/// The MFA validity window in seconds. Must stay in sync with
+/// `admin_core::mfa::RECENT_MFA_WINDOW` (both are 15 minutes = 900 s).
+///
+/// TODO(config): thread this through `AppConfig` so a single value drives
+/// both `PgMfaRecency` and this constant.
+const MFA_WINDOW_SECONDS: i64 = 900;
 
 /// GET /admin/capabilities/me
 ///
@@ -114,8 +134,14 @@ pub struct MyCapabilitiesResponse {
 /// surface emits an audit row). The audit action is `AuditRead` because the
 /// data being read is a slice of the audit / capabilities surface, even
 /// though no `AuditRead` capability is required to invoke this endpoint.
+///
+/// The response also includes `mfa_verified_at` (the timestamp of the
+/// caller's most-recent MFA verification, or `null` if none within the
+/// window) and `mfa_window_seconds` so the frontend can render a live
+/// countdown chip without decoding the JWT.
 async fn list_for_me(
     principal: RequestPrincipal,
+    State(state): State<AppState>,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
     Extension(audit): Extension<Arc<dyn AuditWriter>>,
     headers: HeaderMap,
@@ -124,6 +150,29 @@ async fn list_for_me(
         .list_for_user(principal.user_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Fetch the most-recent MFA verification timestamp for this user, if any
+    // within the validity window. We return `None` if the user has never
+    // verified or if the last verification is older than MFA_WINDOW_SECONDS —
+    // that way the frontend chip stays in the `unverified` state even when the
+    // DB row exists but is stale.
+    //
+    // Best-effort: a DB error here must NOT block the bootstrap response.
+    // The chip falls back to `unverified` — acceptable degradation.
+    let mfa_verified_at: Option<DateTime<Utc>> = sqlx::query_scalar::<_, DateTime<Utc>>(
+        r#"
+        SELECT verified_at
+        FROM two_factor_auth_verifications
+        WHERE user_id = $1
+          AND verified_at > NOW() - INTERVAL '900 seconds'
+        ORDER BY verified_at DESC
+        LIMIT 1
+        "#,
+    )
+    .bind(principal.user_id)
+    .fetch_optional(state.db_pool())
+    .await
+    .unwrap_or(None);
 
     // Audit the read-of-self best-effort. We swallow audit-store errors so
     // an audit-store outage cannot brick the bootstrap path itself — the
@@ -152,6 +201,8 @@ async fn list_for_me(
         user_id: principal.user_id,
         principal_kind: principal.kind.as_str(),
         capabilities: rows,
+        mfa_verified_at,
+        mfa_window_seconds: MFA_WINDOW_SECONDS,
     }))
 }
 
