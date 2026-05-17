@@ -35,6 +35,20 @@ function AdminCapabilityScope({ children }: { children: ReactNode }) {
   );
 }
 
+/** Placeholder for pages being implemented in Round 2. */
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <section style={{ padding: '32px' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ppt-fg-primary, #111827)' }}>
+        {title}
+      </h1>
+      <p style={{ color: 'var(--ppt-fg-muted, #6b7280)', marginTop: '8px' }}>
+        {title} page coming in Round 2
+      </p>
+    </section>
+  );
+}
+
 export function App() {
   return (
     <AdminAuthProvider>
@@ -52,12 +66,98 @@ export function App() {
                 </ProtectedRoute>
               }
             >
+              {/* Overview — no cap required */}
               <Route index element={<Dashboard />} />
-              <Route path="agencies" element={<AgenciesPage />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="audit" element={<AuditPage />} />
-              <Route path="feature-flags" element={<FeatureFlagsPage />} />
-              <Route path="platform" element={<PlatformPage />} />
+
+              {/* TENANTS */}
+              <Route
+                path="tenants/agencies"
+                element={
+                  <ProtectedRoute requiredCapability="agencies_read">
+                    <AgenciesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="tenants/lifecycle"
+                element={
+                  <ProtectedRoute
+                    requiredCapability={['tenant_export', 'tenant_purge', 'tenant_restore']}
+                  >
+                    <PlaceholderPage title="Lifecycle" />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* IDENTITY */}
+              <Route
+                path="identity/users"
+                element={
+                  <ProtectedRoute requiredCapability={['users_read', 'principal_kind_escalate']}>
+                    <UsersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="identity/memberships"
+                element={
+                  <ProtectedRoute requiredCapability={['memberships_grant', 'memberships_revoke']}>
+                    <PlaceholderPage title="Memberships" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="identity/capabilities"
+                element={
+                  <ProtectedRoute requiredCapability="memberships_grant">
+                    <PlaceholderPage title="Capabilities" />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* OPERATIONS */}
+              <Route
+                path="ops/audit"
+                element={
+                  <ProtectedRoute requiredCapability="audit_read">
+                    <AuditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="ops/impersonation"
+                element={
+                  <ProtectedRoute requiredCapability="users_impersonate">
+                    <PlaceholderPage title="Impersonation" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="ops/feature-flags"
+                element={
+                  <ProtectedRoute requiredCapability="feature_flags_write">
+                    <FeatureFlagsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* PLATFORM */}
+              <Route
+                path="platform/settings"
+                element={
+                  <ProtectedRoute requiredCapability="site_settings_write">
+                    <PlatformPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="platform/mobile"
+                element={
+                  <ProtectedRoute requiredCapability="mobile_config_write">
+                    <PlaceholderPage title="Mobile config" />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </MfaWrapper>
