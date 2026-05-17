@@ -29,9 +29,14 @@ set -euo pipefail
 echo "==> ppt-research routine setup"
 
 # --- 1. gh CLI -------------------------------------------------------------
+# Pinned version. `releases/latest/download/<asset>` is a redirector that fills
+# in whatever the current latest tag is — using a hardcoded filename like
+# `gh_2.61.0_linux_amd64.tar.gz` against that path 404s once a newer release
+# ships (the asset filename includes the current version). Pin the tag instead.
+GH_CLI_VERSION="${GH_CLI_VERSION:-2.61.0}"
 if ! command -v gh >/dev/null 2>&1; then
-  echo "==> Installing gh CLI"
-  curl -fsSL https://github.com/cli/cli/releases/latest/download/gh_2.61.0_linux_amd64.tar.gz \
+  echo "==> Installing gh CLI v${GH_CLI_VERSION}"
+  curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.tar.gz" \
     | tar -xz -C /tmp
   mv /tmp/gh_*/bin/gh /usr/local/bin/gh
   chmod +x /usr/local/bin/gh
