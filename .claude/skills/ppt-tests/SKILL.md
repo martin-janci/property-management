@@ -46,7 +46,7 @@ Workspace members: `common`, `api-core`, `admin-core`, `db`, `integrations`,
 
 ```bash
 just test-frontend                           # all apps + packages
-cd frontend && pnpm -F ppt-web test          # single app
+cd frontend && pnpm -F @ppt/web test         # single app (package name from its package.json, NOT dir name)
 cd frontend && pnpm -F @ppt/api-client test  # single package
 ```
 

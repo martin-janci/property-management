@@ -131,13 +131,15 @@ the blocker in the body, per implementer prompt § *Goals*:
 gh --version >/dev/null && gh auth status >/dev/null 2>&1 && echo OK
 # expected: OK
 
-# 2. authenticated as a user with PR-create permission on this repo.
-#    The personal default is `hanibalsk`; collaborators or automation
-#    tokens may differ. Just confirm `gh auth status` reports an account
-#    that GitHub recognises as a contributor.
-gh api user --jq .login
-gh repo view --json viewerCanAdminister --jq '.viewerCanAdminister'
-# expected: true (or any non-empty login that's listed as a collaborator)
+# 2. authenticated as a user / token that can open PRs on this repo.
+#    Personal default is `hanibalsk`; collaborators, fork contributors, or
+#    automation tokens are equally valid. Admin permission is NOT required —
+#    GitHub lets anyone with read access push to a fork + open a PR. We
+#    just want to confirm `gh auth status` is wired up.
+gh auth status >/dev/null 2>&1 && gh api user --jq .login
+# expected: any non-empty login, AND the next command must exit 0
+gh repo view martin-janci/property-management --json id --jq .id >/dev/null
+# expected: exit 0 (repo is reachable from this token)
 
 # 3. base branch main exists on origin
 git ls-remote --heads origin main | grep -q refs/heads/main && echo OK

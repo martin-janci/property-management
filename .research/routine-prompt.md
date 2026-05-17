@@ -24,7 +24,8 @@ is recorded, not hidden), but the brief makes it visible.
 ### G2 — Every run advances state
 
 - **Pass when:** at least one of these changed since the previous run: any cursor (`last_pr_seen`, `last_issue_seen`, `last_commit_sha`), `seen_signals.length`, `hotspot_history` keys, or `stats.quiet_days` (true quiet day still counts as progress).
-- **Check:** `jq --slurpfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{}') '($prev[0] // {}) as $p | (.last_pr_seen != ($p.last_pr_seen // 0)) or (.last_issue_seen != ($p.last_issue_seen // 0)) or (.last_commit_sha != ($p.last_commit_sha // null)) or ((.seen_signals | length) != (($p.seen_signals // []) | length)) or ((.hotspot_history | length) != (($p.hotspot_history // {}) | length)) or (.stats.quiet_days != ($p.stats.quiet_days // 0))' .research/state.json` → expect `true`. *(Uses `--slurpfile`; jq ≥1.7 removed `--argfile`.)*
+- **Timing note:** G2 runs *after* staging this run's `state.json` but *before* the routine's commit (see Phase 4). The on-disk file is the new (this-run) state; the prior committed state is at `HEAD` (the last routine commit). **Compare staged vs `HEAD`, not vs `HEAD~1`** — `HEAD~1` would skip the most recent run and let G2 pass even when nothing changed.
+- **Check:** `jq --slurpfile prev <(git show HEAD:.research/state.json 2>/dev/null || echo '{}') '($prev[0] // {}) as $p | (.last_pr_seen != ($p.last_pr_seen // 0)) or (.last_issue_seen != ($p.last_issue_seen // 0)) or (.last_commit_sha != ($p.last_commit_sha // null)) or ((.seen_signals | length) != (($p.seen_signals // []) | length)) or ((.hotspot_history | length) != (($p.hotspot_history // {}) | length)) or (.stats.quiet_days != ($p.stats.quiet_days // 0))' .research/state.json` → expect `true`. *(Uses `--slurpfile`; jq ≥1.7 removed `--argfile`.)*
 
 ### G3 — Backlog ids are unique
 
@@ -33,14 +34,24 @@ is recorded, not hidden), but the brief makes it visible.
 
 ### G4 — Every signal counted once
 
-- **Pass when:** no signal id from this run's `signals/<date>.json` was already in the previous run's `state.seen_signals` (re-scoring forbidden).
-- **Check:** `jq -s --slurpfile prev <(git show HEAD~1:.research/state.json 2>/dev/null || echo '{"seen_signals":[]}') '.[0].signals as $s | [$s[].id] | map(. as $i | $prev[0].seen_signals | index($i) // empty) | length == 0' .research/signals/$(date -u +%F).json` → expect `true`.
+- **Pass when:** no signal id from this run's `signals/<date>.json` was already in the previous run's `state.seen_signals`, **with one explicit carve-out:** signal types whose payload is intrinsically cumulative — currently `churn-hotspot` and `repeated-churn` (see Phase 1 *Dedup rule*) — may re-emit the same ID with new churn evidence as long as **`score_delta` is NOT re-applied** on the re-emit. G4 only fails when a non-cumulative ID is double-counted *and* its score went up.
+- **Check:** any signal id from `signals/<date>.json` that was already in the previous-run's `seen_signals` AND whose `type` is NOT in the cumulative set must have `score_delta == 0` on the re-emit. Below — `$cum` is the cumulative-type allowlist; the filter selects offenders.
+  ```bash
+  jq -s --slurpfile prev <(git show HEAD:.research/state.json 2>/dev/null || echo '{"seen_signals":[]}') \
+    '($prev[0].seen_signals // []) as $seen
+     | ["churn-hotspot","repeated-churn"] as $cum
+     | [.[0].signals[]
+        | select((.id as $i | $seen | index($i)) and (.type as $t | $cum | index($t) | not) and (.score_delta // 0) != 0)]
+     | length == 0' \
+    .research/signals/$(date -u +%F).json
+  ```
+  → expect `true`.
 
 ### G5 — Score discipline (cap + decay actually applied)
 
 - **Pass when:** no item's score exceeds 8; every `open` item with `updated_at` older than 14 days lost ≥1 point this run *or* moved to `dropped`.
 - **Check (cap):** `jq '[.items[] | select(.score > 8)] | length == 0' .research/backlog.json` → expect `true`.
-- **Check (decay):** for each open item with `updated_at <= today-14`, verify `(prev.score - 1) <= current.score < prev.score` OR `current.status == "dropped"`. Encode as one jq pipeline against `git show HEAD~1:.research/backlog.json`.
+- **Check (decay):** for each open item with `updated_at <= today-14`, verify `(prev.score - 1) <= current.score < prev.score` OR `current.status == "dropped"`. Encode as one jq pipeline against `git show HEAD:.research/backlog.json` (the previously-committed state — `HEAD` *before* this run's commit lands).
 
 ### G6 — Promoted plans actually got the adversarial pass
 
@@ -50,12 +61,17 @@ is recorded, not hidden), but the brief makes it visible.
 ### G7 — At most 2 new plans, each meets all readiness gates
 
 - **Pass when:** ≤2 new plans this run; each contains all 15 required sections (4 metadata fields + 11 headings); each names ≥1 concrete file under the `## Files` heading that resolves on disk.
-- **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | grep -c '\.md$'` ≤ 2.
+- **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -v '/_archive/' | { grep -c '\.md$' || true; }` ≤ 2. (Under `set -o pipefail`/`set -e`, bare `grep -c` exits non-zero when the count is 0; the `|| true` wrapper turns "no new plans this run" into a pass.)
 - **Check (metadata, 4):** for each new plan, all of `**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**` appear at the top of the file (one per line, in the `**Key:**` form).
 - **Check (headings, 11):** for each new plan, all of `## Hypothesis`, `## Evidence`, `## Files`, `## Required capabilities`, `## Repro steps`, `## Suggested approach`, `## Alternatives considered`, `## Root-cause trace`, `## Test plan`, `## Out of scope`, `## After-merge` appear as `##` headings.
 - **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
 - **Check (mode declared):** the *Required capabilities* section declares `Mode: local-only` or `Mode: cloud-ok` (derived from whether C4/C5 are ticked).
-- **Check (files exist on disk):** every bullet under `## Files` must resolve to an existing path. Pipe the bullets through `xargs -I{} test -e {}` and expect zero failures.
+- **Check (files exist on disk):** every bullet under `## Files` must resolve to an existing path. Bullets are written in the template form `` - `<path>:<line?>` `` — strip the leading `- `, the surrounding backticks, and any `:line` suffix before testing. One safe shell pipeline:
+  ```bash
+  awk '/^## Files$/{f=1;next} f && /^## /{f=0} f && /^- /' .research/plans/<slug>.md \
+    | sed -E 's/^- //; s/^`//; s/`$//; s/:[0-9]+$//' \
+    | while IFS= read -r p; do test -e "$p" || { echo "missing: $p"; exit 1; }; done
+  ```
 
 ### G8 — No application code touched
 
@@ -81,7 +97,7 @@ is recorded, not hidden), but the brief makes it visible.
 ### G12 — Plan promotions converge (no thrashing)
 
 - **Pass when:** a plan promoted in run N-1 is either still in `plans/` *or* in `plans/_archive/` in run N — never silently deleted.
-- **Check:** for every prior-run plan slug — `git ls-tree -r --name-only HEAD~1 -- .research/plans/ 2>/dev/null | grep -E '\.research/plans/[^/]+\.md$' | sed 's|^\.research/plans/||; s|\.md$||'` — assert each appears in the current tree as either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md`.
+- **Check:** for every prior-run plan slug — `git ls-tree -r --name-only HEAD -- .research/plans/ 2>/dev/null | grep -E '\.research/plans/[^/]+\.md$' | sed 's|^\.research/plans/||; s|\.md$||'` — assert each appears in the working tree (which has this run's edits staged) as either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md`. `HEAD` here is the last-routine-commit; G2 runs before the new commit, so `HEAD` is the prior state.
 
 ---
 

@@ -14,13 +14,16 @@ tags: [backend, frontend, infra]
 Pipeline (two steps):
 
 1. **`cd docs/api/typespec && npx tsp compile .`** — compiles the TypeSpec
-   into the OpenAPI spec under `tsp-output/`. **This step is what regenerates
-   the spec; the justfile recipe doesn't currently run it for you.**
+   into the OpenAPI spec at **`docs/api/generated/openapi.yaml`** (per
+   `tspconfig.yaml`'s `emitter-output-dir: {project-root}/../generated`).
+   **This step is what regenerates the spec; the justfile recipe doesn't run it.**
 2. **`just generate-api`** — wraps `pnpm generate-api` + `pnpm generate-reality-api`
-   inside `frontend/`, which consumes the spec to regenerate the two TS API
-   clients (`@ppt/api-client`, `@ppt/reality-api-client`).
+   inside `frontend/`, which consumes `docs/api/generated/openapi.yaml` to
+   regenerate the two TS API clients (`@ppt/api-client`, `@ppt/reality-api-client`).
 
-Run both. Backend handlers consume the spec via utoipa annotations.
+**Run both.** Step 1 alone leaves the TS clients stale; step 2 alone leaves
+the OpenAPI YAML stale. Backend handlers consume the spec via utoipa
+annotations.
 
 ## When to invoke
 
@@ -57,7 +60,8 @@ docs/api/typespec/
 │   ├── rentals.tsp
 │   ├── units.tsp
 │   └── voting.tsp
-├── tsp-output/             # generated (do commit)
+# Note: TypeSpec emits to `docs/api/generated/openapi.yaml` (NOT `tsp-output/`)
+# per tspconfig.yaml's `emitter-output-dir: {project-root}/../generated`.
 ├── package.json            # @typespec/* deps
 └── package-lock.json
 ```
@@ -65,15 +69,20 @@ docs/api/typespec/
 ## Steps
 
 1. **Edit the domain file** under `docs/api/typespec/domains/<area>.tsp`.
-2. **Compile + regenerate clients:**
+2. **Recompile the OpenAPI spec** — `just generate-api` alone does NOT do this:
+   ```bash
+   cd docs/api/typespec && npx tsp compile .
+   ```
+   This refreshes `docs/api/generated/openapi.yaml`.
+3. **Regenerate the TS clients:**
    ```bash
    just generate-api
    ```
-   This wraps `pnpm generate-api` + `pnpm generate-reality-api` inside
-   `frontend/`, which in turn calls the TypeSpec emitter and the OpenAPI
-   client generator. Commit both the regenerated TS clients
+   Which wraps `pnpm generate-api` + `pnpm generate-reality-api` inside
+   `frontend/`, consuming the freshly-recompiled
+   `docs/api/generated/openapi.yaml`. Commit both the regenerated TS clients
    (`frontend/packages/api-client/`, `frontend/packages/reality-api-client/`)
-   and the regenerated `tsp-output/`.
+   and the regenerated `docs/api/generated/openapi.yaml`.
 3. **Update backend handlers** to match the new contract. utoipa
    annotations on Rust handlers must stay consistent — see
    [`ppt-rust-backend`](../ppt-rust-backend/SKILL.md).

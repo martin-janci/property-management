@@ -133,8 +133,11 @@ needs under *Required capabilities* — the implementation agent sets up
 exactly those, no more. C4/C5 imply local mode; everything else can run cloud
 or local.
 
-It opens a PR, verifies, and on merge moves the plan to `_archive/` and
-marks the backlog row `done`. The next daily research run sees the
+It opens a PR, verifies, **and includes the archive move (`git mv` of the
+plan into `_archive/`) plus the backlog `status: "done"` flip as a final
+commit in the same PR — before merge, not after** (see implementer-prompt
+§ IG8 for the rationale: deferring the flip risks the next routine run
+re-promoting the same plan). The next daily research run sees the
 shipment in the brief.
 
 ## Hand-edits

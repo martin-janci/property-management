@@ -89,7 +89,8 @@ Plan area is `frontend`, or *Suggested approach* references
 5. **Tests:**
    ```bash
    just test-frontend                       # all
-   cd frontend && pnpm -F ppt-web test      # one app
+   cd frontend && pnpm -F @ppt/web test     # one app (package name, NOT dir name)
+   # Other apps: @ppt/reality-web, @ppt/mobile. Packages: @ppt/api-client, @ppt/admin-ui, …
    ```
 
 ## Deterministic verification

@@ -333,10 +333,13 @@ $ <plan's test-plan commands>
 $ git log --oneline impl/$SLUG ^main
 <sha-fix>   fix: …
 <sha-test>  test: …
-$ git checkout <sha-test> -- backend/...   # test commit, before fix
+# FULL checkout at the test commit (detached HEAD) — no fix in the worktree yet.
+# Do NOT use `git checkout <sha-test> -- <path>` — partial checkout leaves the
+# fix files in place, so the "pre-fix" run silently passes.
+$ git checkout <sha-test>
 $ cargo test <test_name>
 <failure output proving the bug is real>
-$ git checkout impl/$SLUG                  # back to HEAD (fix applied)
+$ git checkout impl/$SLUG                  # back to impl branch (both commits)
 $ cargo test <test_name>
 <pass output proving the fix works>
 \`\`\`
