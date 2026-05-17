@@ -143,9 +143,10 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
 1. `.research/briefs/<YYYY-MM-DD>.md` — today's brief (template below)
 2. `.research/backlog.json` — canonical; append / update / decay / cap items
 3. `.research/backlog.md` — **regenerate from `backlog.json`** (never edit independently); include top-of-file timestamp widget
-4. `.research/plans/<slug>.md` — promote ready vectors (max 2 per run); scaffold from `.research/plan-template.md`
-5. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run
-6. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats
+4. `.research/IDEAS_TRIAGE.md` — **regenerate from `backlog.json`** filtered to `vector == "triage"` (never edit independently); same byte-identity discipline as `backlog.md` (G14)
+5. `.research/plans/<slug>.md` — promote ready vectors (max 2 per run); scaffold from `.research/plan-template.md`
+6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run
+7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats
 
 Then `git add .research/`, run the **quality gates** below, commit, push to `main`.
 
@@ -291,7 +292,25 @@ Then regenerate `backlog.md` from `backlog.json` (sorted by score desc, then `up
 
 Substitute the literal UTC timestamp at regen time. G10's byte-identity check still applies — the timestamp is part of what gets regenerated each run, so a stale view is obvious at a glance.
 
-(The triage-vector digest at `.research/IDEAS_TRIAGE.md` is rendered in a separate sub-section — see below.)
+#### Phase 2 — Triage digest
+
+After `backlog.md` is rendered, regenerate `.research/IDEAS_TRIAGE.md` from the same `backlog.json`. Filter `items` to rows with `vector == "triage"` (the lowest-effort vector that Phase 3 *never* promotes — see *Phase 3*). Same sort key as `backlog.md` (score desc, then `updated_at` desc). Same regeneration discipline as `backlog.md` — never hand-edit; G14 enforces byte-identity. The file's purpose is a separate weekly digest so triage rows don't drown the implementer's view of "what's ready to ship".
+
+Schema:
+
+```markdown
+# Triage queue
+
+<sub>Last regenerated: YYYY-MM-DD HH:MM UTC by routine</sub>
+
+> **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand.
+
+| Score | Title | Source | Updated | Status |
+|-------|-------|--------|---------|--------|
+| <…>   | <…>   | <…>    | <…>     | <…>    |
+```
+
+If no items qualify, render the headers with one empty separator row (same shape as an empty `backlog.md`). Never delete the file — its existence is part of G14's contract. The header text + status legend below the table are static — preserve them verbatim across renders so the byte-identity check stays meaningful.
 
 ### Phase 3 — Promote
 
