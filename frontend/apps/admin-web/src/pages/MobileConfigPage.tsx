@@ -280,8 +280,10 @@ export default function MobileConfigPage() {
   );
 
   const handleDialogCancel = useCallback(() => {
+    // Resolve cleanly on cancel so SettingsForm does not render the
+    // "Cancelled" rejection string as a form error.
     setDialogOpen(false);
-    rejectRef.current?.(new Error('Cancelled'));
+    resolveRef.current?.();
   }, []);
 
   const handleFlagSubmit = useCallback(

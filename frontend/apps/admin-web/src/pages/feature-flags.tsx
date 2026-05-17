@@ -12,6 +12,7 @@
  */
 
 import { type SettingsField, SettingsForm } from '@ppt/admin-ui';
+import { useQuery } from '@tanstack/react-query';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,11 +26,29 @@ interface FeatureFlagValues extends Record<string, unknown> {
   'building.disabled': boolean;
 }
 
-const initialValues: FeatureFlagValues = {
+const FLAG_KEYS = [
+  'beta.new_listings_search',
+  'beta.ai_fault_triage',
+  'building.disabled',
+] as const;
+
+const defaultValues: FeatureFlagValues = {
   'beta.new_listings_search': false,
   'beta.ai_fault_triage': false,
   'building.disabled': false,
 };
+
+interface BackendFeatureFlag {
+  id: string;
+  key: string;
+  name?: string;
+  is_enabled: boolean;
+}
+
+interface ListFeatureFlagsBackendResponse {
+  flags: BackendFeatureFlag[];
+}
+
 
 // ---------------------------------------------------------------------------
 // AuditReason dialog — shown before actual API call
@@ -161,6 +180,47 @@ const FeatureFlagsPage: React.FC = () => {
   const { token } = useAdminAuth();
   const { showToast } = useToast();
 
+  // Load real flag metadata. The backend toggle endpoint takes a UUID id, not
+  // the human-readable key, so we need this list to resolve key → id and to
+  // get the current `is_enabled` baseline used for diffing.
+  const { data: backendFlags } = useQuery<BackendFeatureFlag[]>({
+    queryKey: ['admin', 'platform', 'feature-flags'],
+    queryFn: async () => {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/v1/platform-admin/feature-flags', {
+        headers,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        if (res.status === 404) return [];
+        throw new Error(`Feature flags fetch failed: ${res.status}`);
+      }
+      const body = (await res.json()) as ListFeatureFlagsBackendResponse;
+      return body.flags ?? [];
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+
+  // Index by key for O(1) lookup of {id, is_enabled} during save.
+  const flagsByKey = useMemo(() => {
+    const map = new Map<string, BackendFeatureFlag>();
+    for (const f of backendFlags ?? []) map.set(f.key, f);
+    return map;
+  }, [backendFlags]);
+
+  // Form initial values derived from the server's current is_enabled, falling
+  // back to defaults for keys the server doesn't yet know about.
+  const initialValues = useMemo<FeatureFlagValues>(() => {
+    const result = { ...defaultValues };
+    for (const k of FLAG_KEYS) {
+      const found = flagsByKey.get(k);
+      if (found) (result as Record<string, unknown>)[k] = found.is_enabled;
+    }
+    return result;
+  }, [flagsByKey]);
+
   // Pending values captured from SettingsForm so we can pass to dialog
   const pendingValuesRef = useRef<FeatureFlagValues | null>(null);
   // Resolve/reject for the Promise returned by onSubmit
@@ -201,37 +261,58 @@ const FeatureFlagsPage: React.FC = () => {
   }, []);
 
   const handleConfirm = useCallback(
-    async (reason: string) => {
+    async (_reason: string) => {
       const values = pendingValuesRef.current;
       if (!values) return;
       setDialogPending(true);
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers.Authorization = `Bearer ${token}`;
 
+      // Diff submitted values against the server baseline; only call toggle
+      // for flags that actually changed. Avoids needless writes (and needless
+      // audit-log rows) for flags the operator left untouched.
+      const changedKeys = FLAG_KEYS.filter((k) => {
+        const desired = values[k] === true;
+        const current = flagsByKey.get(k)?.is_enabled ?? defaultValues[k];
+        return desired !== current;
+      });
+
+      if (changedKeys.length === 0) {
+        setDialogPending(false);
+        setDialogOpen(false);
+        showToast({
+          type: 'info',
+          title: t('admin.featureFlags.toast.noChangesTitle', { defaultValue: 'No changes' }),
+          message: t('admin.featureFlags.toast.noChangesMessage', {
+            defaultValue: 'No feature flags were modified.',
+          }),
+        });
+        resolveSubmitRef.current?.();
+        return;
+      }
+
       let anySuccess = false;
       let anyFailure = false;
+      const unknownKeys: string[] = [];
 
-      for (const [flagKey] of Object.entries(values)) {
+      for (const flagKey of changedKeys) {
+        const meta = flagsByKey.get(flagKey);
+        if (!meta) {
+          // Flag isn't registered on the server yet — skip and warn.
+          unknownKeys.push(flagKey);
+          anyFailure = true;
+          continue;
+        }
         try {
           const res = await fetch(
-            `/api/v1/platform-admin/feature-flags/${encodeURIComponent(flagKey)}/toggle`,
+            `/api/v1/platform-admin/feature-flags/${encodeURIComponent(meta.id)}/toggle`,
             {
               method: 'POST',
               headers,
               credentials: 'include',
-              body: JSON.stringify({ reason }),
             }
           );
-          if (res.status === 404) {
-            // TODO: wire to real flag IDs once GET /platform-admin/feature-flags is used to
-            // resolve flag UUIDs from keys. Endpoint: POST /platform-admin/feature-flags/{id}/toggle
-            showToast({
-              type: 'warning',
-              title: 'Save not yet implemented',
-              message: `Flag "${flagKey}" not found on server (404). Wire real flag IDs from GET /platform-admin/feature-flags.`,
-            });
-            anyFailure = true;
-          } else if (!res.ok) {
+          if (!res.ok) {
             anyFailure = true;
           } else {
             anySuccess = true;
@@ -244,6 +325,14 @@ const FeatureFlagsPage: React.FC = () => {
       setDialogPending(false);
       setDialogOpen(false);
 
+      if (unknownKeys.length > 0) {
+        showToast({
+          type: 'warning',
+          title: 'Unknown feature flag(s)',
+          message: `Not registered on server: ${unknownKeys.join(', ')}. Create them via POST /platform-admin/feature-flags first.`,
+        });
+      }
+
       if (anySuccess && !anyFailure) {
         showToast({
           type: 'success',
@@ -253,6 +342,17 @@ const FeatureFlagsPage: React.FC = () => {
           }),
         });
         resolveSubmitRef.current?.();
+      } else if (anyFailure && anySuccess) {
+        showToast({
+          type: 'warning',
+          title: t('admin.featureFlags.toast.partialFailedTitle', {
+            defaultValue: 'Partial save',
+          }),
+          message: t('admin.featureFlags.toast.partialFailedMessage', {
+            defaultValue: 'Some flags were saved; others could not be saved.',
+          }),
+        });
+        rejectSubmitRef.current?.(new Error('Partial save — some flags failed.'));
       } else if (anyFailure) {
         showToast({
           type: 'error',
@@ -266,12 +366,15 @@ const FeatureFlagsPage: React.FC = () => {
         resolveSubmitRef.current?.();
       }
     },
-    [token, showToast, t]
+    [token, showToast, t, flagsByKey]
   );
 
+  // Cancel resolves the form's submit Promise instead of rejecting it, so the
+  // form treats the cancel as a clean no-op rather than rendering "Cancelled"
+  // as a form-level error.
   const handleDialogCancel = useCallback(() => {
     setDialogOpen(false);
-    rejectSubmitRef.current?.(new Error('Cancelled'));
+    resolveSubmitRef.current?.();
   }, []);
 
   return (
@@ -289,6 +392,10 @@ const FeatureFlagsPage: React.FC = () => {
           {t('admin.featureFlags.warning')}
         </p>
         <SettingsForm<FeatureFlagValues>
+          // key forces re-init of the SettingsForm internal state once the
+          // server-provided baseline arrives, so the toggles reflect actual
+          // server values instead of always-false defaults.
+          key={`ff-${(backendFlags ?? []).length}`}
           fields={fields}
           initialValues={initialValues}
           capability="feature_flags_write"

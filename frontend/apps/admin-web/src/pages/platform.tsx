@@ -232,8 +232,10 @@ const PlatformPage: React.FC = () => {
   );
 
   const handleDialogCancel = useCallback(() => {
+    // Resolve the form's submit Promise on cancel so SettingsForm does not
+    // render "Cancelled" as a form error — the user simply backs out.
     setDialogOpen(false);
-    rejectSubmitRef.current?.(new Error('Cancelled'));
+    resolveSubmitRef.current?.();
   }, []);
 
   return (

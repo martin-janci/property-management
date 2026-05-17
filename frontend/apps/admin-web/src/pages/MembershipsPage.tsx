@@ -1,12 +1,15 @@
 /**
  * MembershipsPage — `/identity/memberships`
  *
- * Renders a table of memberships for a given org. Org is selected by slug
- * via a text input + Load button.
+ * Renders a table of memberships for a given org. Org is selected by its
+ * UUID (the admin memberships router doesn't expose a slug→id lookup).
  *
  * Wired to:
- *   GET  /api/v1/admin/memberships?org_id=<id>  (uses org slug lookup stub)
- *   DELETE /api/v1/admin/memberships/{user_id}   → requires MFA + memberships_revoke cap
+ *   GET    /api/v1/organizations/{org_id}/members  — list members for the org.
+ *          (The admin `/admin/memberships` router only exposes invite/accept/
+ *          revoke; member listing lives on the public organizations router.)
+ *   DELETE /api/v1/admin/memberships/{user_id}     — body { organization_id }.
+ *          Requires MFA + memberships_revoke cap.
  */
 
 import { useCapability } from '@ppt/admin-ui';
@@ -29,6 +32,25 @@ interface MembershipsResponse {
   total: number;
 }
 
+// Shape returned by GET /api/v1/organizations/{id}/members
+interface BackendMemberRow {
+  user_id: string;
+  email: string;
+  name?: string;
+  role_id?: string | null;
+  role_name: string;
+  role_type?: string;
+  joined_at?: string | null;
+}
+
+interface BackendListMembersResponse {
+  members: BackendMemberRow[];
+  total: number;
+}
+
+// Loose UUID v4-ish sanity check so we don't fire requests on obvious garbage.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function formatDate(iso: string): string {
   try {
     return new Intl.DateTimeFormat('en-GB', { dateStyle: 'short' }).format(new Date(iso));
@@ -44,49 +66,70 @@ export default function MembershipsPage() {
   const queryClient = useQueryClient();
   const canRevoke = useCapability('memberships_revoke');
 
-  const [orgSlug, setOrgSlug] = useState('');
-  const [loadedSlug, setLoadedSlug] = useState('');
+  const [orgId, setOrgId] = useState('');
+  const [loadedOrgId, setLoadedOrgId] = useState('');
 
   const { data, isLoading, isError, error } = useQuery<MembershipsResponse>({
-    queryKey: ['admin', 'memberships', loadedSlug],
+    queryKey: ['admin', 'memberships', loadedOrgId],
     queryFn: async () => {
-      if (!loadedSlug) return { items: [], total: 0 };
+      if (!loadedOrgId) return { items: [], total: 0 };
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
-      const params = new URLSearchParams({ org_id: loadedSlug });
-      const res = await fetch(`/api/v1/admin/memberships?${params.toString()}`, {
-        headers,
-        credentials: 'include',
-      });
+      // The admin memberships router only exposes invite/accept/revoke (no
+      // list endpoint). Use the organizations router which returns the
+      // member roster with role + identity info.
+      const res = await fetch(
+        `/api/v1/organizations/${encodeURIComponent(loadedOrgId)}/members`,
+        {
+          headers,
+          credentials: 'include',
+        }
+      );
       if (!res.ok) {
         if (res.status === 404) {
           console.warn(
-            'GET /api/v1/admin/memberships returned 404 — endpoint may not be available'
+            `GET /api/v1/organizations/${loadedOrgId}/members returned 404 — org may not exist`
           );
           return { items: [], total: 0 };
         }
         throw new Error(`Memberships fetch failed: ${res.status}`);
       }
-      return res.json() as Promise<MembershipsResponse>;
+      const body = (await res.json()) as BackendListMembersResponse;
+      const items: MembershipRow[] = (body.members ?? []).map((m) => ({
+        user_id: m.user_id,
+        email: m.email,
+        role: m.role_name,
+        invited_at: m.joined_at ?? '',
+        // The organizations endpoint does not surface a membership-lifecycle
+        // status (active/invited/...) — assume active for any returned row.
+        status: 'active',
+      }));
+      return { items, total: body.total ?? items.length };
     },
-    enabled: loadedSlug !== '',
+    enabled: loadedOrgId !== '',
     staleTime: 30_000,
     retry: 1,
   });
 
   const revokeMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const headers: Record<string, string> = { 'X-MFA-Recent': '1' };
+      // Backend `RevokeRequest` requires `{ organization_id }` in the body.
+      // axum also requires Content-Type even when DELETE carries a body.
+      const headers: Record<string, string> = {
+        'X-MFA-Recent': '1',
+        'Content-Type': 'application/json',
+      };
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`/api/v1/admin/memberships/${userId}`, {
         method: 'DELETE',
         headers,
         credentials: 'include',
+        body: JSON.stringify({ organization_id: loadedOrgId }),
       });
       if (!res.ok) throw new Error(`Revoke failed: ${res.status}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'memberships', loadedSlug] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'memberships', loadedOrgId] });
       showToast({
         type: 'success',
         title: t('admin.memberships.toast.revokedTitle', { defaultValue: 'Membership revoked' }),
@@ -105,9 +148,18 @@ export default function MembershipsPage() {
   });
 
   const handleLoad = useCallback(() => {
-    const slug = orgSlug.trim();
-    if (slug) setLoadedSlug(slug);
-  }, [orgSlug]);
+    const id = orgId.trim();
+    if (!id) return;
+    if (!UUID_RE.test(id)) {
+      showToast({
+        type: 'error',
+        title: 'Invalid organisation id',
+        message: 'Organisation id must be a UUID.',
+      });
+      return;
+    }
+    setLoadedOrgId(id);
+  }, [orgId, showToast]);
 
   const items = data?.items ?? [];
 
@@ -127,21 +179,21 @@ export default function MembershipsPage() {
       {/* Org selector */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <label
-          htmlFor="memberships-org-slug"
+          htmlFor="memberships-org-id"
           style={{ fontSize: 13, fontWeight: 500, color: 'var(--ppt-fg-secondary, #374151)' }}
         >
-          {t('admin.memberships.orgSlugLabel', { defaultValue: 'Organisation slug' })}
+          {t('admin.memberships.orgIdLabel', { defaultValue: 'Organisation ID' })}
         </label>
         <input
-          id="memberships-org-slug"
+          id="memberships-org-id"
           type="text"
-          value={orgSlug}
-          onChange={(e) => setOrgSlug(e.target.value)}
+          value={orgId}
+          onChange={(e) => setOrgId(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleLoad();
           }}
-          placeholder={t('admin.memberships.orgSlugPlaceholder', {
-            defaultValue: 'e.g. dunajska-residences',
+          placeholder={t('admin.memberships.orgIdPlaceholder', {
+            defaultValue: 'e.g. 8c2…UUID…d7f',
           })}
           style={{
             fontSize: 13,
@@ -199,7 +251,7 @@ export default function MembershipsPage() {
         </div>
       )}
 
-      {!isLoading && !isError && loadedSlug && (
+      {!isLoading && !isError && loadedOrgId && (
         <div
           style={{
             overflowX: 'auto',

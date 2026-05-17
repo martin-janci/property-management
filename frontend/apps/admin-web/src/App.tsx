@@ -104,7 +104,14 @@ export function App() {
                 <Route
                   path="identity/capabilities"
                   element={
-                    <ProtectedRoute requiredCapability="memberships_grant">
+                    <ProtectedRoute
+                      // Either capability is sufficient to reach the page —
+                      // grant operators see the Grant drawer; revoke-only
+                      // operators can still hit the Revoke buttons. Per-button
+                      // capability gates inside the page keep each action
+                      // correctly scoped.
+                      requiredCapability={['memberships_grant', 'memberships_revoke']}
+                    >
                       <CapabilitiesAdminPage />
                     </ProtectedRoute>
                   }
