@@ -893,17 +893,39 @@ const AuditPage: FC = () => {
 
   const handleExportCsv = async () => {
     const csvQs = buildQueryString(filters);
-    const url = `/api/v1/admin/audit.csv${csvQs ? `?${csvQs}` : ''}`;
+    const url = `/api/v1/admin/audit/csv${csvQs ? `?${csvQs}` : ''}`;
     try {
-      const probe = await fetch(url, { method: 'HEAD' });
-      if (probe.status === 404) {
-        showToast({ type: 'info', title: 'CSV export not yet implemented' });
+      const resp = await fetch(url, {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!resp.ok) {
+        showToast({
+          type: 'error',
+          title: `Export failed (${resp.status})`,
+        });
         return;
       }
-    } catch {
-      // Open anyway — let browser show error
+      const blob = await resp.blob();
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      // Match server's Content-Disposition filename format: YYYYMMDD (no dashes)
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      a.download = `audit-${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Defer revoke so the browser has a tick to start the download before
+      // the object URL is invalidated.
+      setTimeout(() => URL.revokeObjectURL(dlUrl), 100);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Export failed',
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const toggleRow = (id: string) => {
