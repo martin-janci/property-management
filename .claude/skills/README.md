@@ -29,6 +29,7 @@ match the plan's *Required capabilities* section and area.
 | [`ppt-pr-create`](ppt-pr-create/SKILL.md) | both | workflow | Open a PR in this project's style |
 | [`ppt-rust-backend`](ppt-rust-backend/SKILL.md) | both | backend | Cargo workspace navigation |
 | [`ppt-frontend`](ppt-frontend/SKILL.md) | both | frontend | pnpm workspace + Vite/Next apps |
+| [`ppt-screens`](ppt-screens/SKILL.md) | both | frontend, workflow | screen-map docs ↔ routes sync + Chrome MCP / Playwright smoke |
 | [`ppt-mobile-native`](ppt-mobile-native/SKILL.md) | local | mobile | Kotlin / Gradle / Compose (local-only via ADB) |
 | [`ppt-typespec`](ppt-typespec/SKILL.md) | both | backend, frontend, infra | TypeSpec contract authoring |
 | [`ppt-dev-stack`](ppt-dev-stack/SKILL.md) | local | infra | `stack up pm-local` declarative dev stack |

@@ -220,6 +220,8 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
+| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`, `frontend/apps/mobile/app/**`) **without** touching the matching `docs/screens/{ppt,reality,mobile}/*.md` | +2 | vector=`test-gap`; flags screen docs falling behind code |
+| `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
 
 **Churn exclusions** — never score these files as hotspots:
 ```
@@ -230,6 +232,29 @@ docs/api/typespec/*.tsp version bumps
 VERSION
 *.lock, *.lockb
 ```
+
+**Screen-map drift detection** — for each merged PR this run, fetch its file
+list (`gh pr view <num> --json files --jq '.files[].path'`) and apply:
+
+- **Routes touched (the trigger set, mirroring `.github/workflows/screen-map.yml`):**
+  - `frontend/apps/ppt-web/src/App.tsx`
+  - `frontend/apps/ppt-web/src/routes/**`
+  - `frontend/apps/reality-web/src/app/**`
+  - `frontend/apps/mobile/app/**`
+- **Screen docs:** `docs/screens/{ppt,reality,mobile}/**.md`
+
+If the PR's file list intersects the trigger set but contains zero files
+under `docs/screens/`, emit a `screen-map-drift` signal with id
+`screen-map-drift-pr-<num>`, confidence `medium`, candidate vector
+`test-gap`, and a one-line evidence string naming the touched route files.
+
+Additionally, for the orphan signal: spot-check the union of `docs/screens/`
+filenames (sans `.md`, normalised to lowercase) against the union of route
+basenames extracted from the trigger files this run. Any screen doc whose
+slug no longer appears in routes gets a `screen-map-orphan` signal with id
+`screen-map-orphan-<product>-<slug>`, vector `refactor`, confidence
+`medium`. (Don't do exhaustive scanning across full history — the routine
+budget is limited; just the routes touched this run.)
 
 Each signal also carries a `confidence` field:
 
@@ -373,6 +398,12 @@ Run these and verify each passes:
 - Stalled review: #<num> — <days idle>, <author>
 - Reverted: #<num> reverted #<orig> — <hypothesis>
 - Churn hotspots: <file> (<additions+deletions> lines this run, runs_seen=<N>)
+
+## Screen-map status
+- Total `docs/screens/` files: <N> (across `ppt/`, `reality/`, `mobile/`)
+- Drift signals this run: <N> (PRs that changed routes without updating screen docs)
+- Orphan screens this run: <N> (screen docs without a matching route)
+- Last `screen-map.yml` CI run on `main`: <status from `gh run list --workflow=screen-map.yml --branch=main --limit=1`>
 
 ## Backlog deltas
 - **New:** [<score>] <title> — see backlog.md
