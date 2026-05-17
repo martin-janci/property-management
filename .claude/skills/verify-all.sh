@@ -70,6 +70,8 @@ skip() {
 echo "== .claude/skills smoke checks =="
 
 run "ppt-research-flow"   10 'test -d .research/plans/_archive && test -f .research/implementer-prompt.md && echo ok'
+run "ppt-research-trigger" 10 'test -f .research/routine-prompt.md && grep -q "Special trigger payloads" .research/routine-prompt.md'
+run "ppt-next-plan"       10 'test -f .research/backlog.json && jq -e ".items" .research/backlog.json >/dev/null'
 run "ppt-bridge-mcp"      15 'curl -fsS https://p.rlt.sk/healthz >/dev/null'
 if [[ $QUICK -eq 1 ]]; then
   # File-presence fallbacks: confirm the skill points at real workspace paths

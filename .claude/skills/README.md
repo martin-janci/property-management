@@ -24,6 +24,8 @@ match the plan's *Required capabilities* section and area.
 | Skill | Mode | Tags | Purpose |
 |---|---|---|---|
 | [`ppt-research-flow`](ppt-research-flow/SKILL.md) | both | workflow | End-to-end plan → PR → archive choreography |
+| [`ppt-research-trigger`](ppt-research-trigger/SKILL.md) | both | workflow, infra | Fire `deep` / `reset` routine triggers via the API |
+| [`ppt-next-plan`](ppt-next-plan/SKILL.md) | both | workflow | Pick the top `status: ready` plan from `backlog.json` |
 | [`ppt-bridge-mcp`](ppt-bridge-mcp/SKILL.md) | cloud-ok | infra, workflow | Use the ppt-bridge MCP from cloud routines |
 | [`ppt-tests`](ppt-tests/SKILL.md) | both | workflow | Pick the right test command per change |
 | [`ppt-pr-create`](ppt-pr-create/SKILL.md) | both | workflow | Open a PR in this project's style |
