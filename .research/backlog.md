@@ -1,5 +1,7 @@
 # Backlog of vectors
 
+<sub>Last regenerated: 2026-05-17 00:00 UTC by routine</sub>
+
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
 > `backlog.json` and let the next run rebuild this view (or commit both
