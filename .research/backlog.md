@@ -26,6 +26,7 @@ picks from here.
 **Score cap:** 8. **Decay:** −1 per 14 days without new evidence on an `open` item.
 
 Vectors: `bug`, `refactor`, `perf`, `test-gap`, `dx`, `security`, `dep-update`, `triage`.
+`triage` is special: untriaged issue surface signal. **Never promoted to a plan** — Phase 3 readiness gate excludes it. Lives in the backlog as a human-only review queue.
 
 ## Status
 
@@ -33,5 +34,5 @@ Vectors: `bug`, `refactor`, `perf`, `test-gap`, `dx`, `security`, `dep-update`, 
 - `ready` — meets all readiness gates; eligible for plan promotion
 - `picked` — manual agent took it (see `plan` field in JSON for path)
 - `done` — landed; archived plan in `plans/_archive/<slug>.md`
-- `dropped` — reviewed and rejected (see `evidence` for reason)
+- `dropped` — reviewed and rejected; reason is in the item's `evidence` array in `backlog.json` (one line starting with `dropped:`)
 - `needs-human-judgement` — blocked on a question only the user can answer

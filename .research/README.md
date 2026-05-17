@@ -40,8 +40,10 @@ for the environment smoke check.
 2. **Writes the day's brief** at `briefs/YYYY-MM-DD.md` — what shipped, what's
    open/stalled, what changed in code hotspots, anomalies (revert PRs,
    re-opened issues, churn spikes).
-3. **Updates `backlog.md`** — appends new vectors with a score and a one-line
-   rationale; deduplicates against existing rows.
+3. **Updates `backlog.json`** (canonical) — appends new vectors with a score,
+   sources, evidence, and a one-line rationale; deduplicates by `id` and by
+   strong title-similarity overlap. **Regenerates `backlog.md`** from
+   `backlog.json` after each update so the rendered view never drifts.
 4. **Promotes the top items** into ready-to-execute plans at `plans/<slug>.md`
    — each plan is a self-contained brief the implementation agent can read
    cold (file paths, hypothesis, suggested test plan, no this-conversation
@@ -128,9 +130,14 @@ shipment in the brief.
 
 ## Hand-edits
 
-- Drop a vector by editing its row in `backlog.md` to `status: dropped` and
-  leaving a one-line reason. Next routine run respects this.
-- Pause the routine entirely: rename `routine-prompt.md` to
+- **Drop a vector:** edit its row in `backlog.json` (set `status: "dropped"`,
+  append an evidence line with the reason), commit. The next routine run
+  regenerates `backlog.md` from the updated JSON and respects the drop.
+  Don't hand-edit `backlog.md` — it's regenerated each run; your edits
+  there will be silently overwritten.
+- **Defer a vector:** edit its `updated_at` to today in `backlog.json` —
+  resets the 14-day decay clock without other changes.
+- **Pause the routine entirely:** rename `routine-prompt.md` to
   `routine-prompt.md.disabled` — the routine no-ops if its prompt isn't
   present (the routine instructions in claude.ai stay in place but expect to
   read this file at startup).

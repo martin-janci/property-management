@@ -49,10 +49,11 @@ is recorded, not hidden), but the brief makes it visible.
 
 ### G7 — At most 2 new plans, each meets all readiness gates
 
-- **Pass when:** ≤2 new plans this run; each contains all 12 required headings; each names ≥1 concrete file under `files`.
+- **Pass when:** ≤2 new plans this run; each contains all 14 required headings; each has at least one concrete file path under its **Files** heading.
 - **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '\.md$'` ≤ 2.
-- **Check (headings):** for each new plan, all of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings.
+- **Check (headings):** for each new plan, all 14 of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Files`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings. (Yes, 15 with `After-merge` — `Files` was added in 2026-05-17 to give G7 a real anchor; bump the count if you add another required section.)
 - **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
+- **Check (files):** at least one bullet under the *Files* heading matches an existing path: `xargs -I{} test -e {}`.
 
 ### G8 — No application code touched
 
@@ -62,7 +63,8 @@ is recorded, not hidden), but the brief makes it visible.
 ### G9 — No secrets or private hostnames
 
 - **Pass when:** the staged diff contains none of: `sk-ant-`, `ANTHROPIC_API_KEY`, `Authorization: Bearer`, `\.rlt\.sk`, `192\.168\.13\.`, `10\.8\.0\.`, `\$2y\$05\$` (htpasswd), known OAuth client secrets.
-- **Check:** `git diff --cached | grep -E 'sk-ant-|ANTHROPIC_API_KEY|Authorization: Bearer|\.rlt\.sk|192\.168\.13\.|10\.8\.0\.|\$2y\$05\$' | wc -l` → expect `0`. If non-zero, **abort the commit** — secrets are not "log and continue".
+- **Scope carve-out:** the four baseline doc files at the top of `.research/` — `README.md`, `routine-prompt.md`, `implementer-prompt.md`, `IMPROVEMENT_IDEAS.md` — are exempt from G9. They contain `p.rlt.sk` / `n.rlt.sk` deliberately (the bridge-MCP endpoint, public via Cloudflare). The routine *never* edits these files on its own, so they cannot leak fresh secrets through the routine. Everything the routine writes (`briefs/`, `signals/`, `plans/`, `state.json`, `backlog.json`, `backlog.md`) is fully covered.
+- **Check:** `git diff --cached -- '.research/' ':(exclude).research/README.md' ':(exclude).research/routine-prompt.md' ':(exclude).research/implementer-prompt.md' ':(exclude).research/IMPROVEMENT_IDEAS.md' | grep -E 'sk-ant-|ANTHROPIC_API_KEY|Authorization: Bearer|\.rlt\.sk|192\.168\.13\.|10\.8\.0\.|\$2y\$05\$' | wc -l` → expect `0`. If non-zero, **abort the commit** — secrets are not "log and continue".
 
 ### G10 — Backlog markdown matches JSON
 
@@ -137,23 +139,46 @@ write the backlog. Each signal gets a **stable ID**:
 Examples: `unchecked-todo-pr-123`, `reverted-pr-456`, `stalled-review-pr-789`,
 `churn-hotspot-src/foo.ts`, `fixme-commit-abc123-src/foo.ts`.
 
-Drop any signal whose ID is in `state.seen_signals` *unless* it has **materially new evidence** (e.g. churn-hotspot already seen but with new churn this run → still novel, append to its `evidence`).
+**Dedup rule:** a signal ID in `state.seen_signals` is **dropped by default**. The exception is for signals whose payload is intrinsically cumulative — currently only `churn-hotspot` and `repeated-churn` — where the same ID may re-fire on a new run with *new churn numbers*. In that case re-emit the signal with the new churn appended to its `evidence` and **do not add the `score_delta` again**. Every other signal type is one-shot per ID.
 
 Commands:
 
 ```bash
-gh pr list --state merged --base main --limit 50 \
-  --json number,title,mergedAt,author,additions,deletions,files,body,labels
-gh pr list --state open --base main --limit 50 \
-  --json number,title,updatedAt,author,reviewDecision,isDraft,body
-gh pr list --state closed --base main --limit 50 \
-  --json number,title,closedAt,mergedAt,author,body
-gh issue list --state all --limit 100 \
-  --json number,title,state,createdAt,updatedAt,closedAt,labels,body,comments
+SINCE_ISO="$(jq -r '.last_run_iso // "1970-01-01T00:00:00Z"' .research/state.json)"
+LAST_PR="$(jq -r '.last_pr_seen // 0' .research/state.json)"
+LAST_ISSUE="$(jq -r '.last_issue_seen // 0' .research/state.json)"
 
-gh api repos/martin-janci/property-management/commits \
-  --paginate -q '.[] | {sha, message: .commit.message, author: .commit.author.name, date: .commit.author.date, files: [.files[]?.filename]}' \
-  | jq -s 'map(select(.date > $since))'
+# Merged PRs since last_pr_seen
+gh pr list --state merged --base main --limit 50 \
+  --json number,title,mergedAt,author,additions,deletions,files,body,labels \
+  --jq "map(select(.number > $LAST_PR))"
+
+# Open PRs touched since last run
+gh pr list --state open --base main --limit 50 \
+  --json number,title,updatedAt,author,reviewDecision,isDraft,body \
+  --jq "map(select(.updatedAt > \"$SINCE_ISO\"))"
+
+# Closed-but-not-merged PRs since last run (mergedAt is null)
+gh pr list --state closed --base main --limit 50 \
+  --json number,title,closedAt,mergedAt,author,body \
+  --jq "map(select(.mergedAt == null and .closedAt > \"$SINCE_ISO\"))"
+
+# Issues created or updated since last run
+gh issue list --state all --limit 100 \
+  --json number,title,state,createdAt,updatedAt,closedAt,labels,body,comments \
+  --jq "map(select(.number > $LAST_ISSUE or .updatedAt > \"$SINCE_ISO\"))"
+
+# Commit log since last cursor — two-step because the list-commits endpoint
+# does NOT include the `files` array. First list shas + dates, then fetch
+# per-commit metadata for the ones in window.
+gh api "repos/martin-janci/property-management/commits?since=$SINCE_ISO" --paginate \
+  --jq '.[] | {sha, date: .commit.author.date, message: .commit.message, author: .commit.author.name}' \
+  | jq -s '.' > /tmp/commits.json
+jq -r '.[].sha' /tmp/commits.json | while read SHA; do
+  gh api "repos/martin-janci/property-management/commits/$SHA" \
+    --jq '{sha, files: [.files[].filename]}'
+done | jq -s '.' > /tmp/commit_files.json
+# join /tmp/commits.json with /tmp/commit_files.json on .sha for the full picture
 ```
 
 Then derive signals. Types and `score_delta`:
@@ -210,6 +235,7 @@ Convert signals → backlog updates. For each signal:
      "id": "<vector>-<short-stable-slug>",
      "title": "<imperative title under 80 chars>",
      "vector": "bug | refactor | perf | test-gap | dx | security | dep-update | triage",
+     // triage = lowest-effort vector, never promoted to a plan (Phase 3 readiness gate excludes it)
      "score": <initial score_delta>,
      "status": "open",
      "sources": ["PR #123", "commit abc123"],
@@ -265,7 +291,9 @@ This pass is mandatory — it's the difference between "passes mechanical gates"
    - Append new signal IDs to `seen_signals`.
    - Bump `hotspot_history[file]` for each new hotspot: `{ runs_seen: n+1, last_seen: today, recent_churn: <this-run-churn> }`.
    - Increment relevant stats. If nothing new happened, increment `quiet_days`.
-3. Run the **Quality gates** (below) — if any fail, fix the issue (don't commit a broken state). If you cannot fix, leave a `needs-human-judgement` row in `backlog.json` and commit only `briefs/<today>.md` + `state.json`.
+3. Run the **Quality gates** (below) in order:
+   - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row, and commit that partial state.
 4. Commit + push:
    ```bash
    git add .research/
@@ -338,7 +366,7 @@ Run these and verify each passes:
 ```markdown
 # <slug>
 
-**Vector:** <bug|refactor|perf|test-gap|dx|security>
+**Vector:** <bug|refactor|perf|test-gap|dx|security|dep-update>  (no `triage` — those stay in backlog)
 **Score:** <N>
 **Source:** PR #<num> | Issue #<num> | commit <sha> | hotspot in <path>
 **Confidence:** <low | medium | high>
@@ -350,6 +378,12 @@ Run these and verify each passes:
 <Max 5 bullets. Each names a concrete artifact.>
 - <PR url, commit sha, or file:line>
 - <…>
+
+## Files
+<Concrete paths the plan touches. ≥1 path required (G7 verifies it exists).
+Paths are relative to the repo root and must currently exist on `main`.>
+- `<path/to/file>:<line?>`
+- `<path/to/file>`
 
 ## Required capabilities
 <Tick the ones the implementation agent needs. See implementer-prompt.md

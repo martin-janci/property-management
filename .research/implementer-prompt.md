@@ -37,8 +37,18 @@ output in the PR body.
 - **Pass when:** for `bug` / `revert` / `risky-churn` / `test-gap` vectors, the
   PR adds at least one test that fails on `main` without the fix and passes
   with it. (This is the TDD-cycle gate.)
-- **Check:** stash your fix → run the new test → confirm failure → unstash →
-  run the new test → confirm pass. Record both runs in the PR body.
+- **Check** — TDD discipline, two runs against the *same* test name:
+  1. After authoring the failing test and the fix on `impl/<slug>`, commit
+     them in **two separate commits** (`test:` first, `fix:` second) so each
+     can be checked out independently.
+  2. Run the new test on the `test:` commit (before the fix lands) — confirm
+     it fails. Capture the failure output verbatim.
+  3. Run it on `HEAD` (after the fix lands) — confirm it passes. Capture the
+     pass output verbatim.
+  4. Record both runs in the PR body under an *IG3 — TDD evidence* heading.
+- **Why not `git stash`?** Stash only removes *uncommitted* work. Once the
+  fix is committed (which it must be, to be in the PR), stash won't isolate
+  it. The two-commit split is the reliable mechanism.
 
 ### IG4 — All "Suggested approach" steps are addressed or explicitly skipped
 
@@ -68,16 +78,25 @@ output in the PR body.
 ### IG8 — Hand-off back to the routine
 
 - **Pass when:** the PR body includes the literal line
-  `Closes plan: .research/plans/<slug>.md`, and once the PR merges, the
-  plan file is moved to `.research/plans/_archive/<slug>.md` and the
-  matching `backlog.json` row is set to `status: "done"` in the same PR
-  (separate commit is fine).
+  `Closes plan: .research/plans/<slug>.md`, **and** the archive move
+  (`git mv .research/plans/<slug>.md .research/plans/_archive/<slug>.md`)
+  plus the `backlog.json` `status: "done"` flip are in the **same PR**, as
+  a final commit. Don't defer them to a follow-up PR — splitting risks the
+  next routine run promoting the same plan again because it still sees the
+  row in `status: "ready"`.
+- The archive-commit can be authored at any point during the PR's life (the
+  agent may push it as commit N+1 after reviewers approve commit N), but it
+  must be in the diff before merge. Reviewers should not approve a PR
+  missing this commit.
 - **Check:** PR body grep + `git log --diff-filter=R --name-only` shows the
   move.
 
-If any goal fails and you can't fix it, **don't open the PR**. Instead leave
-a draft PR with a `[WIP]` title and document the blocker in the body —
-better an honest stall than a silent partial.
+If any goal fails and you can't fix it, **don't open a ready-to-review PR**.
+The right move is to push the branch and open a **GitHub draft PR** with a
+`[WIP]` prefix in the title; document the blocker in the body under a
+`## Blocker` heading and list which goals failed and why. A draft PR is
+discoverable + reviewable but not yet approval-ready — explicitly different
+from "open for review". Better an honest stall than a silent partial.
 
 ## Two execution modes
 
@@ -235,7 +254,7 @@ the whole world for a unit-test-only change.
 3. **Re-read the plan's `Evidence`** and *open each artifact* (file:line,
    commit sha, PR url) to confirm it still exists. If the evidence has
    rotted (e.g. the file was already fixed in a later PR), abort: leave a
-   note in the brief slot (open a Github issue summarizing why this plan is
+   note in the brief slot (open a GitHub issue summarizing why this plan is
    stale) and don't ship.
 4. **Branch:** `git switch -c impl/$SLUG main`.
 5. **Pre-flight check:** `just check` — confirm a clean baseline. Fix any
@@ -296,12 +315,17 @@ $ <plan's test-plan commands>
 <paste outputs>
 \`\`\`
 
-## IG3 — failing test on main
+## IG3 — failing test on main (two-commit TDD evidence)
 \`\`\`
-$ git stash && cargo test <test_name>
-<failure output>
-$ git stash pop && cargo test <test_name>
-<pass output>
+$ git log --oneline impl/$SLUG ^main
+<sha-fix>   fix: …
+<sha-test>  test: …
+$ git checkout <sha-test> -- backend/...   # test commit, before fix
+$ cargo test <test_name>
+<failure output proving the bug is real>
+$ git checkout impl/$SLUG                  # back to HEAD (fix applied)
+$ cargo test <test_name>
+<pass output proving the fix works>
 \`\`\`
 
 ## Out-of-scope items I noticed
