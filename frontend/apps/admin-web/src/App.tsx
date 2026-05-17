@@ -17,6 +17,7 @@ import { Dashboard } from './pages/Dashboard';
 import FeatureFlagsPage from './pages/feature-flags';
 import { LoginPage } from './pages/LoginPage';
 import PlatformPage from './pages/platform';
+import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
 
 /**
@@ -87,7 +88,7 @@ export function App() {
                     <ProtectedRoute
                       requiredCapability={['tenant_export', 'tenant_purge', 'tenant_restore']}
                     >
-                      <PlaceholderPage title="Lifecycle" />
+                      <TenantLifecyclePage />
                     </ProtectedRoute>
                   }
                 />
