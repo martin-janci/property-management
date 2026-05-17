@@ -137,7 +137,10 @@ shipment in the brief.
   there will be silently overwritten.
 - **Defer a vector:** edit its `updated_at` to today in `backlog.json` —
   resets the 14-day decay clock without other changes.
-- **Pause the routine entirely:** rename `routine-prompt.md` to
-  `routine-prompt.md.disabled` — the routine no-ops if its prompt isn't
-  present (the routine instructions in claude.ai stay in place but expect to
-  read this file at startup).
+- **Pause the routine entirely:** go to claude.ai → Routines → `ppt-research`
+  and toggle the schedule off. The routine instructions live in claude.ai,
+  not in this file, so a file rename here has no effect.
+- **One-off skip:** add a `paused: true` field to `.research/state.json` and
+  commit it. The routine reads state at startup; the first instruction in
+  *Phase 1 — Observe* is to honour this flag (write a quiet-day brief, bump
+  `stats.quiet_days`, exit). To resume, set `paused: false` and commit.

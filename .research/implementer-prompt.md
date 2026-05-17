@@ -334,17 +334,29 @@ EOF
 )"
 ```
 
-## After merge
+## Archive commit (BEFORE merge — see IG8)
 
-On the same merging branch (or a follow-up PR if reviewer demands separation):
+The plan archive move + backlog `done` flip MUST be present in the PR's
+diff before it merges (see IG8). Do this as a final commit on the
+implementation branch, not as a follow-up PR — splitting risks the next
+routine run promoting the same plan again because it still sees
+`status: "ready"`.
 
 1. `git mv .research/plans/$SLUG.md .research/plans/_archive/$SLUG.md`
 2. Edit `.research/backlog.json` — set the matching item's `status` to `done`
    and add an evidence line `"shipped in PR #<num>"`.
 3. Commit: `research: mark $SLUG done (PR #<num>)`.
+4. `git push` — reviewers can approve the PR once this commit is present.
 
 The daily research routine will re-render `backlog.md` from the updated JSON
 on its next run. The brief that day will note your shipment under "Shipped".
+
+*If reviewer specifically demands the archive move land separately* (rare),
+the implementer must reply with a link to IG8 and explain that splitting
+risks duplicate plan promotion. Only on second insistence may the agent
+defer to a follow-up PR — and only after marking the item
+`status: "needs-human-judgement"` in `backlog.json` in the implementation PR
+so the routine pauses on it.
 
 ## Hard rules
 

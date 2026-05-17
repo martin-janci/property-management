@@ -68,12 +68,15 @@ plan* commands all exited 0. You're about to open the PR.
    <paste outputs>
    ```
 
-   ## IG3 — failing test on main
+   ## IG3 — failing test on main (two-commit TDD evidence)
    ```
-   $ git stash && cargo test <test_name>
-   <failure output>
-   $ git stash pop && cargo test <test_name>
-   <pass output>
+   $ git log --oneline impl/$SLUG ^main
+   <fix-sha>   fix: <issue>
+   <test-sha>  test: add regression for <issue>
+   $ git checkout <test-sha> -- <test-path> && cargo test <test_name>
+   <failure output proving the bug exists>
+   $ git checkout impl/$SLUG && cargo test <test_name>
+   <pass output proving the fix works>
    ```
 
    ## Out-of-scope items I noticed

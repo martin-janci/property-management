@@ -38,8 +38,8 @@ From `~/dotfiles/dev-stacks/pm-local.yml`:
 | `minio` | 9000 (API), 9001 (console) | S3-compatible store (documents + images) |
 | `api-server` | 8080 | Rust — Property Management API |
 | `reality-server` | 8081 | Rust — Reality Portal API |
-| `ppt-web` | 3000 | Nuxt — PPT web |
-| `reality-web` | 3001 | Nuxt — Reality web |
+| `ppt-web` | 3000 | Vite + React — PPT web (SPA) |
+| `reality-web` | 3001 | Next.js — Reality web (SSR) |
 
 Dependencies: `api-server`/`reality-server` need `postgres + redis + minio`;
 the web apps need their respective API server.

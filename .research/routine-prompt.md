@@ -49,11 +49,11 @@ is recorded, not hidden), but the brief makes it visible.
 
 ### G7 — At most 2 new plans, each meets all readiness gates
 
-- **Pass when:** ≤2 new plans this run; each contains all 14 required headings; each has at least one concrete file path under its **Files** heading.
+- **Pass when:** ≤2 new plans this run; each contains all 15 required headings; each has at least one concrete file path under its **Files** heading.
 - **Check (count):** `git diff --cached --name-only --diff-filter=A -- .research/plans/ | grep -c '\.md$'` ≤ 2.
-- **Check (headings):** for each new plan, all 14 of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Files`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings. (Yes, 15 with `After-merge` — `Files` was added in 2026-05-17 to give G7 a real anchor; bump the count if you add another required section.)
+- **Check (headings):** for each new plan, all 15 of `Vector`, `Score`, `Source`, `Confidence`, `Hypothesis`, `Evidence`, `Files`, `Required capabilities`, `Repro steps`, `Suggested approach`, `Alternatives considered`, `Root-cause trace`, `Test plan`, `Out of scope`, `After-merge` appear as headings. (Bump the count if you add another required section.)
 - **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
-- **Check (files):** at least one bullet under the *Files* heading matches an existing path: `xargs -I{} test -e {}`.
+- **Check (files):** at least one bullet under the *Files* heading resolves to a path that exists: pipe the bullets into `xargs -I{} test -e {}`.
 
 ### G8 — No application code touched
 
@@ -128,6 +128,12 @@ update; if a phase's commands fail, do not advance that cursor.** Other
 phases still produce output.
 
 ### Phase 1 — Observe
+
+**Pause check (always first):** if `state.json` has `paused: true`, the
+routine writes a quiet-day brief at `.research/briefs/<today>.md` with body
+"`Paused — state.paused == true`", increments `stats.quiet_days`, commits,
+and exits. Don't run any of the rest of the pipeline. To resume, set
+`paused: false` in `state.json` and commit.
 
 Pull raw activity into a typed list of **signals**. Don't score yet, don't
 write the backlog. Each signal gets a **stable ID**:
@@ -284,6 +290,7 @@ This pass is mandatory — it's the difference between "passes mechanical gates"
 
 ### Phase 4 — Write & commit
 
+0. `mkdir -p .research/briefs .research/signals .research/plans/_archive` — the scaffold ships `.gitkeep` placeholders for these, but if the repo is freshly cloned or someone removed the placeholders, the routine creates the dirs idempotently before any writes.
 1. Write the brief at `.research/briefs/<YYYY-MM-DD>.md`. If a brief for today exists, **overwrite** (idempotent rerun should converge).
 2. Update `state.json`:
    - `last_run_iso`, `last_run_ms`

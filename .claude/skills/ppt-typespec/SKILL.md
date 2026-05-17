@@ -46,7 +46,8 @@ docs/api/typespec/
 │   ├── listings.tsp
 │   ├── organizations.tsp
 │   ├── rentals.tsp
-│   └── units.tsp
+│   ├── units.tsp
+│   └── voting.tsp
 ├── tsp-output/             # generated (do commit)
 ├── package.json            # @typespec/* deps
 └── package-lock.json
@@ -106,7 +107,7 @@ test -f docs/api/typespec/main.tsp && echo OK
 # expected: OK
 
 # 4. expected domain files present
-for d in announcements auth buildings compliance documents faults listings organizations rentals units; do
+for d in announcements auth buildings compliance documents faults listings organizations rentals units voting; do
   test -f "docs/api/typespec/domains/$d.tsp" || { echo "missing: $d"; exit 1; }
 done
 echo OK
@@ -133,6 +134,6 @@ just generate-api && just check-frontend
 
 - [`ppt-rust-backend`](../ppt-rust-backend/SKILL.md) — utoipa annotations,
   handler updates
-- [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md) — regenerated
+- [`ppt-frontend`](../ppt-frontend/SKILL.md) — regenerated
   client locations
 - `.github/workflows/api-validation.yml` — CI gate

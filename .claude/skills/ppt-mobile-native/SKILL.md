@@ -17,7 +17,7 @@ Compose Multiplatform.
 
 Plan vector area is `mobile`, or *Suggested approach* references
 `mobile-native/**`. Note: `frontend/apps/mobile` is a *separate*
-React-Native/Expo app — see [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md)
+React-Native/Expo app — see [`ppt-frontend`](../ppt-frontend/SKILL.md)
 for that one.
 
 ## What it gives you
@@ -117,4 +117,4 @@ cd mobile-native && ./gradlew check test
 
 - [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md) C5 — ADB
 - `adb-app-control` skill (in `~/.claude/skills/`) — actual ADB driver
-- [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md) — separate RN app
+- [`ppt-frontend`](../ppt-frontend/SKILL.md) — separate RN app

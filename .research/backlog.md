@@ -30,9 +30,8 @@ Vectors: `bug`, `refactor`, `perf`, `test-gap`, `dx`, `security`, `dep-update`, 
 
 ## Status
 
-- `open` — needs review or more evidence
-- `ready` — meets all readiness gates; eligible for plan promotion
-- `picked` — manual agent took it (see `plan` field in JSON for path)
-- `done` — landed; archived plan in `plans/_archive/<slug>.md`
-- `dropped` — reviewed and rejected; reason is in the item's `evidence` array in `backlog.json` (one line starting with `dropped:`)
-- `needs-human-judgement` — blocked on a question only the user can answer
+- `open` — needs review or more evidence; no plan exists yet
+- `ready` — routine has authored a plan at `plans/<slug>.md` and the item now points at it via the `plan` field; awaiting an implementer
+- `done` — implementer shipped the PR; plan moved to `plans/_archive/<slug>.md`
+- `dropped` — reviewed and rejected; reason is in the item's `evidence` array in `backlog.json` (one line starting with `dropped:`), or decayed to score 0 with `decayed: no new signals in 14 days`
+- `needs-human-judgement` — blocked on a question only the user can answer; routine won't promote, decay, or drop without user input

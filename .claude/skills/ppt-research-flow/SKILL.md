@@ -46,7 +46,7 @@ what the exit criteria are.
    - C4 → local-only; Chrome MCP / Preview / playwright
    - C5 → local-only; `adb-app-control`
    - Anything touching `backend/` → `ppt-rust-backend`
-   - Anything touching `frontend/` → `ppt-nuxt-frontend`
+   - Anything touching `frontend/` → `ppt-frontend`
    - Anything touching `mobile-native/` → `ppt-mobile-native`
    - Anything touching `docs/api/typespec/` → `ppt-typespec`
 3. **Branch** from `main`:
@@ -63,13 +63,19 @@ what the exit criteria are.
 6. **Verify** — run `just check && just test && just build`, plus the plan's
    *Test plan* commands verbatim. See `ppt-tests` for stack-specific subsets.
 7. **Open the PR** — see `ppt-pr-create` for the body template and IG3
-   stash/pop evidence procedure.
-8. **After merge** — same branch or follow-up commit:
+   two-commit (test → fix) evidence procedure.
+8. **Archive commit BEFORE merge** (IG8 requirement — must be in the PR's
+   diff, not a follow-up PR):
    ```bash
    git mv ".research/plans/$SLUG.md" ".research/plans/_archive/$SLUG.md"
-   # edit .research/backlog.json: set status=done, add "shipped in PR #N"
+   # edit .research/backlog.json: set the matching item's status="done"
+   # and append "shipped in PR #N" to its evidence array
    git commit -m "research: mark $SLUG done (PR #<num>)"
+   git push
    ```
+   Reviewers should not approve a PR missing this commit. The flip lands
+   before merge so the next routine run sees `status: "done"` and doesn't
+   re-promote.
 
 ## Deterministic verification
 
@@ -100,9 +106,13 @@ test -d .research/plans/_archive && test -f .research/implementer-prompt.md && e
 ## After-task verification
 
 ```bash
-# IG8 — plan moved + backlog row flipped (run after merge commit)
+# IG8 — plan moved + backlog row flipped (run after the archive commit)
 git log -1 --diff-filter=R --name-only | grep -q "_archive/$SLUG.md"
-jq -e --arg s "$SLUG" '.items[] | select(.slug == $s) | .status == "done"' .research/backlog.json
+# backlog.json items have `id` and `plan` (not `slug`). Match the id that the
+# routine derived from the plan slug, e.g. "test-gap-fix-user-import":
+jq -e --arg p "plans/$SLUG.md" '.items[] | select(.plan == $p) | .status == "done"' .research/backlog.json
+# (alternative if you know the id directly:
+#   jq -e --arg id "<vector>-<slug>" '.items[] | select(.id == $id) | .status == "done"' .research/backlog.json )
 ```
 
 ## Cross-references

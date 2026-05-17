@@ -1,16 +1,18 @@
 ---
-name: ppt-nuxt-frontend
-description: Navigate the Nuxt/pnpm frontend workspace — apps, shared packages, generated API client, Biome.
+name: ppt-frontend
+description: Navigate the React/pnpm frontend workspace — apps, shared packages, generated API client, Biome.
 when_to_use: The plan touches anything under frontend/ — an app, a package, or the generated API client.
 mode: both
 capabilities: [C6]
 tags: [frontend]
 ---
 
-# PPT Nuxt Frontend
+# PPT Frontend
 
-pnpm workspace at `frontend/`. Nuxt 3 apps + TS packages. Biome for lint /
-format. Generated API clients live as separate packages.
+pnpm workspace at `frontend/`. **`ppt-web` is a Vite + React SPA**;
+**`reality-web` is a Next.js 16 SSR app**. Shared TS packages alongside.
+Biome for lint / format on most packages, ESLint per-app. Generated API
+clients live as separate packages.
 
 ## When to invoke
 
@@ -22,6 +24,7 @@ Plan area is `frontend`, or *Suggested approach* references
 - Apps & packages map
 - pnpm filter syntax
 - API-client regeneration loop (couples to `ppt-typespec`)
+- The Vite vs Next.js split — different dev/build commands
 
 ## Inputs
 
@@ -33,9 +36,9 @@ Plan area is `frontend`, or *Suggested approach* references
 
 | App | Port | Stack | Notes |
 |---|---|---|---|
-| `ppt-web` | 3000 | Nuxt 3 | Property Management main web |
-| `reality-web` | 3001 | Nuxt 3 | Reality Portal public site |
-| `mobile` | n/a | RN / Expo | React Native — see also `ppt-mobile-native` for Kotlin app |
+| `ppt-web` | 3000 | **Vite + React** (TS, vitest) | Property Management main web (SPA) |
+| `reality-web` | 3001 | **Next.js 16** (SSR, App Router) | Reality Portal public site |
+| `mobile` | n/a | RN / Expo | React Native — see also `ppt-mobile-native` for the Kotlin native app |
 
 `frontend/packages/`:
 
@@ -59,9 +62,9 @@ Plan area is `frontend`, or *Suggested approach* references
    ```
 2. **Iterate on one app/package:**
    ```bash
-   # dev mode (Nuxt)
-   cd frontend && pnpm dev:ppt          # ppt-web on :3000
-   cd frontend && pnpm dev:reality      # reality-web on :3001
+   # dev mode
+   cd frontend && pnpm dev:ppt          # ppt-web (Vite) on :3000
+   cd frontend && pnpm dev:reality      # reality-web (Next.js) on :3001
    cd frontend && pnpm dev:mobile       # RN/Expo
 
    # build / test one package

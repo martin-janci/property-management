@@ -42,7 +42,7 @@ just test-integration                        # ignored/integration tests (needs 
 Workspace members: `common`, `api-core`, `admin-core`, `db`, `integrations`,
 `tenant-ops`, `api-server`, `reality-server`, `deploy-server`.
 
-### Frontend (Nuxt / pnpm workspace)
+### Frontend (pnpm workspace — Vite for `ppt-web`, Next.js for `reality-web`)
 
 ```bash
 just test-frontend                           # all apps + packages
@@ -72,24 +72,32 @@ cd mobile-native && ./gradlew test --tests "*<filter>*"         # filter
 
 ADB-driven UI checks are C5, local-only — see `ppt-mobile-native`.
 
-## IG3 — failing-on-main test (stash/pop dance)
+## IG3 — failing-on-main test (two-commit pattern)
 
-For `bug`, `revert`, `risky-churn`, `test-gap` vectors:
+For `bug`, `revert`, `risky-churn`, `test-gap` vectors. **Do not use
+`git stash`** — it only isolates uncommitted work, so once the fix is
+committed (required to be in the PR) stash can't separate it from the test.
+See [`implementer-prompt.md`](../../../.research/implementer-prompt.md#ig3—test-that-would-have-caught-the-bug-exists-and-fails-on-main) for the canonical rule.
+
+The pattern:
 
 ```bash
-# 1. write the test, run it, confirm it PASSES with the fix applied
-cargo test -p <crate> -- <test_name>
+# 1. Commit the failing test on its own
+git add <test-path> && git commit -m "test: add regression for <issue>"
+TEST_SHA="$(git rev-parse HEAD)"
 
-# 2. stash the FIX (not the test) and re-run — confirm FAIL
-git stash push -m "ig3-fix" -- <fix-paths>
+# 2. Run the test at this point — confirm it FAILS (proves the bug exists)
 cargo test -p <crate> -- <test_name>   # expected: FAIL
 
-# 3. restore and re-confirm pass
-git stash pop
+# 3. Commit the fix
+git add <fix-paths> && git commit -m "fix: <issue>"
+
+# 4. Run the test at HEAD — confirm it PASSES
 cargo test -p <crate> -- <test_name>   # expected: PASS
 ```
 
-Quote both runs in the PR body under `## IG3 — failing test on main`.
+Quote both runs in the PR body under `## IG3 — failing test on main`,
+along with the two commit SHAs so reviewers can `git checkout` either side.
 
 ## Deterministic verification
 
@@ -127,5 +135,5 @@ just check && just test    # quote tail of each in PR body (IG7)
 
 - [`.research/implementer-prompt.md`](../../../.research/implementer-prompt.md)
   § *Verification before opening the PR* and IG3, IG7
-- [`ppt-rust-backend`](../ppt-rust-backend/SKILL.md), [`ppt-nuxt-frontend`](../ppt-nuxt-frontend/SKILL.md),
+- [`ppt-rust-backend`](../ppt-rust-backend/SKILL.md), [`ppt-frontend`](../ppt-frontend/SKILL.md),
   [`ppt-mobile-native`](../ppt-mobile-native/SKILL.md) — per-stack detail
