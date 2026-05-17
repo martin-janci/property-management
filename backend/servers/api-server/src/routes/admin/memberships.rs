@@ -16,17 +16,19 @@
 //!                                    defense-in-depth identity binding)
 //!   * `DELETE /memberships/{id}`  → `Capability::MembershipsRevoke`
 
-use admin_core::{require_capability, Capability, RequireCapability};
+use admin_core::{require_capability, AuditOutcome, AuditWriter, Capability, RequireCapability};
+use api_core::AuthUser;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
-    routing::{delete, post},
-    Json, Router,
+    http::{HeaderMap, StatusCode},
+    routing::{delete, get, post},
+    Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
 use db::models::membership::GrantMembership;
 use db::repositories::{ConsumeInviteOutcome, MembershipRepository, UserInviteRepository};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -49,6 +51,83 @@ pub fn router() -> Router<AppState> {
             "/memberships/{user_id}",
             delete(revoke).layer(require_capability(Capability::MembershipsRevoke)),
         )
+        .route(
+            "/memberships/merge-collisions",
+            get(merge_collisions).layer(require_capability(Capability::MembershipsGrant)),
+        )
+}
+
+// ====================================================================
+// Merge collisions
+// ====================================================================
+//
+// Reports the set of email addresses that — after a hypothetical
+// per-organization user merge — would collide because the same lower(email)
+// is currently attached to membership rows under 2+ distinct organizations.
+//
+// Note: the `users.email` column itself is globally UNIQUE, so the only way
+// a collision arises is when the same `users.id` has membership rows in
+// multiple `organizations`. The query groups by `lower(u.email)` so two
+// emails that differ only in case are still considered the same identity.
+//
+// Capability: `MembershipsGrant` is the closest existing cap (the codebase
+// has no `MembershipsRead`).
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct MergeCollisionRow {
+    pub email: String,
+    pub user_ids: Vec<Uuid>,
+    pub organization_ids: Vec<Uuid>,
+    pub organization_names: Vec<String>,
+}
+
+async fn merge_collisions(
+    _cap: RequireCapability,
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
+) -> Result<Json<Vec<MergeCollisionRow>>, (StatusCode, String)> {
+    let rows = sqlx::query_as::<_, MergeCollisionRow>(
+        r#"
+        SELECT lower(u.email)                              AS email,
+               array_agg(DISTINCT u.id)                    AS user_ids,
+               array_agg(DISTINCT m.organization_id)       AS organization_ids,
+               array_agg(DISTINCT o.name)                  AS organization_names
+          FROM user_memberships m
+          JOIN users         u ON u.id = m.user_id
+          JOIN organizations o ON o.id = m.organization_id
+         WHERE m.revoked_at IS NULL
+         GROUP BY lower(u.email)
+        HAVING COUNT(DISTINCT m.organization_id) > 1
+         ORDER BY lower(u.email)
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::MembershipsGrant,
+            AuditOutcome::Allowed,
+            Some("memberships_merge_collisions"),
+            None,
+            None,
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for memberships/merge-collisions failed");
+    }
+
+    Ok(Json(rows))
 }
 
 // ====================================================================
