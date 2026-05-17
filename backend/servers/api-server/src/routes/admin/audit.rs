@@ -6,7 +6,8 @@
 use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Query, State},
-    http::StatusCode,
+    http::{header, HeaderMap, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
@@ -17,10 +18,17 @@ use uuid::Uuid;
 use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/",
-        get(list_audit_events).layer(require_capability(Capability::AuditRead)),
-    )
+    // `/csv` must come BEFORE `/` so axum's matcher doesn't try to treat
+    // `csv` as a path segment of the catch-all `/` route.
+    Router::new()
+        .route(
+            "/csv",
+            get(export_csv).layer(require_capability(Capability::AuditRead)),
+        )
+        .route(
+            "/",
+            get(list_audit_events).layer(require_capability(Capability::AuditRead)),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,17 +62,12 @@ pub struct AuditRow {
     pub created_at: DateTime<Utc>,
 }
 
-/// GET /admin/audit
-async fn list_audit_events(
-    _cap: RequireCapability,
-    State(state): State<AppState>,
-    Query(q): Query<AuditQuery>,
-) -> Result<Json<Vec<AuditRow>>, (StatusCode, String)> {
-    let limit = q.limit.unwrap_or(100).min(500) as i64;
-
-    // Filter dynamically. We use a single SQL with `$N IS NULL OR …`
-    // patterns rather than dynamic SQL — avoids string concat / injection.
-    let rows = sqlx::query_as::<_, AuditRow>(
+async fn fetch_rows(
+    state: &AppState,
+    q: &AuditQuery,
+    limit: i64,
+) -> Result<Vec<AuditRow>, sqlx::Error> {
+    sqlx::query_as::<_, AuditRow>(
         r#"
         SELECT id, user_id, action::text AS action, resource_type, resource_id,
                details, ip_address, user_agent, created_at
@@ -88,7 +91,85 @@ async fn list_audit_events(
     .bind(limit)
     .fetch_all(&state.db)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+}
 
+/// GET /admin/audit
+async fn list_audit_events(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    Query(q): Query<AuditQuery>,
+) -> Result<Json<Vec<AuditRow>>, (StatusCode, String)> {
+    let limit = q.limit.unwrap_or(100).min(500) as i64;
+    let rows = fetch_rows(&state, &q, limit)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(rows))
+}
+
+/// GET /admin/audit/csv
+///
+/// Same filter shape as the JSON endpoint. Streams a CSV body with one
+/// header row + one row per audit event. Default limit raised to 10_000
+/// because operators usually export the full filtered range; client can
+/// still narrow via `since` / `until` / `limit` query params.
+async fn export_csv(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    Query(q): Query<AuditQuery>,
+) -> Result<Response, (StatusCode, String)> {
+    let limit = q.limit.unwrap_or(10_000).min(50_000) as i64;
+    let rows = fetch_rows(&state, &q, limit)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Build CSV in memory. With limit ≤50k the buffer stays well under
+    // 10 MB even at 200 chars/row — far below the gateway timeout window.
+    let mut buf: Vec<u8> = Vec::with_capacity(rows.len() * 256);
+    {
+        let mut w = csv::Writer::from_writer(&mut buf);
+        w.write_record([
+            "id",
+            "user_id",
+            "action",
+            "resource_type",
+            "resource_id",
+            "ip_address",
+            "user_agent",
+            "created_at",
+            "details",
+        ])
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        for r in &rows {
+            w.write_record([
+                r.id.to_string(),
+                r.user_id.map(|u| u.to_string()).unwrap_or_default(),
+                r.action.clone(),
+                r.resource_type.clone().unwrap_or_default(),
+                r.resource_id.map(|u| u.to_string()).unwrap_or_default(),
+                r.ip_address.clone().unwrap_or_default(),
+                r.user_agent.clone().unwrap_or_default(),
+                r.created_at.to_rfc3339(),
+                r.details
+                    .as_ref()
+                    .map(|j| j.to_string())
+                    .unwrap_or_default(),
+            ])
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        }
+        w.flush()
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    }
+
+    let filename = format!("audit-{}.csv", Utc::now().format("%Y%m%d"));
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/csv; charset=utf-8"),
+    );
+    headers.insert(
+        header::CONTENT_DISPOSITION,
+        HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
+    );
+    Ok((headers, buf).into_response())
 }

@@ -893,17 +893,35 @@ const AuditPage: FC = () => {
 
   const handleExportCsv = async () => {
     const csvQs = buildQueryString(filters);
-    const url = `/api/v1/admin/audit.csv${csvQs ? `?${csvQs}` : ''}`;
+    const url = `/api/v1/admin/audit/csv${csvQs ? `?${csvQs}` : ''}`;
     try {
-      const probe = await fetch(url, { method: 'HEAD' });
-      if (probe.status === 404) {
-        showToast({ type: 'info', title: 'CSV export not yet implemented' });
+      const resp = await fetch(url, {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!resp.ok) {
+        showToast({
+          type: 'error',
+          title: `Export failed (${resp.status})`,
+        });
         return;
       }
-    } catch {
-      // Open anyway — let browser show error
+      const blob = await resp.blob();
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = `audit-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(dlUrl);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Export failed',
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const toggleRow = (id: string) => {
