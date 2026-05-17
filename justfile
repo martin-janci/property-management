@@ -257,3 +257,18 @@ ci: check test build
 # Prepare for PR (check + test + commit)
 pr-ready: check test
     @echo "✅ Ready for PR!"
+
+# =============================================================================
+# RESEARCH ROUTINE HELPERS
+# =============================================================================
+
+# Scaffold a new plan from .research/plan-template.md.
+# Refuses if the target already exists. Substitutes <slug> into the H1 line.
+new-plan slug:
+    @if [ -z "{{slug}}" ]; then echo "usage: just new-plan <slug>"; exit 2; fi
+    @target=".research/plans/{{slug}}.md"; \
+    if [ -e "$target" ]; then echo "refusing to overwrite $target"; exit 1; fi; \
+    if [ ! -f .research/plan-template.md ]; then echo "missing .research/plan-template.md"; exit 1; fi; \
+    mkdir -p .research/plans; \
+    sed "1s/^# <slug>$/# {{slug}}/" .research/plan-template.md > "$target"; \
+    echo "wrote $target — fill placeholders, then commit on a fresh branch."
