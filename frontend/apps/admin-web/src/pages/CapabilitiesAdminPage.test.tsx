@@ -95,13 +95,9 @@ const SAMPLE_GRANT = {
   status: 'active' as const,
 };
 
-const SAMPLE_USER_RESPONSE = {
-  user_id: 'user-abc',
-  email: 'alice@example.com',
-  grants: [SAMPLE_GRANT],
-  last_change_at: null,
-  last_change_by: null,
-};
+// Backend `GET /admin/capabilities/users/{id}` returns a raw `Vec<CapabilityGrant>`.
+// The page normalizes this into its internal view via `normalizeUserCapabilities`.
+const SAMPLE_USER_RESPONSE = [SAMPLE_GRANT];
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -165,12 +161,11 @@ describe('CapabilitiesAdminPage', () => {
   // ------------------------------------------------------------------
 
   it('falls back to /capabilities/me on 404 from per-user endpoint', async () => {
+    // Backend `/me` returns `MyCapabilitiesResponse { user_id, principal_kind, capabilities }`.
     const ME_RESPONSE = {
       user_id: 'me',
-      email: 'superadmin@example.com',
-      grants: [],
-      last_change_at: null,
-      last_change_by: null,
+      principal_kind: 'platform',
+      capabilities: [],
     };
 
     // First fetch: /users/{id} → 404; second fetch: /me fallback → 200
@@ -190,8 +185,8 @@ describe('CapabilitiesAdminPage', () => {
       { timeout: 3000 }
     );
 
-    // After fallback, heading shows the user email from /me response
-    await waitFor(() => expect(screen.getByText(/superadmin@example\.com/i)).toBeDefined(), {
+    // After fallback, no grants are present → empty state row is rendered.
+    await waitFor(() => expect(screen.getByText(/No capability grants found/i)).toBeDefined(), {
       timeout: 3000,
     });
   });

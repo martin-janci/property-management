@@ -22,7 +22,7 @@ import { useToast } from '../components/Toast';
 // Demo tenant (hard-coded until :id param iteration)
 // ---------------------------------------------------------------------------
 
-interface TenantInfo {
+export interface TenantInfo {
   id: string;
   slug: string;
   name: string;
@@ -304,7 +304,10 @@ interface PurgeWizardProps {
   onCancel: () => void;
 }
 
-function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
+// Exported (in addition to the default `TenantLifecyclePage`) so tests can
+// drive the wizard directly without first arranging a soft-deleted tenant
+// fixture in the parent page. Also exported is `TenantInfo` for fixture use.
+export function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
   // Gate "Start export now" button on tenant_export capability
   const canExportInWizard = useCapability('tenant_export');
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -432,12 +435,24 @@ function PurgeWizard({ tenant, onCancel }: PurgeWizardProps) {
                 type="button"
                 className="lc-btn lc-btn--primary"
                 onClick={() => {
-                  // Trigger export + advance
+                  // Trigger export + advance only when the server actually
+                  // accepts it. `fetch` only rejects on network errors, so
+                  // 4xx/5xx still resolves — guard with response.ok.
                   fetch(`/api/v1/admin/tenants/${tenant.id}/export`, {
                     method: 'POST',
                     headers: { Authorization: `Bearer ${token ?? ''}` },
                   })
-                    .then(() => setStep(2))
+                    .then((resp) => {
+                      if (!resp.ok) {
+                        showToast({
+                          type: 'error',
+                          title: 'Export failed',
+                          message: `Server returned ${resp.status}. Cannot proceed to purge.`,
+                        });
+                        return;
+                      }
+                      setStep(2);
+                    })
                     .catch(() => {
                       showToast({
                         type: 'error',

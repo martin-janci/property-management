@@ -104,11 +104,13 @@ describe('Dashboard', () => {
         return {
           ok: true,
           status: 200,
+          // Backend serializes snake_case — mirror the real wire shape so
+          // this test would catch a regression in the Dashboard adapter.
           json: async () => ({
-            tenantsActive: 42,
-            operatorsOnline: 7,
-            pendingMerges: 3,
-            highRisk24h: 5,
+            tenants_active: 42,
+            operators_online: 7,
+            pending_merges: 3,
+            high_risk_24h: 5,
           }),
         } as Response;
       }
