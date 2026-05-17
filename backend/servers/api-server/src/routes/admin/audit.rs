@@ -32,9 +32,13 @@ pub fn router() -> Router<AppState> {
     )
 }
 
-/// High-risk capability action strings used for `severity=high` filtering.
-/// These match the `action::text` values written by `AuditWriter::record`.
-const HIGH_RISK_ACTIONS: &[&str] = &[
+/// High-risk capability names used for `severity=high` filtering.
+///
+/// `PgAuditWriter::record` writes every capability invocation as
+/// `action = 'resource_accessed'` with the actual capability stashed in
+/// `details->>'capability'`. So we filter on the JSONB capability string,
+/// NOT on `action::text`.
+const HIGH_RISK_CAPABILITIES: &[&str] = &[
     "tenant_purge",
     "principal_kind_escalate",
     "grant_principal_kind_escalate",
@@ -42,15 +46,38 @@ const HIGH_RISK_ACTIONS: &[&str] = &[
 ];
 
 /// Parse a relative duration string like `24h`, `7d`, `15m`, `1h`, `30d`
-/// into a `chrono::Duration`. Returns `None` for unrecognised formats.
+/// into a `chrono::Duration`. Returns `None` for unrecognised formats OR
+/// for values that would overflow chrono's `Duration` (e.g.
+/// `9223372036854775807d`).
+///
+/// We use the `try_*` constructors so an attacker-controlled `after` query
+/// param cannot panic the handler. As an additional belt-and-braces guard
+/// we cap each unit at a clearly-sane upper bound (100 years).
 fn parse_relative_duration(s: &str) -> Option<Duration> {
+    // ~100 years in each unit — more than enough for an audit-log lookback.
+    const MAX_DAYS: i64 = 36_500;
+    const MAX_HOURS: i64 = MAX_DAYS * 24;
+    const MAX_MINUTES: i64 = MAX_HOURS * 60;
+
     let s = s.trim();
     if let Some(val) = s.strip_suffix('h') {
-        val.parse::<i64>().ok().map(Duration::hours)
+        let n = val.parse::<i64>().ok()?;
+        if !(0..=MAX_HOURS).contains(&n) {
+            return None;
+        }
+        Duration::try_hours(n)
     } else if let Some(val) = s.strip_suffix('d') {
-        val.parse::<i64>().ok().map(Duration::days)
+        let n = val.parse::<i64>().ok()?;
+        if !(0..=MAX_DAYS).contains(&n) {
+            return None;
+        }
+        Duration::try_days(n)
     } else if let Some(val) = s.strip_suffix('m') {
-        val.parse::<i64>().ok().map(Duration::minutes)
+        let n = val.parse::<i64>().ok()?;
+        if !(0..=MAX_MINUTES).contains(&n) {
+            return None;
+        }
+        Duration::try_minutes(n)
     } else {
         None
     }
@@ -139,7 +166,8 @@ async fn list_audit_events(
           AND ($4::uuid IS NULL OR resource_id = $4)
           AND ($5::timestamptz IS NULL OR created_at >= $5)
           AND ($6::timestamptz IS NULL OR created_at <= $6)
-          AND (NOT $7 OR action::text = ANY($8))
+          AND (NOT $7 OR (action::text = 'resource_accessed'
+                          AND details->>'capability' = ANY($8)))
         ORDER BY created_at DESC
         LIMIT $9
         "#,
@@ -151,7 +179,7 @@ async fn list_audit_events(
     .bind(effective_since)
     .bind(q.until)
     .bind(high_severity)
-    .bind(HIGH_RISK_ACTIONS)
+    .bind(HIGH_RISK_CAPABILITIES)
     .bind(limit)
     .fetch_all(&state.db)
     .await
@@ -187,5 +215,16 @@ mod tests {
         assert!(parse_relative_duration("1w").is_none());
         assert!(parse_relative_duration("abc").is_none());
         assert!(parse_relative_duration("").is_none());
+    }
+
+    #[test]
+    fn parse_duration_overflow_returns_none_does_not_panic() {
+        // i64::MAX days would panic the legacy `Duration::days` constructor.
+        // Our checked + clamped variant must reject it cleanly.
+        assert!(parse_relative_duration("9223372036854775807d").is_none());
+        assert!(parse_relative_duration("9223372036854775807h").is_none());
+        assert!(parse_relative_duration("9223372036854775807m").is_none());
+        // Negative values are also rejected.
+        assert!(parse_relative_duration("-1d").is_none());
     }
 }

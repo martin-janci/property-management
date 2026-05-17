@@ -1,7 +1,7 @@
 //! Admin metrics summary endpoint. Phase 5.
 //!
 //! Routes:
-//!   * `GET /` — returns a quick-glance operations summary (gated by `AuditRead`).
+//!   * `GET /summary` — returns a quick-glance operations summary (gated by `AuditRead`).
 //!
 //! Mounted under `/api/v1/admin/metrics` via `admin::router()`.
 
@@ -54,13 +54,17 @@ async fn metrics_summary(
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // High-risk capabilities: those whose invocation should be surfaced
-    // immediately to operators. Filtered from audit_logs action column.
+    // immediately to operators. `PgAuditWriter::record` writes every
+    // capability invocation as `action = 'resource_accessed'` with the actual
+    // capability name stashed in `details->>'capability'`, so we filter on
+    // the JSONB capability string — NOT on `action::text`.
     let high_risk_24h: i64 = sqlx::query_scalar(
         r#"
         SELECT COUNT(*)
         FROM audit_logs
         WHERE created_at > NOW() - INTERVAL '24 hours'
-          AND action::text IN (
+          AND action::text = 'resource_accessed'
+          AND details->>'capability' IN (
               'tenant_purge',
               'principal_kind_escalate',
               'grant_principal_kind_escalate',

@@ -3,7 +3,7 @@
 //! Routes for platform-wide administrative operations including
 //! organization management, feature flags, system health, and announcements.
 
-use admin_core::{require_capability, Capability};
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -373,6 +373,7 @@ pub(crate) fn extract_super_admin_token(
     )
 )]
 pub async fn list_organizations(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListOrganizationsQuery>,
@@ -438,6 +439,7 @@ pub async fn list_organizations(
     )
 )]
 pub async fn get_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -503,6 +505,7 @@ pub async fn get_organization(
     )
 )]
 pub async fn suspend_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -632,6 +635,7 @@ pub async fn suspend_organization(
     )
 )]
 pub async fn reactivate_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -729,6 +733,7 @@ pub async fn reactivate_organization(
     )
 )]
 pub async fn get_platform_stats(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<PlatformStatsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -795,6 +800,7 @@ pub struct UpdateFeatureFlagRequest {
     )
 )]
 pub async fn list_feature_flags(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<ListFeatureFlagsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -829,6 +835,7 @@ pub async fn list_feature_flags(
     )
 )]
 pub async fn create_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateFeatureFlagRequest>,
@@ -892,6 +899,7 @@ pub async fn create_feature_flag(
     )
 )]
 pub async fn get_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -953,6 +961,7 @@ pub async fn get_feature_flag(
     )
 )]
 pub async fn update_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1026,6 +1035,7 @@ pub async fn update_feature_flag(
     )
 )]
 pub async fn delete_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1090,6 +1100,7 @@ pub async fn delete_feature_flag(
     )
 )]
 pub async fn toggle_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1159,6 +1170,7 @@ pub async fn toggle_feature_flag(
     )
 )]
 pub async fn create_feature_flag_override(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1254,6 +1266,7 @@ pub async fn create_feature_flag_override(
     )
 )]
 pub async fn delete_feature_flag_override(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path((id, override_id)): Path<(String, String)>,
@@ -1450,6 +1463,7 @@ pub struct AlertAcknowledgeResponse {
     tag = "Platform Admin - Health"
 )]
 pub async fn get_health_dashboard(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<HealthDashboard>, (StatusCode, Json<ErrorResponse>)> {
@@ -1491,6 +1505,7 @@ pub async fn get_health_dashboard(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_metric_history(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(name): Path<String>,
@@ -1541,6 +1556,7 @@ pub async fn get_metric_history(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_health_alerts(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<AlertsQuery>,
@@ -1585,6 +1601,7 @@ pub async fn get_health_alerts(
     tag = "Platform Admin - Health"
 )]
 pub async fn acknowledge_alert(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1635,6 +1652,7 @@ pub async fn acknowledge_alert(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_thresholds(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<MetricThreshold>>, (StatusCode, Json<ErrorResponse>)> {
@@ -1677,6 +1695,7 @@ pub async fn get_thresholds(
     tag = "Platform Admin - Health"
 )]
 pub async fn update_threshold(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(name): Path<String>,
@@ -1770,6 +1789,7 @@ pub struct AcknowledgmentResponse {
     tag = "Platform Admin - Announcements"
 )]
 pub async fn list_system_announcements(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListAnnouncementsAdminQuery>,
@@ -1809,6 +1829,7 @@ pub async fn list_system_announcements(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn create_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(request): Json<CreateSystemAnnouncementRequest>,
@@ -1866,6 +1887,7 @@ pub async fn create_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn get_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1918,6 +1940,7 @@ pub async fn get_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn update_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1979,6 +2002,7 @@ pub async fn update_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn delete_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2028,6 +2052,7 @@ pub async fn delete_system_announcement(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn schedule_maintenance(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(request): Json<CreateMaintenanceRequest>,
@@ -2116,6 +2141,7 @@ pub async fn schedule_maintenance(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn get_upcoming_maintenance_admin(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<ScheduledMaintenance>>, (StatusCode, Json<ErrorResponse>)> {
@@ -2157,6 +2183,7 @@ pub async fn get_upcoming_maintenance_admin(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn delete_scheduled_maintenance(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2450,6 +2477,7 @@ fn default_activity_limit() -> i64 {
     tag = "Platform Admin - Support"
 )]
 pub async fn search_users_for_support(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<SearchUsersQuery>,
@@ -2506,6 +2534,7 @@ pub async fn search_users_for_support(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_for_support(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2566,6 +2595,7 @@ pub async fn get_user_for_support(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_memberships(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2607,6 +2637,7 @@ pub async fn get_user_memberships(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_sessions(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2648,6 +2679,7 @@ pub async fn get_user_sessions(
     tag = "Platform Admin - Support"
 )]
 pub async fn revoke_user_sessions(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2701,6 +2733,7 @@ pub async fn revoke_user_sessions(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_activity(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,

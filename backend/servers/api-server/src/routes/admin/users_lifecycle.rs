@@ -1,6 +1,6 @@
 //! Admin routes for user lifecycle management (Epic 1, Story 1.6).
 
-use admin_core::{require_capability, Capability};
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -260,6 +260,7 @@ fn user_to_admin_info(user: db::models::User) -> AdminUserInfo {
     )
 )]
 pub async fn list_users(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListUsersQuery>,
@@ -318,6 +319,7 @@ pub async fn list_users(
     )
 )]
 pub async fn get_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -369,6 +371,7 @@ pub async fn get_user(
     )
 )]
 pub async fn suspend_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -458,6 +461,7 @@ pub async fn suspend_user(
     )
 )]
 pub async fn reactivate_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -526,6 +530,7 @@ pub async fn reactivate_user(
     )
 )]
 pub async fn delete_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
