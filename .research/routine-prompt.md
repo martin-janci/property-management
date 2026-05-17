@@ -220,7 +220,7 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
-| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`, `frontend/apps/mobile/app/**`) **without** touching the matching `docs/screens/{ppt,reality,mobile}/*.md` | +2 | vector=`test-gap`; flags screen docs falling behind code |
+| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** touching the matching `docs/screens/{ppt,reality}/*.md` | +2 | vector=`test-gap`; flags screen docs falling behind code |
 | `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
 
 **Churn exclusions** — never score these files as hotspots:
@@ -240,13 +240,25 @@ list (`gh pr view <num> --json files --jq '.files[].path'`) and apply:
   - `frontend/apps/ppt-web/src/App.tsx`
   - `frontend/apps/ppt-web/src/routes/**`
   - `frontend/apps/reality-web/src/app/**`
-  - `frontend/apps/mobile/app/**`
-- **Screen docs:** `docs/screens/{ppt,reality,mobile}/**.md`
+  - ~~`frontend/apps/mobile/app/**`~~ — **excluded from drift detection
+    until `docs/screens/mobile/` exists.** The mobile RN/Expo app doesn't
+    have screen docs yet, so every mobile-route change would fire a false
+    `screen-map-drift` signal otherwise. Re-include the path here (and the
+    `mobile` product in the doc dir below) once the user adds at least one
+    file under `docs/screens/mobile/`.
+- **Screen docs:** `docs/screens/{ppt,reality}/**.md`. (Mobile excluded
+  per above. The brief's `Screen-map status` section can still count all
+  three product dirs, but drift detection only fires on the two with
+  populated doc scope.)
 
 If the PR's file list intersects the trigger set but contains zero files
 under `docs/screens/`, emit a `screen-map-drift` signal with id
 `screen-map-drift-pr-<num>`, confidence `medium`, candidate vector
 `test-gap`, and a one-line evidence string naming the touched route files.
+
+When `docs/screens/mobile/` lands later, re-include `frontend/apps/mobile/app/**`
+in the trigger set, drop the strikethrough, and add `mobile` to the doc-dir
+brace expansion above.
 
 Additionally, for the orphan signal: spot-check the union of `docs/screens/`
 filenames (sans `.md`, normalised to lowercase) against the union of route

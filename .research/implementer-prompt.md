@@ -241,10 +241,14 @@ the whole world for a unit-test-only change.
 - **Smoke:** open `http://localhost:3000`, get the page title or h1 — if
   the title says "Property Management" you're in.
 - **Screen-map sync (mandatory for route changes):** if the diff modifies
-  `frontend/apps/{ppt-web,reality-web,mobile}/**/{routes,app}/**`, it MUST
-  also add or update the matching `docs/screens/<product>/<id>.md`. The
-  daily research routine emits `screen-map-drift` if not — your plan will
+  `frontend/apps/{ppt-web,reality-web}/**/{routes,app}/**`, it MUST also
+  add or update the matching `docs/screens/<product>/<id>.md`. The daily
+  research routine emits `screen-map-drift` if not — your plan will
   resurface as a `test-gap` vector next run.
+
+  **Mobile is currently exempt:** the routine excludes `frontend/apps/mobile/`
+  from drift detection because `docs/screens/mobile/` doesn't exist yet.
+  When that directory lands, the routine will be updated to include mobile.
 
 ### C5 — Debug ADB device (mobile)
 
