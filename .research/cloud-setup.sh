@@ -25,8 +25,22 @@
 # implementer runs locally or via the ppt-bridge-mcp (see README).
 
 set -euo pipefail
+# Verbose tracing only when explicitly requested. Avoids leaking token-shaped
+# fragments into the cached log on every routine env build.
+[[ "${DEBUG:-0}" == "1" ]] && set -x
 
 echo "==> ppt-research routine setup"
+
+# --- 0. GH_TOKEN sanity ----------------------------------------------------
+# Fail fast: an empty / missing token guarantees the routine cannot read PRs
+# or push state.json, and we'd rather break the env build than silently land
+# on an unauthenticated `gh` later in the script.
+if [[ -z "${GH_TOKEN:-}" ]]; then
+  echo "!! GH_TOKEN is unset or empty — the routine cannot read PRs/issues or push state.json"
+  echo "   Set it in the environment's Variables section as a fine-grained PAT with:"
+  echo "     repo:contents (read+write), pull-requests (read), issues (read)"
+  exit 1
+fi
 
 # --- 1. gh CLI -------------------------------------------------------------
 # Pinned version. `releases/latest/download/<asset>` is a redirector that fills
@@ -59,18 +73,35 @@ git config --global pull.ff only
 git config --global init.defaultBranch main
 
 # --- 4. gh auth + sanity ---------------------------------------------------
-if [[ -n "${GH_TOKEN:-}" ]]; then
-  # gh uses GH_TOKEN env automatically; no `gh auth login` needed.
-  gh auth status || {
-    echo "!! gh auth check failed; verify GH_TOKEN scope (needs repo:contents, pull-requests, issues)"
-    exit 1
-  }
-  # Confirm we can see the repo at all.
-  gh repo view martin-janci/property-management --json name,visibility | jq -r '.name'
-else
-  echo "!! GH_TOKEN not set — the routine cannot read PRs/issues or push state.json"
-  echo "   Set it in the environment's Variables section."
+# gh uses GH_TOKEN env automatically; no `gh auth login` needed.
+gh auth status || {
+  echo "!! gh auth check failed; verify GH_TOKEN scope (needs repo:contents, pull-requests, issues)"
   exit 1
+}
+
+# Confirm we can see the repo at all (proves read access on contents).
+gh repo view martin-janci/property-management --json name,visibility | jq -r '.name'
+
+# Surface the token's actual scopes for diagnostics. Fine-grained PATs report
+# scopes as `repo:status,repo_deployment,...` via the x-oauth-scopes response
+# header; classic PATs report the umbrella `repo` scope. Both work, but if a
+# user accidentally gives the routine a read-only token, the routine's first
+# push will fail mysteriously — surface that here, not 30 lines into Phase 4.
+SCOPES="$(gh api -i user 2>/dev/null | awk -F': ' 'tolower($1) == "x-oauth-scopes" { sub(/\r$/, "", $2); print $2 }' | head -1)"
+if [[ -n "$SCOPES" ]]; then
+  echo "==> token scopes: $SCOPES"
+  # Classic PATs: must include `repo` (or `public_repo` for public-only).
+  # Fine-grained PATs: x-oauth-scopes is often empty/whitespace; the token
+  # acl is enforced server-side per-resource, so we skip the assertion in
+  # that case rather than false-flag.
+  if ! echo "$SCOPES" | grep -qE '(^|, )(repo|public_repo|contents:write|repo:contents)'; then
+    echo "!! token scopes don't include repo/public_repo/contents:write — pushes to .research/ will fail"
+    echo "   if this is a fine-grained PAT, ensure Contents = Read & Write is set on this repo"
+    exit 1
+  fi
+else
+  # No header → fine-grained PAT or older gh; trust the API call and continue.
+  echo "==> token scopes: (none reported — fine-grained PAT?)"
 fi
 
 # --- 5. seed .research/ if the routine was created before PR #266 merged ---
