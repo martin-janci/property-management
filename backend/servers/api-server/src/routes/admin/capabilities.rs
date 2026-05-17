@@ -20,7 +20,7 @@ use admin_core::{
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::AuthUser;
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     routing::{delete, get, post},
     Extension, Json, Router,
@@ -59,23 +59,51 @@ pub fn router() -> Router<AppState> {
 
 #[derive(Debug, Serialize)]
 pub struct RegistryEntry {
-    pub key: &'static str,
-    pub registered: bool,
+    pub capability: String,
+    pub description: String,
+    pub risk_level: String,
+    pub holder_count: i64,
 }
 
 /// GET /admin/capabilities/registry
-async fn list_registry(_cap: RequireCapability) -> Json<Vec<RegistryEntry>> {
-    use admin_core::CapabilityRegistry;
-    let registered = CapabilityRegistry::registered();
-    Json(
-        Capability::ALL
-            .iter()
-            .map(|c| RegistryEntry {
-                key: c.as_str(),
-                registered: registered.contains(c),
+///
+/// Returns each capability enriched with its canonical description and risk
+/// level from `capability_descriptions` (seeded by migration 00152) plus the
+/// count of current active holders from `capability_grants`.
+async fn list_registry(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<RegistryEntry>>, (StatusCode, String)> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            cd.capability,
+            cd.description,
+            cd.risk_level,
+            COUNT(cg.id) FILTER (
+                WHERE cg.revoked_at IS NULL
+                  AND (cg.expires_at IS NULL OR cg.expires_at > NOW())
+            ) AS "holder_count!: i64"
+        FROM capability_descriptions cd
+        LEFT JOIN capability_grants cg ON cg.capability = cd.capability
+        GROUP BY cd.capability, cd.description, cd.risk_level
+        ORDER BY cd.capability
+        "#
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(
+        rows.into_iter()
+            .map(|r| RegistryEntry {
+                capability: r.capability,
+                description: r.description,
+                risk_level: r.risk_level,
+                holder_count: r.holder_count,
             })
             .collect(),
-    )
+    ))
 }
 
 /// GET /admin/capabilities/users/:user_id
