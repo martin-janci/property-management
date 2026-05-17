@@ -1,0 +1,4 @@
+# Per-run signal trails land here as YYYY-MM-DD.json.
+# Each contains the raw signals derived that run plus goal_checks results.
+# This .gitkeep ensures the directory exists on a fresh clone so the
+# routine's first run doesn't fail with "no such file or directory".
