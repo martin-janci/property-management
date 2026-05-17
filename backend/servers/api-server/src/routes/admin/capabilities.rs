@@ -57,7 +57,7 @@ pub fn router() -> Router<AppState> {
         )
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct RegistryEntry {
     pub capability: String,
     pub description: String,
@@ -74,36 +74,30 @@ async fn list_registry(
     _cap: RequireCapability,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<RegistryEntry>>, (StatusCode, String)> {
-    let rows = sqlx::query!(
+    // Runtime-checked sqlx (not `query!`) — CI runs with SQLX_OFFLINE=true and
+    // no `.sqlx` offline cache is committed, so compile-time checked macros
+    // would fail to build. Matches the convention in `audit.rs`, `agencies.rs`.
+    let rows = sqlx::query_as::<_, RegistryEntry>(
         r#"
         SELECT
-            cd.capability,
-            cd.description,
-            cd.risk_level,
+            cd.capability AS capability,
+            cd.description AS description,
+            cd.risk_level AS risk_level,
             COUNT(cg.id) FILTER (
                 WHERE cg.revoked_at IS NULL
                   AND (cg.expires_at IS NULL OR cg.expires_at > NOW())
-            ) AS "holder_count!: i64"
+            ) AS holder_count
         FROM capability_descriptions cd
         LEFT JOIN capability_grants cg ON cg.capability = cd.capability
         GROUP BY cd.capability, cd.description, cd.risk_level
         ORDER BY cd.capability
-        "#
+        "#,
     )
     .fetch_all(&state.db)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    Ok(Json(
-        rows.into_iter()
-            .map(|r| RegistryEntry {
-                capability: r.capability,
-                description: r.description,
-                risk_level: r.risk_level,
-                holder_count: r.holder_count,
-            })
-            .collect(),
-    ))
+    Ok(Json(rows))
 }
 
 /// GET /admin/capabilities/users/:user_id

@@ -458,8 +458,12 @@ interface RegistryViewProps {
 }
 
 function RegistryView({ onViewUser, token }: RegistryViewProps) {
+  // Include `token` in the query key so cached results from a previous
+  // session are not served after logout / login / token refresh. React Query
+  // treats different keys as separate caches, preventing cross-user leakage.
+  void onViewUser;
   const { data, isLoading, error, refetch } = useQuery<RegistryEntry[]>({
-    queryKey: ['admin', 'capabilities', 'registry'],
+    queryKey: ['admin', 'capabilities', 'registry', token],
     queryFn: async () => {
       const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -520,8 +524,20 @@ function RegistryView({ onViewUser, token }: RegistryViewProps) {
           <span className="cap-card__desc">{entry.description || 'No description available.'}</span>
           <div className="cap-card__footer">
             <span className="cap-card__holders">Holders: {entry.holder_count}</span>
-            <button type="button" className="cap-card__link" onClick={() => onViewUser('me')}>
-              View holders →
+            {/*
+              Per-capability holders view is not yet wired (no
+              `/admin/capabilities/:cap/holders` route exists). Render the
+              affordance as disabled rather than misrouting every card to
+              `onViewUser('me')`, which leaked the current user's grants
+              regardless of which card was clicked.
+            */}
+            <button
+              type="button"
+              className="cap-card__link"
+              disabled
+              title="Per-capability holders view coming soon"
+            >
+              View holders (coming soon)
             </button>
           </div>
         </article>
