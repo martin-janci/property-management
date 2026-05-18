@@ -1337,28 +1337,51 @@ async fn list_workflows(
     }
 }
 
+/// Boilerplate 404 for any cross-tenant probe or genuine miss.
+///
+/// We deliberately use the same response for "doesn't exist" and "exists in
+/// another org" so a caller can't enumerate workflow IDs by comparing 403 vs
+/// 404. See H1 audit notes.
+fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ErrorResponse::new("NOT_FOUND", msg)),
+    )
+}
+
 async fn get_workflow(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.find_by_id(id).await {
+    let tenant = extract_tenant_context(&headers)?;
+    match state
+        .workflow_repo
+        .find_by_id_for_org(id, tenant.tenant_id)
+        .await
+    {
         Ok(Some(workflow)) => {
-            let actions = state.workflow_repo.list_actions(id).await.map_err(|e| {
-                tracing::error!("Failed to list actions: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
-                )
-            })?;
+            // list_actions is scoped by the same org_id, so we cannot leak
+            // actions from a workflow we just verified, but pass org_id
+            // anyway for symmetry / future-proofing against ID swaps.
+            let actions = state
+                .workflow_repo
+                .list_actions(id, tenant.tenant_id)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to list actions: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
+                    )
+                })?
+                .unwrap_or_default();
             Ok(Json(serde_json::json!({
                 "workflow": workflow,
                 "actions": actions
             })))
         }
-        Ok(None) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Workflow not found")),
-        )),
+        Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to get workflow: {}", e);
             Err((
@@ -1371,11 +1394,14 @@ async fn get_workflow(
 
 async fn update_workflow(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkflow>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.update(id, req).await {
-        Ok(workflow) => Ok(Json(serde_json::json!(workflow))),
+    let tenant = extract_tenant_context(&headers)?;
+    match state.workflow_repo.update(id, tenant.tenant_id, req).await {
+        Ok(Some(workflow)) => Ok(Json(serde_json::json!(workflow))),
+        Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to update workflow: {}", e);
             Err((
@@ -1388,14 +1414,13 @@ async fn update_workflow(
 
 async fn delete_workflow(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.delete(id).await {
+    let tenant = extract_tenant_context(&headers)?;
+    match state.workflow_repo.delete(id, tenant.tenant_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
-        Ok(false) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Workflow not found")),
-        )),
+        Ok(false) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to delete workflow: {}", e);
             Err((
@@ -1408,10 +1433,13 @@ async fn delete_workflow(
 
 async fn list_actions(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.list_actions(id).await {
-        Ok(actions) => Ok(Json(serde_json::json!({ "actions": actions }))),
+    let tenant = extract_tenant_context(&headers)?;
+    match state.workflow_repo.list_actions(id, tenant.tenant_id).await {
+        Ok(Some(actions)) => Ok(Json(serde_json::json!({ "actions": actions }))),
+        Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to list actions: {}", e);
             Err((
@@ -1424,11 +1452,17 @@ async fn list_actions(
 
 async fn add_action(
     State(state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(req): Json<CreateWorkflowAction>,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(mut req): Json<CreateWorkflowAction>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.add_action(req).await {
-        Ok(action) => Ok((StatusCode::CREATED, Json(serde_json::json!(action)))),
+    let tenant = extract_tenant_context(&headers)?;
+    // Pin the workflow_id to the path parameter so a caller can't
+    // shadow-target a different workflow via the JSON body.
+    req.workflow_id = id;
+    match state.workflow_repo.add_action(tenant.tenant_id, req).await {
+        Ok(Some(action)) => Ok((StatusCode::CREATED, Json(serde_json::json!(action)))),
+        Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
             tracing::error!("Failed to add action: {}", e);
             Err((
@@ -1441,14 +1475,17 @@ async fn add_action(
 
 async fn delete_action(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(action_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.delete_action(action_id).await {
+    let tenant = extract_tenant_context(&headers)?;
+    match state
+        .workflow_repo
+        .delete_action(action_id, tenant.tenant_id)
+        .await
+    {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
-        Ok(false) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Action not found")),
-        )),
+        Ok(false) => Err(not_found("Action not found")),
         Err(e) => {
             tracing::error!("Failed to delete action: {}", e);
             Err((
@@ -1461,10 +1498,32 @@ async fn delete_action(
 
 async fn trigger_workflow(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<TriggerWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     use crate::services::WorkflowExecutor;
+
+    let tenant = extract_tenant_context(&headers)?;
+
+    // SECURITY (H1): verify the workflow belongs to the caller's org BEFORE
+    // we hand off to the executor. A 404 (not 403) is the correct response
+    // — distinguishing "no such workflow" from "wrong tenant" would let a
+    // caller enumerate workflow IDs cross-tenant.
+    let workflow_exists = state
+        .workflow_repo
+        .find_by_id_for_org(id, tenant.tenant_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load workflow for tenant check: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to trigger")),
+            )
+        })?;
+    if workflow_exists.is_none() {
+        return Err(not_found("Workflow not found"));
+    }
 
     // Create the workflow executor using the repository
     let executor = WorkflowExecutor::new(state.workflow_repo.clone());
@@ -1524,13 +1583,19 @@ async fn list_executions(
 
 async fn get_execution(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.find_execution_by_id(id).await {
+    let tenant = extract_tenant_context(&headers)?;
+    match state
+        .workflow_repo
+        .find_execution_by_id_for_org(id, tenant.tenant_id)
+        .await
+    {
         Ok(Some(execution)) => {
             let steps = state
                 .workflow_repo
-                .list_execution_steps(id)
+                .list_execution_steps_for_org(id, tenant.tenant_id)
                 .await
                 .map_err(|e| {
                     tracing::error!("Failed to list steps: {}", e);
@@ -1538,16 +1603,14 @@ async fn get_execution(
                         StatusCode::INTERNAL_SERVER_ERROR,
                         Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to get")),
                     )
-                })?;
+                })?
+                .unwrap_or_default();
             Ok(Json(serde_json::json!({
                 "execution": execution,
                 "steps": steps
             })))
         }
-        Ok(None) => Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Execution not found")),
-        )),
+        Ok(None) => Err(not_found("Execution not found")),
         Err(e) => {
             tracing::error!("Failed to get execution: {}", e);
             Err((
@@ -1560,10 +1623,17 @@ async fn get_execution(
 
 async fn list_execution_steps(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.list_execution_steps(id).await {
-        Ok(steps) => Ok(Json(serde_json::json!({ "steps": steps }))),
+    let tenant = extract_tenant_context(&headers)?;
+    match state
+        .workflow_repo
+        .list_execution_steps_for_org(id, tenant.tenant_id)
+        .await
+    {
+        Ok(Some(steps)) => Ok(Json(serde_json::json!({ "steps": steps }))),
+        Ok(None) => Err(not_found("Execution not found")),
         Err(e) => {
             tracing::error!("Failed to list steps: {}", e);
             Err((
@@ -1850,7 +1920,13 @@ async fn import_workflow_template(
             retry_delay_seconds: action.retry_delay_seconds,
         };
 
-        if let Err(e) = state.workflow_repo.add_action(create_action).await {
+        // The workflow we just created belongs to `tenant.tenant_id` by
+        // construction, so this is the correct org scope.
+        if let Err(e) = state
+            .workflow_repo
+            .add_action(tenant.tenant_id, create_action)
+            .await
+        {
             tracing::warn!("Failed to add action to imported workflow: {}", e);
         }
     }
@@ -1861,6 +1937,7 @@ async fn import_workflow_template(
             .workflow_repo
             .update(
                 workflow.id,
+                tenant.tenant_id,
                 UpdateWorkflow {
                     name: None,
                     description: None,

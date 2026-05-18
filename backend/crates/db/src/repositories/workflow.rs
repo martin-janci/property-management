@@ -9,6 +9,21 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
+/// Hard ceiling on `retry_count` per action (H4).
+///
+/// Exponential backoff with attempt=N grows as `2^(N-1) * delay`. Even with
+/// a 1-second base delay, attempt=31 would compute to ~68 years before the
+/// runtime clamp kicks in. 10 retries is more than enough for any sane
+/// integration and keeps `2^(retries-1)` within `u64` without surprise.
+pub const MAX_RETRY_COUNT: i32 = 10;
+
+/// Hard ceiling on `retry_delay_seconds` per action (H4).
+///
+/// One hour. The executor caps the *effective* exponential delay at the
+/// same value; clamping the base here just prevents the multiplier from
+/// blowing past `u64` arithmetic in the executor.
+pub const MAX_RETRY_DELAY_SECONDS: i32 = 3600;
+
 /// Repository for workflow operations.
 #[derive(Clone)]
 pub struct WorkflowRepository {
@@ -42,10 +57,32 @@ impl WorkflowRepository {
         .await
     }
 
-    /// Get workflow by ID.
+    /// Get workflow by ID (no tenant scoping — internal use by the executor only).
+    ///
+    /// Handlers must use [`Self::find_by_id_for_org`] to enforce tenant
+    /// isolation. This unscoped variant is retained for the workflow executor,
+    /// which loads workflows during background execution where the
+    /// `organization_id` is derived from the persisted row itself.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Workflow>, sqlx::Error> {
         sqlx::query_as("SELECT * FROM workflows WHERE id = $1")
             .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+    }
+
+    /// Get workflow by ID, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the workflow does not exist OR belongs to a
+    /// different organization — the caller MUST surface this as a 404 to
+    /// avoid disclosing cross-tenant existence.
+    pub async fn find_by_id_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Workflow>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM workflows WHERE id = $1 AND organization_id = $2")
+            .bind(id)
+            .bind(org_id)
             .fetch_optional(&self.pool)
             .await
     }
@@ -90,48 +127,88 @@ impl WorkflowRepository {
         .await
     }
 
-    /// Update a workflow.
-    pub async fn update(&self, id: Uuid, data: UpdateWorkflow) -> Result<Workflow, sqlx::Error> {
+    /// Update a workflow, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the workflow does not exist OR belongs to a
+    /// different organization. The caller MUST surface this as 404.
+    pub async fn update(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+        data: UpdateWorkflow,
+    ) -> Result<Option<Workflow>, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE workflows SET
-                name = COALESCE($2, name),
-                description = COALESCE($3, description),
-                trigger_type = COALESCE($4, trigger_type),
-                trigger_config = COALESCE($5, trigger_config),
-                conditions = COALESCE($6, conditions),
-                enabled = COALESCE($7, enabled),
+                name = COALESCE($3, name),
+                description = COALESCE($4, description),
+                trigger_type = COALESCE($5, trigger_type),
+                trigger_config = COALESCE($6, trigger_config),
+                conditions = COALESCE($7, conditions),
+                enabled = COALESCE($8, enabled),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(org_id)
         .bind(data.name)
         .bind(data.description)
         .bind(data.trigger_type)
         .bind(data.trigger_config.map(sqlx::types::Json))
         .bind(data.conditions.map(sqlx::types::Json))
         .bind(data.enabled)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Delete a workflow.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM workflows WHERE id = $1")
+    /// Delete a workflow, scoped to the caller's organization.
+    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM workflows WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
-    /// Add an action to a workflow.
+    /// Add an action to a workflow, scoped to the caller's organization.
+    ///
+    /// Verifies that `data.workflow_id` belongs to `org_id` BEFORE inserting,
+    /// so a cross-tenant caller cannot attach actions to another org's
+    /// workflow. Returns `Ok(None)` on tenant mismatch — the caller MUST
+    /// surface this as 404.
+    ///
+    /// Also clamps `retry_count` and `retry_delay_seconds` at insertion time
+    /// — see [`MAX_RETRY_COUNT`] / [`MAX_RETRY_DELAY_SECONDS`] (H4 defense).
     pub async fn add_action(
         &self,
+        org_id: Uuid,
         data: CreateWorkflowAction,
-    ) -> Result<WorkflowAction, sqlx::Error> {
-        sqlx::query_as(
+    ) -> Result<Option<WorkflowAction>, sqlx::Error> {
+        // Tenant check: the workflow must belong to the caller's org.
+        let belongs: Option<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM workflows WHERE id = $1 AND organization_id = $2")
+                .bind(data.workflow_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?;
+        if belongs.is_none() {
+            return Ok(None);
+        }
+
+        // H4 (insertion-time clamp): cap retry parameters to safe bounds so
+        // a malicious or buggy client can't queue a retry that sleeps for
+        // years. The executor applies the same clamps at runtime as
+        // defense-in-depth.
+        let retry_count = data.retry_count.unwrap_or(3).clamp(0, MAX_RETRY_COUNT);
+        let retry_delay_seconds = data
+            .retry_delay_seconds
+            .unwrap_or(60)
+            .clamp(0, MAX_RETRY_DELAY_SECONDS);
+
+        let action = sqlx::query_as(
             r#"
             INSERT INTO workflow_actions
                 (workflow_id, action_order, action_type, action_config, on_failure, retry_count, retry_delay_seconds)
@@ -144,31 +221,62 @@ impl WorkflowRepository {
         .bind(data.action_type)
         .bind(sqlx::types::Json(data.action_config))
         .bind(data.on_failure.unwrap_or_else(|| "stop".to_string()))
-        .bind(data.retry_count.unwrap_or(3))
-        .bind(data.retry_delay_seconds.unwrap_or(60))
+        .bind(retry_count)
+        .bind(retry_delay_seconds)
         .fetch_one(&self.pool)
-        .await
+        .await?;
+        Ok(Some(action))
     }
 
-    /// Get actions for a workflow.
+    /// Get actions for a workflow, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the workflow does not exist OR belongs to a
+    /// different organization. The caller MUST surface this as 404.
     pub async fn list_actions(
         &self,
         workflow_id: Uuid,
-    ) -> Result<Vec<WorkflowAction>, sqlx::Error> {
-        sqlx::query_as(
+        org_id: Uuid,
+    ) -> Result<Option<Vec<WorkflowAction>>, sqlx::Error> {
+        // Tenant check first — without this, a cross-tenant caller could
+        // probe action shapes by trying random workflow IDs.
+        let belongs: Option<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM workflows WHERE id = $1 AND organization_id = $2")
+                .bind(workflow_id)
+                .bind(org_id)
+                .fetch_optional(&self.pool)
+                .await?;
+        if belongs.is_none() {
+            return Ok(None);
+        }
+
+        let actions = sqlx::query_as(
             "SELECT * FROM workflow_actions WHERE workflow_id = $1 ORDER BY action_order",
         )
         .bind(workflow_id)
         .fetch_all(&self.pool)
-        .await
+        .await?;
+        Ok(Some(actions))
     }
 
-    /// Delete an action.
-    pub async fn delete_action(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM workflow_actions WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete an action, scoped to the caller's organization.
+    ///
+    /// The action is identified by its own ID. We JOIN through workflows to
+    /// confirm the parent workflow belongs to `org_id`; otherwise the delete
+    /// is a no-op and returns `false`, which the caller surfaces as 404.
+    pub async fn delete_action(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM workflow_actions a
+            USING workflows w
+            WHERE a.id = $1
+              AND a.workflow_id = w.id
+              AND w.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -201,7 +309,9 @@ impl WorkflowRepository {
         Ok(execution)
     }
 
-    /// Get execution by ID.
+    /// Get execution by ID (no tenant scoping — internal use only).
+    ///
+    /// HTTP handlers must use [`Self::find_execution_by_id_for_org`].
     pub async fn find_execution_by_id(
         &self,
         id: Uuid,
@@ -210,6 +320,29 @@ impl WorkflowRepository {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
+    }
+
+    /// Get execution by ID, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the execution does not exist OR belongs to a
+    /// workflow in a different organization. The caller MUST surface this
+    /// as 404.
+    pub async fn find_execution_by_id_for_org(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<WorkflowExecution>, sqlx::Error> {
+        sqlx::query_as(
+            r#"
+            SELECT e.* FROM workflow_executions e
+            JOIN workflows w ON w.id = e.workflow_id
+            WHERE e.id = $1 AND w.organization_id = $2
+            "#,
+        )
+        .bind(id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     /// List executions with filters.
@@ -318,7 +451,9 @@ impl WorkflowRepository {
         .await
     }
 
-    /// Get execution steps.
+    /// Get execution steps (no tenant scoping — internal use only).
+    ///
+    /// HTTP handlers must use [`Self::list_execution_steps_for_org`].
     pub async fn list_execution_steps(
         &self,
         execution_id: Uuid,
@@ -334,6 +469,46 @@ impl WorkflowRepository {
         .bind(execution_id)
         .fetch_all(&self.pool)
         .await
+    }
+
+    /// Get execution steps, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the execution does not exist OR belongs to a
+    /// workflow in a different organization. The caller MUST surface this
+    /// as 404 — disclosing presence/absence cross-tenant is itself a leak.
+    pub async fn list_execution_steps_for_org(
+        &self,
+        execution_id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Vec<WorkflowExecutionStep>>, sqlx::Error> {
+        // Tenant check via the parent workflow.
+        let belongs: Option<(Uuid,)> = sqlx::query_as(
+            r#"
+            SELECT e.id FROM workflow_executions e
+            JOIN workflows w ON w.id = e.workflow_id
+            WHERE e.id = $1 AND w.organization_id = $2
+            "#,
+        )
+        .bind(execution_id)
+        .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        if belongs.is_none() {
+            return Ok(None);
+        }
+
+        let steps = sqlx::query_as(
+            r#"
+            SELECT s.* FROM workflow_execution_steps s
+            JOIN workflow_actions a ON a.id = s.action_id
+            WHERE s.execution_id = $1
+            ORDER BY a.action_order
+            "#,
+        )
+        .bind(execution_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(Some(steps))
     }
 
     /// Get workflows by trigger type (for event matching).

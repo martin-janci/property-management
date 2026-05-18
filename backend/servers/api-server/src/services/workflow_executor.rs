@@ -10,11 +10,37 @@ use db::models::{
     execution_status, on_failure, step_status, trigger_type, TriggerWorkflow, Workflow,
     WorkflowAction,
 };
-use db::repositories::WorkflowRepository;
+use db::repositories::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use thiserror::Error;
 use uuid::Uuid;
+
+/// Compute the exponential-backoff sleep for a retry attempt, clamped to a
+/// safe ceiling.
+///
+/// Without a clamp, `2^(attempt-1) * base_delay` overflows or sleeps for
+/// effectively forever — with `retry_delay_seconds = 86400` and
+/// `attempt = 31`, the naive formula yielded ~2900 years (H4 audit). We:
+///
+/// 1. Saturate the exponent at 30 so `2_u64.pow(...)` cannot overflow.
+/// 2. Use `saturating_mul` for the multiplication.
+/// 3. Cap the final value at `MAX_RETRY_DELAY_SECONDS` (1 hour).
+///
+/// `attempt` is expected to be >= 1 (callers handle `attempt == 0` —
+/// the first try has no delay). `attempt == 0` returns 0 defensively.
+#[inline]
+fn compute_backoff_seconds(base_delay_seconds: i32, attempt: i32) -> u64 {
+    if attempt < 1 {
+        return 0;
+    }
+    let base = base_delay_seconds.max(0) as u64;
+    // Cap the exponent so 2^exp stays well within u64 (2^62 is plenty).
+    let exp = ((attempt - 1) as u32).min(30);
+    let multiplier = 1u64 << exp;
+    let raw = base.saturating_mul(multiplier);
+    raw.min(MAX_RETRY_DELAY_SECONDS as u64)
+}
 
 /// Errors that can occur during workflow execution.
 #[derive(Debug, Error)]
@@ -648,8 +674,14 @@ impl WorkflowExecutorTask {
             "Starting workflow execution"
         );
 
-        // Get workflow actions
-        let actions = self.workflow_repo.list_actions(workflow.id).await?;
+        // Get workflow actions. The executor is internal — we already
+        // loaded `workflow`, so the organization scope is derived from the
+        // row itself (no risk of cross-tenant leakage here).
+        let actions = self
+            .workflow_repo
+            .list_actions(workflow.id, workflow.organization_id)
+            .await?
+            .unwrap_or_default();
 
         if actions.is_empty() {
             tracing::warn!(
@@ -759,16 +791,19 @@ impl WorkflowExecutorTask {
             .get(&action.action_type)
             .ok_or_else(|| ActionError::InvalidActionType(action.action_type.clone()))?;
 
-        // Execute with retry logic
+        // Execute with retry logic. Defense-in-depth (H4): clamp the
+        // retry_count and retry_delay_seconds read from the DB even though
+        // `add_action` already clamps on insertion — a row written before
+        // the clamp landed (or via a future side channel) must not be able
+        // to wedge the executor.
         let mut last_error: Option<ActionError> = None;
-        let max_retries = action.retry_count;
+        let max_retries = action.retry_count.clamp(0, MAX_RETRY_COUNT);
+        let base_delay_seconds = action.retry_delay_seconds.clamp(0, MAX_RETRY_DELAY_SECONDS);
 
         for attempt in 0..=max_retries {
             if attempt > 0 {
-                // Wait before retry (exponential backoff)
-                let delay = Duration::from_secs(
-                    action.retry_delay_seconds as u64 * (2_u64.pow(attempt as u32 - 1)),
-                );
+                let delay_secs = compute_backoff_seconds(base_delay_seconds, attempt);
+                let delay = Duration::from_secs(delay_secs);
                 tracing::info!(
                     action_id = %action.id,
                     attempt = attempt,
@@ -876,5 +911,70 @@ mod tests {
         assert_eq!(event.event_type, trigger_type::FAULT_CREATED);
         assert!(event.building_id.is_some());
         assert!(event.triggered_by.is_some());
+    }
+
+    // ------------------------------------------------------------------
+    // H4: retry backoff clamp
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_backoff_attempt_zero_is_zero() {
+        // The first attempt has no delay — callers don't sleep on attempt=0,
+        // but the helper should still return 0 defensively.
+        assert_eq!(compute_backoff_seconds(60, 0), 0);
+    }
+
+    #[test]
+    fn test_backoff_normal_growth() {
+        // base=60, attempts 1..=5 → 60, 120, 240, 480, 960 (all < ceiling).
+        assert_eq!(compute_backoff_seconds(60, 1), 60);
+        assert_eq!(compute_backoff_seconds(60, 2), 120);
+        assert_eq!(compute_backoff_seconds(60, 3), 240);
+        assert_eq!(compute_backoff_seconds(60, 4), 480);
+        assert_eq!(compute_backoff_seconds(60, 5), 960);
+    }
+
+    #[test]
+    fn test_backoff_clamps_at_ceiling() {
+        // base=60, attempt=7 → 60 * 2^6 = 3840 > 3600 → ceiling = 3600.
+        assert_eq!(
+            compute_backoff_seconds(60, 7),
+            MAX_RETRY_DELAY_SECONDS as u64
+        );
+        // base=60, attempt=20 → would be 60 * 2^19; must still cap.
+        assert_eq!(
+            compute_backoff_seconds(60, 20),
+            MAX_RETRY_DELAY_SECONDS as u64
+        );
+    }
+
+    #[test]
+    fn test_backoff_huge_input_does_not_overflow() {
+        // The audit scenario: retry_count=100, retry_delay_seconds=86400,
+        // attempt=99. Before the clamp this computed to ~2900 years and
+        // could overflow u64. With the clamp it must be <= 1 hour.
+        let delay = compute_backoff_seconds(86_400, 99);
+        assert!(
+            delay <= MAX_RETRY_DELAY_SECONDS as u64,
+            "delay {} exceeded ceiling {}",
+            delay,
+            MAX_RETRY_DELAY_SECONDS
+        );
+    }
+
+    #[test]
+    fn test_backoff_negative_base_treated_as_zero() {
+        // `retry_delay_seconds` is i32; a corrupt -1 row must not panic or
+        // wrap to a huge u64.
+        assert_eq!(compute_backoff_seconds(-1, 5), 0);
+    }
+
+    #[test]
+    fn test_backoff_max_base_clamps_immediately() {
+        // base at the per-row ceiling, attempt=1 → exactly the ceiling.
+        assert_eq!(
+            compute_backoff_seconds(MAX_RETRY_DELAY_SECONDS, 1),
+            MAX_RETRY_DELAY_SECONDS as u64
+        );
     }
 }

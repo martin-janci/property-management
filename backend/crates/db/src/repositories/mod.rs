@@ -65,7 +65,7 @@ pub mod rental;
 pub use ai_chat::AiChatRepository;
 pub use equipment::EquipmentRepository;
 pub use sentiment::SentimentRepository;
-pub use workflow::WorkflowRepository;
+pub use workflow::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECONDS};
 
 // Epic 14: IoT & Smart Building
 pub use sensor::SensorRepository;
