@@ -268,9 +268,20 @@ impl Scheduler {
 
         match announcement.target_type.as_str() {
             "all" => {
-                // Get all users in the organization
+                // Get all users in the organization. `users` has no
+                // `organization_id` column — membership lives in
+                // `user_memberships` (migration 00128, the canonical authz
+                // spine). Join through it and filter to active grants.
                 let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
-                    "SELECT id FROM users WHERE organization_id = $1 AND status = 'active'",
+                    r#"
+                    SELECT DISTINCT u.id
+                    FROM users u
+                    JOIN user_memberships m ON m.user_id = u.id
+                    WHERE m.organization_id = $1
+                      AND m.revoked_at IS NULL
+                      AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                      AND u.status = 'active'
+                    "#,
                 )
                 .bind(announcement.organization_id)
                 .fetch_all(&self.pool)
