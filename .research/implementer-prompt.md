@@ -220,9 +220,9 @@ the whole world for a unit-test-only change.
 
 - **When:** any change to `frontend/`, the customer/host portals, or any
   flow that's only visible end-to-end. Also triggers when a plan touches a
-  route file — see also [`ppt-screens`](../../.claude/skills/ppt-screens/SKILL.md)
+  route file — see also [`ppt-screens`](../.claude/skills/ppt-screens/SKILL.md)
   for the screen-map sync requirement (route + doc must change together).
-- **Skill:** [`ppt-screens`](../../.claude/skills/ppt-screens/SKILL.md) —
+- **Skill:** [`ppt-screens`](../.claude/skills/ppt-screens/SKILL.md) —
   full visual-smoke playbook with Chrome MCP, Playwright codegen, and
   screen-map authoring/validation patterns.
 - **Tools (in priority order):**

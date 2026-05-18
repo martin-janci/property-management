@@ -22,8 +22,8 @@ signals.
 - A plan adds / removes / refactors a route in any of:
   - `frontend/apps/ppt-web/src/{App.tsx,routes/**}`
   - `frontend/apps/reality-web/src/app/**`
-  - `frontend/apps/mobile/app/**`
-- A plan modifies an existing `docs/screens/{ppt,reality,mobile}/*.md`
+  - `frontend/apps/mobile/src/**` (React Native; no Expo Router — see [mobile structure note](#mobile-app-structure-note))
+- A plan modifies an existing `docs/screens/{ppt,reality}/*.md` (mobile docs not yet seeded; see note)
 - A plan needs visual verification (Chrome / Playwright) — IG5 evidence
   for any frontend-touching plan that doesn't have a pure unit test
 - The daily research brief flagged a `screen-map-drift` signal you're
@@ -58,7 +58,8 @@ signals.
    - `ppt-web`: add to `frontend/apps/ppt-web/src/App.tsx` or
      `frontend/apps/ppt-web/src/routes/<area>/<file>.tsx`
    - `reality-web`: `frontend/apps/reality-web/src/app/<route>/page.tsx`
-   - `mobile`: `frontend/apps/mobile/app/<route>.tsx` (Expo Router)
+   - `mobile`: `frontend/apps/mobile/src/screens/<Screen>.tsx` registered
+     in `frontend/apps/mobile/src/App.tsx` (React Native — no Expo Router)
 5. **Commit both files in the same PR.** The screen-map CI workflow
    triggers on either path; submitting one without the other will trip
    the `screen-map-drift` signal on the next routine run even if CI is
@@ -82,14 +83,15 @@ The CLI is wired through pnpm:
 
 ```bash
 cd frontend
-pnpm --filter @ppt/screen-map test         # unit tests for parser / validator
-pnpm --filter @ppt/screen-map cli validate --strict   # validate all docs/screens/**
-pnpm --filter @ppt/screen-map cli discover            # list parsed screens (Phase-1+)
+pnpm --filter @ppt/screen-map test                              # unit tests for parser / validator
+pnpm --filter @ppt/screen-map run cli -- validate --strict      # validate all docs/screens/**
+pnpm --filter @ppt/screen-map run cli -- discover               # list parsed screens (Phase-1+)
 ```
 
-Cold checkouts need `pnpm install` first. The pre-commit hook also runs
-`pnpm --filter @ppt/screen-map cli validate --strict` on the same paths
-that the GitHub workflow validates — passing locally means CI will pass.
+The `-- ` (double-dash) is what forwards args past the pnpm script wrapper
+reliably across pnpm versions. Cold checkouts need `pnpm install` first.
+The pre-commit hook runs the same `cli -- validate --strict` invocation,
+so passing locally means CI will pass.
 
 ## Visual smoke (when a plan ticks C4)
 
@@ -122,14 +124,17 @@ npx playwright codegen http://localhost:3000/<route>
 ```
 
 Codegen opens an instrumented browser; click through the flow once and
-the generated test goes to `frontend/apps/<app>/tests/e2e/<flow>.spec.ts`
-(or wherever the app's test directory is — `ppt-web` uses Vitest unit
-tests + Playwright E2E in `tests/e2e/`). Then:
+save the output to the app's e2e directory. For `ppt-web` that's
+`frontend/apps/ppt-web/e2e/<flow>.spec.ts` (e.g. `auth.spec.ts`,
+`home.spec.ts`, `navigation.spec.ts`, `pages.spec.ts`). Then:
 
 ```bash
 cd frontend
-pnpm --filter @ppt/web exec playwright test
+pnpm --filter @ppt/ppt-web exec playwright test
 ```
+
+(Verify the package name in `frontend/apps/ppt-web/package.json` — pnpm
+filters silently match nothing if the name is wrong.)
 
 ### Cloud (via ppt-bridge)
 
@@ -142,12 +147,14 @@ URLs that respond to HEAD/GET without browser rendering (e.g. via curl).
 ## Deterministic verification
 
 ```bash
-# 1. docs/screens/ is non-empty for each product
-for p in ppt reality mobile; do
+# 1. docs/screens/ is non-empty for each seeded product (ppt + reality).
+# Mobile docs are intentionally not seeded yet — see "Mobile app structure
+# note" below; mobile is expected to read 0 until screens land for it.
+for p in ppt reality; do
   count=$(find "docs/screens/$p" -maxdepth 2 -name '*.md' -type f 2>/dev/null | wc -l | tr -d ' ')
   [ "$count" -gt 0 ] && printf "%-8s %s files\n" "$p" "$count" || echo "EMPTY: docs/screens/$p"
 done
-# expected: ppt, reality, mobile each report >0 files
+# expected: ppt, reality each report >0 files
 
 # 2. screen-map package present
 test -f frontend/packages/screen-map/package.json && echo OK
@@ -165,11 +172,14 @@ test -f docs/screens/_template.md && echo OK
 ## Smoke check (single command)
 
 ```bash
-find docs/screens -name '*.md' -type f -not -name '_template.md' | head -1 | xargs -I{} test -e {}
+find docs/screens/ppt docs/screens/reality -name '*.md' -type f -not -name '_template.md' -not -name 'README.md' 2>/dev/null | grep -q .
 ```
 
-> Asserts at least one parsed-eligible screen doc exists. Doesn't run the
-> validator (that needs `pnpm install`), just confirms the tree shape.
+> Asserts at least one parsed-eligible screen doc exists under a seeded
+> product directory. Scoped to `ppt/` + `reality/` so top-level
+> `_template.md` / `README.md` and unrelated `*.md` files added later
+> don't accidentally pass the check. Doesn't run the validator (that
+> needs `pnpm install`), just confirms the tree shape.
 
 ## After-task verification
 
@@ -185,6 +195,25 @@ cd frontend && pnpm --filter @ppt/screen-map cli validate --strict
 
 # 3. (if C4 was ticked) visual smoke captured in PR body under "IG5 — Screen evidence"
 ```
+
+## Mobile app structure note
+
+`frontend/apps/mobile/` is a **React Native / Expo** app **without Expo
+Router** — there is no `frontend/apps/mobile/app/` directory. The actual
+shape is:
+
+- `frontend/apps/mobile/src/App.tsx` — root component + screen registry
+- `frontend/apps/mobile/src/screens/<Screen>.tsx` — one file per screen
+
+Treat any documentation or signal definition that mentions
+`frontend/apps/mobile/app/**` as legacy / stale and update it to
+`frontend/apps/mobile/src/**`. The routine's `screen-map-drift` trigger
+paths and the screen-map workflow already use `src/**`.
+
+Mobile screen docs under `docs/screens/mobile/` are not yet seeded — the
+directory legitimately doesn't exist on `main`. Verification blocks here
+explicitly drop mobile until the first batch lands; signal definitions
+and brief templates do the same.
 
 ## Cross-references
 
