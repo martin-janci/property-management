@@ -97,6 +97,37 @@ impl OrganizationRepository {
         Ok(org)
     }
 
+    /// Find organizations by a batch of IDs with RLS context.
+    ///
+    /// Returns all matching, non-deleted organizations in a single query.
+    /// Used to avoid N+1 round-trips when expanding a list of memberships
+    /// into their full organization records. Result order is not guaranteed —
+    /// callers should regroup via `HashMap<Uuid, Organization>` keyed by `id`.
+    pub async fn find_by_ids_rls<'e, E>(
+        &self,
+        executor: E,
+        ids: &[Uuid],
+    ) -> Result<Vec<Organization>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let orgs = sqlx::query_as::<_, Organization>(
+            r#"
+            SELECT * FROM organizations
+            WHERE id = ANY($1) AND status != 'deleted'
+            "#,
+        )
+        .bind(ids)
+        .fetch_all(executor)
+        .await?;
+
+        Ok(orgs)
+    }
+
     /// Find organization by slug with RLS context.
     pub async fn find_by_slug_rls<'e, E>(
         &self,

@@ -104,6 +104,9 @@ pub struct OrganizationMemberWithUser {
     // User fields
     pub user_email: String,
     pub user_name: String,
+    // Role fields (populated via LEFT JOIN roles to avoid N+1 in list views).
+    // `None` when the member has no role assignment.
+    pub role_name: Option<String>,
 }
 
 /// User's membership in an organization (for user profile views).

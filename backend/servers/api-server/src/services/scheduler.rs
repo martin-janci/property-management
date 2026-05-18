@@ -279,24 +279,25 @@ impl Scheduler {
                 Ok(users.into_iter().map(|(id,)| id).collect())
             }
             "building" => {
-                // Get all users associated with the specified buildings
-                let mut user_ids = Vec::new();
-                for building_id in target_ids {
-                    let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
-                        r#"
-                        SELECT DISTINCT ur.user_id
-                        FROM unit_residents ur
-                        JOIN units u ON ur.unit_id = u.id
-                        WHERE u.building_id = $1 AND ur.move_out_date IS NULL
-                        "#,
-                    )
-                    .bind(building_id)
-                    .fetch_all(&self.pool)
-                    .await?;
-
-                    user_ids.extend(users.into_iter().map(|(id,)| id));
+                // Get all users associated with the specified buildings.
+                // Single query across all target buildings (was N+1: one
+                // SELECT per building). DISTINCT collapses duplicates that
+                // existed across the old per-building results.
+                if target_ids.is_empty() {
+                    return Ok(Vec::new());
                 }
-                Ok(user_ids)
+                let users: Vec<(uuid::Uuid,)> = sqlx::query_as(
+                    r#"
+                    SELECT DISTINCT ur.user_id
+                    FROM unit_residents ur
+                    JOIN units u ON ur.unit_id = u.id
+                    WHERE u.building_id = ANY($1) AND ur.move_out_date IS NULL
+                    "#,
+                )
+                .bind(&target_ids)
+                .fetch_all(&self.pool)
+                .await?;
+                Ok(users.into_iter().map(|(id,)| id).collect())
             }
             "units" => {
                 // Get all users associated with the specified units
@@ -414,6 +415,21 @@ impl Scheduler {
                 metrics.votes_closed += closed_ids.len() as u64;
             }
 
+            // Batch-fetch participants for all closed votes in a single query
+            // (was N+1: one SELECT per closed vote). Group by vote_id so each
+            // iteration below has its participant list ready in memory.
+            let participants_by_vote: std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>> =
+                match self.get_vote_participants_batch(&closed_ids).await {
+                    Ok(map) => map,
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            "Failed to batch-fetch vote participants; falling back to empty map"
+                        );
+                        std::collections::HashMap::new()
+                    }
+                };
+
             // Send notifications for each closed vote
             for vote_id in &closed_ids {
                 // Get the vote with results
@@ -424,10 +440,10 @@ impl Scheduler {
                 let results_result = self.vote_repo.get_results(*vote_id).await;
                 if let Ok(Some(vote)) = vote_result {
                     if let Ok(Some(results)) = results_result {
-                        // Get participants (users who voted)
-                        let participant_ids = self
-                            .get_vote_participants(*vote_id)
-                            .await
+                        // Participants pre-fetched by batch query above.
+                        let participant_ids = participants_by_vote
+                            .get(vote_id)
+                            .cloned()
                             .unwrap_or_default();
 
                         if !participant_ids.is_empty() {
@@ -483,6 +499,10 @@ impl Scheduler {
     }
 
     /// Get users who participated in a vote.
+    ///
+    /// Retained for ad-hoc single-vote use; the closed-vote notification
+    /// loop now prefers `get_vote_participants_batch` to avoid N+1.
+    #[allow(dead_code)]
     async fn get_vote_participants(
         &self,
         vote_id: uuid::Uuid,
@@ -496,7 +516,41 @@ impl Scheduler {
         Ok(users.into_iter().map(|(id,)| id).collect())
     }
 
+    /// Batched variant of `get_vote_participants` — fetches participants for
+    /// many votes in a single query and groups by `vote_id`. Used by the
+    /// closed-vote notification loop to avoid N+1 round-trips.
+    async fn get_vote_participants_batch(
+        &self,
+        vote_ids: &[uuid::Uuid],
+    ) -> Result<std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>>, sqlx::Error> {
+        if vote_ids.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let rows: Vec<(uuid::Uuid, uuid::Uuid)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT vote_id, user_id
+            FROM vote_responses
+            WHERE vote_id = ANY($1)
+            "#,
+        )
+        .bind(vote_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut map: std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>> =
+            std::collections::HashMap::new();
+        for (vote_id, user_id) in rows {
+            map.entry(vote_id).or_default().push(user_id);
+        }
+        Ok(map)
+    }
+
     /// Get eligible users who have NOT voted yet.
+    ///
+    /// Retained for ad-hoc single-vote use; the reminder loop now prefers
+    /// `get_users_not_voted_batch` to avoid N+1.
+    #[allow(dead_code)]
     async fn get_users_not_voted(
         &self,
         vote_id: uuid::Uuid,
@@ -524,6 +578,50 @@ impl Scheduler {
         Ok(users.into_iter().map(|(id,)| id).collect())
     }
 
+    /// Batched variant of `get_users_not_voted` — for each vote in `votes`,
+    /// resolves the eligible owners in its building who have not yet voted,
+    /// in a single query. Avoids N+1 round-trips when the scheduler is
+    /// reminding many concurrently-expiring votes.
+    async fn get_users_not_voted_batch(
+        &self,
+        votes: &[(uuid::Uuid, uuid::Uuid)],
+    ) -> Result<std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>>, sqlx::Error> {
+        if votes.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let vote_ids: Vec<uuid::Uuid> = votes.iter().map(|(v, _)| *v).collect();
+
+        // Join votes -> unit_residents via the vote's building_id; filter out
+        // residents who have already voted via NOT EXISTS. Returns one row per
+        // (vote_id, user_id) pair, which we group below.
+        let rows: Vec<(uuid::Uuid, uuid::Uuid)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT v.id as vote_id, ur.user_id
+            FROM votes v
+            JOIN units u ON u.building_id = v.building_id
+            JOIN unit_residents ur ON ur.unit_id = u.id
+            WHERE v.id = ANY($1)
+              AND ur.resident_type = 'owner'
+              AND ur.move_out_date IS NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM vote_responses vr
+                  WHERE vr.vote_id = v.id AND vr.unit_id = ur.unit_id
+              )
+            "#,
+        )
+        .bind(&vote_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut map: std::collections::HashMap<uuid::Uuid, Vec<uuid::Uuid>> =
+            std::collections::HashMap::new();
+        for (vote_id, user_id) in rows {
+            map.entry(vote_id).or_default().push(user_id);
+        }
+        Ok(map)
+    }
+
     // ========================================================================
     // Story 106.3: Reminder Notifications
     // ========================================================================
@@ -548,12 +646,27 @@ impl Scheduler {
 
         let mut reminders_sent = 0u64;
 
+        // Batch-fetch "users not yet voted" for all expiring votes in one
+        // query (was N+1: one SELECT per vote). The helper returns a map
+        // keyed by vote_id so the per-vote loop below stays O(1) lookup.
+        let vote_pairs: Vec<(uuid::Uuid, uuid::Uuid)> = votes_ending_soon
+            .iter()
+            .map(|v| (v.id, v.building_id))
+            .collect();
+        let not_voted_by_vote = match self.get_users_not_voted_batch(&vote_pairs).await {
+            Ok(map) => map,
+            Err(e) => {
+                tracing::error!(
+                    error = %e,
+                    "Failed to batch-fetch users-not-voted; falling back to empty map"
+                );
+                std::collections::HashMap::new()
+            }
+        };
+
         for vote in votes_ending_soon {
-            // Get users who haven't voted yet
-            let users_not_voted = self
-                .get_users_not_voted(vote.id, vote.building_id)
-                .await
-                .unwrap_or_default();
+            // Pre-fetched via batch query above.
+            let users_not_voted = not_voted_by_vote.get(&vote.id).cloned().unwrap_or_default();
 
             if !users_not_voted.is_empty() {
                 match self
