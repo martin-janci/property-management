@@ -4,16 +4,17 @@
 //! handler compiles before Phase 2 lands. The capability gating (Phase 5
 //! responsibility) is fully wired.
 
-use admin_core::{require_capability, Capability, RequireCapability};
+use admin_core::{require_capability, AuditOutcome, AuditWriter, Capability, RequireCapability};
 use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::services::{AuthPolicyEnforcer, AuthPolicyError};
@@ -124,12 +125,42 @@ async fn set_principal_kind(
     _cap: RequireCapability,
     principal: RequestPrincipal,
     State(state): State<AppState>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
     mut rls: RlsConnection,
     Path(target_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(body): Json<SetPrincipalKindBody>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    let ip = super::audit_ip_from_headers(&headers);
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+
     if !matches!(body.kind.as_str(), "public" | "staff" | "platform") {
         rls.release().await;
+        // Failure audit row: invalid body. Outcome::Denied with target_id so
+        // the trail records "who tried to change user X's principal kind" —
+        // closes the M2 gap (capability extractor's "allowed" row carries no
+        // resource id).
+        let payload = serde_json::json!({
+            "kind": body.kind,
+            "error": "invalid_kind",
+        });
+        if let Err(e) = audit
+            .record(
+                Some(principal.user_id),
+                Capability::PrincipalKindEscalate,
+                AuditOutcome::Denied,
+                Some("principal_kind"),
+                Some(target_id),
+                Some(&payload),
+                ip,
+                ua,
+            )
+            .await
+        {
+            tracing::warn!(error = %e, "audit write for set_principal_kind (invalid) failed");
+        }
         return Err((StatusCode::BAD_REQUEST, "invalid principal kind".into()));
     }
 
@@ -139,8 +170,49 @@ async fn set_principal_kind(
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
     if let Err(err) = enforcer.check_principal_kind_change(target_id).await {
         rls.release().await;
+        let payload = serde_json::json!({
+            "kind": body.kind,
+            "error": "auth_policy_rejected",
+        });
+        if let Err(e) = audit
+            .record(
+                Some(principal.user_id),
+                Capability::PrincipalKindEscalate,
+                AuditOutcome::Denied,
+                Some("principal_kind"),
+                Some(target_id),
+                Some(&payload),
+                ip,
+                ua,
+            )
+            .await
+        {
+            tracing::warn!(error = %e, "audit write for set_principal_kind (policy) failed");
+        }
         return Err(map_auth_policy_error(err));
     }
+
+    // Best-effort: snapshot the prior principal_kind so the audit payload can
+    // surface a before/after pair. A read failure here must NOT block the
+    // mutation — we degrade to `prior_kind: null` rather than erroring out.
+    // The read runs on the RLS-scoped connection so the same security context
+    // applies.
+    let prior_kind: Option<String> =
+        match sqlx::query_scalar::<_, String>("SELECT principal_kind FROM users WHERE id = $1")
+            .bind(target_id)
+            .fetch_optional(&mut **rls.conn())
+            .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    target = %target_id,
+                    "failed to read prior principal_kind for audit payload"
+                );
+                None
+            }
+        };
 
     // N3: pass the authenticated principal as `actor`. The SECURITY DEFINER
     // function asserts `actor == app.current_user_id` (set by RlsConnection),
@@ -156,7 +228,32 @@ async fn set_principal_kind(
     rls.release().await;
 
     match result {
-        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Ok(_) => {
+            // Success audit row carrying target_id + before/after payload.
+            // `PgAuditWriter` SHA-256-hashes the payload before persistence
+            // (pre-existing limitation tracked in #300 — fix happens there,
+            // not here). Emitting consistently is the M2 deliverable.
+            let payload = serde_json::json!({
+                "kind": body.kind,
+                "prior_kind": prior_kind,
+            });
+            if let Err(e) = audit
+                .record(
+                    Some(principal.user_id),
+                    Capability::PrincipalKindEscalate,
+                    AuditOutcome::Allowed,
+                    Some("principal_kind"),
+                    Some(target_id),
+                    Some(&payload),
+                    ip,
+                    ua,
+                )
+                .await
+            {
+                tracing::warn!(error = %e, "audit write for set_principal_kind (success) failed");
+            }
+            Ok(StatusCode::NO_CONTENT)
+        }
         Err(e) => {
             tracing::error!(
                 error = %e,
@@ -164,6 +261,30 @@ async fn set_principal_kind(
                 actor = %principal.user_id,
                 "set_principal_kind failed"
             );
+            // Failure audit row: SECURITY DEFINER function rejected the
+            // transition. We DO NOT include the DB error string in the
+            // payload (could echo PII); we record the attempted target_kind
+            // and a stable error tag.
+            let payload = serde_json::json!({
+                "kind": body.kind,
+                "prior_kind": prior_kind,
+                "error": "db_function_rejected",
+            });
+            if let Err(audit_err) = audit
+                .record(
+                    Some(principal.user_id),
+                    Capability::PrincipalKindEscalate,
+                    AuditOutcome::Denied,
+                    Some("principal_kind"),
+                    Some(target_id),
+                    Some(&payload),
+                    ip,
+                    ua,
+                )
+                .await
+            {
+                tracing::warn!(error = %audit_err, "audit write for set_principal_kind (failure) failed");
+            }
             Err((StatusCode::BAD_REQUEST, e.to_string()))
         }
     }

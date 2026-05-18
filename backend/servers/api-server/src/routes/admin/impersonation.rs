@@ -63,6 +63,25 @@ pub struct ActiveImpersonationRow {
     pub reason: String,
 }
 
+// M6 (round-5 security review): this handler runs against the raw pool
+// (`&state.db`), which bypasses RLS. Defensible TODAY because
+// `UsersImpersonate` is a platform-only capability and the dashboard
+// intentionally needs cross-tenant visibility into every active
+// impersonation token.
+//
+// Migrating to an `RlsConnection`-style extractor is BLOCKED on a
+// platform-admin RLS context: all current extractors
+// (`RlsConnection`, `SimpleRlsConnection`, `HostRlsConnection`) set
+// `app.current_org_id` to a single tenant id, which would *incorrectly*
+// filter the cross-tenant query above (a platform admin would only see
+// impersonations involving users in their primary org). Introducing a
+// "platform-scoped RLS context" (org_id NULL + super-admin flag) is a
+// larger refactor — same gap that stopped the RLS migration pilot on
+// `notification_preferences`. Deferred. Sibling handlers
+// (`routes/admin/memberships.rs` merge-collisions, `routes/admin/audit.rs`)
+// share the same pattern and the same deferral. If `UsersImpersonate`
+// ever gets scoped per-org, revisit this immediately — at that point
+// cross-tenant email leakage becomes a live concern.
 async fn list_active(
     _cap: RequireCapability,
     auth: AuthUser,
