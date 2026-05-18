@@ -738,6 +738,10 @@ fn get_compliance_zone(region: &DataRegion) -> &'static str {
 }
 
 /// Generate a hash for an audit entry (for tamper-evident logging).
+///
+/// Placeholder for the audit hash-chain feature (Epic 144 data-residency).
+/// Not yet wired into the audit write path; kept here so the hashing
+/// scheme is reviewable alongside the audit entry definitions.
 #[allow(dead_code)]
 fn generate_audit_hash(entry: &AuditLogEntry, previous_hash: Option<&str>) -> String {
     let mut hasher = Sha256::new();

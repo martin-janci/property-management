@@ -623,8 +623,6 @@ async fn generate_document(
     let file_key = format!("generated/{}/{}.md", org_id, uuid::Uuid::new_v4());
     let file_name = format!("{}.md", req.title.replace(['/', '\\'], "_"));
 
-    let _generation_metadata = serde_json::to_value(&req.values).unwrap();
-
     let create_doc = db::models::CreateDocument {
         organization_id: org_id,
         folder_id: req.folder_id,
