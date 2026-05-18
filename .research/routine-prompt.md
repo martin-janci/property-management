@@ -65,7 +65,7 @@ is recorded, not hidden), but the brief makes it visible.
 - **Check (metadata, 4):** for each new plan, all of `**Vector:**`, `**Score:**`, `**Source:**`, `**Confidence:**` appear at the top of the file (one per line, in the `**Key:**` form).
 - **Check (headings, 11):** for each new plan, all of `## Hypothesis`, `## Evidence`, `## Files`, `## Required capabilities`, `## Repro steps`, `## Suggested approach`, `## Alternatives considered`, `## Root-cause trace`, `## Test plan`, `## Out of scope`, `## After-merge` appear as `##` headings.
 - **Check (capability):** at least one capability checkbox is ticked (`- [x]`).
-- **Check (mode declared):** the *Required capabilities* section declares `Mode: local-only` or `Mode: cloud-ok` (derived from whether C4/C5 are ticked).
+- **Check (mode declared):** the *Required capabilities* section declares `Mode: local-only` or `Mode: cloud-ok` (derived from whether C4/C5 are ticked). One runnable check: `grep -E '^Mode: (local-only|cloud-ok)$' .research/plans/<slug>.md` → expect at least one match.
 - **Check (files exist on disk):** every bullet under `## Files` must resolve to an existing path. Bullets are written in the template form `` - `<path>:<line?>` `` — strip the leading `- `, the surrounding backticks, and any `:line` suffix before testing. One safe shell pipeline:
   ```bash
   awk '/^## Files$/{f=1;next} f && /^## /{f=0} f && /^- /' .research/plans/<slug>.md \
@@ -98,6 +98,16 @@ is recorded, not hidden), but the brief makes it visible.
 
 - **Pass when:** a plan promoted in run N-1 is either still in `plans/` *or* in `plans/_archive/` in run N — never silently deleted.
 - **Check:** for every prior-run plan slug — `git ls-tree -r --name-only HEAD -- .research/plans/ 2>/dev/null | grep -E '\.research/plans/[^/]+\.md$' | sed 's|^\.research/plans/||; s|\.md$||'` — assert each appears in the working tree (which has this run's edits staged) as either `.research/plans/<slug>.md` or `.research/plans/_archive/<slug>.md`. `HEAD` here is the last-routine-commit; G2 runs before the new commit, so `HEAD` is the prior state.
+
+### G13 — Archive only grows
+
+- **Pass when:** the count of files in `.research/plans/_archive/` this run is **≥** the count at `HEAD`. Archived plans never undo (defensive against accidental rollback during merge conflicts).
+- **Check:** `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` → expect exit 0. Both sides count tracked files only — `git ls-files` reflects the staged index (what this run will commit), `git ls-tree HEAD` reflects the prior routine commit. Untracked/ignored files and any future subdirectories don't skew the comparison.
+
+### G14 — Triage digest matches JSON
+
+- **Pass when:** regenerating `.research/IDEAS_TRIAGE.md` from the `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors G10's pattern: `IDEAS_TRIAGE.md` is a rendered view, never hand-edited.
+- **Check:** materialize the rendered view to `/tmp/ideas-triage.regen.md`, then `diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md` → expect exit 0.
 
 ---
 
@@ -132,10 +142,11 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
 
 1. `.research/briefs/<YYYY-MM-DD>.md` — today's brief (template below)
 2. `.research/backlog.json` — canonical; append / update / decay / cap items
-3. `.research/backlog.md` — **regenerate from `backlog.json`** (never edit independently)
-4. `.research/plans/<slug>.md` — promote ready vectors (max 2 per run)
-5. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run
-6. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats
+3. `.research/backlog.md` — **regenerate from `backlog.json`** (never edit independently); include top-of-file timestamp widget
+4. `.research/IDEAS_TRIAGE.md` — **regenerate from `backlog.json`** filtered to `vector == "triage"` (never edit independently); same byte-identity discipline as `backlog.md` (G14)
+5. `.research/plans/<slug>.md` — promote ready vectors (max 2 per run); scaffold from `.research/plan-template.md`
+6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run
+7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats
 
 Then `git add .research/`, run the **quality gates** below, commit, push to `main`.
 
@@ -333,7 +344,42 @@ Convert signals → backlog updates. For each signal:
 4. **Score cap:** clamp to 8.
 5. **Decay:** for every `open` item with `updated_at` older than 14 days, score −1 this run. If score reaches 0, set `status = "dropped"` with an evidence line "decayed: no new signals in 14 days".
 
-Then regenerate `backlog.md` from `backlog.json` (sorted by score desc, then `updated_at` desc).
+Then regenerate `backlog.md` from `backlog.json` (sorted by score desc, then `updated_at` desc). Write a freshness widget directly under the H1 — exact line, no other content between `# Backlog of vectors` and this:
+
+```
+<sub>Last regenerated: YYYY-MM-DD HH:MM UTC by routine</sub>
+```
+
+Substitute the literal UTC timestamp at regen time. G10's byte-identity check still applies — the timestamp is part of what gets regenerated each run, so a stale view is obvious at a glance.
+
+#### Phase 2 — Triage digest
+
+After `backlog.md` is rendered, regenerate `.research/IDEAS_TRIAGE.md` from the same `backlog.json`. Filter `items` to rows with `vector == "triage"` (the lowest-effort vector that Phase 3 *never* promotes — see *Phase 3*). Same sort key as `backlog.md` (score desc, then `updated_at` desc). Same regeneration discipline as `backlog.md` — never hand-edit; G14 enforces byte-identity. The file's purpose is a separate weekly digest so triage rows don't drown the implementer's view of "what's ready to ship".
+
+Schema (regenerator must reproduce every static line verbatim — prose paragraph, callout, table headers, and the entire status legend below — because G14 diffs byte-for-byte):
+
+```markdown
+# Triage queue
+
+<sub>Last regenerated: YYYY-MM-DD HH:MM UTC by routine</sub>
+
+> **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
+
+Untriaged-issue signals (`vector: "triage"`) pile up here for human review rather than drowning the implementer's `backlog.md`. Phase 3's readiness gate explicitly excludes `triage`, so nothing in this file is promoted to a plan automatically.
+
+| Score | Title | Source | Updated | Status |
+|-------|-------|--------|---------|--------|
+| <…>   | <…>   | <…>    | <…>     | <…>    |
+
+## Status legend
+
+- `open` — needs review or more evidence; no plan exists yet (most triage rows live here)
+- `done` — addressed by hand (issue closed, archived, or moved to a real vector)
+- `dropped` — reviewed and rejected; reason is in the item's `evidence` array in `backlog.json`
+- `needs-human-judgement` — blocked on a question only the user can answer
+```
+
+If no items qualify, render the headers with one empty separator row (same shape as an empty `backlog.md`). Never delete the file — its existence is part of G14's contract. The prose paragraph, the callout, the table headers, and the **entire** status legend are static — preserve them verbatim across renders so the byte-identity check stays meaningful.
 
 ### Phase 3 — Promote
 
@@ -383,7 +429,7 @@ This pass is mandatory — it's the difference between "passes mechanical gates"
    Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
 4. Run the **Quality gates** (below) in order against the staged index:
    - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
 5. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans"
@@ -413,6 +459,8 @@ Run these and verify each passes:
     - `…` standalone on a line (the literal ellipsis as a placeholder)
 
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
+12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
+13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
 
 ## Brief template
 
@@ -458,88 +506,13 @@ Run these and verify each passes:
 
 ## Plan template
 
-```markdown
-# <slug>
+The plan template is stored as a standalone file at `.research/plan-template.md`. Read it before promoting:
 
-**Vector:** <bug|refactor|perf|test-gap|dx|security|dep-update>  (no `triage` — those stay in backlog)
-**Score:** <N>
-**Source:** PR #<num> | Issue #<num> | commit <sha> | hotspot in <path>
-**Confidence:** <low | medium | high>
-
-## Hypothesis
-<2–4 sentences. What's the problem, why it matters, smallest change that resolves it.>
-
-## Evidence
-<Max 5 bullets. Each names a concrete artifact.>
-- <PR url, commit sha, or file:line>
-- <…>
-
-## Files
-<Concrete paths the plan touches. ≥1 path required (G7 verifies it exists).
-Paths are relative to the repo root and must currently exist on `main`.>
-- `<path/to/file>:<line?>`
-- `<path/to/file>`
-
-## Required capabilities
-<Tick the ones the implementation agent needs. See implementer-prompt.md
-for what each provides. Be honest — over-asking wastes setup time,
-under-asking blocks the agent mid-flight.>
-- [ ] C1 — Systematic debugging (always tick for bug / revert / risky-churn)
-- [ ] C2 — Seed data
-- [ ] C3 — Dev instance running (`stack up pm-local …` or `ppt_dev_up` via bridge)
-- [ ] C4 — Browser (Chrome MCP / Preview / playwright)  · **local-only**
-- [ ] C5 — ADB device (only for mobile-touching plans)  · **local-only**
-- [ ] C6 — Verification before completion (always tick)
-- [ ] C7 — Code-review reception (tick if you expect controversy)
-
-**Execution mode (auto-derived from the ticks):**
-- If C4 or C5 is ticked → `local` (implementer must run on the user's Mac)
-- Otherwise → `cloud-ok` (can run as a claude.ai routine via `ppt-bridge` MCP at `https://p.rlt.sk/mcp`)
-
-State the mode explicitly in this section under the checklist, e.g.
-`Mode: cloud-ok` or `Mode: local-only (reason: C4 — flow needs Chrome DOM inspection)`.
-
-## Repro steps
-<Smallest deterministic sequence that reproduces the problem the plan
-solves. The implementation agent uses this to author the failing-on-main
-test (IG3). One numbered list, each step concrete enough to paste.>
-1. <…>
-2. <expected vs actual at the end>
-
-## Suggested approach
-<Max 7 numbered steps. Reference files by path with line numbers when known.>
-1. <…>
-2. <…>
-
-## Alternatives considered
-<Exactly 2 bullets. Each names another approach you weighed and the concrete reason you rejected it.>
-- **<alt name>** — rejected because <…>
-- **<alt name>** — rejected because <…>
-
-## Root-cause trace
-<Required for vectors `revert`, `risky-churn`, `bug` with confidence ≥ medium.
-Otherwise: write `N/A — <vector> doesn't need backward tracing.`
-Trace data flow from the failure symptom backward through layers: which
-boundary leaked, which assumption broke, which contract was implicit. Name
-the file:line for each step.>
-
-1. Symptom: <observed behavior / failing test / stack-trace tip>
-2. ← <immediate cause at <file:line>>
-3. ← <upstream cause at <file:line>>
-4. Origin: <commit sha or PR # that introduced the latent issue>
-
-## Test plan
-- [ ] <unit/integration test that would have caught this — file path or test name>
-- [ ] <regression scenario>
-- [ ] <exact command to run locally: `cargo test -p foo` / `pnpm -F bar test` / etc.>
-
-## Out of scope
-<Explicit non-goals so the implementation agent doesn't bloat the PR.>
-
-## After-merge
-- Move this file to `plans/_archive/<slug>.md`
-- Mark the matching `backlog.json` row as `status: "done"`
+```bash
+cat .research/plan-template.md
 ```
+
+When promoting a vector, copy that file to `.research/plans/<slug>.md` and replace `<slug>` in the H1 plus the `<…>` placeholders. Hand-authors and tooling (e.g. `just new-plan <slug>`) consume the same file. Keep the file's 4 metadata fields + 11 `##` headings intact — Quality Gate 7 enforces them.
 
 ## Hard rules
 

@@ -257,3 +257,25 @@ ci: check test build
 # Prepare for PR (check + test + commit)
 pr-ready: check test
     @echo "✅ Ready for PR!"
+
+# =============================================================================
+# RESEARCH ROUTINE HELPERS
+# =============================================================================
+
+# Scaffold a new plan from .research/plan-template.md.
+# Refuses if the target already exists. Substitutes <slug> into the H1 line.
+# Slug must match [a-z0-9][a-z0-9-]* — anything else is rejected so the sed
+# substitution (and the surrounding shell) cannot be confused by delimiters
+# or metacharacters in the input.
+new-plan slug:
+    @SLUG='{{slug}}'; \
+    if [ -z "$SLUG" ]; then echo "usage: just new-plan <slug>"; exit 2; fi; \
+    if ! printf '%s' "$SLUG" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then \
+        echo "invalid slug: '$SLUG' (must match [a-z0-9][a-z0-9-]*)"; exit 2; \
+    fi; \
+    target=".research/plans/$SLUG.md"; \
+    if [ -e "$target" ]; then echo "refusing to overwrite $target"; exit 1; fi; \
+    if [ ! -f .research/plan-template.md ]; then echo "missing .research/plan-template.md"; exit 1; fi; \
+    mkdir -p .research/plans; \
+    sed "1s|^# <slug>\$|# $SLUG|" .research/plan-template.md > "$target"; \
+    echo "wrote $target — fill placeholders, then commit on a fresh branch."
