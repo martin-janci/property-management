@@ -1,0 +1,279 @@
+//! URL validation helpers for SSRF defense.
+//!
+//! Used by handlers that accept user-supplied URLs which will later be
+//! fetched server-side (e.g. agency import feeds). The validator rejects:
+//!
+//! * non-`http`/`https` schemes (including `file://`, `data:`, `javascript:`,
+//!   `gopher://`, etc.),
+//! * `http://` outside development builds,
+//! * literal IPs in private, loopback, link-local, multicast, or reserved
+//!   ranges (IPv4 + IPv6),
+//! * the IPv4 broadcast address.
+//!
+//! Hostnames (domains) pass this check; the import worker MUST re-resolve and
+//! re-validate the resolved IP at fetch time to defend against DNS-rebinding
+//! attacks. See the worker maintainer note in `routes::agency_imports`.
+//!
+//! This module is deliberately small so the same helper can be reused by
+//! other handlers that accept user-supplied URLs for server-side fetches
+//! (e.g. logo / profile-image URLs — fix in a follow-up branch).
+
+use url::{Host, Url};
+
+/// Outcome of a URL validation check.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum UrlValidationError {
+    /// URL failed to parse as a `url::Url`.
+    InvalidFormat(String),
+    /// Scheme is not in the allowlist.
+    DisallowedScheme(String),
+    /// `http://` was used in a production build.
+    PlainHttpNotAllowed,
+    /// URL has no host component (e.g. `file:///etc/passwd`).
+    MissingHost,
+    /// Host is a literal IP in a forbidden range.
+    PrivateOrReservedIp(String),
+}
+
+impl std::fmt::Display for UrlValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidFormat(e) => write!(f, "Invalid URL format: {}", e),
+            Self::DisallowedScheme(s) => write!(f, "URL scheme '{}' is not allowed", s),
+            Self::PlainHttpNotAllowed => {
+                write!(f, "Plain http:// URLs are not allowed; use https://")
+            }
+            Self::MissingHost => write!(f, "URL must have a host"),
+            Self::PrivateOrReservedIp(reason) => {
+                write!(f, "URL points to a forbidden network range: {}", reason)
+            }
+        }
+    }
+}
+
+impl std::error::Error for UrlValidationError {}
+
+/// Returns true when the process is running in a development build.
+///
+/// Matches the convention used by `state::AppConfig::from_env` — `RUST_ENV`
+/// must be `"development"` to relax production-only checks.
+fn is_development() -> bool {
+    std::env::var("RUST_ENV").unwrap_or_default() == "development"
+}
+
+/// Validate that `raw` is a safe URL to fetch server-side.
+///
+/// On success returns the parsed [`Url`]. On failure returns a structured
+/// [`UrlValidationError`] suitable for surfacing as a 400 Bad Request.
+///
+/// **Important**: this is a *static* check on the supplied string. The
+/// caller MUST repeat the IP-range check after DNS resolution at fetch
+/// time, otherwise an attacker can register a hostname that resolves to a
+/// private IP (or use DNS rebinding to flip the answer between checks).
+pub fn validate_fetch_url(raw: &str) -> Result<Url, UrlValidationError> {
+    let parsed = Url::parse(raw).map_err(|e| UrlValidationError::InvalidFormat(e.to_string()))?;
+
+    // Scheme allowlist: only http(s).
+    let scheme = parsed.scheme();
+    match scheme {
+        "https" => {}
+        "http" => {
+            if !is_development() {
+                return Err(UrlValidationError::PlainHttpNotAllowed);
+            }
+        }
+        other => return Err(UrlValidationError::DisallowedScheme(other.to_string())),
+    }
+
+    // Must have a host (rules out `file:///path`, `data:...`, etc., though
+    // those would already trip the scheme check — defense in depth).
+    let host = parsed.host().ok_or(UrlValidationError::MissingHost)?;
+
+    match host {
+        Host::Ipv4(ip) => {
+            let octets = ip.octets();
+
+            // 10.0.0.0/8 — private
+            if octets[0] == 10 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "10.0.0.0/8 (private)".into(),
+                ));
+            }
+            // 172.16.0.0/12 — private
+            if octets[0] == 172 && (16..=31).contains(&octets[1]) {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "172.16.0.0/12 (private)".into(),
+                ));
+            }
+            // 192.168.0.0/16 — private
+            if octets[0] == 192 && octets[1] == 168 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "192.168.0.0/16 (private)".into(),
+                ));
+            }
+            // 127.0.0.0/8 — loopback
+            if octets[0] == 127 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "127.0.0.0/8 (loopback)".into(),
+                ));
+            }
+            // 169.254.0.0/16 — link-local (covers AWS/GCP metadata 169.254.169.254)
+            if octets[0] == 169 && octets[1] == 254 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "169.254.0.0/16 (link-local / cloud metadata)".into(),
+                ));
+            }
+            // 0.0.0.0/8 — reserved
+            if octets[0] == 0 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "0.0.0.0/8 (reserved)".into(),
+                ));
+            }
+            // 255.255.255.255 — broadcast
+            if octets == [255, 255, 255, 255] {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "255.255.255.255 (broadcast)".into(),
+                ));
+            }
+            // 224.0.0.0/4 — multicast
+            if octets[0] >= 224 && octets[0] <= 239 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "224.0.0.0/4 (multicast)".into(),
+                ));
+            }
+        }
+        Host::Ipv6(ip) => {
+            if ip.is_loopback() {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "::1 (IPv6 loopback)".into(),
+                ));
+            }
+            let segments = ip.segments();
+            // fc00::/7 — IPv6 unique local
+            if (segments[0] & 0xfe00) == 0xfc00 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "fc00::/7 (IPv6 unique local)".into(),
+                ));
+            }
+            // fe80::/10 — IPv6 link-local
+            if (segments[0] & 0xffc0) == 0xfe80 {
+                return Err(UrlValidationError::PrivateOrReservedIp(
+                    "fe80::/10 (IPv6 link-local)".into(),
+                ));
+            }
+        }
+        Host::Domain(_) => {
+            // Hostnames must be re-validated at fetch time by the worker
+            // after DNS resolution. We can't do it here without performing
+            // (cacheable, race-prone) DNS lookups inside the request path.
+        }
+    }
+
+    Ok(parsed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn force_prod() {
+        std::env::set_var("RUST_ENV", "production");
+    }
+
+    fn force_dev() {
+        std::env::set_var("RUST_ENV", "development");
+    }
+
+    #[test]
+    fn accepts_https_domain() {
+        force_prod();
+        assert!(validate_fetch_url("https://example.com/feed.xml").is_ok());
+    }
+
+    #[test]
+    fn rejects_http_in_prod() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("http://example.com/feed.xml"),
+            Err(UrlValidationError::PlainHttpNotAllowed)
+        ));
+    }
+
+    #[test]
+    fn allows_http_in_dev() {
+        force_dev();
+        assert!(validate_fetch_url("http://example.com/feed.xml").is_ok());
+        force_prod();
+    }
+
+    #[test]
+    fn rejects_file_scheme() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("file:///etc/passwd"),
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_data_scheme() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("data:text/plain,hello"),
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_javascript_scheme() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("javascript:alert(1)"),
+            Err(UrlValidationError::DisallowedScheme(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_aws_metadata_ip() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("http://169.254.169.254/latest/meta-data/"),
+            // PlainHttp check trips first in prod; in dev the IP rule fires.
+            Err(UrlValidationError::PlainHttpNotAllowed)
+                | Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+        force_dev();
+        assert!(matches!(
+            validate_fetch_url("http://169.254.169.254/latest/meta-data/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+        force_prod();
+    }
+
+    #[test]
+    fn rejects_https_loopback() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("https://127.0.0.1/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_https_private_10() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("https://10.0.0.5/feed.xml"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_ipv6_loopback() {
+        force_prod();
+        assert!(matches!(
+            validate_fetch_url("https://[::1]/"),
+            Err(UrlValidationError::PrivateOrReservedIp(_))
+        ));
+    }
+}

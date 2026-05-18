@@ -38,12 +38,20 @@ pub fn router() -> Router<AppState> {
 // ==================== Web SSO Flow ====================
 
 /// SSO login query parameters.
+///
+/// SECURITY (H1, round-9 audit): the `state` parameter is intentionally
+/// absent. CSRF protection uses the server-generated PKCE session id (stored
+/// server-side, threaded through the OAuth `state` query param to the
+/// authorization endpoint, and verified on callback). A user-supplied
+/// `state` value was previously accepted, stored, and silently dropped —
+/// which advertised a CSRF surface that did not actually exist. If a future
+/// client needs round-trip state, add it as a separate `client_state` cookie
+/// or set via POST instead of leaking it into the redirect chain.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SsoLoginQuery {
-    /// Where to redirect after successful login
+    /// Where to redirect after successful login. MUST resolve to an origin
+    /// in `ALLOWED_REDIRECT_ORIGINS`; anything else is rejected with 400.
     pub redirect_uri: Option<String>,
-    /// Optional state for CSRF protection
-    pub state: Option<String>,
 }
 
 /// Initiate SSO login - redirects to PM OAuth provider.
@@ -52,17 +60,29 @@ pub struct SsoLoginQuery {
     path = "/api/v1/sso/login",
     tag = "SSO",
     params(
-        ("redirect_uri" = Option<String>, Query, description = "Post-login redirect URI"),
-        ("state" = Option<String>, Query, description = "CSRF state token")
+        ("redirect_uri" = Option<String>, Query, description = "Post-login redirect URI (must match ALLOWED_REDIRECT_ORIGINS)")
     ),
     responses(
-        (status = 302, description = "Redirect to PM OAuth authorize endpoint")
+        (status = 302, description = "Redirect to PM OAuth authorize endpoint"),
+        (status = 400, description = "redirect_uri rejected by allowlist", body = SsoError)
     )
 )]
 pub async fn sso_login(
     State(state): State<AppState>,
     Query(params): Query<SsoLoginQuery>,
-) -> impl IntoResponse {
+) -> Result<Redirect, (StatusCode, Json<SsoError>)> {
+    // SECURITY (H1, round-9 audit): validate redirect_uri against allowlist
+    // BEFORE storing it. Without this, /api/v1/sso/login?redirect_uri=https://evil.com
+    // would persist an attacker-controlled URL to be served by the callback.
+    if let Some(uri) = params.redirect_uri.as_deref() {
+        if let Err(err) = ensure_redirect_uri_allowed(&state, uri) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(SsoError::new("invalid_redirect_uri", &err)),
+            ));
+        }
+    }
+
     // Generate PKCE code verifier and challenge
     let code_verifier = generate_code_verifier();
     let code_challenge = generate_code_challenge(&code_verifier);
@@ -76,7 +96,6 @@ pub async fn sso_login(
         PendingSsoSession {
             code_verifier,
             redirect_uri: params.redirect_uri.clone(),
-            state: params.state.clone(),
             created_at: chrono::Utc::now(),
         },
     );
@@ -92,7 +111,48 @@ pub async fn sso_login(
         urlencoding::encode(&code_challenge),
     );
 
-    Redirect::temporary(&oauth_authorize_url)
+    Ok(Redirect::temporary(&oauth_authorize_url))
+}
+
+/// Validate a user-supplied `redirect_uri` against
+/// `AppConfig::allowed_redirect_origins`.
+///
+/// Match is done on the URL's origin (`scheme://host[:port]`) — the path,
+/// query, and fragment can be anything. Returns `Err(reason)` when the URL
+/// is malformed, missing a host, or whose origin is not in the allowlist
+/// (including the empty/None case, which means "no redirects accepted").
+fn ensure_redirect_uri_allowed(state: &AppState, raw: &str) -> Result<(), String> {
+    // Allow same-origin relative paths (e.g. "/dashboard") unconditionally —
+    // the browser will resolve them against the reality-web origin that
+    // initiated the flow, which by definition the user already trusts.
+    if raw.starts_with('/') && !raw.starts_with("//") {
+        return Ok(());
+    }
+
+    let parsed = url::Url::parse(raw).map_err(|e| format!("invalid URL: {}", e))?;
+    // Only http(s) — block javascript:, data:, file:, etc.
+    match parsed.scheme() {
+        "http" | "https" => {}
+        other => return Err(format!("scheme '{}' not allowed", other)),
+    }
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| "URL has no host".to_string())?;
+    let origin = match parsed.port() {
+        Some(p) => format!("{}://{}:{}", parsed.scheme(), host, p),
+        None => format!("{}://{}", parsed.scheme(), host),
+    };
+
+    let allowed = state
+        .config
+        .allowed_redirect_origins
+        .as_deref()
+        .unwrap_or(&[]);
+    if allowed.iter().any(|o| o == &origin) {
+        Ok(())
+    } else {
+        Err(format!("origin '{}' is not in the allowlist", origin))
+    }
 }
 
 /// SSO callback query parameters.
@@ -219,10 +279,24 @@ pub async fn sso_callback(
             )
         })?;
 
-    // Build redirect URL with session cookie
-    let redirect_uri = pending_session
-        .redirect_uri
-        .unwrap_or_else(|| "/".to_string());
+    // Build redirect URL with session cookie.
+    //
+    // SECURITY (H1): re-validate the stored redirect_uri against the
+    // current allowlist as defense in depth. The login handler already
+    // validated it, but the allowlist may have shrunk since then (e.g.
+    // operator removed a deprecated origin), and we want to refuse the
+    // *current* admin policy, not the snapshot at login time.
+    let redirect_uri = match pending_session.redirect_uri {
+        Some(uri) if ensure_redirect_uri_allowed(&state, &uri).is_ok() => uri,
+        Some(bad) => {
+            tracing::warn!(
+                redirect_uri = %bad,
+                "Dropping stored redirect_uri that is no longer in the allowlist; falling back to '/'"
+            );
+            "/".to_string()
+        }
+        None => "/".to_string(),
+    };
 
     // Set session cookie and redirect
     Ok((
@@ -518,11 +592,16 @@ pub struct SessionInfo {
 }
 
 /// Pending SSO session for PKCE flow.
+///
+/// SECURITY (H1): no `state: Option<String>` field — the OAuth `state`
+/// parameter on the upstream authorize URL is the **server-generated
+/// `session_id`** (the map key), never user input. A previous shape stored
+/// a `params.state` echoed from the request and never used it, which was
+/// misleading code: it suggested CSRF protection that did not exist.
 #[derive(Debug)]
 pub struct PendingSsoSession {
     pub code_verifier: String,
     pub redirect_uri: Option<String>,
-    pub state: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 

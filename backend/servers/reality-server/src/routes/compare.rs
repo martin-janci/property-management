@@ -98,7 +98,12 @@ pub async fn get_compare_list(
             (SELECT url FROM listing_photos WHERE listing_id = l.id ORDER BY display_order ASC LIMIT 1) AS photo_url,
             l.status
         FROM compare_lists cl
-        LEFT JOIN listings l ON l.id = cl.listing_id
+        -- SECURITY (H4): hide listings whose status flipped to non-active
+        -- after they were added. The LEFT JOIN keeps the compare row so the
+        -- frontend can still surface a "this listing is no longer available"
+        -- placeholder, but all listing fields come back NULL — no leak of
+        -- draft/archived/pending data.
+        LEFT JOIN listings l ON l.id = cl.listing_id AND l.status = 'active'
         WHERE cl.user_id = $1
         ORDER BY cl.added_at ASC
         "#,
@@ -174,13 +179,20 @@ pub async fn add_to_compare(
         ));
     }
 
-    // Check listing exists
-    let listing_exists: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1)")
-            .bind(listing_id)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| crate::util::errors::db_error("check listing", e))?;
+    // Check listing exists AND is publicly visible.
+    //
+    // SECURITY (H4, round-9 audit): without the status filter, any
+    // authenticated portal user could add a draft/archived/pending
+    // listing UUID to their compare list and read its details via the
+    // join in `get_compare_list`. Restrict to `status = 'active'` to
+    // match the public-listing surface.
+    let listing_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')",
+    )
+    .bind(listing_id)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
     if !listing_exists {
         return Err((

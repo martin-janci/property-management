@@ -39,6 +39,13 @@ pub struct AppConfig {
     pub jwt_secret: String,
     /// PM API health check URL (Epic 104.1)
     pub pm_api_health_url: String,
+    /// Allowlist of post-SSO redirect origins (`scheme://host[:port]`).
+    ///
+    /// Loaded from `ALLOWED_REDIRECT_ORIGINS` (comma-separated). `None` means
+    /// no client-supplied `redirect_uri` is accepted at all — handlers must
+    /// fall back to a hard-coded safe path (e.g. `"/"`). Empty list also
+    /// rejects everything.
+    pub allowed_redirect_origins: Option<Vec<String>>,
 }
 
 impl AppConfig {
@@ -111,6 +118,18 @@ impl AppConfig {
             // is unaffected — it still uses `/health`.
             pm_api_health_url: std::env::var("PM_API_HEALTH_URL")
                 .unwrap_or_else(|_| format!("{}/readiness", pm_api_base)),
+            // SECURITY: post-SSO redirect target allowlist. Origins are
+            // compared as `scheme://host[:port]` exact-match strings.
+            // Missing env var ⇒ `None` ⇒ all client-supplied redirect_uris
+            // are rejected (handlers fall back to "/"). This is the safe
+            // default — operators must opt in to redirecting back to the
+            // web/mobile app origins.
+            allowed_redirect_origins: std::env::var("ALLOWED_REDIRECT_ORIGINS").ok().map(|raw| {
+                raw.split(',')
+                    .map(|s| s.trim().trim_end_matches('/').to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            }),
         }
     }
 }

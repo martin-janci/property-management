@@ -4,6 +4,7 @@
 //! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
 use crate::state::AppState;
+use crate::util::url_validator::validate_fetch_url;
 use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
@@ -228,6 +229,17 @@ pub async fn test_connection(
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
+    // SECURITY (H3, round-9 audit): refuse SSRF-prone feed URLs *before*
+    // the stub (and the real implementation that will replace it) tries
+    // to fetch them. Hostnames pass this static check; the import worker
+    // must re-validate the resolved IP at fetch time to defend against
+    // DNS rebinding.
+    if let Some(url) = data.feed_url.as_deref() {
+        if let Err(err) = validate_fetch_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
+
     // Stub: real implementation would call the external provider.
     let response = TestConnectionResponse {
         success: true,
@@ -268,6 +280,17 @@ pub async fn run_import(
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
+
+    // SECURITY (H3): reject SSRF-prone feed URLs at submission time so
+    // the worker queue never accepts http://169.254.169.254/, file://,
+    // or private/loopback targets. NOTE TO WORKER MAINTAINER: after DNS
+    // resolution, re-run this check on the resolved IP — a domain that
+    // passes here can still resolve to a private IP (DNS rebinding).
+    if let Some(url) = data.feed_url.as_deref() {
+        if let Err(err) = validate_fetch_url(url) {
+            return Err((axum::http::StatusCode::BAD_REQUEST, err.to_string()));
+        }
+    }
 
     let provider_str = data.provider.to_string();
 
@@ -371,7 +394,13 @@ pub async fn get_import_job_status(
 }
 
 /// Helper: verify the user is an active member of the given agency.
-async fn check_agency_membership(
+///
+/// Exposed to sibling modules (`super::agencies`, `super::agency_branding`)
+/// so they can apply the same auth check. Also used here to gate every
+/// import endpoint. SECURITY: returns `403 Not a member of this agency`
+/// even when the user is staff in a different agency — never leaks
+/// cross-agency membership.
+pub(super) async fn check_agency_membership(
     conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
     agency_id: Uuid,
     user_id: Uuid,
