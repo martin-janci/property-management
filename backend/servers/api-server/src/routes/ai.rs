@@ -2,15 +2,26 @@
 //!
 //! Handles AI chat, sentiment analysis, equipment/maintenance, and workflows.
 //! Epic 91: Wired to actual LLM providers (OpenAI/Anthropic).
+//!
+//! # Authentication & tenancy (SECURITY-CRITICAL)
+//!
+//! Every handler in this module derives tenancy from the verified
+//! [`RequestPrincipal`] (built from the bearer JWT + host-resolved tenant).
+//! The previous implementation read tenancy from a client-supplied
+//! `X-Tenant-Context` header, which let any unauthenticated caller forge a
+//! tenant id and burn the company's LLM billing on behalf of arbitrary
+//! tenants. That extractor has been deleted; see git history for
+//! `extract_tenant_context`.
 
 use crate::state::AppState;
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{alert_type, CreateSentimentAlert, UpsertSentimentTrend};
 use db::models::{
     CreateChatSession, CreateEquipment, CreateMaintenance, CreateWorkflow, CreateWorkflowAction,
@@ -28,29 +39,22 @@ use uuid::Uuid;
 // Helper Functions
 // ============================================================================
 
-/// Extract tenant context from request headers.
-fn extract_tenant_context(
-    headers: &HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Tenant context required",
-                )),
-            )
-        })?;
-
-    serde_json::from_str(tenant_header).map_err(|_| {
+/// Resolve the effective tenant id from a verified [`RequestPrincipal`].
+///
+/// AI endpoints are per-tenant by definition (cost attribution, RAG context,
+/// chat history). A platform-kind principal hitting the platform host has no
+/// `effective_org` — for those callers we refuse with 403 rather than fall
+/// back to a wildcard. Non-platform principals without a host-resolved tenant
+/// never reach this point because `RequestPrincipal` rejects them earlier.
+fn require_tenant_id(
+    principal: &RequestPrincipal,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    principal.effective_org.ok_or_else(|| {
         (
-            StatusCode::BAD_REQUEST,
+            StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid tenant context format",
+                "TENANT_REQUIRED",
+                "AI endpoints require a tenant-resolved request",
             )),
         )
     })
@@ -110,6 +114,7 @@ pub fn ai_chat_router() -> Router<AppState> {
 )]
 async fn create_session(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Json(req): Json<CreateChatSession>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     match state.ai_chat_repo.create_session(req).await {
@@ -139,15 +144,13 @@ async fn create_session(
 )]
 async fn list_sessions(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-
     match state
         .ai_chat_repo
         .list_user_sessions(
-            tenant.user_id,
+            principal.user_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
@@ -169,6 +172,7 @@ async fn list_sessions(
 
 async fn get_session(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.ai_chat_repo.find_session_by_id(session_id).await {
@@ -192,6 +196,7 @@ async fn get_session(
 
 async fn delete_session(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     match state.ai_chat_repo.delete_session(session_id).await {
@@ -215,6 +220,7 @@ async fn delete_session(
 
 async fn list_messages(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -261,14 +267,17 @@ const MAX_RESPONSE_TOKENS: u32 = 2048;
 
 async fn send_message(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(session_id): Path<Uuid>,
     Json(req): Json<SendChatMessage>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     let start_time = Instant::now();
 
-    // Get tenant context for RAG document search
-    let tenant = extract_tenant_context(&headers).ok();
+    // SECURITY: tenant is now derived from the verified principal, never from
+    // a client-supplied header. Per-tenant features (RAG, sentiment trend
+    // bookkeeping, custom system prompt) require a resolved org; a platform
+    // principal on the platform host has no `effective_org` and is rejected.
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Verify session exists
     let _session = state
@@ -327,7 +336,7 @@ async fn send_message(
         })?;
 
     // Story 97.4: Analyze sentiment of user message and trigger alerts if needed
-    let sentiment_analysis = if let Some(ref tenant_ctx) = tenant {
+    let sentiment_analysis = {
         // Check if sentiment analysis is enabled via feature flag
         let sentiment_enabled = std::env::var("SENTIMENT_ANALYSIS_ENABLED")
             .unwrap_or_else(|_| "true".to_string())
@@ -338,11 +347,7 @@ async fn send_message(
             match state.llm_client.analyze_sentiment(&req.content, None).await {
                 Ok(result) => {
                     // Check if alert should be triggered based on organization thresholds
-                    if let Ok(thresholds) = state
-                        .sentiment_repo
-                        .get_thresholds(tenant_ctx.tenant_id)
-                        .await
-                    {
+                    if let Ok(thresholds) = state.sentiment_repo.get_thresholds(tenant_id).await {
                         if thresholds.enabled {
                             // Story 97.4: Check if sentiment requires attention and create alert
                             let should_alert = result.requires_attention
@@ -351,7 +356,7 @@ async fn send_message(
 
                             if should_alert {
                                 let alert = CreateSentimentAlert {
-                                    organization_id: tenant_ctx.tenant_id,
+                                    organization_id: tenant_id,
                                     building_id: None, // Could be extracted from session context
                                     alert_type: alert_type::SPIKE_NEGATIVE.to_string(),
                                     threshold_breached: thresholds.negative_threshold,
@@ -381,7 +386,7 @@ async fn send_message(
                             };
 
                             let trend_data = UpsertSentimentTrend {
-                                organization_id: tenant_ctx.tenant_id,
+                                organization_id: tenant_id,
                                 building_id: None,
                                 date: today,
                                 avg_sentiment: result.score,
@@ -407,13 +412,13 @@ async fn send_message(
         } else {
             None
         }
-    } else {
-        None
     };
 
     // Story 97.1: Build tenant-specific system prompt
-    // Load tenant AI configuration if available (custom personality, building context)
-    let tenant_config = if tenant.is_some() {
+    // Load tenant AI configuration if available (custom personality, building context).
+    // Tenant is always present now (auth required); kept the wrapper for the
+    // future per-tenant DB lookup so the option type is the right shape.
+    let tenant_config = {
         // Try to load tenant AI config from environment or database
         // For now, build from environment variables as a simple implementation
         // In production, this would query a tenant_ai_config table
@@ -433,8 +438,6 @@ async fn send_message(
             ),
             escalation_topics: vec![],
         })
-    } else {
-        None
     };
 
     // Determine language for response
@@ -461,9 +464,10 @@ async fn send_message(
         });
     }
 
-    // Story 97.2: Search for relevant documents using RAG with semantic similarity
+    // Story 97.2: Search for relevant documents using RAG with semantic similarity.
+    // Scoped to `tenant_id` derived from the verified principal.
     let mut context_chunks: Vec<ContextChunk> = vec![];
-    if let Some(ref tenant_ctx) = tenant {
+    {
         // Check if semantic search is enabled via feature flag
         let semantic_search_enabled = std::env::var("RAG_SEMANTIC_SEARCH_ENABLED")
             .unwrap_or_else(|_| "true".to_string())
@@ -484,7 +488,7 @@ async fn send_message(
                     match state
                         .llm_document_repo
                         .search_documents_by_embedding(
-                            tenant_ctx.tenant_id,
+                            tenant_id,
                             &embedding_result.embedding,
                             5,         // Get top 5 relevant chunks
                             Some(0.6), // Minimum similarity threshold
@@ -531,7 +535,7 @@ async fn send_message(
         if context_chunks.is_empty() {
             match state
                 .llm_document_repo
-                .search_documents_by_text(tenant_ctx.tenant_id, &req.content, 3)
+                .search_documents_by_text(tenant_id, &req.content, 3)
                 .await
             {
                 Ok(docs) => {
@@ -552,7 +556,7 @@ async fn send_message(
                 Err(e) => {
                     tracing::warn!(
                         "Failed to search documents for RAG context (tenant: {}): {}",
-                        tenant_ctx.tenant_id,
+                        tenant_id,
                         e
                     );
                 }
@@ -768,6 +772,7 @@ async fn send_message(
 
 async fn provide_feedback(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(message_id): Path<Uuid>,
     Json(req): Json<ProvideFeedback>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
@@ -791,15 +796,15 @@ async fn provide_feedback(
 
 async fn list_escalated(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .ai_chat_repo
         .list_escalated_messages(
-            tenant.tenant_id,
+            tenant_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
@@ -835,16 +840,12 @@ pub fn sentiment_router() -> Router<AppState> {
 
 async fn get_trends(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<SentimentTrendQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state
-        .sentiment_repo
-        .list_trends(tenant.tenant_id, query)
-        .await
-    {
+    match state.sentiment_repo.list_trends(tenant_id, query).await {
         Ok(trends) => Ok(Json(serde_json::json!({ "trends": trends }))),
         Err(e) => {
             tracing::error!("Failed to get trends: {}", e);
@@ -858,15 +859,15 @@ async fn get_trends(
 
 async fn list_alerts(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<AlertsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .sentiment_repo
         .list_alerts(
-            tenant.tenant_id,
+            tenant_id,
             query.acknowledged,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
@@ -889,14 +890,16 @@ async fn list_alerts(
 
 async fn acknowledge_alert(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    // require_tenant_id ensures the request is tenant-scoped; the alert's
+    // org-scoping is enforced by repository RLS.
+    let _ = require_tenant_id(&principal)?;
 
     match state
         .sentiment_repo
-        .acknowledge_alert(alert_id, tenant.user_id)
+        .acknowledge_alert(alert_id, principal.user_id)
         .await
     {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),
@@ -915,11 +918,11 @@ async fn acknowledge_alert(
 
 async fn get_thresholds(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state.sentiment_repo.get_thresholds(tenant.tenant_id).await {
+    match state.sentiment_repo.get_thresholds(tenant_id).await {
         Ok(thresholds) => Ok(Json(serde_json::json!(thresholds))),
         Err(e) => {
             tracing::error!("Failed to get thresholds: {}", e);
@@ -936,16 +939,12 @@ async fn get_thresholds(
 
 async fn update_thresholds(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<UpdateSentimentThresholds>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state
-        .sentiment_repo
-        .update_thresholds(tenant.tenant_id, req)
-        .await
-    {
+    match state.sentiment_repo.update_thresholds(tenant_id, req).await {
         Ok(thresholds) => Ok(Json(serde_json::json!(thresholds))),
         Err(e) => {
             tracing::error!("Failed to update thresholds: {}", e);
@@ -959,10 +958,9 @@ async fn update_thresholds(
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    let org_id = tenant.tenant_id;
+    let org_id = require_tenant_id(&principal)?;
     let today = chrono::Utc::now().date_naive();
     let thirty_days_ago = today - chrono::Duration::days(30);
 
@@ -1042,6 +1040,7 @@ pub fn equipment_router() -> Router<AppState> {
 
 async fn create_equipment(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Json(req): Json<CreateEquipment>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     match state.equipment_repo.create(req).await {
@@ -1058,12 +1057,12 @@ async fn create_equipment(
 
 async fn list_equipment(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<EquipmentQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state.equipment_repo.list(tenant.tenant_id, query).await {
+    match state.equipment_repo.list(tenant_id, query).await {
         Ok(equipment) => Ok(Json(serde_json::json!({ "equipment": equipment }))),
         Err(e) => {
             tracing::error!("Failed to list equipment: {}", e);
@@ -1077,6 +1076,7 @@ async fn list_equipment(
 
 async fn get_equipment(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.equipment_repo.find_by_id(id).await {
@@ -1097,6 +1097,7 @@ async fn get_equipment(
 
 async fn update_equipment(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -1114,6 +1115,7 @@ async fn update_equipment(
 
 async fn delete_equipment(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     match state.equipment_repo.delete(id).await {
@@ -1134,6 +1136,7 @@ async fn delete_equipment(
 
 async fn list_maintenance(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -1155,6 +1158,7 @@ async fn list_maintenance(
 
 async fn create_maintenance(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(_id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
@@ -1172,6 +1176,7 @@ async fn create_maintenance(
 
 async fn update_maintenance(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -1189,14 +1194,14 @@ async fn update_maintenance(
 
 async fn list_predictions(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .equipment_repo
-        .list_high_risk_predictions(tenant.tenant_id, 50.0, query.limit.unwrap_or(20))
+        .list_high_risk_predictions(tenant_id, 50.0, query.limit.unwrap_or(20))
         .await
     {
         Ok(predictions) => Ok(Json(serde_json::json!({ "predictions": predictions }))),
@@ -1217,15 +1222,15 @@ pub struct AcknowledgePredictionRequest {
 
 async fn acknowledge_prediction(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgePredictionRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let _ = require_tenant_id(&principal)?;
 
     match state
         .equipment_repo
-        .acknowledge_prediction(id, tenant.user_id, req.action_taken.as_deref())
+        .acknowledge_prediction(id, principal.user_id, req.action_taken.as_deref())
         .await
     {
         Ok(prediction) => Ok(Json(serde_json::json!(prediction))),
@@ -1250,15 +1255,15 @@ pub struct MaintenanceDueQuery {
 
 async fn list_needing_maintenance(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<MaintenanceDueQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .equipment_repo
         .list_needing_maintenance(
-            tenant.tenant_id,
+            tenant_id,
             query.days_ahead.unwrap_or(30),
             query.limit.unwrap_or(20),
         )
@@ -1304,6 +1309,7 @@ pub fn workflow_router() -> Router<AppState> {
 
 async fn create_workflow(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Json(req): Json<CreateWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     match state.workflow_repo.create(req).await {
@@ -1320,12 +1326,12 @@ async fn create_workflow(
 
 async fn list_workflows(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<WorkflowQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state.workflow_repo.list(tenant.tenant_id, query).await {
+    match state.workflow_repo.list(tenant_id, query).await {
         Ok(workflows) => Ok(Json(serde_json::json!({ "workflows": workflows }))),
         Err(e) => {
             tracing::error!("Failed to list workflows: {}", e);
@@ -1351,22 +1357,18 @@ fn not_found(msg: &'static str) -> (StatusCode, Json<ErrorResponse>) {
 
 async fn get_workflow(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    match state
-        .workflow_repo
-        .find_by_id_for_org(id, tenant.tenant_id)
-        .await
-    {
+    let org_id = require_tenant_id(&principal)?;
+    match state.workflow_repo.find_by_id_for_org(id, org_id).await {
         Ok(Some(workflow)) => {
             // list_actions is scoped by the same org_id, so we cannot leak
             // actions from a workflow we just verified, but pass org_id
             // anyway for symmetry / future-proofing against ID swaps.
             let actions = state
                 .workflow_repo
-                .list_actions(id, tenant.tenant_id)
+                .list_actions(id, org_id)
                 .await
                 .map_err(|e| {
                     tracing::error!("Failed to list actions: {}", e);
@@ -1394,12 +1396,12 @@ async fn get_workflow(
 
 async fn update_workflow(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkflow>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    match state.workflow_repo.update(id, tenant.tenant_id, req).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.workflow_repo.update(id, org_id, req).await {
         Ok(Some(workflow)) => Ok(Json(serde_json::json!(workflow))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
@@ -1414,11 +1416,11 @@ async fn update_workflow(
 
 async fn delete_workflow(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    match state.workflow_repo.delete(id, tenant.tenant_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.workflow_repo.delete(id, org_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err(not_found("Workflow not found")),
         Err(e) => {
@@ -1433,11 +1435,11 @@ async fn delete_workflow(
 
 async fn list_actions(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    match state.workflow_repo.list_actions(id, tenant.tenant_id).await {
+    let org_id = require_tenant_id(&principal)?;
+    match state.workflow_repo.list_actions(id, org_id).await {
         Ok(Some(actions)) => Ok(Json(serde_json::json!({ "actions": actions }))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
@@ -1452,15 +1454,15 @@ async fn list_actions(
 
 async fn add_action(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateWorkflowAction>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let org_id = require_tenant_id(&principal)?;
     // Pin the workflow_id to the path parameter so a caller can't
     // shadow-target a different workflow via the JSON body.
     req.workflow_id = id;
-    match state.workflow_repo.add_action(tenant.tenant_id, req).await {
+    match state.workflow_repo.add_action(org_id, req).await {
         Ok(Some(action)) => Ok((StatusCode::CREATED, Json(serde_json::json!(action)))),
         Ok(None) => Err(not_found("Workflow not found")),
         Err(e) => {
@@ -1475,15 +1477,11 @@ async fn add_action(
 
 async fn delete_action(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(action_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
-    match state
-        .workflow_repo
-        .delete_action(action_id, tenant.tenant_id)
-        .await
-    {
+    let org_id = require_tenant_id(&principal)?;
+    match state.workflow_repo.delete_action(action_id, org_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err(not_found("Action not found")),
         Err(e) => {
@@ -1498,13 +1496,13 @@ async fn delete_action(
 
 async fn trigger_workflow(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<TriggerWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     use crate::services::WorkflowExecutor;
 
-    let tenant = extract_tenant_context(&headers)?;
+    let org_id = require_tenant_id(&principal)?;
 
     // SECURITY (H1): verify the workflow belongs to the caller's org BEFORE
     // we hand off to the executor. A 404 (not 403) is the correct response
@@ -1512,7 +1510,7 @@ async fn trigger_workflow(
     // caller enumerate workflow IDs cross-tenant.
     let workflow_exists = state
         .workflow_repo
-        .find_by_id_for_org(id, tenant.tenant_id)
+        .find_by_id_for_org(id, org_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to load workflow for tenant check: {}", e);
@@ -1560,16 +1558,12 @@ async fn trigger_workflow(
 
 async fn list_executions(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<ExecutionQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state
-        .workflow_repo
-        .list_executions(tenant.tenant_id, query)
-        .await
-    {
+    match state.workflow_repo.list_executions(tenant_id, query).await {
         Ok(executions) => Ok(Json(serde_json::json!({ "executions": executions }))),
         Err(e) => {
             tracing::error!("Failed to list executions: {}", e);
@@ -1583,19 +1577,19 @@ async fn list_executions(
 
 async fn get_execution(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let org_id = require_tenant_id(&principal)?;
     match state
         .workflow_repo
-        .find_execution_by_id_for_org(id, tenant.tenant_id)
+        .find_execution_by_id_for_org(id, org_id)
         .await
     {
         Ok(Some(execution)) => {
             let steps = state
                 .workflow_repo
-                .list_execution_steps_for_org(id, tenant.tenant_id)
+                .list_execution_steps_for_org(id, org_id)
                 .await
                 .map_err(|e| {
                     tracing::error!("Failed to list steps: {}", e);
@@ -1623,13 +1617,13 @@ async fn get_execution(
 
 async fn list_execution_steps(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let org_id = require_tenant_id(&principal)?;
     match state
         .workflow_repo
-        .list_execution_steps_for_org(id, tenant.tenant_id)
+        .list_execution_steps_for_org(id, org_id)
         .await
     {
         Ok(Some(steps)) => Ok(Json(serde_json::json!({ "steps": steps }))),
@@ -1664,23 +1658,23 @@ pub struct WorkflowEventRequest {
 /// Handle workflow trigger events (Story 94.2).
 async fn handle_workflow_event(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<WorkflowEventRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     use crate::services::{WorkflowEvent, WorkflowExecutor};
 
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Create the workflow executor
     let executor = WorkflowExecutor::new(state.workflow_repo.clone());
 
     // Create the event
-    let mut event = WorkflowEvent::new(&req.event_type, tenant.tenant_id, req.data);
+    let mut event = WorkflowEvent::new(&req.event_type, tenant_id, req.data);
     if let Some(building_id) = req.building_id {
         event = event.with_building(building_id);
     }
     // Set the user who triggered the event
-    event = event.with_user(tenant.user_id);
+    event = event.with_user(principal.user_id);
 
     // Handle the event - this finds matching workflows and executes them
     match executor.handle_event(event).await {
@@ -1725,6 +1719,7 @@ pub struct TemplateQuery {
 
 /// List available workflow templates.
 async fn list_workflow_templates(
+    _principal: RequestPrincipal,
     Query(query): Query<TemplateQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // For now, return built-in templates
@@ -1792,6 +1787,7 @@ async fn list_workflow_templates(
 
 /// Get a specific workflow template.
 async fn get_workflow_template(
+    _principal: RequestPrincipal,
     Path(id): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // Handle built-in templates
@@ -1845,11 +1841,11 @@ async fn get_workflow_template(
 /// Import a workflow template.
 async fn import_workflow_template(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<String>,
     Json(req): Json<ImportTemplateRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Get the template
     let (template, actions) = if id.starts_with("builtin-") {
@@ -1883,13 +1879,13 @@ async fn import_workflow_template(
         .unwrap_or_else(|| format!("{} (from template)", template.name));
 
     let create_workflow = CreateWorkflow {
-        organization_id: tenant.tenant_id,
+        organization_id: tenant_id,
         name: workflow_name.clone(),
         description: template.description,
         trigger_type: template.trigger_type,
         trigger_config: template.trigger_config,
         conditions: template.conditions,
-        created_by: tenant.user_id,
+        created_by: principal.user_id,
     };
 
     // Create the workflow
@@ -1920,11 +1916,11 @@ async fn import_workflow_template(
             retry_delay_seconds: action.retry_delay_seconds,
         };
 
-        // The workflow we just created belongs to `tenant.tenant_id` by
+        // The workflow we just created belongs to `tenant_id` by
         // construction, so this is the correct org scope.
         if let Err(e) = state
             .workflow_repo
-            .add_action(tenant.tenant_id, create_action)
+            .add_action(tenant_id, create_action)
             .await
         {
             tracing::warn!("Failed to add action to imported workflow: {}", e);
@@ -1937,7 +1933,7 @@ async fn import_workflow_template(
             .workflow_repo
             .update(
                 workflow.id,
-                tenant.tenant_id,
+                tenant_id,
                 UpdateWorkflow {
                     name: None,
                     description: None,
@@ -1970,6 +1966,7 @@ async fn import_workflow_template(
 
 /// List all built-in templates.
 async fn list_builtin_templates(
+    _principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     let builtin = get_builtin_templates();
 
@@ -2063,10 +2060,10 @@ pub fn llm_router() -> Router<AppState> {
 )]
 async fn generate_lease(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<GenerateLeaseRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
     let start_time = Instant::now();
 
     // Check feature flag for document generation
@@ -2088,8 +2085,8 @@ async fn generate_lease(
     let request = state
         .llm_document_repo
         .create_generation_request(
-            tenant.tenant_id,
-            tenant.user_id,
+            tenant_id,
+            principal.user_id,
             "lease_generation",
             &provider,
             &model,
@@ -2271,13 +2268,13 @@ Respond with well-structured content that can be converted to a professional doc
 
 async fn list_lease_templates(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
-        .list_prompt_templates(Some(tenant.tenant_id), Some("lease_generation"))
+        .list_prompt_templates(Some(tenant_id), Some("lease_generation"))
         .await
     {
         Ok(templates) => Ok(Json(serde_json::json!({ "templates": templates }))),
@@ -2296,6 +2293,7 @@ async fn list_lease_templates(
 
 async fn get_lease_template(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.llm_document_repo.find_prompt_template(id).await {
@@ -2333,10 +2331,10 @@ async fn get_lease_template(
 )]
 async fn generate_listing_description(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<GenerateListingDescriptionRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
     let start_time = Instant::now();
 
     // Check feature flag for document generation
@@ -2358,8 +2356,8 @@ async fn generate_listing_description(
     let request = state
         .llm_document_repo
         .create_generation_request(
-            tenant.tenant_id,
-            tenant.user_id,
+            tenant_id,
+            principal.user_id,
             "listing_description",
             &provider,
             &model,
@@ -2441,9 +2439,9 @@ async fn generate_listing_description(
     let description = state
         .llm_document_repo
         .create_listing_description(
-            tenant.tenant_id,
+            tenant_id,
             req.listing_id,
-            tenant.user_id,
+            principal.user_id,
             &req.language,
             &description_text,
             input_data,
@@ -2538,6 +2536,7 @@ Format your response with clear sections for each component."#,
 
 async fn list_listing_descriptions(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state
@@ -2558,6 +2557,7 @@ async fn list_listing_descriptions(
 
 async fn publish_description(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.llm_document_repo.publish_description(id).await {
@@ -2592,15 +2592,15 @@ async fn publish_description(
 )]
 async fn enhanced_chat(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<EnhancedChatRequest>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Get escalation config
     let config = state
         .llm_document_repo
-        .get_escalation_config(tenant.tenant_id)
+        .get_escalation_config(tenant_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get escalation config: {}", e);
@@ -2633,13 +2633,13 @@ async fn enhanced_chat(
 
 async fn get_escalation_config(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
-        .get_escalation_config(tenant.tenant_id)
+        .get_escalation_config(tenant_id)
         .await
     {
         Ok(config) => Ok(Json(serde_json::json!(config))),
@@ -2655,14 +2655,14 @@ async fn get_escalation_config(
 
 async fn update_escalation_config(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<UpdateEscalationConfig>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
-        .update_escalation_config(tenant.tenant_id, req)
+        .update_escalation_config(tenant_id, req)
         .await
     {
         Ok(config) => Ok(Json(serde_json::json!(config))),
@@ -2695,19 +2695,19 @@ async fn update_escalation_config(
 )]
 async fn enhance_photo(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<EnhancePhotoRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let metadata = serde_json::to_value(&req.options).unwrap_or_default();
 
     let enhancement = state
         .llm_document_repo
         .create_photo_enhancement(
-            tenant.tenant_id,
+            tenant_id,
             req.listing_id,
-            tenant.user_id,
+            principal.user_id,
             &req.photo_url,
             &req.enhancement_type,
             metadata,
@@ -2737,19 +2737,19 @@ async fn enhance_photo(
 
 async fn batch_enhance_photos(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<db::models::BatchEnhancePhotosRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let mut enhancements = Vec::new();
     for photo_url in &req.photo_urls {
         let enhancement = state
             .llm_document_repo
             .create_photo_enhancement(
-                tenant.tenant_id,
+                tenant_id,
                 req.listing_id,
-                tenant.user_id,
+                principal.user_id,
                 photo_url,
                 &req.enhancement_type,
                 serde_json::json!({}),
@@ -2784,6 +2784,7 @@ async fn batch_enhance_photos(
 
 async fn get_photo_enhancement(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.llm_document_repo.find_photo_enhancement(id).await {
@@ -2808,13 +2809,15 @@ async fn get_photo_enhancement(
 
 async fn list_voice_devices(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    // Voice devices are scoped to the user; require_tenant_id still gates
+    // platform-host callers out of a per-tenant API surface.
+    let _ = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
-        .list_user_voice_devices(tenant.user_id)
+        .list_user_voice_devices(principal.user_id)
         .await
     {
         Ok(devices) => Ok(Json(serde_json::json!({ "devices": devices }))),
@@ -2840,10 +2843,10 @@ async fn list_voice_devices(
 )]
 async fn link_voice_device(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<LinkVoiceDeviceRequest>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Generate a unique device ID: platform prefix + UUID for debugging and uniqueness.
     // Format: "google_assistant_550e8400-e29b-41d4-a716-446655440000"
@@ -2858,8 +2861,8 @@ async fn link_voice_device(
     let device = state
         .llm_document_repo
         .create_voice_device(
-            tenant.tenant_id,
-            tenant.user_id,
+            tenant_id,
+            principal.user_id,
             req.unit_id,
             &req.platform,
             &device_id,
@@ -2978,6 +2981,7 @@ async fn exchange_voice_oauth_tokens(
 
 async fn unlink_voice_device(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     match state.llm_document_repo.deactivate_voice_device(id).await {
@@ -2998,6 +3002,7 @@ async fn unlink_voice_device(
 
 async fn list_voice_commands(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(device_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -3027,13 +3032,13 @@ async fn list_voice_commands(
 
 async fn get_ai_statistics(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
-        .get_usage_statistics(tenant.tenant_id, None, None)
+        .get_usage_statistics(tenant_id, None, None)
         .await
     {
         Ok(stats) => Ok(Json(serde_json::json!(stats))),
@@ -3060,15 +3065,15 @@ pub struct GenerationRequestsQuery {
 
 async fn list_generation_requests(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<GenerationRequestsQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .llm_document_repo
         .list_generation_requests(
-            tenant.tenant_id,
+            tenant_id,
             query.request_type.as_deref(),
             query.status.as_deref(),
             query.limit.unwrap_or(50),
@@ -3089,6 +3094,7 @@ async fn list_generation_requests(
 
 async fn get_generation_request(
     State(state): State<AppState>,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     match state.llm_document_repo.find_generation_request(id).await {
