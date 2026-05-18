@@ -118,7 +118,7 @@ fn init_otel_tracer(config: &OtelConfig) -> Option<Tracer> {
     {
         Ok(e) => e,
         Err(e) => {
-            tracing::error!("Failed to create OTLP exporter: {}", e);
+            tracing::error!(error = %e, "Failed to create OTLP exporter");
             return None;
         }
     };

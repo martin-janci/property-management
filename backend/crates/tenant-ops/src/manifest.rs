@@ -134,7 +134,7 @@ mod tests {
             // Tests run from the crate dir; jump up two levels.
             let alt = std::path::PathBuf::from("../../manifests/tenant-data-manifest.json");
             if !alt.exists() {
-                eprintln!("manifest not present at default or alt path; skipping");
+                tracing::warn!("manifest not present at default or alt path; skipping");
                 return;
             }
             let m = TenantDataManifest::load(&alt).expect("load manifest");

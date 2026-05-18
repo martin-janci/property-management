@@ -11,6 +11,7 @@ use axum::{
 use common::errors::ErrorResponse;
 use db::repositories::{FaqEntry, HelpArticle, HelpCategory, Tooltip};
 use serde::{Deserialize, Serialize};
+use tracing::Instrument;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -300,9 +301,12 @@ pub async fn get_article(
     // Increment view count in background
     let slug_clone = slug.clone();
     let repo = state.help_repo.clone();
-    tokio::spawn(async move {
-        let _ = repo.increment_article_view(&slug_clone).await;
-    });
+    tokio::spawn(
+        async move {
+            let _ = repo.increment_article_view(&slug_clone).await;
+        }
+        .instrument(tracing::info_span!("bg.help_article_view_increment", slug = %slug)),
+    );
 
     Ok(Json(article))
 }
