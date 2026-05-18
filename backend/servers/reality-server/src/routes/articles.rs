@@ -16,6 +16,18 @@ use sqlx::Row;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+// ---------------------------------------------------------------------------
+// Input hygiene constants (H6, M5)
+// ---------------------------------------------------------------------------
+// Comments are public-write (after auth) but a 100MB body still bloats the
+// DB. Mirror the 5000-char cap used elsewhere in this server.
+const MAX_COMMENT_BODY_LEN: usize = 5000;
+// Default page size for unauthenticated comment listing. Without a cap a
+// popular article DoSs both the API request and the SSR page that renders
+// it.
+const DEFAULT_COMMENTS_LIMIT: i64 = 50;
+const MAX_COMMENTS_LIMIT: i64 = 200;
+
 /// Create articles router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -115,6 +127,15 @@ pub struct ArticlesQuery {
     pub search: Option<String>,
     pub page: Option<i64>,
     pub per_page: Option<i64>,
+}
+
+/// Comments list query parameters (M5: paginate).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct CommentsQuery {
+    /// Maximum comments to return. Defaults to 50, capped at 200.
+    pub limit: Option<i64>,
+    /// Number of comments to skip. Defaults to 0.
+    pub offset: Option<i64>,
 }
 
 /// List articles with optional filters.
@@ -312,12 +333,15 @@ pub async fn get_article(
     Ok(Json(ArticleDetailResponse { article }))
 }
 
-/// List comments for an article.
+/// List comments for an article (paginated — M5).
 #[utoipa::path(
     get,
     path = "/api/v1/articles/{slug}/comments",
     tag = "Articles",
-    params(("slug" = String, Path, description = "Article URL slug")),
+    params(
+        ("slug" = String, Path, description = "Article URL slug"),
+        CommentsQuery,
+    ),
     responses(
         (status = 200, description = "Comment list", body = CommentsResponse),
         (status = 404, description = "Article not found")
@@ -326,7 +350,14 @@ pub async fn get_article(
 pub async fn list_comments(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    Query(query): Query<CommentsQuery>,
 ) -> Result<Json<CommentsResponse>, (axum::http::StatusCode, String)> {
+    let limit = query
+        .limit
+        .unwrap_or(DEFAULT_COMMENTS_LIMIT)
+        .clamp(1, MAX_COMMENTS_LIMIT);
+    let offset = query.offset.unwrap_or(0).max(0);
+
     let mut conn = state
         .acquire_public_conn()
         .await
@@ -348,25 +379,35 @@ pub async fn list_comments(
         )
     })?;
 
+    // COUNT(*) OVER () returns the unfiltered total alongside each page row
+    // so we get the real total without a second round-trip.
     let rows = sqlx::query(
         r#"
         SELECT
             ac.id, ac.article_id, ac.author_user_id,
             COALESCE(pu.name, 'Anonymous') AS author_name,
             pu.profile_image_url AS author_avatar_url,
-            ac.body, ac.created_at
+            ac.body, ac.created_at,
+            COUNT(*) OVER () AS total_count
         FROM reality_article_comments ac
         LEFT JOIN users pu ON pu.id = ac.author_user_id AND pu.principal_kind = 'public'
         WHERE ac.article_id = $1
         ORDER BY ac.created_at ASC
+        LIMIT $2 OFFSET $3
         "#,
     )
     .bind(article_id)
+    .bind(limit)
+    .bind(offset)
     .fetch_all(&mut *conn)
     .await
     .map_err(|e| crate::util::errors::db_error("list comments", e))?;
 
-    let total = rows.len() as i64;
+    let total: i64 = rows
+        .first()
+        .map(|r| r.get::<i64, _>("total_count"))
+        .unwrap_or(0);
+
     let comments: Vec<ArticleComment> = rows
         .into_iter()
         .map(|r| ArticleComment {
@@ -410,6 +451,15 @@ pub async fn create_comment(
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
             "Comment body cannot be empty".to_string(),
+        ));
+    }
+    if data.body.len() > MAX_COMMENT_BODY_LEN {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            format!(
+                "Comment body must be at most {} characters",
+                MAX_COMMENT_BODY_LEN
+            ),
         ));
     }
 
