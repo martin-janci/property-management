@@ -58,12 +58,7 @@ pub async fn list_saved_searches(
         .reality_portal_repo
         .get_saved_searches(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list saved searches: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list saved searches", e))?;
 
     Ok(Json(SavedSearchesResponse { searches }))
 }
@@ -97,10 +92,7 @@ pub async fn create_saved_search(
                     "Maximum saved searches limit reached".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to create saved search: {}", e),
-                )
+                crate::util::errors::db_error("create saved search", e)
             }
         })?;
 
@@ -129,12 +121,7 @@ pub async fn get_saved_search(
         .reality_portal_repo
         .get_saved_searches(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get saved search: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get saved search", e))?;
 
     let search = searches.into_iter().find(|s| s.id == id).ok_or_else(|| {
         (
@@ -177,10 +164,7 @@ pub async fn update_saved_search(
                     "Saved search not found".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to update saved search: {}", e),
-                )
+                crate::util::errors::db_error("update saved search", e)
             }
         })?;
 
@@ -208,12 +192,7 @@ pub async fn delete_saved_search(
         .reality_portal_repo
         .delete_saved_search(id, principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to delete saved search: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("delete saved search", e))?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -240,12 +219,7 @@ pub async fn run_saved_search(
         .reality_portal_repo
         .get_saved_searches(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get saved search: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get saved search", e))?;
 
     let search = searches.into_iter().find(|s| s.id == id).ok_or_else(|| {
         (
@@ -256,27 +230,21 @@ pub async fn run_saved_search(
 
     // Parse the stored criteria JSON to a search query
     let query: db::models::PublicListingQuery = serde_json::from_value(search.criteria.clone())
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to parse saved search criteria: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("parse saved search criteria", e))?;
 
-    // Execute the search using the portal repository
-    let results = state
-        .portal_repo
-        .search_listings(&query)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to run saved search: {}", e),
-            )
-        })?;
+    // Execute the search using the portal repository. `count` must reflect
+    // the total matching rows across all pages, not just the size of the
+    // page we're returning — otherwise the client cannot tell whether
+    // more pages exist. Run page + count concurrently against the same
+    // query criteria.
+    let (results, count) = tokio::try_join!(
+        state.portal_repo.search_listings(&query),
+        state.portal_repo.count_listings(&query),
+    )
+    .map_err(|e| crate::util::errors::db_error("run saved search", e))?;
 
     Ok(Json(RunSavedSearchResponse {
-        count: results.len() as i64,
+        count,
         listings: results,
     }))
 }

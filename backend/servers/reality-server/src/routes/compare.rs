@@ -75,12 +75,10 @@ pub async fn get_compare_list(
     State(state): State<AppState>,
     principal: RequestPrincipal,
 ) -> Result<Json<CompareListResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let rows = sqlx::query(
         r#"
@@ -108,12 +106,7 @@ pub async fn get_compare_list(
     .bind(principal.user_id)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to fetch compare list: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("fetch compare list", e))?;
 
     use sqlx::Row;
     let entries: Vec<CompareEntry> = rows
@@ -159,24 +152,17 @@ pub async fn add_to_compare(
     principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<(axum::http::StatusCode, Json<AddCompareResponse>), (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Check current count
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM compare_lists WHERE user_id = $1")
         .bind(principal.user_id)
         .fetch_one(&mut *conn)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to count compare entries: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("count compare entries", e))?;
 
     if count >= MAX_COMPARE_LISTINGS {
         return Err((
@@ -194,12 +180,7 @@ pub async fn add_to_compare(
             .bind(listing_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check listing: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
     if !listing_exists {
         return Err((
@@ -216,12 +197,7 @@ pub async fn add_to_compare(
     .bind(listing_id)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to check compare list: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("check compare list", e))?;
 
     if already_in {
         return Err((
@@ -235,12 +211,7 @@ pub async fn add_to_compare(
         .bind(listing_id)
         .execute(&mut *conn)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to add to compare list: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("add to compare list", e))?;
 
     Ok((
         axum::http::StatusCode::CREATED,
@@ -269,12 +240,10 @@ pub async fn remove_from_compare(
     principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let rows_affected =
         sqlx::query("DELETE FROM compare_lists WHERE user_id = $1 AND listing_id = $2")
@@ -282,12 +251,7 @@ pub async fn remove_from_compare(
             .bind(listing_id)
             .execute(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to remove from compare list: {}", e),
-                )
-            })?
+            .map_err(|e| crate::util::errors::db_error("remove from compare list", e))?
             .rows_affected();
 
     if rows_affected == 0 {

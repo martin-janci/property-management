@@ -689,6 +689,26 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Count inquiries for a realtor (matching the same filter as
+    /// `get_realtor_inquiries`). Used by paginated routes to expose the
+    /// true `total` instead of returning `len()` of the current page.
+    pub async fn count_realtor_inquiries(
+        &self,
+        realtor_id: Uuid,
+        status: Option<String>,
+    ) -> Result<i64, SqlxError> {
+        sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*) FROM listing_inquiries
+            WHERE realtor_id = $1 AND ($2::text IS NULL OR status = $2)
+            "#,
+        )
+        .bind(realtor_id)
+        .bind(&status)
+        .fetch_one(&self.pool)
+        .await
+    }
+
     /// Mark inquiry as read.
     pub async fn mark_inquiry_read(&self, id: Uuid) -> Result<(), SqlxError> {
         sqlx::query("UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL")

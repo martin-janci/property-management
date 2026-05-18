@@ -121,12 +121,10 @@ pub async fn get_branding(
     State(state): State<AppState>,
     Path(agency_id): Path<Uuid>,
 ) -> Result<Json<BrandingResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let row = sqlx::query(
         r#"
@@ -140,12 +138,7 @@ pub async fn get_branding(
     .bind(agency_id)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get branding: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("get branding", e))?;
 
     match row {
         Some(r) => {
@@ -170,12 +163,7 @@ pub async fn get_branding(
                     .bind(agency_id)
                     .fetch_one(&mut *conn)
                     .await
-                    .map_err(|e| {
-                        (
-                            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                            format!("Failed to check agency: {}", e),
-                        )
-                    })?;
+                    .map_err(|e| crate::util::errors::db_error("check agency", e))?;
 
             if !agency_exists {
                 return Err((
@@ -223,12 +211,10 @@ pub async fn update_branding(
     Path(agency_id): Path<Uuid>,
     Json(data): Json<UpdateBrandingRequest>,
 ) -> Result<Json<BrandingResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Check agency exists
     let agency_exists: bool =
@@ -236,12 +222,7 @@ pub async fn update_branding(
             .bind(agency_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check agency: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check agency", e))?;
 
     if !agency_exists {
         return Err((
@@ -263,12 +244,7 @@ pub async fn update_branding(
     .bind(principal.user_id)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to check membership: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("check membership", e))?;
 
     if !is_member {
         return Err((
@@ -311,12 +287,7 @@ pub async fn update_branding(
     .bind(&data.watermark_url)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to update branding: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("update branding", e))?;
 
     let branding = AgencyBranding {
         agency_id,

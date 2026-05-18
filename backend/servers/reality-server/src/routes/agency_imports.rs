@@ -154,12 +154,10 @@ pub async fn list_import_history(
     principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
 ) -> Result<Json<ImportHistoryResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
@@ -179,12 +177,7 @@ pub async fn list_import_history(
     .bind(agency_id)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list import history: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list import history", e))?;
 
     let total = rows.len() as i64;
     let jobs: Vec<ImportJobSummary> = rows
@@ -228,12 +221,10 @@ pub async fn test_connection(
     Path(agency_id): Path<Uuid>,
     Json(data): Json<TestConnectionRequest>,
 ) -> Result<Json<TestConnectionResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
@@ -271,12 +262,10 @@ pub async fn run_import(
     Path(agency_id): Path<Uuid>,
     Json(data): Json<RunImportRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RunImportResponse>), (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
@@ -297,12 +286,7 @@ pub async fn run_import(
     .bind(&data.feed_url)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to create import job: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("create import job", e))?;
 
     Ok((
         axum::http::StatusCode::ACCEPTED,
@@ -336,12 +320,10 @@ pub async fn get_import_job_status(
     principal: RequestPrincipal,
     Path((agency_id, job_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<ImportJobDetailResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     check_agency_membership(&mut conn, agency_id, principal.user_id).await?;
 
@@ -360,12 +342,7 @@ pub async fn get_import_job_status(
     .bind(agency_id)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get import job: {}", e),
-        )
-    })?
+    .map_err(|e| crate::util::errors::db_error("get import job", e))?
     .ok_or_else(|| {
         (
             axum::http::StatusCode::NOT_FOUND,
@@ -405,12 +382,7 @@ async fn check_agency_membership(
             .bind(agency_id)
             .fetch_one(&mut **conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check agency: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check agency", e))?;
 
     if !agency_exists {
         return Err((
@@ -431,12 +403,7 @@ async fn check_agency_membership(
     .bind(user_id)
     .fetch_one(&mut **conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to check membership: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("check membership", e))?;
 
     if !is_member {
         return Err((

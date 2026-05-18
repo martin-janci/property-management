@@ -33,6 +33,7 @@ mod handlers;
 mod observability;
 mod routes;
 pub mod state;
+mod util;
 
 use state::AppState;
 
