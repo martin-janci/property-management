@@ -8,7 +8,7 @@ import { LoginPage } from './LoginPage';
 
 describe('LoginPage', () => {
   it('calls login API and stores token on success', async () => {
-    const login = vi.fn().mockResolvedValue({ access_token: 'tk' });
+    const login = vi.fn().mockResolvedValue({ accessToken: 'tk' });
     const user = userEvent.setup();
     render(
       <MemoryRouter>
