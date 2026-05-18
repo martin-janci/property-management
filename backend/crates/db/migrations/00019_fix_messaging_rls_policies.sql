@@ -62,7 +62,7 @@ BEGIN
         WHERE table_name = 'user_blocks' AND column_name = 'organization_id'
     ) THEN
         ALTER TABLE user_blocks
-            ADD COLUMN organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+            ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
 
         -- Update existing blocks with org from blocker (via organization_members)
         UPDATE user_blocks ub
