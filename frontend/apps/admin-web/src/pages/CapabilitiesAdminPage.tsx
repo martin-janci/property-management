@@ -18,7 +18,7 @@
  *     → DELETE /api/v1/admin/capabilities/users/:id/grant/:grantId
  */
 
-import { CAPABILITIES, useMfaChallenge } from '@ppt/admin-ui';
+import { CAPABILITIES, useCapability, useMfaChallenge } from '@ppt/admin-ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -29,27 +29,6 @@ import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReaso
 // ---------------------------------------------------------------------------
 // Constants & helpers
 // ---------------------------------------------------------------------------
-
-// TODO: replace stub descriptions with data from GET /api/v1/admin/capabilities/registry
-const CAPABILITY_DESCRIPTIONS: Record<string, string> = {
-  agencies_read: 'View agencies and their memberships.',
-  agencies_write: 'Create and edit agency records.',
-  agencies_suspend: 'Suspend or reinstate an agency.',
-  users_read: 'List and inspect user accounts.',
-  users_write: 'Edit user profile fields and metadata.',
-  users_impersonate: 'Impersonate a user for support.',
-  memberships_grant: 'Grant capabilities to platform principals.',
-  memberships_revoke: 'Revoke capabilities from principals.',
-  site_settings_read: 'View tenant-wide site settings.',
-  site_settings_write: 'Modify site settings.',
-  mobile_config_write: 'Push mobile-app configuration.',
-  feature_flags_write: 'Toggle and configure feature flags.',
-  tenant_export: 'Trigger a full tenant data export.',
-  tenant_purge: 'Permanently delete a tenant and all its data.',
-  tenant_restore: 'Restore a tenant from an archive.',
-  audit_read: 'View the platform audit log.',
-  principal_kind_escalate: 'Escalate a user to a higher principal kind.',
-};
 
 const HIGH_RISK_CAPS = new Set(['tenant_purge', 'principal_kind_escalate']);
 
@@ -80,22 +59,93 @@ function timeAgo(iso: string | null): string {
 // Types
 // ---------------------------------------------------------------------------
 
-interface CapabilityGrant {
+interface RegistryEntry {
+  capability: string;
+  description: string;
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  holder_count: number;
+}
+
+/**
+ * Raw shape returned by the backend. NOTE: the backend `CapabilityGrant`
+ * struct does NOT carry a `status` field — it only persists `revoked_at`
+ * and `expires_at`. We derive status on the client (see `deriveGrantStatus`).
+ */
+interface BackendCapabilityGrant {
   id: string;
   capability: string;
   granted_at: string;
   granted_by: string;
   expires_at: string | null;
   revoked_at: string | null;
+}
+
+interface CapabilityGrant extends BackendCapabilityGrant {
+  /** Derived from `revoked_at` + `expires_at`, never sent by the server. */
   status: 'active' | 'expired' | 'revoked';
 }
 
+/**
+ * Derive a grant's lifecycle status from the raw backend fields. Without
+ * this the page treated every grant as `'active'` because the missing
+ * `status` field was always `undefined !== 'revoked'`.
+ */
+function deriveGrantStatus(g: BackendCapabilityGrant): CapabilityGrant['status'] {
+  if (g.revoked_at) return 'revoked';
+  if (g.expires_at && new Date(g.expires_at).getTime() < Date.now()) return 'expired';
+  return 'active';
+}
+
+/**
+ * Normalized internal view of a user's capability grants.
+ *
+ * The backend exposes two different shapes for capability data:
+ *   - `GET /admin/capabilities/users/{id}` → `Vec<CapabilityGrant>` (raw array)
+ *   - `GET /admin/capabilities/me`         → `{ user_id, principal_kind, capabilities: [...] }`
+ *
+ * Neither carries `email` / `last_change_at` / `last_change_by` — those would
+ * have to come from a separate users endpoint. Until that lands, we keep them
+ * `null` and the header falls back to the `userId` from the route.
+ */
 interface UserCapabilitiesResponse {
   user_id: string;
-  email: string;
+  email: string | null;
   grants: CapabilityGrant[];
   last_change_at: string | null;
   last_change_by: string | null;
+}
+
+/**
+ * Normalize either the raw `Vec<CapabilityGrant>` shape (per-user endpoint)
+ * or the `MyCapabilitiesResponse { capabilities, ... }` shape (`/me`) into
+ * the page's internal {@link UserCapabilitiesResponse} view.
+ *
+ * Tolerates a few synonyms (`grants` vs `capabilities`) so we don't break if
+ * a future backend revision normalizes one to match the other.
+ */
+function withDerivedStatus(grants: BackendCapabilityGrant[]): CapabilityGrant[] {
+  return grants.map((g) => ({ ...g, status: deriveGrantStatus(g) }));
+}
+
+function normalizeUserCapabilities(raw: unknown, userId: string): UserCapabilitiesResponse {
+  if (Array.isArray(raw)) {
+    return {
+      user_id: userId,
+      email: null,
+      grants: withDerivedStatus(raw as BackendCapabilityGrant[]),
+      last_change_at: null,
+      last_change_by: null,
+    };
+  }
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const grants = (obj.grants ?? obj.capabilities ?? []) as BackendCapabilityGrant[];
+  return {
+    user_id: (obj.user_id as string) ?? userId,
+    email: (obj.email as string | null) ?? null,
+    grants: Array.isArray(grants) ? withDerivedStatus(grants) : [],
+    last_change_at: (obj.last_change_at as string | null) ?? null,
+    last_change_by: (obj.last_change_by as string | null) ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +301,34 @@ function ensureStyles() {
     .cap-pill--expired, .cap-pill--revoked {
       background: var(--ppt-bg-subtle, #f3f4f6);
       color: var(--ppt-fg-muted, #6b7280);
+    }
+
+    /* ---- Risk level pills ---- */
+    .cap-risk {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .cap-risk--low {
+      background: var(--ppt-bg-subtle, #f3f4f6);
+      color: var(--ppt-fg-muted, #6b7280);
+    }
+    .cap-risk--medium {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .cap-risk--high {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .cap-risk--critical {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     /* ---- Buttons ---- */
@@ -440,23 +518,90 @@ function ensureStyles() {
 
 interface RegistryViewProps {
   onViewUser: (userId: string) => void;
+  token: string | null;
 }
 
-function RegistryView({ onViewUser }: RegistryViewProps) {
-  // TODO: fetch holder counts from GET /api/v1/admin/capabilities/registry
-  // when backend supports it; currently returns placeholder "—".
+function RegistryView({ onViewUser, token }: RegistryViewProps) {
+  // Include `token` in the query key so cached results from a previous
+  // session are not served after logout / login / token refresh. React Query
+  // treats different keys as separate caches, preventing cross-user leakage.
+  void onViewUser;
+  const { data, isLoading, error, refetch } = useQuery<RegistryEntry[]>({
+    queryKey: ['admin', 'capabilities', 'registry', token],
+    queryFn: async () => {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/v1/admin/capabilities/registry', {
+        headers,
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`Registry fetch failed: ${res.status}`);
+      return res.json() as Promise<RegistryEntry[]>;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="cap-grid">
+        {[...Array(17)].map((_, i) => (
+          <div key={i} className="cap-skeleton" style={{ height: 100, borderRadius: 12 }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="cap-error-banner">
+        {error instanceof Error ? error.message : 'Unable to load registry.'}
+        <button
+          type="button"
+          className="cap-btn cap-btn--secondary"
+          onClick={() => refetch()}
+          style={{ marginLeft: 12 }}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const entries = data ?? [];
+
   return (
     <div className="cap-grid">
-      {CAPABILITIES.map((cap) => (
-        <article key={cap} className="cap-card">
-          <span className="cap-card__name">{cap}</span>
-          <span className="cap-card__desc">
-            {CAPABILITY_DESCRIPTIONS[cap] ?? 'No description available.'}
-          </span>
+      {entries.map((entry) => (
+        <article key={entry.capability} className="cap-card">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+          >
+            <span className="cap-card__name">{entry.capability}</span>
+            <span className={`cap-risk cap-risk--${entry.risk_level}`}>{entry.risk_level}</span>
+          </div>
+          <span className="cap-card__desc">{entry.description || 'No description available.'}</span>
           <div className="cap-card__footer">
-            <span className="cap-card__holders">Holders: —</span>
-            <button type="button" className="cap-card__link" onClick={() => onViewUser('me')}>
-              View holders →
+            <span className="cap-card__holders">Holders: {entry.holder_count}</span>
+            {/*
+              Per-capability holders view is not yet wired (no
+              `/admin/capabilities/:cap/holders` route exists). Render the
+              affordance as disabled rather than misrouting every card to
+              `onViewUser('me')`, which leaked the current user's grants
+              regardless of which card was clicked.
+            */}
+            <button
+              type="button"
+              className="cap-card__link"
+              disabled
+              title="Per-capability holders view coming soon"
+            >
+              View holders (coming soon)
             </button>
           </div>
         </article>
@@ -478,6 +623,7 @@ interface UserViewProps {
 function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
   const queryClient = useQueryClient();
   const { prompt: promptMfa } = useMfaChallenge();
+  const canRevoke = useCapability('memberships_revoke');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [revokeState, setRevokeState] = useState<{
     grantId: string;
@@ -503,11 +649,11 @@ function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
             credentials: 'include',
           });
           if (!fallback.ok) throw new Error(`Unable to load capabilities: ${fallback.status}`);
-          return fallback.json() as Promise<UserCapabilitiesResponse>;
+          return normalizeUserCapabilities(await fallback.json(), userId);
         }
         throw new Error(`Unable to load capabilities: ${res.status}`);
       }
-      return res.json() as Promise<UserCapabilitiesResponse>;
+      return normalizeUserCapabilities(await res.json(), userId);
     },
     staleTime: 30_000,
     retry: 1,
@@ -660,7 +806,7 @@ function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
                     <span className={`cap-pill cap-pill--${grant.status}`}>{grant.status}</span>
                   </td>
                   <td>
-                    {!isExpiredOrRevoked && (
+                    {!isExpiredOrRevoked && canRevoke && (
                       <button
                         type="button"
                         className="cap-btn cap-btn--danger"
@@ -1090,7 +1236,7 @@ export default function CapabilitiesAdminPage() {
           </p>
         </div>
       </div>
-      <RegistryView onViewUser={switchToUser} />
+      <RegistryView onViewUser={switchToUser} token={token} />
     </div>
   );
 }
