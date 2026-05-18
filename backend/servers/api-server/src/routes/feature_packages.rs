@@ -112,6 +112,10 @@ fn require_super_admin(
 }
 
 /// Verify user has access to the organization.
+///
+/// Placeholder for future per-org gating in feature-package routes; current routes
+/// rely on super-admin checks via `verify_super_admin_rls`. Kept for parity with
+/// `integrations::verify_org_access` once non-super-admin flows are added.
 #[allow(dead_code)]
 async fn verify_org_access(
     rls: &mut RlsConnection,
