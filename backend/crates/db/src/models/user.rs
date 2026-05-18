@@ -255,6 +255,8 @@ pub struct UpdateUser {
     pub name: Option<String>,
     pub phone: Option<String>,
     pub locale: Option<Locale>,
+    /// Profile picture URL (maps to `users.profile_image_url`).
+    pub avatar_url: Option<String>,
 }
 
 /// Email verification token entity.
