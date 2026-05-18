@@ -70,6 +70,7 @@ else
   run "ppt-rust-backend"  300 'cd backend && cargo check --workspace --message-format=short >/dev/null'
 fi
 run "ppt-frontend"   30 'cd frontend && pnpm -r list --depth -1 --json >/dev/null 2>&1'
+run "ppt-screens"         10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
 run "ppt-mobile-native"   60 'cd mobile-native && ./gradlew help -q >/dev/null 2>&1'
 run "ppt-typespec"        20 'cd docs/api/typespec && npx --no-install tsp --version >/dev/null 2>&1'
 run "ppt-dev-stack"       10 'stack list 2>/dev/null | grep -qE "(^|\s)pm-local(\s|$)"'

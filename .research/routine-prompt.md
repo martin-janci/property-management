@@ -220,6 +220,8 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
+| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** updating the matching product's `docs/screens/<product>/*.md` — emit **one signal per drifting product** with id `screen-map-drift-pr-<num>-<product>` | +2 | vector=`test-gap`; flags screen docs falling behind code |
+| `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
 
 **Churn exclusions** — never score these files as hotspots:
 ```
@@ -230,6 +232,64 @@ docs/api/typespec/*.tsp version bumps
 VERSION
 *.lock, *.lockb
 ```
+
+**Screen-map drift detection** — for each merged PR this run, fetch its file
+list (`gh pr view <num> --json files --jq '.files[].path'`) and apply:
+
+- **Routes touched (the trigger set, mirroring `.github/workflows/screen-map.yml`):**
+  - `frontend/apps/ppt-web/src/App.tsx`
+  - `frontend/apps/ppt-web/src/routes/**`
+  - `frontend/apps/reality-web/src/app/**`
+  - ~~`frontend/apps/mobile/src/**`~~ — **excluded from drift detection
+    until `docs/screens/mobile/` exists.** The mobile RN/Expo app doesn't
+    have screen docs yet, so every mobile-route change would fire a false
+    `screen-map-drift` signal otherwise. Re-include the path here (and the
+    `mobile` product in the doc dir below) once the user adds at least one
+    file under `docs/screens/mobile/`. (Note: mobile is React Native
+    *without* Expo Router — its screens live under `src/screens/`, not
+    `app/`. The strikethrough path uses `src/**` to match that.)
+- **Screen docs:** `docs/screens/{ppt,reality}/**.md`. (Mobile excluded
+  per above. The brief's `Screen-map status` section can still count all
+  three product dirs, but drift detection only fires on the two with
+  populated doc scope.)
+
+**Per-product matching.** A drift signal fires when route files for a
+*product* are touched without a corresponding doc update in the *same
+product's* `docs/screens/<product>/`. Specifically:
+
+- A PR touches any `frontend/apps/ppt-web/src/{App.tsx,routes/**}` →
+  must also touch at least one `docs/screens/ppt/*.md`.
+- A PR touches any `frontend/apps/reality-web/src/app/**` → must also
+  touch at least one `docs/screens/reality/*.md`.
+
+A PR that touches `ppt-web` routes but only updates `docs/screens/reality/`
+(or vice versa) *still drifts on the unmatched product side* and emits
+the signal for that product. Emit one signal per drifting product with
+id `screen-map-drift-pr-<num>-<product>`, confidence `medium`, candidate
+vector `test-gap`, and a one-line evidence string naming the touched
+route files for that product.
+
+When `docs/screens/mobile/` lands later, re-include `frontend/apps/mobile/src/**`
+in the trigger set, drop the strikethrough, and add `mobile` to the
+doc-dir brace expansion above.
+
+Additionally, for the orphan signal: spot-check the union of `docs/screens/`
+filenames (sans `.md`, normalised to lowercase) against the union of route
+basenames extracted from the trigger files this run. Any screen doc whose
+slug no longer appears in routes gets a `screen-map-orphan` signal with id
+`screen-map-orphan-<product>-<slug>`, vector `refactor`, confidence
+`medium`. (Don't do exhaustive scanning across full history — the routine
+budget is limited; just the routes touched this run.)
+
+> **Best-effort heuristic.** Matching screen-doc slugs against route
+> *file basenames* is fragile and expected to produce false positives —
+> many routes don't share a basename with their screen slug
+> (`routes/buildings/$id.tsx` won't match `unit-detail`; `App.tsx`
+> aggregates routes whose basenames don't reflect any screen). Treat
+> the resulting backlog items as **review candidates**, not promotable
+> plans, and surface the heuristic caveat in the brief. Phase 3
+> readiness gate should de-prioritise these unless a human marks them
+> as real.
 
 Each signal also carries a `confidence` field:
 
@@ -373,6 +433,12 @@ Run these and verify each passes:
 - Stalled review: #<num> — <days idle>, <author>
 - Reverted: #<num> reverted #<orig> — <hypothesis>
 - Churn hotspots: <file> (<additions+deletions> lines this run, runs_seen=<N>)
+
+## Screen-map status
+- Total `docs/screens/` files: <N> (across `ppt/` + `reality/`; `mobile/` not yet seeded → 0)
+- Drift signals this run: <N> (PRs that changed routes without updating screen docs)
+- Orphan screens this run: <N> (screen docs without a matching route)
+- Last `screen-map.yml` CI run on `main`: <status from `gh run list --workflow=screen-map.yml --branch=main --limit=1`>
 
 ## Backlog deltas
 - **New:** [<score>] <title> — see backlog.md
