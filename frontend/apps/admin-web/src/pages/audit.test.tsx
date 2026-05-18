@@ -334,9 +334,7 @@ describe('AuditPage', () => {
       expect(url).toContain('range=24h');
       // Auth header is forwarded
       const init = csvCall![1] as RequestInit;
-      expect(init.headers).toEqual(
-        expect.objectContaining({ Authorization: 'Bearer test-token' })
-      );
+      expect(init.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer test-token' }));
     });
 
     // Object URL plumbing fired
