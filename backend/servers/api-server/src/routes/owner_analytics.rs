@@ -14,11 +14,23 @@ use db::models::owner_analytics::{
     ExpenseRequestsQuery, OwnerPropertiesQuery, PortfolioComparisonRequest, ReviewExpenseRequest,
     SubmitExpenseForApproval, UpdateAutoApprovalRule, ValueHistoryQuery,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Serialize a value to `serde_json::Value`, mapping failures to a 500 response.
+fn to_json<T: Serialize>(value: T) -> Result<serde_json::Value, (StatusCode, Json<ErrorResponse>)> {
+    serde_json::to_value(value).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::internal_error(&format!(
+                "Failed to serialize response: {e}"
+            ))),
+        )
+    })
+}
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -110,7 +122,7 @@ async fn get_unit_valuation(
         )
     })?;
     match s.owner_analytics_repo.get_latest_valuation(uid, org).await {
-        Ok(Some(v)) => Ok(Json(serde_json::to_value(v).unwrap())),
+        Ok(Some(v)) => Ok(Json(to_json(v)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Not found")),
@@ -133,7 +145,7 @@ async fn create_valuation(
         .create_valuation(r.organization_id, r.data)
         .await
     {
-        Ok(v) => Ok(Json(serde_json::to_value(v).unwrap())),
+        Ok(v) => Ok(Json(to_json(v)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -157,7 +169,7 @@ async fn get_valuation_with_comparables(
         .get_valuation_with_comparables(vid, org)
         .await
     {
-        Ok(Some(v)) => Ok(Json(serde_json::to_value(v).unwrap())),
+        Ok(Some(v)) => Ok(Json(to_json(v)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Not found")),
@@ -176,7 +188,7 @@ async fn add_comparable(
     Json(r): Json<AddComparableProperty>,
 ) -> ApiResult<Json<serde_json::Value>> {
     match s.owner_analytics_repo.add_comparable(vid, r).await {
-        Ok(c) => Ok(Json(serde_json::to_value(c).unwrap())),
+        Ok(c) => Ok(Json(to_json(c)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -198,7 +210,7 @@ async fn get_value_history(
         })
         .await
     {
-        Ok(h) => Ok(Json(serde_json::to_value(h).unwrap())),
+        Ok(h) => Ok(Json(to_json(h)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -218,7 +230,7 @@ async fn get_value_trend(
         )
     })?;
     match s.owner_analytics_repo.get_value_trend(uid, org).await {
-        Ok(Some(t)) => Ok(Json(serde_json::to_value(t).unwrap())),
+        Ok(Some(t)) => Ok(Json(to_json(t)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Not found")),
@@ -241,7 +253,7 @@ async fn calculate_roi(
         .calculate_roi(r.organization_id, r.data)
         .await
     {
-        Ok(roi) => Ok(Json(serde_json::to_value(roi).unwrap())),
+        Ok(roi) => Ok(Json(to_json(roi)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -266,7 +278,7 @@ async fn get_cash_flow_breakdown(
         .get_cash_flow_breakdown(uid, org, p.from_date, p.to_date)
         .await
     {
-        Ok(cf) => Ok(Json(serde_json::to_value(cf).unwrap())),
+        Ok(cf) => Ok(Json(to_json(cf)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -291,7 +303,7 @@ async fn get_roi_dashboard(
         .get_roi_dashboard(uid, org, p.from_date, p.to_date)
         .await
     {
-        Ok(d) => Ok(Json(serde_json::to_value(d).unwrap())),
+        Ok(d) => Ok(Json(to_json(d)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -312,7 +324,7 @@ async fn get_portfolio_summary(
         })
         .await
     {
-        Ok(ps) => Ok(Json(serde_json::to_value(ps).unwrap())),
+        Ok(ps) => Ok(Json(to_json(ps)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -332,7 +344,7 @@ async fn compare_properties(
         )
     })?;
     match s.owner_analytics_repo.compare_properties(org, r).await {
-        Ok(c) => Ok(Json(serde_json::to_value(c).unwrap())),
+        Ok(c) => Ok(Json(to_json(c)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -355,7 +367,7 @@ async fn list_auto_approval_rules(
         .get_auto_approval_rules(user.user_id, org)
         .await
     {
-        Ok(r) => Ok(Json(serde_json::to_value(r).unwrap())),
+        Ok(r) => Ok(Json(to_json(r)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -373,7 +385,7 @@ async fn create_auto_approval_rule(
         .create_auto_approval_rule(user.user_id, r.organization_id, r.data)
         .await
     {
-        Ok(rule) => Ok(Json(serde_json::to_value(rule).unwrap())),
+        Ok(rule) => Ok(Json(to_json(rule)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -392,7 +404,7 @@ async fn update_auto_approval_rule(
         .update_auto_approval_rule(id, user.user_id, r)
         .await
     {
-        Ok(rule) => Ok(Json(serde_json::to_value(rule).unwrap())),
+        Ok(rule) => Ok(Json(to_json(rule)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -428,7 +440,7 @@ async fn submit_expense(
         .submit_expense_for_approval(user.user_id, r.organization_id, r.data)
         .await
     {
-        Ok(resp) => Ok(Json(serde_json::to_value(resp).unwrap())),
+        Ok(resp) => Ok(Json(to_json(resp)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -448,7 +460,7 @@ async fn list_expense_requests(
         )
     })?;
     match s.owner_analytics_repo.list_expense_requests(org, q).await {
-        Ok(r) => Ok(Json(serde_json::to_value(r).unwrap())),
+        Ok(r) => Ok(Json(to_json(r)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -467,7 +479,7 @@ async fn review_expense(
         .review_expense(id, user.user_id, r)
         .await
     {
-        Ok(e) => Ok(Json(serde_json::to_value(e).unwrap())),
+        Ok(e) => Ok(Json(to_json(e)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),

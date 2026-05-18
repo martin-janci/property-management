@@ -14,11 +14,24 @@ use db::models::lease_abstraction::{
     ApproveExtraction, CreateExtractionCorrection, CreateLeaseDocument, CreateLeaseExtraction,
     ImportExtractionRequest, LeaseDocumentQuery, ProcessDocumentRequest, RejectExtraction,
 };
+use serde::Serialize;
 use serde_json::json;
 use tracing::{info, warn};
 use uuid::Uuid;
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
+
+/// Serialize a value to `serde_json::Value`, mapping failures to a 500 response.
+fn to_json<T: Serialize>(value: T) -> Result<serde_json::Value, (StatusCode, Json<ErrorResponse>)> {
+    serde_json::to_value(value).map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::internal_error(&format!(
+                "Failed to serialize response: {e}"
+            ))),
+        )
+    })
+}
 
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -146,7 +159,7 @@ async fn upload_document(
         .create_document(org_id, user_id, req)
         .await
     {
-        Ok(doc) => Ok(Json(serde_json::to_value(doc).unwrap())),
+        Ok(doc) => Ok(Json(to_json(doc)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -168,7 +181,7 @@ async fn get_document(
     })?;
 
     match s.lease_abstraction_repo.get_document(id, org_id).await {
-        Ok(Some(doc)) => Ok(Json(serde_json::to_value(doc).unwrap())),
+        Ok(Some(doc)) => Ok(Json(to_json(doc)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Document not found")),
@@ -436,7 +449,7 @@ async fn get_extraction(
         .get_extraction_for_org(id, org_id)
         .await
     {
-        Ok(Some(extraction)) => Ok(Json(serde_json::to_value(extraction).unwrap())),
+        Ok(Some(extraction)) => Ok(Json(to_json(extraction)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Extraction not found")),
@@ -467,7 +480,7 @@ async fn get_extraction_fields(
         .await
     {
         Ok(Some(extraction_with_fields)) => {
-            Ok(Json(serde_json::to_value(extraction_with_fields).unwrap()))
+            Ok(Json(to_json(extraction_with_fields)?))
         }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -546,7 +559,7 @@ async fn approve_extraction(
     {
         Ok(Some(extraction)) => {
             info!("Extraction {} approved by user {}", id, user_id);
-            Ok(Json(serde_json::to_value(extraction).unwrap()))
+            Ok(Json(to_json(extraction)?))
         }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -610,7 +623,7 @@ async fn reject_extraction(
                 "Extraction {} rejected by user {}: {}",
                 id, user_id, req.reason
             );
-            Ok(Json(serde_json::to_value(extraction).unwrap()))
+            Ok(Json(to_json(extraction)?))
         }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -689,7 +702,7 @@ async fn add_correction(
         .add_correction(id, user_id, req)
         .await
     {
-        Ok(correction) => Ok(Json(serde_json::to_value(correction).unwrap())),
+        Ok(correction) => Ok(Json(to_json(correction)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -775,7 +788,7 @@ async fn validate_import(
         .validate_import(id, &extraction)
         .await
     {
-        Ok(result) => Ok(Json(serde_json::to_value(result).unwrap())),
+        Ok(result) => Ok(Json(to_json(result)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -873,7 +886,7 @@ async fn import_to_lease(
                 "Extraction {} imported to lease {:?} by user {}",
                 id, result.lease_id, user_id
             );
-            Ok(Json(serde_json::to_value(result).unwrap()))
+            Ok(Json(to_json(result)?))
         }
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
@@ -917,7 +930,7 @@ async fn get_import(
     })?;
 
     match s.lease_abstraction_repo.get_import(id, org_id).await {
-        Ok(Some(import)) => Ok(Json(serde_json::to_value(import).unwrap())),
+        Ok(Some(import)) => Ok(Json(to_json(import)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Import not found")),
