@@ -479,9 +479,7 @@ async fn get_extraction_fields(
         .get_extraction_with_fields(id, org_id)
         .await
     {
-        Ok(Some(extraction_with_fields)) => {
-            Ok(Json(to_json(extraction_with_fields)?))
-        }
+        Ok(Some(extraction_with_fields)) => Ok(Json(to_json(extraction_with_fields)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Extraction not found")),
