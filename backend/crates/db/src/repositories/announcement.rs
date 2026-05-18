@@ -946,15 +946,22 @@ impl AnnouncementRepository {
     where
         E: Executor<'e, Database = Postgres>,
     {
-        // Single query to get all stats
+        // Single query to get all stats. `users` has no `organization_id`
+        // column — membership lives in `user_memberships` (migration 00128,
+        // the canonical authz spine). Join through it and filter to active
+        // grants. Same schema-drift fix as PR #322 (scheduler.rs).
         let stats: (i64, i64, i64) = sqlx::query_as(
             r#"
             SELECT
                 (SELECT COUNT(*) FROM announcement_reads WHERE announcement_id = $1) as read_count,
                 (SELECT COUNT(*) FROM announcement_reads WHERE announcement_id = $1 AND acknowledged_at IS NOT NULL) as acknowledged_count,
                 (SELECT COUNT(DISTINCT u.id) FROM users u
-                 JOIN announcements a ON a.organization_id = u.organization_id
-                 WHERE a.id = $1) as total_targeted
+                 JOIN user_memberships m ON m.user_id = u.id
+                 JOIN announcements a ON a.organization_id = m.organization_id
+                 WHERE a.id = $1
+                   AND m.revoked_at IS NULL
+                   AND (m.expires_at IS NULL OR m.expires_at > NOW())
+                   AND u.status = 'active') as total_targeted
             "#,
         )
         .bind(announcement_id)
@@ -986,17 +993,25 @@ impl AnnouncementRepository {
         let limit = limit.unwrap_or(50).min(100);
         let offset = offset.unwrap_or(0);
 
+        // `users` has no `organization_id` column — membership lives in
+        // `user_memberships` (migration 00128, the canonical authz spine).
+        // Join through it and filter to active grants. Same schema-drift
+        // fix as PR #322 (scheduler.rs).
         let users = sqlx::query_as::<_, UserAcknowledgmentStatus>(
             r#"
-            SELECT
+            SELECT DISTINCT
                 u.id as user_id,
                 u.name as user_name,
                 ar.read_at,
                 ar.acknowledged_at
             FROM users u
-            JOIN announcements a ON a.organization_id = u.organization_id
+            JOIN user_memberships m ON m.user_id = u.id
+            JOIN announcements a ON a.organization_id = m.organization_id
             LEFT JOIN announcement_reads ar ON ar.announcement_id = a.id AND ar.user_id = u.id
             WHERE a.id = $1
+              AND m.revoked_at IS NULL
+              AND (m.expires_at IS NULL OR m.expires_at > NOW())
+              AND u.status = 'active'
             ORDER BY
                 ar.acknowledged_at DESC NULLS LAST,
                 ar.read_at DESC NULLS LAST,
