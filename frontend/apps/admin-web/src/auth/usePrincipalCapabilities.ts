@@ -110,7 +110,11 @@ export function usePrincipalCapabilities(): PrincipalCapabilitiesResult {
     retry: 1,
   });
 
-  const mfaVerifiedAtMs = data?.mfa_verified_at != null ? Date.parse(data.mfa_verified_at) : null;
+  const mfaVerifiedAtMs = (() => {
+    if (data?.mfa_verified_at == null) return null;
+    const parsed = Date.parse(data.mfa_verified_at);
+    return Number.isFinite(parsed) ? parsed : null;
+  })();
 
   // Default to 900 s if the backend omits the field (older deployments).
   const mfaWindowMs = (data?.mfa_window_seconds ?? 900) * 1000;
