@@ -219,7 +219,12 @@ the whole world for a unit-test-only change.
 ### C4 — Browse the running site (web tests)
 
 - **When:** any change to `frontend/`, the customer/host portals, or any
-  flow that's only visible end-to-end.
+  flow that's only visible end-to-end. Also triggers when a plan touches a
+  route file — see also [`ppt-screens`](../.claude/skills/ppt-screens/SKILL.md)
+  for the screen-map sync requirement (route + doc must change together).
+- **Skill:** [`ppt-screens`](../.claude/skills/ppt-screens/SKILL.md) —
+  full visual-smoke playbook with Chrome MCP, Playwright codegen, and
+  screen-map authoring/validation patterns.
 - **Tools (in priority order):**
   1. **Claude in Chrome MCP** (`mcp__Claude_in_Chrome__*`) — DOM-aware,
      fast, ideal for clicking through flows on `localhost:3000` /
@@ -235,6 +240,15 @@ the whole world for a unit-test-only change.
      Chrome+screenshots on the bridge host.
 - **Smoke:** open `http://localhost:3000`, get the page title or h1 — if
   the title says "Property Management" you're in.
+- **Screen-map sync (mandatory for route changes):** if the diff modifies
+  `frontend/apps/{ppt-web,reality-web}/**/{routes,app}/**`, it MUST also
+  add or update the matching `docs/screens/<product>/<id>.md`. The daily
+  research routine emits `screen-map-drift` if not — your plan will
+  resurface as a `test-gap` vector next run.
+
+  **Mobile is currently exempt:** the routine excludes `frontend/apps/mobile/`
+  from drift detection because `docs/screens/mobile/` doesn't exist yet.
+  When that directory lands, the routine will be updated to include mobile.
 
 ### C5 — Debug ADB device (mobile)
 
