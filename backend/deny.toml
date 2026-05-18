@@ -18,26 +18,6 @@ ignore = [
     # justification per RUSTSEC entry. Each one has a tracked follow-up.
     # ---------------------------------------------------------------------
 
-    # RUSTSEC-2024-0363 — sqlx 0.7.x Postgres binary-protocol misinterpretation
-    # (truncating cast on values > 4 GiB). Fixed in sqlx 0.8.1.
-    #
-    # Why acceptable for now:
-    # - Exploit requires encoding a single parameter > 4 GiB. All Axum routes
-    #   already cap request bodies (workspace default ~1 MiB via api-core
-    #   middleware), so the actual attack surface is empty.
-    # - sqlx 0.7 → 0.8 is a breaking-API bump touching every repository in
-    #   `crates/db`. That migration is its own PR.
-    "RUSTSEC-2024-0363",
-
-    # RUSTSEC-2024-0421 — idna < 1.0.0 punycode/IDN-handling vulnerability.
-    # Pinned at 0.4.0 by `validator 0.16.1`. Fixed in idna 1.0.x (only reachable
-    # by upgrading `validator` past 0.16). The exploit path requires us to
-    # accept attacker-controlled IDN domains and use them in security-relevant
-    # comparisons; our `validator` use is form-input validation where the
-    # output is never used as an authentication primitive.
-    # Follow-up: bump `validator` to 0.18.x and drop this ignore.
-    "RUSTSEC-2024-0421",
-
     # RUSTSEC-2026-0098, -0099, -0104 — rustls-webpki 0.101.7 URI/name-constraint
     # bugs. Pinned by `rustls 0.21.12` which is in turn pinned by the entire AWS
     # SDK family (`aws-config`, `aws-smithy-http-client`, etc.). Fixed in
