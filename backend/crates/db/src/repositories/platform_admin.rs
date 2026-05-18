@@ -245,6 +245,14 @@ impl PlatformAdminRepository {
     }
 
     /// Get platform statistics summary.
+    ///
+    /// Note: `total_buildings` / `total_units` count all rows. The `buildings`
+    /// and `units` tables have no `deleted_at` column and no soft-delete
+    /// mechanism — their `status` column is constrained to `'active'` or
+    /// `'archived'`, neither of which represents deletion. Counting all rows
+    /// matches the schema honestly; the previous `WHERE deleted_at IS NULL`
+    /// predicate referenced a non-existent column and caused this endpoint
+    /// to 500 on every load.
     pub async fn get_platform_stats(&self) -> Result<PlatformStats, SqlxError> {
         let stats = sqlx::query_as::<_, PlatformStats>(
             r#"
@@ -252,8 +260,8 @@ impl PlatformAdminRepository {
                 (SELECT COUNT(*) FROM organizations WHERE status = 'active') as active_orgs,
                 (SELECT COUNT(*) FROM organizations WHERE status = 'suspended') as suspended_orgs,
                 (SELECT COUNT(*) FROM users WHERE status = 'active') as active_users,
-                (SELECT COUNT(*) FROM buildings WHERE deleted_at IS NULL) as total_buildings,
-                (SELECT COUNT(*) FROM units WHERE deleted_at IS NULL) as total_units
+                (SELECT COUNT(*) FROM buildings) as total_buildings,
+                (SELECT COUNT(*) FROM units) as total_units
             "#,
         )
         .fetch_one(&self.pool)
