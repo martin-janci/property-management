@@ -242,7 +242,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "empty identifier after sanitization")]
     fn sanitize_panics_on_empty() {
         let _ = sanitize_ident("");
     }

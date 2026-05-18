@@ -18,7 +18,7 @@
 //!                                                   before deleting; returns 404 if ownership fails.
 
 use admin_core::{
-    require_capability, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
+    require_capability, AdminDeps, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
     CapabilityGrantsRepository, RequireCapability,
 };
 use api_core::extractors::principal::RequestPrincipal;
@@ -191,17 +191,22 @@ async fn list_for_me(
     // TODO(refactor): move into MfaRecency trait to dedupe with
     // PgMfaRecency::is_recent — add `latest_verification(user_id)` to the
     // trait + Pg impl + tests so the raw SQL lives in one place.
+    // Bind the MFA window from the single-source-of-truth constant
+    // (`MFA_WINDOW_SECONDS`) instead of duplicating the magic number as a
+    // SQL literal. `make_interval(secs => $2)` keeps the type explicit on
+    // the Postgres side. See item 5 of the admin backend audit follow-ups.
     let mfa_verified_at: Option<DateTime<Utc>> = match sqlx::query_scalar::<_, DateTime<Utc>>(
         r#"
         SELECT verified_at
         FROM two_factor_auth_verifications
         WHERE user_id = $1
-          AND verified_at > NOW() - INTERVAL '900 seconds'
+          AND verified_at > NOW() - make_interval(secs => $2)
         ORDER BY verified_at DESC
         LIMIT 1
         "#,
     )
     .bind(principal.user_id)
+    .bind(MFA_WINDOW_SECONDS as f64)
     .fetch_optional(state.db_pool())
     .await
     {
@@ -253,6 +258,22 @@ pub struct GrantBody {
     #[serde(default = "default_true")]
     pub mfa_required: bool,
     pub note: Option<String>,
+    /// Free-form justification supplied by the granter. Surfaced into the
+    /// audit-log payload so the trail records *why* the grant was issued
+    /// (distinct from `note`, which is operator-facing and persists on the
+    /// grant row itself).
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+pub struct RevokeBody {
+    /// Free-form justification supplied by the revoker. Plumbed into the
+    /// audit-log payload. Optional and defaulted because some clients
+    /// (curl one-liners, ops tooling) issue DELETE with no body — those
+    /// fall through to `None` rather than failing the request.
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -277,11 +298,18 @@ fn default_true() -> bool {
 async fn grant_capability(
     _cap: RequireCapability,
     auth: AuthUser,
-    Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
+    // Both `grants` and `audit` live inside the already-attached `AdminDeps`
+    // bundle (`lib.rs::attach_admin_extensions`). Using the bundle directly
+    // keeps this handler under clippy's `too_many_arguments` 7-arg limit
+    // without dropping any extractor — see PR #300 review.
+    Extension(deps): Extension<AdminDeps>,
     axum::extract::State(state): axum::extract::State<AppState>,
     Path(user_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(body): Json<GrantBody>,
 ) -> Result<Json<CapabilityGrant>, (StatusCode, String)> {
+    let grants = &deps.grants;
+    let audit = &deps.audit;
     if body.capability == Capability::PrincipalKindEscalate {
         let has = grants
             .user_has(auth.user_id, Capability::PrincipalKindEscalate)
@@ -311,10 +339,42 @@ async fn grant_capability(
             auth.user_id,
             body.expires_at,
             body.mfa_required,
-            body.note,
+            body.note.clone(),
         )
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Emit a route-level audit row that carries the operator-supplied
+    // `reason` in the hashed payload (the baseline audit from
+    // `RequireCapability` only sees the capability name, not the body).
+    let ip = super::audit_ip_from_headers(&headers);
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    let payload = serde_json::json!({
+        "grant_id": row.id,
+        "user_id": user_id,
+        "capability": body.capability.as_str(),
+        "reason": body.reason,
+        "expires_at": body.expires_at,
+        "mfa_required": body.mfa_required,
+    });
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::MembershipsGrant,
+            AuditOutcome::Allowed,
+            Some("capability_grant"),
+            Some(row.id),
+            Some(&payload),
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for capability grant (reason) failed");
+    }
+
     Ok(Json(row))
 }
 
@@ -343,10 +403,19 @@ async fn grant_capability(
 async fn revoke_capability(
     _cap: RequireCapability,
     auth: AuthUser,
-    Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
+    // See `grant_capability` — collapsing `grants` + `audit` into the
+    // `AdminDeps` bundle keeps the signature under clippy's 7-arg limit.
+    Extension(deps): Extension<AdminDeps>,
     axum::extract::State(state): axum::extract::State<AppState>,
     Path((user_id, grant_id)): Path<(Uuid, Uuid)>,
+    headers: HeaderMap,
+    // DELETE requests historically arrive without a body; `Option<Json<_>>`
+    // makes the body optional so callers that do supply a JSON `reason`
+    // get it plumbed into the audit log, while body-less callers still 204.
+    body: Option<Json<RevokeBody>>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    let grants = &deps.grants;
+    let audit = &deps.audit;
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
     if let Err(err) = enforcer.check_capability_revoke(auth.user_id).await {
         return Err(map_auth_policy_error(err));
@@ -368,6 +437,35 @@ async fn revoke_capability(
         .revoke(grant_id, auth.user_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Emit a route-level audit row that carries the operator-supplied
+    // `reason` (if any) in the hashed payload. Mirrors the grant path.
+    let reason = body.and_then(|Json(b)| b.reason);
+    let ip = super::audit_ip_from_headers(&headers);
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    let payload = serde_json::json!({
+        "grant_id": grant_id,
+        "user_id": user_id,
+        "reason": reason,
+    });
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::MembershipsRevoke,
+            AuditOutcome::Allowed,
+            Some("capability_revoke"),
+            Some(grant_id),
+            Some(&payload),
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for capability revoke (reason) failed");
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 

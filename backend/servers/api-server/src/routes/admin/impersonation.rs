@@ -118,6 +118,14 @@ async fn list_active(
 #[derive(Debug, Deserialize)]
 pub struct StartBody {
     pub target_user_id: Uuid,
+    /// Free-form justification supplied by the operator. The frontend
+    /// surface requires this for compliance; we plumb it into the audit
+    /// payload so the audit trail records *why* impersonation was started
+    /// (the `impersonation_tokens` table itself has no `reason` column —
+    /// see `ActiveImpersonationRow::reason` for the existing capability-
+    /// string substitute).
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -140,10 +148,20 @@ impl From<IssuedImpersonationToken> for StartResponse {
 }
 
 /// POST /admin/impersonation/start
+///
+/// `PgImpersonationService::start_impersonation` already writes a baseline
+/// audit row (capability + token id + expiry). We additionally emit a
+/// route-level audit row that carries the operator's free-form `reason` in
+/// the hashed payload so the audit trail records *why* the session was
+/// opened. Plumbing `reason` into the service's audit call would require a
+/// trait-signature change in `admin-core`; emitting at the route layer is
+/// strictly additive and stays within this file's scope.
 async fn start(
     _cap: RequireCapability,
     auth: AuthUser,
     Extension(svc): Extension<Arc<dyn ImpersonationService>>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
     Json(body): Json<StartBody>,
 ) -> Result<Json<StartResponse>, (StatusCode, String)> {
     let issued = svc
@@ -154,6 +172,32 @@ async fn start(
         )
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    let ip = super::audit_ip_from_headers(&headers);
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    let payload = serde_json::json!({
+        "impersonation_token_id": issued.record.id,
+        "target_user_id": body.target_user_id,
+        "reason": body.reason,
+    });
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::UsersImpersonate,
+            AuditOutcome::Allowed,
+            Some("impersonation_start"),
+            Some(body.target_user_id),
+            Some(&payload),
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for impersonation/start (reason) failed");
+    }
+
     Ok(Json(issued.into()))
 }
 
