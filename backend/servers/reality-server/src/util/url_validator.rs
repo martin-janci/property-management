@@ -175,24 +175,47 @@ pub fn validate_fetch_url(raw: &str) -> Result<Url, UrlValidationError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::env_lock;
 
-    fn force_prod() {
-        std::env::set_var("RUST_ENV", "production");
+    /// RAII guard that pins `RUST_ENV` to a given value for the lifetime of a
+    /// single test, then restores the previous value on drop. Acquires the
+    /// process-wide [`env_lock`] so concurrent tests in this crate can't race
+    /// on the same env var.
+    struct EnvGuard {
+        _lock: std::sync::MutexGuard<'static, ()>,
+        previous: Option<String>,
     }
 
-    fn force_dev() {
-        std::env::set_var("RUST_ENV", "development");
+    impl EnvGuard {
+        fn set(value: &str) -> Self {
+            let lock = env_lock();
+            let previous = std::env::var("RUST_ENV").ok();
+            std::env::set_var("RUST_ENV", value);
+            Self {
+                _lock: lock,
+                previous,
+            }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            match self.previous.take() {
+                Some(v) => std::env::set_var("RUST_ENV", v),
+                None => std::env::remove_var("RUST_ENV"),
+            }
+        }
     }
 
     #[test]
     fn accepts_https_domain() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(validate_fetch_url("https://example.com/feed.xml").is_ok());
     }
 
     #[test]
     fn rejects_http_in_prod() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("http://example.com/feed.xml"),
             Err(UrlValidationError::PlainHttpNotAllowed)
@@ -201,14 +224,13 @@ mod tests {
 
     #[test]
     fn allows_http_in_dev() {
-        force_dev();
+        let _g = EnvGuard::set("development");
         assert!(validate_fetch_url("http://example.com/feed.xml").is_ok());
-        force_prod();
     }
 
     #[test]
     fn rejects_file_scheme() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("file:///etc/passwd"),
             Err(UrlValidationError::DisallowedScheme(_))
@@ -217,7 +239,7 @@ mod tests {
 
     #[test]
     fn rejects_data_scheme() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("data:text/plain,hello"),
             Err(UrlValidationError::DisallowedScheme(_))
@@ -226,7 +248,7 @@ mod tests {
 
     #[test]
     fn rejects_javascript_scheme() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("javascript:alert(1)"),
             Err(UrlValidationError::DisallowedScheme(_))
@@ -235,24 +257,25 @@ mod tests {
 
     #[test]
     fn rejects_aws_metadata_ip() {
-        force_prod();
-        assert!(matches!(
-            validate_fetch_url("http://169.254.169.254/latest/meta-data/"),
-            // PlainHttp check trips first in prod; in dev the IP rule fires.
-            Err(UrlValidationError::PlainHttpNotAllowed)
-                | Err(UrlValidationError::PrivateOrReservedIp(_))
-        ));
-        force_dev();
+        {
+            let _g = EnvGuard::set("production");
+            assert!(matches!(
+                validate_fetch_url("http://169.254.169.254/latest/meta-data/"),
+                // PlainHttp check trips first in prod; in dev the IP rule fires.
+                Err(UrlValidationError::PlainHttpNotAllowed)
+                    | Err(UrlValidationError::PrivateOrReservedIp(_))
+            ));
+        }
+        let _g = EnvGuard::set("development");
         assert!(matches!(
             validate_fetch_url("http://169.254.169.254/latest/meta-data/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
         ));
-        force_prod();
     }
 
     #[test]
     fn rejects_https_loopback() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("https://127.0.0.1/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
@@ -261,7 +284,7 @@ mod tests {
 
     #[test]
     fn rejects_https_private_10() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("https://10.0.0.5/feed.xml"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
@@ -270,7 +293,7 @@ mod tests {
 
     #[test]
     fn rejects_ipv6_loopback() {
-        force_prod();
+        let _g = EnvGuard::set("production");
         assert!(matches!(
             validate_fetch_url("https://[::1]/"),
             Err(UrlValidationError::PrivateOrReservedIp(_))
