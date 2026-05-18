@@ -131,7 +131,7 @@ pub async fn register(
 
     match handler.register(&req.email, &req.password, &req.name).await {
         RegistrationResult::Success(user) => {
-            tracing::info!(user_id = %user.id, email = %user.email, "User registered");
+            tracing::info!(user_id = %user.id, "User registered");
             Ok((
                 axum::http::StatusCode::CREATED,
                 Json(RegisterResponse {
@@ -213,7 +213,11 @@ pub async fn login(
             }))
         }
         Err(message) => {
-            tracing::debug!(email = %req.email, "Login failed: {}", message);
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Login failed: {}",
+                message
+            );
             Err((axum::http::StatusCode::UNAUTHORIZED, message.to_string()))
         }
     }
@@ -422,18 +426,24 @@ pub async fn request_password_reset(
             // builds should not log this.
             #[cfg(debug_assertions)]
             tracing::info!(
-                email = %req.email,
+                email_hash = %common::email_log_hash(&req.email),
                 token = %plaintext_token,
                 "Password reset token issued (dev: token logged for testing)"
             );
             #[cfg(not(debug_assertions))]
             {
                 let _ = plaintext_token;
-                tracing::info!(email = %req.email, "Password reset token issued");
+                tracing::info!(
+                    email_hash = %common::email_log_hash(&req.email),
+                    "Password reset token issued"
+                );
             }
         }
         Ok(PasswordResetRequestResult::UserNotFound) => {
-            tracing::debug!(email = %req.email, "Password reset requested for unknown email");
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Password reset requested for unknown email"
+            );
         }
         Err(e) => {
             tracing::error!(error = %e, "Failed to issue password reset token");

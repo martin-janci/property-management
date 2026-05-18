@@ -170,7 +170,11 @@ pub async fn register(
     let user = match state.user_repo.create(create_user).await {
         Ok(user) => user,
         Err(e) => {
-            tracing::error!(error = %e, email = %req.email, "Failed to create user");
+            tracing::error!(
+                error = %e,
+                email_hash = %common::email_log_hash(&req.email),
+                "Failed to create user"
+            );
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -207,7 +211,6 @@ pub async fn register(
 
     tracing::info!(
         user_id = %user.id,
-        email = %user.email,
         "User registered successfully"
     );
 
@@ -307,7 +310,7 @@ pub async fn verify_email(
         .await
     {
         Ok(Some(user)) => {
-            tracing::info!(user_id = %user.id, email = %user.email, "Email verified");
+            tracing::info!(user_id = %user.id, "Email verified");
             Ok(Json(VerifyEmailResponse {
                 message: "Your email has been verified. You can now log in.".to_string(),
             }))
@@ -402,7 +405,10 @@ pub async fn resend_verification(
         }
         _ => {
             // User not found or already verified - don't reveal this
-            tracing::debug!(email = %req.email, "Resend verification request for non-pending account");
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Resend verification request for non-pending account"
+            );
         }
     }
 
@@ -471,7 +477,7 @@ pub async fn login(
         Ok(status) if !status.can_attempt() => {
             let remaining = status.lockout_remaining_secs.unwrap_or(900);
             tracing::warn!(
-                email = %req.email,
+                email_hash = %common::email_log_hash(&req.email),
                 ip = %ip_address,
                 remaining_secs = remaining,
                 "Login attempt blocked due to rate limiting"
@@ -503,7 +509,10 @@ pub async fn login(
                 .session_repo
                 .record_login_attempt(&req.email, &ip_address, false)
                 .await;
-            tracing::debug!(email = %req.email, "Login failed: user not found");
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Login failed: user not found"
+            );
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ErrorResponse::new(
@@ -574,7 +583,10 @@ pub async fn login(
             .session_repo
             .record_login_attempt(&req.email, &ip_address, false)
             .await;
-        tracing::debug!(email = %req.email, "Login failed: invalid password");
+        tracing::debug!(
+            user_id = %user.id,
+            "Login failed: invalid password"
+        );
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse::new(
@@ -802,7 +814,6 @@ pub async fn login(
 
     tracing::info!(
         user_id = %user.id,
-        email = %user.email,
         "User logged in successfully"
     );
 
@@ -1156,14 +1167,17 @@ pub async fn forgot_password(
         Ok(Some(user)) => {
             // User exists but not active (pending/suspended/deleted)
             tracing::debug!(
-                email = %req.email,
+                user_id = %user.id,
                 status = %user.status,
                 "Password reset requested for non-active account"
             );
         }
         Ok(None) => {
             // User not found - don't reveal this
-            tracing::debug!(email = %req.email, "Password reset requested for unknown email");
+            tracing::debug!(
+                email_hash = %common::email_log_hash(&req.email),
+                "Password reset requested for unknown email"
+            );
         }
         Err(e) => {
             tracing::error!(error = %e, "Database error finding user for password reset");
