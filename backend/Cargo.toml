@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.392"
+version = "0.2.397"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -70,7 +70,7 @@ base64 = "0.22"
 urlencoding = "2.1"
 
 # HTTP client (for integrations)
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json", "form", "query"] }
 
 # Observability (Epic 95)
 opentelemetry = { version = "0.21", features = ["metrics", "trace"] }

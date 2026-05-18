@@ -2,7 +2,7 @@
 name: ppt-screens
 description: Author + validate screen-map docs, keep them in sync with routes, and run screen smoke checks via Chrome MCP / Playwright.
 when_to_use: The plan adds, removes, or changes a route in ppt-web / reality-web / mobile, or modifies a `docs/screens/<product>/*.md` file, or needs visual proof that a frontend change works.
-mode: both
+mode: local
 capabilities: [C4, C6]
 tags: [frontend, workflow]
 ---
@@ -191,7 +191,7 @@ git diff --name-only main..HEAD | grep -E '(frontend/apps/(ppt-web|reality-web|m
 # expected: at least one route file AND at least one docs/screens/ file
 
 # 2. screen-map validator clean
-cd frontend && pnpm --filter @ppt/screen-map cli validate --strict
+cd frontend && pnpm --filter @ppt/screen-map run cli -- validate --strict
 
 # 3. (if C4 was ticked) visual smoke captured in PR body under "IG5 — Screen evidence"
 ```

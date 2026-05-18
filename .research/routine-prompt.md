@@ -220,7 +220,7 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
-| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** touching the matching `docs/screens/{ppt,reality}/*.md` | +2 | vector=`test-gap`; flags screen docs falling behind code |
+| `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** updating the matching product's `docs/screens/<product>/*.md` — emit **one signal per drifting product** with id `screen-map-drift-pr-<num>-<product>` | +2 | vector=`test-gap`; flags screen docs falling behind code |
 | `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
 
 **Churn exclusions** — never score these files as hotspots:
