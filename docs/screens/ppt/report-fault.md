@@ -33,6 +33,9 @@ designSources:
     frame: MobReportFaultScreen
 useCases:
   - UC-03
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

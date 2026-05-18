@@ -32,6 +32,9 @@ designSources:
   - adapter: claude-design
     file: guest-registration-v2-design-system/project/ui_kits/mobile/screens.jsx
     frame: MobHomeScreen
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

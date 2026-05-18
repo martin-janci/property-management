@@ -37,6 +37,8 @@ designSources:
     frame: step1-category+severity / step3-attachments-uploading / step5-review / submitted-D-2026-0058 / step3-validation-errors
 useCases:
   - UC-38
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

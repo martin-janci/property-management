@@ -36,6 +36,10 @@ designSources:
     frame: MSell (KMP)
 useCases:
   - UC-31
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

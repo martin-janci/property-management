@@ -39,6 +39,8 @@ designSources:
     frame: MobAnnouncementsScreen + MobAnnouncementDetailScreen
 useCases:
   - UC-02
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

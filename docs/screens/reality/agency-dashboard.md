@@ -37,6 +37,8 @@ useCases:
   - UC-49
   - UC-50
   - UC-51
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

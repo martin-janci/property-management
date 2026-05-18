@@ -4,11 +4,10 @@
 
   Primary protection is `android:allowBackup="false"` in AndroidManifest;
   these rules are a defense-in-depth safety net in case backup is ever
-  re-enabled. At the moment the app has no persistent sharedprefs that hold
-  auth secrets, so there's nothing explicit to exclude. When SSO session
-  persistence is added (see SsoService.restoreSession TODO), add an
-  <exclude domain="sharedpref" path="..."/> entry that matches the actual
-  SharedPreferences filename used.
+  re-enabled. The `secure/` file-domain exclusion below covers any auth
+  tokens or secrets persisted to internal storage under that subdirectory.
+  If SharedPreferences are later used to persist session state, add an
+  <exclude domain="sharedpref" path="..."/> entry matching the prefs file.
 -->
 <full-backup-content>
     <exclude domain="file" path="secure/" />

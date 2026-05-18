@@ -35,6 +35,8 @@ designSources:
     frame: read-mode-published-7-comments / edit-mode-auto-saved / draft-preview / loading
 useCases:
   - UC-13
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

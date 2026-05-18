@@ -43,6 +43,8 @@ designSources:
     frame: MobDocumentsScreen
 useCases:
   - UC-08
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

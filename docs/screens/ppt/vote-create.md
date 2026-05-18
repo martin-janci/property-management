@@ -32,6 +32,10 @@ designSources:
     frame: step1-yes-no-pick / step2-single-choice-3-suppliers / step3-owners-quorum-60-15-of-24 / step4-now-7days-blind-tally-off / step5-review / confirm-published
 useCases:
   - UC-04
+endpoints: []
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

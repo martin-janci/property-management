@@ -43,6 +43,9 @@ useCases:
   - UC-31
   - UC-44
   - UC-46
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

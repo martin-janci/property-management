@@ -32,6 +32,9 @@ designSources:
     frame: loaded / export-3-state / delete-modal-2 / sessions-3 / consents-just-changed+audit / page-error
 useCases:
   - UC-23
+endpoints: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

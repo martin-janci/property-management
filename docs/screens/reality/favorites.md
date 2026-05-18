@@ -39,6 +39,9 @@ designSources:
     frame: KmpFavoritesScreen
 useCases:
   - UC-44
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

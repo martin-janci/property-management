@@ -34,6 +34,10 @@ designSources:
     frame: compare-loaded+empty+loading+error+add-modal
 useCases:
   - UC-48
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

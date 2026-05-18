@@ -38,6 +38,9 @@ designSources:
     frame: KmpInquiriesScreen + KmpInquiryThreadScreen
 useCases:
   - UC-46
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist
