@@ -1,0 +1,74 @@
+# Template — `${BG_TARGET}` and `${BG_COLOR}` are filled in at container
+# startup by /docker-entrypoint.d/10-render-template.sh via `envsubst`.
+#
+# admin-web differs from ppt-web in two ways:
+#   - X-Frame-Options: DENY (admin must never be embedded)
+#   - Cache-Control: no-store on HTML (no admin caching at intermediaries)
+
+server {
+    listen 8080;
+    listen [::]:8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/javascript
+        application/x-javascript
+        application/json
+        application/xml
+        application/rss+xml
+        application/atom+xml
+        image/svg+xml;
+
+    # Stronger security headers than ppt-web — admin is sensitive.
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Cache-Control "no-store" always;
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    location /health {
+        access_log off;
+        return 200 "OK\n";
+        add_header Content-Type text/plain;
+    }
+
+    # Same-origin shim: admin SPA fetches `/api/v1/...` which Caddy in
+    # front maps to admin.<reality_apex>, nginx then proxies to the
+    # api-server container in the same Docker network color.
+    location /api/ {
+        proxy_pass http://${BG_TARGET}-api-${BG_COLOR}:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_read_timeout 90s;
+        proxy_send_timeout 90s;
+    }
+
+    # SPA fallback — all admin paths render index.html, router takes over.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

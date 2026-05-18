@@ -1,7 +1,9 @@
 //! Agency routes (Epic 32: Agency Management).
+//!
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -79,12 +81,12 @@ pub struct MembersResponse {
 )]
 pub async fn create_agency(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Json(data): Json<CreateRealityAgency>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
     let agency = state
         .reality_portal_repo
-        .create_agency(auth.user_id, data)
+        .create_agency(principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -319,13 +321,13 @@ pub async fn list_members(
 )]
 pub async fn create_invitation(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<CreateAgencyInvitation>,
 ) -> Result<Json<RealityAgencyInvitation>, (axum::http::StatusCode, String)> {
     let invitation = state
         .reality_portal_repo
-        .create_invitation(agency_id, auth.user_id, data)
+        .create_invitation(agency_id, principal.user_id, data)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -370,12 +372,12 @@ pub struct AcceptInvitationRequest {
 )]
 pub async fn accept_invitation(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(token): Path<String>,
 ) -> Result<Json<RealityAgencyMember>, (axum::http::StatusCode, String)> {
     let member = state
         .reality_portal_repo
-        .accept_invitation(&token, auth.user_id)
+        .accept_invitation(&token, principal.user_id)
         .await
         .map_err(|e| {
             let error_str = e.to_string();

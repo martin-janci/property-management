@@ -76,9 +76,23 @@ pub struct OAuthClient {
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// Phase 6 C17: which principal_kind values may authenticate via this client.
+    /// Defaults to all kinds for backward compatibility.
+    #[sqlx(default)]
+    pub allowed_principal_kinds: Vec<String>,
 }
 
 impl OAuthClient {
+    /// Phase 6 C17: check if the given principal_kind is allowed to obtain
+    /// tokens via this client. An empty allowed list (legacy rows before
+    /// migration 00147 back-fills the default) is treated as "allow all".
+    pub fn is_principal_kind_allowed(&self, kind: &str) -> bool {
+        if self.allowed_principal_kinds.is_empty() {
+            return true;
+        }
+        self.allowed_principal_kinds.iter().any(|k| k == kind)
+    }
+
     /// Check if a redirect URI is allowed for this client.
     pub fn is_redirect_uri_allowed(&self, uri: &str) -> bool {
         self.redirect_uris.iter().any(|allowed| allowed == uri)

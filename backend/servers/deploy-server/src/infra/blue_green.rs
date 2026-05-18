@@ -14,7 +14,13 @@ use std::sync::Arc;
 /// Service names participating in blue/green deploys.
 /// Used by the deployer itself and by lifecycle code (gc, etc.) that needs to
 /// enumerate per-target containers without hardcoding the list.
-pub const BG_SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web"];
+///
+/// `admin-web` was added in Phase 5 (2026-05) when the super-admin control
+/// plane moved out of `ppt-web` into its own SPA served at `admin.<reality_apex>`
+/// (`admin.rlt.sk` in prod, `admin.staging.rlt.sk` in staging). It joins the
+/// existing four services as a 5th atomic-flip member so `pmctl promote` and
+/// `pmctl rollback` cover the admin app too.
+pub const BG_SERVICES: &[&str] = &["api", "reality", "ppt", "reality-web", "admin-web"];
 
 pub struct BlueGreenDeployer {
     pub docker: Arc<DockerClient>,
@@ -28,6 +34,21 @@ pub struct BlueGreenSpec {
     pub reality_image: String,
     pub ppt_web_image: String,
     pub reality_web_image: String,
+    /// Super-admin SPA image (`ghcr.io/martin-janci/ppt-admin-web:<tag>`).
+    /// Phase 5 control plane served at `admin.<reality_apex>`.
+    ///
+    /// Optional for backwards compatibility: Release rows persisted BEFORE
+    /// admin-web was added (registered through `build_staging_images` < #268)
+    /// don't carry an `admin-web` image. Rollback via `pmctl rollback prod`
+    /// builds the prev_color spec from one of those older Release rows; if
+    /// this field were required, rollback would 400 with "missing image for
+    /// service 'admin-web'" and leave the operator without a recovery path.
+    ///
+    /// When `None`, `deploy()` skips the admin-web pull/run/wait/register
+    /// steps entirely (no admin-web container is created for that color and
+    /// no `admin.<apex>` route is registered). The other four services are
+    /// still deployed atomically.
+    pub admin_web_image: Option<String>,
     /// Reality Portal apex (e.g. `rlt.sk`, `staging.rlt.sk`). reality-web is
     /// served at this exact host; reality-server at `api.<reality_apex>`.
     pub reality_apex: String,
@@ -71,6 +92,9 @@ impl BlueGreenSpec {
             reality_image: require(rel, "reality-server")?,
             ppt_web_image: require(rel, "ppt-web")?,
             reality_web_image: require(rel, "reality-web")?,
+            // admin-web missing on older Release rows (pre #268) is fine —
+            // skip it during deploy() instead of refusing the rollback.
+            admin_web_image: rel.images.get("admin-web").cloned(),
             reality_apex: target.reality_apex.clone(),
             ppt_apex: target.ppt_apex.clone(),
             service_envs,
@@ -196,9 +220,27 @@ pub fn build_service_envs(
         "RUST_LOG=info".into(),
     ];
 
+    // PLATFORM_HOST: comma-separated list of hosts the api-core
+    // `host_tenant_middleware` should resolve to `TenantSource::PlatformHost`
+    // (global-read context, no specific tenant). Both backends use the same
+    // resolver, so this list goes on api-server AND reality-server.
+    //
+    // Includes both the Reality Portal apex tree (`<reality_apex>`,
+    // `www.<reality_apex>`, `api.<reality_apex>`), the Property Management
+    // apex tree (`<ppt_apex>`, `api.<ppt_apex>`), and the super-admin
+    // control plane (`admin.<reality_apex>`). Without these the api-server
+    // rejects every request with 404 "Unknown tenant host", because
+    // `reserved_platform_hosts` is consulted by the agency_domains CHECK
+    // constraint but NOT by the resolver itself (see api-core
+    // middleware/host_tenant.rs `load_platform_hosts`).
+    let platform_hosts = format!(
+        "{0},www.{0},api.{0},{1},api.{1},admin.{0}",
+        target.reality_apex, target.ppt_apex
+    );
     let mut api_env = backend_env.clone();
     api_env.push(format!("TOTP_ENCRYPTION_KEY={totp_key}"));
     api_env.push(format!("INTEGRATION_ENCRYPTION_KEY={integration_key}"));
+    api_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut reality_env = std::mem::take(&mut backend_env);
     reality_env.push(format!("PM_CLIENT_SECRET={pm_client_secret}"));
@@ -223,6 +265,7 @@ pub fn build_service_envs(
         "SSO_CALLBACK_URL=https://{}/api/v1/sso/callback",
         target.reality_apex
     ));
+    reality_env.push(format!("PLATFORM_HOST={platform_hosts}"));
 
     let mut envs = std::collections::HashMap::new();
     envs.insert("api".into(), api_env);
@@ -245,6 +288,13 @@ pub fn build_service_envs(
     // the color is only known after the next-color decision; this entry
     // stays empty here.
     envs.insert("ppt".into(), vec![]);
+    // admin-web is the same shape as ppt-web: a static Vite SPA served by
+    // nginx. Its build-time `VITE_API_URL=/api` is baked into the bundle,
+    // so the SPA fetches `/api/*` against its own origin. The container's
+    // nginx then proxies `/api/` to `${BG_TARGET}-api-${BG_COLOR}:8080`
+    // via envsubst at startup — `BG_TARGET` / `BG_COLOR` are appended in
+    // `BlueGreenDeployer::deploy` once the next color is known.
+    envs.insert("admin-web".into(), vec![]);
     Ok(envs)
 }
 
@@ -258,6 +308,9 @@ impl BlueGreenDeployer {
             &spec.reality_web_image,
         ] {
             self.pull_image(docker, img).await?;
+        }
+        if let Some(admin_img) = &spec.admin_web_image {
+            self.pull_image(docker, admin_img).await?;
         }
 
         let target_name = &spec.target_name;
@@ -332,6 +385,11 @@ impl BlueGreenDeployer {
         let mut ppt_env = env_for("ppt");
         ppt_env.push(format!("BG_TARGET={target_name}"));
         ppt_env.push(format!("BG_COLOR={next_color}"));
+        // admin-web's nginx renders the /api/* proxy upstream from the same
+        // two vars at container start (envsubst). Pattern mirrors ppt-web.
+        let mut admin_web_env = env_for("admin-web");
+        admin_web_env.push(format!("BG_TARGET={target_name}"));
+        admin_web_env.push(format!("BG_COLOR={next_color}"));
 
         // reality-server's `/health` periodically pings the PM API. Without
         // an override it uses `${PM_API_URL}/health` — which is the public
@@ -395,6 +453,25 @@ impl BlueGreenDeployer {
             env_for("reality-web"),
         )
         .await?;
+        // admin-web: same nginx-on-8080 pattern as ppt-web. The Dockerfile
+        // EXPOSEs 8080 and renders its /api/* proxy upstream from BG_TARGET
+        // and BG_COLOR at start.
+        //
+        // Optional: missing on rollback specs built from pre-#268 Release rows
+        // (see `BlueGreenSpec::admin_web_image` rationale). When absent, we
+        // skip the container — the corresponding `admin.<apex>` Caddy route
+        // (registered below) is also skipped so requests to that host fall
+        // through to onyx / 404 instead of routing to a dead upstream.
+        if let Some(admin_img) = spec.admin_web_image.as_deref() {
+            self.run_service(
+                &format!("{target_name}-admin-web-{next_color}"),
+                admin_img,
+                8080,
+                target_name,
+                admin_web_env,
+            )
+            .await?;
+        }
 
         // Wait for each container to reach a ready state before flipping Caddy upstream.
         // Backends (api / reality) get a longer timeout because they run all DB
@@ -409,6 +486,10 @@ impl BlueGreenDeployer {
             .await?;
         self.wait_until_ready(&format!("{target_name}-reality-web-{next_color}"), 3000, 30)
             .await?;
+        if spec.admin_web_image.is_some() {
+            self.wait_until_ready(&format!("{target_name}-admin-web-{next_color}"), 8080, 30)
+                .await?;
+        }
 
         // Per-service Caddy routes use the dual-apex layout:
         //   <reality_apex>           → reality-web   (Reality Portal UI, bare apex)
@@ -456,6 +537,32 @@ impl BlueGreenDeployer {
                 &format!("{target_name}-reality-web-{next_color}:3000"),
             )
             .await?;
+        // admin.<reality_apex> → admin-web. The admin-web nginx itself
+        // proxies /api/* to api-server in the same color (same way ppt-web
+        // does), so Caddy registers a single upstream per host — no
+        // path-based split needed at the edge.
+        //
+        // Prod: admin.rlt.sk. Staging: admin.staging.rlt.sk. Both rely on
+        // Cloudflare Universal SSL (`*.rlt.sk`) for TLS, and on `PLATFORM_HOST`
+        // env var injected by `build_service_envs` so api-server's
+        // host_tenant_middleware resolves the host as `PlatformHost`.
+        // (Migration 00151 adds the host to `reserved_platform_hosts` for
+        // the agency_domains CHECK constraint — it prevents an agency from
+        // claiming `admin.<apex>` — but that table is NOT consulted by the
+        // resolver itself; see api-core middleware/host_tenant.rs
+        // `load_platform_hosts`.)
+        //
+        // Skipped when `admin_web_image` is None (rollback to pre-#268
+        // release); no admin-web container exists in that color and an
+        // `admin.<apex>` route here would just 502.
+        if spec.admin_web_image.is_some() {
+            self.caddy
+                .register_route(
+                    &format!("admin.{reality_apex}"),
+                    &format!("{target_name}-admin-web-{next_color}:8080"),
+                )
+                .await?;
+        }
 
         let prev_containers: Vec<String> = BG_SERVICES
             .iter()

@@ -6,6 +6,7 @@
  */
 
 // Export domain-specific modules
+export * from './admin';
 export * from './advanced-notifications';
 export * from './announcements';
 // Export auth token provider for secure token management

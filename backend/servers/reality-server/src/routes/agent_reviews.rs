@@ -3,9 +3,10 @@
 //! Allows portal users to review realtors. The "verified buyer" flag is set
 //! server-side based on whether the reviewer has a prior responded inquiry with
 //! that realtor.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -124,7 +125,7 @@ pub async fn list_reviews(
             rr.created_at,
             rr.updated_at
         FROM realtor_reviews rr
-        LEFT JOIN portal_users pu ON pu.id = rr.reviewer_user_id
+        LEFT JOIN users pu ON pu.id = rr.reviewer_user_id AND pu.principal_kind = 'public'
         WHERE rr.realtor_id = $1
         ORDER BY rr.created_at DESC
         LIMIT $2 OFFSET $3
@@ -210,7 +211,7 @@ pub async fn list_reviews(
 )]
 pub async fn create_review(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(realtor_id): Path<Uuid>,
     Json(data): Json<CreateReviewRequest>,
 ) -> Result<(axum::http::StatusCode, Json<RealtorReview>), (axum::http::StatusCode, String)> {
@@ -260,7 +261,7 @@ pub async fn create_review(
         )
         "#,
     )
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(realtor_id)
     .fetch_one(&mut *conn)
     .await
@@ -271,19 +272,20 @@ pub async fn create_review(
         )
     })?;
 
-    // Get reviewer name from portal_users
-    let reviewer_name: String = sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
-        .bind(auth.user_id)
-        .fetch_optional(&mut *conn)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get reviewer name: {}", e),
-            )
-        })?
-        .flatten()
-        .unwrap_or_else(|| "Anonymous".to_string());
+    // Phase 6: reads from `users` (portal_users dropped in migration 00148).
+    let reviewer_name: String =
+        sqlx::query_scalar("SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'")
+            .bind(principal.user_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to get reviewer name: {}", e),
+                )
+            })?
+            .flatten()
+            .unwrap_or_else(|| "Anonymous".to_string());
 
     // Insert review; unique constraint prevents duplicates
     let row = sqlx::query(
@@ -297,7 +299,7 @@ pub async fn create_review(
         "#,
     )
     .bind(realtor_id)
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(data.rating)
     .bind(&data.body)
     .bind(verified_buyer)

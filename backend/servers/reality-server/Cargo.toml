@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 publish = false
 
+[lib]
+name = "reality_server"
+path = "src/lib.rs"
+
 [[bin]]
 name = "reality-server"
 path = "src/main.rs"
@@ -50,3 +54,6 @@ sentry = { workspace = true }
 
 # Epic 104: Token hashing for cache
 hex = { workspace = true }
+
+[dev-dependencies]
+tower = { workspace = true, features = ["util"] }

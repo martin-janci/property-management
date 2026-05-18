@@ -1,9 +1,10 @@
 //! Journal/News article routes (UC-13: Reality Portal News).
 //!
 //! Public article list + detail, comment list and (auth-required) comment creation.
+//! D1.2: comment creation now uses the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -155,7 +156,7 @@ pub async fn list_articles(
             COUNT(ac.id) AS comment_count,
             a.published_at
         FROM reality_articles a
-        LEFT JOIN portal_users pu ON pu.id = a.author_user_id
+        LEFT JOIN users pu ON pu.id = a.author_user_id AND pu.principal_kind = 'public'
         LEFT JOIN reality_article_comments ac ON ac.article_id = a.id
         WHERE a.published_at <= NOW()
           AND ($1::text IS NULL OR a.category = $1)
@@ -254,7 +255,7 @@ pub async fn get_article(
             COUNT(ac.id) AS comment_count,
             a.published_at, a.updated_at
         FROM reality_articles a
-        LEFT JOIN portal_users pu ON pu.id = a.author_user_id
+        LEFT JOIN users pu ON pu.id = a.author_user_id AND pu.principal_kind = 'public'
         LEFT JOIN reality_article_comments ac ON ac.article_id = a.id
         WHERE a.slug = $1 AND a.published_at <= NOW()
         GROUP BY a.id, pu.name, pu.profile_image_url
@@ -386,7 +387,7 @@ pub async fn list_comments(
             pu.profile_image_url AS author_avatar_url,
             ac.body, ac.created_at
         FROM reality_article_comments ac
-        LEFT JOIN portal_users pu ON pu.id = ac.author_user_id
+        LEFT JOIN users pu ON pu.id = ac.author_user_id AND pu.principal_kind = 'public'
         WHERE ac.article_id = $1
         ORDER BY ac.created_at ASC
         "#,
@@ -437,7 +438,7 @@ pub async fn list_comments(
 )]
 pub async fn create_comment(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(slug): Path<String>,
     Json(data): Json<CreateCommentRequest>,
 ) -> Result<(axum::http::StatusCode, Json<ArticleComment>), (axum::http::StatusCode, String)> {
@@ -476,31 +477,34 @@ pub async fn create_comment(
     })?;
 
     // Get author info
-    let author_name: String = sqlx::query_scalar("SELECT name FROM portal_users WHERE id = $1")
-        .bind(auth.user_id)
-        .fetch_optional(&mut *conn)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get author name: {}", e),
-            )
-        })?
-        .flatten()
-        .unwrap_or_else(|| "Anonymous".to_string());
-
-    let author_avatar_url: Option<String> =
-        sqlx::query_scalar("SELECT profile_image_url FROM portal_users WHERE id = $1")
-            .bind(auth.user_id)
+    // Phase 6: reads from `users` (portal_users dropped in migration 00148).
+    let author_name: String =
+        sqlx::query_scalar("SELECT name FROM users WHERE id = $1 AND principal_kind = 'public'")
+            .bind(principal.user_id)
             .fetch_optional(&mut *conn)
             .await
             .map_err(|e| {
                 (
                     axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to get avatar: {}", e),
+                    format!("Failed to get author name: {}", e),
                 )
             })?
-            .flatten();
+            .flatten()
+            .unwrap_or_else(|| "Anonymous".to_string());
+
+    let author_avatar_url: Option<String> = sqlx::query_scalar(
+        "SELECT profile_image_url FROM users WHERE id = $1 AND principal_kind = 'public'",
+    )
+    .bind(principal.user_id)
+    .fetch_optional(&mut *conn)
+    .await
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to get avatar: {}", e),
+        )
+    })?
+    .flatten();
 
     let row = sqlx::query(
         r#"
@@ -510,7 +514,7 @@ pub async fn create_comment(
         "#,
     )
     .bind(article_id)
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .bind(&data.body)
     .fetch_one(&mut *conn)
     .await

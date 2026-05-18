@@ -1,0 +1,390 @@
+//! Admin: membership invite + accept + revoke (Phase 2 — Identity Unification).
+//!
+//! Mounted at `/api/v1/admin/memberships`. The endpoints here are the ONE
+//! sanctioned path to grant or revoke a `user_memberships` row (defends
+//! leak #9).
+//!
+//! # Auth
+//!
+//! Phase 5 capability gating is wired (N5). Each route declares the capability
+//! it needs via the `RequireCapability` extractor + `require_capability(...)`
+//! tower layer:
+//!
+//!   * `POST /memberships/invite`  → `Capability::MembershipsGrant`
+//!   * `POST /memberships/accept`  → no capability (the invitee accepts; only
+//!                                    `RequestPrincipal` is required for
+//!                                    defense-in-depth identity binding)
+//!   * `DELETE /memberships/{id}`  → `Capability::MembershipsRevoke`
+
+use admin_core::{require_capability, AuditOutcome, AuditWriter, Capability, RequireCapability};
+use api_core::AuthUser;
+use axum::{
+    extract::{Path, State},
+    http::{HeaderMap, StatusCode},
+    routing::{delete, get, post},
+    Extension, Json, Router,
+};
+use chrono::{DateTime, Utc};
+use db::models::membership::GrantMembership;
+use db::repositories::{ConsumeInviteOutcome, MembershipRepository, UserInviteRepository};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use utoipa::ToSchema;
+use uuid::Uuid;
+
+use crate::services::{AuthPolicyEnforcer, AuthPolicyError};
+use crate::state::AppState;
+use api_core::extractors::principal::RequestPrincipal;
+
+/// Sub-router. Merged into `super::router()`.
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/memberships/invite",
+            post(invite).layer(require_capability(Capability::MembershipsGrant)),
+        )
+        // `accept` is performed by the invitee — gated only by `RequestPrincipal`
+        // identity binding (the handler verifies principal == named user_id).
+        // No capability is required here.
+        .route("/memberships/accept", post(accept))
+        .route(
+            "/memberships/{user_id}",
+            delete(revoke).layer(require_capability(Capability::MembershipsRevoke)),
+        )
+        .route(
+            "/memberships/merge-collisions",
+            get(merge_collisions).layer(require_capability(Capability::MembershipsGrant)),
+        )
+}
+
+// ====================================================================
+// Merge collisions
+// ====================================================================
+//
+// Reports the set of email addresses that — after a hypothetical
+// per-organization user merge — would collide because the same lower(email)
+// is currently attached to membership rows under 2+ distinct organizations.
+//
+// Note: the `users.email` column itself is globally UNIQUE, so the only way
+// a collision arises is when the same `users.id` has membership rows in
+// multiple `organizations`. The query groups by `lower(u.email)` so two
+// emails that differ only in case are still considered the same identity.
+//
+// Capability: `MembershipsGrant` is the closest existing cap (the codebase
+// has no `MembershipsRead`).
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct MergeCollisionRow {
+    pub email: String,
+    pub user_ids: Vec<Uuid>,
+    pub organization_ids: Vec<Uuid>,
+    pub organization_names: Vec<String>,
+}
+
+async fn merge_collisions(
+    _cap: RequireCapability,
+    auth: AuthUser,
+    State(state): State<AppState>,
+    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    headers: HeaderMap,
+) -> Result<Json<Vec<MergeCollisionRow>>, (StatusCode, String)> {
+    let rows = sqlx::query_as::<_, MergeCollisionRow>(
+        r#"
+        SELECT lower(u.email)                              AS email,
+               array_agg(DISTINCT u.id)                    AS user_ids,
+               array_agg(DISTINCT m.organization_id)       AS organization_ids,
+               array_agg(DISTINCT o.name)                  AS organization_names
+          FROM user_memberships m
+          JOIN users         u ON u.id = m.user_id
+          JOIN organizations o ON o.id = m.organization_id
+         WHERE m.revoked_at IS NULL
+         GROUP BY lower(u.email)
+        HAVING COUNT(DISTINCT m.organization_id) > 1
+         ORDER BY lower(u.email)
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ua = headers
+        .get(axum::http::header::USER_AGENT)
+        .and_then(|h| h.to_str().ok());
+    if let Err(e) = audit
+        .record(
+            Some(auth.user_id),
+            Capability::MembershipsGrant,
+            AuditOutcome::Allowed,
+            Some("memberships_merge_collisions"),
+            None,
+            None,
+            ip,
+            ua,
+        )
+        .await
+    {
+        tracing::warn!(error = %e, "audit write for memberships/merge-collisions failed");
+    }
+
+    Ok(Json(rows))
+}
+
+// ====================================================================
+// Invite
+// ====================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct InviteRequest {
+    pub email: String,
+    pub organization_id: Uuid,
+    pub role: String,
+    /// Optional explicit TTL in days. Defaults to 7.
+    #[serde(default)]
+    pub ttl_days: Option<i64>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct InviteResponse {
+    pub id: Uuid,
+    pub email: String,
+    pub organization_id: Uuid,
+    pub role: String,
+    pub expires_at: DateTime<Utc>,
+    /// Plaintext token — shown ONCE here. Store-and-show server side never again.
+    pub token: String,
+}
+
+pub async fn invite(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<InviteRequest>,
+) -> Result<(StatusCode, Json<InviteResponse>), (StatusCode, &'static str)> {
+    if req.email.trim().is_empty() || !req.email.contains('@') {
+        return Err((StatusCode::BAD_REQUEST, "invalid email"));
+    }
+    if req.role.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "role required"));
+    }
+
+    // N2: re-evaluate the org's effective auth policy BEFORE we issue the
+    // invite. If the invitee already exists in `users` and the org demands
+    // verified email, reject early; otherwise the policy load is a liveness
+    // check (a corrupted policy aborts the flow).
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    {
+        use db::repositories::UserRepository;
+        let user_repo = UserRepository::new(state.db.clone());
+        if let Ok(Some(existing)) = user_repo.find_by_email(&req.email).await {
+            if let Err(err) = enforcer
+                .check_membership_grant(req.organization_id, existing.id)
+                .await
+            {
+                return Err(map_auth_policy_error(err));
+            }
+        } else {
+            // No existing row — still pre-load the policy as a liveness check.
+            if let Err(err) = enforcer.policy_for(req.organization_id).await {
+                return Err(map_auth_policy_error(err));
+            }
+        }
+    }
+
+    let token = generate_token();
+    let ttl = chrono::Duration::days(req.ttl_days.unwrap_or(7).max(1));
+
+    let repo = UserInviteRepository::new(state.db.clone());
+    let invite = repo
+        .create(
+            &req.email,
+            req.organization_id,
+            &req.role,
+            Some(principal.user_id),
+            &token,
+            ttl,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to create invite");
+            (StatusCode::INTERNAL_SERVER_ERROR, "invite create failed")
+        })?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(InviteResponse {
+            id: invite.id,
+            email: invite.email,
+            organization_id: invite.organization_id,
+            role: invite.role,
+            expires_at: invite.expires_at,
+            token,
+        }),
+    ))
+}
+
+// ====================================================================
+// Accept
+// ====================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AcceptRequest {
+    pub token: String,
+    /// The accepting user's id (the request principal). The handler also
+    /// verifies the principal's email matches the invite (single-use, email-bound).
+    pub user_id: Uuid,
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AcceptResponse {
+    pub user_id: Uuid,
+    pub organization_id: Uuid,
+    pub role: String,
+}
+
+pub async fn accept(
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Json(req): Json<AcceptRequest>,
+) -> Result<Json<AcceptResponse>, (StatusCode, &'static str)> {
+    // The accepting principal MUST be the same user as the one named in the
+    // body — defense-in-depth, since `consume_by_token` already verifies the
+    // email match. We allow Platform principals to accept on behalf of a user
+    // (admin-side flow), but not other staff/public principals.
+    if !principal.is_platform() && principal.user_id != req.user_id {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "cannot accept invite on behalf of another user",
+        ));
+    }
+
+    let invite_repo = UserInviteRepository::new(state.db.clone());
+    let outcome = invite_repo
+        .consume_by_token(&req.token, req.user_id, &req.email)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to consume invite");
+            (StatusCode::INTERNAL_SERVER_ERROR, "invite accept failed")
+        })?;
+
+    let invite = match outcome {
+        ConsumeInviteOutcome::Accepted(i) => i,
+        ConsumeInviteOutcome::UnknownToken => {
+            return Err((StatusCode::NOT_FOUND, "invite not found"))
+        }
+        ConsumeInviteOutcome::AlreadyAccepted => {
+            return Err((StatusCode::CONFLICT, "invite already accepted"))
+        }
+        ConsumeInviteOutcome::Expired => return Err((StatusCode::GONE, "invite expired")),
+        ConsumeInviteOutcome::EmailMismatch => {
+            return Err((StatusCode::FORBIDDEN, "invite email does not match"))
+        }
+    };
+
+    // Acceptance succeeded — write the membership grant in the same flow.
+    let mem_repo = MembershipRepository::new(state.db.clone());
+    let grant = mem_repo
+        .grant(GrantMembership {
+            user_id: req.user_id,
+            organization_id: invite.organization_id,
+            role: invite.role.clone(),
+            granted_by: invite.invited_by,
+            expires_at: None,
+        })
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to write membership after accept");
+            (StatusCode::INTERNAL_SERVER_ERROR, "membership grant failed")
+        })?;
+
+    Ok(Json(AcceptResponse {
+        user_id: grant.user_id,
+        organization_id: grant.organization_id,
+        role: grant.role,
+    }))
+}
+
+// ====================================================================
+// Revoke
+// ====================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RevokeRequest {
+    pub organization_id: Uuid,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct RevokeResponse {
+    pub user_id: Uuid,
+    pub organization_id: Uuid,
+    pub revoked_roles: Vec<String>,
+}
+
+pub async fn revoke(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    principal: RequestPrincipal,
+    Path(user_id): Path<Uuid>,
+    Json(req): Json<RevokeRequest>,
+) -> Result<Json<RevokeResponse>, (StatusCode, &'static str)> {
+    // N2: liveness-check the org's auth policy before mutating membership
+    // state. A corrupted policy row aborts the revoke instead of silently
+    // proceeding under stale / wrong-tenant defaults.
+    let enforcer = AuthPolicyEnforcer::new(state.db.clone());
+    if let Err(err) = enforcer
+        .check_membership_revoke(req.organization_id, user_id)
+        .await
+    {
+        return Err(map_auth_policy_error(err));
+    }
+
+    let mem_repo = MembershipRepository::new(state.db.clone());
+    let revoked = mem_repo
+        .revoke(user_id, req.organization_id, Some(principal.user_id))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "failed to revoke memberships");
+            (StatusCode::INTERNAL_SERVER_ERROR, "revoke failed")
+        })?;
+
+    Ok(Json(RevokeResponse {
+        user_id,
+        organization_id: req.organization_id,
+        revoked_roles: revoked,
+    }))
+}
+
+// ====================================================================
+// Helpers
+// ====================================================================
+
+/// Generate a 32-byte URL-safe token. Plaintext is shown once at create.
+fn generate_token() -> String {
+    let mut bytes = [0u8; 32];
+    rand::TryRng::try_fill_bytes(&mut rand::rngs::SysRng, &mut bytes).expect("OS rng failed");
+    use base64::Engine as _;
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
+}
+
+/// Map an AuthPolicyError onto the (StatusCode, &'static str) shape this
+/// module's handlers return. We use static strings to keep the existing
+/// handler signature; the structured error is logged for observability.
+fn map_auth_policy_error(err: AuthPolicyError) -> (StatusCode, &'static str) {
+    tracing::warn!(error = %err, "auth policy enforcement rejected request (N2)");
+    match err {
+        AuthPolicyError::EmailNotVerified => {
+            (StatusCode::FORBIDDEN, "org policy requires verified email")
+        }
+        AuthPolicyError::PasswordPolicy(_) => (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "password does not satisfy org policy",
+        ),
+        AuthPolicyError::MfaRequired(_) => (StatusCode::FORBIDDEN, "MFA required by org policy"),
+        AuthPolicyError::UserNotFound(_) => (StatusCode::NOT_FOUND, "target user not found"),
+        AuthPolicyError::Lookup(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "auth policy lookup failed",
+        ),
+    }
+}

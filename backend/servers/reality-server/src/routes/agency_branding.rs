@@ -2,9 +2,10 @@
 //!
 //! GET/PUT branding settings for an agency.
 //! Only agency members may update branding.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     routing::{get, put},
@@ -218,7 +219,7 @@ pub async fn get_branding(
 )]
 pub async fn update_branding(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(agency_id): Path<Uuid>,
     Json(data): Json<UpdateBrandingRequest>,
 ) -> Result<Json<BrandingResponse>, (axum::http::StatusCode, String)> {
@@ -259,7 +260,7 @@ pub async fn update_branding(
         "#,
     )
     .bind(agency_id)
-    .bind(auth.user_id)
+    .bind(principal.user_id)
     .fetch_one(&mut *conn)
     .await
     .map_err(|e| {

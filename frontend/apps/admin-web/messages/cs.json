@@ -1,0 +1,196 @@
+{
+  "admin": {
+    "agencies": {
+      "actions": {
+        "addDomain": "Přidat doménu",
+        "edit": "Upravit",
+        "suspend": "Pozastavit"
+      },
+      "columns": {
+        "members": "Členové",
+        "name": "Název",
+        "slug": "Identifikátor",
+        "status": "Stav"
+      },
+      "empty": "Nenalezeny žádné agentury.",
+      "loadError": "Nepodařilo se načíst agentury: {{message}}",
+      "loading": "Načítají se agentury…",
+      "title": "Agentury",
+      "toast": {
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add",
+        "notWiredTitle": "Zatím nezapojeno",
+        "suspendFailedMessage": "Pozastavení selhalo",
+        "suspendFailedTitle": "Pozastavení selhalo",
+        "suspendedMessage": "{{name}} byla pozastavena.",
+        "suspendedTitle": "Agentura pozastavena"
+      },
+      "unknownError": "Neznámá chyba"
+    },
+    "audit": {
+      "columns": {
+        "action": "Akce",
+        "actor": "Vykonavatel",
+        "ip": "IP",
+        "outcome": "Výsledek",
+        "target": "Cíl",
+        "time": "Čas"
+      },
+      "empty": "Žádné záznamy auditu neodpovídají aktuálním filtrům.",
+      "filters": {
+        "action": "Akce",
+        "actor": "Vykonavatel",
+        "actorId": "ID vykonavatele",
+        "legend": "Filtry",
+        "outcome": "Výsledek",
+        "since": "Od",
+        "target": "Cíl",
+        "targetType": "Typ cíle",
+        "until": "Do"
+      },
+      "loading": "Načítá se…",
+      "pagination": {
+        "next": "Další",
+        "page": "Strana {{page}}",
+        "previous": "Předchozí",
+        "showing": "Zobrazuje se {{from}}–{{to}} z {{total}}"
+      },
+      "system": "(systém)",
+      "timeAgo": {
+        "days": "před {{count}} d",
+        "days_one": "před {{count}} d",
+        "hours": "před {{count}} h",
+        "hours_one": "před {{count}} h",
+        "justNow": "právě teď",
+        "minutes": "před {{count}} min",
+        "minutes_one": "před {{count}} min"
+      },
+      "title": "Audit log"
+    },
+    "common": {
+      "actions": "Akce",
+      "cancel": "Zrušit",
+      "confirm": "Opravdu?",
+      "loading": "Načítá se…",
+      "noResults": "Žádné výsledky.",
+      "readOnly": "Pouze ke čtení",
+      "retry": "Opakovat",
+      "save": "Uložit",
+      "saveFailed": "Uložení selhalo.",
+      "saving": "Ukládá se…"
+    },
+    "featureFlags": {
+      "fields": {
+        "aiFaultTriage": "AI třídění závad (beta)",
+        "buildingDisabled": "Vypnout tuto budovu (nouzový vypínač)",
+        "newListingsSearch": "Nové vyhledávání inzerátů (beta)"
+      },
+      "title": "Feature flagy",
+      "warning": "Nouzový vypínač pro nájemníka — změny se okamžitě projeví u všech uživatelů tohoto nájemníka."
+    },
+    "impersonation": {
+      "asUser": "jako {{name}}",
+      "expires": "vyprší {{time}}",
+      "label": "VYSTUPOVÁNÍ ZA UŽIVATELE",
+      "stop": "Ukončit vystupování",
+      "youAreImpersonating": "Vystupujete jako uživatel {{name}}"
+    },
+    "mfa": {
+      "cancel": "Zrušit",
+      "description": "Zadejte 6místný kód z autentizační aplikace.",
+      "descriptionForAction": "{{action}} vyžaduje nový autentizační kód.",
+      "expired": "Ověření MFA vypršelo",
+      "invalidCode": "Tento kód nefungoval. Zkuste to znovu.",
+      "invalidFormat": "Zadejte 6místný kód z autentizační aplikace.",
+      "label": "Ověřovací kód",
+      "requiredToast": {
+        "message": "Pro pokračování potvrďte v autentizační aplikaci.",
+        "title": "Vyžaduje se dvoufaktorové potvrzení"
+      },
+      "title": "Ověřte svou identitu",
+      "verificationFailed": "Ověření selhalo.",
+      "verify": "Ověřit",
+      "verifying": "Ověřuje se…"
+    },
+    "platform": {
+      "fields": {
+        "maintenanceMode": "Režim údržby",
+        "signupEnabled": "Registrace povolena",
+        "supportEmail": "E-mail podpory",
+        "supportEmailPlaceholder": "podpora@example.com"
+      },
+      "title": "Nastavení platformy"
+    },
+    "users": {
+      "actions": {
+        "edit": "Upravit",
+        "impersonate": "Vystupovat jako",
+        "transition": "Změnit typ"
+      },
+      "columns": {
+        "displayName": "Zobrazované jméno",
+        "email": "E-mail",
+        "principalKind": "Typ principálu"
+      },
+      "empty": "Hledejte pro načtení uživatelů.",
+      "principalKinds": {
+        "agency": "Agentura",
+        "platform": "Platforma",
+        "service": "Služba",
+        "tenant": "Nájemník"
+      },
+      "searchPlaceholder": "Hledat uživatele podle e-mailu nebo jména…",
+      "title": "Uživatelé",
+      "transition": {
+        "cancel": "Zrušit",
+        "confirm": "Změnit typ",
+        "description": "Tato změna ovlivní způsob autentizace uživatele {{name}} a oprávnění, která má. Pokračovat?",
+        "title": "Změnit typ principálu"
+      }
+    }
+  },
+  "common": {
+    "add": "Přidat",
+    "all": "Vše",
+    "back": "Zpět",
+    "backToBuildings": "Zpět na budovy",
+    "backToDispute": "Zpět na spor",
+    "backToDisputes": "Zpět na spory",
+    "backToDocuments": "Zpět na dokumenty",
+    "backToFaults": "Zpět na závady",
+    "cancel": "Zrušit",
+    "close": "Zavřít",
+    "confirm": "Potvrdit",
+    "copied": "Zkopírováno",
+    "copyErrorDetails": "Kopírovat podrobnosti chyby",
+    "copyErrorMessage": "Kopírovat chybovou zprávu",
+    "create": "Vytvořit",
+    "delete": "Smazat",
+    "dismissNotification": "Zavřít oznámení",
+    "edit": "Upravit",
+    "error": "Chyba",
+    "loading": "Načítá se...",
+    "loadingDispute": "Načítá se spor...",
+    "login": "Přihlásit se",
+    "logout": "Odhlásit se",
+    "next": "Další",
+    "no": "Ne",
+    "none": "Žádné",
+    "notifications": "Oznámení",
+    "optional": "Volitelné",
+    "pleaseWait": "Počkejte, než načteme údaje.",
+    "previous": "Předchozí",
+    "reloadPage": "Obnovit stránku",
+    "required": "Povinné",
+    "retry": "Opakovat",
+    "save": "Uložit",
+    "search": "Hledat",
+    "select": "Vybrat",
+    "submit": "Odeslat",
+    "success": "Úspěch",
+    "tryAgain": "Zkusit znovu",
+    "yes": "Ano"
+  },
+  "nav": {
+    "admin": "Administrace"
+  }
+}

@@ -1,5 +1,6 @@
 //! Admin routes for user lifecycle management (Epic 1, Story 1.6).
 
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -13,14 +14,40 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-/// Create admin router.
-pub fn router() -> Router<AppState> {
+/// Create admin user-lifecycle router (Epic 1, Story 1.6).
+///
+/// Renamed in Phase 5 from `router()` → `lifecycle_router()` so the new
+/// admin module hierarchy (`routes::admin::router`) can mount this alongside
+/// Phase 5's capability-gated routers without name collision. The Phase 2
+/// `memberships` sub-router is mounted by the parent `admin/mod.rs` router
+/// directly (not nested inside this lifecycle router), so it is not merged
+/// here.
+///
+/// Phase 5 addendum: each route now carries a `RequireCapability` layer in
+/// addition to the pre-existing `has_admin_role` JWT check. Capabilities are
+/// additive — both gates must pass.
+pub fn lifecycle_router() -> Router<AppState> {
     Router::new()
-        .route("/users", get(list_users))
-        .route("/users/{id}", get(get_user))
-        .route("/users/{id}/suspend", post(suspend_user))
-        .route("/users/{id}/reactivate", post(reactivate_user))
-        .route("/users/{id}/delete", post(delete_user))
+        .route(
+            "/users",
+            get(list_users).layer(require_capability(Capability::UsersRead)),
+        )
+        .route(
+            "/users/{id}",
+            get(get_user).layer(require_capability(Capability::UsersRead)),
+        )
+        .route(
+            "/users/{id}/suspend",
+            post(suspend_user).layer(require_capability(Capability::UsersWrite)),
+        )
+        .route(
+            "/users/{id}/reactivate",
+            post(reactivate_user).layer(require_capability(Capability::UsersWrite)),
+        )
+        .route(
+            "/users/{id}/delete",
+            post(delete_user).layer(require_capability(Capability::UsersWrite)),
+        )
 }
 
 // ==================== Types ====================
@@ -233,6 +260,7 @@ fn user_to_admin_info(user: db::models::User) -> AdminUserInfo {
     )
 )]
 pub async fn list_users(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListUsersQuery>,
@@ -291,6 +319,7 @@ pub async fn list_users(
     )
 )]
 pub async fn get_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -342,6 +371,7 @@ pub async fn get_user(
     )
 )]
 pub async fn suspend_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -431,6 +461,7 @@ pub async fn suspend_user(
     )
 )]
 pub async fn reactivate_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -499,6 +530,7 @@ pub async fn reactivate_user(
     )
 )]
 pub async fn delete_user(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,

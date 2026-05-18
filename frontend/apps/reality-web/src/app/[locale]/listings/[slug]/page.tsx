@@ -2,10 +2,15 @@
  * Listing Detail Page
  *
  * Property detail page with SSR (Epic 44, Story 44.3).
+ *
+ * C2 (Phase 6): fetch cache is tenant-keyed via `tags` so a
+ * `revalidateTag('host:<host>:listing:<slug>')` call only busts the cache
+ * for that tenant — not for other tenants serving the same slug.
  */
 
 import type { ListingDetail } from '@ppt/reality-api-client';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { ListingDetailContent, ListingNotFound } from '@/components/listings';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
@@ -14,10 +19,34 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getListing(slug: string): Promise<ListingDetail | null> {
+/**
+ * Resolve the inbound host from the `x-tenant-host` header set by middleware.
+ * Falls back to the `host` header, then to the empty string (build time).
+ */
+async function resolveHost(): Promise<string> {
   try {
+    const h = await headers();
+    return h.get('x-tenant-host') || h.get('host') || '';
+  } catch {
+    // Outside a request scope (generateStaticParams / build time).
+    return '';
+  }
+}
+
+async function getListing(slug: string, host: string): Promise<ListingDetail | null> {
+  try {
+    // C2: include host in cache tags so per-tenant ISR invalidation works:
+    //   revalidateTag('host:agency.example.com:listing:my-flat-slug')
+    // busts only that tenant's cached entry.  The `host` part of the
+    // cache key is implicit in the fetch URL (Host header) but Next.js
+    // data-cache does NOT automatically key on request headers — explicit
+    // `tags` are required.
+    const tags = host
+      ? [`host:${host}:listings`, `host:${host}:listing:${slug}`]
+      : ['listings', `listing:${slug}`];
     const response = await fetch(`${API_BASE}/api/v1/listings/${slug}`, {
-      next: { revalidate: 60 }, // Revalidate every minute
+      headers: host ? { Host: host } : {},
+      next: { revalidate: 60, tags },
     });
     if (!response.ok) return null;
     return response.json();
@@ -28,7 +57,8 @@ async function getListing(slug: string): Promise<ListingDetail | null> {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const listing = await getListing(slug);
+  const host = await resolveHost();
+  const listing = await getListing(slug, host);
 
   if (!listing) {
     return {
@@ -53,7 +83,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const listing = await getListing(slug);
+  const host = await resolveHost();
+  const listing = await getListing(slug, host);
 
   if (!listing) {
     return <ListingNotFound />;

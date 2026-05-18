@@ -22,6 +22,7 @@ COPY frontend/packages/reality-api-client/package.json ./packages/reality-api-cl
 COPY frontend/packages/sitemap/package.json ./packages/sitemap/
 COPY frontend/packages/dev-panel/package.json ./packages/dev-panel/
 COPY frontend/packages/vite-plugin-ppt-worktree/package.json ./packages/vite-plugin-ppt-worktree/
+COPY frontend/packages/admin-ui/package.json ./packages/admin-ui/
 COPY frontend/apps/reality-web/package.json ./apps/reality-web/
 
 RUN pnpm install

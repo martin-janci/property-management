@@ -1,0 +1,240 @@
+/**
+ * Toast Notification Styles.
+ *
+ * Supports:
+ * - Icon, title, and message layout
+ * - Action buttons
+ * - Copy button for errors
+ * - Slide in/out animations
+ * - Top-right positioning
+ */
+
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  animation: toast-slide-in 0.2s ease-out;
+  pointer-events: auto;
+}
+
+.toast.toast--exiting {
+  animation: toast-slide-out 0.2s ease-in forwards;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.125rem;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.toast-message {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  opacity: 0.9;
+  word-break: break-word;
+}
+
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.toast-action-btn {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+
+.toast-action-btn:hover {
+  opacity: 0.9;
+}
+
+.toast-action-btn:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.toast-copy-btn,
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  border-radius: 0.25rem;
+}
+
+.toast-copy-btn:hover,
+.toast-close:hover {
+  opacity: 1;
+}
+
+.toast-copy-btn:focus,
+.toast-close:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+/* Toast variants */
+.toast--success {
+  background-color: var(--ppt-color-success-light);
+  border: 1px solid var(--ppt-color-success);
+  color: var(--ppt-color-success-dark);
+}
+
+.toast--success .toast-icon svg {
+  stroke: var(--ppt-color-success-hover);
+}
+
+.toast--success .toast-action-btn {
+  background-color: var(--ppt-color-success-hover);
+  color: var(--ppt-fg-on-accent);
+}
+
+.toast--error {
+  background-color: var(--ppt-color-danger-light);
+  border: 1px solid var(--ppt-color-danger);
+  color: var(--ppt-color-danger-dark);
+}
+
+.toast--error .toast-icon svg {
+  stroke: var(--ppt-color-danger-hover);
+}
+
+.toast--error .toast-action-btn {
+  background-color: var(--ppt-color-danger-hover);
+  color: var(--ppt-fg-on-accent);
+}
+
+.toast--warning {
+  background-color: var(--ppt-color-warning-light);
+  border: 1px solid var(--ppt-color-warning);
+  color: var(--ppt-color-warning-dark);
+}
+
+.toast--warning .toast-icon svg {
+  stroke: var(--ppt-color-warning-hover);
+}
+
+.toast--warning .toast-action-btn {
+  background-color: var(--ppt-color-warning-hover);
+  color: var(--ppt-fg-on-accent);
+}
+
+.toast--info {
+  background-color: var(--ppt-color-primary-soft-bg);
+  border: 1px solid var(--ppt-color-primary);
+  color: var(--ppt-color-primary-active);
+}
+
+.toast--info .toast-icon svg {
+  stroke: var(--ppt-color-primary);
+}
+
+.toast--info .toast-action-btn {
+  background-color: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+  .toast.toast--exiting {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .toast-container {
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+    top: 0.75rem;
+  }
+
+  .toast {
+    padding: 0.75rem;
+  }
+
+  .toast-title {
+    font-size: 0.8125rem;
+  }
+
+  .toast-message {
+    font-size: 0.75rem;
+  }
+}

@@ -1,9 +1,10 @@
 //! Inquiries routes - contact and viewing requests.
 //!
 //! Handles listing inquiries, contact forms, and viewing scheduling.
+//! D1.2: handlers now use the unified `RequestPrincipal` extractor.
 
-use crate::extractors::AuthenticatedUser;
 use crate::state::AppState;
+use api_core::extractors::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post, put},
@@ -374,7 +375,7 @@ pub async fn request_viewing(
 )]
 pub async fn list_my_inquiries(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Query(query): Query<InquiryListQuery>,
 ) -> Result<Json<InquiryListResponse>, (axum::http::StatusCode, String)> {
     let page = query.page.unwrap_or(1).max(1);
@@ -383,7 +384,7 @@ pub async fn list_my_inquiries(
 
     let inquiries = state
         .reality_portal_repo
-        .get_realtor_inquiries(auth.user_id, query.status, limit, offset)
+        .get_realtor_inquiries(principal.user_id, query.status, limit, offset)
         .await
         .map_err(|e| {
             (
@@ -416,13 +417,13 @@ pub async fn list_my_inquiries(
 )]
 pub async fn get_inquiry(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<InquiryDetailResponse>, (axum::http::StatusCode, String)> {
     // Get inquiries for this user and find the one with matching ID
     let inquiries = state
         .reality_portal_repo
-        .get_realtor_inquiries(auth.user_id, None, 100, 0)
+        .get_realtor_inquiries(principal.user_id, None, 100, 0)
         .await
         .map_err(|e| {
             (
@@ -461,7 +462,7 @@ pub async fn get_inquiry(
 )]
 pub async fn mark_as_read(
     State(state): State<AppState>,
-    _auth: AuthenticatedUser,
+    _principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     state
@@ -493,7 +494,7 @@ pub async fn mark_as_read(
 )]
 pub async fn respond_to_inquiry(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<SendInquiryMessage>,
 ) -> Result<Json<InquiryMessageResponse>, (axum::http::StatusCode, String)> {
@@ -514,7 +515,7 @@ pub async fn respond_to_inquiry(
 
     let message = state
         .reality_portal_repo
-        .respond_to_inquiry(id, auth.user_id, &req.message)
+        .respond_to_inquiry(id, principal.user_id, &req.message)
         .await
         .map_err(|e| {
             (

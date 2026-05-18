@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "last_run_iso": null,
+  "last_run_ms": 0,
+  "last_pr_seen": 0,
+  "last_issue_seen": 0,
+  "last_commit_sha": null,
+  "hotspot_history": {},
+  "seen_signals": [],
+  "stats": {
+    "runs": 0,
+    "vectors_created": 0,
+    "plans_created": 0,
+    "quiet_days": 0
+  }
+}

@@ -3,6 +3,7 @@
 //! This module exposes the application components for integration testing.
 
 // Allow dead code for stub implementations during development
+#![allow(clippy::doc_overindented_list_items)]
 #![allow(dead_code)]
 
 pub mod handlers;
@@ -11,12 +12,89 @@ pub mod routes;
 pub mod services;
 pub mod state;
 
-use axum::{http, routing::get, Router};
+use axum::{http, routing::get, Extension, Router};
 use http::HeaderValue;
+use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::state::AppState;
+
+// Phase 5 — Admin extension wiring.
+use admin_core::{
+    AdminDeps, AlwaysEnrolledMfa, AuditWriter, CapabilityGrantsRepository, CapabilityRegistry,
+    ImpersonationService, MfaEnrollment, MfaRecency, NoopAuditWriter, NoopMfaRecency,
+    PgAuditWriter, PgCapabilityGrantsRepository, PgImpersonationService, PgMfaEnrollment,
+    PgMfaRecency,
+};
+
+/// Phase 5 — admin dependency injection bundle.
+///
+/// Holds the trio of services (`grants`, `mfa`, `audit`) the
+/// `RequireCapability` extractor needs, plus the impersonation service.
+/// Construct via [`build_admin_extensions`] and apply with
+/// [`attach_admin_extensions`] so the production binary in `main.rs::serve`
+/// and the test-side `create_router` agree exactly.
+#[derive(Clone)]
+pub struct AdminExtensions {
+    pub deps: AdminDeps,
+    pub grants: Arc<dyn CapabilityGrantsRepository>,
+    pub mfa: Arc<dyn MfaRecency>,
+    pub enrollment: Arc<dyn MfaEnrollment>,
+    pub audit: Arc<dyn AuditWriter>,
+    pub impersonation: Arc<dyn ImpersonationService>,
+}
+
+/// Build the admin dependency bundle from a database pool.
+///
+/// Initialises the capability registry as a side effect (idempotent — the
+/// registry is a `OnceLock` under the hood).
+pub fn build_admin_extensions(pool: db::DbPool) -> AdminExtensions {
+    CapabilityRegistry::init(admin_core::Capability::ALL.iter().copied());
+    let grants: Arc<dyn CapabilityGrantsRepository> =
+        Arc::new(PgCapabilityGrantsRepository::new(pool.clone()));
+    let mfa: Arc<dyn MfaRecency> = Arc::new(PgMfaRecency::new(pool.clone()));
+    let enrollment: Arc<dyn MfaEnrollment> = Arc::new(PgMfaEnrollment::new(pool.clone()));
+    let audit: Arc<dyn AuditWriter> = Arc::new(PgAuditWriter::new(pool.clone()));
+    let deps = AdminDeps::new(
+        grants.clone(),
+        mfa.clone(),
+        enrollment.clone(),
+        audit.clone(),
+    );
+    let impersonation: Arc<dyn ImpersonationService> =
+        Arc::new(PgImpersonationService::new(pool, audit.clone()));
+    // Suppress unused warnings for noop fixtures (used by tests, not by the
+    // production binary).
+    let _ = (NoopAuditWriter, NoopMfaRecency, AlwaysEnrolledMfa);
+    AdminExtensions {
+        deps,
+        grants,
+        mfa,
+        enrollment,
+        audit,
+        impersonation,
+    }
+}
+
+/// Layer the admin-core extensions onto a router.
+///
+/// Order mirrors the pre-existing chain in `create_router` so behaviour is
+/// identical between the test-side and production paths. Layered before
+/// `TraceLayer` (the caller is responsible for that ordering) so every nested
+/// route inherits the extensions.
+pub fn attach_admin_extensions<S>(router: Router<S>, ext: &AdminExtensions) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    router
+        .layer(Extension(ext.deps.clone()))
+        .layer(Extension(ext.grants.clone()))
+        .layer(Extension(ext.mfa.clone()))
+        .layer(Extension(ext.enrollment.clone()))
+        .layer(Extension(ext.audit.clone()))
+        .layer(Extension(ext.impersonation.clone()))
+}
 
 /// Default CORS allowed origins for api-server.
 const DEFAULT_CORS_ORIGINS: &[&str] = &[
@@ -38,9 +116,17 @@ fn parse_default_origins() -> Vec<HeaderValue> {
 
 /// Create the application router with all routes.
 ///
-/// This function is exposed for integration testing.
+/// This function is exposed for integration testing. The production binary's
+/// `serve` entry point in `main.rs` builds an equivalent router with the same
+/// extension layering (see [`attach_admin_extensions`]).
 pub fn create_router(state: AppState) -> Router {
-    Router::new()
+    // Phase 5 — Admin dependency wiring. Built via [`build_admin_extensions`]
+    // so `main.rs::serve` and this test-side router stay in sync; an extension
+    // chain divergence between them previously meant 500s on every `/admin/*`
+    // call in production while tests passed.
+    let admin_ext = build_admin_extensions(state.db.clone());
+
+    let router = Router::new()
         // Health (liveness) — shallow, no deps. Docker HEALTHCHECK target.
         .route("/health", get(routes::health::liveness))
         // Readiness — deep dep check (DB + Redis). Operator dashboards.
@@ -49,6 +135,8 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/auth", routes::auth::router())
         // Admin routes
         .nest("/api/v1/admin", routes::admin::router())
+        // Phase 5.5: tenant lifecycle (export / purge / restore) — platform-admin only.
+        .nest("/api/v1/admin", routes::admin_tenant_lifecycle::router())
         // Organizations routes
         .nest("/api/v1/organizations", routes::organizations::router())
         // Buildings routes
@@ -262,7 +350,13 @@ pub fn create_router(state: AppState) -> Router {
         // Board Meetings routes (Epic 143)
         .nest("/api/v1/board-meetings", routes::board_meetings::router())
         // Data Residency routes (Epic 146)
-        .nest("/api/v1/data-residency", routes::data_residency::router())
+        .nest("/api/v1/data-residency", routes::data_residency::router());
+
+    // Phase 5 — admin dependency injection. Layered before TraceLayer so every
+    // nested route inherits these extensions. Production binary applies the
+    // same chain from `main.rs::serve` via `attach_admin_extensions` so the
+    // two paths cannot drift.
+    attach_admin_extensions(router, &admin_ext)
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration

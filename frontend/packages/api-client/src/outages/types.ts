@@ -53,6 +53,8 @@ export interface OutageSummary {
 export interface OutageWithDetails extends Outage {
   buildings: OutageBuilding[];
   readStatus?: OutageReadStatus;
+  /** Resolved display name of the user who created the outage (joined server-side). */
+  creatorName?: string;
 }
 
 export interface OutageBuilding {

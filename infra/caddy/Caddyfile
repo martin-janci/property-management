@@ -1,0 +1,114 @@
+# Phase 3: Caddy in front of api-server (8080) and reality-server (8081).
+#
+# Architecture: `agency_domains` is the single source of truth for both
+# (a) tenant resolution (read by host_tenant_middleware in both servers)
+# and (b) TLS issuance (read by Caddy on-demand-TLS via the ask-endpoint
+# below). This means a single config row drives a tenant going live —
+# subdomain becomes routable AND certifiable on the same write.
+#
+# Env vars consumed:
+#   PLATFORM_HOST         e.g. "rlt.sk" — apex used for the wildcard cert
+#                                          covering `*.<PLATFORM_HOST>`.
+#   API_INTERNAL_URL      e.g. "http://api-server:8080" — service URL the
+#                                          on-demand TLS ask-endpoint queries.
+#   LETSENCRYPT_EMAIL     ACME contact email; required for production.
+#   INTERNAL_API_TOKEN    Shared secret matched by /internal/caddy-ask in
+#                         non-development environments.
+
+{
+	# ACME contact email — Let's Encrypt requires this in production.
+	# Set via env so dev / staging / prod can use different mailboxes.
+	email {$LETSENCRYPT_EMAIL}
+
+	# On-demand TLS gate. Caddy calls the `ask` URL BEFORE issuing a cert
+	# for any host it hasn't seen. We point this at the api-server's
+	# `/internal/caddy-ask` endpoint, which only answers 200 if the host
+	# is already registered in `agency_domains` with a verifying/verified
+	# state. ANY non-2xx response (including 5xx, network errors) makes
+	# Caddy refuse — that's the leak #4 defense.
+	#
+	# `interval` and `burst` cap how many on-demand attempts a single
+	# client can drive (defense-in-depth above the api-server's own per-IP
+	# rate limit).
+	on_demand_tls {
+		ask {$API_INTERNAL_URL}/internal/caddy-ask
+		interval 1m
+		burst 10
+	}
+}
+
+# ---------------------------------------------------------------------------
+# api-server (api.<PLATFORM_HOST>) — single host, no on-demand needed.
+# Caddy's automatic HTTPS handles cert issuance via the configured email.
+# ---------------------------------------------------------------------------
+api.{$PLATFORM_HOST} {
+	encode gzip
+
+	# Pass through the original host so the host_tenant_middleware sees
+	# the inbound API host (today: api.<PLATFORM_HOST>; not tenant-scoped).
+	reverse_proxy {$API_INTERNAL_URL} {
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# reality-server (every tenant subdomain + every brought custom domain).
+#
+# The platform-subdomain plan: any `*.<PLATFORM_HOST>` is covered by a
+# wildcard cert (single ACME order, no per-tenant rate-limit pressure).
+# Custom domains brought by an agency go through on-demand TLS, gated by
+# the ask-endpoint above.
+#
+# The `tls` directive WITHOUT `internal` lets Caddy ask Let's Encrypt for
+# both the wildcard AND the on-demand-issued per-domain certs.
+# ---------------------------------------------------------------------------
+*.{$PLATFORM_HOST} {
+	# Wildcard requires DNS-01 challenge; configure the dns provider
+	# block here when the platform hosting the apex is settled (e.g.
+	# Cloudflare, Route53). For first-deploy bring-up, individual
+	# subdomain certs via on-demand TLS still work.
+	tls {
+		on_demand
+	}
+
+	encode gzip
+
+	# Reality-server reads the inbound Host header to resolve the tenant
+	# via `agency_domains`. The reverse_proxy MUST forward the original
+	# host unchanged.
+	reverse_proxy http://reality-server:8081 {
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# Custom-domain catch-all. Any host that ISN'T `*.<PLATFORM_HOST>` falls
+# through to this block. Certs are minted on-demand IFF the ask-endpoint
+# above said yes. Hosts not in `agency_domains` get a TLS handshake that
+# Caddy aborts (no cert) — the user sees a connection error, not the app.
+:443 {
+	tls {
+		on_demand
+	}
+
+	encode gzip
+
+	reverse_proxy http://reality-server:8081 {
+		header_up Host {host}
+		header_up X-Forwarded-Host {host}
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+# Plain HTTP — redirect everything to HTTPS. Healthchecks ride on this
+# port via the `:80` block.
+:80 {
+	# Caddy auto-redirects to HTTPS for known hosts via automatic_https,
+	# so no explicit `redir` is needed; this block is here to keep `:80`
+	# explicit in the config so reverse-proxies / load-balancers know it
+	# is bound.
+	respond /caddy-health 200
+}

@@ -1,0 +1,196 @@
+{
+  "admin": {
+    "agencies": {
+      "actions": {
+        "addDomain": "Pridať doménu",
+        "edit": "Upraviť",
+        "suspend": "Pozastaviť"
+      },
+      "columns": {
+        "members": "Členovia",
+        "name": "Názov",
+        "slug": "Identifikátor",
+        "status": "Stav"
+      },
+      "empty": "Nenašli sa žiadne agentúry.",
+      "loadError": "Nepodarilo sa načítať agentúry: {{message}}",
+      "loading": "Načítavajú sa agentúry…",
+      "title": "Agentúry",
+      "toast": {
+        "notWiredMessage": "TODO: POST /admin/agencies/{{id}}/domains/add",
+        "notWiredTitle": "Zatiaľ nezapojené",
+        "suspendFailedMessage": "Pozastavenie zlyhalo",
+        "suspendFailedTitle": "Pozastavenie zlyhalo",
+        "suspendedMessage": "{{name}} bola pozastavená.",
+        "suspendedTitle": "Agentúra pozastavená"
+      },
+      "unknownError": "Neznáma chyba"
+    },
+    "audit": {
+      "columns": {
+        "action": "Akcia",
+        "actor": "Vykonávateľ",
+        "ip": "IP",
+        "outcome": "Výsledok",
+        "target": "Cieľ",
+        "time": "Čas"
+      },
+      "empty": "Žiadne záznamy auditu nezodpovedajú aktuálnym filtrom.",
+      "filters": {
+        "action": "Akcia",
+        "actor": "Vykonávateľ",
+        "actorId": "ID vykonávateľa",
+        "legend": "Filtre",
+        "outcome": "Výsledok",
+        "since": "Od",
+        "target": "Cieľ",
+        "targetType": "Typ cieľa",
+        "until": "Do"
+      },
+      "loading": "Načítava sa…",
+      "pagination": {
+        "next": "Ďalšie",
+        "page": "Strana {{page}}",
+        "previous": "Predchádzajúce",
+        "showing": "Zobrazujú sa {{from}}–{{to}} z {{total}}"
+      },
+      "system": "(systém)",
+      "timeAgo": {
+        "days": "pred {{count}} d",
+        "days_one": "pred {{count}} d",
+        "hours": "pred {{count}} h",
+        "hours_one": "pred {{count}} h",
+        "justNow": "práve teraz",
+        "minutes": "pred {{count}} min",
+        "minutes_one": "pred {{count}} min"
+      },
+      "title": "Audit log"
+    },
+    "common": {
+      "actions": "Akcie",
+      "cancel": "Zrušiť",
+      "confirm": "Naozaj?",
+      "loading": "Načítava sa…",
+      "noResults": "Žiadne výsledky.",
+      "readOnly": "Iba na čítanie",
+      "retry": "Opakovať",
+      "save": "Uložiť",
+      "saveFailed": "Uloženie zlyhalo.",
+      "saving": "Ukladá sa…"
+    },
+    "featureFlags": {
+      "fields": {
+        "aiFaultTriage": "AI triedenie porúch (beta)",
+        "buildingDisabled": "Vypnúť túto budovu (núdzový vypínač)",
+        "newListingsSearch": "Nové vyhľadávanie inzerátov (beta)"
+      },
+      "title": "Funkčné príznaky",
+      "warning": "Núdzový vypínač pre nájomníka — zmeny sa prejavia okamžite pre každého používateľa v tomto nájomníkovi."
+    },
+    "impersonation": {
+      "asUser": "ako {{name}}",
+      "expires": "vyprší {{time}}",
+      "label": "ZOSOBNENIE",
+      "stop": "Ukončiť zosobnenie",
+      "youAreImpersonating": "Zosobňujete používateľa {{name}}"
+    },
+    "mfa": {
+      "cancel": "Zrušiť",
+      "description": "Zadajte 6-miestny kód z autentifikačnej aplikácie.",
+      "descriptionForAction": "{{action}} vyžaduje nový autentifikačný kód.",
+      "expired": "Overenie MFA vypršalo",
+      "invalidCode": "Tento kód nefungoval. Skúste to znova.",
+      "invalidFormat": "Zadajte 6-miestny kód z autentifikačnej aplikácie.",
+      "label": "Overovací kód",
+      "requiredToast": {
+        "message": "Pre pokračovanie potvrďte v autentifikačnej aplikácii.",
+        "title": "Vyžaduje sa dvojfaktorové potvrdenie"
+      },
+      "title": "Overte svoju identitu",
+      "verificationFailed": "Overenie zlyhalo.",
+      "verify": "Overiť",
+      "verifying": "Overuje sa…"
+    },
+    "platform": {
+      "fields": {
+        "maintenanceMode": "Režim údržby",
+        "signupEnabled": "Registrácia povolená",
+        "supportEmail": "E-mail podpory",
+        "supportEmailPlaceholder": "podpora@example.com"
+      },
+      "title": "Nastavenia platformy"
+    },
+    "users": {
+      "actions": {
+        "edit": "Upraviť",
+        "impersonate": "Zosobniť",
+        "transition": "Zmeniť typ"
+      },
+      "columns": {
+        "displayName": "Zobrazované meno",
+        "email": "E-mail",
+        "principalKind": "Typ principála"
+      },
+      "empty": "Hľadajte pre načítanie používateľov.",
+      "principalKinds": {
+        "agency": "Agentúra",
+        "platform": "Platforma",
+        "service": "Služba",
+        "tenant": "Nájomník"
+      },
+      "searchPlaceholder": "Hľadať používateľov podľa e-mailu alebo mena…",
+      "title": "Používatelia",
+      "transition": {
+        "cancel": "Zrušiť",
+        "confirm": "Zmeniť typ",
+        "description": "Toto zmení spôsob autentifikácie {{name}} a oprávnenia, ktoré majú. Pokračovať?",
+        "title": "Zmeniť typ principála"
+      }
+    }
+  },
+  "common": {
+    "add": "Pridať",
+    "all": "Všetky",
+    "back": "Späť",
+    "backToBuildings": "Späť na budovy",
+    "backToDispute": "Späť na spor",
+    "backToDisputes": "Späť na spory",
+    "backToDocuments": "Späť na dokumenty",
+    "backToFaults": "Späť na poruchy",
+    "cancel": "Zrušiť",
+    "close": "Zavrieť",
+    "confirm": "Potvrdiť",
+    "copied": "Skopírované",
+    "copyErrorDetails": "Kopírovať podrobnosti chyby",
+    "copyErrorMessage": "Kopírovať chybovú správu",
+    "create": "Vytvoriť",
+    "delete": "Vymazať",
+    "dismissNotification": "Zavrieť oznámenie",
+    "edit": "Upraviť",
+    "error": "Chyba",
+    "loading": "Načítava sa...",
+    "loadingDispute": "Načítava sa spor...",
+    "login": "Prihlásiť sa",
+    "logout": "Odhlásiť sa",
+    "next": "Ďalej",
+    "no": "Nie",
+    "none": "Žiadne",
+    "notifications": "Oznámenia",
+    "optional": "Voliteľné",
+    "pleaseWait": "Počkajte, kým načítame údaje.",
+    "previous": "Predchádzajúce",
+    "reloadPage": "Obnoviť stránku",
+    "required": "Povinné",
+    "retry": "Opakovať",
+    "save": "Uložiť",
+    "search": "Hladať",
+    "select": "Vybrať",
+    "submit": "Odoslať",
+    "success": "Úspech",
+    "tryAgain": "Skúsiť znova",
+    "yes": "Áno"
+  },
+  "nav": {
+    "admin": "Administrácia"
+  }
+}

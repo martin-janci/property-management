@@ -1,7 +1,26 @@
 //! Favorites routes - save and manage favorite listings (Story 16.2).
+//!
+//! D1.2: all endpoints in this file now adopt the unified `RequestPrincipal`
+//! / `OptionalRequestPrincipal` extractors (Phase 2 identity stack). The
+//! `list_favorite_ids` SSR-anonymous path uses the optional wrapper so a
+//! missing Authorization header yields an empty list, while a malformed or
+//! revoked token still surfaces as 401/403 (do NOT silently demote — see
+//! leak #10/#11 defenses on the wrapper).
+//!
+//! Behavior contract for the auth-required endpoints (list/add/remove/check):
+//!
+//! * No bearer token / invalid token / unknown user → 401.
+//! * Token for a non-platform principal arriving at a tenant-scoped host
+//!   without an active membership → 403 (leak #11 cross-tenant rejection).
+//! * Otherwise → 2xx with the response payload.
+//!
+//! We deliberately do NOT consult `principal.effective_org` here: favorites
+//! are user-scoped, not org-scoped, and the listing rows are read via the
+//! public listings index. The principal is used purely as the
+//! authenticated-user identifier.
 
-use crate::extractors::{AuthenticatedUser, OptionalAuth};
 use crate::state::AppState;
+use api_core::extractors::{OptionalRequestPrincipal, RequestPrincipal};
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post},
@@ -37,22 +56,28 @@ pub struct CheckFavoriteResponse {
 }
 
 /// List user's favorites.
+///
+/// Uses the unified [`RequestPrincipal`] extractor (see file-level docs for
+/// the full auth/membership contract). Favorites are user-scoped — the
+/// principal is consulted purely as the authenticated-user identifier; we
+/// do NOT branch on `principal.effective_org` here.
 #[utoipa::path(
     get,
     path = "/api/v1/favorites",
     tag = "Favorites",
     responses(
         (status = 200, description = "List of favorites", body = FavoritesResponse),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized — missing or invalid token"),
+        (status = 403, description = "Forbidden — host/principal mismatch (leak #11 defense)")
     )
 )]
 pub async fn list_favorites(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
 ) -> Result<Json<FavoritesResponse>, (axum::http::StatusCode, String)> {
     let favorites = state
         .reality_portal_repo
-        .get_favorites_with_listings(auth.user_id)
+        .get_favorites_with_listings(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -80,13 +105,13 @@ pub async fn list_favorites(
 )]
 pub async fn add_favorite(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
     Json(data): Json<AddFavorite>,
 ) -> Result<Json<PortalFavorite>, (axum::http::StatusCode, String)> {
     let favorite = state
         .reality_portal_repo
-        .add_favorite(auth.user_id, listing_id, data.notes)
+        .add_favorite(principal.user_id, listing_id, data.notes)
         .await
         .map_err(|e| {
             let error_str = e.to_string();
@@ -125,12 +150,12 @@ pub async fn add_favorite(
 )]
 pub async fn remove_favorite(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
     state
         .reality_portal_repo
-        .remove_favorite(auth.user_id, listing_id)
+        .remove_favorite(principal.user_id, listing_id)
         .await
         .map_err(|e| {
             (
@@ -155,13 +180,13 @@ pub async fn remove_favorite(
 )]
 pub async fn check_favorite(
     State(state): State<AppState>,
-    auth: AuthenticatedUser,
+    principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<CheckFavoriteResponse>, (axum::http::StatusCode, String)> {
     // Check if the user has this listing in favorites by getting favorites and checking
     let favorites = state
         .reality_portal_repo
-        .get_favorites_with_listings(auth.user_id)
+        .get_favorites_with_listings(principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -190,20 +215,26 @@ pub async fn check_favorite(
         (status = 200, description = "List of favorited listing IDs", body = [Uuid])
     )
 )]
+// D1.1/D1.2: now uses `OptionalRequestPrincipal`. Behavior:
+//   * No Authorization header → empty list (anonymous SSR path stays quiet).
+//   * Authorization present but invalid/forbidden → propagated 401/403 by
+//     the wrapper. Do NOT silently demote to "anonymous + empty list" — a
+//     stolen-but-revoked token must be told "no", not given an indistinguish-
+//     able response from a real anonymous request (leak #10/#11 defense).
 pub async fn list_favorite_ids(
     State(state): State<AppState>,
-    OptionalAuth(auth): OptionalAuth,
+    OptionalRequestPrincipal(principal): OptionalRequestPrincipal,
 ) -> Result<Json<Vec<Uuid>>, (axum::http::StatusCode, String)> {
-    let Some(auth) = auth else {
+    let Some(principal) = principal else {
         return Ok(Json(Vec::new()));
     };
 
     let favorites = state
         .reality_portal_repo
-        .get_favorites_with_listings(auth.user_id)
+        .get_favorites_with_listings(principal.user_id)
         .await
         .map_err(|e| {
-            tracing::error!(user_id = %auth.user_id, error = %e, "Failed to list favorite IDs");
+            tracing::error!(user_id = %principal.user_id, error = %e, "Failed to list favorite IDs");
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Internal server error".to_string(),

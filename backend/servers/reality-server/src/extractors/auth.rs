@@ -1,75 +1,37 @@
-//! Authentication extractor for Reality Server.
+//! Session-token extraction helpers for Reality Server.
 //!
-//! Extracts authenticated user from session token (JWT in Authorization header or cookie).
-//! Uses the SessionService to validate and retrieve session information.
+//! # Status (Phase 2.5 / E1.3)
+//!
+//! `RequestPrincipal` (in `api-core`) is the ONLY authentication path used
+//! by route handlers in reality-server. It validates the JWT directly
+//! against `JWT_SECRET` and re-derives `principal_kind` from the trusted
+//! `users` table on every request, so endpoints never need to parse the
+//! Authorization header themselves.
+//!
+//! That leaves exactly one place that still needs the *raw* session token:
+//! the logout flow. Logout has to invalidate the underlying session row in
+//! `portal_sessions`, which is keyed on a SHA-256 hash of the raw token —
+//! `RequestPrincipal` only carries the validated user id, not the token
+//! string. So this module exposes two narrow helpers:
+//!
+//! * [`extract_session_token`] — pulls the token out of the `Authorization:
+//!   Bearer …` header or the `portal_session` cookie.
+//! * [`extract_session_cookie`] — cookie-only variant (the SSO logout
+//!   endpoint requires the cookie path specifically).
+//!
+//! These were previously duplicated in three places (`extractors::auth`,
+//! `routes::users::logout`, `routes::sso`). Consolidating them here removes
+//! the duplication and the legacy `AuthenticatedUser` / `OptionalAuth`
+//! extractors that the D1.2 sweep made dead code.
 
-use axum::{
-    extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
-};
-use uuid::Uuid;
+use axum::http::HeaderMap;
 
-use crate::state::AppState;
-
-/// Authenticated portal user extracted from session token.
-#[derive(Debug, Clone)]
-pub struct AuthenticatedUser {
-    /// Portal user ID
-    pub user_id: Uuid,
-    /// User email
-    pub email: String,
-    /// User display name
-    pub name: String,
-}
-
-impl FromRequestParts<AppState> for AuthenticatedUser {
-    type Rejection = (StatusCode, &'static str);
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        // Extract session token from Authorization header or cookie
-        let session_token = extract_session_token(&parts.headers)
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing authentication token"))?;
-
-        // Validate session and get user info
-        let session_info = state
-            .session_service
-            .get_session(&session_token)
-            .await
-            .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid or expired session"))?;
-
-        Ok(AuthenticatedUser {
-            user_id: session_info.user_id,
-            email: session_info.email,
-            name: session_info.name,
-        })
-    }
-}
-
-/// Optional authentication extractor.
-/// Returns Some(AuthenticatedUser) if authenticated, None otherwise.
-#[derive(Debug, Clone)]
-pub struct OptionalAuth(pub Option<AuthenticatedUser>);
-
-impl FromRequestParts<AppState> for OptionalAuth {
-    type Rejection = std::convert::Infallible;
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
-        match AuthenticatedUser::from_request_parts(parts, state).await {
-            Ok(user) => Ok(OptionalAuth(Some(user))),
-            Err(_) => Ok(OptionalAuth(None)),
-        }
-    }
-}
-
-/// Extract session token from Authorization header or cookie.
-fn extract_session_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    // Try Authorization header first (Bearer token)
+/// Pull a session token out of the request headers.
+///
+/// Looks at `Authorization: Bearer …` first; falls back to the
+/// `portal_session` cookie. Returns `None` if neither is present, so the
+/// caller can choose the right error response (401 vs. silent skip).
+pub fn extract_session_token(headers: &HeaderMap) -> Option<String> {
     if let Some(auth) = headers
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
@@ -79,7 +41,15 @@ fn extract_session_token(headers: &axum::http::HeaderMap) -> Option<String> {
         }
     }
 
-    // Fall back to cookie
+    extract_session_cookie(headers)
+}
+
+/// Cookie-only variant of [`extract_session_token`].
+///
+/// Used by the SSO logout endpoint, which is invoked by the browser after
+/// the cookie is set on the SSO callback — there is no Authorization header
+/// to fall back to in that flow.
+pub fn extract_session_cookie(headers: &HeaderMap) -> Option<String> {
     headers
         .get(axum::http::header::COOKIE)
         .and_then(|v| v.to_str().ok())
