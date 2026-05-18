@@ -4,7 +4,8 @@
  * Modal dialog for cancelling a booking with an optional reason.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 interface CancelBookingDialogProps {
   bookingId: string;
@@ -34,6 +35,8 @@ export function CancelBookingDialog({
   isSubmitting,
 }: CancelBookingDialogProps) {
   const [reason, setReason] = useState('');
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, onCancel);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +45,12 @@ export function CancelBookingDialog({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
+      tabIndex={-1}
     >
       {/* Backdrop - click handler for dismiss, keyboard users use ESC or Cancel button */}
       <div

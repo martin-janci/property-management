@@ -5,8 +5,9 @@
  * @module features/dashboard/components/KeyboardShortcutsHelp
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import './KeyboardShortcutsHelp.css';
 
 interface KeyboardShortcutsHelpProps {
@@ -31,29 +32,22 @@ const shortcuts: ShortcutItem[] = [
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
   const { t } = useTranslation();
+
+  if (!isOpen) return null;
+
+  return <KeyboardShortcutsHelpDialog t={t} onClose={onClose} />;
+}
+
+interface KeyboardShortcutsHelpDialogProps {
+  t: ReturnType<typeof useTranslation>['t'];
+  onClose: () => void;
+}
+
+// Inner component so useFocusTrap only mounts when the dialog is actually open,
+// guaranteeing focus capture + restore on each open/close cycle.
+function KeyboardShortcutsHelpDialog({ t, onClose }: KeyboardShortcutsHelpDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Focus trap
-  useEffect(() => {
-    if (isOpen && dialogRef.current) {
-      dialogRef.current.focus();
-    }
-  }, [isOpen]);
+  useFocusTrap(dialogRef, onClose);
 
   // Handle backdrop click
   const handleBackdropClick = useCallback(
@@ -64,8 +58,6 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
     },
     [onClose]
   );
-
-  if (!isOpen) return null;
 
   return (
     <div className="kbd-help-overlay" onClick={handleBackdropClick} role="presentation">
