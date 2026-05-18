@@ -9,7 +9,7 @@
  */
 
 /// <reference types="vitest/globals" />
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastProvider, useToast } from './Toast';
 
@@ -109,16 +109,82 @@ describe('Toast Component', () => {
     });
   });
 
-  // Note: Timer-based auto-dismiss tests are skipped due to complexity with fake timers and React state updates.
-  // The auto-dismiss functionality is verified through manual/E2E testing.
-  // The core rendering and interaction tests above provide sufficient coverage for unit tests.
+  // Helper that exposes the showToast function so the auto-dismiss tests can
+  // trigger a toast without going through userEvent — userEvent's internal
+  // awaits stall when combined with fake timers in this setup.
+  function ToastEmitter({
+    onReady,
+  }: {
+    onReady: (showToast: ReturnType<typeof useToast>['showToast']) => void;
+  }) {
+    const { showToast } = useToast();
+    onReady(showToast);
+    return null;
+  }
 
-  it.skip('auto-dismisses success toast after duration', async () => {
-    // Skipped: Fake timers have compatibility issues with React state batching
+  it('auto-dismisses success toast after duration', async () => {
+    // Success toasts auto-dismiss after DEFAULT_SUCCESS_DURATION (5000ms).
+    vi.useFakeTimers();
+    try {
+      let trigger: ReturnType<typeof useToast>['showToast'] | null = null;
+
+      render(
+        <ToastProvider>
+          <ToastEmitter
+            onReady={(showToast) => {
+              trigger = showToast;
+            }}
+          />
+        </ToastProvider>
+      );
+
+      await act(async () => {
+        trigger?.({ type: 'success', title: 'Auto-dismiss me' });
+      });
+      expect(screen.getByText('Auto-dismiss me')).toBeInTheDocument();
+
+      // Advance past the 5000ms success duration; flush React state updates.
+      await act(async () => {
+        vi.advanceTimersByTime(5001);
+      });
+
+      expect(screen.queryByText('Auto-dismiss me')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it.skip('error toast persists (no auto-dismiss)', async () => {
-    // Skipped: Fake timers have compatibility issues with React state batching
+  it('error toast persists (no auto-dismiss)', async () => {
+    // Error toasts have duration = 0, meaning no auto-dismiss timer is set.
+    vi.useFakeTimers();
+    try {
+      let trigger: ReturnType<typeof useToast>['showToast'] | null = null;
+
+      render(
+        <ToastProvider>
+          <ToastEmitter
+            onReady={(showToast) => {
+              trigger = showToast;
+            }}
+          />
+        </ToastProvider>
+      );
+
+      await act(async () => {
+        trigger?.({ type: 'error', title: 'Sticky error' });
+      });
+      expect(screen.getByText('Sticky error')).toBeInTheDocument();
+
+      // Advance well past any plausible auto-dismiss window.
+      await act(async () => {
+        vi.advanceTimersByTime(30_000);
+      });
+
+      // Error toast should still be present.
+      expect(screen.getByText('Sticky error')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
