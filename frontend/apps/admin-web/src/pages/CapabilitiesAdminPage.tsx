@@ -18,7 +18,7 @@
  *     → DELETE /api/v1/admin/capabilities/users/:id/grant/:grantId
  */
 
-import { CAPABILITIES, useMfaChallenge } from '@ppt/admin-ui';
+import { CAPABILITIES, useCapability, useMfaChallenge } from '@ppt/admin-ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -66,22 +66,86 @@ interface RegistryEntry {
   holder_count: number;
 }
 
-interface CapabilityGrant {
+/**
+ * Raw shape returned by the backend. NOTE: the backend `CapabilityGrant`
+ * struct does NOT carry a `status` field — it only persists `revoked_at`
+ * and `expires_at`. We derive status on the client (see `deriveGrantStatus`).
+ */
+interface BackendCapabilityGrant {
   id: string;
   capability: string;
   granted_at: string;
   granted_by: string;
   expires_at: string | null;
   revoked_at: string | null;
+}
+
+interface CapabilityGrant extends BackendCapabilityGrant {
+  /** Derived from `revoked_at` + `expires_at`, never sent by the server. */
   status: 'active' | 'expired' | 'revoked';
 }
 
+/**
+ * Derive a grant's lifecycle status from the raw backend fields. Without
+ * this the page treated every grant as `'active'` because the missing
+ * `status` field was always `undefined !== 'revoked'`.
+ */
+function deriveGrantStatus(g: BackendCapabilityGrant): CapabilityGrant['status'] {
+  if (g.revoked_at) return 'revoked';
+  if (g.expires_at && new Date(g.expires_at).getTime() < Date.now()) return 'expired';
+  return 'active';
+}
+
+/**
+ * Normalized internal view of a user's capability grants.
+ *
+ * The backend exposes two different shapes for capability data:
+ *   - `GET /admin/capabilities/users/{id}` → `Vec<CapabilityGrant>` (raw array)
+ *   - `GET /admin/capabilities/me`         → `{ user_id, principal_kind, capabilities: [...] }`
+ *
+ * Neither carries `email` / `last_change_at` / `last_change_by` — those would
+ * have to come from a separate users endpoint. Until that lands, we keep them
+ * `null` and the header falls back to the `userId` from the route.
+ */
 interface UserCapabilitiesResponse {
   user_id: string;
-  email: string;
+  email: string | null;
   grants: CapabilityGrant[];
   last_change_at: string | null;
   last_change_by: string | null;
+}
+
+/**
+ * Normalize either the raw `Vec<CapabilityGrant>` shape (per-user endpoint)
+ * or the `MyCapabilitiesResponse { capabilities, ... }` shape (`/me`) into
+ * the page's internal {@link UserCapabilitiesResponse} view.
+ *
+ * Tolerates a few synonyms (`grants` vs `capabilities`) so we don't break if
+ * a future backend revision normalizes one to match the other.
+ */
+function withDerivedStatus(grants: BackendCapabilityGrant[]): CapabilityGrant[] {
+  return grants.map((g) => ({ ...g, status: deriveGrantStatus(g) }));
+}
+
+function normalizeUserCapabilities(raw: unknown, userId: string): UserCapabilitiesResponse {
+  if (Array.isArray(raw)) {
+    return {
+      user_id: userId,
+      email: null,
+      grants: withDerivedStatus(raw as BackendCapabilityGrant[]),
+      last_change_at: null,
+      last_change_by: null,
+    };
+  }
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const grants = (obj.grants ?? obj.capabilities ?? []) as BackendCapabilityGrant[];
+  return {
+    user_id: (obj.user_id as string) ?? userId,
+    email: (obj.email as string | null) ?? null,
+    grants: Array.isArray(grants) ? withDerivedStatus(grants) : [],
+    last_change_at: (obj.last_change_at as string | null) ?? null,
+    last_change_by: (obj.last_change_by as string | null) ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -559,6 +623,7 @@ interface UserViewProps {
 function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
   const queryClient = useQueryClient();
   const { prompt: promptMfa } = useMfaChallenge();
+  const canRevoke = useCapability('memberships_revoke');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [revokeState, setRevokeState] = useState<{
     grantId: string;
@@ -584,11 +649,11 @@ function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
             credentials: 'include',
           });
           if (!fallback.ok) throw new Error(`Unable to load capabilities: ${fallback.status}`);
-          return fallback.json() as Promise<UserCapabilitiesResponse>;
+          return normalizeUserCapabilities(await fallback.json(), userId);
         }
         throw new Error(`Unable to load capabilities: ${res.status}`);
       }
-      return res.json() as Promise<UserCapabilitiesResponse>;
+      return normalizeUserCapabilities(await res.json(), userId);
     },
     staleTime: 30_000,
     retry: 1,
@@ -741,7 +806,7 @@ function UserView({ userId, token, onSwitchToRegistry }: UserViewProps) {
                     <span className={`cap-pill cap-pill--${grant.status}`}>{grant.status}</span>
                   </td>
                   <td>
-                    {!isExpiredOrRevoked && (
+                    {!isExpiredOrRevoked && canRevoke && (
                       <button
                         type="button"
                         className="cap-btn cap-btn--danger"

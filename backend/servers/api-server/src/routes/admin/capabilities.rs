@@ -1,17 +1,21 @@
 //! Admin endpoints for capability grants. Phase 5.
 //!
 //! Routes:
-//!   * `GET    /registry`           — list all known capabilities (gated by `AuditRead`).
-//!   * `GET    /me`                 — N10 bootstrap: caller introspects their own
-//!                                    `principal_kind` + active grants. NOT gated by
-//!                                    a capability — only by `RequestPrincipal`.
-//!                                    Without this endpoint, a fresh platform
-//!                                    principal cannot self-introspect because
-//!                                    `/users/{id}` requires `AuditRead`, which
-//!                                    they may not yet hold (deadlock).
-//!   * `GET    /users/{user_id}`    — list another principal's grants (gated by `AuditRead`).
-//!   * `POST   /grant`              — issue a grant (gated by `MembershipsGrant`).
-//!   * `DELETE /{grant_id}`         — revoke a grant (gated by `MembershipsRevoke`).
+//!   * `GET    /registry`                          — list all known capabilities (gated by `AuditRead`).
+//!   * `GET    /me`                                — N10 bootstrap: caller introspects their own
+//!                                                   `principal_kind` + active grants. NOT gated by
+//!                                                   a capability — only by `RequestPrincipal`.
+//!                                                   Without this endpoint, a fresh platform
+//!                                                   principal cannot self-introspect because
+//!                                                   `/users/{id}` requires `AuditRead`, which
+//!                                                   they may not yet hold (deadlock).
+//!   * `GET    /users/{user_id}`                   — list another principal's grants (gated by `AuditRead`).
+//!   * `POST   /users/{user_id}/grant`             — issue a grant (gated by `MembershipsGrant`).
+//!                                                   `user_id` is extracted from the path (source of
+//!                                                   truth); the body no longer contains `user_id`.
+//!   * `DELETE /users/{user_id}/grant/{grant_id}`  — revoke a grant (gated by `MembershipsRevoke`).
+//!                                                   Validates that `grant_id` belongs to `user_id`
+//!                                                   before deleting; returns 404 if ownership fails.
 
 use admin_core::{
     require_capability, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
@@ -47,12 +51,15 @@ pub fn router() -> Router<AppState> {
             "/users/{user_id}",
             get(list_for_user).layer(require_capability(Capability::AuditRead)),
         )
+        // RESTful nested-resource convention: user_id in path is the source of
+        // truth; body no longer contains user_id (body-injection defence).
         .route(
-            "/grant",
+            "/users/{user_id}/grant",
             post(grant_capability).layer(require_capability(Capability::MembershipsGrant)),
         )
+        // Validates grant ownership (grant_id must belong to user_id) before delete.
         .route(
-            "/{grant_id}",
+            "/users/{user_id}/grant/{grant_id}",
             delete(revoke_capability).layer(require_capability(Capability::MembershipsRevoke)),
         )
 }
@@ -239,7 +246,8 @@ async fn list_for_me(
 
 #[derive(Debug, Deserialize)]
 pub struct GrantBody {
-    pub user_id: Uuid,
+    /// `user_id` is taken from the URL path (`/users/{user_id}/grant`).
+    /// Removed from the body to prevent path/body mismatch injection.
     pub capability: Capability,
     pub expires_at: Option<DateTime<Utc>>,
     #[serde(default = "default_true")]
@@ -251,9 +259,11 @@ fn default_true() -> bool {
     true
 }
 
-/// POST /admin/capabilities/grant
+/// POST /admin/capabilities/users/:user_id/grant
 ///
 /// Defenses:
+///   * `user_id` is extracted from the URL path — body injection is not
+///     possible because the body no longer carries a `user_id` field.
 ///   * Application layer rejects `granted_by == user_id` (no self-grant) —
 ///     leak #21. Enforced by `PgCapabilityGrantsRepository::grant`.
 ///   * Granting `PrincipalKindEscalate` requires the granter ALSO holds
@@ -269,6 +279,7 @@ async fn grant_capability(
     auth: AuthUser,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
     axum::extract::State(state): axum::extract::State<AppState>,
+    Path(user_id): Path<Uuid>,
     Json(body): Json<GrantBody>,
 ) -> Result<Json<CapabilityGrant>, (StatusCode, String)> {
     if body.capability == Capability::PrincipalKindEscalate {
@@ -289,13 +300,13 @@ async fn grant_capability(
     // grant that violates the grantee org's email-verification rule is
     // rejected before the capability row is written.
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
-    if let Err(err) = enforcer.check_capability_grant_for_user(body.user_id).await {
+    if let Err(err) = enforcer.check_capability_grant_for_user(user_id).await {
         return Err(map_auth_policy_error(err));
     }
 
     let row = grants
         .grant(
-            body.user_id,
+            user_id,
             body.capability,
             auth.user_id,
             body.expires_at,
@@ -307,7 +318,7 @@ async fn grant_capability(
     Ok(Json(row))
 }
 
-/// DELETE /admin/capabilities/:grant_id
+/// DELETE /admin/capabilities/users/:user_id/grant/:grant_id
 ///
 /// D2.1: capability rows are PLATFORM-scoped (no `organization_id` column);
 /// see `docs/multitenancy/decisions/capability-platform-scope.md`. The
@@ -317,6 +328,11 @@ async fn grant_capability(
 /// `check_capability_revoke` so the policy-load liveness check is symmetric
 /// with `check_capability_grant_for_user` on the grant path — a corrupted
 /// policy-resolution layer aborts the revoke instead of silently proceeding.
+///
+/// Ownership validation: the grant row's `user_id` must match the path
+/// `user_id` parameter. Returns 404 (not 403) if ownership fails — leaking
+/// whether a grant_id exists at all is harmless only to callers with
+/// `MembershipsRevoke`, but we still prefer the lookup-consistent 404.
 ///
 /// E3 hardening: the underlying repo UPDATE writes
 /// `revoked_with_mfa_at = NOW()` and the DB-layer trigger
@@ -329,11 +345,23 @@ async fn revoke_capability(
     auth: AuthUser,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
     axum::extract::State(state): axum::extract::State<AppState>,
-    Path(grant_id): Path<Uuid>,
+    Path((user_id, grant_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
     if let Err(err) = enforcer.check_capability_revoke(auth.user_id).await {
         return Err(map_auth_policy_error(err));
+    }
+
+    // Ownership validation: verify the grant belongs to the claimed user_id.
+    let user_grants = grants
+        .list_for_user(user_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if !user_grants.iter().any(|g| g.id == grant_id) {
+        return Err((
+            StatusCode::NOT_FOUND,
+            format!("grant {grant_id} not found for user {user_id}"),
+        ));
     }
 
     grants
