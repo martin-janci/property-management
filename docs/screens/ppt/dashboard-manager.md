@@ -9,7 +9,7 @@ implementations:
     component: ManagerDashboardPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens:
   - id: ppt/dashboard-resident

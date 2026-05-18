@@ -9,7 +9,7 @@ implementations:
     component: ThreadDetailPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens:
   - id: ppt/messages

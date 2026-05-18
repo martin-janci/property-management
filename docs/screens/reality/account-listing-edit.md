@@ -9,7 +9,7 @@ implementations:
     component: AccountListingEditPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens:
   - id: reality/account

@@ -9,7 +9,7 @@ implementations:
     component: EditFaultPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens:
   - id: ppt/fault-detail

@@ -9,7 +9,7 @@ implementations:
     component: AuthLoginPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens:
   - id: reality/auth-register

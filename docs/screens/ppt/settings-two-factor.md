@@ -9,7 +9,7 @@ implementations:
     component: TwoFactorAuthPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: unknown
+    apiStatus: stub
 endpoints: []
 relatedScreens: []
 sharedComponents: []
