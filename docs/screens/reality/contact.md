@@ -33,6 +33,10 @@ designSources:
     frame: MContact (KMP)
 useCases:
   - UC-42
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

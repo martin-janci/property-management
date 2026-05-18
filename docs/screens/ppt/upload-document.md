@@ -38,6 +38,8 @@ designSources:
     frame: loaded-4-files-mixed-states / empty-drag-over / success-toast
 useCases:
   - UC-08
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

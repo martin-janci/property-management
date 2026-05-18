@@ -14,6 +14,14 @@ implementations:
     buildStatus: n/a
     redesignStatus: n/a
     apiStatus: n/a
+relatedScreens:
+  - id: reality/home
+    rel: parent
+useCases: []
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

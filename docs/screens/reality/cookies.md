@@ -32,6 +32,10 @@ designSources:
     frame: MLegal[kind=cookies] (KMP)
 useCases:
   - UC-23
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

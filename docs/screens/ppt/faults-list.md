@@ -37,6 +37,9 @@ designSources:
     frame: mobile-faults-list
 useCases:
   - UC-03
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

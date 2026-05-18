@@ -58,6 +58,10 @@ designSources:
     frame: mobile-variant
 useCases:
   - UC-31
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

@@ -36,6 +36,8 @@ designSources:
     frame: loaded-V-mediacii / loaded-vyriesene-readonly / loading
 useCases:
   - UC-38
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

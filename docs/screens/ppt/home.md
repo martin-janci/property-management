@@ -38,6 +38,10 @@ useCases:
   - UC-02
   - UC-04
   - UC-17
+endpoints: []
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

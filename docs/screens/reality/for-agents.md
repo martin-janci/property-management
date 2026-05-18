@@ -33,6 +33,10 @@ designSources:
     frame: MAgents (KMP)
 useCases:
   - UC-49
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

@@ -35,6 +35,8 @@ designSources:
     frame: loaded-grid-3up-1featured-1pinned-1scheduled-1draft / empty / loading-6-skel / error-503
 useCases:
   - UC-13
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

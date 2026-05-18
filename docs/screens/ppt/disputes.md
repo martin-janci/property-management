@@ -38,6 +38,8 @@ designSources:
     frame: loaded-3-selected / empty / loading-6-skel / error-503
 useCases:
   - UC-38
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

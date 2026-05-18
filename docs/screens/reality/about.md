@@ -30,6 +30,10 @@ designSources:
     frame: MAbout (KMP Android frame 412×892)
 useCases:
   - UC-42
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

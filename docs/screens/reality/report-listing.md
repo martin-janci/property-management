@@ -35,6 +35,10 @@ designSources:
 useCases:
   - UC-23
   - UC-31
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

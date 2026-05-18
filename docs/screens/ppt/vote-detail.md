@@ -37,6 +37,10 @@ designSources:
     frame: MobVoteDetailScreen
 useCases:
   - UC-04
+endpoints: []
+epics: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

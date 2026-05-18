@@ -31,6 +31,9 @@ designSources:
     frame: loaded / loading+saved-toast / empty+error
 useCases:
   - UC-25
+endpoints: []
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

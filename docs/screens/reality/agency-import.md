@@ -31,6 +31,10 @@ designSources:
     frame: 9-step-wizard-step1-connect / step2-map-fields / step3a-preview / step3b-source-vs-imported / step4-schedule / confirm / history-7-rows / empty-no-imports / error-states-4
 useCases:
   - UC-50
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist

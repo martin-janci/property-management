@@ -34,6 +34,8 @@ designSources:
     frame: loaded-8-rows / inline-edit / add-drawer-empty+filled / delete-confirm / empty / loading / error
 useCases:
   - UC-39
+diagrams: []
+owner: pm-frontend
 ---
 
 ## Functionality Checklist

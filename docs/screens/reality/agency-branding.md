@@ -30,6 +30,10 @@ designSources:
     frame: default-with-profile-logo-color-watermark / loading
 useCases:
   - UC-49
+endpoints: []
+epics: []
+diagrams: []
+owner: reality-frontend
 ---
 
 ## Functionality Checklist
