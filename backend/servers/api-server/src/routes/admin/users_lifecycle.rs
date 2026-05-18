@@ -104,6 +104,7 @@ fn default_page_size() -> u32 {
 
 /// List users response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ListUsersResponse {
     /// Users on this page
     pub users: Vec<AdminUserInfo>,
@@ -124,6 +125,7 @@ pub struct UserActionRequest {
 
 /// Admin action response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AdminActionResponse {
     /// Success message
     pub message: String,

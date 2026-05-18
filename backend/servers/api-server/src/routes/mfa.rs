@@ -29,6 +29,7 @@ pub fn router() -> Router<AppState> {
 
 /// MFA setup response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MfaSetupResponse {
     /// The TOTP secret (only shown once, for manual entry)
     pub secret: String,
@@ -193,6 +194,7 @@ pub struct VerifyMfaRequest {
 
 /// MFA verification response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct VerifyMfaResponse {
     /// Success message
     pub message: String,
@@ -360,6 +362,7 @@ pub struct DisableMfaRequest {
 
 /// Disable MFA response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct DisableMfaResponse {
     /// Success message
     pub message: String,
@@ -527,6 +530,7 @@ pub async fn disable_mfa(
 
 /// MFA status response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct MfaStatusResponse {
     /// Whether MFA is enabled
     pub enabled: bool,
@@ -606,6 +610,7 @@ pub struct RegenerateBackupCodesRequest {
 
 /// Regenerate backup codes response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RegenerateBackupCodesResponse {
     /// New backup codes (only shown once)
     pub backup_codes: Vec<String>,

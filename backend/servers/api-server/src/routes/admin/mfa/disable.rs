@@ -26,6 +26,7 @@ pub struct DisableRequest {
 
 /// Response for `POST /admin/mfa/disable`.
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DisableResponse {
     pub message: String,
 }
