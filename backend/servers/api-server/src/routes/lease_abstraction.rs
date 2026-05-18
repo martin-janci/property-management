@@ -22,7 +22,7 @@ use uuid::Uuid;
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
 
 /// Serialize a value to `serde_json::Value`, mapping failures to a 500 response.
-fn to_json<T: Serialize>(value: T) -> Result<serde_json::Value, (StatusCode, Json<ErrorResponse>)> {
+fn to_json_value<T: Serialize>(value: T) -> ApiResult<serde_json::Value> {
     serde_json::to_value(value).map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -159,7 +159,7 @@ async fn upload_document(
         .create_document(org_id, user_id, req)
         .await
     {
-        Ok(doc) => Ok(Json(to_json(doc)?)),
+        Ok(doc) => Ok(Json(to_json_value(doc)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -181,7 +181,7 @@ async fn get_document(
     })?;
 
     match s.lease_abstraction_repo.get_document(id, org_id).await {
-        Ok(Some(doc)) => Ok(Json(to_json(doc)?)),
+        Ok(Some(doc)) => Ok(Json(to_json_value(doc)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Document not found")),
@@ -449,7 +449,7 @@ async fn get_extraction(
         .get_extraction_for_org(id, org_id)
         .await
     {
-        Ok(Some(extraction)) => Ok(Json(to_json(extraction)?)),
+        Ok(Some(extraction)) => Ok(Json(to_json_value(extraction)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Extraction not found")),
@@ -479,7 +479,7 @@ async fn get_extraction_fields(
         .get_extraction_with_fields(id, org_id)
         .await
     {
-        Ok(Some(extraction_with_fields)) => Ok(Json(to_json(extraction_with_fields)?)),
+        Ok(Some(extraction_with_fields)) => Ok(Json(to_json_value(extraction_with_fields)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Extraction not found")),
@@ -557,7 +557,7 @@ async fn approve_extraction(
     {
         Ok(Some(extraction)) => {
             info!("Extraction {} approved by user {}", id, user_id);
-            Ok(Json(to_json(extraction)?))
+            Ok(Json(to_json_value(extraction)?))
         }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -621,7 +621,7 @@ async fn reject_extraction(
                 "Extraction {} rejected by user {}: {}",
                 id, user_id, req.reason
             );
-            Ok(Json(to_json(extraction)?))
+            Ok(Json(to_json_value(extraction)?))
         }
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -700,7 +700,7 @@ async fn add_correction(
         .add_correction(id, user_id, req)
         .await
     {
-        Ok(correction) => Ok(Json(to_json(correction)?)),
+        Ok(correction) => Ok(Json(to_json_value(correction)?)),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::bad_request(&e.to_string())),
@@ -786,7 +786,7 @@ async fn validate_import(
         .validate_import(id, &extraction)
         .await
     {
-        Ok(result) => Ok(Json(to_json(result)?)),
+        Ok(result) => Ok(Json(to_json_value(result)?)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::internal_error(&e.to_string())),
@@ -884,7 +884,7 @@ async fn import_to_lease(
                 "Extraction {} imported to lease {:?} by user {}",
                 id, result.lease_id, user_id
             );
-            Ok(Json(to_json(result)?))
+            Ok(Json(to_json_value(result)?))
         }
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
@@ -928,7 +928,7 @@ async fn get_import(
     })?;
 
     match s.lease_abstraction_repo.get_import(id, org_id).await {
-        Ok(Some(import)) => Ok(Json(to_json(import)?)),
+        Ok(Some(import)) => Ok(Json(to_json_value(import)?)),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::not_found("Import not found")),
