@@ -8,7 +8,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::{ErrorResponse, ValidationError};
-use db::models::{AuditAction, CreateAuditLog, CreateUser, Locale};
+use db::models::{AuditAction, CreateAuditLog, CreateUser, Locale, UpdateUser};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,6 +30,8 @@ pub fn router() -> Router<AppState> {
         .route("/sessions", get(list_sessions))
         .route("/sessions/revoke", post(revoke_session))
         .route("/sessions/revoke-all", post(revoke_all_sessions))
+        // Current user profile (TypeSpec auth.tsp `/me` GET + PATCH)
+        .route("/me", get(get_me).patch(update_me))
 }
 
 // ==================== Register (Story 1.1) ====================
@@ -1691,6 +1693,254 @@ pub async fn revoke_all_sessions(
     }
 }
 
+// ==================== Current User Profile (TypeSpec `/me`) ====================
+
+/// Public-facing user shape returned by `GET /me` and `PATCH /me`.
+///
+/// Mirrors the `Auth.User` model in `docs/api/typespec/domains/auth.tsp`. Fields
+/// are camelCase to match the TypeSpec contract and the generated TS SDK
+/// (`Auth_User` in `frontend/packages/api-client/src/generated/models.ts`).
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct AuthUserResponse {
+    /// Unique identifier
+    pub id: String,
+    /// Email address
+    pub email: String,
+    /// Display name
+    pub display_name: String,
+    /// Phone number (E.164 or local format)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phone: Option<String>,
+    /// Profile picture URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar_url: Option<String>,
+    /// Whether email is verified
+    pub email_verified: bool,
+    /// Whether 2FA is enabled
+    pub two_factor_enabled: bool,
+    /// Last login timestamp (RFC3339). Not currently tracked on `users`, so
+    /// this is omitted in responses until the column is added.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_login_at: Option<String>,
+    /// Account status (`active` | `inactive` | `suspended` | `pending_verification`)
+    pub status: String,
+    /// Creation timestamp (RFC3339)
+    pub created_at: String,
+    /// Last update timestamp (RFC3339)
+    pub updated_at: String,
+}
+
+impl AuthUserResponse {
+    /// Build response from a DB `User` row + the user's 2FA-enabled flag.
+    fn from_user(user: &db::models::User, two_factor_enabled: bool) -> Self {
+        // Map internal status to TypeSpec `UserStatus`. The DB stores
+        // `pending` for unverified accounts; TypeSpec calls that
+        // `pending_verification`.
+        let status = match user.status.as_str() {
+            "pending" => "pending_verification".to_string(),
+            other => other.to_string(),
+        };
+        Self {
+            id: user.id.to_string(),
+            email: user.email.clone(),
+            display_name: user.name.clone(),
+            phone: user.phone.clone(),
+            avatar_url: user.profile_image_url.clone(),
+            email_verified: user.is_verified(),
+            two_factor_enabled,
+            last_login_at: None,
+            status,
+            created_at: user.created_at.to_rfc3339(),
+            updated_at: user.updated_at.to_rfc3339(),
+        }
+    }
+}
+
+/// Body for `PATCH /api/v1/auth/me`.
+///
+/// **Whitelist only**: `displayName`, `phone`, `avatarUrl`. Identity fields
+/// (`id`, `email`, `role`, `tenant_id`, `is_admin`, `password`) and the
+/// `status` flag are intentionally NOT accepted — they have dedicated
+/// verification/admin flows.
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateMeRequest {
+    /// New display name (1..=120 chars, non-blank).
+    #[serde(default)]
+    pub display_name: Option<String>,
+    /// New phone number, or `null`/omit to keep current.
+    #[serde(default)]
+    pub phone: Option<String>,
+    /// New profile picture URL.
+    #[serde(default)]
+    pub avatar_url: Option<String>,
+}
+
+/// Get current authenticated user's profile.
+#[utoipa::path(
+    get,
+    path = "/api/v1/auth/me",
+    tag = "Authentication",
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 200, description = "Current user profile", body = AuthUserResponse),
+        (status = 401, description = "Not authenticated", body = ErrorResponse)
+    )
+)]
+pub async fn get_me(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let token = extract_bearer_token(&headers)?;
+    let claims = validate_access_token(&state, &token)?;
+
+    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+        )
+    })?;
+
+    let user = match state.user_repo.find_by_id(user_id).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "USER_NOT_FOUND",
+                    "User account no longer exists",
+                )),
+            ));
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Database error loading current user");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to load profile",
+                )),
+            ));
+        }
+    };
+
+    // `two_factor_enabled` is a user-level flag, not tenant-scoped. Login
+    // already reads it the same way; mirror that for `/me`.
+    #[allow(deprecated)]
+    let two_factor_enabled = state
+        .two_factor_repo
+        .get_by_user_id(user.id)
+        .await
+        .ok()
+        .flatten()
+        .map(|r| r.enabled)
+        .unwrap_or(false);
+
+    Ok(Json(AuthUserResponse::from_user(&user, two_factor_enabled)))
+}
+
+/// Update current authenticated user's profile (whitelist of profile-y fields).
+#[utoipa::path(
+    patch,
+    path = "/api/v1/auth/me",
+    tag = "Authentication",
+    security(("bearer_auth" = [])),
+    request_body = UpdateMeRequest,
+    responses(
+        (status = 200, description = "Profile updated", body = AuthUserResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Not authenticated", body = ErrorResponse)
+    )
+)]
+pub async fn update_me(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+    Json(req): Json<UpdateMeRequest>,
+) -> Result<Json<AuthUserResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let token = extract_bearer_token(&headers)?;
+    let claims = validate_access_token(&state, &token)?;
+
+    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
+        )
+    })?;
+
+    // Validate displayName (if provided) — must be non-blank, <= 120 chars.
+    if let Some(name) = req.display_name.as_ref() {
+        let trimmed = name.trim();
+        if trimmed.is_empty() {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_DISPLAY_NAME",
+                    "displayName cannot be empty",
+                )),
+            ));
+        }
+        if trimmed.chars().count() > 120 {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_DISPLAY_NAME",
+                    "displayName exceeds 120 characters",
+                )),
+            ));
+        }
+    }
+
+    // Reject empty patches early — nothing to do.
+    if req.display_name.is_none() && req.phone.is_none() && req.avatar_url.is_none() {
+        // Idempotent no-op: return the current profile rather than 400.
+        return get_me(State(state), headers).await;
+    }
+
+    let update = UpdateUser {
+        name: req.display_name.as_ref().map(|s| s.trim().to_string()),
+        phone: req.phone.clone(),
+        locale: None,
+        avatar_url: req.avatar_url.clone(),
+    };
+
+    let user = match state.user_repo.update(user_id, update).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "USER_NOT_FOUND",
+                    "User account no longer exists",
+                )),
+            ));
+        }
+        Err(e) => {
+            tracing::error!(error = %e, user_id = %user_id, "Failed to update profile");
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to update profile",
+                )),
+            ));
+        }
+    };
+
+    #[allow(deprecated)]
+    let two_factor_enabled = state
+        .two_factor_repo
+        .get_by_user_id(user.id)
+        .await
+        .ok()
+        .flatten()
+        .map(|r| r.enabled)
+        .unwrap_or(false);
+
+    tracing::info!(user_id = %user.id, "Profile updated via PATCH /me");
+    Ok(Json(AuthUserResponse::from_user(&user, two_factor_enabled)))
+}
+
 // ==================== Helper Functions ====================
 
 /// Extract bearer token from Authorization header.
@@ -1735,4 +1985,85 @@ fn validate_access_token(
             )),
         )
     })
+}
+
+#[cfg(test)]
+mod me_tests {
+    use super::{AuthUserResponse, UpdateMeRequest};
+    use serde_json::json;
+
+    /// `AuthUserResponse` must serialize in camelCase to match the TypeSpec
+    /// `Auth.User` contract and the generated TS SDK (`Auth_User`).
+    #[test]
+    fn auth_user_response_uses_camelcase() {
+        let resp = AuthUserResponse {
+            id: "11111111-1111-1111-1111-111111111111".to_string(),
+            email: "alice@example.com".to_string(),
+            display_name: "Alice".to_string(),
+            phone: Some("+421900000000".to_string()),
+            avatar_url: Some("https://cdn/a.png".to_string()),
+            email_verified: true,
+            two_factor_enabled: false,
+            last_login_at: None,
+            status: "active".to_string(),
+            created_at: "2026-05-18T00:00:00+00:00".to_string(),
+            updated_at: "2026-05-18T00:00:00+00:00".to_string(),
+        };
+        let v = serde_json::to_value(&resp).expect("serialize");
+        // camelCase keys present
+        for key in [
+            "id",
+            "email",
+            "displayName",
+            "phone",
+            "avatarUrl",
+            "emailVerified",
+            "twoFactorEnabled",
+            "status",
+            "createdAt",
+            "updatedAt",
+        ] {
+            assert!(v.get(key).is_some(), "missing camelCase key: {}", key);
+        }
+        // snake_case must not leak
+        for bad in ["display_name", "avatar_url", "email_verified", "created_at"] {
+            assert!(v.get(bad).is_none(), "leaked snake_case key: {}", bad);
+        }
+        // optional `lastLoginAt` skipped when None
+        assert!(v.get("lastLoginAt").is_none());
+    }
+
+    /// PATCH body must accept camelCase from the SDK.
+    #[test]
+    fn update_me_request_parses_camelcase() {
+        let body = json!({
+            "displayName": "Bob",
+            "phone": "+421900000001",
+            "avatarUrl": "https://cdn/b.png"
+        });
+        let parsed: UpdateMeRequest = serde_json::from_value(body).expect("parse");
+        assert_eq!(parsed.display_name.as_deref(), Some("Bob"));
+        assert_eq!(parsed.phone.as_deref(), Some("+421900000001"));
+        assert_eq!(parsed.avatar_url.as_deref(), Some("https://cdn/b.png"));
+    }
+
+    /// PATCH body must reject identity fields silently — they are not declared
+    /// in `UpdateMeRequest`, so serde drops unknown keys and the whitelist
+    /// holds. (Validates the "do not allow updating id/email/role/password"
+    /// requirement at the type level.)
+    #[test]
+    fn update_me_request_ignores_unknown_fields() {
+        let body = json!({
+            "displayName": "Carol",
+            "email": "attacker@example.com",
+            "role": "admin",
+            "tenantId": "00000000-0000-0000-0000-000000000000",
+            "isAdmin": true,
+            "password": "hunter2"
+        });
+        let parsed: UpdateMeRequest = serde_json::from_value(body).expect("parse");
+        assert_eq!(parsed.display_name.as_deref(), Some("Carol"));
+        assert!(parsed.phone.is_none());
+        assert!(parsed.avatar_url.is_none());
+    }
 }

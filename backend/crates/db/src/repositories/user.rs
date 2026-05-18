@@ -144,6 +144,10 @@ impl UserRepository {
             param_count += 1;
             query.push_str(&format!(", locale = ${}", param_count));
         }
+        if data.avatar_url.is_some() {
+            param_count += 1;
+            query.push_str(&format!(", profile_image_url = ${}", param_count));
+        }
 
         query.push_str(" WHERE id = $1 AND status != 'deleted' RETURNING *");
 
@@ -157,6 +161,9 @@ impl UserRepository {
         }
         if let Some(locale) = &data.locale {
             q = q.bind(locale.as_str());
+        }
+        if let Some(avatar_url) = &data.avatar_url {
+            q = q.bind(avatar_url);
         }
 
         let user = q.fetch_optional(&self.pool).await?;
