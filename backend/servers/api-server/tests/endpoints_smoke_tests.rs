@@ -344,7 +344,7 @@ mod auth_negative_cases {
     async fn test_refresh_with_empty_string_token_is_rejected(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
-        let body = json!({"refresh_token": ""});
+        let body = json!({"refreshToken": ""});
         let response = app
             .execute(json_request(Method::POST, "/api/v1/auth/refresh", body))
             .await;
