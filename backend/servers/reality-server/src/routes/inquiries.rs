@@ -419,19 +419,20 @@ pub async fn get_inquiry(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<InquiryDetailResponse>, (axum::http::StatusCode, String)> {
-    // Get inquiries for this user and find the one with matching ID
-    let inquiries = state
+    // Single-row lookup scoped to the calling realtor. The previous code
+    // fetched the first 100 inquiries and linear-scanned in Rust, which
+    // silently 404'd for any inquiry beyond the first page for power users.
+    let inquiry = state
         .reality_portal_repo
-        .get_realtor_inquiries(principal.user_id, None, 100, 0)
+        .get_inquiry_for_realtor(id, principal.user_id)
         .await
-        .map_err(|e| crate::util::errors::db_error("get inquiry", e))?;
-
-    let inquiry = inquiries.into_iter().find(|i| i.id == id).ok_or_else(|| {
-        (
-            axum::http::StatusCode::NOT_FOUND,
-            "Inquiry not found".to_string(),
-        )
-    })?;
+        .map_err(|e| crate::util::errors::db_error("get inquiry", e))?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Inquiry not found".to_string(),
+            )
+        })?;
 
     // Mark as read if not already
     let _ = state.reality_portal_repo.mark_inquiry_read(id).await;
