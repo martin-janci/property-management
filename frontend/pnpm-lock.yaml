@@ -422,7 +422,7 @@ importers:
         version: 5.100.9(react@19.2.0)
     devDependencies:
       '@hey-api/openapi-ts':
-        specifier: ^0.97.0
+        specifier: ^0.97.1
         version: 0.97.1(typescript@5.9.3)
       typescript:
         specifier: ^5.3.0
@@ -466,7 +466,7 @@ importers:
         version: 19.2.0
     devDependencies:
       '@hey-api/openapi-ts':
-        specifier: ^0.97.0
+        specifier: ^0.97.1
         version: 0.97.1(typescript@5.9.3)
       '@types/node':
         specifier: ^20.0.0
