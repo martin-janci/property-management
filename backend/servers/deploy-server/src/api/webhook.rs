@@ -10,6 +10,7 @@ use hmac::{Hmac, KeyInit, Mac};
 use serde::Deserialize;
 use sha2::Sha256;
 use std::sync::Arc;
+use subtle::ConstantTimeEq;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -146,21 +147,10 @@ fn verify_signature(headers: &HeaderMap, body: &[u8], secret: &str) -> Result<()
         .map_err(|e| DeployError::Internal(format!("hmac key: {e}")))?;
     mac.update(body);
     let expected = hex::encode(mac.finalize().into_bytes());
-    if !constant_time_eq(sig.as_bytes(), expected.as_bytes()) {
+    if !bool::from(sig.as_bytes().ct_eq(expected.as_bytes())) {
         return Err(DeployError::Unauthorized("bad signature".into()));
     }
     Ok(())
-}
-
-fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    let mut diff = 0u8;
-    for (x, y) in a.iter().zip(b.iter()) {
-        diff |= x ^ y;
-    }
-    diff == 0
 }
 
 #[cfg(test)]

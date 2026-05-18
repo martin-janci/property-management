@@ -52,10 +52,12 @@ frontend/**/.next/
 frontend/**/dist/
 frontend/**/.turbo/
 
-# Mobile Native
-mobile-native/build/
-mobile-native/**/build/
-mobile-native/.gradle/
+# Mobile Native — Kotlin Multiplatform sources, not referenced by any Dockerfile
+mobile-native/
+
+# React Native app — frontend/apps/mobile is not built by any Dockerfile
+# (frontend Dockerfiles only build admin-web, reality-web, ppt-web)
+frontend/apps/mobile/
 
 # =============================================================================
 # Environment and Secrets
@@ -109,3 +111,4 @@ _bmad-output/
 .worktrees/
 .autopilot/
 .claude/
+.research/

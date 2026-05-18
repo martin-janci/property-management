@@ -23,7 +23,7 @@ services:
       POSTGRES_PASSWORD: ppt_dev_password
       POSTGRES_DB: ppt
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
@@ -40,7 +40,7 @@ services:
     container_name: ppt-redis
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -63,8 +63,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     ports:
-      - "9000:9000"   # API
-      - "9001:9001"   # Console
+      - "127.0.0.1:9000:9000"   # API
+      - "127.0.0.1:9001:9001"   # Console
     volumes:
       - minio_data:/data
     healthcheck:
@@ -114,7 +114,7 @@ services:
       S3_BUCKET: ppt-documents
       S3_REGION: us-east-1
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./backend:/app:cached
       - cargo_cache:/usr/local/cargo/registry
@@ -144,7 +144,7 @@ services:
       S3_BUCKET: ppt-images
       S3_REGION: us-east-1
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     volumes:
       - ./backend:/app:cached
       - cargo_cache:/usr/local/cargo/registry
@@ -170,7 +170,7 @@ services:
       VITE_API_URL: http://localhost:8080
       VITE_WS_URL: ws://localhost:8080
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./frontend:/app:cached
       - pnpm_store:/root/.local/share/pnpm/store
@@ -188,7 +188,7 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:8081
       NEXT_PUBLIC_SITE_URL: http://localhost:3001
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     volumes:
       - ./frontend:/app:cached
       - pnpm_store:/root/.local/share/pnpm/store
