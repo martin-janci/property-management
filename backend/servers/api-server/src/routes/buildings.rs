@@ -1938,11 +1938,17 @@ pub async fn assign_unit_owner(
                 user_id = %req.user_id,
                 "Owner row was created but user lookup returned None — invariant violation"
             );
+            // Distinct from client-facing `USER_NOT_FOUND` 400s earlier in
+            // this handler: the owner row was just written successfully, so
+            // the user MUST exist. Reaching this arm is a server-side
+            // invariant violation, not a missing-input error — surface it
+            // as `INTERNAL_ERROR` so log/consumer triage can tell the two
+            // apart (PR #300 review).
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "Owner user not found after assignment",
+                    "INTERNAL_ERROR",
+                    "User row missing after successful write",
                 )),
             )
         })?;
@@ -2098,11 +2104,15 @@ pub async fn update_unit_owner(
                 user_id = %owner_user_id,
                 "Owner row was updated but user lookup returned None — invariant violation"
             );
+            // See `assign_unit_owner` — `INTERNAL_ERROR` instead of
+            // `USER_NOT_FOUND` so the invariant-violation path is
+            // distinguishable from the client-input 400s earlier in this
+            // handler (PR #300 review).
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
-                    "USER_NOT_FOUND",
-                    "Owner user not found after update",
+                    "INTERNAL_ERROR",
+                    "User row missing after successful write",
                 )),
             )
         })?;

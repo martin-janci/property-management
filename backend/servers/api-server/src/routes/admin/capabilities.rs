@@ -18,7 +18,7 @@
 //!                                                   before deleting; returns 404 if ownership fails.
 
 use admin_core::{
-    require_capability, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
+    require_capability, AdminDeps, AuditOutcome, AuditWriter, Capability, CapabilityGrant,
     CapabilityGrantsRepository, RequireCapability,
 };
 use api_core::extractors::principal::RequestPrincipal;
@@ -298,13 +298,18 @@ fn default_true() -> bool {
 async fn grant_capability(
     _cap: RequireCapability,
     auth: AuthUser,
-    Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
-    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    // Both `grants` and `audit` live inside the already-attached `AdminDeps`
+    // bundle (`lib.rs::attach_admin_extensions`). Using the bundle directly
+    // keeps this handler under clippy's `too_many_arguments` 7-arg limit
+    // without dropping any extractor — see PR #300 review.
+    Extension(deps): Extension<AdminDeps>,
     axum::extract::State(state): axum::extract::State<AppState>,
     Path(user_id): Path<Uuid>,
     headers: HeaderMap,
     Json(body): Json<GrantBody>,
 ) -> Result<Json<CapabilityGrant>, (StatusCode, String)> {
+    let grants = &deps.grants;
+    let audit = &deps.audit;
     if body.capability == Capability::PrincipalKindEscalate {
         let has = grants
             .user_has(auth.user_id, Capability::PrincipalKindEscalate)
@@ -342,7 +347,7 @@ async fn grant_capability(
     // Emit a route-level audit row that carries the operator-supplied
     // `reason` in the hashed payload (the baseline audit from
     // `RequireCapability` only sees the capability name, not the body).
-    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ip = super::audit_ip_from_headers(&headers);
     let ua = headers
         .get(axum::http::header::USER_AGENT)
         .and_then(|h| h.to_str().ok());
@@ -398,8 +403,9 @@ async fn grant_capability(
 async fn revoke_capability(
     _cap: RequireCapability,
     auth: AuthUser,
-    Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
-    Extension(audit): Extension<Arc<dyn AuditWriter>>,
+    // See `grant_capability` — collapsing `grants` + `audit` into the
+    // `AdminDeps` bundle keeps the signature under clippy's 7-arg limit.
+    Extension(deps): Extension<AdminDeps>,
     axum::extract::State(state): axum::extract::State<AppState>,
     Path((user_id, grant_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
@@ -408,6 +414,8 @@ async fn revoke_capability(
     // get it plumbed into the audit log, while body-less callers still 204.
     body: Option<Json<RevokeBody>>,
 ) -> Result<StatusCode, (StatusCode, String)> {
+    let grants = &deps.grants;
+    let audit = &deps.audit;
     let enforcer = AuthPolicyEnforcer::new(state.db.clone());
     if let Err(err) = enforcer.check_capability_revoke(auth.user_id).await {
         return Err(map_auth_policy_error(err));
@@ -433,7 +441,7 @@ async fn revoke_capability(
     // Emit a route-level audit row that carries the operator-supplied
     // `reason` (if any) in the hashed payload. Mirrors the grant path.
     let reason = body.and_then(|Json(b)| b.reason);
-    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ip = super::audit_ip_from_headers(&headers);
     let ua = headers
         .get(axum::http::header::USER_AGENT)
         .and_then(|h| h.to_str().ok());

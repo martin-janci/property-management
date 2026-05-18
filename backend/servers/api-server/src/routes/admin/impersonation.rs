@@ -173,7 +173,7 @@ async fn start(
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
-    let ip = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok());
+    let ip = super::audit_ip_from_headers(&headers);
     let ua = headers
         .get(axum::http::header::USER_AGENT)
         .and_then(|h| h.to_str().ok());
