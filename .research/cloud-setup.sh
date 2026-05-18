@@ -88,19 +88,25 @@ gh repo view martin-janci/property-management --json name,visibility | jq -r '.n
 # user accidentally gives the routine a read-only token, the routine's first
 # push will fail mysteriously — surface that here, not 30 lines into Phase 4.
 SCOPES="$(gh api -i user 2>/dev/null | awk -F': ' 'tolower($1) == "x-oauth-scopes" { sub(/\r$/, "", $2); print $2 }' | head -1)"
-if [[ -n "$SCOPES" ]]; then
+# Strip whitespace so a header value of " " (which fine-grained PATs commonly
+# return) is treated the same as a missing header — otherwise `[[ -n ]]` is
+# true for whitespace-only and the assertion below false-flags a valid token.
+SCOPES_TRIM="${SCOPES//[[:space:]]/}"
+if [[ -n "$SCOPES_TRIM" ]]; then
   echo "==> token scopes: $SCOPES"
-  # Classic PATs: must include `repo` (or `public_repo` for public-only).
-  # Fine-grained PATs: x-oauth-scopes is often empty/whitespace; the token
-  # acl is enforced server-side per-resource, so we skip the assertion in
-  # that case rather than false-flag.
-  if ! echo "$SCOPES" | grep -qE '(^|, )(repo|public_repo|contents:write|repo:contents)'; then
-    echo "!! token scopes don't include repo/public_repo/contents:write — pushes to .research/ will fail"
+  # x-oauth-scopes only reports classic OAuth scope names (e.g. `repo`,
+  # `public_repo`, `workflow`). Fine-grained PATs report empty/whitespace
+  # here and enforce permissions server-side per-resource, so they fall
+  # through to the else branch above.
+  if ! echo "$SCOPES" | grep -qE '(^|, )(repo|public_repo)(,|$)'; then
+    echo "!! token scopes don't include repo/public_repo — pushes to .research/ will fail"
     echo "   if this is a fine-grained PAT, ensure Contents = Read & Write is set on this repo"
     exit 1
   fi
 else
-  # No header → fine-grained PAT or older gh; trust the API call and continue.
+  # No header (or whitespace-only) → fine-grained PAT or older gh; trust the
+  # API call we already made and continue. Permissions are enforced per
+  # resource on the server side for fine-grained PATs.
   echo "==> token scopes: (none reported — fine-grained PAT?)"
 fi
 

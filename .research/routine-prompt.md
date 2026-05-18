@@ -102,7 +102,7 @@ is recorded, not hidden), but the brief makes it visible.
 ### G13 — Archive only grows
 
 - **Pass when:** the count of files in `.research/plans/_archive/` this run is **≥** the count at `HEAD`. Archived plans never undo (defensive against accidental rollback during merge conflicts).
-- **Check:** `[ "$(ls .research/plans/_archive/ 2>/dev/null | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` → expect exit 0.
+- **Check:** `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` → expect exit 0. Both sides count tracked files only — `git ls-files` reflects the staged index (what this run will commit), `git ls-tree HEAD` reflects the prior routine commit. Untracked/ignored files and any future subdirectories don't skew the comparison.
 
 ### G14 — Triage digest matches JSON
 
@@ -390,7 +390,7 @@ Run these and verify each passes:
     - `…` standalone on a line (the literal ellipsis as a placeholder)
 
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
-12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(ls .research/plans/_archive/ 2>/dev/null | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
+12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
 13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
 
 ## Brief template

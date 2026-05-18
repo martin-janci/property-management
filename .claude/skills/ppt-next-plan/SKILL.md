@@ -35,19 +35,19 @@ Skip this skill when:
    ```bash
    jq -r '
      [.items[] | select(.status == "ready" and .plan != null)]
-     | sort_by([-(.score // 0), .updated_at])
+     | sort_by([.score // 0, .updated_at])
      | reverse
      | .[0].plan // "NONE"
    ' .research/backlog.json
    ```
    - Output is `plans/<slug>.md` (relative to `.research/`), or the literal `NONE` if nothing's ready.
-   - The `sort_by` key is `[-score, updated_at]` then `reverse`d, which sorts by `score` DESC and `updated_at` DESC — the same order `backlog.md` renders. A simpler `sort_by(.score)` won't tiebreak deterministically.
+   - `sort_by([.score, .updated_at])` sorts ASC by both keys; the trailing `reverse` flips the array so both keys end up DESC — the same order `backlog.md` renders. A simpler `sort_by(.score)` won't tiebreak deterministically.
 
 2. **Open the plan**:
    ```bash
    PLAN=$(jq -r '
      [.items[] | select(.status == "ready" and .plan != null)]
-     | sort_by([-(.score // 0), .updated_at]) | reverse | .[0].plan // "NONE"
+     | sort_by([.score // 0, .updated_at]) | reverse | .[0].plan // "NONE"
    ' .research/backlog.json)
    [ "$PLAN" = "NONE" ] && { echo "no ready plans"; exit 1; }
    cat ".research/$PLAN"
@@ -76,14 +76,14 @@ jq '.items | length' .research/backlog.json >/dev/null && echo OK
 # 2. the picker either returns a real plan path or NONE — never errors mid-pipeline
 jq -re '
   [.items[] | select(.status == "ready" and .plan != null)]
-  | sort_by([-(.score // 0), .updated_at]) | reverse | .[0].plan // "NONE"
+  | sort_by([.score // 0, .updated_at]) | reverse | .[0].plan // "NONE"
 ' .research/backlog.json >/dev/null && echo OK
 # expected: OK
 
 # 3. if a path is returned, it exists on disk
 PLAN=$(jq -r '
   [.items[] | select(.status == "ready" and .plan != null)]
-  | sort_by([-(.score // 0), .updated_at]) | reverse | .[0].plan // "NONE"
+  | sort_by([.score // 0, .updated_at]) | reverse | .[0].plan // "NONE"
 ' .research/backlog.json)
 if [ "$PLAN" != "NONE" ]; then
   test -f ".research/$PLAN" && echo "OK: $PLAN"
