@@ -54,19 +54,23 @@ impl PgMfaRecency {
 #[async_trait]
 impl MfaRecency for PgMfaRecency {
     async fn recent_mfa(&self, user_id: Uuid) -> Result<bool, AdminError> {
-        // The `INTERVAL` literal mirrors `RECENT_MFA_WINDOW`. Keep them
-        // in sync if the constant changes.
+        // Bind the window from the `RECENT_MFA_WINDOW` constant instead of
+        // hard-coding `INTERVAL '15 minutes'` so a single source of truth
+        // drives both Rust-side checks and the SQL filter. `make_interval`
+        // accepts a double-precision seconds value.
+        let window_seconds = RECENT_MFA_WINDOW.num_seconds() as f64;
         let row: Option<(bool,)> = sqlx::query_as(
             r#"
             SELECT TRUE
             FROM two_factor_auth_verifications
             WHERE user_id = $1
-              AND verified_at > NOW() - INTERVAL '15 minutes'
+              AND verified_at > NOW() - make_interval(secs => $2)
             ORDER BY verified_at DESC
             LIMIT 1
             "#,
         )
         .bind(user_id)
+        .bind(window_seconds)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e: SqlxError| AdminError::Internal(format!("mfa_recency: {}", e)))?;

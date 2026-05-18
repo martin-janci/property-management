@@ -19,6 +19,7 @@ pub fn router() -> Router<AppState> {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MetricsSummary {
     /// Organizations whose `status` is not `'deleted'`.
     ///
@@ -71,8 +72,11 @@ async fn metrics_summary(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    // `user_merge_collisions` (migration 00131) tracks unresolved rows via
+    // `status = 'pending'` — there is no `resolved_at` column. The previous
+    // query referenced a nonexistent column and would 500 at runtime.
     let pending_merges: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM user_merge_collisions WHERE resolved_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM user_merge_collisions WHERE status = 'pending'")
             .fetch_one(&state.db)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;

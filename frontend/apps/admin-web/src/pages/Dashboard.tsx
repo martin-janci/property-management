@@ -298,14 +298,15 @@ async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary
       );
       return STUB;
     }
-    // Backend serializes snake_case (no #[serde(rename_all)] on MetricsSummary);
-    // adapt to the camelCase shape used by the rest of the FE.
-    const raw = (await resp.json()) as Record<string, unknown>;
+    // Backend now serializes camelCase (MetricsSummary has
+    // `#[serde(rename_all = "camelCase")]`). Coerce each field through
+    // `Number()` so missing / null values fall back to 0 instead of NaN.
+    const raw = (await resp.json()) as Partial<MetricsSummary>;
     return {
-      tenantsActive: Number(raw.tenantsActive ?? raw.tenants_active ?? 0),
-      operatorsOnline: Number(raw.operatorsOnline ?? raw.operators_online ?? 0),
-      pendingMerges: Number(raw.pendingMerges ?? raw.pending_merges ?? 0),
-      highRisk24h: Number(raw.highRisk24h ?? raw.high_risk_24h ?? 0),
+      tenantsActive: Number(raw.tenantsActive ?? 0),
+      operatorsOnline: Number(raw.operatorsOnline ?? 0),
+      pendingMerges: Number(raw.pendingMerges ?? 0),
+      highRisk24h: Number(raw.highRisk24h ?? 0),
     };
   } catch (err) {
     console.warn(

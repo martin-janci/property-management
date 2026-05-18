@@ -1919,7 +1919,9 @@ pub async fn assign_unit_owner(
         "Unit owner assigned"
     );
 
-    // Return owner info
+    // Return owner info. The owner row was just written above so the user
+    // must exist; if `find_by_id` returns `None` we have an invariant break
+    // (race with delete, foreign-key drift) and surface 500 rather than panic.
     let user = state
         .user_repo
         .find_by_id(req.user_id)
@@ -1931,7 +1933,19 @@ pub async fn assign_unit_owner(
                 Json(ErrorResponse::new("DB_ERROR", "Database error")),
             )
         })?
-        .unwrap();
+        .ok_or_else(|| {
+            tracing::error!(
+                user_id = %req.user_id,
+                "Owner row was created but user lookup returned None — invariant violation"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "USER_NOT_FOUND",
+                    "Owner user not found after assignment",
+                )),
+            )
+        })?;
 
     rls.release().await;
 
@@ -2065,7 +2079,9 @@ pub async fn update_unit_owner(
         "Unit owner updated"
     );
 
-    // Get user info
+    // Get user info. The owner update succeeded above, so the user must
+    // exist; if not we have an invariant break and surface 500 rather than
+    // panic on `.unwrap()`.
     let user = state
         .user_repo
         .find_by_id(owner_user_id)
@@ -2077,7 +2093,19 @@ pub async fn update_unit_owner(
                 Json(ErrorResponse::new("DB_ERROR", "Database error")),
             )
         })?
-        .unwrap();
+        .ok_or_else(|| {
+            tracing::error!(
+                user_id = %owner_user_id,
+                "Owner row was updated but user lookup returned None — invariant violation"
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "USER_NOT_FOUND",
+                    "Owner user not found after update",
+                )),
+            )
+        })?;
 
     rls.release().await;
 
