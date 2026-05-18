@@ -39,6 +39,16 @@ interface CapabilityGrantRow {
 interface MeCapabilitiesResponse {
   principal_kind: 'platform' | 'org' | 'service' | 'staff' | 'public';
   capabilities: ReadonlyArray<CapabilityGrantRow>;
+  /**
+   * ISO-8601 timestamp of the caller's most recent MFA verification within
+   * the current window, or `null` / absent if never verified or expired.
+   * Emitted by api-server since Sprint 1 PR B (scan finding #12).
+   */
+  mfa_verified_at?: string | null;
+  /**
+   * Length of the MFA validity window in seconds (typically 900 = 15 min).
+   */
+  mfa_window_seconds?: number | null;
 }
 
 export interface PrincipalCapabilitiesResult {
@@ -46,6 +56,17 @@ export interface PrincipalCapabilitiesResult {
   capabilities: ReadonlyArray<Capability>;
   /** True while the /me request is in flight; UI should treat as loading. */
   isLoading: boolean;
+  /**
+   * Unix-millisecond timestamp of the most recent MFA verification, derived
+   * from the `mfa_verified_at` field returned by `/me`. `null` if never
+   * verified within the current window.
+   */
+  mfaVerifiedAtMs: number | null;
+  /**
+   * Length of the MFA validity window in milliseconds (typically 900_000).
+   * Defaults to 900_000 if the backend didn't send the field.
+   */
+  mfaWindowMs: number;
 }
 
 async function fetchMeCapabilities(token: string): Promise<MeCapabilitiesResponse> {
@@ -89,9 +110,16 @@ export function usePrincipalCapabilities(): PrincipalCapabilitiesResult {
     retry: 1,
   });
 
+  const mfaVerifiedAtMs = data?.mfa_verified_at != null ? Date.parse(data.mfa_verified_at) : null;
+
+  // Default to 900 s if the backend omits the field (older deployments).
+  const mfaWindowMs = (data?.mfa_window_seconds ?? 900) * 1000;
+
   return {
     isPlatformPrincipal: data?.principal_kind === 'platform',
     capabilities: data ? liveCapabilities(data.capabilities) : [],
     isLoading: isLoading && token !== null,
+    mfaVerifiedAtMs,
+    mfaWindowMs,
   };
 }

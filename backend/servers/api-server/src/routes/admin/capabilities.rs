@@ -22,9 +22,9 @@ use admin_core::{
     CapabilityGrantsRepository, RequireCapability,
 };
 use api_core::extractors::principal::RequestPrincipal;
-use api_core::AuthUser;
+use api_core::{AuthUser, TenantMembershipProvider};
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     routing::{delete, get, post},
     Extension, Json, Router,
@@ -64,25 +64,47 @@ pub fn router() -> Router<AppState> {
         )
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct RegistryEntry {
-    pub key: &'static str,
-    pub registered: bool,
+    pub capability: String,
+    pub description: String,
+    pub risk_level: String,
+    pub holder_count: i64,
 }
 
 /// GET /admin/capabilities/registry
-async fn list_registry(_cap: RequireCapability) -> Json<Vec<RegistryEntry>> {
-    use admin_core::CapabilityRegistry;
-    let registered = CapabilityRegistry::registered();
-    Json(
-        Capability::ALL
-            .iter()
-            .map(|c| RegistryEntry {
-                key: c.as_str(),
-                registered: registered.contains(c),
-            })
-            .collect(),
+///
+/// Returns each capability enriched with its canonical description and risk
+/// level from `capability_descriptions` (seeded by migration 00152) plus the
+/// count of current active holders from `capability_grants`.
+async fn list_registry(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<RegistryEntry>>, (StatusCode, String)> {
+    // Runtime-checked sqlx (not `query!`) — CI runs with SQLX_OFFLINE=true and
+    // no `.sqlx` offline cache is committed, so compile-time checked macros
+    // would fail to build. Matches the convention in `audit.rs`, `agencies.rs`.
+    let rows = sqlx::query_as::<_, RegistryEntry>(
+        r#"
+        SELECT
+            cd.capability AS capability,
+            cd.description AS description,
+            cd.risk_level AS risk_level,
+            COUNT(cg.id) FILTER (
+                WHERE cg.revoked_at IS NULL
+                  AND (cg.expires_at IS NULL OR cg.expires_at > NOW())
+            ) AS holder_count
+        FROM capability_descriptions cd
+        LEFT JOIN capability_grants cg ON cg.capability = cd.capability
+        GROUP BY cd.capability, cd.description, cd.risk_level
+        ORDER BY cd.capability
+        "#,
     )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(rows))
 }
 
 /// GET /admin/capabilities/users/:user_id
@@ -107,7 +129,27 @@ pub struct MyCapabilitiesResponse {
     pub principal_kind: &'static str,
     /// Active (non-revoked, non-expired) capability grants for the caller.
     pub capabilities: Vec<CapabilityGrant>,
+    /// Timestamp of the caller's most recent MFA verification, if any and
+    /// still within the validity window. `null` means never verified or the
+    /// window has already expired.
+    ///
+    /// Frontend uses this (together with `mfa_window_seconds`) to compute the
+    /// live countdown on the `MfaWindowChip` header chip.
+    pub mfa_verified_at: Option<DateTime<Utc>>,
+    /// Length of the MFA validity window in seconds. Currently hardcoded to
+    /// 900 (15 min) — matching `RECENT_MFA_WINDOW` in `admin_core::mfa`.
+    ///
+    /// TODO(config): expose via `AppConfig::mfa_window_seconds` and thread it
+    /// into both `PgMfaRecency` and this field so a single value drives both.
+    pub mfa_window_seconds: i64,
 }
+
+/// The MFA validity window in seconds. Must stay in sync with
+/// `admin_core::mfa::RECENT_MFA_WINDOW` (both are 15 minutes = 900 s).
+///
+/// TODO(config): thread this through `AppConfig` so a single value drives
+/// both `PgMfaRecency` and this constant.
+const MFA_WINDOW_SECONDS: i64 = 900;
 
 /// GET /admin/capabilities/me
 ///
@@ -121,8 +163,14 @@ pub struct MyCapabilitiesResponse {
 /// surface emits an audit row). The audit action is `AuditRead` because the
 /// data being read is a slice of the audit / capabilities surface, even
 /// though no `AuditRead` capability is required to invoke this endpoint.
+///
+/// The response also includes `mfa_verified_at` (the timestamp of the
+/// caller's most-recent MFA verification, or `null` if none within the
+/// window) and `mfa_window_seconds` so the frontend can render a live
+/// countdown chip without decoding the JWT.
 async fn list_for_me(
     principal: RequestPrincipal,
+    State(state): State<AppState>,
     Extension(grants): Extension<Arc<dyn CapabilityGrantsRepository>>,
     Extension(audit): Extension<Arc<dyn AuditWriter>>,
     headers: HeaderMap,
@@ -131,6 +179,38 @@ async fn list_for_me(
         .list_for_user(principal.user_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Fetch the most-recent MFA verification timestamp for this user, if any
+    // within the validity window. We return `None` if the user has never
+    // verified or if the last verification is older than MFA_WINDOW_SECONDS —
+    // that way the frontend chip stays in the `unverified` state even when the
+    // DB row exists but is stale.
+    //
+    // Best-effort: a DB error here must NOT block the bootstrap response.
+    // The chip falls back to `unverified` — acceptable degradation.
+    // TODO(refactor): move into MfaRecency trait to dedupe with
+    // PgMfaRecency::is_recent — add `latest_verification(user_id)` to the
+    // trait + Pg impl + tests so the raw SQL lives in one place.
+    let mfa_verified_at: Option<DateTime<Utc>> = match sqlx::query_scalar::<_, DateTime<Utc>>(
+        r#"
+        SELECT verified_at
+        FROM two_factor_auth_verifications
+        WHERE user_id = $1
+          AND verified_at > NOW() - INTERVAL '900 seconds'
+        ORDER BY verified_at DESC
+        LIMIT 1
+        "#,
+    )
+    .bind(principal.user_id)
+    .fetch_optional(state.db_pool())
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::warn!(user_id = %principal.user_id, error = %e, "failed to load latest MFA verification");
+            None
+        }
+    };
 
     // Audit the read-of-self best-effort. We swallow audit-store errors so
     // an audit-store outage cannot brick the bootstrap path itself — the
@@ -159,6 +239,8 @@ async fn list_for_me(
         user_id: principal.user_id,
         principal_kind: principal.kind.as_str(),
         capabilities: rows,
+        mfa_verified_at,
+        mfa_window_seconds: MFA_WINDOW_SECONDS,
     }))
 }
 

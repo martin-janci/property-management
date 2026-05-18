@@ -6,12 +6,9 @@
  *   - verified (>2min):  green pill with pulsing dot, "MFA verified · MM:SS"
  *   - expiring (≤2min): amber pill with pulsing dot, "MFA expires · M:SS"
  *
- * Context: MfaWindowProvider reads useAdminAuth().token and decodes the JWT for
- * the MFA-verified claim (`mfa_verified_at` + `mfa_window_seconds`).
- *
- * TODO(backend): api-server must include `mfa_verified_at` and `mfa_window_seconds`
- * in the access-token claims for this chip to show verified/expiring states.
- * Until that claim is present the provider stubs { state: 'unverified', msRemaining: 0 }.
+ * Data source: MfaWindowProvider reads `mfa_verified_at` + `mfa_window_seconds`
+ * from the `usePrincipalCapabilities` hook (which fetches `GET /api/v1/admin/capabilities/me`).
+ * No JWT decoding — the values come directly from the bootstrap /me response.
  */
 
 import {
@@ -25,7 +22,7 @@ import {
   useState,
 } from 'react';
 
-import { useAdminAuth } from '../auth/AdminAuthContext';
+import { usePrincipalCapabilities } from '../auth/usePrincipalCapabilities';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,40 +45,21 @@ interface MfaWindowContextValue {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Decode a JWT payload without verifying the signature.
- * Only used client-side for display purposes — never for auth decisions.
- */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const json = atob(padded.padEnd(padded.length + ((4 - (padded.length % 4)) % 4), '='));
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
 const TWO_MINUTES_MS = 2 * 60 * 1000;
 
-function deriveWindowState(token: string | null): MfaWindowContextValue {
-  if (!token) return { state: 'unverified', msRemaining: 0 };
+/**
+ * Derive MFA window state from the /me response fields.
+ *
+ * @param mfaVerifiedAtMs - Unix-millisecond timestamp of last MFA verify, or null.
+ * @param mfaWindowMs     - Length of the MFA validity window in milliseconds.
+ */
+function deriveWindowState(
+  mfaVerifiedAtMs: number | null,
+  mfaWindowMs: number
+): MfaWindowContextValue {
+  if (mfaVerifiedAtMs == null) return { state: 'unverified', msRemaining: 0 };
 
-  const payload = decodeJwtPayload(token);
-  if (!payload) return { state: 'unverified', msRemaining: 0 };
-
-  // TODO(backend): depend on `mfa_verified_at` (unix seconds) and
-  // `mfa_window_seconds` claims emitted by api-server's JWT minting.
-  const mfaVerifiedAt = payload.mfa_verified_at;
-  const mfaWindowSec = payload.mfa_window_seconds;
-
-  if (typeof mfaVerifiedAt !== 'number' || typeof mfaWindowSec !== 'number') {
-    return { state: 'unverified', msRemaining: 0 };
-  }
-
-  const expiresAt = (mfaVerifiedAt + mfaWindowSec) * 1000;
+  const expiresAt = mfaVerifiedAtMs + mfaWindowMs;
   const msRemaining = Math.max(0, expiresAt - Date.now());
 
   if (msRemaining === 0) return { state: 'unverified', msRemaining: 0 };
@@ -96,30 +74,32 @@ function deriveWindowState(token: string | null): MfaWindowContextValue {
 const MfaWindowContext = createContext<MfaWindowContextValue | null>(null);
 
 export function MfaWindowProvider({ children }: { children: ReactNode }) {
-  const { token } = useAdminAuth();
-  const [value, setValue] = useState<MfaWindowContextValue>(() => deriveWindowState(token));
+  const { mfaVerifiedAtMs, mfaWindowMs } = usePrincipalCapabilities();
+  const [value, setValue] = useState<MfaWindowContextValue>(() =>
+    deriveWindowState(mfaVerifiedAtMs, mfaWindowMs)
+  );
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const tick = useCallback(() => {
-    setValue(deriveWindowState(token));
-  }, [token]);
+    setValue(deriveWindowState(mfaVerifiedAtMs, mfaWindowMs));
+  }, [mfaVerifiedAtMs, mfaWindowMs]);
 
   // Recompute every second so the countdown stays live.
   useEffect(() => {
-    setValue(deriveWindowState(token));
+    setValue(deriveWindowState(mfaVerifiedAtMs, mfaWindowMs));
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(tick, 1000);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [token, tick]);
+  }, [mfaVerifiedAtMs, mfaWindowMs, tick]);
 
   return <MfaWindowContext.Provider value={value}>{children}</MfaWindowContext.Provider>;
 }
 
 MfaWindowProvider.displayName = 'MfaWindowProvider';
 
-/** Returns current MFA window state derived from the active token. */
+/** Returns current MFA window state derived from the /me bootstrap data. */
 export function useMfaWindow(): MfaWindowContextValue {
   const ctx = useContext(MfaWindowContext);
   if (!ctx) throw new Error('useMfaWindow must be used inside <MfaWindowProvider>');
