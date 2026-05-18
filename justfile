@@ -277,5 +277,5 @@ new-plan slug:
     if [ -e "$target" ]; then echo "refusing to overwrite $target"; exit 1; fi; \
     if [ ! -f .research/plan-template.md ]; then echo "missing .research/plan-template.md"; exit 1; fi; \
     mkdir -p .research/plans; \
-    SLUG="$SLUG" sed "1s|^# <slug>\$|# $SLUG|" .research/plan-template.md > "$target"; \
+    sed "1s|^# <slug>\$|# $SLUG|" .research/plan-template.md > "$target"; \
     echo "wrote $target — fill placeholders, then commit on a fresh branch."

@@ -296,21 +296,30 @@ Substitute the literal UTC timestamp at regen time. G10's byte-identity check st
 
 After `backlog.md` is rendered, regenerate `.research/IDEAS_TRIAGE.md` from the same `backlog.json`. Filter `items` to rows with `vector == "triage"` (the lowest-effort vector that Phase 3 *never* promotes — see *Phase 3*). Same sort key as `backlog.md` (score desc, then `updated_at` desc). Same regeneration discipline as `backlog.md` — never hand-edit; G14 enforces byte-identity. The file's purpose is a separate weekly digest so triage rows don't drown the implementer's view of "what's ready to ship".
 
-Schema:
+Schema (regenerator must reproduce every static line verbatim — prose paragraph, callout, table headers, and the entire status legend below — because G14 diffs byte-for-byte):
 
 ```markdown
 # Triage queue
 
 <sub>Last regenerated: YYYY-MM-DD HH:MM UTC by routine</sub>
 
-> **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand.
+> **Canonical source:** `backlog.json` rows where `vector == "triage"`. This file is **regenerated** from it each run — do not edit by hand. To drop, defer, or re-score a triage row, edit `backlog.json` and let the next routine run rebuild this view.
+
+Untriaged-issue signals (`vector: "triage"`) pile up here for human review rather than drowning the implementer's `backlog.md`. Phase 3's readiness gate explicitly excludes `triage`, so nothing in this file is promoted to a plan automatically.
 
 | Score | Title | Source | Updated | Status |
 |-------|-------|--------|---------|--------|
 | <…>   | <…>   | <…>    | <…>     | <…>    |
+
+## Status legend
+
+- `open` — needs review or more evidence; no plan exists yet (most triage rows live here)
+- `done` — addressed by hand (issue closed, archived, or moved to a real vector)
+- `dropped` — reviewed and rejected; reason is in the item's `evidence` array in `backlog.json`
+- `needs-human-judgement` — blocked on a question only the user can answer
 ```
 
-If no items qualify, render the headers with one empty separator row (same shape as an empty `backlog.md`). Never delete the file — its existence is part of G14's contract. The header text + status legend below the table are static — preserve them verbatim across renders so the byte-identity check stays meaningful.
+If no items qualify, render the headers with one empty separator row (same shape as an empty `backlog.md`). Never delete the file — its existence is part of G14's contract. The prose paragraph, the callout, the table headers, and the **entire** status legend are static — preserve them verbatim across renders so the byte-identity check stays meaningful.
 
 ### Phase 3 — Promote
 
