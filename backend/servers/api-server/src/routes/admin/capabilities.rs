@@ -57,25 +57,47 @@ pub fn router() -> Router<AppState> {
         )
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct RegistryEntry {
-    pub key: &'static str,
-    pub registered: bool,
+    pub capability: String,
+    pub description: String,
+    pub risk_level: String,
+    pub holder_count: i64,
 }
 
 /// GET /admin/capabilities/registry
-async fn list_registry(_cap: RequireCapability) -> Json<Vec<RegistryEntry>> {
-    use admin_core::CapabilityRegistry;
-    let registered = CapabilityRegistry::registered();
-    Json(
-        Capability::ALL
-            .iter()
-            .map(|c| RegistryEntry {
-                key: c.as_str(),
-                registered: registered.contains(c),
-            })
-            .collect(),
+///
+/// Returns each capability enriched with its canonical description and risk
+/// level from `capability_descriptions` (seeded by migration 00152) plus the
+/// count of current active holders from `capability_grants`.
+async fn list_registry(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<RegistryEntry>>, (StatusCode, String)> {
+    // Runtime-checked sqlx (not `query!`) — CI runs with SQLX_OFFLINE=true and
+    // no `.sqlx` offline cache is committed, so compile-time checked macros
+    // would fail to build. Matches the convention in `audit.rs`, `agencies.rs`.
+    let rows = sqlx::query_as::<_, RegistryEntry>(
+        r#"
+        SELECT
+            cd.capability AS capability,
+            cd.description AS description,
+            cd.risk_level AS risk_level,
+            COUNT(cg.id) FILTER (
+                WHERE cg.revoked_at IS NULL
+                  AND (cg.expires_at IS NULL OR cg.expires_at > NOW())
+            ) AS holder_count
+        FROM capability_descriptions cd
+        LEFT JOIN capability_grants cg ON cg.capability = cd.capability
+        GROUP BY cd.capability, cd.description, cd.risk_level
+        ORDER BY cd.capability
+        "#,
     )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(rows))
 }
 
 /// GET /admin/capabilities/users/:user_id

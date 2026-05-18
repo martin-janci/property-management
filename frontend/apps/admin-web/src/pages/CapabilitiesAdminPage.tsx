@@ -30,27 +30,6 @@ import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReaso
 // Constants & helpers
 // ---------------------------------------------------------------------------
 
-// TODO: replace stub descriptions with data from GET /api/v1/admin/capabilities/registry
-const CAPABILITY_DESCRIPTIONS: Record<string, string> = {
-  agencies_read: 'View agencies and their memberships.',
-  agencies_write: 'Create and edit agency records.',
-  agencies_suspend: 'Suspend or reinstate an agency.',
-  users_read: 'List and inspect user accounts.',
-  users_write: 'Edit user profile fields and metadata.',
-  users_impersonate: 'Impersonate a user for support.',
-  memberships_grant: 'Grant capabilities to platform principals.',
-  memberships_revoke: 'Revoke capabilities from principals.',
-  site_settings_read: 'View tenant-wide site settings.',
-  site_settings_write: 'Modify site settings.',
-  mobile_config_write: 'Push mobile-app configuration.',
-  feature_flags_write: 'Toggle and configure feature flags.',
-  tenant_export: 'Trigger a full tenant data export.',
-  tenant_purge: 'Permanently delete a tenant and all its data.',
-  tenant_restore: 'Restore a tenant from an archive.',
-  audit_read: 'View the platform audit log.',
-  principal_kind_escalate: 'Escalate a user to a higher principal kind.',
-};
-
 const HIGH_RISK_CAPS = new Set(['tenant_purge', 'principal_kind_escalate']);
 
 function formatDate(iso: string | null): string {
@@ -79,6 +58,13 @@ function timeAgo(iso: string | null): string {
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+interface RegistryEntry {
+  capability: string;
+  description: string;
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  holder_count: number;
+}
 
 interface CapabilityGrant {
   id: string;
@@ -251,6 +237,34 @@ function ensureStyles() {
     .cap-pill--expired, .cap-pill--revoked {
       background: var(--ppt-bg-subtle, #f3f4f6);
       color: var(--ppt-fg-muted, #6b7280);
+    }
+
+    /* ---- Risk level pills ---- */
+    .cap-risk {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .cap-risk--low {
+      background: var(--ppt-bg-subtle, #f3f4f6);
+      color: var(--ppt-fg-muted, #6b7280);
+    }
+    .cap-risk--medium {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .cap-risk--high {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .cap-risk--critical {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     /* ---- Buttons ---- */
@@ -440,23 +454,90 @@ function ensureStyles() {
 
 interface RegistryViewProps {
   onViewUser: (userId: string) => void;
+  token: string | null;
 }
 
-function RegistryView({ onViewUser }: RegistryViewProps) {
-  // TODO: fetch holder counts from GET /api/v1/admin/capabilities/registry
-  // when backend supports it; currently returns placeholder "—".
+function RegistryView({ onViewUser, token }: RegistryViewProps) {
+  // Include `token` in the query key so cached results from a previous
+  // session are not served after logout / login / token refresh. React Query
+  // treats different keys as separate caches, preventing cross-user leakage.
+  void onViewUser;
+  const { data, isLoading, error, refetch } = useQuery<RegistryEntry[]>({
+    queryKey: ['admin', 'capabilities', 'registry', token],
+    queryFn: async () => {
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch('/api/v1/admin/capabilities/registry', {
+        headers,
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`Registry fetch failed: ${res.status}`);
+      return res.json() as Promise<RegistryEntry[]>;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="cap-grid">
+        {[...Array(17)].map((_, i) => (
+          <div key={i} className="cap-skeleton" style={{ height: 100, borderRadius: 12 }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="cap-error-banner">
+        {error instanceof Error ? error.message : 'Unable to load registry.'}
+        <button
+          type="button"
+          className="cap-btn cap-btn--secondary"
+          onClick={() => refetch()}
+          style={{ marginLeft: 12 }}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const entries = data ?? [];
+
   return (
     <div className="cap-grid">
-      {CAPABILITIES.map((cap) => (
-        <article key={cap} className="cap-card">
-          <span className="cap-card__name">{cap}</span>
-          <span className="cap-card__desc">
-            {CAPABILITY_DESCRIPTIONS[cap] ?? 'No description available.'}
-          </span>
+      {entries.map((entry) => (
+        <article key={entry.capability} className="cap-card">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}
+          >
+            <span className="cap-card__name">{entry.capability}</span>
+            <span className={`cap-risk cap-risk--${entry.risk_level}`}>{entry.risk_level}</span>
+          </div>
+          <span className="cap-card__desc">{entry.description || 'No description available.'}</span>
           <div className="cap-card__footer">
-            <span className="cap-card__holders">Holders: —</span>
-            <button type="button" className="cap-card__link" onClick={() => onViewUser('me')}>
-              View holders →
+            <span className="cap-card__holders">Holders: {entry.holder_count}</span>
+            {/*
+              Per-capability holders view is not yet wired (no
+              `/admin/capabilities/:cap/holders` route exists). Render the
+              affordance as disabled rather than misrouting every card to
+              `onViewUser('me')`, which leaked the current user's grants
+              regardless of which card was clicked.
+            */}
+            <button
+              type="button"
+              className="cap-card__link"
+              disabled
+              title="Per-capability holders view coming soon"
+            >
+              View holders (coming soon)
             </button>
           </div>
         </article>
@@ -1090,7 +1171,7 @@ export default function CapabilitiesAdminPage() {
           </p>
         </div>
       </div>
-      <RegistryView onViewUser={switchToUser} />
+      <RegistryView onViewUser={switchToUser} token={token} />
     </div>
   );
 }
