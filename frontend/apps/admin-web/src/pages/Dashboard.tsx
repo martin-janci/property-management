@@ -298,7 +298,15 @@ async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary
       );
       return STUB;
     }
-    return (await resp.json()) as MetricsSummary;
+    // Backend serializes snake_case (no #[serde(rename_all)] on MetricsSummary);
+    // adapt to the camelCase shape used by the rest of the FE.
+    const raw = (await resp.json()) as Record<string, unknown>;
+    return {
+      tenantsActive: Number(raw.tenantsActive ?? raw.tenants_active ?? 0),
+      operatorsOnline: Number(raw.operatorsOnline ?? raw.operators_online ?? 0),
+      pendingMerges: Number(raw.pendingMerges ?? raw.pending_merges ?? 0),
+      highRisk24h: Number(raw.highRisk24h ?? raw.high_risk_24h ?? 0),
+    };
   } catch (err) {
     console.warn(
       '[Dashboard] GET /api/v1/admin/metrics/summary failed:',

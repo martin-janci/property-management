@@ -3,6 +3,7 @@
 //! Routes for platform-wide administrative operations including
 //! organization management, feature flags, system health, and announcements.
 
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -31,58 +32,157 @@ use uuid::Uuid;
 use crate::state::AppState;
 
 /// Create platform admin router.
+///
+/// Phase 5 addendum: each route carries a `RequireCapability` layer so the
+/// platform-principal + MFA + active-grant triple is enforced on every call.
+/// The pre-existing JWT-role checks (inside each handler) remain as defence
+/// in depth — capabilities are additive.
 pub fn router() -> Router<AppState> {
     Router::new()
         // Organization management (Story 10B.1)
-        .route("/organizations", get(list_organizations))
-        .route("/organizations/{id}", get(get_organization))
-        .route("/organizations/{id}/suspend", post(suspend_organization))
+        .route(
+            "/organizations",
+            get(list_organizations).layer(require_capability(Capability::AgenciesRead)),
+        )
+        .route(
+            "/organizations/{id}",
+            get(get_organization).layer(require_capability(Capability::AgenciesRead)),
+        )
+        .route(
+            "/organizations/{id}/suspend",
+            post(suspend_organization).layer(require_capability(Capability::AgenciesSuspend)),
+        )
         .route(
             "/organizations/{id}/reactivate",
-            post(reactivate_organization),
+            post(reactivate_organization).layer(require_capability(Capability::AgenciesSuspend)),
         )
-        .route("/stats", get(get_platform_stats))
+        .route(
+            "/stats",
+            get(get_platform_stats).layer(require_capability(Capability::AuditRead)),
+        )
         // Feature flag management (Story 10B.2)
-        .route("/feature-flags", get(list_feature_flags))
-        .route("/feature-flags", post(create_feature_flag))
-        .route("/feature-flags/{id}", get(get_feature_flag))
-        .route("/feature-flags/{id}", put(update_feature_flag))
-        .route("/feature-flags/{id}", delete(delete_feature_flag))
-        .route("/feature-flags/{id}/toggle", post(toggle_feature_flag))
+        .route(
+            "/feature-flags",
+            get(list_feature_flags).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
+        .route(
+            "/feature-flags",
+            post(create_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
+        .route(
+            "/feature-flags/{id}",
+            get(get_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
+        .route(
+            "/feature-flags/{id}",
+            put(update_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
+        .route(
+            "/feature-flags/{id}",
+            delete(delete_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
+        .route(
+            "/feature-flags/{id}/toggle",
+            post(toggle_feature_flag).layer(require_capability(Capability::FeatureFlagsWrite)),
+        )
         .route(
             "/feature-flags/{id}/overrides",
-            post(create_feature_flag_override),
+            post(create_feature_flag_override)
+                .layer(require_capability(Capability::FeatureFlagsWrite)),
         )
         .route(
             "/feature-flags/{id}/overrides/{override_id}",
-            delete(delete_feature_flag_override),
+            delete(delete_feature_flag_override)
+                .layer(require_capability(Capability::FeatureFlagsWrite)),
         )
         // Health monitoring (Story 10B.3)
-        .route("/health/dashboard", get(get_health_dashboard))
-        .route("/health/metrics/{name}/history", get(get_metric_history))
-        .route("/health/alerts", get(get_health_alerts))
-        .route("/health/alerts/{id}/acknowledge", post(acknowledge_alert))
-        .route("/health/thresholds", get(get_thresholds))
-        .route("/health/thresholds/{name}", put(update_threshold))
+        .route(
+            "/health/dashboard",
+            get(get_health_dashboard).layer(require_capability(Capability::AuditRead)),
+        )
+        .route(
+            "/health/metrics/{name}/history",
+            get(get_metric_history).layer(require_capability(Capability::AuditRead)),
+        )
+        .route(
+            "/health/alerts",
+            get(get_health_alerts).layer(require_capability(Capability::AuditRead)),
+        )
+        .route(
+            "/health/alerts/{id}/acknowledge",
+            post(acknowledge_alert).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/health/thresholds",
+            get(get_thresholds).layer(require_capability(Capability::AuditRead)),
+        )
+        .route(
+            "/health/thresholds/{name}",
+            put(update_threshold).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         // System announcements (Story 10B.4)
-        .route("/announcements", get(list_system_announcements))
-        .route("/announcements", post(create_system_announcement))
-        .route("/announcements/{id}", get(get_system_announcement))
-        .route("/announcements/{id}", put(update_system_announcement))
-        .route("/announcements/{id}", delete(delete_system_announcement))
-        .route("/maintenance", post(schedule_maintenance))
-        .route("/maintenance", get(get_upcoming_maintenance_admin))
-        .route("/maintenance/{id}", delete(delete_scheduled_maintenance))
+        .route(
+            "/announcements",
+            get(list_system_announcements).layer(require_capability(Capability::SiteSettingsRead)),
+        )
+        .route(
+            "/announcements",
+            post(create_system_announcement)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/announcements/{id}",
+            get(get_system_announcement).layer(require_capability(Capability::SiteSettingsRead)),
+        )
+        .route(
+            "/announcements/{id}",
+            put(update_system_announcement)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/announcements/{id}",
+            delete(delete_system_announcement)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/maintenance",
+            post(schedule_maintenance).layer(require_capability(Capability::SiteSettingsWrite)),
+        )
+        .route(
+            "/maintenance",
+            get(get_upcoming_maintenance_admin)
+                .layer(require_capability(Capability::SiteSettingsRead)),
+        )
+        .route(
+            "/maintenance/{id}",
+            delete(delete_scheduled_maintenance)
+                .layer(require_capability(Capability::SiteSettingsWrite)),
+        )
         // Support data access (Story 10B.5)
-        .route("/support/users", get(search_users_for_support))
-        .route("/support/users/{id}", get(get_user_for_support))
-        .route("/support/users/{id}/memberships", get(get_user_memberships))
-        .route("/support/users/{id}/sessions", get(get_user_sessions))
+        .route(
+            "/support/users",
+            get(search_users_for_support).layer(require_capability(Capability::UsersRead)),
+        )
+        .route(
+            "/support/users/{id}",
+            get(get_user_for_support).layer(require_capability(Capability::UsersRead)),
+        )
+        .route(
+            "/support/users/{id}/memberships",
+            get(get_user_memberships).layer(require_capability(Capability::UsersRead)),
+        )
+        .route(
+            "/support/users/{id}/sessions",
+            get(get_user_sessions).layer(require_capability(Capability::UsersRead)),
+        )
         .route(
             "/support/users/{id}/sessions/revoke",
-            post(revoke_user_sessions),
+            post(revoke_user_sessions).layer(require_capability(Capability::UsersWrite)),
         )
-        .route("/support/users/{id}/activity", get(get_user_activity))
+        .route(
+            "/support/users/{id}/activity",
+            get(get_user_activity).layer(require_capability(Capability::AuditRead)),
+        )
         // Agency provisioning (Phase 1: Tenant Resolution).
         // Merged in from `agency_provisioning` so the new
         // `POST /api/v1/platform-admin/agencies` endpoint is picked up by the
@@ -273,6 +373,7 @@ pub(crate) fn extract_super_admin_token(
     )
 )]
 pub async fn list_organizations(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListOrganizationsQuery>,
@@ -338,6 +439,7 @@ pub async fn list_organizations(
     )
 )]
 pub async fn get_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -403,6 +505,7 @@ pub async fn get_organization(
     )
 )]
 pub async fn suspend_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -532,6 +635,7 @@ pub async fn suspend_organization(
     )
 )]
 pub async fn reactivate_organization(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -629,6 +733,7 @@ pub async fn reactivate_organization(
     )
 )]
 pub async fn get_platform_stats(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<PlatformStatsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -695,6 +800,7 @@ pub struct UpdateFeatureFlagRequest {
     )
 )]
 pub async fn list_feature_flags(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<ListFeatureFlagsResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -729,6 +835,7 @@ pub async fn list_feature_flags(
     )
 )]
 pub async fn create_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateFeatureFlagRequest>,
@@ -792,6 +899,7 @@ pub async fn create_feature_flag(
     )
 )]
 pub async fn get_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -853,6 +961,7 @@ pub async fn get_feature_flag(
     )
 )]
 pub async fn update_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -926,6 +1035,7 @@ pub async fn update_feature_flag(
     )
 )]
 pub async fn delete_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -990,6 +1100,7 @@ pub async fn delete_feature_flag(
     )
 )]
 pub async fn toggle_feature_flag(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1059,6 +1170,7 @@ pub async fn toggle_feature_flag(
     )
 )]
 pub async fn create_feature_flag_override(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<String>,
@@ -1154,6 +1266,7 @@ pub async fn create_feature_flag_override(
     )
 )]
 pub async fn delete_feature_flag_override(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path((id, override_id)): Path<(String, String)>,
@@ -1350,6 +1463,7 @@ pub struct AlertAcknowledgeResponse {
     tag = "Platform Admin - Health"
 )]
 pub async fn get_health_dashboard(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<HealthDashboard>, (StatusCode, Json<ErrorResponse>)> {
@@ -1391,6 +1505,7 @@ pub async fn get_health_dashboard(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_metric_history(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(name): Path<String>,
@@ -1441,6 +1556,7 @@ pub async fn get_metric_history(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_health_alerts(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<AlertsQuery>,
@@ -1485,6 +1601,7 @@ pub async fn get_health_alerts(
     tag = "Platform Admin - Health"
 )]
 pub async fn acknowledge_alert(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1535,6 +1652,7 @@ pub async fn acknowledge_alert(
     tag = "Platform Admin - Health"
 )]
 pub async fn get_thresholds(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<MetricThreshold>>, (StatusCode, Json<ErrorResponse>)> {
@@ -1577,6 +1695,7 @@ pub async fn get_thresholds(
     tag = "Platform Admin - Health"
 )]
 pub async fn update_threshold(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(name): Path<String>,
@@ -1670,6 +1789,7 @@ pub struct AcknowledgmentResponse {
     tag = "Platform Admin - Announcements"
 )]
 pub async fn list_system_announcements(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListAnnouncementsAdminQuery>,
@@ -1709,6 +1829,7 @@ pub async fn list_system_announcements(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn create_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(request): Json<CreateSystemAnnouncementRequest>,
@@ -1766,6 +1887,7 @@ pub async fn create_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn get_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1818,6 +1940,7 @@ pub async fn get_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn update_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1879,6 +2002,7 @@ pub async fn update_system_announcement(
     tag = "Platform Admin - Announcements"
 )]
 pub async fn delete_system_announcement(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -1928,6 +2052,7 @@ pub async fn delete_system_announcement(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn schedule_maintenance(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Json(request): Json<CreateMaintenanceRequest>,
@@ -2016,6 +2141,7 @@ pub async fn schedule_maintenance(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn get_upcoming_maintenance_admin(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Vec<ScheduledMaintenance>>, (StatusCode, Json<ErrorResponse>)> {
@@ -2057,6 +2183,7 @@ pub async fn get_upcoming_maintenance_admin(
     tag = "Platform Admin - Maintenance"
 )]
 pub async fn delete_scheduled_maintenance(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2350,6 +2477,7 @@ fn default_activity_limit() -> i64 {
     tag = "Platform Admin - Support"
 )]
 pub async fn search_users_for_support(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Query(query): Query<SearchUsersQuery>,
@@ -2406,6 +2534,7 @@ pub async fn search_users_for_support(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_for_support(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2466,6 +2595,7 @@ pub async fn get_user_for_support(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_memberships(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2507,6 +2637,7 @@ pub async fn get_user_memberships(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_sessions(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2548,6 +2679,7 @@ pub async fn get_user_sessions(
     tag = "Platform Admin - Support"
 )]
 pub async fn revoke_user_sessions(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -2601,6 +2733,7 @@ pub async fn revoke_user_sessions(
     tag = "Platform Admin - Support"
 )]
 pub async fn get_user_activity(
+    _cap: RequireCapability,
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
