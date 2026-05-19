@@ -31,7 +31,16 @@ export type WebSocketEventType =
   | 'entity:created'
   | 'entity:deleted'
   | 'connection:authenticated'
-  | 'connection:error';
+  | 'connection:error'
+  | 'connection:max-retries-exceeded';
+
+/**
+ * Default maximum number of reconnect attempts before giving up.
+ * After this many failed attempts in a row, the client stops trying
+ * and emits a `connection:max-retries-exceeded` event so callers can
+ * surface a UI-level "offline" state instead of silently retrying forever.
+ */
+const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
 
 /**
  * Connection states for the WebSocket.
@@ -54,7 +63,12 @@ export type ConnectionStateHandler = (state: ConnectionState, error?: Error) => 
 export interface WebSocketServiceConfig {
   /**
    * WebSocket server URL.
-   * Defaults to VITE_WS_URL env variable or 'ws://localhost:8080/ws'.
+   *
+   * Defaults to:
+   * 1. `config.url` if provided,
+   * 2. `VITE_WS_URL` env variable if set,
+   * 3. `ws://localhost:8080/ws` in dev (`import.meta.env.DEV`),
+   * 4. `wss://${location.host}/ws` in production (no cleartext fallback).
    */
   url?: string;
 
@@ -86,6 +100,37 @@ export interface WebSocketServiceConfig {
    * @default 10000
    */
   pongTimeout?: number;
+
+  /**
+   * Maximum number of reconnect attempts before giving up.
+   * After exceeding this, the client emits a `connection:max-retries-exceeded`
+   * message and stops retrying. Call `connect()` again to resume.
+   * @default 10
+   */
+  maxReconnectAttempts?: number;
+}
+
+/**
+ * Compute the default WebSocket URL.
+ *
+ * In dev we keep the explicit cleartext `ws://localhost:8080/ws` so the
+ * local Vite stack works without TLS. In production we never default to
+ * cleartext: we derive `wss://${location.host}/ws` so the WS scheme
+ * tracks the page scheme and the deploy host. Callers can still override
+ * via the `url` config option or the `VITE_WS_URL` env variable.
+ */
+function defaultWebSocketUrl(): string {
+  if (import.meta.env.DEV) {
+    return 'ws://localhost:8080/ws';
+  }
+
+  // SSR / non-browser safety net — should not happen for ppt-web (SPA),
+  // but keeps the function total.
+  if (typeof window === 'undefined' || !window.location) {
+    return 'wss://localhost/ws';
+  }
+
+  return `wss://${window.location.host}/ws`;
 }
 
 /**
@@ -103,6 +148,7 @@ export class WebSocketService {
   private readonly maxReconnectDelay: number;
   private readonly heartbeatInterval: number;
   private readonly pongTimeout: number;
+  private readonly maxReconnectAttempts: number;
 
   // Reconnection state
   private reconnectAttempts = 0;
@@ -122,12 +168,13 @@ export class WebSocketService {
   private lastEventTimestamp: string | null = null;
 
   constructor(config: WebSocketServiceConfig) {
-    this.url = config.url ?? import.meta.env.VITE_WS_URL ?? 'ws://localhost:8080/ws';
+    this.url = config.url ?? import.meta.env.VITE_WS_URL ?? defaultWebSocketUrl();
     this.getToken = config.getToken;
     this.minReconnectDelay = config.minReconnectDelay ?? 1000;
     this.maxReconnectDelay = config.maxReconnectDelay ?? 30000;
     this.heartbeatInterval = config.heartbeatInterval ?? 30000;
     this.pongTimeout = config.pongTimeout ?? 10000;
+    this.maxReconnectAttempts = config.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
   }
 
   /**
@@ -372,17 +419,66 @@ export class WebSocketService {
 
     this.clearReconnectTimeout();
 
-    // Calculate delay with exponential backoff
-    const delay = Math.min(
+    // Stop retrying once we hit the cap. Without this the client would
+    // hammer a dead endpoint forever, spamming console + server logs and
+    // acting as a small DoS amplifier in dev.
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.shouldReconnect = false;
+      console.warn(
+        `[WebSocket] Giving up after ${this.reconnectAttempts} reconnect attempts. ` +
+          'Call connect() to resume.'
+      );
+      this.notifyMaxRetriesExceeded();
+      this.setConnectionState(
+        'error',
+        new Error(`Max reconnect attempts (${this.maxReconnectAttempts}) exceeded`)
+      );
+      return;
+    }
+
+    // Exponential backoff capped at maxReconnectDelay, plus random jitter
+    // in [0.5, 1.0) to avoid a thundering-herd on shared outages.
+    const baseDelay = Math.min(
       this.minReconnectDelay * 2 ** this.reconnectAttempts,
       this.maxReconnectDelay
     );
+    const delay = baseDelay * (0.5 + Math.random() * 0.5);
 
     this.reconnectAttempts++;
 
     this.reconnectTimeoutId = setTimeout(() => {
       this.connect();
     }, delay);
+  }
+
+  private notifyMaxRetriesExceeded(): void {
+    const message: WebSocketMessage = {
+      type: 'connection:max-retries-exceeded',
+      payload: { attempts: this.reconnectAttempts },
+      timestamp: new Date().toISOString(),
+    };
+
+    const typeHandlers = this.messageHandlers.get(message.type);
+    if (typeHandlers) {
+      for (const handler of typeHandlers) {
+        try {
+          handler(message);
+        } catch (handlerError) {
+          console.error('[WebSocket] max-retries handler error:', handlerError);
+        }
+      }
+    }
+
+    const wildcardHandlers = this.messageHandlers.get('*');
+    if (wildcardHandlers) {
+      for (const handler of wildcardHandlers) {
+        try {
+          handler(message);
+        } catch (handlerError) {
+          console.error('[WebSocket] Wildcard handler error:', handlerError);
+        }
+      }
+    }
   }
 
   private clearReconnectTimeout(): void {

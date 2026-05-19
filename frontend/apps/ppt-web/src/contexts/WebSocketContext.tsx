@@ -129,7 +129,12 @@ export interface WebSocketProviderProps {
 
   /**
    * WebSocket server URL.
-   * Defaults to VITE_WS_URL env variable or 'ws://localhost:8080/ws'.
+   *
+   * Defaults to (in order): the `VITE_WS_URL` env variable; then
+   * `ws://localhost:8080/ws` in dev (`import.meta.env.DEV`); then
+   * `wss://${location.host}/ws` in production. We never default to
+   * cleartext `ws://` outside dev to avoid leaking the bearer token
+   * in the URL over an unencrypted channel.
    */
   wsUrl?: string;
 
