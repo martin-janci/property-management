@@ -72,34 +72,16 @@ impl ListingHandler {
 
     /// Get listing by ID with full details.
     pub async fn get_listing(&self, id: Uuid) -> Result<Option<PublicListingDetail>, String> {
-        // For now, we'll construct the detail from a search result
-        // In a real implementation, this would have a dedicated repository method
-        let query = PublicListingQuery {
-            q: None,
-            property_type: None,
-            transaction_type: None,
-            price_min: None,
-            price_max: None,
-            area_min: None,
-            area_max: None,
-            rooms_min: None,
-            rooms_max: None,
-            city: None,
-            country: None,
-            page: Some(1),
-            limit: Some(1),
-            sort: None,
-        };
-
-        // Search for this specific listing
-        let listings = self
+        // Direct lookup by id. The previous implementation called
+        // `search_listings(limit=1)` and then `.find(|l| l.id == id)`, which
+        // returns the first active listing regardless of id (and `.find`
+        // would then yield `None` whenever that arbitrary first row didn't
+        // match) — a functional bug, not just a perf issue.
+        let summary = self
             .repo
-            .search_listings(&query)
+            .get_listing_by_id(id)
             .await
             .map_err(|e| format!("Failed to fetch listing: {}", e))?;
-
-        // Find the specific listing
-        let summary = listings.into_iter().find(|l| l.id == id);
 
         match summary {
             Some(s) => Ok(Some(PublicListingDetail {
