@@ -41,14 +41,25 @@ pub fn router() -> Router<AppState> {
 
 /// Sanitize a string cell for CSV output to prevent spreadsheet formula
 /// injection. The `csv` crate already handles quoting/escaping of commas,
-/// quotes, and newlines — we only need to neutralize leading `=`, `+`,
-/// `-`, `@` characters that some spreadsheet apps interpret as formulas.
+/// quotes, and newlines — we only need to neutralize the `=`, `+`, `-`,
+/// `@` characters that some spreadsheet apps interpret as formulas.
+///
+/// Two checks:
+///   1. The classic START-of-cell rule (leading `=+-@`).
+///   2. The "anywhere" rule (M5 fix): a cell whose body contains one of
+///      these chars also gets the quote prefix. This matters for the
+///      JSON `details` blob, which starts with `{` (so the leading-char
+///      check passes) but can embed `=cmd|...` that Excel still parses
+///      when the operator copy-pastes the cell contents.
 ///
 /// We prepend a single quote (`'`) which is the standard mitigation: it
 /// forces the cell to be treated as text without being visible in most
-/// spreadsheet UIs.
+/// spreadsheet UIs. False positives (a legit cell containing `-`) are
+/// acceptable for an audit export — the prefix is harmless when pasted
+/// into a viewer and the operator can strip it.
 fn sanitize_csv_cell(value: &str) -> String {
-    if matches!(value.chars().next(), Some('=' | '+' | '-' | '@')) {
+    let dangerous = value.chars().any(|c| matches!(c, '=' | '+' | '-' | '@'));
+    if dangerous {
         let mut out = String::with_capacity(value.len() + 1);
         out.push('\'');
         out.push_str(value);
@@ -325,6 +336,40 @@ mod tests {
         assert!(parse_relative_duration("1w").is_none());
         assert!(parse_relative_duration("abc").is_none());
         assert!(parse_relative_duration("").is_none());
+    }
+
+    #[test]
+    fn sanitize_csv_cell_leading_equals() {
+        // Legacy behaviour: leading `=` gets a quote prefix.
+        assert_eq!(sanitize_csv_cell("=cmd|/c calc"), "'=cmd|/c calc");
+    }
+
+    #[test]
+    fn sanitize_csv_cell_plain_text_untouched() {
+        assert_eq!(sanitize_csv_cell("ordinary"), "ordinary");
+        assert_eq!(sanitize_csv_cell(""), "");
+    }
+
+    #[test]
+    fn sanitize_csv_cell_json_blob_with_inner_equals() {
+        // M5 fix: a JSON blob starts with `{` (leading-char rule passes)
+        // but embeds `=cmd|...` which Excel parses when the operator
+        // copy-pastes the cell. The "anywhere" check catches it.
+        let json = r#"{"action":"=cmd|/c calc"}"#;
+        let sanitized = sanitize_csv_cell(json);
+        assert!(
+            sanitized.starts_with('\''),
+            "JSON cell with inner `=` must be prefixed; got {sanitized}"
+        );
+        // The original content must be preserved (just prefixed).
+        assert_eq!(&sanitized[1..], json);
+    }
+
+    #[test]
+    fn sanitize_csv_cell_json_blob_with_inner_at_sign() {
+        // `@` inside the JSON should also trigger the prefix.
+        let json = r#"{"actor":"@SUM(A1:A9)"}"#;
+        assert!(sanitize_csv_cell(json).starts_with('\''));
     }
 
     #[test]
