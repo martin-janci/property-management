@@ -59,6 +59,10 @@ pub enum Capability {
     // Audit-log viewer.
     AuditRead,
 
+    // OAuth client administration (register, list, view, update, revoke,
+    // regenerate client secrets). Gates `/api/v1/admin/oauth/clients`.
+    OauthClientWrite,
+
     // Platform-kind promotion. Reserved — must be paired with the Phase 2
     // SECURITY DEFINER function and can only be granted by another holder.
     PrincipalKindEscalate,
@@ -86,6 +90,7 @@ impl Capability {
             Capability::TenantPurge => "tenant_purge",
             Capability::TenantRestore => "tenant_restore",
             Capability::AuditRead => "audit_read",
+            Capability::OauthClientWrite => "oauth_client_write",
             Capability::PrincipalKindEscalate => "principal_kind_escalate",
         }
     }
@@ -109,6 +114,7 @@ impl Capability {
         Capability::TenantPurge,
         Capability::TenantRestore,
         Capability::AuditRead,
+        Capability::OauthClientWrite,
         Capability::PrincipalKindEscalate,
     ];
 }

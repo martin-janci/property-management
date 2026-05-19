@@ -5,7 +5,7 @@
 //! `OrganizationRepository` and `AgencyDomainRepository` infra.
 
 use admin_core::{require_capability, AuditOutcome, AuditWriter, Capability, RequireCapability};
-use api_core::AuthUser;
+use api_core::{extractors::principal::RequestPrincipal, AuthUser};
 use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
@@ -150,16 +150,18 @@ pub struct SuspendBody {
 /// POST /admin/agencies/:id/suspend
 async fn suspend_agency(
     _cap: RequireCapability,
+    principal: RequestPrincipal,
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(body): Json<SuspendBody>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    // We do not have the actor_id wired here yet; Phase 2's RequestPrincipal
-    // will provide it. For now we pass `id` as the admin sentinel — the
-    // capability gate already audited the call with the real actor.
+    // Pass the authenticated platform principal as actor_id so the audit row
+    // attributes the suspension to the admin, not the target org. The old code
+    // here passed `id` (the target org id) as the actor — a passive audit-trail
+    // forgery vulnerability.
     state
         .platform_admin_repo
-        .suspend_organization(id, id, &body.reason)
+        .suspend_organization(id, principal.user_id, &body.reason)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(StatusCode::NO_CONTENT)

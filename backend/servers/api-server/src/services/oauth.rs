@@ -474,13 +474,16 @@ impl OAuthService {
             return Err(OAuthServiceError::PrincipalKindNotAllowed);
         }
 
-        // Generate tokens
+        // Generate tokens. Public clients receive no refresh token in the
+        // response (per spec) and we now skip persisting one as well — a
+        // discarded refresh row in DB was an unreachable replay risk.
         let (access_token, refresh_token) = self
             .issue_tokens(
                 auth_code.user_id,
                 &auth_code.client_id,
                 &auth_code.scopes.0,
                 None, // New token family
+                client.is_confidential,
             )
             .await?;
 
@@ -488,11 +491,7 @@ impl OAuthService {
             access_token,
             token_type: "Bearer".to_string(),
             expires_in: self.config.access_token_expires_secs,
-            refresh_token: if client.is_confidential {
-                Some(refresh_token)
-            } else {
-                None
-            },
+            refresh_token,
             scope: auth_code.scopes.0.join(" "),
         })
     }
@@ -568,12 +567,16 @@ impl OAuthService {
             None
         };
 
+        // A refresh-token flow only reaches this point for confidential
+        // clients (public clients never received one to refresh with), so
+        // request a refresh token on the new exchange as well.
         let (access_token, new_refresh_token) = self
             .issue_tokens(
                 refresh_token.user_id,
                 client_id,
                 &refresh_token.scopes.0,
                 family_id,
+                client.is_confidential,
             )
             .await?;
 
@@ -581,7 +584,7 @@ impl OAuthService {
             access_token,
             token_type: "Bearer".to_string(),
             expires_in: self.config.access_token_expires_secs,
-            refresh_token: Some(new_refresh_token),
+            refresh_token: new_refresh_token,
             scope: refresh_token.scopes.0.join(" "),
         })
     }
@@ -685,23 +688,25 @@ impl OAuthService {
 
     // ==================== Private Helpers ====================
 
-    /// Issue access and refresh tokens.
+    /// Issue access (and optionally refresh) tokens.
+    ///
+    /// When `with_refresh` is `false` no refresh token is generated, hashed, or
+    /// persisted — this is the path public OAuth clients take, since the
+    /// response never returns a refresh token to them anyway. Previously a
+    /// refresh row was written for public clients and then discarded by the
+    /// caller, leaving an orphan token in DB that could be replayed if the DB
+    /// leaked.
     async fn issue_tokens(
         &self,
         user_id: Uuid,
         client_id: &str,
         scopes: &[String],
         family_id: Option<Uuid>,
-    ) -> Result<(String, String), OAuthServiceError> {
+        with_refresh: bool,
+    ) -> Result<(String, Option<String>), OAuthServiceError> {
         let access_token = self.generate_secure_token();
-        let refresh_token = self.generate_secure_token();
-
         let access_token_hash = self.hash_token(&access_token);
-        let refresh_token_hash = self.hash_token(&refresh_token);
-
         let access_expires = Utc::now() + Duration::seconds(self.config.access_token_expires_secs);
-        let refresh_expires =
-            Utc::now() + Duration::seconds(self.config.refresh_token_expires_secs);
 
         // Create access token
         self.repo
@@ -713,6 +718,15 @@ impl OAuthService {
                 expires_at: access_expires,
             })
             .await?;
+
+        if !with_refresh {
+            return Ok((access_token, None));
+        }
+
+        let refresh_token = self.generate_secure_token();
+        let refresh_token_hash = self.hash_token(&refresh_token);
+        let refresh_expires =
+            Utc::now() + Duration::seconds(self.config.refresh_token_expires_secs);
 
         // Create refresh token
         self.repo
@@ -726,7 +740,7 @@ impl OAuthService {
             })
             .await?;
 
-        Ok((access_token, refresh_token))
+        Ok((access_token, Some(refresh_token)))
     }
 
     /// Generate a 16-byte client_id (base64url encoded).

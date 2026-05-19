@@ -2,6 +2,7 @@
 //!
 //! Implements OAuth 2.0 Authorization Code flow with PKCE support.
 
+use admin_core::{require_capability, Capability, RequireCapability};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -40,16 +41,40 @@ pub fn router() -> Router<AppState> {
 }
 
 /// Create OAuth admin router (for client management).
+///
+/// Every route is gated by `Capability::OauthClientWrite`. The previous
+/// implementation hand-rolled a `claims.roles.contains("super_admin")` check
+/// in each handler — that pattern trusts the JWT `roles` string claim, which
+/// the rest of the admin surface has moved away from. The capability gate
+/// re-derives the platform principal from the trusted `users` table on every
+/// request, checks an active grant, and enforces recent MFA.
 pub fn admin_router() -> Router<AppState> {
     Router::new()
-        .route("/clients", post(register_client))
-        .route("/clients", get(list_clients))
-        .route("/clients/{id}", get(get_client))
-        .route("/clients/{id}", axum::routing::patch(update_client))
-        .route("/clients/{id}", axum::routing::delete(revoke_client))
+        .route(
+            "/clients",
+            post(register_client).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/clients",
+            get(list_clients).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/clients/{id}",
+            get(get_client).layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/clients/{id}",
+            axum::routing::patch(update_client)
+                .layer(require_capability(Capability::OauthClientWrite)),
+        )
+        .route(
+            "/clients/{id}",
+            axum::routing::delete(revoke_client)
+                .layer(require_capability(Capability::OauthClientWrite)),
+        )
         .route(
             "/clients/{id}/regenerate-secret",
-            post(regenerate_client_secret),
+            post(regenerate_client_secret).layer(require_capability(Capability::OauthClientWrite)),
         )
 }
 
@@ -608,24 +633,11 @@ pub async fn revoke_user_grant(
     )
 )]
 pub async fn register_client(
+    _cap: RequireCapability,
+    principal: api_core::extractors::principal::RequestPrincipal,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     Json(request): Json<RegisterClientRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    // Check super admin role
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let response = state
         .oauth_service
         .register_client(request)
@@ -638,11 +650,8 @@ pub async fn register_client(
             )
         })?;
 
-    // Audit log
-    let user_id: Option<Uuid> = claims.sub.parse().ok();
-    if user_id.is_none() {
-        tracing::warn!(sub = %claims.sub, "Failed to parse user_id from JWT claims for audit log");
-    }
+    // Audit log — use trusted server-side principal, not a JWT claim.
+    let user_id: Option<Uuid> = Some(principal.user_id);
     if let Err(e) = state
         .audit_log_repo
         .create(CreateAuditLog {
@@ -682,22 +691,9 @@ pub async fn register_client(
     )
 )]
 pub async fn list_clients(
+    _cap: RequireCapability,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let clients = state.oauth_service.list_clients().await.map_err(|e| {
         tracing::error!(error = %e, "Failed to list OAuth clients");
         (
@@ -727,23 +723,10 @@ pub async fn list_clients(
     )
 )]
 pub async fn get_client(
+    _cap: RequireCapability,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let client = state.oauth_repo.find_client_by_id(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to get OAuth client");
         (
@@ -778,24 +761,11 @@ pub async fn get_client(
     )
 )]
 pub async fn update_client(
+    _cap: RequireCapability,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(data): Json<UpdateOAuthClient>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let client = state
         .oauth_service
         .update_client(id, data)
@@ -832,23 +802,11 @@ pub async fn update_client(
     )
 )]
 pub async fn revoke_client(
+    _cap: RequireCapability,
+    principal: api_core::extractors::principal::RequestPrincipal,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let revoked = state.oauth_service.revoke_client(id).await.map_err(|e| {
         tracing::error!(error = %e, "Failed to revoke OAuth client");
         (
@@ -864,11 +822,8 @@ pub async fn revoke_client(
         ));
     }
 
-    // Audit log
-    let user_id: Option<Uuid> = claims.sub.parse().ok();
-    if user_id.is_none() {
-        tracing::warn!(sub = %claims.sub, "Failed to parse user_id from JWT claims for audit log");
-    }
+    // Audit log — use trusted server-side principal, not a JWT claim.
+    let user_id: Option<Uuid> = Some(principal.user_id);
     if let Err(e) = state
         .audit_log_repo
         .create(CreateAuditLog {
@@ -913,23 +868,11 @@ pub struct RegenerateSecretResponse {
     )
 )]
 pub async fn regenerate_client_secret(
+    _cap: RequireCapability,
+    principal: api_core::extractors::principal::RequestPrincipal,
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    if !claims.roles.iter().any(|r| r == "super_admin") {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse::new(
-                "FORBIDDEN",
-                "Super admin access required",
-            )),
-        ));
-    }
-
     let secret = state
         .oauth_service
         .regenerate_client_secret(id)
@@ -942,11 +885,8 @@ pub async fn regenerate_client_secret(
             )
         })?;
 
-    // Audit log
-    let user_id: Option<Uuid> = claims.sub.parse().ok();
-    if user_id.is_none() {
-        tracing::warn!(sub = %claims.sub, "Failed to parse user_id from JWT claims for audit log");
-    }
+    // Audit log — use trusted server-side principal, not a JWT claim.
+    let user_id: Option<Uuid> = Some(principal.user_id);
     if let Err(e) = state
         .audit_log_repo
         .create(CreateAuditLog {
