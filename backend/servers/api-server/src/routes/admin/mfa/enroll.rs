@@ -19,6 +19,7 @@ use crate::state::AppState;
 
 /// Response returned by `POST /admin/mfa/enroll/start`.
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EnrollStartResponse {
     /// `otpauth://` URI — hand to a QR-code library.
     pub uri: String,

@@ -232,6 +232,7 @@ pub struct VerifyEmailQuery {
 
 /// Verify email response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct VerifyEmailResponse {
     /// Success message
     pub message: String,
@@ -344,6 +345,7 @@ pub struct ResendVerificationRequest {
 
 /// Resend verification response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ResendVerificationResponse {
     /// Success message
     pub message: String,
@@ -1034,6 +1036,7 @@ pub struct LogoutRequest {
 
 /// Logout response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LogoutResponse {
     /// Success message
     pub message: String,
@@ -1095,6 +1098,7 @@ pub struct ForgotPasswordRequest {
 
 /// Forgot password response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ForgotPasswordResponse {
     /// Success message (always same to prevent enumeration)
     pub message: String,
@@ -1192,6 +1196,7 @@ pub struct ResetPasswordRequest {
 
 /// Reset password response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ResetPasswordResponse {
     /// Success message
     pub message: String,
@@ -1411,6 +1416,7 @@ pub async fn reset_password(
 
 /// Session info returned to clients.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionInfo {
     /// Session ID
     pub id: String,
@@ -1430,6 +1436,7 @@ pub struct SessionInfo {
 
 /// List sessions response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ListSessionsResponse {
     /// Active sessions
     pub sessions: Vec<SessionInfo>,
@@ -1521,6 +1528,7 @@ pub struct RevokeSessionRequest {
 
 /// Revoke session response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RevokeSessionResponse {
     /// Success message
     pub message: String,
@@ -1619,6 +1627,7 @@ pub async fn revoke_session(
 
 /// Revoke all sessions response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RevokeAllSessionsResponse {
     /// Success message
     pub message: String,

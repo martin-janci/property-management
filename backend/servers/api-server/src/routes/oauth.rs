@@ -138,6 +138,7 @@ pub struct ConsentForm {
 
 /// Authorization code response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthorizeResponse {
     pub code: String,
     pub state: Option<String>,
@@ -892,6 +893,7 @@ pub async fn revoke_client(
 
 /// Regenerate client secret response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RegenerateSecretResponse {
     pub client_secret: String,
 }

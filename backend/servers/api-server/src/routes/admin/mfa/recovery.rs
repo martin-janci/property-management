@@ -25,6 +25,7 @@ pub struct UseRecoveryRequest {
 
 /// Response for `POST /admin/mfa/recovery/use`.
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UseRecoveryResponse {
     pub message: String,
     /// How many unused recovery codes remain after this call.
