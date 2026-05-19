@@ -136,12 +136,10 @@ pub async fn list_articles(
     let offset = (page - 1) * per_page;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let rows = sqlx::query(
         r#"
@@ -172,12 +170,7 @@ pub async fn list_articles(
     .bind(offset)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list articles: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list articles", e))?;
 
     let total: i64 = sqlx::query_scalar(
         r#"
@@ -191,12 +184,7 @@ pub async fn list_articles(
     .bind(&search_pattern)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to count articles: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("count articles", e))?;
 
     let articles: Vec<ArticleSummary> = rows
         .into_iter()
@@ -238,12 +226,10 @@ pub async fn get_article(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<ArticleDetailResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let row = sqlx::query(
         r#"
@@ -264,12 +250,7 @@ pub async fn get_article(
     .bind(&slug)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get article: {}", e),
-        )
-    })?
+    .map_err(|e| crate::util::errors::db_error("get article", e))?
     .ok_or_else(|| {
         (
             axum::http::StatusCode::NOT_FOUND,
@@ -293,12 +274,7 @@ pub async fn get_article(
     .bind(&slug)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to fetch related articles: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("fetch related articles", e))?;
 
     let related_articles: Vec<RelatedArticle> = related_rows
         .into_iter()
@@ -351,12 +327,10 @@ pub async fn list_comments(
     State(state): State<AppState>,
     Path(slug): Path<String>,
 ) -> Result<Json<CommentsResponse>, (axum::http::StatusCode, String)> {
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Resolve article ID
     let article_id: Option<Uuid> = sqlx::query_scalar(
@@ -365,12 +339,7 @@ pub async fn list_comments(
     .bind(&slug)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let article_id = article_id.ok_or_else(|| {
         (
@@ -395,12 +364,7 @@ pub async fn list_comments(
     .bind(article_id)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list comments: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list comments", e))?;
 
     let total = rows.len() as i64;
     let comments: Vec<ArticleComment> = rows
@@ -449,12 +413,10 @@ pub async fn create_comment(
         ));
     }
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let article_id: Option<Uuid> = sqlx::query_scalar(
         "SELECT id FROM reality_articles WHERE slug = $1 AND published_at <= NOW()",
@@ -462,12 +424,7 @@ pub async fn create_comment(
     .bind(&slug)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let article_id = article_id.ok_or_else(|| {
         (
@@ -483,12 +440,7 @@ pub async fn create_comment(
             .bind(principal.user_id)
             .fetch_optional(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to get author name: {}", e),
-                )
-            })?
+            .map_err(|e| crate::util::errors::db_error("get author name", e))?
             .flatten()
             .unwrap_or_else(|| "Anonymous".to_string());
 
@@ -498,12 +450,7 @@ pub async fn create_comment(
     .bind(principal.user_id)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get avatar: {}", e),
-        )
-    })?
+    .map_err(|e| crate::util::errors::db_error("get avatar", e))?
     .flatten();
 
     let row = sqlx::query(
@@ -518,12 +465,7 @@ pub async fn create_comment(
     .bind(&data.body)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to create comment: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("create comment", e))?;
 
     let comment = ArticleComment {
         id: row.get("id"),

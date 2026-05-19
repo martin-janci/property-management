@@ -96,10 +96,7 @@ pub async fn create_agency(
                     "Agency with this name or slug already exists".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to create agency: {}", e),
-                )
+                crate::util::errors::db_error("create agency", e)
             }
         })?;
 
@@ -127,12 +124,7 @@ pub async fn list_agencies(
         .reality_portal_repo
         .list_public_agencies(limit, offset)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list agencies: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list agencies", e))?;
 
     Ok(Json(AgencyListResponse { agencies, total }))
 }
@@ -156,12 +148,7 @@ pub async fn get_agency(
         .reality_portal_repo
         .get_agency(id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get agency: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get agency", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -191,12 +178,7 @@ pub async fn get_agency_by_slug(
         .reality_portal_repo
         .get_agency_by_slug(&slug)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get agency: {}", e),
-            )
-        })?
+        .map_err(|e| crate::util::errors::db_error("get agency", e))?
         .ok_or_else(|| {
             (
                 axum::http::StatusCode::NOT_FOUND,
@@ -265,12 +247,7 @@ pub async fn update_branding(
         .reality_portal_repo
         .update_agency_branding(id, data)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to update branding: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("update branding", e))?;
 
     Ok(Json(AgencyResponse { agency }))
 }
@@ -294,12 +271,7 @@ pub async fn list_members(
         .reality_portal_repo
         .get_agency_members(id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get members: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get members", e))?;
 
     let total = members.len() as i64;
 
@@ -342,10 +314,7 @@ pub async fn create_invitation(
                     "Not authorized to create invitations for this agency".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to create invitation: {}", e),
-                )
+                crate::util::errors::db_error("create invitation", e)
             }
         })?;
 
@@ -392,10 +361,7 @@ pub async fn accept_invitation(
                     "Invalid invitation token".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to accept invitation: {}", e),
-                )
+                crate::util::errors::db_error("accept invitation", e)
             }
         })?;
 

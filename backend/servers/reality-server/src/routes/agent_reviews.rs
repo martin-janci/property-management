@@ -85,12 +85,10 @@ pub async fn list_reviews(
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let offset = query.offset.unwrap_or(0).max(0);
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Verify realtor exists
     let realtor_exists: bool =
@@ -98,12 +96,7 @@ pub async fn list_reviews(
             .bind(realtor_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check realtor: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check realtor", e))?;
 
     if !realtor_exists {
         return Err((
@@ -136,36 +129,21 @@ pub async fn list_reviews(
     .bind(offset)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list reviews: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list reviews", e))?;
 
     let total: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM realtor_reviews WHERE realtor_id = $1")
             .bind(realtor_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to count reviews: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("count reviews", e))?;
 
     let avg_rating: Option<f64> =
         sqlx::query_scalar("SELECT AVG(rating::float8) FROM realtor_reviews WHERE realtor_id = $1")
             .bind(realtor_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to compute avg rating: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("compute avg rating", e))?;
 
     let reviews: Vec<RealtorReview> = rows
         .into_iter()
@@ -222,12 +200,10 @@ pub async fn create_review(
         ));
     }
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Verify realtor exists
     let realtor_exists: bool =
@@ -235,12 +211,7 @@ pub async fn create_review(
             .bind(realtor_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check realtor: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check realtor", e))?;
 
     if !realtor_exists {
         return Err((
@@ -265,12 +236,7 @@ pub async fn create_review(
     .bind(realtor_id)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to check verified buyer status: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("check verified buyer status", e))?;
 
     // Phase 6: reads from `users` (portal_users dropped in migration 00148).
     let reviewer_name: String =
@@ -278,12 +244,7 @@ pub async fn create_review(
             .bind(principal.user_id)
             .fetch_optional(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to get reviewer name: {}", e),
-                )
-            })?
+            .map_err(|e| crate::util::errors::db_error("get reviewer name", e))?
             .flatten()
             .unwrap_or_else(|| "Anonymous".to_string());
 
@@ -305,12 +266,7 @@ pub async fn create_review(
     .bind(verified_buyer)
     .fetch_optional(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to create review: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("create review", e))?;
 
     match row {
         Some(r) => {

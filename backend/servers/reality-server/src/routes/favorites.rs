@@ -79,12 +79,7 @@ pub async fn list_favorites(
         .reality_portal_repo
         .get_favorites_with_listings(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list favorites: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("list favorites", e))?;
 
     Ok(Json(FavoritesResponse { favorites }))
 }
@@ -126,10 +121,7 @@ pub async fn add_favorite(
                     "Maximum favorites limit reached".to_string(),
                 )
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to add favorite: {}", e),
-                )
+                crate::util::errors::db_error("add favorite", e)
             }
         })?;
 
@@ -157,12 +149,7 @@ pub async fn remove_favorite(
         .reality_portal_repo
         .remove_favorite(principal.user_id, listing_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to remove favorite: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("remove favorite", e))?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -188,12 +175,7 @@ pub async fn check_favorite(
         .reality_portal_repo
         .get_favorites_with_listings(principal.user_id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to check favorite: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("check favorite", e))?;
 
     let is_favorited = favorites.iter().any(|f| f.listing_id == listing_id);
 

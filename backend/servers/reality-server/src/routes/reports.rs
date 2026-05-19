@@ -134,12 +134,10 @@ pub async fn submit_report(
         ));
     }
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     // Check listing exists
     let listing_exists: bool =
@@ -147,12 +145,7 @@ pub async fn submit_report(
             .bind(data.listing_id)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to check listing: {}", e),
-                )
-            })?;
+            .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
     if !listing_exists {
         return Err((
@@ -187,12 +180,7 @@ pub async fn submit_report(
     .bind(&data.reporter_phone)
     .fetch_one(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to submit report: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("submit report", e))?;
 
     use sqlx::Row;
     let attachments_stored: Option<serde_json::Value> = row.get("attachments");
@@ -240,12 +228,10 @@ pub async fn list_my_reports(
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let offset = query.offset.unwrap_or(0).max(0);
 
-    let mut conn = state.acquire_public_conn().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Database error: {}", e),
-        )
-    })?;
+    let mut conn = state
+        .acquire_public_conn()
+        .await
+        .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
     let rows = sqlx::query(
         r#"
@@ -265,12 +251,7 @@ pub async fn list_my_reports(
     .bind(&query.status)
     .fetch_all(&mut *conn)
     .await
-    .map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to list reports: {}", e),
-        )
-    })?;
+    .map_err(|e| crate::util::errors::db_error("list reports", e))?;
 
     use sqlx::Row;
     let reports: Vec<ListingReport> = rows

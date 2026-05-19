@@ -226,10 +226,7 @@ pub async fn send_contact_message(
                     "Listing not found".to_string(),
                 ))
             } else {
-                Err((
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to send message: {}", e),
-                ))
+                Err(crate::util::errors::db_error("send contact message", e))
             }
         }
     }
@@ -353,10 +350,7 @@ pub async fn request_viewing(
                     "Listing not found".to_string(),
                 ))
             } else {
-                Err((
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to send viewing request: {}", e),
-                ))
+                Err(crate::util::errors::db_error("send viewing request", e))
             }
         }
     }
@@ -382,18 +376,23 @@ pub async fn list_my_inquiries(
     let limit = query.limit.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * limit;
 
-    let inquiries = state
-        .reality_portal_repo
-        .get_realtor_inquiries(principal.user_id, query.status, limit, offset)
-        .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to list inquiries: {}", e),
-            )
-        })?;
-
-    let total = inquiries.len() as i64;
+    // Run the page query and the matching COUNT in parallel — the count
+    // must use the same filter as the page so clients can compute
+    // `total / limit` for pagination. Returning `inquiries.len()` here
+    // (the previous behaviour) silently lied on every non-final page.
+    let status_filter = query.status.clone();
+    let (inquiries, total) = tokio::try_join!(
+        state.reality_portal_repo.get_realtor_inquiries(
+            principal.user_id,
+            query.status,
+            limit,
+            offset,
+        ),
+        state
+            .reality_portal_repo
+            .count_realtor_inquiries(principal.user_id, status_filter),
+    )
+    .map_err(|e| crate::util::errors::db_error("list inquiries", e))?;
 
     Ok(Json(InquiryListResponse {
         inquiries,
@@ -425,12 +424,7 @@ pub async fn get_inquiry(
         .reality_portal_repo
         .get_realtor_inquiries(principal.user_id, None, 100, 0)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to get inquiry: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("get inquiry", e))?;
 
     let inquiry = inquiries.into_iter().find(|i| i.id == id).ok_or_else(|| {
         (
@@ -469,12 +463,7 @@ pub async fn mark_as_read(
         .reality_portal_repo
         .mark_inquiry_read(id)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to mark as read: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("mark inquiry read", e))?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
@@ -517,12 +506,7 @@ pub async fn respond_to_inquiry(
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &req.message)
         .await
-        .map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to send response: {}", e),
-            )
-        })?;
+        .map_err(|e| crate::util::errors::db_error("respond to inquiry", e))?;
 
     Ok(Json(InquiryMessageResponse {
         id: message.id,
