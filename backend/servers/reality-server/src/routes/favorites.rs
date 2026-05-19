@@ -170,14 +170,13 @@ pub async fn check_favorite(
     principal: RequestPrincipal,
     Path(listing_id): Path<Uuid>,
 ) -> Result<Json<CheckFavoriteResponse>, (axum::http::StatusCode, String)> {
-    // Check if the user has this listing in favorites by getting favorites and checking
-    let favorites = state
+    // Single-row existence query (was previously a full list-then-filter which
+    // silently lost favorites past the implicit fetch cap for power users).
+    let is_favorited = state
         .reality_portal_repo
-        .get_favorites_with_listings(principal.user_id)
+        .is_favorite(principal.user_id, listing_id)
         .await
         .map_err(|e| crate::util::errors::db_error("check favorite", e))?;
-
-    let is_favorited = favorites.iter().any(|f| f.listing_id == listing_id);
 
     Ok(Json(CheckFavoriteResponse { is_favorited }))
 }

@@ -141,6 +141,22 @@ impl RealityPortalRepository {
         .await
     }
 
+    /// Check whether a user has a given listing in their favorites.
+    ///
+    /// Single-row existence query — avoids fetching the entire favorites
+    /// collection just to test membership (functional bug at large N where
+    /// list endpoints cap results).
+    pub async fn is_favorite(&self, user_id: Uuid, listing_id: Uuid) -> Result<bool, SqlxError> {
+        let exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM portal_favorites WHERE user_id = $1 AND listing_id = $2)",
+        )
+        .bind(user_id)
+        .bind(listing_id)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(exists)
+    }
+
     /// Remove listing from favorites.
     pub async fn remove_favorite(
         &self,
@@ -222,6 +238,25 @@ impl RealityPortalRepository {
         )
         .bind(user_id)
         .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Get a single saved search by id, scoped to the owning user.
+    ///
+    /// Single-row query — replaces the previous list-then-filter pattern in
+    /// the handlers, which silently 404'd whenever a search wasn't in the
+    /// first page of `get_saved_searches`.
+    pub async fn get_saved_search_for_user(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<Option<PortalSavedSearch>, SqlxError> {
+        sqlx::query_as::<_, PortalSavedSearch>(
+            "SELECT * FROM portal_saved_searches WHERE id = $1 AND user_id = $2",
+        )
+        .bind(id)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -706,6 +741,25 @@ impl RealityPortalRepository {
         .bind(realtor_id)
         .bind(&status)
         .fetch_one(&self.pool)
+        .await
+    }
+
+    /// Get a single inquiry by id, scoped to the owning realtor.
+    ///
+    /// Single-row query — replaces the previous list-then-filter pattern in
+    /// the handler, which silently 404'd any inquiry beyond the first 100
+    /// for power users.
+    pub async fn get_inquiry_for_realtor(
+        &self,
+        inquiry_id: Uuid,
+        realtor_id: Uuid,
+    ) -> Result<Option<ListingInquiry>, SqlxError> {
+        sqlx::query_as::<_, ListingInquiry>(
+            "SELECT * FROM listing_inquiries WHERE id = $1 AND realtor_id = $2",
+        )
+        .bind(inquiry_id)
+        .bind(realtor_id)
+        .fetch_optional(&self.pool)
         .await
     }
 

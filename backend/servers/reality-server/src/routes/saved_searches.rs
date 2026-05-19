@@ -116,19 +116,20 @@ pub async fn get_saved_search(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PortalSavedSearch>, (axum::http::StatusCode, String)> {
-    // Get all saved searches for user and filter by id (since repository doesn't have get_by_id)
-    let searches = state
+    // Single-row lookup scoped to the owning user. The previous code fetched
+    // the entire saved-search collection and linear-scanned, which is both
+    // wasteful and breaks at scale (functional bug for power users).
+    let search = state
         .reality_portal_repo
-        .get_saved_searches(principal.user_id)
+        .get_saved_search_for_user(id, principal.user_id)
         .await
-        .map_err(|e| crate::util::errors::db_error("get saved search", e))?;
-
-    let search = searches.into_iter().find(|s| s.id == id).ok_or_else(|| {
-        (
-            axum::http::StatusCode::NOT_FOUND,
-            "Saved search not found".to_string(),
-        )
-    })?;
+        .map_err(|e| crate::util::errors::db_error("get saved search", e))?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Saved search not found".to_string(),
+            )
+        })?;
 
     Ok(Json(search))
 }
@@ -214,19 +215,18 @@ pub async fn run_saved_search(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RunSavedSearchResponse>, (axum::http::StatusCode, String)> {
-    // First get the saved search to verify ownership and get criteria
-    let searches = state
+    // Single-row lookup scoped to the owning user (same fix as get_saved_search).
+    let search = state
         .reality_portal_repo
-        .get_saved_searches(principal.user_id)
+        .get_saved_search_for_user(id, principal.user_id)
         .await
-        .map_err(|e| crate::util::errors::db_error("get saved search", e))?;
-
-    let search = searches.into_iter().find(|s| s.id == id).ok_or_else(|| {
-        (
-            axum::http::StatusCode::NOT_FOUND,
-            "Saved search not found".to_string(),
-        )
-    })?;
+        .map_err(|e| crate::util::errors::db_error("get saved search", e))?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Saved search not found".to_string(),
+            )
+        })?;
 
     // Parse the stored criteria JSON to a search query
     let query: db::models::PublicListingQuery = serde_json::from_value(search.criteria.clone())
