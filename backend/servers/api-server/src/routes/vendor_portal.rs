@@ -3,14 +3,15 @@
 //! Provides vendor-facing endpoints for job management, property access,
 //! work completion, invoicing, and performance tracking.
 
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{
     AcceptJobRequest, AccessCodeResponse, DeclineJobRequest, GenerateAccessCode,
     PropertyAccessInfo, SubmitWorkCompletion, VendorDashboardStats, VendorEarningsSummary,
@@ -27,40 +28,18 @@ use crate::state::AppState;
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/// Extract vendor context from request headers.
-/// Vendors must be authenticated and have vendor role.
-fn extract_vendor_context(
-    headers: &HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Vendor authentication required",
-                )),
-            )
-        })?;
-
-    let context: TenantContext = serde_json::from_str(tenant_header).map_err(|_| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid vendor context format",
-            )),
-        )
-    })?;
-
-    // Verify the user has vendor role
-    // In a full implementation, this would check context.role == TenantRole::Vendor
-    // For now, we accept any authenticated user but this should be restricted
-    Ok(context)
-}
+//
+// SECURITY: The previous `extract_vendor_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy. That helper has been deleted; every handler now goes
+// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
+//
+// TODO(security): vendor-portal endpoints should additionally assert
+// `principal.kind == Staff` AND a vendor-role lookup. The previous
+// `extract_vendor_context` only contained a comment promising that check;
+// it was never wired up. Closing the auth-bypass takes priority over
+// reintroducing the missing vendor-role gate.
 
 /// Query parameters for invoice listing.
 #[derive(Debug, Deserialize, IntoParams)]
@@ -127,10 +106,8 @@ pub fn router() -> Router<AppState> {
 )]
 async fn get_dashboard_stats(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
 ) -> Result<Json<VendorDashboardStats>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
-
     let stats = VendorDashboardStats {
         today_jobs: 3,
         upcoming_jobs: 12,
@@ -158,10 +135,9 @@ async fn get_dashboard_stats(
 )]
 async fn list_jobs(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Query(_query): Query<VendorJobQuery>,
 ) -> Result<Json<Vec<VendorJobSummary>>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let jobs = vec![
         VendorJobSummary {
             id: Uuid::new_v4(),
@@ -206,10 +182,9 @@ async fn list_jobs(
 )]
 async fn get_job_details(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<VendorJob>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let job = VendorJob {
         id: job_id,
         work_order_id: Uuid::new_v4(),
@@ -255,11 +230,10 @@ async fn get_job_details(
 )]
 async fn accept_job(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<AcceptJobRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     Ok(StatusCode::OK)
 }
 
@@ -281,11 +255,10 @@ async fn accept_job(
 )]
 async fn decline_job(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<DeclineJobRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     Ok(StatusCode::OK)
 }
 
@@ -306,11 +279,10 @@ async fn decline_job(
 )]
 async fn propose_alternative_time(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<db::models::ProposeAlternativeTime>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     Ok(StatusCode::OK)
 }
 
@@ -332,10 +304,9 @@ async fn propose_alternative_time(
 )]
 async fn get_access_info(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<PropertyAccessInfo>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let access_info = PropertyAccessInfo {
         job_id,
         building_id: Uuid::new_v4(),
@@ -371,11 +342,10 @@ async fn get_access_info(
 )]
 async fn generate_access_code(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(request): Json<GenerateAccessCode>,
 ) -> Result<Json<AccessCodeResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let now = Utc::now();
     let response = AccessCodeResponse {
         code: "847291".to_string(),
@@ -406,11 +376,10 @@ async fn generate_access_code(
 )]
 async fn submit_work_completion(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
     Json(request): Json<SubmitWorkCompletion>,
 ) -> Result<Json<WorkCompletion>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let materials_total: Decimal = request.materials_used.iter().map(|m| m.total_cost).sum();
 
     let completion = WorkCompletion {
@@ -445,10 +414,9 @@ async fn submit_work_completion(
 )]
 async fn get_work_completion(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<WorkCompletion>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let completion = WorkCompletion {
         job_id,
         completed_at: Utc::now(),
@@ -478,10 +446,9 @@ async fn get_work_completion(
 )]
 async fn list_invoices(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Query(_query): Query<InvoiceQuery>,
 ) -> Result<Json<Vec<VendorInvoiceWithTracking>>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let invoices = vec![
         VendorInvoiceWithTracking {
             id: Uuid::new_v4(),
@@ -526,9 +493,8 @@ async fn list_invoices(
 )]
 async fn get_profile(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
 ) -> Result<Json<VendorProfile>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let profile = VendorProfile {
         id: Uuid::new_v4(),
         company_name: "ABC Plumbing Services".to_string(),
@@ -565,10 +531,9 @@ async fn get_profile(
 )]
 async fn list_feedback(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Query(_query): Query<FeedbackQuery>,
 ) -> Result<Json<Vec<VendorFeedback>>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let feedback = vec![
         VendorFeedback {
             id: Uuid::new_v4(),
@@ -616,10 +581,9 @@ async fn list_feedback(
 )]
 async fn get_earnings_summary(
     State(_state): State<AppState>,
-    headers: HeaderMap,
+    _principal: RequestPrincipal,
     Query(query): Query<EarningsQuery>,
 ) -> Result<Json<VendorEarningsSummary>, (StatusCode, Json<ErrorResponse>)> {
-    let _context = extract_vendor_context(&headers)?;
     let months = query.period_months.unwrap_or(1);
     let today = Utc::now().date_naive();
     let period_start = today - chrono::Duration::days(months as i64 * 30);

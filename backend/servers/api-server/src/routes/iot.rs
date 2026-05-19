@@ -3,13 +3,14 @@
 //! Handles sensor registration, data ingestion, dashboards, alerts, and correlations.
 
 use crate::state::AppState;
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{
     AlertQuery, BatchSensorReadings, CreateSensor, CreateSensorFaultCorrelation,
     CreateSensorReading, CreateSensorThreshold, ReadingQuery, SensorQuery, UpdateSensor,
@@ -22,30 +23,28 @@ use uuid::Uuid;
 // ============================================================================
 // Helper Functions
 // ============================================================================
+//
+// SECURITY: The previous `extract_tenant_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy. That helper has been deleted; every handler now goes
+// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 
-/// Extract tenant context from request headers.
-fn extract_tenant_context(
-    headers: &HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Tenant context required",
-                )),
-            )
-        })?;
-
-    serde_json::from_str(tenant_header).map_err(|_| {
+/// Resolve the effective tenant id from a verified [`RequestPrincipal`].
+///
+/// IoT endpoints are per-tenant by definition (sensor inventory, alerts,
+/// dashboards). A platform-kind principal hitting the platform host has no
+/// `effective_org` — for those callers we refuse with 403 rather than fall
+/// back to a wildcard.
+fn require_tenant_id(
+    principal: &RequestPrincipal,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    principal.effective_org.ok_or_else(|| {
         (
-            StatusCode::BAD_REQUEST,
+            StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid tenant context format",
+                "TENANT_REQUIRED",
+                "IoT endpoints require a tenant-resolved request",
             )),
         )
     })
@@ -145,12 +144,12 @@ async fn create_sensor(
 )]
 async fn list_sensors(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<SensorQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    match state.sensor_repo.list(tenant.tenant_id, query).await {
+    match state.sensor_repo.list(tenant_id, query).await {
         Ok(sensors) => Ok(Json(serde_json::json!({ "sensors": sensors }))),
         Err(e) => {
             tracing::error!("Failed to list sensors: {}", e);
@@ -428,14 +427,14 @@ async fn delete_threshold(
 
 async fn list_sensor_alerts(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(mut query): Query<AlertQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
     query.sensor_id = Some(id);
 
-    match state.sensor_repo.list_alerts(tenant.tenant_id, query).await {
+    match state.sensor_repo.list_alerts(tenant_id, query).await {
         Ok(alerts) => Ok(Json(serde_json::json!({ "alerts": alerts }))),
         Err(e) => {
             tracing::error!("Failed to list alerts: {}", e);
@@ -452,14 +451,14 @@ async fn list_sensor_alerts(
 
 async fn acknowledge_alert(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .sensor_repo
-        .acknowledge_alert(alert_id, tenant.user_id)
+        .acknowledge_alert(alert_id, principal.user_id)
         .await
     {
         Ok(alert) => Ok(Json(serde_json::json!(alert))),
@@ -531,13 +530,13 @@ async fn list_correlations(
 
 async fn create_correlation(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorFaultCorrelation>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
-    req.created_by = Some(tenant.user_id);
+    req.created_by = Some(principal.user_id);
 
     match state.sensor_repo.create_correlation(req).await {
         Ok(correlation) => Ok((StatusCode::CREATED, Json(serde_json::json!(correlation)))),
@@ -583,14 +582,14 @@ async fn delete_correlation(
 
 async fn list_threshold_templates(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<TemplateQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .sensor_repo
-        .list_threshold_templates(Some(tenant.tenant_id), query.sensor_type.as_deref())
+        .list_threshold_templates(Some(tenant_id), query.sensor_type.as_deref())
         .await
     {
         Ok(templates) => Ok(Json(serde_json::json!({ "templates": templates }))),
@@ -647,14 +646,14 @@ pub struct ApplyTemplateRequest {
 
 async fn get_dashboard(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<DashboardQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     match state
         .sensor_repo
-        .get_dashboard(tenant.tenant_id, query.building_id)
+        .get_dashboard(tenant_id, query.building_id)
         .await
     {
         Ok(dashboard) => Ok(Json(serde_json::json!(dashboard))),

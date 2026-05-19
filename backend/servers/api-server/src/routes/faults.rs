@@ -1,14 +1,15 @@
 //! Fault routes (Epic 4: Fault Reporting & Resolution).
 
 use crate::state::AppState;
+use api_core::extractors::principal::RequestPrincipal;
 use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{
     AddFaultComment, AddWorkNote, AiSuggestion, AssignFault, ConfirmFault, CreateFault,
     CreateFaultAttachment, Fault, FaultAttachment, FaultListQuery, FaultStatistics, FaultSummary,
@@ -22,30 +23,29 @@ use uuid::Uuid;
 // ============================================================================
 // Helper Functions
 // ============================================================================
+//
+// SECURITY: The previous `extract_tenant_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy. That helper has been deleted; every handler now goes
+// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
+//
+// TODO(security): the `is_manager` branches below previously trusted the
+// client-supplied role. They have been replaced with `false` (least
+// privilege) and need a real role lookup against the `memberships` table —
+// see `routes/organizations.rs` for the canonical pattern. Closing the
+// auth-bypass takes priority over reinstating the role distinction.
 
-/// Extract tenant context from request headers.
-fn extract_tenant_context(
-    headers: &HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Authentication required",
-                )),
-            )
-        })?;
-
-    serde_json::from_str(tenant_header).map_err(|_| {
+/// Resolve the effective tenant id from a verified [`RequestPrincipal`].
+fn require_tenant_id(
+    principal: &RequestPrincipal,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    principal.effective_org.ok_or_else(|| {
         (
-            StatusCode::BAD_REQUEST,
+            StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid authentication context format",
+                "TENANT_REQUIRED",
+                "Faults endpoints require a tenant-resolved request",
             )),
         )
     })
@@ -283,17 +283,17 @@ pub fn router() -> Router<AppState> {
 )]
 async fn create_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     mut rls: RlsConnection,
     Json(req): Json<CreateFaultRequest>,
 ) -> Result<(StatusCode, Json<CreateFaultResponse>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = CreateFault {
-        organization_id: context.tenant_id,
+        organization_id: tenant_id,
         building_id: req.building_id,
         unit_id: req.unit_id,
-        reporter_id: context.user_id,
+        reporter_id: principal.user_id,
         title: req.title,
         description: req.description,
         location_description: req.location_description,
@@ -340,10 +340,10 @@ async fn create_fault(
 )]
 async fn list_faults(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<ListFaultsQuery>,
 ) -> Result<Json<FaultListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let list_query = FaultListQuery {
         building_id: query.building_id,
@@ -364,7 +364,7 @@ async fn list_faults(
 
     let faults = state
         .fault_repo
-        .list(context.tenant_id, list_query)
+        .list(tenant_id, list_query)
         .await
         .map_err(|e| {
             tracing::error!("Failed to list faults: {}", e);
@@ -393,15 +393,15 @@ async fn list_faults(
 )]
 async fn list_my_faults(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<ListFaultsQuery>,
 ) -> Result<Json<FaultListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let faults = state
         .fault_repo
         .list_by_reporter(
-            context.user_id,
+            principal.user_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )
@@ -436,11 +436,12 @@ async fn list_my_faults(
 )]
 async fn get_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FaultDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-    let is_manager = context.role.is_manager();
+    let tenant_id = require_tenant_id(&principal)?;
+    // TODO(security): real role lookup; previous code trusted client-supplied role.
+    let is_manager = false;
 
     let fault = match state.fault_repo.find_by_id_with_details(id).await {
         Ok(Some(f)) => f,
@@ -580,12 +581,12 @@ async fn update_fault(
 )]
 async fn triage_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<TriageFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Check fault exists
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
@@ -626,7 +627,7 @@ async fn triage_fault(
 
     let fault = state
         .fault_repo
-        .triage(id, context.user_id, data)
+        .triage(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to triage fault: {}", e);
@@ -662,11 +663,11 @@ async fn triage_fault(
 )]
 async fn assign_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<AssignFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = AssignFault {
         assigned_to: req.assigned_to,
@@ -674,7 +675,7 @@ async fn assign_fault(
 
     let fault = state
         .fault_repo
-        .assign(id, context.user_id, data)
+        .assign(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to assign fault: {}", e);
@@ -710,12 +711,12 @@ async fn assign_fault(
 )]
 async fn update_status(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Get current fault to obtain current status
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
@@ -749,7 +750,7 @@ async fn update_status(
         .update_status_rls(
             &mut **rls.conn(),
             id,
-            context.user_id,
+            principal.user_id,
             data,
             existing.status,
         )
@@ -788,11 +789,11 @@ async fn update_status(
 )]
 async fn resolve_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = ResolveFault {
         resolution_notes: req.resolution_notes,
@@ -800,7 +801,7 @@ async fn resolve_fault(
 
     let fault = state
         .fault_repo
-        .resolve(id, context.user_id, data)
+        .resolve(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to resolve fault: {}", e);
@@ -836,11 +837,11 @@ async fn resolve_fault(
 )]
 async fn confirm_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<ConfirmFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = ConfirmFault {
         rating: req.rating,
@@ -849,7 +850,7 @@ async fn confirm_fault(
 
     let fault = state
         .fault_repo
-        .confirm(id, context.user_id, data)
+        .confirm(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to confirm fault: {}", e);
@@ -884,17 +885,17 @@ async fn confirm_fault(
 )]
 async fn reopen_fault(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<ReopenFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = ReopenFault { reason: req.reason };
 
     let fault = state
         .fault_repo
-        .reopen(id, context.user_id, data)
+        .reopen(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to reopen fault: {}", e);
@@ -927,11 +928,12 @@ async fn reopen_fault(
 )]
 async fn list_comments(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TimelineResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-    let is_manager = context.role.is_manager();
+    let tenant_id = require_tenant_id(&principal)?;
+    // TODO(security): real role lookup; previous code trusted client-supplied role.
+    let is_manager = false;
 
     match state.fault_repo.list_timeline(id, is_manager).await {
         Ok(entries) => Ok(Json(TimelineResponse { entries })),
@@ -964,11 +966,11 @@ async fn list_comments(
 )]
 async fn add_comment(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = AddFaultComment {
         note: req.note,
@@ -977,7 +979,7 @@ async fn add_comment(
 
     state
         .fault_repo
-        .add_comment(id, context.user_id, data)
+        .add_comment(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to add comment: {}", e);
@@ -1009,17 +1011,17 @@ async fn add_comment(
 )]
 async fn add_work_note(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<AddWorkNoteRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = AddWorkNote { note: req.note };
 
     state
         .fault_repo
-        .add_work_note(id, context.user_id, data)
+        .add_work_note(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!("Failed to add work note: {}", e);
@@ -1082,11 +1084,11 @@ async fn list_attachments(
 )]
 async fn add_attachment(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<AddAttachmentRequest>,
 ) -> Result<(StatusCode, Json<FaultAttachment>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let data = CreateFaultAttachment {
         fault_id: id,
@@ -1096,7 +1098,7 @@ async fn add_attachment(
         size_bytes: req.size_bytes,
         storage_url: req.storage_url,
         thumbnail_url: req.thumbnail_url,
-        uploaded_by: context.user_id,
+        uploaded_by: principal.user_id,
         description: req.description,
         width: req.width,
         height: req.height,
@@ -1310,14 +1312,14 @@ async fn get_ai_suggestion(
 )]
 async fn get_statistics(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Query(query): Query<StatisticsQuery>,
 ) -> Result<Json<StatisticsResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     let statistics = state
         .fault_repo
-        .get_statistics(context.tenant_id, query.building_id)
+        .get_statistics(tenant_id, query.building_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get statistics: {}", e);

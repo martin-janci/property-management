@@ -41,6 +41,12 @@ use crate::state::AppState;
 // ============================================================================
 // Helper Functions
 // ============================================================================
+//
+// SECURITY: The previous `extract_tenant_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy. That helper has been deleted; every handler now goes
+// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 
 type ApiResult<T> = Result<T, (StatusCode, Json<ErrorResponse>)>;
 

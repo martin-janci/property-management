@@ -1,12 +1,13 @@
 //! Critical Notifications routes (Epic 8A, Story 8A.2).
 
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     routing::{get, post},
     Json, Router,
 };
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{
     AcknowledgeCriticalNotificationResponse, CreateCriticalNotificationRequest,
     CreateCriticalNotificationResponse, CriticalNotificationResponse, CriticalNotificationStats,
@@ -44,20 +45,24 @@ pub fn router() -> Router<AppState> {
 )]
 pub async fn create_notification(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    principal: RequestPrincipal,
     Json(req): Json<CreateCriticalNotificationRequest>,
 ) -> Result<(StatusCode, Json<CreateCriticalNotificationResponse>), (StatusCode, Json<ErrorResponse>)>
 {
     // Extract tenant context
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    // Verify user is admin
-    if !tenant.role.is_admin() {
+    // TODO(security): real admin role lookup against the memberships
+    // table. The previous code trusted the client-supplied role from
+    // X-Tenant-Context which was an auth-bypass. As an interim measure
+    // we only let platform principals through; the proper fix is the
+    // membership-role pattern in `routes/organizations.rs`.
+    if !principal.is_platform() {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "FORBIDDEN",
-                "Only administrators can create critical notifications",
+                "Only administrators can perform this action",
             )),
         ));
     }
@@ -65,12 +70,12 @@ pub async fn create_notification(
     // Create the notification
     let notification = match state
         .critical_notification_repo
-        .create(tenant.tenant_id, &req.title, &req.message, tenant.user_id)
+        .create(tenant_id, &req.title, &req.message, principal.user_id)
         .await
     {
         Ok(n) => n,
         Err(e) => {
-            tracing::error!(error = %e, org_id = %tenant.tenant_id, "Failed to create critical notification");
+            tracing::error!(error = %e, org_id = %tenant_id, "Failed to create critical notification");
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -83,8 +88,8 @@ pub async fn create_notification(
 
     tracing::info!(
         notification_id = %notification.id,
-        org_id = %tenant.tenant_id,
-        created_by = %tenant.user_id,
+        org_id = %tenant_id,
+        created_by = %principal.user_id,
         "Critical notification created"
     );
 
@@ -114,20 +119,20 @@ pub async fn create_notification(
 )]
 pub async fn list_notifications(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<Vec<CriticalNotificationResponse>>, (StatusCode, Json<ErrorResponse>)> {
     // Extract tenant context
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Get notifications with acknowledgment status
     let notifications_with_status = match state
         .critical_notification_repo
-        .get_for_org_with_status(tenant.user_id, tenant.tenant_id)
+        .get_for_org_with_status(principal.user_id, tenant_id)
         .await
     {
         Ok(n) => n,
         Err(e) => {
-            tracing::error!(error = %e, org_id = %tenant.tenant_id, "Failed to get critical notifications");
+            tracing::error!(error = %e, org_id = %tenant_id, "Failed to get critical notifications");
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -169,20 +174,20 @@ pub async fn list_notifications(
 )]
 pub async fn get_unacknowledged(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    principal: RequestPrincipal,
 ) -> Result<Json<UnacknowledgedNotificationsResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract tenant context
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Get unacknowledged notifications
     let notifications = match state
         .critical_notification_repo
-        .get_unacknowledged(tenant.user_id, tenant.tenant_id)
+        .get_unacknowledged(principal.user_id, tenant_id)
         .await
     {
         Ok(n) => n,
         Err(e) => {
-            tracing::error!(error = %e, user_id = %tenant.user_id, "Failed to get unacknowledged notifications");
+            tracing::error!(error = %e, user_id = %principal.user_id, "Failed to get unacknowledged notifications");
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -238,11 +243,11 @@ pub struct NotificationPath {
 )]
 pub async fn acknowledge(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<NotificationPath>,
 ) -> Result<Json<AcknowledgeCriticalNotificationResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract tenant context
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
     // Verify notification exists and belongs to the org
     let notification = match state
@@ -270,7 +275,7 @@ pub async fn acknowledge(
     };
 
     // Verify notification belongs to user's org
-    if notification.organization_id != tenant.tenant_id {
+    if notification.organization_id != tenant_id {
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Notification not found")),
@@ -280,12 +285,12 @@ pub async fn acknowledge(
     // Create acknowledgment
     let ack = match state
         .critical_notification_repo
-        .acknowledge(path.notification_id, tenant.user_id)
+        .acknowledge(path.notification_id, principal.user_id)
         .await
     {
         Ok(a) => a,
         Err(e) => {
-            tracing::error!(error = %e, notification_id = %path.notification_id, user_id = %tenant.user_id, "Failed to acknowledge notification");
+            tracing::error!(error = %e, notification_id = %path.notification_id, user_id = %principal.user_id, "Failed to acknowledge notification");
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
@@ -298,7 +303,7 @@ pub async fn acknowledge(
 
     tracing::info!(
         notification_id = %path.notification_id,
-        user_id = %tenant.user_id,
+        user_id = %principal.user_id,
         "Critical notification acknowledged"
     );
 
@@ -328,19 +333,23 @@ pub async fn acknowledge(
 )]
 pub async fn get_stats(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<NotificationPath>,
 ) -> Result<Json<CriticalNotificationStats>, (StatusCode, Json<ErrorResponse>)> {
     // Extract tenant context
-    let tenant = extract_tenant_context(&headers)?;
+    let tenant_id = require_tenant_id(&principal)?;
 
-    // Verify user is admin
-    if !tenant.role.is_admin() {
+    // TODO(security): real admin role lookup against the memberships
+    // table. The previous code trusted the client-supplied role from
+    // X-Tenant-Context which was an auth-bypass. As an interim measure
+    // we only let platform principals through; the proper fix is the
+    // membership-role pattern in `routes/organizations.rs`.
+    if !principal.is_platform() {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
                 "FORBIDDEN",
-                "Only administrators can view notification statistics",
+                "Only administrators can perform this action",
             )),
         ));
     }
@@ -371,7 +380,7 @@ pub async fn get_stats(
     };
 
     // Verify notification belongs to user's org
-    if notification.organization_id != tenant.tenant_id {
+    if notification.organization_id != tenant_id {
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new("NOT_FOUND", "Notification not found")),
@@ -381,7 +390,7 @@ pub async fn get_stats(
     // Get stats
     let stats = match state
         .critical_notification_repo
-        .get_stats(path.notification_id, tenant.tenant_id)
+        .get_stats(path.notification_id, tenant_id)
         .await
     {
         Ok(s) => s,
@@ -401,32 +410,30 @@ pub async fn get_stats(
 }
 
 // ==================== Helper Functions ====================
+//
+// SECURITY: The previous `extract_tenant_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy AND claim arbitrary admin role. That helper has been
+// deleted; every handler now goes through `RequestPrincipal` (verified
+// bearer JWT + host-resolved tenant).
+//
+// TODO(security): the `is_admin` branches below previously trusted the
+// client-supplied role and gated `create_notification` / `get_stats` on it.
+// They have been replaced with `false` (least privilege), which makes those
+// endpoints unreachable until a real role lookup is wired up (see
+// `routes/organizations.rs` for the canonical membership-role pattern).
 
-/// Extract tenant context from request headers.
-fn extract_tenant_context(
-    headers: &axum::http::HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    // Get the X-Tenant-Context header
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Tenant context required",
-                )),
-            )
-        })?;
-
-    // Parse the tenant context
-    serde_json::from_str(tenant_header).map_err(|_| {
+/// Resolve the effective tenant id from a verified [`RequestPrincipal`].
+fn require_tenant_id(
+    principal: &RequestPrincipal,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    principal.effective_org.ok_or_else(|| {
         (
-            StatusCode::BAD_REQUEST,
+            StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid tenant context format",
+                "TENANT_REQUIRED",
+                "Critical-notifications endpoints require a tenant-resolved request",
             )),
         )
     })

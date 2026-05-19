@@ -2,13 +2,14 @@
 //!
 //! Routes for community groups, posts, events, and marketplace.
 
+use api_core::extractors::principal::RequestPrincipal;
 use axum::{
     extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     routing::{get, post},
     Json, Router,
 };
-use common::{errors::ErrorResponse, TenantContext};
+use common::errors::ErrorResponse;
 use db::models::{
     CommunityComment, CommunityEvent, CommunityEventRsvp, CommunityGroup,
     CommunityGroupWithMembership, CommunityPost, CreateCommunityComment, CreateCommunityEvent,
@@ -24,34 +25,12 @@ use crate::state::AppState;
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/// Extract tenant context from request headers.
-fn extract_tenant_context(
-    headers: &HeaderMap,
-) -> Result<TenantContext, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_header = headers
-        .get("X-Tenant-Context")
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_CONTEXT",
-                    "Authentication required",
-                )),
-            )
-        })?;
-
-    serde_json::from_str(tenant_header).map_err(|_| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new(
-                "INVALID_CONTEXT",
-                "Invalid authentication context format",
-            )),
-        )
-    })
-}
+//
+// SECURITY: The previous `extract_tenant_context` helper deserialized the
+// client-supplied `X-Tenant-Context` JSON header directly into a
+// `TenantContext`. No JWT verification — any unauthenticated caller could
+// forge tenancy. That helper has been deleted; every handler now goes
+// through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 
 /// Create community router.
 pub fn router() -> Router<AppState> {
@@ -198,15 +177,13 @@ pub async fn list_groups(
 )]
 pub async fn create_group(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateCommunityGroup>,
 ) -> Result<(StatusCode, Json<CommunityGroup>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let group = state
         .community_repo
-        .create_group(path.building_id, context.user_id, data)
+        .create_group(path.building_id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create group");
@@ -271,14 +248,12 @@ pub async fn get_group(
 )]
 pub async fn join_group(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     state
         .community_repo
-        .join_group(path.id, context.user_id)
+        .join_group(path.id, principal.user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to join group");
@@ -305,14 +280,12 @@ pub async fn join_group(
 )]
 pub async fn leave_group(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<GroupIdPath>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     state
         .community_repo
-        .leave_group(path.id, context.user_id)
+        .leave_group(path.id, principal.user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to leave group");
@@ -378,15 +351,13 @@ pub async fn list_posts(
 )]
 pub async fn create_post(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<GroupPostsPath>,
     Json(data): Json<CreateCommunityPost>,
 ) -> Result<(StatusCode, Json<CommunityPost>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let post = state
         .community_repo
-        .create_post(path.group_id, context.user_id, data)
+        .create_post(path.group_id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create post");
@@ -417,15 +388,13 @@ pub async fn create_post(
 )]
 pub async fn add_reaction(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<PostIdPath>,
     Json(data): Json<AddReactionRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     state
         .community_repo
-        .add_post_reaction(path.id, context.user_id, &data.reaction_type)
+        .add_post_reaction(path.id, principal.user_id, &data.reaction_type)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to add reaction");
@@ -456,15 +425,13 @@ pub async fn add_reaction(
 )]
 pub async fn create_comment(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<PostIdPath>,
     Json(data): Json<CreateCommunityComment>,
 ) -> Result<(StatusCode, Json<CommunityComment>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let comment = state
         .community_repo
-        .create_comment(path.id, context.user_id, data)
+        .create_comment(path.id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create comment");
@@ -533,15 +500,13 @@ pub async fn list_events(
 )]
 pub async fn create_event(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateCommunityEvent>,
 ) -> Result<(StatusCode, Json<CommunityEvent>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let event = state
         .community_repo
-        .create_event(path.building_id, context.user_id, data)
+        .create_event(path.building_id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create event");
@@ -572,15 +537,13 @@ pub async fn create_event(
 )]
 pub async fn rsvp_event(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<EventRsvpRequest>,
 ) -> Result<Json<CommunityEventRsvp>, (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let rsvp = state
         .community_repo
-        .rsvp_event(id, context.user_id, data)
+        .rsvp_event(id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to RSVP to event");
@@ -646,15 +609,13 @@ pub async fn list_items(
 )]
 pub async fn create_item(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateMarketplaceItem>,
 ) -> Result<(StatusCode, Json<MarketplaceItem>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let item = state
         .community_repo
-        .create_item(path.building_id, context.user_id, data)
+        .create_item(path.building_id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create item");
@@ -720,15 +681,13 @@ pub async fn get_item(
 )]
 pub async fn create_inquiry(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    principal: RequestPrincipal,
     Path(path): Path<ItemIdPath>,
     Json(data): Json<CreateMarketplaceInquiry>,
 ) -> Result<(StatusCode, Json<MarketplaceInquiry>), (StatusCode, Json<ErrorResponse>)> {
-    let context = extract_tenant_context(&headers)?;
-
     let inquiry = state
         .community_repo
-        .create_inquiry(path.id, context.user_id, data)
+        .create_inquiry(path.id, principal.user_id, data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to create inquiry");
