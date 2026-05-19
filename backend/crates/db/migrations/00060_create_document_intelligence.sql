@@ -83,12 +83,16 @@ CREATE TRIGGER trigger_update_document_search_vector
     EXECUTE FUNCTION update_document_search_vector();
 
 -- Update existing documents' search vectors
+-- Idempotency hardening: WHERE search_vector IS NULL makes replay cheap and
+-- avoids a multi-minute table rewrite on dev DB resets / backup restores.
+-- No semantic change on first run: at that point all rows already had NULL.
 UPDATE documents SET search_vector =
     setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
     setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
     setweight(to_tsvector('english', COALESCE(file_name, '')), 'B') ||
     setweight(to_tsvector('english', COALESCE(extracted_text, '')), 'C') ||
-    setweight(to_tsvector('english', COALESCE(ai_summary, '')), 'C');
+    setweight(to_tsvector('english', COALESCE(ai_summary, '')), 'C')
+WHERE search_vector IS NULL;
 
 -- ============================================================================
 -- Story 28.3: Document Auto-Classification

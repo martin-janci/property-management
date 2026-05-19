@@ -29,7 +29,7 @@
 -- row in a "global portal" table — the global view is a filter (see 00136).
 
 ALTER TABLE listings
-    ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT FALSE;
+    ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Backfill: rows previously visible via the reality-server `status='active'`
 -- filter become published. Other status values remain unpublished.
