@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "last_run_iso": "2026-05-20T10:53:33Z",
   "last_run_ms": 1779274413000,
   "last_pr_seen": 343,
@@ -31,10 +31,12 @@
     "unchecked-todo-portfolio-dashboard-stubs",
     "dep-update-noise-2026-05-20"
   ],
+  "auto_fix_history": {},
   "stats": {
     "runs": 1,
     "vectors_created": 6,
     "plans_created": 0,
-    "quiet_days": 0
+    "quiet_days": 0,
+    "auto_fix_count": 0
   }
 }
