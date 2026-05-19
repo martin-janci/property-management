@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 
 export interface LoginResponse {
-  /** Empty string when `mfa_required: true` (server defers the token until MFA passes). */
-  access_token: string;
-  mfa_required?: boolean;
+  /** Empty string when `mfaRequired: true` (server defers the token until MFA passes). */
+  accessToken: string;
+  mfaRequired?: boolean;
 }
 
 export interface LoginPageProps {
@@ -14,14 +14,14 @@ export interface LoginPageProps {
   loginFn?: (creds: {
     email: string;
     password: string;
-    two_factor_code?: string;
+    twoFactorCode?: string;
   }) => Promise<LoginResponse>;
 }
 
 const defaultLoginFn = async (creds: {
   email: string;
   password: string;
-  two_factor_code?: string;
+  twoFactorCode?: string;
 }) => {
   const resp = await fetch('/api/v1/auth/login', {
     method: 'POST',
@@ -38,10 +38,10 @@ export function LoginPage({ loginFn = defaultLoginFn }: LoginPageProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // `mfaRequired` flips after the first POST returns `mfa_required: true`.
+  // `mfaRequired` flips after the first POST returns `mfaRequired: true`.
   // The form then renders the TOTP code input and a second submit replays
-  // the login with `two_factor_code` populated. Until the server returns a
-  // non-empty access_token we never call `setToken` — otherwise we'd land
+  // the login with `twoFactorCode` populated. Until the server returns a
+  // non-empty accessToken we never call `setToken` — otherwise we'd land
   // on the dashboard with an empty Bearer header and every API call would
   // 401-loop.
   const [mfaRequired, setMfaRequired] = useState(false);
@@ -57,18 +57,18 @@ export function LoginPage({ loginFn = defaultLoginFn }: LoginPageProps) {
       const resp = await loginFn({
         email,
         password,
-        two_factor_code: mfaRequired ? code : undefined,
+        twoFactorCode: mfaRequired ? code : undefined,
       });
-      if (resp.mfa_required || !resp.access_token) {
+      if (resp.mfaRequired || !resp.accessToken) {
         setMfaRequired(true);
         setCode('');
-        if (!resp.access_token && !resp.mfa_required) {
+        if (!resp.accessToken && !resp.mfaRequired) {
           // Server returned 200 but no token and no MFA flag — refuse to navigate.
           setError('Login response missing access token');
         }
         return;
       }
-      auth.setToken(resp.access_token);
+      auth.setToken(resp.accessToken);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'login failed');

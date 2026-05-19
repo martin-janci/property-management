@@ -53,6 +53,7 @@ pub struct RegisterRequest {
 
 /// Register response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterResponse {
     /// Success message
     pub message: String,
@@ -413,6 +414,7 @@ pub async fn resend_verification(
 
 /// Login request.
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
     /// Email address
     pub email: String,
@@ -425,6 +427,7 @@ pub struct LoginRequest {
 
 /// Login response.
 #[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginResponse {
     /// JWT access token (empty if MFA required)
     pub access_token: String,
@@ -820,6 +823,7 @@ pub async fn login(
 
 /// Refresh token request.
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct RefreshTokenRequest {
     /// The refresh token to exchange for new tokens
     pub refresh_token: String,
@@ -1022,6 +1026,7 @@ pub async fn refresh_token(
 
 /// Logout request.
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct LogoutRequest {
     /// The refresh token to revoke
     pub refresh_token: String,
@@ -1177,6 +1182,7 @@ pub async fn forgot_password(
 
 /// Reset password request.
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct ResetPasswordRequest {
     /// Reset token from email
     pub token: String,
