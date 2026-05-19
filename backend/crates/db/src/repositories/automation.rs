@@ -54,12 +54,37 @@ impl AutomationRepository {
         .await
     }
 
-    /// Get automation rule by ID.
+    /// Get automation rule by ID (no tenant scoping — internal use only).
+    ///
+    /// Handlers MUST use [`Self::find_rule_for_org`] to enforce tenant
+    /// isolation. This unscoped variant is retained for background workers
+    /// (scheduled execution, executor lookups) where the `organization_id`
+    /// is derived from the persisted row itself rather than from a caller.
     pub async fn get_rule(&self, id: Uuid) -> Result<Option<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
             "SELECT * FROM workflow_automation_rules WHERE id = $1",
         )
         .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Get automation rule by ID, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the rule does not exist OR belongs to a
+    /// different organization — the caller MUST surface this as a 404 so
+    /// cross-tenant existence is not leaked via the status code.
+    /// Mirrors `WorkflowRepository::find_by_id_for_org`.
+    pub async fn find_rule_for_org(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<Option<WorkflowAutomationRule>, SqlxError> {
+        sqlx::query_as::<_, WorkflowAutomationRule>(
+            "SELECT * FROM workflow_automation_rules WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
         .fetch_optional(&self.pool)
         .await
     }
@@ -77,57 +102,76 @@ impl AutomationRepository {
         .await
     }
 
-    /// Update automation rule.
+    /// Update automation rule, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the rule does not exist OR belongs to a
+    /// different organization. The caller MUST surface this as 404 to avoid
+    /// leaking cross-tenant existence.
     pub async fn update_rule(
         &self,
         id: Uuid,
+        organization_id: Uuid,
         data: UpdateAutomationRule,
-    ) -> Result<WorkflowAutomationRule, SqlxError> {
+    ) -> Result<Option<WorkflowAutomationRule>, SqlxError> {
         sqlx::query_as::<_, WorkflowAutomationRule>(
             r#"
             UPDATE workflow_automation_rules SET
-                name = COALESCE($2, name),
-                description = COALESCE($3, description),
-                trigger_config = COALESCE($4, trigger_config),
-                conditions = COALESCE($5, conditions),
-                actions = COALESCE($6, actions),
-                is_active = COALESCE($7, is_active),
+                name = COALESCE($3, name),
+                description = COALESCE($4, description),
+                trigger_config = COALESCE($5, trigger_config),
+                conditions = COALESCE($6, conditions),
+                actions = COALESCE($7, actions),
+                is_active = COALESCE($8, is_active),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $2
             RETURNING *
             "#,
         )
         .bind(id)
+        .bind(organization_id)
         .bind(&data.name)
         .bind(&data.description)
         .bind(&data.trigger_config)
         .bind(&data.conditions)
         .bind(&data.actions)
         .bind(data.is_active)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
-    /// Delete automation rule.
-    pub async fn delete_rule(&self, id: Uuid) -> Result<bool, SqlxError> {
-        let result = sqlx::query("DELETE FROM workflow_automation_rules WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete automation rule, scoped to the caller's organization.
+    pub async fn delete_rule(&self, id: Uuid, organization_id: Uuid) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "DELETE FROM workflow_automation_rules WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(id)
+        .bind(organization_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
-    /// Toggle rule active status.
-    pub async fn toggle_rule(&self, id: Uuid, is_active: bool) -> Result<(), SqlxError> {
-        sqlx::query(
-            "UPDATE workflow_automation_rules SET is_active = $2, updated_at = NOW() WHERE id = $1",
+    /// Toggle rule active status, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(false)` when no row was updated (rule missing OR belongs
+    /// to a different organization). Caller surfaces this as 404.
+    pub async fn toggle_rule(
+        &self,
+        id: Uuid,
+        organization_id: Uuid,
+        is_active: bool,
+    ) -> Result<bool, SqlxError> {
+        let result = sqlx::query(
+            "UPDATE workflow_automation_rules SET is_active = $3, updated_at = NOW() \
+             WHERE id = $1 AND organization_id = $2",
         )
         .bind(id)
+        .bind(organization_id)
         .bind(is_active)
         .execute(&self.pool)
         .await?;
-        Ok(())
+        Ok(result.rows_affected() > 0)
     }
 
     // ========================================================================
@@ -221,7 +265,9 @@ impl AutomationRepository {
         Ok(())
     }
 
-    /// Get execution logs for a rule.
+    /// Get execution logs for a rule (no tenant scoping — internal use only).
+    ///
+    /// Handlers MUST use [`Self::get_rule_logs_for_org`].
     pub async fn get_rule_logs(
         &self,
         rule_id: Uuid,
@@ -239,6 +285,47 @@ impl AutomationRepository {
         .bind(limit)
         .fetch_all(&self.pool)
         .await
+    }
+
+    /// Get execution logs for a rule, scoped to the caller's organization.
+    ///
+    /// Returns `Ok(None)` when the rule does not exist OR belongs to a
+    /// different organization. We do a pre-check on the rule (rather than
+    /// JOIN-and-return-empty) so the caller can distinguish "no logs yet"
+    /// from "wrong tenant" and emit a 404 in the latter case — otherwise
+    /// every cross-tenant probe would return 200 with `[]` and silently
+    /// confirm the row exists in *some* org.
+    pub async fn get_rule_logs_for_org(
+        &self,
+        rule_id: Uuid,
+        organization_id: Uuid,
+        limit: i32,
+    ) -> Result<Option<Vec<WorkflowAutomationLog>>, SqlxError> {
+        let owner_org: Option<Uuid> = sqlx::query_scalar(
+            "SELECT organization_id FROM workflow_automation_rules WHERE id = $1",
+        )
+        .bind(rule_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match owner_org {
+            Some(owner) if owner == organization_id => {
+                let logs = sqlx::query_as::<_, WorkflowAutomationLog>(
+                    r#"
+                    SELECT * FROM workflow_automation_logs
+                    WHERE rule_id = $1
+                    ORDER BY started_at DESC
+                    LIMIT $2
+                    "#,
+                )
+                .bind(rule_id)
+                .bind(limit)
+                .fetch_all(&self.pool)
+                .await?;
+                Ok(Some(logs))
+            }
+            _ => Ok(None),
+        }
     }
 
     // ========================================================================
