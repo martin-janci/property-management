@@ -21,3 +21,19 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "gradle"
+    directory: "/mobile-native"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin*"
+      compose:
+        patterns:
+          - "androidx.compose*"
+          - "androidx.compose.material*"
+      ktor:
+        patterns:
+          - "io.ktor*"

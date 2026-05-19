@@ -41,7 +41,7 @@ importers:
         specifier: ^5.17.0
         version: 5.100.9(react@19.2.0)
       axios:
-        specifier: ^1.6.0
+        specifier: ^1.7.4
         version: 1.16.0
       i18next:
         specifier: ^25.7.3
@@ -183,9 +183,6 @@ importers:
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
-      '@types/react-native':
-        specifier: ~0.73.0
-        version: 0.73.0(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
       jest:
         specifier: ^29.7.0
         version: 29.7.0
@@ -220,7 +217,7 @@ importers:
         specifier: ^5.17.0
         version: 5.100.9(react@19.2.0)
       axios:
-        specifier: ^1.6.0
+        specifier: ^1.7.4
         version: 1.16.0
       dompurify:
         specifier: ^3.3.1
@@ -4479,23 +4476,6 @@ packages:
       '@types/react': 19.2.14
     dependencies:
       '@types/react': 19.2.14
-    dev: true
-
-  /@types/react-native@0.73.0(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0):
-    resolution: {integrity: sha512-6ZRPQrYM72qYKGWidEttRe6M5DZBEV5F+MHMHqd4TTYx0tfkcdrUFGdef6CCxY0jXU7wldvd/zA/b0A/kTeJmA==}
-    deprecated: This is a stub types definition. react-native provides its own type definitions, so you do not need this installed.
-    dependencies:
-      react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@react-native-community/cli'
-      - '@react-native/jest-preset'
-      - '@react-native/metro-config'
-      - '@types/react'
-      - bufferutil
-      - react
-      - supports-color
-      - utf-8-validate
     dev: true
 
   /@types/react@19.2.14:
