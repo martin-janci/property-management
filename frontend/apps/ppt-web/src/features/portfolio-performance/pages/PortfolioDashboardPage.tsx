@@ -325,8 +325,12 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
             <PerformanceAlert
               key={alert.id}
               {...alert}
-              onMarkRead={() => console.log('Mark read:', alert.id)}
-              onResolve={() => console.log('Resolve:', alert.id)}
+              onMarkRead={() => {
+                // TODO: wire to alerts API (mark-read mutation)
+              }}
+              onResolve={() => {
+                // TODO: wire to alerts API (resolve mutation)
+              }}
             />
           ))}
         </div>
@@ -358,7 +362,9 @@ export const PortfolioDashboardPage: React.FC<PortfolioDashboardPageProps> = ({ 
             <PropertyCard
               key={property.id}
               {...property}
-              onClick={() => console.log('View property:', property.id)}
+              onClick={() => {
+                // TODO: navigate to property detail route
+              }}
             />
           ))}
         </div>

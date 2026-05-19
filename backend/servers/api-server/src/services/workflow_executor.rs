@@ -14,6 +14,7 @@ use db::repositories::{WorkflowRepository, MAX_RETRY_COUNT, MAX_RETRY_DELAY_SECO
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use thiserror::Error;
+use tracing::Instrument;
 use uuid::Uuid;
 
 /// Compute the exponential-backoff sleep for a retry attempt, clamped to a
@@ -245,19 +246,26 @@ impl WorkflowExecutor {
             config: self.config.clone(),
         };
 
-        tokio::spawn(async move {
-            if let Err(e) = executor
-                .run(workflow, execution_id, trigger_event, context)
-                .await
-            {
-                tracing::error!(
-                    workflow_id = %workflow_id,
-                    execution_id = %execution_id,
-                    error = %e,
-                    "Workflow execution failed"
-                );
+        tokio::spawn(
+            async move {
+                if let Err(e) = executor
+                    .run(workflow, execution_id, trigger_event, context)
+                    .await
+                {
+                    tracing::error!(
+                        workflow_id = %workflow_id,
+                        execution_id = %execution_id,
+                        error = %e,
+                        "Workflow execution failed"
+                    );
+                }
             }
-        });
+            .instrument(tracing::info_span!(
+                "bg.workflow_step",
+                workflow_id = %workflow_id,
+                execution_id = %execution_id,
+            )),
+        );
 
         Ok(execution_id)
     }

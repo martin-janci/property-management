@@ -11,6 +11,7 @@ use db::DbPool;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
+use tracing::Instrument;
 
 use super::notification::{NotificationService, NotificationServiceConfig};
 use super::EmailService;
@@ -137,24 +138,31 @@ impl Scheduler {
     /// This spawns a tokio task that runs indefinitely,
     /// checking for scheduled tasks at the configured interval.
     pub fn start(self) -> tokio::task::JoinHandle<()> {
-        tokio::spawn(async move {
-            if !self.config.enabled {
-                tracing::info!("Scheduler disabled, not starting background tasks");
-                return;
+        let interval_secs = self.config.interval_secs;
+        tokio::spawn(
+            async move {
+                if !self.config.enabled {
+                    tracing::info!("Scheduler disabled, not starting background tasks");
+                    return;
+                }
+
+                tracing::info!(
+                    "Starting background scheduler with {}s interval",
+                    self.config.interval_secs
+                );
+
+                let mut ticker = interval(Duration::from_secs(self.config.interval_secs));
+
+                loop {
+                    ticker.tick().await;
+                    self.run_scheduled_tasks().await;
+                }
             }
-
-            tracing::info!(
-                "Starting background scheduler with {}s interval",
-                self.config.interval_secs
-            );
-
-            let mut ticker = interval(Duration::from_secs(self.config.interval_secs));
-
-            loop {
-                ticker.tick().await;
-                self.run_scheduled_tasks().await;
-            }
-        })
+            .instrument(tracing::info_span!(
+                "bg.scheduler_tick",
+                interval_secs = interval_secs,
+            )),
+        )
     }
 
     /// Run all scheduled tasks.

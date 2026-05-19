@@ -11,6 +11,7 @@ use redis::{
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 use tokio::sync::broadcast;
+use tracing::Instrument;
 use uuid::Uuid;
 
 // ============================================================================
@@ -704,21 +705,28 @@ impl PubSubService {
         tracing::info!(channel = %full_channel, "Subscribed to channel");
 
         // Spawn a task to forward messages
-        tokio::spawn(async move {
-            let mut pubsub_stream = pubsub.into_on_message();
+        let span_channel = full_channel.clone();
+        tokio::spawn(
+            async move {
+                let mut pubsub_stream = pubsub.into_on_message();
 
-            while let Some(msg) = futures_lite::StreamExt::next(&mut pubsub_stream).await {
-                let payload: Result<String, RedisError> = msg.get_payload();
-                if let Ok(payload) = payload {
-                    if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload) {
-                        // Filter out messages from same instance
-                        if message.source_instance.as_ref() != Some(&instance_id) {
-                            let _ = tx.send(message);
+                while let Some(msg) = futures_lite::StreamExt::next(&mut pubsub_stream).await {
+                    let payload: Result<String, RedisError> = msg.get_payload();
+                    if let Ok(payload) = payload {
+                        if let Ok(message) = serde_json::from_str::<PubSubMessage>(&payload) {
+                            // Filter out messages from same instance
+                            if message.source_instance.as_ref() != Some(&instance_id) {
+                                let _ = tx.send(message);
+                            }
                         }
                     }
                 }
             }
-        });
+            .instrument(tracing::info_span!(
+                "bg.redis_pubsub",
+                channel = %span_channel,
+            )),
+        );
 
         Ok(rx)
     }

@@ -230,14 +230,12 @@ export function IntegrationMarketplacePage() {
     return result;
   }, [searchQuery, selectedCategory, showFeaturedOnly, showPremiumOnly, sortBy]);
 
-  const handleInstall = (id: string) => {
-    // TODO: Implement installation
-    console.log('Installing integration:', id);
+  const handleInstall = (_id: string) => {
+    // TODO: Implement installation flow (Epic API-marketplace install)
   };
 
-  const handleViewDetails = (id: string) => {
-    // TODO: Navigate to integration details
-    console.log('Viewing integration details:', id);
+  const handleViewDetails = (_id: string) => {
+    // TODO: Navigate to integration details route
   };
 
   return (

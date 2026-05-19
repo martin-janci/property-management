@@ -134,6 +134,9 @@ mod tests {
             // Tests run from the crate dir; jump up two levels.
             let alt = std::path::PathBuf::from("../../manifests/tenant-data-manifest.json");
             if !alt.exists() {
+                // `tracing` is not a dependency of this crate; use stderr in
+                // this dev-only test branch instead. The test is intentionally
+                // a no-op when the manifest fixture isn't available.
                 eprintln!("manifest not present at default or alt path; skipping");
                 return;
             }

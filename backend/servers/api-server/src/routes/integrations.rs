@@ -41,6 +41,7 @@ use integrations::{
 };
 use serde::Deserialize;
 use sha2::Sha256;
+use tracing::Instrument;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -844,11 +845,17 @@ pub async fn sync_calendar(
         let repo = state.integration_repo.clone();
         let connection_id = path.id;
         let error_msg = e.to_string();
-        tokio::spawn(async move {
-            let _ = repo
-                .update_sync_status(connection_id, "error", Some(&error_msg))
-                .await;
-        });
+        tokio::spawn(
+            async move {
+                let _ = repo
+                    .update_sync_status(connection_id, "error", Some(&error_msg))
+                    .await;
+            }
+            .instrument(tracing::info_span!(
+                "bg.integration_sync_status_update",
+                connection_id = %connection_id,
+            )),
+        );
 
         (
             StatusCode::INTERNAL_SERVER_ERROR,

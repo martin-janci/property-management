@@ -4,6 +4,7 @@
 //! enabling PostgreSQL RLS policies to enforce data isolation.
 
 use sqlx::{Error as SqlxError, Executor, Postgres};
+use tracing::Instrument;
 use uuid::Uuid;
 
 /// Set the tenant context for the current database session.
@@ -55,21 +56,28 @@ where
 /// This provides best-effort cleanup. For guaranteed cleanup, always call
 /// `release().await` explicitly before dropping the guard.
 pub fn spawn_clear_context(mut conn: sqlx::pool::PoolConnection<Postgres>, context_info: String) {
-    tokio::spawn(async move {
-        if let Err(e) = clear_request_context(&mut *conn).await {
-            tracing::error!(
-                error = %e,
-                context = %context_info,
-                "SECURITY: Failed to clear RLS context in Drop cleanup task - context may bleed"
-            );
-        } else {
-            tracing::debug!(
-                context = %context_info,
-                "RLS context cleared via Drop cleanup task"
-            );
+    let span_context = context_info.clone();
+    tokio::spawn(
+        async move {
+            if let Err(e) = clear_request_context(&mut *conn).await {
+                tracing::error!(
+                    error = %e,
+                    context = %context_info,
+                    "SECURITY: Failed to clear RLS context in Drop cleanup task - context may bleed"
+                );
+            } else {
+                tracing::debug!(
+                    context = %context_info,
+                    "RLS context cleared via Drop cleanup task"
+                );
+            }
+            // Connection is dropped here, returning to pool with cleared context
         }
-        // Connection is dropped here, returning to pool with cleared context
-    });
+        .instrument(tracing::info_span!(
+            "bg.tenant_context_eviction",
+            context = %span_context,
+        )),
+    );
 }
 
 /// Set only the tenant (organization) context.
