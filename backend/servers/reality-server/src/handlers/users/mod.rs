@@ -303,23 +303,42 @@ impl UserHandler {
                             SsoResult::Created(p)
                         }
                     }
-                    Ok(None) => SsoResult::ProviderError(
-                        "upsert succeeded but users row not immediately visible".to_string(),
-                    ),
-                    Err(e) => SsoResult::ProviderError(e.to_string()),
+                    Ok(None) => {
+                        tracing::error!(
+                            user_id = %user.id,
+                            "SSO upsert succeeded but users row not immediately visible"
+                        );
+                        SsoResult::ProviderError("internal".to_string())
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            user_id = %user.id,
+                            "SSO upsert: failed to re-read users row after upsert"
+                        );
+                        SsoResult::ProviderError("internal".to_string())
+                    }
                 }
             }
             Err(UnifiedPortalError::Collision { existing_user_id }) => {
+                // SECURITY (H1): the upstream IdP/SSO client receives only a
+                // sanitised error code. The collision details (email, target
+                // user_id) stay in the server-side log.
                 tracing::warn!(
-                    email = %email,
+                    email_hash = %common::email_log_hash(email),
                     existing_user_id = %existing_user_id,
                     "SSO upsert refused: email belongs to a non-public principal (collision queued)"
                 );
-                SsoResult::ProviderError(format!(
-                    "email collides with existing non-public principal (collision queued for review): {existing_user_id}"
-                ))
+                SsoResult::ProviderError("collision".to_string())
             }
-            Err(UnifiedPortalError::Db(e)) => SsoResult::ProviderError(e.to_string()),
+            Err(UnifiedPortalError::Db(e)) => {
+                tracing::error!(
+                    error = %e,
+                    email_hash = %common::email_log_hash(email),
+                    "SSO upsert failed with database error"
+                );
+                SsoResult::ProviderError("internal".to_string())
+            }
         }
     }
 
