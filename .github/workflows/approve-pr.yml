@@ -144,17 +144,20 @@ jobs:
             exit 1
           fi
 
-          # Fail on non-success conclusions (skipped, cancelled, neutral, action_required, timed_out)
-          NON_SUCCESS=$((SKIPPED + CANCELLED + NEUTRAL + ACTION_REQUIRED + TIMED_OUT))
+          # Fail on non-success conclusions (cancelled, neutral, action_required, timed_out).
+          # `skipped` is treated as passing — path-filtered jobs (e.g. backend.yml on a
+          # frontend-only PR) legitimately produce `skipped`, and auto-approve.yml already
+          # counts SKIPPED as PASSING (see auto-approve.yml line ~83). Mirror that here.
+          NON_SUCCESS=$((CANCELLED + NEUTRAL + ACTION_REQUIRED + TIMED_OUT))
           if [ "$NON_SUCCESS" -gt 0 ]; then
             echo "❌ CI checks have non-success conclusions:"
-            [ "$SKIPPED" -gt 0 ] && echo "  - $SKIPPED skipped"
             [ "$CANCELLED" -gt 0 ] && echo "  - $CANCELLED cancelled"
             [ "$NEUTRAL" -gt 0 ] && echo "  - $NEUTRAL neutral"
             [ "$ACTION_REQUIRED" -gt 0 ] && echo "  - $ACTION_REQUIRED action_required"
             [ "$TIMED_OUT" -gt 0 ] && echo "  - $TIMED_OUT timed_out"
             exit 1
           fi
+          [ "$SKIPPED" -gt 0 ] && echo "ℹ️  $SKIPPED skipped check(s) treated as passing"
 
           # Fail if any checks or statuses are pending
           if [ "$PENDING" -gt 0 ] || [ "$STATUS_PENDING" -gt 0 ]; then
@@ -162,11 +165,13 @@ jobs:
             exit 1
           fi
 
-          # Verify all completed checks are successful
-          # Safety check: While non-success conclusions are already rejected above (lines 147-157),
+          # Verify all completed checks are successful or skipped.
+          # Safety check: While non-success conclusions are already rejected above,
           # this provides an additional safety net in case the logic changes or edge cases arise.
-          if [ "$COMPLETED" -ne "$SUCCESS" ]; then
-            echo "❌ Not all completed check runs have 'success' conclusion"
+          # `skipped` counts as passing here (matches auto-approve.yml's PASSING=SUCCESS+SKIPPED).
+          PASSING=$((SUCCESS + SKIPPED))
+          if [ "$COMPLETED" -ne "$PASSING" ]; then
+            echo "❌ Not all completed check runs have 'success' or 'skipped' conclusion"
             exit 1
           fi
 
