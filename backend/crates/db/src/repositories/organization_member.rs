@@ -115,14 +115,18 @@ impl OrganizationMemberRepository {
             "AND om.status != 'removed'"
         };
 
+        // LEFT JOIN roles to fetch role_name in the same query — eliminates
+        // the N+1 round-trip the route layer used to do per member.
         let data_query = format!(
             r#"
             SELECT
                 om.id, om.organization_id, om.user_id, om.role_id, om.role_type,
                 om.status, om.joined_at,
-                u.email as user_email, u.name as user_name
+                u.email as user_email, u.name as user_name,
+                r.name as role_name
             FROM organization_members om
             INNER JOIN users u ON u.id = om.user_id
+            LEFT JOIN roles r ON r.id = om.role_id
             WHERE om.organization_id = $1 {}
             ORDER BY om.joined_at DESC NULLS LAST
             LIMIT $2 OFFSET $3
@@ -362,14 +366,18 @@ impl OrganizationMemberRepository {
             }
         );
 
+        // LEFT JOIN roles to fetch role_name in the same query — eliminates
+        // the N+1 round-trip the route layer used to do per member.
         let data_query = format!(
             r#"
             SELECT
                 om.id, om.organization_id, om.user_id, om.role_id, om.role_type,
                 om.status, om.joined_at,
-                u.email as user_email, u.name as user_name
+                u.email as user_email, u.name as user_name,
+                r.name as role_name
             FROM organization_members om
             INNER JOIN users u ON u.id = om.user_id
+            LEFT JOIN roles r ON r.id = om.role_id
             WHERE om.organization_id = $1 {}
             ORDER BY om.joined_at DESC NULLS LAST
             LIMIT $2 OFFSET $3

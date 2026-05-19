@@ -430,17 +430,43 @@ pub async fn list_my_organizations(
         }
     };
 
-    // Fetch full organization details for each membership
-    let mut organizations = Vec::new();
-    for membership in &memberships {
-        if let Ok(Some(org)) = state
-            .org_repo
-            .find_by_id_rls(&mut **rls.conn(), membership.organization_id)
-            .await
-        {
-            organizations.push(OrganizationResponse::from(org));
+    // Batch-fetch full organization details for all memberships in one query
+    // (avoids N+1: previously issued one SELECT per membership).
+    let org_ids: Vec<Uuid> = memberships.iter().map(|m| m.organization_id).collect();
+
+    let orgs = match state
+        .org_repo
+        .find_by_ids_rls(&mut **rls.conn(), &org_ids)
+        .await
+    {
+        Ok(o) => o,
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to fetch organizations by ids");
+            rls.release().await;
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to fetch organizations",
+                )),
+            ));
         }
-    }
+    };
+
+    // Regroup into a HashMap so we can preserve membership ordering and
+    // silently skip orgs that were deleted/inaccessible (matching prior behavior).
+    let org_by_id: std::collections::HashMap<Uuid, Organization> =
+        orgs.into_iter().map(|o| (o.id, o)).collect();
+
+    let organizations: Vec<OrganizationResponse> = memberships
+        .iter()
+        .filter_map(|m| {
+            org_by_id
+                .get(&m.organization_id)
+                .cloned()
+                .map(OrganizationResponse::from)
+        })
+        .collect();
 
     let total = organizations.len() as i64;
 
@@ -971,27 +997,28 @@ pub async fn list_organization_members(
         }
     };
 
-    let mut member_responses = Vec::new();
-    for m in members_with_users {
-        // Get role name
-        let role_name = match m.role_id {
-            Some(role_id) => match state.role_repo.find_by_id(role_id).await {
-                Ok(Some(r)) => r.name,
-                _ => "Unknown".to_string(),
-            },
-            None => "No Role".to_string(),
-        };
+    // role_name is now populated by list_org_members via LEFT JOIN roles —
+    // no per-member lookup required (previously N+1 SELECTs from roles).
+    let member_responses: Vec<MemberResponse> = members_with_users
+        .into_iter()
+        .map(|m| {
+            let role_name = match (m.role_id, m.role_name.as_deref()) {
+                (Some(_), Some(name)) => name.to_string(),
+                (Some(_), None) => "Unknown".to_string(),
+                (None, _) => "No Role".to_string(),
+            };
 
-        member_responses.push(MemberResponse {
-            user_id: m.user_id,
-            name: m.user_name,
-            email: m.user_email,
-            role_id: m.role_id,
-            role_name,
-            role_type: m.role_type,
-            joined_at: m.joined_at.map(|dt| dt.to_rfc3339()),
-        });
-    }
+            MemberResponse {
+                user_id: m.user_id,
+                name: m.user_name,
+                email: m.user_email,
+                role_id: m.role_id,
+                role_name,
+                role_type: m.role_type,
+                joined_at: m.joined_at.map(|dt| dt.to_rfc3339()),
+            }
+        })
+        .collect();
 
     Ok(Json(ListMembersResponse {
         members: member_responses,
