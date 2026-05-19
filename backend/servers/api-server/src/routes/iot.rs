@@ -454,7 +454,7 @@ async fn acknowledge_alert(
     principal: RequestPrincipal,
     Path(alert_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     match state
         .sensor_repo
@@ -534,7 +534,7 @@ async fn create_correlation(
     Path(id): Path<Uuid>,
     Json(mut req): Json<CreateSensorFaultCorrelation>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
     req.sensor_id = id;
     req.created_by = Some(principal.user_id);
 

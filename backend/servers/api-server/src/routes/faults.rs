@@ -396,7 +396,7 @@ async fn list_my_faults(
     principal: RequestPrincipal,
     Query(query): Query<ListFaultsQuery>,
 ) -> Result<Json<FaultListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let faults = state
         .fault_repo
@@ -439,7 +439,7 @@ async fn get_fault(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FaultDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
     // TODO(security): real role lookup; previous code trusted client-supplied role.
     let is_manager = false;
 
@@ -586,7 +586,7 @@ async fn triage_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<TriageFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     // Check fault exists
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
@@ -667,7 +667,7 @@ async fn assign_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<AssignFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = AssignFault {
         assigned_to: req.assigned_to,
@@ -716,7 +716,7 @@ async fn update_status(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     // Get current fault to obtain current status
     let existing = match state.fault_repo.find_by_id_rls(&mut **rls.conn(), id).await {
@@ -793,7 +793,7 @@ async fn resolve_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = ResolveFault {
         resolution_notes: req.resolution_notes,
@@ -841,7 +841,7 @@ async fn confirm_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ConfirmFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = ConfirmFault {
         rating: req.rating,
@@ -889,7 +889,7 @@ async fn reopen_fault(
     Path(id): Path<Uuid>,
     Json(req): Json<ReopenFaultRequest>,
 ) -> Result<Json<FaultActionResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = ReopenFault { reason: req.reason };
 
@@ -931,7 +931,7 @@ async fn list_comments(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TimelineResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
     // TODO(security): real role lookup; previous code trusted client-supplied role.
     let is_manager = false;
 
@@ -970,7 +970,7 @@ async fn add_comment(
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = AddFaultComment {
         note: req.note,
@@ -1015,7 +1015,7 @@ async fn add_work_note(
     Path(id): Path<Uuid>,
     Json(req): Json<AddWorkNoteRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = AddWorkNote { note: req.note };
 
@@ -1088,7 +1088,7 @@ async fn add_attachment(
     Path(id): Path<Uuid>,
     Json(req): Json<AddAttachmentRequest>,
 ) -> Result<(StatusCode, Json<FaultAttachment>), (StatusCode, Json<ErrorResponse>)> {
-    let tenant_id = require_tenant_id(&principal)?;
+    let _tenant_id = require_tenant_id(&principal)?;
 
     let data = CreateFaultAttachment {
         fault_id: id,
