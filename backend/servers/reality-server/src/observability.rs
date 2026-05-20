@@ -507,6 +507,13 @@ mod tests {
 
     #[test]
     fn test_default_configs() {
+        // SentryConfig::default() reads RUST_ENV; serialize against other
+        // tests in this crate that mutate the same var (see util::env_lock),
+        // and force the value to "development" for a deterministic assertion.
+        let _lock = crate::util::env_lock();
+        let previous = std::env::var("RUST_ENV").ok();
+        std::env::set_var("RUST_ENV", "development");
+
         let otel_config = OtelConfig::default();
         assert_eq!(otel_config.service_name, "reality-server");
         assert!(!otel_config.enabled);
@@ -518,6 +525,11 @@ mod tests {
         let metrics_config = MetricsConfig::default();
         assert_eq!(metrics_config.port, 9091);
         assert!(metrics_config.enabled);
+
+        match previous {
+            Some(v) => std::env::set_var("RUST_ENV", v),
+            None => std::env::remove_var("RUST_ENV"),
+        }
     }
 
     #[test]

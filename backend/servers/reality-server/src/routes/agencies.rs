@@ -190,6 +190,11 @@ pub async fn get_agency_by_slug(
 }
 
 /// Update agency.
+///
+/// SECURITY (H2, round-9 audit): requires an authenticated principal who
+/// is an active member of the target agency. Previously this handler had
+/// no auth extractor, allowing anyone on the internet to overwrite an
+/// agency's name / slug / contact info via `PUT /api/v1/agencies/{id}`.
 #[utoipa::path(
     put,
     path = "/api/v1/agencies/{id}",
@@ -199,14 +204,29 @@ pub async fn get_agency_by_slug(
     responses(
         (status = 200, description = "Agency updated", body = AgencyResponse),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a member of this agency"),
         (status = 404, description = "Agency not found")
-    )
+    ),
+    security(("session_token" = []))
 )]
 pub async fn update_agency(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateRealityAgency>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
+    // SECURITY (H2): membership check via the shared helper in
+    // `super::agency_imports` — single source of truth for "is this user
+    // allowed to mutate this agency's data?".
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", e),
+        )
+    })?;
+    super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
+    drop(conn);
+
     let agency = state
         .reality_portal_repo
         .update_agency(id, data)
@@ -226,6 +246,12 @@ pub async fn update_agency(
 }
 
 /// Update agency branding.
+///
+/// SECURITY (H2, round-9 audit): the *wired* `PUT /api/v1/agencies/{id}/branding`
+/// route in `main.rs` is `routes::agency_branding::update_branding`, which
+/// already authenticates and checks membership. This handler is currently
+/// dead code (not mounted) but still surfaces in OpenAPI; we keep the auth
+/// extractor here as defense-in-depth in case routing is ever changed.
 #[utoipa::path(
     put,
     path = "/api/v1/agencies/{id}/branding",
@@ -235,14 +261,26 @@ pub async fn update_agency(
     responses(
         (status = 200, description = "Branding updated", body = AgencyResponse),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not a member of this agency"),
         (status = 404, description = "Agency not found")
-    )
+    ),
+    security(("session_token" = []))
 )]
 pub async fn update_branding(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateAgencyBranding>,
 ) -> Result<Json<AgencyResponse>, (axum::http::StatusCode, String)> {
+    let mut conn = state.acquire_public_conn().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", e),
+        )
+    })?;
+    super::agency_imports::check_agency_membership(&mut conn, id, principal.user_id).await?;
+    drop(conn);
+
     let agency = state
         .reality_portal_repo
         .update_agency_branding(id, data)

@@ -139,13 +139,21 @@ pub async fn submit_report(
         .await
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
-    // Check listing exists
-    let listing_exists: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1)")
-            .bind(data.listing_id)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| crate::util::errors::db_error("check listing", e))?;
+    // Check listing exists AND is publicly visible.
+    //
+    // SECURITY (H5, round-9 audit): without the status filter, this endpoint
+    // is an unauthenticated existence oracle — an attacker can probe whether
+    // a UUID belongs to a draft/archived/pending listing by diffing 404 vs
+    // 201. Restricting to `status = 'active'` collapses the response shape
+    // to "is there a public listing with this id?", matching what an honest
+    // reporter would see in the UI.
+    let listing_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')",
+    )
+    .bind(data.listing_id)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
     if !listing_exists {
         return Err((
