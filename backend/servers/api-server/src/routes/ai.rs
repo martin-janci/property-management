@@ -114,10 +114,17 @@ pub fn ai_chat_router() -> Router<AppState> {
 )]
 async fn create_session(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Json(req): Json<CreateChatSession>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.ai_chat_repo.create_session(req).await {
+    // SECURITY: the owning org/user are derived from the verified principal,
+    // never trusted from the request body (prevents IDOR / cross-tenant writes).
+    let organization_id = require_tenant_id(&principal)?;
+    match state
+        .ai_chat_repo
+        .create_session(organization_id, principal.user_id, req)
+        .await
+    {
         Ok(session) => Ok((StatusCode::CREATED, Json(serde_json::json!(session)))),
         Err(e) => {
             tracing::error!("Failed to create session: {}", e);
@@ -772,14 +779,20 @@ async fn send_message(
 
 async fn provide_feedback(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(message_id): Path<Uuid>,
     Json(req): Json<ProvideFeedback>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
     let mut feedback = req;
     feedback.message_id = message_id;
 
-    match state.ai_chat_repo.add_feedback(feedback).await {
+    // SECURITY: feedback author is derived from the verified principal, never
+    // from the request body.
+    match state
+        .ai_chat_repo
+        .add_feedback(principal.user_id, feedback)
+        .await
+    {
         Ok(fb) => Ok((StatusCode::CREATED, Json(serde_json::json!(fb)))),
         Err(e) => {
             tracing::error!("Failed to add feedback: {}", e);
@@ -1040,10 +1053,12 @@ pub fn equipment_router() -> Router<AppState> {
 
 async fn create_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Json(req): Json<CreateEquipment>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.create(req).await {
+    // SECURITY: owning org is derived from the verified principal, never the body.
+    let organization_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.create(organization_id, req).await {
         Ok(equipment) => Ok((StatusCode::CREATED, Json(serde_json::json!(equipment)))),
         Err(e) => {
             tracing::error!("Failed to create equipment: {}", e);
@@ -1309,10 +1324,17 @@ pub fn workflow_router() -> Router<AppState> {
 
 async fn create_workflow(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Json(req): Json<CreateWorkflow>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.workflow_repo.create(req).await {
+    // SECURITY: owning org and creator are derived from the verified principal,
+    // never from the request body.
+    let organization_id = require_tenant_id(&principal)?;
+    match state
+        .workflow_repo
+        .create(organization_id, principal.user_id, req)
+        .await
+    {
         Ok(workflow) => Ok((StatusCode::CREATED, Json(serde_json::json!(workflow)))),
         Err(e) => {
             tracing::error!("Failed to create workflow: {}", e);

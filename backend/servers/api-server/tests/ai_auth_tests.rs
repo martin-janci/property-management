@@ -29,17 +29,21 @@ use common::TestApp;
 
 /// Acceptable rejection statuses for an unauthenticated AI request.
 ///
-/// The contract is "any 4xx that means 'not allowed'". `RequestPrincipal`
-/// returns 401 when the Authorization header is missing or the JWT is
-/// invalid, 403 when membership / host-tenant resolution fails. Anything
-/// in that set is correct — what would NOT be correct is `200 OK` (the
-/// regressed behaviour).
+/// The contract is strict: a request with no proof of identity MUST be
+/// rejected by the auth layer, BEFORE it ever reaches a handler.
+/// `RequestPrincipal` returns 401 when the Authorization header is missing or
+/// the JWT is invalid, and 403 when membership / host-tenant resolution fails.
+/// Only those two statuses are correct here.
+///
+/// Note `400 BAD_REQUEST` is intentionally NOT accepted: a 400 means the
+/// request slipped past the auth gate and was rejected later by handler-side
+/// body/validation logic. Treating 400 as a pass would let the regression
+/// (handler reachable without auth) hide behind an unrelated validation error.
 fn assert_rejected(actual: StatusCode) {
     assert!(
-        actual == StatusCode::UNAUTHORIZED
-            || actual == StatusCode::FORBIDDEN
-            || actual == StatusCode::BAD_REQUEST,
-        "Expected AI route to reject unauthenticated traffic with 4xx, got {}",
+        actual == StatusCode::UNAUTHORIZED || actual == StatusCode::FORBIDDEN,
+        "Expected AI route to reject unauthenticated traffic at the auth layer \
+         with 401 or 403, got {}",
         actual,
     );
 }
