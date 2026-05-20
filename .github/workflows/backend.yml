@@ -274,10 +274,43 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
         run: sqlx database create && sqlx migrate run
 
+      - name: Create non-superuser test role
+        # Postgres exempts SUPERUSERS from RLS entirely (FORCE ROW LEVEL
+        # SECURITY only binds the table OWNER, not superusers). The default
+        # `postgres` user IS a superuser, so connecting as it bypasses RLS
+        # silently and the penetration tests can never observe tenant
+        # isolation — the cross-tenant tests then see every org's rows and
+        # fail. We create a separate non-superuser role for the test
+        # connection so RLS policies actually run. Grants are scoped to the
+        # test database and schema; the role is created idempotently so
+        # re-runs are fine. Mirrors the rls-smoke-test job above.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d ppt_test <<'SQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_runner') THEN
+                CREATE ROLE rls_test_runner LOGIN PASSWORD 'rls_test_runner';
+              END IF;
+            END $$;
+            GRANT CONNECT ON DATABASE ppt_test TO rls_test_runner;
+            GRANT USAGE ON SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL TABLES IN SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO rls_test_runner;
+            GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO rls_test_runner;
+          SQL
+
       - name: Run RLS penetration tests
         working-directory: backend
         env:
-          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+          # Connect as the non-superuser role so RLS is actually enforced —
+          # the `postgres` superuser bypasses RLS and breaks the cross-tenant
+          # isolation assertions.
+          TEST_DATABASE_URL: postgres://rls_test_runner:rls_test_runner@localhost:5432/ppt_test
           RUST_LOG: debug
         # `--test-threads=1`: every test in rls_penetration_tests.rs shares the
         # SAME Postgres database and brackets itself with `db.cleanup()`, which
