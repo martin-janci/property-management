@@ -26,7 +26,7 @@ sqlx = { workspace = true }
 tokio = { workspace = true }
 async-trait = { workspace = true }
 # Phase 5.5: per-tenant rate limiting (defense leak #15) and metering (#19)
-governor = "0.6"
+governor = "0.10"
 metrics = { workspace = true }
 
 [dev-dependencies]
