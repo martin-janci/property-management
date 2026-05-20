@@ -1,0 +1,111 @@
+{
+  "run_iso": "2026-05-20T10:53:33Z",
+  "window": {
+    "since": "2026-05-06T00:00:00Z",
+    "until": "2026-05-20T10:53:33Z",
+    "note": "Initial 14-day sweep — state.json was fresh (last_pr_seen=0, last_run_iso=null)."
+  },
+  "observed": {
+    "merged_prs": 94,
+    "merged_pr_range": "#239–#343",
+    "open_prs_touched": 25,
+    "closed_not_merged": 6,
+    "new_or_updated_issues": 1,
+    "commits_on_main": 211
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/<today>.md && head -1 starts with '# 2026-05-20'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "compare staged state.json vs HEAD",                              "observed": "last_pr_seen 0→343, last_commit_sha null→fc8af0a, last_issue_seen 0→160, seen_signals 0→7, hotspot_history 0→3, stats.runs 0→1", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq backlog ids unique",                                          "observed": "6 unique ids",   "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no signal id already in seen_signals (prior=empty)",             "observed": "all 7 ids new",  "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8 and no decay candidates yet (initial run)",         "observed": "max=2, no 14d-stale items", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "every new plan has adversarial-pass annotation",                  "observed": "0 plans promoted → vacuously true", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, each meets readiness gates",                       "observed": "0 new plans",    "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only ⊂ .research/",                     "observed": "all staged paths under .research/", "expected": "exit 0" },
+    { "goal": "G9", "passed": true,  "command": "staged diff has no secrets/private hostnames",                   "observed": "clean",          "expected": "exit 0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regenerates byte-identical from backlog.json",        "observed": "diff clean",     "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures reflected in brief + cursors",                     "observed": "no phase failures", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan still in plans/ or _archive/",               "observed": "no prior plans", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count ≥ count at HEAD",                                  "observed": "0 ≥ 0",          "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regenerates byte-identical (no triage rows)",     "observed": "diff clean",     "expected": "exit 0" }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/main since 2026-05-06",
+      "score_delta": 1,
+      "evidence": "12,977 lines (additions+deletions) over 14d in integrations.rs — top-1 code-churn file this run",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/main since 2026-05-06",
+      "score_delta": 1,
+      "evidence": "12,060 lines (additions+deletions) over 14d in organizations.rs — top-2 code-churn file (multitenancy + admin work)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/main since 2026-05-06",
+      "score_delta": 1,
+      "evidence": "10,659 lines (additions+deletions) over 14d in documents.rs — top-3 code-churn file",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-rls-migration-residual",
+      "type": "unchecked-todo",
+      "source": "issue #160 (closed 2026-05-10); voting/mod.rs:353; market_pricing.rs; faults/mod.rs; notification_preferences.rs; reports.rs",
+      "score_delta": 2,
+      "evidence": "31 `TODO: Migrate to *_rls when route handlers pass RLS connection` markers across 5 backend files (13 voting, 7 market_pricing, 6 faults, 4 notification_preferences, 1 reports). Issue #160 (HIGH priority, security/multi-tenancy) was closed on 2026-05-10 but residual migration is incomplete; non-RLS repository calls remain in hot handlers.",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "unchecked-todo-integration-marketplace-stubs",
+      "type": "unchecked-todo",
+      "source": "PR #282 (commit c97781a) + PR #328 (commit 254f01d); IntegrationMarketplacePage.tsx:234,238; integrations.rs OAuth URL TODO",
+      "score_delta": 2,
+      "evidence": "Frontend IntegrationMarketplacePage at frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 ('TODO: Implement installation flow (Epic API-marketplace install)') and :238 ('TODO: Navigate to integration details route') are no-op handlers. Backend integrations.rs carries 'TODO: Generate OAuth URL based on integration type' and 'TODO: Full implementation needs building/unit context from TenantContext' — the marketplace UI ships, but install/OAuth flows are placeholders.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-portfolio-dashboard-stubs",
+      "type": "unchecked-todo",
+      "source": "PR #328 (commit 254f01d); PortfolioDashboardPage.tsx:329,332,366",
+      "score_delta": 2,
+      "evidence": "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 ('TODO: wire to alerts API (mark-read mutation)'), :332 ('TODO: wire to alerts API (resolve mutation)'), :366 ('TODO: navigate to property detail route'). PR #328 explicitly downgraded these from console.log to no-op handlers but did not wire the real endpoints.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-2026-05-20",
+      "type": "dep-update-noise",
+      "source": "open PRs #344-#363 (20 dependabot PRs), merged #244-#258 batch",
+      "score_delta": 0,
+      "evidence": "20 open + 8 merged dependabot/renovate PRs in window (gradle, ktor, kotlin, compose, axum, expo, postcss, etc.). 5 dependabot PRs were closed unmerged (#253-#257). Logged but not scored — review batch when convenient.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "screen_map_status": {
+    "ppt_files": 53,
+    "reality_files": 46,
+    "mobile_files": "n/a (dir not seeded)",
+    "drift_signals_this_run": 0,
+    "orphan_signals_this_run": 0
+  },
+  "process_signals": {
+    "reverts": 0,
+    "stalled_reviews": 0,
+    "hotfix_no_test": 0,
+    "untriaged_issues": 0,
+    "closed_not_merged_pr": "6 (5 dependabot superseded by newer versions, 1 duplicate version-bump bot PR — all benign, not scored)"
+  }
+}
