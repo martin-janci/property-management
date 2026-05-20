@@ -8,6 +8,17 @@
 //! 2. Permission boundary tests - Verify role-based access restrictions
 //! 3. Context manipulation tests - Ensure session variables cannot be spoofed
 //! 4. Null context tests - Verify behavior when no tenant context is set
+//!
+//! IMPORTANT — run serially:
+//!   cargo test --test rls_penetration_tests -- --ignored --test-threads=1
+//!
+//! Every test here shares the SAME Postgres database and brackets itself with
+//! `db.cleanup()` (a `DELETE FROM roles/organizations WHERE TRUE`). Running the
+//! tests in parallel lets one test's cleanup wipe — or the org-creation trigger
+//! inject — rows while a sibling test is mid-`SELECT`, which breaks the
+//! "every returned row belongs to my org" assertions in
+//! `test_cross_tenant_role_isolation` / `test_cross_tenant_org_isolation`.
+//! Without `--test-threads=1` those two tests fail non-deterministically.
 
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::time::Duration;
