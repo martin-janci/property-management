@@ -1,15 +1,39 @@
 {
   "version": 2,
-  "last_run_iso": null,
-  "last_run_ms": 0,
-  "last_pr_seen": 0,
-  "last_issue_seen": 0,
-  "last_commit_sha": null,
-  "hotspot_history": {},
-  "seen_signals": [],
+  "last_run_iso": "2026-05-20T10:53:33Z",
+  "last_run_ms": 1779274413000,
+  "last_pr_seen": 343,
+  "last_issue_seen": 160,
+  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "hotspot_history": {
+    "backend/servers/api-server/src/routes/integrations.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-20",
+      "recent_churn": 12977
+    },
+    "backend/servers/api-server/src/routes/organizations.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-20",
+      "recent_churn": 12060
+    },
+    "backend/servers/api-server/src/routes/documents.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-20",
+      "recent_churn": 10659
+    }
+  },
+  "seen_signals": [
+    "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
+    "unchecked-todo-rls-migration-residual",
+    "unchecked-todo-integration-marketplace-stubs",
+    "unchecked-todo-portfolio-dashboard-stubs",
+    "dep-update-noise-2026-05-20"
+  ],
   "stats": {
-    "runs": 0,
-    "vectors_created": 0,
+    "runs": 1,
+    "vectors_created": 6,
     "plans_created": 0,
     "quiet_days": 0
   }

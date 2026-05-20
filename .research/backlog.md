@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: never (scaffold — first routine run will overwrite this)</sub>
+<sub>Last regenerated: 2026-05-20 10:55 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -13,7 +13,12 @@ picks from here.
 
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
-|       |       |        |        |         |        |
+| 2 | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | security | issue #160 | 2026-05-20 | open |
+| 2 | Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation | dx | PR #282 | 2026-05-20 | open |
+| 2 | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dx | PR #328 | 2026-05-20 | open |
+| 1 | integrations.rs churn-hot — 12,977 lines over 14d, candidate for module split | refactor | git log origin/main since 2026-05-06 | 2026-05-20 | open |
+| 1 | organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin) | refactor | git log origin/main since 2026-05-06 | 2026-05-20 | open |
+| 1 | documents.rs churn-hot — 10,659 lines over 14d | refactor | git log origin/main since 2026-05-06 | 2026-05-20 | open |
 
 ## Scoring rubric
 
