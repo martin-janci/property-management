@@ -86,7 +86,7 @@ if [[ $QUICK -eq 1 ]]; then
   # without spinning up the toolchain (just / gh / cargo / pnpm / gradle /
   # npx-tsp / stack). Suitable for cold caches and offline CI runners.
   run "ppt-tests"         10 'test -f justfile && grep -qE "^test(-(backend|frontend|integration))?:" justfile'
-  run "ppt-pr-create"     10 'test -d .github && test -f .github/workflows/ci.yml'
+  run "ppt-pr-create"     10 'test -d .github && test -f .github/workflows/backend.yml'
   run "ppt-rust-backend"  10 'test -f backend/Cargo.toml && test -d backend/crates'
   run "ppt-frontend"      10 'test -f frontend/pnpm-workspace.yaml || test -f frontend/package.json'
   run "ppt-screens"       10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
