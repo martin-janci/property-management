@@ -1901,19 +1901,17 @@ async fn import_workflow_template(
         .unwrap_or_else(|| format!("{} (from template)", template.name));
 
     let create_workflow = CreateWorkflow {
-        organization_id: tenant_id,
         name: workflow_name.clone(),
         description: template.description,
         trigger_type: template.trigger_type,
         trigger_config: template.trigger_config,
         conditions: template.conditions,
-        created_by: principal.user_id,
     };
 
-    // Create the workflow
+    // Create the workflow. Org and creator come from the verified principal.
     let workflow = state
         .workflow_repo
-        .create(create_workflow)
+        .create(tenant_id, principal.user_id, create_workflow)
         .await
         .map_err(|e| {
             tracing::error!("Failed to create workflow from template: {}", e);
