@@ -91,13 +91,13 @@ fun ProfileEditScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
         },
@@ -170,7 +170,7 @@ fun ProfileEditScreen(
                                         colors = listOf(Brand800, Brand500),
                                         start = Offset(0f, 0f),
                                         end = Offset(size.width, size.height),
-                                    ),
+                                    )
                             )
                         },
                     contentAlignment = Alignment.Center,
@@ -214,9 +214,7 @@ fun ProfileEditScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-            ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
                 generalError?.let {
                     ErrorBanner(it)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -273,10 +271,7 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(18.dp))
                 AuthFieldLabel(stringResource(R.string.profile_edit_language))
                 Spacer(modifier = Modifier.height(6.dp))
-                LanguageGrid(
-                    selected = selectedLang,
-                    onSelect = { selectedLang = it },
-                )
+                LanguageGrid(selected = selectedLang, onSelect = { selectedLang = it })
 
                 Spacer(modifier = Modifier.height(18.dp))
                 AuthFieldLabel(stringResource(R.string.profile_edit_about))
@@ -379,7 +374,7 @@ private fun LanguageCard(
                             Modifier.padding(4.dp)
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary)
                     )
                 }
             }
@@ -406,11 +401,7 @@ private fun LanguageCard(
 }
 
 @Composable
-private fun EditProfileBottomBar(
-    onCancel: () -> Unit,
-    onSave: () -> Unit,
-    saving: Boolean,
-) {
+private fun EditProfileBottomBar(onCancel: () -> Unit, onSave: () -> Unit, saving: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,

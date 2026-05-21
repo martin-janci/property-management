@@ -57,16 +57,16 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
-        },
+        }
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -131,7 +131,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                         indication = null,
                     ) {
                         focusRequester.requestFocus()
-                    },
+                    }
             ) {
                 BasicTextField(
                     value = code,
@@ -161,7 +161,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.height(10.dp))
-            TextButton(onClick = { /* backup code */}) {
+            TextButton(onClick = { /* backup code */ }) {
                 Text(
                     text = stringResource(R.string.auth_2fa_backup_code),
                     style = MaterialTheme.typography.bodyMedium,
@@ -177,13 +177,7 @@ fun TwoFactorScreen(onBackClick: () -> Unit, onDone: () -> Unit) {
             }
             val invalidCodeMsg = stringResource(R.string.auth_validation_2fa_invalid)
             Box(
-                modifier =
-                    Modifier.padding(
-                        start = 24.dp,
-                        end = 24.dp,
-                        top = 16.dp,
-                        bottom = 32.dp,
-                    ),
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 32.dp)
             ) {
                 Button(
                     onClick = {
@@ -239,5 +233,5 @@ private fun CodeCell(char: String, focused: Boolean) {
 
 private enum class TwoFactorStep {
     Verify,
-    Enabled
+    Enabled,
 }

@@ -125,12 +125,12 @@ class NotificationModelsContractTest {
             RegisterPushTokenRequest(
                 token = "expo-push-token",
                 platform = "ios",
-                deviceId = "device-uuid-123"
+                deviceId = "device-uuid-123",
             )
         val encoded = json.encodeToString(request)
         assertTrue(
             encoded.contains("\"device_id\":\"device-uuid-123\""),
-            "missing snake_case: $encoded"
+            "missing snake_case: $encoded",
         )
         assertTrue(encoded.contains("\"platform\":\"ios\""))
     }
@@ -188,7 +188,7 @@ class NotificationModelsContractTest {
                 priceDrops = true,
                 inquiryResponses = false,
                 listingUpdates = true,
-                marketing = true
+                marketing = true,
             )
         val decoded: NotificationPreferences = json.decodeFromString(json.encodeToString(prefs))
         assertEquals(prefs, decoded)

@@ -87,7 +87,7 @@ object FormatUtils {
     fun buildLocationString(
         address: Address,
         includeStreet: Boolean = false,
-        includePostalCode: Boolean = false
+        includePostalCode: Boolean = false,
     ): String {
         val parts = mutableListOf<String>()
 

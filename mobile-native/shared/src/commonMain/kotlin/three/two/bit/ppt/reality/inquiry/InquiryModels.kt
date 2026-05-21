@@ -16,7 +16,7 @@ import three.two.bit.ppt.reality.listing.RealtorInfo
 enum class InquiryStatus {
     @SerialName("pending") PENDING,
     @SerialName("responded") RESPONDED,
-    @SerialName("closed") CLOSED
+    @SerialName("closed") CLOSED,
 }
 
 /** Inquiry entry. */
@@ -31,7 +31,7 @@ data class Inquiry(
     @SerialName("updated_at") val updatedAt: String,
     val listing: ListingSummary? = null,
     val realtor: RealtorInfo? = null,
-    val responses: List<InquiryResponse> = emptyList()
+    val responses: List<InquiryResponse> = emptyList(),
 )
 
 /** Inquiry response from realtor. */
@@ -42,7 +42,7 @@ data class InquiryResponse(
     @SerialName("realtor_id") val realtorId: String,
     val message: String,
     @SerialName("created_at") val createdAt: String,
-    val realtor: RealtorInfo? = null
+    val realtor: RealtorInfo? = null,
 )
 
 /** User inquiries response. */
@@ -51,7 +51,7 @@ data class InquiriesResponse(
     val inquiries: List<Inquiry>,
     val total: Int,
     val page: Int,
-    @SerialName("page_size") val pageSize: Int
+    @SerialName("page_size") val pageSize: Int,
 )
 
 /** Create inquiry request. */
@@ -61,7 +61,7 @@ data class CreateInquiryRequest(
     val message: String,
     val name: String? = null,
     val email: String? = null,
-    val phone: String? = null
+    val phone: String? = null,
 )
 
 /** Create inquiry response. */
@@ -70,7 +70,7 @@ data class CreateInquiryResponse(
     val id: String,
     @SerialName("listing_id") val listingId: String,
     val status: InquiryStatus,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
 )
 
 /** Reply to inquiry request. */
@@ -87,7 +87,7 @@ data class ScheduleViewingRequest(
     val message: String? = null,
     val name: String? = null,
     val email: String? = null,
-    val phone: String? = null
+    val phone: String? = null,
 )
 
 /** Viewing request. */
@@ -105,7 +105,7 @@ data class ViewingRequest(
     @SerialName("confirmed_date") val confirmedDate: String? = null,
     @SerialName("confirmed_time") val confirmedTime: String? = null,
     @SerialName("created_at") val createdAt: String,
-    val listing: ListingSummary? = null
+    val listing: ListingSummary? = null,
 )
 
 /** Viewing status. */
@@ -114,7 +114,7 @@ enum class ViewingStatus {
     @SerialName("pending") PENDING,
     @SerialName("confirmed") CONFIRMED,
     @SerialName("completed") COMPLETED,
-    @SerialName("cancelled") CANCELLED
+    @SerialName("cancelled") CANCELLED,
 }
 
 /** User viewings response. */
