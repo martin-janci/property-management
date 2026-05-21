@@ -21,7 +21,7 @@ rand = { workspace = true }
 hex = { workspace = true }
 sha2 = { workspace = true }
 argon2 = "0.5"
-password-hash = "0.5"
+password-hash = "0.6"
 url = "2.5"
 tokio = { workspace = true, features = ["rt"] }
 async-trait = { workspace = true }
