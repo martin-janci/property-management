@@ -107,7 +107,7 @@ jobs:
           fi
 
       - name: Get OIDC token for ppt-deploy
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         id: oidc
         with:
           script: |
