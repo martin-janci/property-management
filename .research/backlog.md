@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-20 10:55 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-21 03:13 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -13,6 +13,8 @@ picks from here.
 
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
+| 4 | Add route-level regression tests for reality-server security fixes (open-redirect, IDOR, input caps) | test-gap | PR #316 | 2026-05-21 | ready |
+| 2 | Restore manager/admin role lookups hardcoded to false by X-Tenant-Context bypass fix (#335) | bug | PR #335 | 2026-05-21 | open |
 | 2 | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | security | issue #160 | 2026-05-20 | open |
 | 2 | Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation | dx | PR #282 | 2026-05-20 | open |
 | 2 | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dx | PR #328 | 2026-05-20 | open |

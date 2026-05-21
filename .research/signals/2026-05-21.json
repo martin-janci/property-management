@@ -1,0 +1,115 @@
+{
+  "run_iso": "2026-05-21T03:13:00Z",
+  "window": {
+    "since": "2026-05-20T10:53:33Z",
+    "until": "2026-05-21T03:13:00Z",
+    "note": "Normal run since last cursor. Merged-PR query re-run by mergedAt (not number>cursor) to catch low-number old PRs merged this window (#316, #317, #332, #335)."
+  },
+  "observed": {
+    "merged_prs": 11,
+    "merged_pr_range": "#316,#317,#332,#335,#365–#372",
+    "content_prs": "#316 #317 #332 #335 #367 #369 (rest are version-bump bot + own research brief #365)",
+    "open_prs_touched": 18,
+    "closed_not_merged": 0,
+    "new_or_updated_issues": 0,
+    "commits_on_main": 11
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true,  "command": "test -f briefs/2026-05-21.md && head -1 == '# 2026-05-21'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true,  "command": "compare staged state.json vs HEAD", "observed": "last_pr_seen 343→373, last_commit_sha fc8af0a→04bbbed, seen_signals 7→14, hotspot_history keys changed, stats.runs 1→2", "expected": "true" },
+    { "goal": "G3", "passed": true,  "command": "jq backlog ids unique", "observed": "8 unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true,  "command": "no non-cumulative signal id re-counted from prior seen_signals", "observed": "all 7 new ids fresh; no churn-hotspot re-emit", "expected": "true" },
+    { "goal": "G5", "passed": true,  "command": "no score > 8; decay applied to 14d-stale open items", "observed": "max=4; no open item older than 14d (all created 2026-05-20/21)", "expected": "true" },
+    { "goal": "G6", "passed": true,  "command": "every new plan has adversarial-pass annotation in brief", "observed": "1 plan promoted; annotated 'adversarial pass: passed'", "expected": "true" },
+    { "goal": "G7", "passed": true,  "command": "≤2 new plans, each meets readiness gates", "observed": "1 new plan; 4 metadata + 11 headings present; Files paths resolve; Mode declared", "expected": "true" },
+    { "goal": "G8", "passed": true,  "command": "git diff --cached --name-only ⊂ .research/", "observed": "all staged paths under .research/", "expected": "exit 0" },
+    { "goal": "G9", "passed": true,  "command": "staged diff has no secrets/private hostnames", "observed": "clean", "expected": "exit 0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regenerates byte-identical from backlog.json", "observed": "diff clean", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures reflected in brief + cursors", "observed": "no phase failures", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan still in plans/ or _archive/", "observed": "no prior plans existed", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count ≥ count at HEAD", "observed": "0 ≥ 0", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regenerates byte-identical (no triage rows)", "observed": "diff clean", "expected": "exit 0" }
+  ],
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-316",
+      "type": "hotfix-no-test",
+      "source": "PR #316 (fix(security): reality-server hardening — open redirect, missing auth, SSRF, IDORs)",
+      "score_delta": 2,
+      "evidence": "Merged 2026-05-20 with +550/-32 across 10 reality-server files (sso.rs, agencies.rs, agency_imports.rs, compare.rs, reports.rs, util/url_validator.rs, ...) and NO `*test*` file in the diff. url_validator.rs has 11 inline #[cfg(test)] cases, but the route-handler open-redirect/IDOR/SSRF-wiring fixes are untested. Maps to test-gap item test-gap-reality-server-security-route-tests.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "hotfix-no-test-pr-317",
+      "type": "hotfix-no-test",
+      "source": "PR #317 (fix(security): reality-server input hygiene — length caps, URL scheme validation, paginate comments)",
+      "score_delta": 2,
+      "evidence": "Merged 2026-05-21 with +280/-5 across agency_branding.rs, articles.rs, inquiries.rs, reports.rs, users.rs and NO test file. Input length caps + URL-scheme validation shipped without regression tests. Maps to test-gap-reality-server-security-route-tests.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "fixme-in-merged-code-pr-335",
+      "type": "fixme-in-merged-code",
+      "source": "PR #335 (commit 7cae0256); faults.rs:33,443,935; critical_notifications.rs:55,342,421; vendor_portal.rs:38",
+      "score_delta": 2,
+      "evidence": "X-Tenant-Context bypass fix replaced client-trusted role branches with hardcoded `false` (least privilege) and left TODO(security) markers to wire real membership-role lookup (canonical pattern in routes/organizations.rs). Live functional regression: org admins cannot create critical notifications (gated on principal.is_platform() only); managers lose manager-gated fault data (is_manager=false at faults.rs:443,935). Fail-closed = safe, not a vulnerability. Maps to bug-role-lookup-regression-after-tenant-fix.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+      "type": "churn-hotspot",
+      "source": "git diff fc8af0a..origin/main",
+      "score_delta": 0,
+      "evidence": "Top-1 raw churn this run: 420 lines in ai.rs — but this is the one-time #332 JWT-auth rewrite of the AI router, not recurring instability. Tracked in hotspot_history (runs_seen=1) for future repeated-churn detection; not scored as a refactor target.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/url_validator.rs",
+      "type": "churn-hotspot",
+      "source": "git diff fc8af0a..origin/main",
+      "score_delta": 0,
+      "evidence": "Top-2 raw churn this run: 302 lines — a brand-new SSRF-guard module added once by #316 (with inline tests). New-file addition, not instability. Tracked in hotspot_history (runs_seen=1); not scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/ai_auth_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git diff fc8af0a..origin/main",
+      "score_delta": 0,
+      "evidence": "Top-3 raw churn this run: 219 lines — brand-new test file added by #332. New-file addition (good: adds coverage). Tracked in hotspot_history (runs_seen=1); not scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-2026-05-21",
+      "type": "dep-update-noise",
+      "source": "open PRs #344-#358 (15 dependabot), #371 (batch dependabot), #373 (version bump)",
+      "score_delta": 0,
+      "evidence": "18 open PRs touched this run: 15 individual dependabot bumps (GitHub Actions, backend Cargo: governor/config/dialoguer/tower-http/fluent-bundle, frontend npm: postcss/dompurify/expo/async-storage/react-test-renderer), #371 batch-Dependabot PR (REVIEW_REQUIRED), #373 version bump (APPROVED). #364 (research Phase 5) created 2026-05-19 (~2d, not stalled). Logged, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "screen_map_status": {
+    "ppt_files": 53,
+    "reality_files": 46,
+    "mobile_files": "n/a (dir not seeded)",
+    "drift_signals_this_run": 0,
+    "orphan_signals_this_run": 0,
+    "note": "No frontend route files (ppt-web App.tsx/routes/**, reality-web app/**) touched this window — all 6 content PRs were backend-only. No drift/orphan to compute.",
+    "screen_map_ci_main": "completed/success 2026-05-20T23:29:33Z"
+  },
+  "process_signals": {
+    "reverts": 0,
+    "stalled_reviews": 0,
+    "hotfix_no_test": "2 (#316, #317 — both folded into test-gap item)",
+    "fixme_in_merged_code": "1 (#335 role-lookup regression)",
+    "untriaged_issues": 0,
+    "closed_not_merged_pr": 0
+  }
+}

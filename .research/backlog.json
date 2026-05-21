@@ -2,6 +2,55 @@
   "version": 1,
   "items": [
     {
+      "id": "test-gap-reality-server-security-route-tests",
+      "title": "Add route-level regression tests for reality-server security fixes (open-redirect, IDOR, input caps)",
+      "vector": "test-gap",
+      "score": 4,
+      "status": "ready",
+      "sources": ["PR #316", "PR #317"],
+      "evidence": [
+        "PR #316 (fix(security): reality-server hardening — open redirect, missing auth, SSRF, IDORs, +550/-32) merged 2026-05-20 added route-level fixes to sso.rs, agencies.rs, agency_imports.rs, compare.rs, reports.rs but shipped NO test file in the diff",
+        "PR #317 (fix(security): reality-server input hygiene — length caps, URL scheme validation, paginate comments, +280/-5) merged 2026-05-21 touched agency_branding.rs, articles.rs, inquiries.rs, reports.rs, users.rs with NO test file in the diff",
+        "open-redirect guard `ensure_redirect_uri_allowed` defined at backend/servers/reality-server/src/routes/sso.rs:124 has zero tests — grep of tests/ + routes/ for ensure_redirect_uri_allowed/invalid_redirect/ALLOWED_REDIRECT returned nothing",
+        "the only reality-server integration test file is backend/servers/reality-server/tests/raw_pool_audit_tests.rs (tenant-host isolation); no route covers open-redirect rejection, cross-agency IDOR denial, or oversized-input rejection",
+        "url_validator.rs (SSRF core) IS covered by 11 inline #[cfg(test)] cases, so the gap is the route-handler application of these fixes, not the URL parser itself"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/sso.rs",
+        "backend/servers/reality-server/src/routes/agencies.rs",
+        "backend/servers/reality-server/src/routes/reports.rs",
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/servers/reality-server/tests/raw_pool_audit_tests.rs"
+      ],
+      "created_at": "2026-05-21",
+      "updated_at": "2026-05-21",
+      "plan": "plans/reality-server-security-route-tests.md"
+    },
+    {
+      "id": "bug-role-lookup-regression-after-tenant-fix",
+      "title": "Restore manager/admin role lookups hardcoded to false by X-Tenant-Context bypass fix (#335)",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "sources": ["PR #335", "commit 7cae0256"],
+      "evidence": [
+        "PR #335 (fix(SECURITY-CRITICAL): close X-Tenant-Context auth bypass in 6 peer routes, 52 handlers) deleted extract_tenant_context and routed every handler through RequestPrincipal — correct fail-closed fix",
+        "to prioritise closing the bypass, role branches were replaced with `false` (least privilege) pending a real membership-role lookup: faults.rs:443 and :935 set `is_manager = false` unconditionally; critical_notifications.rs gates create_notification/get_stats on `principal.is_platform()` only",
+        "comment at critical_notifications.rs:421 states the endpoints are 'unreachable until a real role lookup is wired up' — a live functional regression: org admins can no longer create critical notifications; managers lose manager-gated fault data",
+        "TODO(security) markers point at the canonical fix: membership-role pattern in routes/organizations.rs (faults.rs:33, critical_notifications.rs:55/342, vendor_portal.rs:38)",
+        "NOT a vulnerability (fail-closed is safe) — this is incomplete migration / feature regression; one signal short of the promote threshold"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/faults.rs",
+        "backend/servers/api-server/src/routes/critical_notifications.rs",
+        "backend/servers/api-server/src/routes/vendor_portal.rs",
+        "backend/servers/api-server/src/routes/organizations.rs"
+      ],
+      "created_at": "2026-05-21",
+      "updated_at": "2026-05-21",
+      "plan": null
+    },
+    {
       "id": "security-rls-migration-residual",
       "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
       "vector": "security",

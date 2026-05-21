@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "last_run_iso": "2026-05-20T10:53:33Z",
-  "last_run_ms": 1779274413000,
-  "last_pr_seen": 343,
+  "last_run_iso": "2026-05-21T03:13:00Z",
+  "last_run_ms": 1779333180000,
+  "last_pr_seen": 373,
   "last_issue_seen": 160,
-  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "last_commit_sha": "04bbbedfba70261d8024cb75aa1184b17dc36d60",
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
       "runs_seen": 1,
@@ -20,6 +20,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-20",
       "recent_churn": 10659
+    },
+    "backend/servers/api-server/src/routes/ai.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-21",
+      "recent_churn": 420
+    },
+    "backend/servers/reality-server/src/util/url_validator.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-21",
+      "recent_churn": 302
+    },
+    "backend/servers/api-server/tests/ai_auth_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-21",
+      "recent_churn": 219
     }
   },
   "seen_signals": [
@@ -29,12 +44,19 @@
     "unchecked-todo-rls-migration-residual",
     "unchecked-todo-integration-marketplace-stubs",
     "unchecked-todo-portfolio-dashboard-stubs",
-    "dep-update-noise-2026-05-20"
+    "dep-update-noise-2026-05-20",
+    "hotfix-no-test-pr-316",
+    "hotfix-no-test-pr-317",
+    "fixme-in-merged-code-pr-335",
+    "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+    "churn-hotspot-backend/servers/reality-server/src/util/url_validator.rs",
+    "churn-hotspot-backend/servers/api-server/tests/ai_auth_tests.rs",
+    "dep-update-noise-2026-05-21"
   ],
   "stats": {
-    "runs": 1,
-    "vectors_created": 6,
-    "plans_created": 0,
+    "runs": 2,
+    "vectors_created": 8,
+    "plans_created": 1,
     "quiet_days": 0
   }
 }
