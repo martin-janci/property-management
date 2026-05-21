@@ -73,10 +73,11 @@ is recorded, not hidden), but the brief makes it visible.
     | while IFS= read -r p; do test -e "$p" || { echo "missing: $p"; exit 1; }; done
   ```
 
-### G8 — No application code touched
+### G8 — No application code touched (on the routine commit)
 
 - **Pass when:** `git diff --cached --name-only` contains only paths starting with `.research/`.
 - **Check:** `git diff --cached --name-only | grep -v '^\.research/' | wc -l` → expect `0`.
+- **Scope:** G8 applies to **the routine commit on `main`** only. Phase 5 — Auto-fix uses a *separate* worktree on an `auto-fix/<slug>` branch, opens its own PR, and never touches the routine's staged index. The auto-fix branch may modify application files (the whole point) and is gated by its own checks (G15 + verify-all). G8 here is the firewall that keeps the daily routine commit pure `.research/`.
 
 ### G9 — No secrets or private hostnames
 
@@ -109,6 +110,40 @@ is recorded, not hidden), but the brief makes it visible.
 - **Pass when:** regenerating `.research/IDEAS_TRIAGE.md` from the `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors G10's pattern: `IDEAS_TRIAGE.md` is a rendered view, never hand-edited.
 - **Check:** materialize the rendered view to `/tmp/ideas-triage.regen.md`, then `diff -q .research/IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md` → expect exit 0.
 
+### G15 — Auto-fix discipline
+
+The routine may, when the bar is met, open **at most one** issue+PR per run via Phase 5. This goal enforces the discipline.
+
+- **Pass when:** all of the following hold simultaneously:
+  1. **Kill switch respected.** If `ROUTINE_AUTOFIX_DISABLED=1` in the env, Phase 5 was skipped entirely and no `auto-fix/*` branch was pushed this run.
+  2. **Per-run cap.** At most **one** new `auto-fix/*` branch was pushed and at most **one** new PR was opened by the routine this run. Issue-only actions (e.g. `fixme-in-merged-code` surfacing) and comment-only actions (`stalled-review` nudges) do **not** count against the PR cap, but the same per-run cap of 1 applies to each category — at most 1 new issue, at most 1 stalled-review comment.
+  3. **Idempotency.** No signal id present in `state.auto_fix_history` was processed again. Each signal id is processed at most once across the lifetime of the state file. (A re-emit of a cumulative signal type — `churn-hotspot`, `repeated-churn` — never goes through Phase 5; it's analytical, not actionable, by allowlist.)
+  4. **Certainty bar held.** Every signal that produced an auto-fix had `confidence == "high"` *and* the item's `score >= 3` in `backlog.json` at the time Phase 5 ran. (Anything weaker stays in the manual-implementer path.)
+  5. **Verify-all gated the push.** For each auto-fix branch that was pushed, `SKIP_NETWORK=1 ./.claude/skills/verify-all.sh --quick` exited 0 *inside the auto-fix worktree* before `git push` was called. If verify-all failed, the routine deleted the worktree without pushing.
+  6. **Routine commit untainted.** No file under `.git/MERGE_HEAD`, `.git/CHERRY_PICK_HEAD`, or staged on the routine branch outside `.research/` (i.e. G8 still passes).
+
+- **Check (cap + idempotency, in `signals/<today>.json`):**
+  ```bash
+  jq '.auto_fix_actions | length <= 3
+      and ([.[] | select(.action_type == "pr")]   | length) <= 1
+      and ([.[] | select(.action_type == "issue")] | length) <= 1
+      and ([.[] | select(.action_type == "comment")] | length) <= 1' \
+    .research/signals/$(date -u +%F).json
+  ```
+  → expect `true`. Mirror each action into `auto_fix_actions[]` in the signals file with shape `{ signal_id, action_type: "pr"|"issue"|"comment", target_url, verify_all_exit, opened_at }`.
+
+- **Check (idempotency vs history):** every entry in this run's `auto_fix_actions[]` must have its `signal_id` *absent* from the prior committed `state.auto_fix_history`:
+  ```bash
+  jq --slurpfile prev <(git show HEAD:.research/state.json 2>/dev/null || echo '{}') \
+    '([.auto_fix_actions[].signal_id] - ($prev[0].auto_fix_history // {} | keys)) == [.auto_fix_actions[].signal_id]' \
+    .research/signals/$(date -u +%F).json
+  ```
+  → expect `true`.
+
+- **Check (kill switch honored):** if `ROUTINE_AUTOFIX_DISABLED=1` was set this run, `auto_fix_actions` must be empty: `jq '.auto_fix_actions | length == 0' .research/signals/$(date -u +%F).json` → expect `true` when disabled.
+
+- **Failure mode:** if any sub-check fails, surface it under brief's *Goal violations*. The routine commit still proceeds (the failure log is value) — but Phase 5 itself must already have aborted before any push if verify-all failed; G15 is the post-hoc audit trail, not the runtime gate. The runtime gate lives inside Phase 5.
+
 ---
 
 **Goal-check report format** (in `signals/<date>.json`):
@@ -129,7 +164,7 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
 ## Inputs you read
 
 - `.research/state.json` — what you've already seen (cursors + `seen_signals`
-  + `hotspot_history`)
+  + `hotspot_history` + `auto_fix_history`)
 - `.research/backlog.json` — **canonical** ranked vectors (don't duplicate; regenerate `backlog.md` from this)
 - `.research/plans/` — plans the implementation agent may have picked up
 - GitHub (via `gh` CLI in bash): merged PRs since `last_pr_seen`, open and
@@ -137,6 +172,7 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
   `last_commit_sha`
 - Code (via `Read` / `Grep`): file diffs in the top-3 churn hotspots since
   the last run
+- Env: `ROUTINE_AUTOFIX_DISABLED` (Phase 5 kill switch — set to `1` to skip Phase 5 entirely)
 
 ## Outputs you write
 
@@ -145,10 +181,37 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
 3. `.research/backlog.md` — **regenerate from `backlog.json`** (never edit independently); include top-of-file timestamp widget
 4. `.research/IDEAS_TRIAGE.md` — **regenerate from `backlog.json`** filtered to `vector == "triage"` (never edit independently); same byte-identity discipline as `backlog.md` (G14)
 5. `.research/plans/<slug>.md` — promote ready vectors (max 2 per run); scaffold from `.research/plan-template.md`
-6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run
-7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats
+6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run, including `auto_fix_actions[]` populated by Phase 5
+7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats, append to `auto_fix_history` for each signal Phase 5 acted on
 
-Then `git add .research/`, run the **quality gates** below, commit, push to `main`.
+Then `git add .research/`, run the **quality gates** below, commit, push to `main`. Phase 5 may *also* push to a separate `auto-fix/<slug>` branch and open a PR — that's a side effect, not part of the `.research/` commit.
+
+### `state.json` shape (relevant keys)
+
+```jsonc
+{
+  "last_pr_seen": 297,
+  "last_issue_seen": 142,
+  "last_commit_sha": "8f30207d…",
+  "last_run_iso": "2026-05-18T04:00:00Z",
+  "last_run_ms": 4321,
+  "seen_signals": ["<signal-id>", "…"],
+  "hotspot_history": { "<file>": { "runs_seen": 3, "last_seen": "2026-05-17", "recent_churn": 42 } },
+  "auto_fix_history": {
+    "<signal-id>": {
+      "pr_url": "https://github.com/.../pull/N",     // or null if issue-only / comment-only
+      "issue_url": "https://github.com/.../issues/N", // or null if comment-only
+      "opened_at": "2026-05-18T04:00:00Z",
+      "action": "doc-stub | orphan-remove | lockfile-bump | issue-only | comment-only",
+      "verify_all_exit": 0                            // 0 on success; non-zero or absent if aborted
+    }
+  },
+  "stats": { "runs": 17, "vectors_created": 9, "plans_created": 4, "quiet_days": 2, "auto_fix_count": 3 },
+  "paused": false
+}
+```
+
+`auto_fix_history` is **append-only across the file's lifetime**. Even after a PR is reverted, the entry stays — that's the idempotency key. If you genuinely want a signal to re-fire (e.g. you reverted a bad auto-fix and want the routine to try again differently), delete the entry by hand and the next run will re-process.
 
 ## Pipeline
 
@@ -412,30 +475,194 @@ Before locking in the promotions, re-read each newly-written plan **as a skeptic
 
 This pass is mandatory — it's the difference between "passes mechanical gates" and "actually ready". Note the result for each plan in the brief under *Plans promoted*.
 
-### Phase 4 — Write & commit
+### Phase 4 — Write artifacts
 
 0. `mkdir -p .research/briefs .research/signals .research/plans/_archive` — the scaffold ships `.gitkeep` placeholders for these, but if the repo is freshly cloned or someone removed the placeholders, the routine creates the dirs idempotently before any writes.
-1. Write the brief at `.research/briefs/<YYYY-MM-DD>.md`. If a brief for today exists, **overwrite** (idempotent rerun should converge).
+1. Write the brief at `.research/briefs/<YYYY-MM-DD>.md`. If a brief for today exists, **overwrite** (idempotent rerun should converge). The brief's *Auto-fix* section will be filled in at the end of Phase 5; for now leave a placeholder `<filled by Phase 5>`.
 2. Update `state.json`:
    - `last_run_iso`, `last_run_ms`
    - **Only advance cursors for phases that succeeded.** If Phase 1's `gh pr list` failed but issues succeeded, advance `last_issue_seen` but not `last_pr_seen`.
    - Append new signal IDs to `seen_signals`.
    - Bump `hotspot_history[file]` for each new hotspot: `{ runs_seen: n+1, last_seen: today, recent_churn: <this-run-churn> }`.
    - Increment relevant stats. If nothing new happened, increment `quiet_days`.
-3. **Stage everything in `.research/`** so the quality gates have something to inspect:
+   - Leave `auto_fix_history` untouched at this point — Phase 5 will append.
+3. Write `signals/<today>.json` with the `signals[]` and `goal_checks[]` arrays. Leave `auto_fix_actions: []` for Phase 5 to populate.
+
+**Do not stage or commit yet.** Phase 5 may write more to `.research/state.json`, and the gates need a stable set before they inspect the index.
+
+### Phase 5 — Auto-fix (optional, capped)
+
+**Goal:** when the routine surfaces a backlog item with very high certainty *and* the proposed change has a mechanically-verifiable safe shape, open the issue / PR / comment directly instead of leaving it for the manual implementer.
+
+**Kill switch:** if `ROUTINE_AUTOFIX_DISABLED=1` is set in the env, skip this phase entirely — write `auto_fix_actions: []` and `auto_fix_skipped_reason: "killed by env"` into `signals/<today>.json`, then go to Phase 6. The brief's *Auto-fix* section becomes "disabled by env".
+
+**Allowlist — only these signal types are eligible:**
+
+| Signal type | Action shape | Produces |
+|---|---|---|
+| `screen-map-drift` | Write stub `docs/screens/<product>/<slug>.md` from `docs/screens/_template.md`. Frontmatter `status: stub`, body left intentionally bare with the routes that triggered the signal listed under *Routes*. | issue + PR |
+| `screen-map-orphan` | Delete the orphan `docs/screens/<product>/<slug>.md`. Verify with `grep -r` that no other doc / code references the slug first; if it does, skip and surface in the brief instead. | issue + PR |
+| `fixme-in-merged-code` | Open a GitHub issue titled `FIXME: <file>:<line> — <quoted comment>` with body linking the PR that introduced it. No code change — the routine is not the right context to fix arbitrary FIXMEs. | issue only |
+| `dep-update-noise` (specifically the **lockfile-drift** sub-shape: a dependabot PR merged on main but a consumer `package.json` / `Cargo.toml` wasn't bumped in lock-step) | Edit the affected consumer manifest's caret spec to match the lockfile-pinned version. One file, one line, one caret bump. | issue + PR |
+| `stalled-review` | Post a comment on the stalled PR: `Routine ping: this PR has been open <N> days with no reviewDecision. <Author>, anything blocking?` | comment only |
+
+**Certainty bar — all must hold before firing:**
+
+1. `signal.confidence == "high"` (fact-grade, not analytical inference).
+2. The backlog item's `score >= 3` (above the +2 baseline of a single signal — i.e. two pieces of evidence have stacked, or a high-confidence signal got an explicit bump).
+3. The signal id is **not** already in `state.auto_fix_history` (idempotency — never re-open).
+4. The action's "safe shape" matches the allowlist above exactly. Anything else — even a "trivial-looking" code fix — goes to the manual plan path.
+
+**Per-run caps:**
+- ≤1 PR opened by the routine.
+- ≤1 issue opened by the routine (issue-only flows).
+- ≤1 comment posted by the routine (stalled-review).
+If multiple eligible candidates exist, pick the highest-scored. If tied, pick the most recently updated.
+
+**Procedure (for the PR-producing actions):**
+
+1. **Stage isolation via worktree.** The routine's working dir has unstaged `.research/` writes from Phase 4 — don't disturb them. Create a side worktree off `origin/main`:
+   ```bash
+   AUTO_FIX_DIR=$(mktemp -d -t auto-fix-XXXX)
+   git worktree add "$AUTO_FIX_DIR" -b auto-fix/<slug> origin/main
+   cd "$AUTO_FIX_DIR"
+   ```
+   The slug is `<signal-type>-<short-hash>` (e.g. `screen-map-drift-pr-291-ppt-abc1234`). Short-hash is the first 7 of the signal id's SHA-256 so it's stable across reruns and unique.
+
+2. **Apply the per-signal action** (see table above). Stay disciplined — the touch should be exactly the documented shape, nothing else.
+
+3. **Verify locally:**
+   ```bash
+   SKIP_NETWORK=1 ./.claude/skills/verify-all.sh --quick
+   ```
+   If exit ≠ 0: **abort.** Tear down the worktree (the only place this happens on the failure path), log to `signals/<today>.json` under `auto_fix_actions[]` with `verify_all_exit: <code>` and `aborted: true`, write a brief-section line explaining the abort, and continue to Phase 6 *without* the auto-PR. Do not push, do not open the issue.
+
+   ```bash
+   cd - >/dev/null
+   git worktree remove "$AUTO_FIX_DIR"
+   ```
+
+   If exit == 0: **leave the worktree in place** — steps 4–5 still need it for commit/push. It is cleaned up at the end of step 5.
+
+4. **Open the tracking issue first** (so the PR can link to it):
+   ```bash
+   ISSUE_URL=$(gh issue create \
+     --title "<auto-fix> <signal-type>: <one-line summary>" \
+     --body "$(cat <<EOF
+   Surfaced by the daily research routine on $(date -u +%F).
+
+   - Signal id: \`<signal-id>\`
+   - Signal type: \`<signal-type>\`
+   - Confidence: high
+   - Score at promotion: <N>
+   - Evidence: <one-line — file:line, PR #, or commit sha>
+
+   _Filed automatically; PR will link back here. Mark with \`needs-human-judgement\` if the proposed fix is wrong._
+   EOF
+   )")
+   ```
+
+5. **Commit + push + open PR (inside the worktree):**
+   ```bash
+   cd "$AUTO_FIX_DIR"
+   git add <touched paths only — NOT .research/>
+   git commit -m "$(cat <<EOF
+   auto-fix(<vector>): <one-line subject>
+
+   Surfaced by the daily research routine on $(date -u +%F).
+   Signal: <signal-id> (<signal-type>, confidence=high, score=<N>)
+   Closes #<issue-number from step 4>
+
+   verify-all.sh --quick: exit 0
+   EOF
+   )"
+   git push origin auto-fix/<slug>
+   PR_URL=$(gh pr create \
+     --title "auto-fix(<vector>): <one-line subject>" \
+     --body "$(cat <<EOF
+   Auto-opened by the daily research routine. Closes #<issue-number>.
+
+   ## What
+
+   <one-paragraph: what the signal flagged, what the fix does>
+
+   ## Verification
+
+   - \`SKIP_NETWORK=1 ./.claude/skills/verify-all.sh --quick\` → exit 0 inside the worktree before push.
+   - Confidence: high. Score at promotion: <N>. Signal id: \`<signal-id>\`.
+
+   ## Why this is safe to auto-merge
+
+   <one of: doc-stub creation, orphan-doc removal, lockfile-spec alignment — name which and why the blast radius is contained>
+
+   ---
+   _Routine auto-fix. Roll back by reverting this PR; the next routine run will re-surface the signal (history entry won't replay)._
+   EOF
+   )")
+   cd - >/dev/null
+   git worktree remove "$AUTO_FIX_DIR"
+   ```
+
+6. **Record in `state.json` and `signals/<today>.json`:**
+   - In `state.json` under `auto_fix_history[<signal-id>]`:
+     ```jsonc
+     {
+       "pr_url": "<PR_URL>",
+       "issue_url": "<ISSUE_URL>",
+       "opened_at": "<iso now>",
+       "action": "doc-stub | orphan-remove | lockfile-bump",
+       "verify_all_exit": 0
+     }
+     ```
+   - In `signals/<today>.json` append to `auto_fix_actions[]`:
+     ```jsonc
+     { "signal_id": "...", "action_type": "pr", "target_url": "<PR_URL>", "verify_all_exit": 0, "opened_at": "..." }
+     ```
+
+**Procedure (issue-only — `fixme-in-merged-code`):**
+
+Same as steps 4 + 6 above. Skip worktree, no PR. Record under `auto_fix_actions[]` with `action_type: "issue"` and `target_url: "<ISSUE_URL>"`.
+
+**Procedure (comment-only — `stalled-review`):**
+
+```bash
+gh pr comment <pr-number> --body "Routine ping: this PR has been open <N> days with no reviewDecision. @<author>, anything blocking? \n\n_Auto-posted by the research routine. Reply 'noped' to suppress future pings._"
+```
+
+Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<PR comment URL>"`. No issue, no PR, no worktree.
+
+**Failure modes (Phase 5 specific):**
+
+| Failure | Response |
+|---|---|
+| `gh worktree add` fails (existing branch / dirty index) | Abort Phase 5. Surface in brief. Don't push, don't open issue. |
+| `verify-all.sh --quick` exits non-zero in the worktree | Abort. Don't push. Record `aborted: true` in `auto_fix_actions[]`. Delete worktree. |
+| `gh issue create` fails | Abort. Don't push the branch. Delete worktree. |
+| `git push` fails (e.g. branch already exists with different commits — re-run race) | Abort, delete the local branch, log a warning. Next run's idempotency check will see no `auto_fix_history` entry and may retry. |
+| `gh pr create` fails after push succeeded | **Don't delete the branch.** Record the issue+branch in `auto_fix_history` with `pr_url: null` and `pr_create_failed: true`. The brief surfaces it as needing manual PR creation. |
+| `ROUTINE_AUTOFIX_DISABLED=1` set | Skip the phase entirely. Write `auto_fix_actions: []` and `auto_fix_skipped_reason: "killed by env"`. |
+
+**Brief's *Auto-fix* section** — fill in with one of:
+- `disabled by env` — kill switch was set
+- `no candidate` — nothing matched the certainty bar this run
+- `<N> action(s): <type>: <target-url>; …` — one line per `auto_fix_actions[]` entry, success or aborted
+
+### Phase 6 — Stage, gate, commit
+
+0. **Stage everything in `.research/`** so the quality gates have something to inspect:
    ```bash
    git add .research/
    ```
    Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
-4. Run the **Quality gates** (below) in order against the staged index:
+1. Run the **Quality gates** (below) in order against the staged index:
    - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
-5. Commit + push (only when gates passed or partial-commit was approved):
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+2. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
-   git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans"
+   git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
    git push origin main
    ```
-   Requires "Allow unrestricted branch pushes" on this repo. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
+   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Requires "Allow unrestricted branch pushes" on this repo. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
 
 ## Quality gates (before every commit)
 
@@ -497,6 +724,12 @@ Run these and verify each passes:
 ## Plans promoted
 - `plans/<slug>.md` — <one-line summary> · adversarial pass: <passed | fixed-in-place | rolled-back>
 
+## Auto-fix
+- <one of:>
+  - `disabled by env` — `ROUTINE_AUTOFIX_DISABLED=1` was set
+  - `no candidate` — no signal met confidence=high + score≥3 + allowlist this run
+  - one line per `auto_fix_actions[]` entry: `<action_type>: <signal-type> → <target_url> (<verify_all_exit | aborted: reason>)`
+
 ## Open questions
 - <anything that needs human judgement before promoting to a plan>
 
@@ -516,16 +749,18 @@ When promoting a vector, copy that file to `.research/plans/<slug>.md` and repla
 
 ## Hard rules
 
-- **Never modify files outside `.research/`.** No application-code changes.
-- **Never open PRs.** Direct commit to `main` is the policy for this routine.
+- **The daily routine commit on `main` only touches `.research/`.** No application-code changes on the routine commit. Phase 5 — Auto-fix is a separate flow on an `auto-fix/<slug>` branch with its own PR, capped at ≤1 per run, gated by `verify-all.sh --quick` and the kill switch `ROUTINE_AUTOFIX_DISABLED=1`.
+- **The routine opens PRs only via Phase 5, on `auto-fix/<slug>` branches off `main`.** Never push to `main` directly anything except the `.research/` routine commit.
 - **Treat `.research/backlog.json` as canonical.** `backlog.md` is a rendered view, regenerated each run.
 - **Never score the same signal twice.** Use stable signal IDs in `state.seen_signals`.
+- **Never auto-fix the same signal twice.** Use `state.auto_fix_history` for idempotency.
 - **Don't promote vague vectors.** A plan must name concrete files, PRs, issues, or commits and pass *all* readiness gates.
 - **Don't overfit to PR text.** Open the diff and confirm code evidence before promoting.
 - **Ignore generated files, lockfiles, vendored code, and formatting-only churn** unless directly tied to a bug/revert.
 - **If a command fails, do not advance that section's cursor.** Other sections still commit.
 - **Cap individual backlog score at 8.** Decay open items by 1 after 14 days without new evidence; drop at 0.
 - **Cap plan output at 2 new plans per run.**
+- **Cap auto-fix output at 1 PR + 1 issue + 1 comment per run.** See Phase 5.
 - **No secrets, no private hostnames.**
 
 ## Special trigger payloads

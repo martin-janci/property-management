@@ -1975,7 +1975,7 @@ packages:
       '@expo/require-utils': 55.0.5(typescript@5.9.3)
       '@expo/router-server': 55.0.17(expo-constants@55.0.16)(expo-font@55.0.8)(expo-server@55.0.10)(expo@55.0.25)(react@19.2.0)
       '@expo/schema-utils': 55.0.4
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
       '@expo/ws-tunnel': 1.0.6
       '@expo/xcpretty': 4.4.4
       '@react-native/dev-middleware': 0.83.6
@@ -2015,7 +2015,7 @@ packages:
       terminal-link: 2.1.1
       toqr: 0.1.1
       wrap-ansi: 7.0.0
-      ws: 8.20.0
+      ws: 8.20.1
       zod: 3.25.76
     transitivePeerDependencies:
       - '@expo/dom-webview'
@@ -2152,7 +2152,7 @@ packages:
     hasBin: true
     dependencies:
       '@expo/env': 2.1.2
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
       arg: 5.0.2
       chalk: 4.1.2
       debug: 4.4.3
@@ -2229,7 +2229,7 @@ packages:
       '@expo/env': 2.1.2
       '@expo/json-file': 10.0.14
       '@expo/metro': 55.1.1
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
       browserslist: 4.28.2
       chalk: 4.1.2
       debug: 4.4.3
@@ -2276,14 +2276,14 @@ packages:
     resolution: {integrity: sha512-wbuj3EebM7W9hN/Wp4xTzKd6rQ2zKJzAxkFxkOOwyysLp0HOAgQ4/5RINyoS241pZUX2rUHq7mAJ7pcCQ8U0Ow==}
     engines: {node: '>=12'}
     dependencies:
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
     dev: false
 
   /@expo/package-manager@1.10.5:
     resolution: {integrity: sha512-nCP9Mebfl3jvOr0/P6VAuyah6PAtun+aihIL2zAtuE8uSe94JWkVZ7051i0MUVO+y3gFpBqnr8IIH5ch+VJjHA==}
     dependencies:
       '@expo/json-file': 10.0.14
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
       chalk: 4.1.2
       npm-package-arg: 11.0.3
       ora: 3.4.0
@@ -2377,6 +2377,13 @@ packages:
 
   /@expo/spawn-async@1.7.2:
     resolution: {integrity: sha512-QdWi16+CHB9JYP7gma19OVVg0BFkvU8zNj9GjWorYI8Iv8FUxjOCcYRuAmX4s/h91e4e7BPsskc8cSrZYho9Ew==}
+    engines: {node: '>=12'}
+    dependencies:
+      cross-spawn: 7.0.6
+    dev: false
+
+  /@expo/spawn-async@1.8.0:
+    resolution: {integrity: sha512-eb9xxd/LbuEGSdua4NumCu/McVB9EM+F/JxB9pWgnERw4HQ9XyTNH1KapG6oqLWR8TuRK2LQfzJlmNi94CVobw==}
     engines: {node: '>=12'}
     dependencies:
       cross-spawn: 7.0.6
@@ -6007,7 +6014,7 @@ packages:
     hasBin: true
     dependencies:
       '@expo/require-utils': 55.0.5(typescript@5.9.3)
-      '@expo/spawn-async': 1.7.2
+      '@expo/spawn-async': 1.8.0
       chalk: 4.1.2
       commander: 7.2.0
     transitivePeerDependencies:
@@ -7363,7 +7370,7 @@ packages:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 11.0.0
-      ws: 8.20.0
+      ws: 8.20.1
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -7756,7 +7763,7 @@ packages:
       metro-cache: 0.83.7
       metro-core: 0.83.7
       metro-runtime: 0.83.7
-      yaml: 2.8.4
+      yaml: 2.9.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -10269,6 +10276,19 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+    dev: true
+
+  /ws@8.20.1:
+    resolution: {integrity: sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   /wsl-utils@0.3.1:
     resolution: {integrity: sha512-g/eziiSUNBSsdDJtCLB8bdYEUMj4jR7AGeUo96p/3dTafgjHhpF4RiCFPiRILwjQoDXx5MqkBr4fwWtR3Ky4Wg==}
@@ -10329,6 +10349,12 @@ packages:
     resolution: {integrity: sha512-ml/JPOj9fOQK8RNnWojA67GbZ0ApXAUlN2UQclwv2eVgTgn7O9gg9o7paZWKMp4g0H3nTLtS9LVzhkpOFIKzog==}
     engines: {node: '>= 14.6'}
     hasBin: true
+
+  /yaml@2.9.0:
+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+    dev: false
 
   /yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
