@@ -13,7 +13,7 @@ ksp = "2.1.0-1.0.29"
 composeBom = "2024.12.01"
 activityCompose = "1.9.3"
 lifecycleRuntimeCompose = "2.8.7"
-navigationCompose = "2.8.5"
+navigationCompose = "2.9.8"
 
 # Kotlin Libraries
 kotlinxCoroutines = "1.11.0"
