@@ -112,7 +112,7 @@ integrations = { path = "crates/integrations" }
 tenant-ops = { path = "crates/tenant-ops" }
 
 # Phase 1: deploy-server
-bollard = "0.16"
+bollard = "0.21"
 listenfd = "1.0"
 tokio-util = { version = "0.7", features = ["io"] }
 futures-util = "0.3"
