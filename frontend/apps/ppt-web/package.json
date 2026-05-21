@@ -46,7 +46,7 @@
     "@vitest/coverage-v8": "^4.1.5",
     "autoprefixer": "^10.4.20",
     "axe-core": "^4.11.1",
-    "jsdom": "^25.0.1",
+    "jsdom": "^29.1.1",
     "msw": "^2.14.6",
     "@tailwindcss/postcss": "^4.3.0",
     "postcss": "^8.5.15",
