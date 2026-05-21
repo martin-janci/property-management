@@ -252,7 +252,7 @@ mod tests {
     async fn unregister_404_is_ok() {
         let server = MockServer::start();
         server.mock(|when, then| {
-            when.method(DELETE).path_contains("/id/ppt-deploy-");
+            when.method(DELETE).path_includes("/id/ppt-deploy-");
             then.status(404);
         });
         let client = CaddyClient::new(server.base_url());
