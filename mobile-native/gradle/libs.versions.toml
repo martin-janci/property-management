@@ -61,7 +61,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.5.0" 
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.0.1" }
 
 # DataStore
-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.0.0" }
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.2.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
