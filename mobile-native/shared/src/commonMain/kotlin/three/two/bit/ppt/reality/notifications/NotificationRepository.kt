@@ -14,7 +14,7 @@ import three.two.bit.ppt.reality.api.HttpClientProvider
 class NotificationRepository(
     private val baseUrl: String,
     private val sessionToken: String? = null,
-    private val client: HttpClient = HttpClientProvider.client
+    private val client: HttpClient = HttpClientProvider.client,
 ) {
 
     private fun HttpRequestBuilder.configureRequest() {
@@ -27,7 +27,7 @@ class NotificationRepository(
     suspend fun getNotifications(
         page: Int = 1,
         pageSize: Int = 20,
-        unreadOnly: Boolean = false
+        unreadOnly: Boolean = false,
     ): Result<NotificationsResponse> {
         return try {
             val response =
@@ -135,7 +135,7 @@ class NotificationRepository(
     suspend fun registerPushToken(
         token: String,
         platform: String,
-        deviceId: String? = null
+        deviceId: String? = null,
     ): Result<RegisterPushTokenResponse> {
         return try {
             val response =

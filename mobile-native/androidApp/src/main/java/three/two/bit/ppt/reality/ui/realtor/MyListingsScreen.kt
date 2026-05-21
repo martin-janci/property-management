@@ -50,10 +50,7 @@ fun MyListingsScreen(
     onListingClick: (id: String) -> Unit,
 ) {
     var statusFilter by remember { mutableStateOf<String?>(null) }
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
@@ -65,7 +62,7 @@ fun MyListingsScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
+                            contentDescription = stringResource(R.string.cd_back),
                         )
                     }
                     Text(
@@ -115,11 +112,7 @@ fun MyListingsScreen(
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding =
-                                PaddingValues(
-                                    start = 16.dp,
-                                    end = 16.dp,
-                                    bottom = 110.dp,
-                                ),
+                                PaddingValues(start = 16.dp, end = 16.dp, bottom = 110.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             items(filtered, key = { it.id }) { listing ->
@@ -146,23 +139,14 @@ fun MyListingsScreen(
 }
 
 @Composable
-private fun StatusChip(
-    label: String,
-    count: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun StatusChip(label: String, count: Int, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
         border =
             if (selected) null
-            else
-                androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline,
-                ),
+            else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)) {
             Text(
@@ -196,9 +180,7 @@ private fun ListingCard(listing: RealtorListing, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            Box(
-                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
                 AsyncImage(
                     model =
                         ImageRequest.Builder(LocalContext.current)
@@ -234,7 +216,7 @@ private fun ListingCard(listing: RealtorListing, onClick: () -> Unit) {
                             .size(34.dp)
                             .clip(CircleShape)
                             .background(Color.White.copy(alpha = 0.92f))
-                            .clickable { /* menu */},
+                            .clickable { /* menu */ },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -246,10 +228,7 @@ private fun ListingCard(listing: RealtorListing, onClick: () -> Unit) {
                 }
             }
             Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = listing.formattedPrice,
                         style = MaterialTheme.typography.titleMedium,
@@ -286,10 +265,7 @@ private fun ListingCard(listing: RealtorListing, onClick: () -> Unit) {
 }
 
 @Composable
-private fun Counter(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    value: Int,
-) {
+private fun Counter(icon: androidx.compose.ui.graphics.vector.ImageVector, value: Int) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = icon,

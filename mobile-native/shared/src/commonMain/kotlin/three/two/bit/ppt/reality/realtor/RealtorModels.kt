@@ -36,5 +36,4 @@ data class RealtorProfile(
 @Serializable data class RealtorProfileResponse(val profile: RealtorProfile)
 
 /** Realtor directory response. */
-@Serializable
-data class RealtorListResponse(val realtors: List<RealtorProfile>, val total: Int = 0)
+@Serializable data class RealtorListResponse(val realtors: List<RealtorProfile>, val total: Int = 0)

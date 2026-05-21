@@ -64,7 +64,7 @@ android {
             buildConfigField(
                 "String",
                 "API_BASE_URL",
-                "\"https://staging-reality.ppt.example.com\""
+                "\"https://staging-reality.ppt.example.com\"",
             )
             buildConfigField("String", "ENVIRONMENT", "\"staging\"")
             buildConfigField("Boolean", "ENABLE_LOGGING", "true")
@@ -84,7 +84,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // Use release signing config if keystore exists
             val keystoreFile = file(System.getenv("KEYSTORE_FILE") ?: "../keystore/release.jks")

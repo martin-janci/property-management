@@ -52,13 +52,9 @@ internal fun ErrorBanner(message: String) {
             Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .background(DangerRedBg)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodySmall,
-            color = DangerRedDark,
-        )
+        Text(text = message, style = MaterialTheme.typography.bodySmall, color = DangerRedDark)
     }
 }
 
@@ -69,13 +65,9 @@ internal fun SuccessBanner(message: String) {
             Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .background(SuccessGreenBg)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodySmall,
-            color = SuccessGreenDark,
-        )
+        Text(text = message, style = MaterialTheme.typography.bodySmall, color = SuccessGreenDark)
     }
 }
 
@@ -113,17 +105,12 @@ internal fun AuthBrandHero(title: String, subtitle: String) {
                                 colors = listOf(Brand800, Brand500),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height),
-                            ),
+                            )
                     )
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "R",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-            )
+            Text(text = "R", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
         }
         Spacer(modifier = Modifier.height(18.dp))
         Text(

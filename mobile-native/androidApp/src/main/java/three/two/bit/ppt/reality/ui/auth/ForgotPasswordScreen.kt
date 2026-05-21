@@ -53,20 +53,18 @@ fun ForgotPasswordScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
-        },
+        }
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (submitted) {
                 AuthIconHero(
                     iconBg = Color(0xFFD1FAE5),
@@ -95,7 +93,7 @@ fun ForgotPasswordScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)
             ) {
                 Text(
                     text = stringResource(R.string.auth_forgot_body),

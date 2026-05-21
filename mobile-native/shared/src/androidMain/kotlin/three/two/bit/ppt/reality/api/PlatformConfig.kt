@@ -5,8 +5,8 @@ package three.two.bit.ppt.reality.api
  *
  * AGP 9 migration: the new `com.android.kotlin.multiplatform.library` plugin used by the `:shared`
  * module is variant-agnostic and no longer generates a `BuildConfig` class or supports product
- * flavors. The environment-specific values still live in the `:androidApp` module's product
- * flavors (`buildConfigField` in `androidApp/build.gradle.kts`), which DO generate a `BuildConfig`.
+ * flavors. The environment-specific values still live in the `:androidApp` module's product flavors
+ * (`buildConfigField` in `androidApp/build.gradle.kts`), which DO generate a `BuildConfig`.
  *
  * This implementation reads those fields from the app's generated `BuildConfig` via reflection at
  * runtime — mirroring the iOS implementation, which reads `Info.plist` from `NSBundle` at runtime.
