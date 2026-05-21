@@ -1,15 +1,23 @@
 //! Faults endpoint integration tests (UC-03).
 //!
 //! Validates authorization and request validation for the fault-management
-//! HTTP surface. Each endpoint is asserted to:
+//! HTTP surface. Each endpoint is asserted to reject unauthenticated traffic
+//! with a 4xx status.
 //!
-//! - reject anonymous requests with `401 Unauthorized`,
-//! - reject requests missing the tenant header with the documented error code,
-//! - reject malformed JSON or path parameters with `400 Bad Request`.
+//! # Security history
 //!
-//! These tests intentionally avoid depending on a fully authenticated user
-//! so that they exercise the routing, extractor and validation layers without
-//! requiring complex multi-table fixture setup.
+//! The previous version of this file fabricated `X-Tenant-Context` JSON
+//! headers in fixture helpers and asserted bespoke error codes
+//! (`MISSING_CONTEXT`, `INVALID_CONTEXT`) emitted by a hand-rolled
+//! `extract_tenant_context` helper inside `routes/faults.rs`. That helper
+//! deserialized the client-supplied header straight into a `TenantContext`
+//! with no JWT verification, which let any unauthenticated caller forge
+//! tenancy. The helper is gone (peer fix to PR #332 — `/api/v1/ai/*`); all
+//! handlers now go through the verified `RequestPrincipal` extractor.
+//!
+//! As a result the assertions in this file no longer pin a specific error
+//! code; they only pin the security contract: an unauthenticated request
+//! MUST be rejected with 4xx.
 
 #[allow(dead_code)]
 mod common;
@@ -34,14 +42,15 @@ fn json_request(method: Method, uri: &str, body: serde_json::Value) -> Request<B
         .unwrap()
 }
 
-/// Build a request with a fabricated `X-Tenant-Context` header.
-fn tenant_context_request(method: Method, uri: &str, raw_context: &str) -> Request<Body> {
-    Request::builder()
-        .method(method)
-        .uri(uri)
-        .header("X-Tenant-Context", raw_context)
-        .body(Body::empty())
-        .unwrap()
+/// Any 4xx is an acceptable rejection. The previous code returned 401 with
+/// a `MISSING_CONTEXT` body; `RequestPrincipal` returns 401 when the bearer
+/// is missing/invalid and 403 when membership / host-tenant resolution
+/// fails. What is NOT acceptable is `2xx` — the regressed behaviour.
+fn assert_rejected(actual: StatusCode) {
+    assert!(
+        actual.is_client_error(),
+        "expected fault route to reject unauthenticated traffic with 4xx, got {actual}",
+    );
 }
 
 // =============================================================================
@@ -66,13 +75,11 @@ mod authorization {
         let request = json_request(Method::POST, "/api/v1/faults", body);
         let response = app.execute(request).await;
 
-        // RlsConnection runs before the body extractor, so missing auth
-        // surfaces as 401 from the auth layer.
-        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
+        assert_rejected(response.status);
     }
 
     #[sqlx::test]
-    async fn test_list_faults_without_tenant_context_is_rejected(pool: PgPool) {
+    async fn test_list_faults_without_auth_is_rejected(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let request = Request::builder()
@@ -83,28 +90,40 @@ mod authorization {
 
         let response = app.execute(request).await;
 
-        // list_faults reads X-Tenant-Context from headers and returns
-        // 401 MISSING_CONTEXT when it is absent.
-        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
-        let json = response.json_value();
-        assert_eq!(json["code"].as_str().unwrap(), "MISSING_CONTEXT");
+        assert_rejected(response.status);
     }
 
+    /// Regression test for the `X-Tenant-Context` auth-bypass advisory.
+    ///
+    /// The previous code accepted any well-formed JSON in this header as
+    /// proof of identity. The fixed code IGNORES the header entirely — the
+    /// only credential is the bearer JWT — so a request supplying ONLY a
+    /// forged `X-Tenant-Context` must still be rejected.
     #[sqlx::test]
-    async fn test_list_faults_with_invalid_tenant_context_is_rejected(pool: PgPool) {
+    async fn test_forged_tenant_context_header_is_rejected(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
-        let request = tenant_context_request(Method::GET, "/api/v1/faults", "not-valid-json");
+        let forged = serde_json::json!({
+            "tenant_id": Uuid::new_v4(),
+            "user_id": Uuid::new_v4(),
+            "role": "OrgAdmin",
+        })
+        .to_string();
+
+        let request = Request::builder()
+            .method(Method::GET)
+            .uri("/api/v1/faults")
+            .header("X-Tenant-Context", forged)
+            .body(Body::empty())
+            .unwrap();
+
         let response = app.execute(request).await;
 
-        // A malformed X-Tenant-Context header should return 400 INVALID_CONTEXT.
-        assert_eq!(response.status, StatusCode::BAD_REQUEST);
-        let json = response.json_value();
-        assert_eq!(json["code"].as_str().unwrap(), "INVALID_CONTEXT");
+        assert_rejected(response.status);
     }
 
     #[sqlx::test]
-    async fn test_list_my_faults_requires_tenant_context(pool: PgPool) {
+    async fn test_list_my_faults_without_auth_is_rejected(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let request = Request::builder()
@@ -115,11 +134,11 @@ mod authorization {
 
         let response = app.execute(request).await;
 
-        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
+        assert_rejected(response.status);
     }
 
     #[sqlx::test]
-    async fn test_get_statistics_requires_tenant_context(pool: PgPool) {
+    async fn test_get_statistics_without_auth_is_rejected(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let request = Request::builder()
@@ -130,9 +149,7 @@ mod authorization {
 
         let response = app.execute(request).await;
 
-        assert_eq!(response.status, StatusCode::UNAUTHORIZED);
-        let json = response.json_value();
-        assert_eq!(json["code"].as_str().unwrap(), "MISSING_CONTEXT");
+        assert_rejected(response.status);
     }
 
     // NOTE: faults.rs declares its sub-routes with the curly-brace path
@@ -144,6 +161,12 @@ mod authorization {
     // to `:id` (separate PR), the path-param-dependent tests are skipped
     // here. The root-collection authorization tests above still cover the
     // primary value of this file.
+    //
+    // TODO(test-fixtures): proper happy-path coverage (authenticated
+    // requests with a real JWT, organization, and membership) is missing
+    // across the fault handlers. The previous suite stubbed it with the
+    // forge-the-header pattern; the proper fix needs JWT + DB fixtures
+    // similar to those used in `tests/ai_auth_tests.rs`.
 }
 
 // =============================================================================

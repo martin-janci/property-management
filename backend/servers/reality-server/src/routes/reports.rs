@@ -18,6 +18,31 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+// ---------------------------------------------------------------------------
+// Input hygiene constants (H6, H7)
+// ---------------------------------------------------------------------------
+// Public-anonymous endpoint — without caps an unauthenticated attacker can
+// post arbitrary-size strings/arrays that bloat DB rows, log files and the
+// request body. 5000 chars mirrors the existing inquiry-response cap.
+const MAX_REPORT_DESCRIPTION_LEN: usize = 5000;
+const MAX_REPORT_ATTACHMENTS: usize = 10;
+const MAX_URL_LEN: usize = 2048;
+
+/// Reject `javascript:`, `data:`, `file:`, etc. URLs that would later be
+/// rendered in `<img src=>` / `<a href=>` on the frontend (stored XSS).
+/// Inlined locally per H7 brief — once the auth-hardening branch lands a
+/// shared `url_validator` module this should be swapped for the import.
+fn validate_image_or_link_url(s: &str) -> Result<(), String> {
+    if s.len() > MAX_URL_LEN {
+        return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
+    }
+    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
+    match parsed.scheme() {
+        "https" | "http" => Ok(()),
+        _ => Err("URL scheme must be http or https".to_string()),
+    }
+}
+
 /// Create reports router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -133,19 +158,56 @@ pub async fn submit_report(
             "Description is required".to_string(),
         ));
     }
+    if data.description.len() > MAX_REPORT_DESCRIPTION_LEN {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            format!(
+                "Description must be at most {} characters",
+                MAX_REPORT_DESCRIPTION_LEN
+            ),
+        ));
+    }
+
+    // H6/H7: cap attachments array and validate each URL. Reject the request
+    // generically — do NOT echo the offending URL back, that would itself be
+    // a reflected XSS vector if the frontend renders error strings as HTML.
+    if let Some(ref atts) = data.attachments {
+        if atts.len() > MAX_REPORT_ATTACHMENTS {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("At most {} attachments are allowed", MAX_REPORT_ATTACHMENTS),
+            ));
+        }
+        for url in atts.iter() {
+            if validate_image_or_link_url(url).is_err() {
+                return Err((
+                    axum::http::StatusCode::BAD_REQUEST,
+                    "Attachment URL is invalid (must be http(s) and <= 2048 chars)".to_string(),
+                ));
+            }
+        }
+    }
 
     let mut conn = state
         .acquire_public_conn()
         .await
         .map_err(|e| crate::util::errors::db_error("database error", e))?;
 
-    // Check listing exists
-    let listing_exists: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1)")
-            .bind(data.listing_id)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| crate::util::errors::db_error("check listing", e))?;
+    // Check listing exists AND is publicly visible.
+    //
+    // SECURITY (H5, round-9 audit): without the status filter, this endpoint
+    // is an unauthenticated existence oracle — an attacker can probe whether
+    // a UUID belongs to a draft/archived/pending listing by diffing 404 vs
+    // 201. Restricting to `status = 'active'` collapses the response shape
+    // to "is there a public listing with this id?", matching what an honest
+    // reporter would see in the UI.
+    let listing_exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM listings WHERE id = $1 AND status = 'active')",
+    )
+    .bind(data.listing_id)
+    .fetch_one(&mut *conn)
+    .await
+    .map_err(|e| crate::util::errors::db_error("check listing", e))?;
 
     if !listing_exists {
         return Err((

@@ -56,10 +56,12 @@ pub mod message_role {
 }
 
 /// Request to create a chat session.
+///
+/// `organization_id` and `user_id` are intentionally NOT part of this struct:
+/// the owning org/user are always derived from the verified `RequestPrincipal`
+/// server-side, never trusted from client input (prevents IDOR).
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateChatSession {
-    pub organization_id: Uuid,
-    pub user_id: Uuid,
     pub title: Option<String>,
     pub context: Option<serde_json::Value>,
 }
@@ -95,7 +97,6 @@ pub struct AiSource {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvideFeedback {
     pub message_id: Uuid,
-    pub user_id: Uuid,
     pub rating: Option<i32>,
     pub helpful: Option<bool>,
     pub feedback_text: Option<String>,

@@ -15,6 +15,45 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+// ---------------------------------------------------------------------------
+// Input hygiene constants (H6)
+// ---------------------------------------------------------------------------
+// `respond_to_inquiry` already caps at 5000; mirror the same for the
+// public-anonymous initial submit (`send_contact_message`, `request_viewing`)
+// so unauthenticated traffic cannot upload arbitrary-size payloads.
+const MAX_INQUIRY_MESSAGE_LEN: usize = 5000;
+const MAX_INQUIRY_NAME_LEN: usize = 200;
+const MAX_INQUIRY_EMAIL_LEN: usize = 320; // RFC 5321 max
+const MAX_INQUIRY_PHONE_LEN: usize = 32;
+const MAX_INQUIRY_PREFERRED_TIMES: usize = 20;
+const MAX_INQUIRY_PREFERRED_TIME_LEN: usize = 200;
+
+/// Apply length caps to a public-submitted inquiry payload. Returns a generic
+/// error message that does NOT echo the user-submitted string back (avoids
+/// reflected XSS if a frontend ever renders error bodies as HTML).
+fn validate_inquiry_lengths(
+    name: &str,
+    email: &str,
+    phone: Option<&str>,
+    message: &str,
+) -> Result<(), &'static str> {
+    if name.len() > MAX_INQUIRY_NAME_LEN {
+        return Err("Name is too long");
+    }
+    if email.len() > MAX_INQUIRY_EMAIL_LEN {
+        return Err("Email is too long");
+    }
+    if let Some(p) = phone {
+        if p.len() > MAX_INQUIRY_PHONE_LEN {
+            return Err("Phone is too long");
+        }
+    }
+    if message.len() > MAX_INQUIRY_MESSAGE_LEN {
+        return Err("Message is too long (max 5000 characters)");
+    }
+    Ok(())
+}
+
 /// Create inquiries router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -140,6 +179,14 @@ pub async fn send_contact_message(
     Path(listing_id): Path<Uuid>,
     Json(req): Json<ContactMessageRequest>,
 ) -> Result<Json<ContactMessageResponse>, (axum::http::StatusCode, String)> {
+    // H6: length caps before semantic validation — reject oversize bodies
+    // before they bloat the request body / DB row.
+    if let Err(msg) =
+        validate_inquiry_lengths(&req.name, &req.email, req.phone.as_deref(), &req.message)
+    {
+        return Err((axum::http::StatusCode::BAD_REQUEST, msg.to_string()));
+    }
+
     // Validate contact info
     let validation = crate::handlers::inquiries::InquiriesHandler::validate_contact(
         &req.name,
@@ -250,6 +297,55 @@ pub async fn request_viewing(
     Path(listing_id): Path<Uuid>,
     Json(req): Json<ViewingRequest>,
 ) -> Result<Json<ViewingRequestResponse>, (axum::http::StatusCode, String)> {
+    // H6: cap fields BEFORE we concatenate them into the outgoing message.
+    if req.name.len() > MAX_INQUIRY_NAME_LEN {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Name is too long".to_string(),
+        ));
+    }
+    if req.email.len() > MAX_INQUIRY_EMAIL_LEN {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            "Email is too long".to_string(),
+        ));
+    }
+    if let Some(ref phone) = req.phone {
+        if phone.len() > MAX_INQUIRY_PHONE_LEN {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Phone is too long".to_string(),
+            ));
+        }
+    }
+    if let Some(ref m) = req.message {
+        if m.len() > MAX_INQUIRY_MESSAGE_LEN {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "Message is too long (max 5000 characters)".to_string(),
+            ));
+        }
+    }
+    if let Some(ref times) = req.preferred_times {
+        if times.len() > MAX_INQUIRY_PREFERRED_TIMES {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!(
+                    "At most {} preferred times allowed",
+                    MAX_INQUIRY_PREFERRED_TIMES
+                ),
+            ));
+        }
+        for t in times.iter() {
+            if t.len() > MAX_INQUIRY_PREFERRED_TIME_LEN {
+                return Err((
+                    axum::http::StatusCode::BAD_REQUEST,
+                    "Preferred time entry is too long".to_string(),
+                ));
+            }
+        }
+    }
+
     // Build message with preferred times
     let message = if let Some(times) = &req.preferred_times {
         format!(

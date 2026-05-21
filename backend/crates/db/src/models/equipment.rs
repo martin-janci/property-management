@@ -95,9 +95,12 @@ pub mod maintenance_status {
 }
 
 /// Request to create equipment.
+///
+/// `organization_id` is intentionally NOT part of this struct: it is always
+/// derived from the verified `RequestPrincipal` server-side, never trusted
+/// from client input (prevents IDOR).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateEquipment {
-    pub organization_id: Uuid,
     pub building_id: Uuid,
     pub facility_id: Option<Uuid>,
     pub name: String,

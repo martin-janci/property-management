@@ -37,7 +37,17 @@ impl WorkflowRepository {
     }
 
     /// Create a new workflow.
-    pub async fn create(&self, data: CreateWorkflow) -> Result<Workflow, sqlx::Error> {
+    /// Create a workflow.
+    ///
+    /// `organization_id` and `created_by` are passed explicitly by the caller
+    /// and must originate from the verified request principal, never from
+    /// client input in `data`.
+    pub async fn create(
+        &self,
+        organization_id: Uuid,
+        created_by: Uuid,
+        data: CreateWorkflow,
+    ) -> Result<Workflow, sqlx::Error> {
         sqlx::query_as(
             r#"
             INSERT INTO workflows
@@ -46,13 +56,13 @@ impl WorkflowRepository {
             RETURNING *
             "#,
         )
-        .bind(data.organization_id)
+        .bind(organization_id)
         .bind(data.name)
         .bind(data.description)
         .bind(data.trigger_type)
         .bind(sqlx::types::Json(data.trigger_config.unwrap_or_default()))
         .bind(sqlx::types::Json(data.conditions.unwrap_or_default()))
-        .bind(data.created_by)
+        .bind(created_by)
         .fetch_one(&self.pool)
         .await
     }

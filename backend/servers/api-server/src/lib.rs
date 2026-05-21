@@ -375,6 +375,11 @@ pub fn create_router(state: AppState) -> Router {
                     http::Method::DELETE,
                     http::Method::OPTIONS,
                 ])
+                // SECURITY: `x-tenant-context` was removed from the allowlist
+                // alongside the deletion of `routes::ai::extract_tenant_context`.
+                // Tenancy is now derived from the verified server-side
+                // `RequestPrincipal`; trusting a client-supplied header was the
+                // root cause of the AI router auth-bypass advisory.
                 .allow_headers([
                     http::header::AUTHORIZATION,
                     http::header::CONTENT_TYPE,
@@ -382,7 +387,6 @@ pub fn create_router(state: AppState) -> Router {
                     http::header::ORIGIN,
                     http::HeaderName::from_static("x-requested-with"),
                     http::HeaderName::from_static("x-tenant-id"),
-                    http::HeaderName::from_static("x-tenant-context"),
                 ])
                 .allow_credentials(true)
                 .max_age(std::time::Duration::from_secs(3600)),

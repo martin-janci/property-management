@@ -177,15 +177,17 @@ pub mod on_failure {
 }
 
 /// Request to create a workflow.
+///
+/// `organization_id` and `created_by` are intentionally NOT part of this
+/// struct: they are always derived from the verified `RequestPrincipal`
+/// server-side, never trusted from client input (prevents IDOR).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateWorkflow {
-    pub organization_id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub trigger_type: String,
     pub trigger_config: Option<serde_json::Value>,
     pub conditions: Option<Vec<serde_json::Value>>,
-    pub created_by: Uuid,
 }
 
 /// Request to update a workflow.

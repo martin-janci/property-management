@@ -20,8 +20,14 @@ impl AiChatRepository {
     }
 
     /// Create a new chat session.
+    ///
+    /// `organization_id` and `user_id` are passed explicitly by the caller and
+    /// must originate from the verified request principal, never from client
+    /// input in `data`.
     pub async fn create_session(
         &self,
+        organization_id: Uuid,
+        user_id: Uuid,
         data: CreateChatSession,
     ) -> Result<AiChatSession, sqlx::Error> {
         sqlx::query_as(
@@ -31,8 +37,8 @@ impl AiChatRepository {
             RETURNING *
             "#,
         )
-        .bind(data.organization_id)
-        .bind(data.user_id)
+        .bind(organization_id)
+        .bind(user_id)
         .bind(data.title)
         .bind(sqlx::types::Json(data.context.unwrap_or_default()))
         .fetch_one(&self.pool)
@@ -169,8 +175,13 @@ impl AiChatRepository {
     }
 
     /// Add training feedback for a message.
+    /// Record AI training feedback for a message.
+    ///
+    /// `user_id` is passed explicitly by the caller and must originate from the
+    /// verified request principal, never from client input in `data`.
     pub async fn add_feedback(
         &self,
+        user_id: Uuid,
         data: ProvideFeedback,
     ) -> Result<AiTrainingFeedback, sqlx::Error> {
         sqlx::query_as(
@@ -185,7 +196,7 @@ impl AiChatRepository {
             "#,
         )
         .bind(data.message_id)
-        .bind(data.user_id)
+        .bind(user_id)
         .bind(data.rating)
         .bind(data.helpful)
         .bind(data.feedback_text)

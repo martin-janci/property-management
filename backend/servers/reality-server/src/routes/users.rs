@@ -18,6 +18,25 @@ use db::models::PortalUser;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+// H7 — `profile_image_url` ends up in `<img src=>` on the frontend. Reject
+// `javascript:`, `data:`, `file:` URLs. Inlined locally (see H7 brief);
+// swap for a shared `url_validator` module once it lands on main.
+const MAX_PROFILE_URL_LEN: usize = 2048;
+
+fn validate_image_or_link_url(s: &str) -> Result<(), String> {
+    if s.len() > MAX_PROFILE_URL_LEN {
+        return Err(format!(
+            "URL must be at most {} characters",
+            MAX_PROFILE_URL_LEN
+        ));
+    }
+    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
+    match parsed.scheme() {
+        "https" | "http" => Ok(()),
+        _ => Err("URL scheme must be http or https".to_string()),
+    }
+}
+
 /// Create users router.
 pub fn router() -> Router<AppState> {
     Router::new()
@@ -326,6 +345,18 @@ pub async fn update_me(
             return Err((
                 axum::http::StatusCode::BAD_REQUEST,
                 format!("Locale must be one of: {}", valid_locales.join(", ")),
+            ));
+        }
+    }
+
+    // H7: validate profile image URL — reject `javascript:`, `data:`, `file:`
+    // and enforce a length cap. Use a generic error so the rejected URL is
+    // NOT echoed back (reflected-XSS guard).
+    if let Some(ref purl) = req.profile_image_url {
+        if !purl.is_empty() && validate_image_or_link_url(purl).is_err() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                "profile_image_url must be a http(s) URL (max 2048 chars)".to_string(),
             ));
         }
     }
