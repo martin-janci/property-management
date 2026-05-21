@@ -17,6 +17,42 @@ use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+// ---------------------------------------------------------------------------
+// H7 — URL hygiene
+// ---------------------------------------------------------------------------
+// `logo_url`, `banner_url`, `watermark_url` end up in `<img src=>` on the
+// frontend. Reject `javascript:`, `data:`, `file:` and any non-http(s) URL.
+// Inlined locally until the auth-hardening branch lands a shared validator.
+const MAX_URL_LEN: usize = 2048;
+
+fn validate_image_or_link_url(s: &str) -> Result<(), String> {
+    if s.len() > MAX_URL_LEN {
+        return Err(format!("URL must be at most {} characters", MAX_URL_LEN));
+    }
+    let parsed = url::Url::parse(s).map_err(|_| "Invalid URL".to_string())?;
+    match parsed.scheme() {
+        "https" | "http" => Ok(()),
+        _ => Err("URL scheme must be http or https".to_string()),
+    }
+}
+
+/// Validate an optional URL field. Returns a generic 400 message that does
+/// NOT echo the rejected URL back (reflected-XSS guard).
+fn check_optional_url_field(
+    value: &Option<String>,
+    field: &'static str,
+) -> Result<(), (axum::http::StatusCode, String)> {
+    if let Some(s) = value.as_deref() {
+        if !s.is_empty() && validate_image_or_link_url(s).is_err() {
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                format!("{} must be a http(s) URL (max 2048 chars)", field),
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Create agency branding router.
 /// Mounted at /api/v1/agencies/:id/branding to avoid prefix collision with
 /// routes::agencies (which nests under /api/v1/agencies — Axum's .nest() with
@@ -211,6 +247,12 @@ pub async fn update_branding(
     Path(agency_id): Path<Uuid>,
     Json(data): Json<UpdateBrandingRequest>,
 ) -> Result<Json<BrandingResponse>, (axum::http::StatusCode, String)> {
+    // H7: validate URL fields before doing any DB work. These end up in
+    // `<img src=>` on the frontend — reject `javascript:`, `data:`, `file:`.
+    check_optional_url_field(&data.logo_url, "logo_url")?;
+    check_optional_url_field(&data.banner_url, "banner_url")?;
+    check_optional_url_field(&data.watermark_url, "watermark_url")?;
+
     let mut conn = state
         .acquire_public_conn()
         .await
