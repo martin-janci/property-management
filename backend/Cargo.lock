@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1643,7 +1643,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "axum 0.8.9",
  "chrono",
@@ -1706,15 +1706,14 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.15.11"
+version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
+checksum = "d64e8af5551369d19cf50138de61f1c42074ab970f74e99be916646777f8fc87"
 dependencies = [
  "encode_unicode",
  "libc",
- "once_cell",
  "unicode-width",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2048,7 +2047,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2101,7 +2100,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2182,14 +2181,13 @@ dependencies = [
 
 [[package]]
 name = "dialoguer"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "658bce805d770f407bc62102fca7c2c64ceef2fbcb2b8bd19d2765ce093980de"
+checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
 dependencies = [
  "console",
  "shell-words",
  "tempfile",
- "thiserror 1.0.69",
  "zeroize",
 ]
 
@@ -3564,7 +3562,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -5368,7 +5366,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "anyhow",
  "api-core",
@@ -6902,7 +6900,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.402"
+version = "0.2.413"
 dependencies = [
  "chrono",
  "common",
