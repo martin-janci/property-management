@@ -57,7 +57,9 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
           // Vendor chunks - libraries that rarely change
-          if (/[\\/]node_modules[\\/](react|react-dom|react-router-dom|react-router)[\\/]/.test(id)) {
+          if (
+            /[\\/]node_modules[\\/](react|react-dom|react-router-dom|react-router)[\\/]/.test(id)
+          ) {
             return 'vendor-react';
           }
           if (/[\\/]node_modules[\\/]@tanstack[\\/]/.test(id)) {
