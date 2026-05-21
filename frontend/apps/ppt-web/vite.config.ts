@@ -48,12 +48,27 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        // Manual chunks for better code splitting
-        manualChunks: {
+        // Manual chunks for better code splitting.
+        // Vite 8 bundles with Rolldown, which only supports the *function*
+        // form of `manualChunks` — the object form (chunk-name -> module list)
+        // that classic Rollup accepted is rejected with "manualChunks is not
+        // a function". This function reproduces the same grouping by matching
+        // each module's path against the vendor packages.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
           // Vendor chunks - libraries that rarely change
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-tanstack': ['@tanstack/react-query'],
-          'vendor-i18n': ['react-i18next', 'i18next'],
+          if (
+            /[\\/]node_modules[\\/](react|react-dom|react-router-dom|react-router)[\\/]/.test(id)
+          ) {
+            return 'vendor-react';
+          }
+          if (/[\\/]node_modules[\\/]@tanstack[\\/]/.test(id)) {
+            return 'vendor-tanstack';
+          }
+          if (/[\\/]node_modules[\\/](react-i18next|i18next)[\\/]/.test(id)) {
+            return 'vendor-i18n';
+          }
+          return undefined;
         },
       },
     },
