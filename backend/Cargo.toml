@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.429"
+version = "0.2.430"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -46,8 +46,11 @@ rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
 
 # Auth
-jsonwebtoken = "9.2"
-argon2 = "0.5"
+# jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
+# panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
+# the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).
+jsonwebtoken = { version = "10", features = ["rust_crypto"] }
+argon2 = "=0.6.0-rc.8"
 
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
