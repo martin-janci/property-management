@@ -1,19 +1,19 @@
 [versions]
 # SDK
-compileSdk = "34"
+compileSdk = "36"
 minSdk = "24"
-targetSdk = "34"
+targetSdk = "36"
 
 # Build
-agp = "8.7.3"
+agp = "9.2.1"
 kotlin = "2.3.21"
-ksp = "2.1.0-1.0.29"
+ksp = "2.3.21-2.0.4"
 
 # Compose
-composeBom = "2024.12.01"
-activityCompose = "1.9.3"
+composeBom = "2026.05.01"
+activityCompose = "1.13.0"
 lifecycleRuntimeCompose = "2.8.7"
-navigationCompose = "2.8.5"
+navigationCompose = "2.9.8"
 
 # Kotlin Libraries
 kotlinxCoroutines = "1.11.0"
@@ -55,17 +55,18 @@ ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test" }
 
 # Image Loading
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.5.0" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.7.0" }
 
 # Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.0.1" }
 
 # DataStore
-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.0.0" }
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.2.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

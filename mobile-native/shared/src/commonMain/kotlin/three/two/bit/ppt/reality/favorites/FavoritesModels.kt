@@ -17,7 +17,7 @@ data class FavoriteEntry(
     @SerialName("listing_id") val listingId: String,
     @SerialName("user_id") val userId: String,
     @SerialName("created_at") val createdAt: String,
-    val listing: ListingSummary? = null
+    val listing: ListingSummary? = null,
 )
 
 /** User favorites response. */
@@ -31,7 +31,7 @@ data class FavoriteEntry(
 data class AddFavoriteResponse(
     val id: String,
     @SerialName("listing_id") val listingId: String,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
 )
 
 /** Saved search. */
@@ -44,7 +44,7 @@ data class SavedSearch(
     @SerialName("alert_enabled") val alertEnabled: Boolean = false,
     @SerialName("created_at") val createdAt: String,
     @SerialName("last_notified_at") val lastNotifiedAt: String? = null,
-    @SerialName("new_count") val newCount: Int = 0
+    @SerialName("new_count") val newCount: Int = 0,
 )
 
 /** Saved search filters. */
@@ -55,7 +55,7 @@ data class SavedSearchFilters(
     val city: String? = null,
     @SerialName("min_price") val minPrice: Long? = null,
     @SerialName("max_price") val maxPrice: Long? = null,
-    @SerialName("min_rooms") val minRooms: Int? = null
+    @SerialName("min_rooms") val minRooms: Int? = null,
 )
 
 /** Saved searches response. */
@@ -67,12 +67,12 @@ data class CreateSavedSearchRequest(
     val name: String,
     val query: String? = null,
     val filters: SavedSearchFilters? = null,
-    @SerialName("alert_enabled") val alertEnabled: Boolean = false
+    @SerialName("alert_enabled") val alertEnabled: Boolean = false,
 )
 
 /** Update saved search request. */
 @Serializable
 data class UpdateSavedSearchRequest(
     val name: String? = null,
-    @SerialName("alert_enabled") val alertEnabled: Boolean? = null
+    @SerialName("alert_enabled") val alertEnabled: Boolean? = null,
 )

@@ -112,10 +112,7 @@ fun HomeScreen(
         isLoading = false
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
             item {
                 HomeTopBar(
@@ -156,11 +153,7 @@ fun HomeScreen(
                     onSeeAllClick = { onSearchClick(null, null) },
                 )
             }
-            item {
-                CategoryGrid(
-                    onCategoryClick = { category -> onSearchClick(null, category) },
-                )
-            }
+            item { CategoryGrid(onCategoryClick = { category -> onSearchClick(null, category) }) }
 
             if (recentListings.isNotEmpty()) {
                 item {
@@ -223,14 +216,14 @@ private fun HomeTopBar(
                             .offset(x = (-2).dp, y = 2.dp)
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.background),
+                            .background(MaterialTheme.colorScheme.background)
                 ) {
                     Box(
                         modifier =
                             Modifier.padding(2.dp)
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.error),
+                                .background(MaterialTheme.colorScheme.error)
                     )
                 }
             }
@@ -275,10 +268,7 @@ private fun HomeTopBar(
 // with 18% alpha to match.
 
 @Composable
-private fun HeroCard(
-    onSearchClick: () -> Unit,
-    onTabClick: (ListingType?) -> Unit,
-) {
+private fun HeroCard(onSearchClick: () -> Unit, onTabClick: (ListingType?) -> Unit) {
     Box(
         modifier =
             Modifier.padding(horizontal = 16.dp)
@@ -291,10 +281,10 @@ private fun HeroCard(
                                 colors = listOf(Brand800, Brand500),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height),
-                            ),
+                            )
                     )
                 }
-                .padding(18.dp),
+                .padding(18.dp)
     ) {
         Column {
             Text(
@@ -494,11 +484,7 @@ private fun listingMeta(listing: ListingSummary): String {
     val parts = buildList {
         listing.rooms?.let {
             add(
-                androidx.compose.ui.res.pluralStringResource(
-                    R.plurals.listing_rooms_plural,
-                    it,
-                    it,
-                )
+                androidx.compose.ui.res.pluralStringResource(R.plurals.listing_rooms_plural, it, it)
             )
         }
         listing.areaSqm?.toInt()?.let { add(stringResource(R.string.area_m2, it)) }
@@ -518,7 +504,7 @@ private fun FeaturedSkeleton() {
                 shape = RoundedCornerShape(16.dp),
                 colors =
                     CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                 content = {},
             )
@@ -670,10 +656,7 @@ private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Row(
-            modifier = Modifier.padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model =
                     ImageRequest.Builder(LocalContext.current)
@@ -725,10 +708,7 @@ private fun RecentRow(listing: ListingSummary, onClick: () -> Unit) {
 private fun ErrorCard(message: String) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
     ) {
         Text(
             text = message,

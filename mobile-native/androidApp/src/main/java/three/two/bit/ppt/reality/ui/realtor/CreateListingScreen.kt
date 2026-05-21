@@ -70,7 +70,7 @@ fun CreateListingScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close)
+                            contentDescription = stringResource(R.string.close),
                         )
                     }
                 },
@@ -80,7 +80,7 @@ fun CreateListingScreen(
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
         },
@@ -114,7 +114,7 @@ fun CreateListingScreen(
                                     price = priceNum,
                                     currency = currency,
                                     transactionType = transactionType,
-                                ),
+                                )
                             )
                         isSubmitting = false
                         result.fold(
@@ -131,13 +131,12 @@ fun CreateListingScreen(
         },
     ) { padding ->
         Column(
-            modifier =
-                Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
         ) {
             ProgressHeader()
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 generalError?.let {
                     ErrorBanner(it)
@@ -294,10 +293,7 @@ private fun ProgressHeader() {
             modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(999.dp)),
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             listOf(
                     R.string.realtor_create_step1,
                     R.string.realtor_create_step2,
@@ -321,10 +317,7 @@ private fun ProgressHeader() {
 
 @Composable
 private fun DraftSavedPill() {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color(0xFFD1FAE5),
-    ) {
+    Surface(shape = RoundedCornerShape(999.dp), color = Color(0xFFD1FAE5)) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -351,11 +344,7 @@ private fun DraftSavedPill() {
 }
 
 @Composable
-private fun CreateListingFooter(
-    onCancel: () -> Unit,
-    onSubmit: () -> Unit,
-    isSubmitting: Boolean,
-) {
+private fun CreateListingFooter(onCancel: () -> Unit, onSubmit: () -> Unit, isSubmitting: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,

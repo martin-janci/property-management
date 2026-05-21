@@ -15,7 +15,7 @@ data class SsoUserInfo(
     @SerialName("user_id") val userId: String,
     val email: String,
     val name: String,
-    @SerialName("avatar_url") val avatarUrl: String? = null
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 /** Request to create a mobile SSO token. */
@@ -27,7 +27,7 @@ data class CreateMobileSsoTokenRequest(@SerialName("pm_access_token") val pmAcce
 data class MobileSsoTokenResponse(
     @SerialName("sso_token") val ssoToken: String,
     @SerialName("expires_in") val expiresIn: Long,
-    @SerialName("deep_link") val deepLink: String
+    @SerialName("deep_link") val deepLink: String,
 )
 
 /** Request to validate a mobile SSO token. */
@@ -39,7 +39,7 @@ data class ValidateMobileSsoTokenRequest(@SerialName("sso_token") val ssoToken: 
 data class SessionResponse(
     @SerialName("session_token") val sessionToken: String,
     val user: SsoUserInfo,
-    @SerialName("expires_in") val expiresIn: Long
+    @SerialName("expires_in") val expiresIn: Long,
 )
 
 /** Current session information. */
@@ -48,14 +48,14 @@ data class SessionInfo(
     @SerialName("user_id") val userId: String,
     val email: String,
     val name: String,
-    @SerialName("expires_at") val expiresAt: String
+    @SerialName("expires_at") val expiresAt: String,
 )
 
 /** SSO error response. */
 @Serializable
 data class SsoError(
     val error: String,
-    @SerialName("error_description") val errorDescription: String? = null
+    @SerialName("error_description") val errorDescription: String? = null,
 )
 
 /** Email/password login request (UC-47.2). */
@@ -86,18 +86,11 @@ data class PortalUser(
 
 /** Registration request (UC-47.1). Matches `POST /api/v1/users/register`. */
 @Serializable
-data class AuthRegisterRequest(
-    val email: String,
-    val password: String,
-    val name: String,
-)
+data class AuthRegisterRequest(val email: String, val password: String, val name: String)
 
 /** Registration response — only contains a success message and the new user id. */
 @Serializable
-data class AuthRegisterResponse(
-    val message: String,
-    @SerialName("user_id") val userId: String,
-)
+data class AuthRegisterResponse(val message: String, @SerialName("user_id") val userId: String)
 
 /** Body for `POST /api/v1/users/password-reset` (UC-44.3 step 1). */
 @Serializable data class PasswordResetRequest(val email: String)

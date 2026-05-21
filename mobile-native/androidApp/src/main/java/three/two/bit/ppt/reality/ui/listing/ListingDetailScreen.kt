@@ -117,10 +117,7 @@ fun ListingDetailScreen(
         if (authState is AuthState.Authenticated) {
             favoritesRepository
                 .isFavorite(listingId)
-                .fold(
-                    onSuccess = { isFavorite = it },
-                    onFailure = { /* non-critical */},
-                )
+                .fold(onSuccess = { isFavorite = it }, onFailure = { /* non-critical */ })
         }
     }
     LaunchedEffect(listingId) {
@@ -139,16 +136,10 @@ fun ListingDetailScreen(
             )
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
             isLoading ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             errorMessage != null ->
@@ -185,7 +176,7 @@ fun ListingDetailScreen(
                                         else favoritesRepository.removeFavorite(listingId)
                                     result.fold(
                                         onSuccess = { isFavorite = newFav },
-                                        onFailure = { /* revert silently */},
+                                        onFailure = { /* revert silently */ },
                                     )
                                     isFavoriteLoading = false
                                 }
@@ -196,7 +187,7 @@ fun ListingDetailScreen(
                                 context.startActivity(
                                     Intent(Intent.ACTION_DIAL).apply {
                                         data = Uri.parse("tel:$phone")
-                                    },
+                                    }
                                 )
                             }
                         },
@@ -284,12 +275,7 @@ private fun ListingContent(
             item { HeaderSection(listing = listing) }
             item { Spacer(modifier = Modifier.height(18.dp)) }
             item { QuickStatsStrip(listing = listing) }
-            item {
-                TabStrip(
-                    selected = selectedTab,
-                    onSelect = { selectedTab = it },
-                )
-            }
+            item { TabStrip(selected = selectedTab, onSelect = { selectedTab = it }) }
             when (selectedTab) {
                 0 -> {
                     item { DescriptionBody(description = listing.description) }
@@ -327,13 +313,10 @@ private fun HeroGallery(
         modifier =
             Modifier.fillMaxWidth()
                 .height(280.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         if (images.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Default.Image,
                     contentDescription = null,
@@ -396,8 +379,8 @@ private fun HeroGallery(
                                 .clip(CircleShape)
                                 .background(
                                     if (idx == pagerState.currentPage) Color.White
-                                    else Color.White.copy(alpha = 0.5f),
-                                ),
+                                    else Color.White.copy(alpha = 0.5f)
+                                )
                     )
                 }
             }
@@ -411,9 +394,7 @@ private fun HeroGallery(
                     text = "${pagerState.currentPage + 1} / ${images.size}",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     style =
-                        MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                        ),
+                        MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = Color.White,
                 )
             }
@@ -553,10 +534,7 @@ private fun StickyAgentBar(listing: ListingDetail, onCallClick: () -> Unit) {
 
 @Composable
 private fun SmallVerifiedPill() {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color(0xFFD1FAE5),
-    ) {
+    Surface(shape = RoundedCornerShape(999.dp), color = Color(0xFFD1FAE5)) {
         Row(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -586,9 +564,7 @@ private fun SmallVerifiedPill() {
 
 @Composable
 private fun HeaderSection(listing: ListingDetail) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             if (listing.isFeatured) {
                 UppercaseBadge(
@@ -657,10 +633,7 @@ private fun HeaderSection(listing: ListingDetail) {
 
 @Composable
 private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = bg,
-    ) {
+    Surface(shape = RoundedCornerShape(6.dp), color = bg) {
         Text(
             text = text.uppercase(),
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),
@@ -770,14 +743,14 @@ private fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
         )
     Row(
         modifier =
-            Modifier.fillMaxWidth().padding(top = 18.dp).horizontalScroll(rememberScrollState()),
+            Modifier.fillMaxWidth().padding(top = 18.dp).horizontalScroll(rememberScrollState())
     ) {
         tabs.forEachIndexed { index, label ->
             val isOn = selected == index
             Column(
                 modifier =
                     Modifier.clickable { onSelect(index) }
-                        .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp),
+                        .padding(start = if (index == 0) 16.dp else 0.dp, end = 12.dp)
             ) {
                 Text(
                     text = label,
@@ -792,7 +765,7 @@ private fun TabStrip(selected: Int, onSelect: (Int) -> Unit) {
                     modifier =
                         Modifier.height(2.dp)
                             .width(if (isOn) 44.dp else 0.dp)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(MaterialTheme.colorScheme.primary)
                 )
             }
         }
@@ -962,10 +935,7 @@ private fun PriceHistoryCard(listing: ListingDetail) {
             )
             if (delta > 0) {
                 Spacer(modifier = Modifier.height(14.dp))
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = Color(0xFFD1FAE5),
-                ) {
+                Surface(shape = RoundedCornerShape(999.dp), color = Color(0xFFD1FAE5)) {
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -1150,7 +1120,7 @@ private fun InquiryDialog(
 ) {
     var message by remember {
         mutableStateOf(
-            "Hi, I'm interested in ${listing.title}. Please contact me with more information.",
+            "Hi, I'm interested in ${listing.title}. Please contact me with more information."
         )
     }
     var name by remember { mutableStateOf("") }
@@ -1171,8 +1141,8 @@ private fun InquiryDialog(
                     Card(
                         colors =
                             CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            ),
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                            )
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -1261,7 +1231,7 @@ private fun InquiryDialog(
                 }
                 Text(
                     if (isSubmitting) stringResource(R.string.inquiry_sending)
-                    else stringResource(R.string.inquiry_send),
+                    else stringResource(R.string.inquiry_send)
                 )
             }
         },

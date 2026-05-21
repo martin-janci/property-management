@@ -101,10 +101,7 @@ fun AccountScreen(
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (val state = authState) {
             is AuthState.Unauthenticated,
             is AuthState.Error -> {
@@ -159,7 +156,7 @@ fun AccountScreen(
                                                     Log.e(
                                                         TAG,
                                                         "Failed to update notification preferences",
-                                                        it
+                                                        it,
                                                     )
                                                 },
                                             )
@@ -193,7 +190,7 @@ fun AccountScreen(
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
                 ) {
                     Text(stringResource(R.string.sign_out))
@@ -275,7 +272,7 @@ private fun ProfileHero(user: SsoUserInfo) {
                                     colors = listOf(Brand800, Brand500),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height),
-                                ),
+                                )
                         )
                     },
                 contentAlignment = Alignment.Center,
@@ -310,10 +307,7 @@ private fun ProfileHero(user: SsoUserInfo) {
 
 @Composable
 private fun VerifiedPill() {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = Color(0xFFD1FAE5),
-    ) {
+    Surface(shape = RoundedCornerShape(999.dp), color = Color(0xFFD1FAE5)) {
         Row(
             modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -426,7 +420,7 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_compare),
                 subtitle = stringResource(R.string.profile_section_compare_sub),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to compare */},
+                onClick = { /* nav to compare */ },
             )
             SectionDivider()
             SectionRow(
@@ -442,7 +436,7 @@ private fun SectionList(
                 title = stringResource(R.string.profile_section_privacy),
                 subtitle = null,
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to privacy */},
+                onClick = { /* nav to privacy */ },
             )
             SectionDivider()
             SectionRow(
@@ -451,7 +445,7 @@ private fun SectionList(
                 subtitle =
                     stringResource(R.string.profile_section_about_sub, BuildConfig.VERSION_NAME),
                 trailing = SectionTrailing.Chevron,
-                onClick = { /* nav to about */},
+                onClick = { /* nav to about */ },
             )
         }
     }
@@ -518,10 +512,7 @@ private fun SectionRow(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             is SectionTrailing.Toggle ->
-                Switch(
-                    checked = trailing.checked,
-                    onCheckedChange = { onClick() },
-                )
+                Switch(checked = trailing.checked, onCheckedChange = { onClick() })
         }
     }
 }
@@ -632,40 +623,35 @@ private fun AppSettingsCard() {
                 icon = Icons.Default.Language,
                 title = stringResource(R.string.setting_language),
                 value = stringResource(R.string.language_english),
-                onClick = { /* picker */},
+                onClick = { /* picker */ },
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.Euro,
                 title = stringResource(R.string.setting_currency),
                 value = stringResource(R.string.currency_eur),
-                onClick = { /* picker */},
+                onClick = { /* picker */ },
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.Straighten,
                 title = stringResource(R.string.setting_units),
                 value = stringResource(R.string.units_metric),
-                onClick = { /* picker */},
+                onClick = { /* picker */ },
             )
             SectionDivider()
             SettingsRow(
                 icon = Icons.Default.DarkMode,
                 title = stringResource(R.string.setting_theme),
                 value = stringResource(R.string.theme_system),
-                onClick = { /* picker */},
+                onClick = { /* picker */ },
             )
         }
     }
 }
 
 @Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    title: String,
-    value: String,
-    onClick: () -> Unit,
-) {
+private fun SettingsRow(icon: ImageVector, title: String, value: String, onClick: () -> Unit) {
     Row(
         modifier =
             Modifier.fillMaxWidth()
@@ -722,25 +708,25 @@ private fun AboutCard() {
             AboutRow(
                 icon = Icons.Default.Description,
                 title = stringResource(R.string.terms_of_service),
-                onClick = { /* open terms */},
+                onClick = { /* open terms */ },
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.Default.PrivacyTip,
                 title = stringResource(R.string.privacy_policy),
-                onClick = { /* open privacy */},
+                onClick = { /* open privacy */ },
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.AutoMirrored.Filled.Help,
                 title = stringResource(R.string.help_support),
-                onClick = { /* open help */},
+                onClick = { /* open help */ },
             )
             SectionDivider()
             AboutRow(
                 icon = Icons.Default.Feedback,
                 title = stringResource(R.string.send_feedback),
-                onClick = { /* open feedback */},
+                onClick = { /* open feedback */ },
             )
         }
     }
@@ -868,7 +854,7 @@ private fun NotSignedInContent(onSignInClick: () -> Unit) {
             Icon(
                 Icons.AutoMirrored.Filled.Login,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.sign_in_pm_app))

@@ -112,10 +112,7 @@ fun FavoritesScreen(
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (authState) {
             is AuthState.Unauthenticated,
             is AuthState.Error -> NotSignedInContent(onSignInClick = onSignInClick)
@@ -213,7 +210,7 @@ fun FavoritesScreen(
                         selectedTab == 1 -> {
                             SavedSearchesTabContent(
                                 searches = savedSearches,
-                                onSearchClick = { /* Navigate to search with filters */},
+                                onSearchClick = { /* Navigate to search with filters */ },
                                 onToggleAlert = { id, enabled ->
                                     scope.launch {
                                         favoritesRepository
@@ -254,13 +251,13 @@ fun FavoritesScreen(
 private enum class TransactionFilter {
     ALL,
     SALE,
-    RENT
+    RENT,
 }
 
 private enum class SortMode {
     NEWEST,
     PRICE_ASC,
-    PRICE_DESC
+    PRICE_DESC,
 }
 
 private fun applyFilterAndSort(
@@ -305,24 +302,19 @@ private fun FavoritesHeader(favoriteCount: Int, savedSearchCount: Int) {
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text =
-                    stringResource(
-                        R.string.favorites_summary,
-                        favoriteCount,
-                        savedSearchCount,
-                    ),
+                text = stringResource(R.string.favorites_summary, favoriteCount, savedSearchCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = { /* share */}) {
+        IconButton(onClick = { /* share */ }) {
             Icon(
                 imageVector = Icons.Default.Share,
                 contentDescription = stringResource(R.string.cd_share),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
         }
-        IconButton(onClick = { /* export */}) {
+        IconButton(onClick = { /* export */ }) {
             Icon(
                 imageVector = Icons.Default.FileDownload,
                 contentDescription = stringResource(R.string.cd_export),
@@ -388,17 +380,12 @@ private fun PropertyTabContent(
 
                 // FAB — "Create list"
                 ExtendedFloatingActionButton(
-                    onClick = { /* create list */},
+                    onClick = { /* create list */ },
                     modifier =
                         Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp),
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                        )
-                    },
+                    icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
                     text = { Text(text = stringResource(R.string.favorites_create_list)) },
                 )
             }
@@ -407,10 +394,7 @@ private fun PropertyTabContent(
 }
 
 @Composable
-private fun FilterChipStrip(
-    selected: TransactionFilter,
-    onSelect: (TransactionFilter) -> Unit,
-) {
+private fun FilterChipStrip(selected: TransactionFilter, onSelect: (TransactionFilter) -> Unit) {
     val chips =
         listOf(
             TransactionFilter.ALL to R.string.favorites_filter_all,
@@ -503,9 +487,7 @@ private fun FavoritePropertyCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column {
-            Box(
-                modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f)) {
                 AsyncImage(
                     model =
                         ImageRequest.Builder(LocalContext.current)
@@ -629,12 +611,7 @@ private fun SavedSearchCard(
                     if (search.newCount > 0) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                            Text(
-                                stringResource(
-                                    R.string.saved_search_new_count,
-                                    search.newCount,
-                                )
-                            )
+                            Text(stringResource(R.string.saved_search_new_count, search.newCount))
                         }
                     }
                 }
@@ -692,7 +669,7 @@ private fun SavedSearchCard(
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
                 ) {
                     Text(stringResource(R.string.delete))

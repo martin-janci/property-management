@@ -17,7 +17,7 @@ enum class NotificationType {
     @SerialName("inquiry_response") INQUIRY_RESPONSE,
     @SerialName("listing_update") LISTING_UPDATE,
     @SerialName("favorite_sold") FAVORITE_SOLD,
-    @SerialName("system") SYSTEM
+    @SerialName("system") SYSTEM,
 }
 
 /** Notification entry. */
@@ -31,7 +31,7 @@ data class NotificationEntry(
     @SerialName("inquiry_id") val inquiryId: String? = null,
     val data: Map<String, String> = emptyMap(),
     @SerialName("is_read") val isRead: Boolean = false,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
 )
 
 /** User notifications response. */
@@ -39,7 +39,7 @@ data class NotificationEntry(
 data class NotificationsResponse(
     val notifications: List<NotificationEntry>,
     val total: Int,
-    @SerialName("unread_count") val unreadCount: Int
+    @SerialName("unread_count") val unreadCount: Int,
 )
 
 /** Push notification token registration request. */
@@ -47,7 +47,7 @@ data class NotificationsResponse(
 data class RegisterPushTokenRequest(
     val token: String,
     val platform: String, // "android" or "ios"
-    @SerialName("device_id") val deviceId: String? = null
+    @SerialName("device_id") val deviceId: String? = null,
 )
 
 /** Push notification token registration response. */
@@ -61,7 +61,7 @@ data class NotificationPreferences(
     @SerialName("price_drops") val priceDrops: Boolean = true,
     @SerialName("inquiry_responses") val inquiryResponses: Boolean = true,
     @SerialName("listing_updates") val listingUpdates: Boolean = true,
-    @SerialName("marketing") val marketing: Boolean = false
+    @SerialName("marketing") val marketing: Boolean = false,
 )
 
 /** Update notification preferences request. */
@@ -75,7 +75,7 @@ data class AlertConfig(
     @SerialName("search_id") val searchId: String,
     val enabled: Boolean = true,
     val frequency: AlertFrequency = AlertFrequency.INSTANT,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
 )
 
 /** Alert frequency. */
@@ -83,12 +83,12 @@ data class AlertConfig(
 enum class AlertFrequency {
     @SerialName("instant") INSTANT,
     @SerialName("daily") DAILY,
-    @SerialName("weekly") WEEKLY
+    @SerialName("weekly") WEEKLY,
 }
 
 /** Update alert config request. */
 @Serializable
 data class UpdateAlertConfigRequest(
     val enabled: Boolean? = null,
-    val frequency: AlertFrequency? = null
+    val frequency: AlertFrequency? = null,
 )

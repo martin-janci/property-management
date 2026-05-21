@@ -70,23 +70,23 @@ fun RegisterScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
-        },
+        }
     ) { padding ->
         Column(
             modifier =
                 Modifier.fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                    .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
             if (submitted) {
                 Text(
@@ -199,10 +199,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
             Row(verticalAlignment = Alignment.Top) {
-                Checkbox(
-                    checked = termsAccepted,
-                    onCheckedChange = { termsAccepted = it },
-                )
+                Checkbox(checked = termsAccepted, onCheckedChange = { termsAccepted = it })
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = stringResource(R.string.auth_register_terms),
@@ -218,10 +215,7 @@ fun RegisterScreen(
             val emailInvalidMsg = stringResource(R.string.auth_validation_email_invalid)
             val passwordRequiredMsg = stringResource(R.string.auth_validation_password_required)
             val passwordTooShortMsg =
-                stringResource(
-                    R.string.auth_validation_password_too_short,
-                    MIN_PASSWORD_LENGTH,
-                )
+                stringResource(R.string.auth_validation_password_too_short, MIN_PASSWORD_LENGTH)
             val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
             val termsRequiredMsg = stringResource(R.string.auth_validation_terms_required)
             val registerFailedMsg = stringResource(R.string.auth_validation_register_failed)
@@ -305,10 +299,7 @@ fun RegisterScreen(
 
 @Composable
 private fun PasswordStrengthBars(strength: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         repeat(4) { idx ->
             val fillColor =
                 when {
@@ -322,7 +313,7 @@ private fun PasswordStrengthBars(strength: Int) {
                     Modifier.weight(1f)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(fillColor),
+                        .background(fillColor)
             )
         }
     }
