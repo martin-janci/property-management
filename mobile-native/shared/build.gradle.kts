@@ -7,11 +7,7 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-        }
-    }
+    androidTarget { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
 
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
