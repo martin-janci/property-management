@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1643,7 +1643,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "axum 0.8.9",
  "chrono",
@@ -2048,7 +2048,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2250,7 +2250,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users 0.5.2",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2435,7 +2435,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3365,7 +3365,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "system-configuration",
  "tokio",
  "tower-service",
@@ -3574,7 +3574,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -4203,7 +4203,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5190,7 +5190,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash 2.1.2",
  "rustls 0.23.40",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -5228,7 +5228,7 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.3",
+ "socket2 0.5.10",
  "tracing",
  "windows-sys 0.59.0",
 ]
@@ -5362,7 +5362,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "anyhow",
  "api-core",
@@ -5836,7 +5836,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5905,7 +5905,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -6905,12 +6905,12 @@ dependencies = [
  "getrandom 0.4.2",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "chrono",
  "common",
@@ -7281,9 +7281,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.10"
+version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68d6fdd9f81c2819c9a8b0e0cd91660e7746a8e6ea2ba7c6b2b057985f6bcb51"
+checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
  "async-compression",
  "bitflags 2.11.1",
@@ -7973,7 +7973,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
