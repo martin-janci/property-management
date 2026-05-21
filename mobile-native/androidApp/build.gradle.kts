@@ -1,6 +1,7 @@
 plugins {
+    // AGP 9 bundles the Kotlin Android plugin; `alias(libs.plugins.kotlin.android)` is no longer
+    // applied explicitly. The Compose compiler plugin must still be applied.
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -105,6 +106,8 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        // AGP 9 defaults `resValues` to false; product flavors below use `resValue(...)`.
+        resValues = true
     }
 }
 
