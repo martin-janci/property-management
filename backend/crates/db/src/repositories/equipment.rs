@@ -21,7 +21,15 @@ impl EquipmentRepository {
     }
 
     /// Create new equipment.
-    pub async fn create(&self, data: CreateEquipment) -> Result<Equipment, sqlx::Error> {
+    /// Create equipment.
+    ///
+    /// `organization_id` is passed explicitly by the caller and must originate
+    /// from the verified request principal, never from client input in `data`.
+    pub async fn create(
+        &self,
+        organization_id: Uuid,
+        data: CreateEquipment,
+    ) -> Result<Equipment, sqlx::Error> {
         sqlx::query_as(
             r#"
             INSERT INTO equipment
@@ -32,7 +40,7 @@ impl EquipmentRepository {
             RETURNING *
             "#,
         )
-        .bind(data.organization_id)
+        .bind(organization_id)
         .bind(data.building_id)
         .bind(data.facility_id)
         .bind(data.name)
