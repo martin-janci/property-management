@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1643,7 +1643,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "axum 0.8.9",
  "chrono",
@@ -2048,7 +2048,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "argon2",
  "async-trait",
@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2577,16 +2577,16 @@ dependencies = [
 
 [[package]]
 name = "fluent-bundle"
-version = "0.15.3"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fe0a21ee80050c678013f82edf4b705fe2f26f1f9877593d13198612503f493"
+checksum = "01203cb8918f5711e73891b347816d932046f95f54207710bda99beaeb423bf4"
 dependencies = [
  "fluent-langneg",
  "fluent-syntax",
  "intl-memoizer",
  "intl_pluralrules",
- "rustc-hash 1.1.0",
- "self_cell 0.10.3",
+ "rustc-hash",
+ "self_cell",
  "smallvec",
  "unic-langid",
 ]
@@ -2602,11 +2602,12 @@ dependencies = [
 
 [[package]]
 name = "fluent-syntax"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a530c4694a6a8d528794ee9bbd8ba0122e779629ac908d15ad5a7ae7763a33d"
+checksum = "54f0d287c53ffd184d04d8677f590f4ac5379785529e5e08b1c8083acdd5c198"
 dependencies = [
- "thiserror 1.0.69",
+ "memchr",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -3574,7 +3575,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -5188,7 +5189,7 @@ dependencies = [
  "pin-project-lite",
  "quinn-proto",
  "quinn-udp",
- "rustc-hash 2.1.2",
+ "rustc-hash",
  "rustls 0.23.40",
  "socket2 0.6.3",
  "thiserror 2.0.18",
@@ -5209,7 +5210,7 @@ dependencies = [
  "lru-slab",
  "rand 0.9.4",
  "ring",
- "rustc-hash 2.1.2",
+ "rustc-hash",
  "rustls 0.23.40",
  "rustls-pki-types",
  "slab",
@@ -5362,7 +5363,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "anyhow",
  "api-core",
@@ -5807,12 +5808,6 @@ checksum = "b50b8869d9fc858ce7266cce0194bd74df58b9d0e3f6df3a9fc8eb470d95c09d"
 
 [[package]]
 name = "rustc-hash"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
-
-[[package]]
-name = "rustc-hash"
 version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
@@ -6047,15 +6042,6 @@ checksum = "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3"
 dependencies = [
  "core-foundation-sys",
  "libc",
-]
-
-[[package]]
-name = "self_cell"
-version = "0.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e14e4d63b804dc0c7ec4a1e52bcb63f02c7ac94476755aa579edac21e01f915d"
-dependencies = [
- "self_cell 1.2.2",
 ]
 
 [[package]]
@@ -6910,7 +6896,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.414"
+version = "0.2.416"
 dependencies = [
  "chrono",
  "common",
@@ -7419,7 +7405,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb30dbbd9036155e74adad6812e9898d03ec374946234fbcebd5dfc7b9187b90"
 dependencies = [
- "rustc-hash 2.1.2",
+ "rustc-hash",
 ]
 
 [[package]]
