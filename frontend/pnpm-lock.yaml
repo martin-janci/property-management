@@ -220,8 +220,8 @@ importers:
         specifier: ^1.7.4
         version: 1.16.0
       dompurify:
-        specifier: ^3.3.1
-        version: 3.4.2
+        specifier: ^3.4.5
+        version: 3.4.5
       i18next:
         specifier: ^25.7.3
         version: 25.10.10(typescript@5.9.3)
@@ -4438,7 +4438,7 @@ packages:
     resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
     deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
     dependencies:
-      dompurify: 3.4.2
+      dompurify: 3.4.5
     dev: true
 
   /@types/estree@1.0.8:
@@ -5664,8 +5664,8 @@ packages:
       webidl-conversions: 7.0.0
     dev: true
 
-  /dompurify@3.4.2:
-    resolution: {integrity: sha512-lHeS9SA/IKeIFFyYciHBr2n0v1VMPlSj843HdLOwjb2OxNwdq9Xykxqhk+FE42MzAdHvInbAolSE4mhahPpjXA==}
+  /dompurify@3.4.5:
+    resolution: {integrity: sha512-OrwIBKsdNSVEeubdJ1HBv/wNENRM9ytAVCv7YXt//A3vPdVMNuACRqK9mXCGCBW2ln7BT/A4X0jXHo2Gu89miA==}
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
