@@ -32,6 +32,21 @@ ignore = [
     "RUSTSEC-2026-0098",
     "RUSTSEC-2026-0099",
     "RUSTSEC-2026-0104",
+
+    # RUSTSEC-2023-0071 — "Marvin Attack" timing side-channel in the `rsa` crate
+    # (0.9.x, no fixed version published upstream). Pulled in transitively by
+    # `jsonwebtoken` 10's `rust_crypto` backend, which bundles RSA algorithm
+    # support.
+    #
+    # Reachability: our JWT service signs/verifies with HMAC only
+    # (`EncodingKey::from_secret` / `DecodingKey::from_secret`, HS256 via the
+    # symmetric `JWT_SECRET`) — see servers/api-server/src/services/jwt.rs. We
+    # never perform RSA private-key operations, which is what the Marvin timing
+    # attack requires, so the vulnerable code path is not exercised. The crate
+    # is present in the graph but dead weight.
+    # Follow-up: drop when `rsa` ships a constant-time fix, or switch
+    # jsonwebtoken to the `aws_lc_rs` backend.
+    "RUSTSEC-2023-0071",
 ]
 
 [bans]
