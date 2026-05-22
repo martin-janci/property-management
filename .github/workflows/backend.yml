@@ -274,20 +274,51 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
         run: sqlx database create && sqlx migrate run
 
+      - name: Create non-superuser test role
+        # Postgres exempts SUPERUSERS from RLS entirely (FORCE ROW LEVEL
+        # SECURITY only binds the table OWNER, not superusers). The default
+        # `postgres` user IS a superuser, so connecting as it bypasses RLS
+        # silently — `set_request_context(.., is_super_admin=false)` has no
+        # effect and the connection sees every tenant's rows. That made the
+        # cross-tenant isolation assertions in test_cross_tenant_role_isolation
+        # / test_cross_tenant_org_isolation fail deterministically.
+        #
+        # We create a separate non-superuser role for the test connection so
+        # RLS policies actually run. Idempotent + scoped to the test database;
+        # identical to the rls-smoke-test job's setup.
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d ppt_test <<'SQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rls_test_runner') THEN
+                CREATE ROLE rls_test_runner LOGIN PASSWORD 'rls_test_runner';
+              END IF;
+            END $$;
+            GRANT CONNECT ON DATABASE ppt_test TO rls_test_runner;
+            GRANT USAGE ON SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL TABLES IN SCHEMA public TO rls_test_runner;
+            GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO rls_test_runner;
+            GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO rls_test_runner;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO rls_test_runner;
+          SQL
+
       - name: Run RLS penetration tests
         working-directory: backend
         env:
-          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ppt_test
+          # Connect as the non-superuser role so RLS is actually enforced.
+          # Connecting as the `postgres` superuser bypasses RLS entirely and
+          # makes the cross-tenant isolation tests fail deterministically.
+          TEST_DATABASE_URL: postgres://rls_test_runner:rls_test_runner@localhost:5432/ppt_test
           RUST_LOG: debug
         # `--test-threads=1`: every test in rls_penetration_tests.rs shares the
-        # SAME Postgres database and brackets itself with `db.cleanup()`, which
-        # runs `DELETE FROM roles/organizations WHERE TRUE`. Run in parallel,
-        # one test's cleanup wipes (or the org-creation trigger injects) rows
-        # while a sibling test is mid-`SELECT * FROM roles`, so the
-        # "every row belongs to my org" assertions in
-        # test_cross_tenant_role_isolation / test_cross_tenant_org_isolation
-        # fail non-deterministically. Serializing makes the suite reliable —
-        # matches the rls_smoke_tests job above.
+        # SAME Postgres database and brackets itself with `db.cleanup()`
+        # (`DELETE FROM roles/organizations WHERE TRUE`). Serial execution keeps
+        # the shared-DB cleanup from racing sibling tests — matches the
+        # rls_smoke_tests job above.
         run: cargo test --test rls_penetration_tests -- --ignored --nocapture --test-threads=1
 
   cargo-deny:
