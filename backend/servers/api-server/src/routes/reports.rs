@@ -7,7 +7,7 @@
 //! - Story 55.4: Consumption Report
 //! - Story 55.5: Export Reports to PDF/Excel
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -216,13 +216,20 @@ pub fn router() -> Router<AppState> {
 // ============================================================================
 
 /// Get building name by ID if provided.
-/// Note: This helper function is called from report handlers. RLS migration
-/// would require passing RlsConnection through all callers.
-async fn get_building_name(state: &AppState, building_id: Option<Uuid>) -> Option<String> {
+///
+/// RLS-scoped: callers pass their request's `RlsConnection` so the lookup is
+/// constrained to buildings the authenticated tenant can see (prevents leaking
+/// a building name across tenants via an arbitrary id).
+async fn get_building_name(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    building_id: Option<Uuid>,
+) -> Option<String> {
     if let Some(id) = building_id {
-        // TODO: Migrate to find_by_id_rls when handlers pass RlsConnection
-        #[allow(deprecated)]
-        let result = state.building_repo.find_by_id(id).await;
+        let result = state
+            .building_repo
+            .find_by_id_rls(&mut **rls.conn(), id)
+            .await;
         result.ok().flatten().and_then(|b| b.name)
     } else {
         None
@@ -538,6 +545,7 @@ fn validate_date_range(
 pub async fn get_fault_statistics_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<FaultStatisticsQuery>,
 ) -> Result<Json<FaultStatisticsReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Get date range (default to last 30 days if not specified)
@@ -552,7 +560,9 @@ pub async fn get_fault_statistics_report(
     validate_date_range(from_date, to_date)?;
 
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Get fault statistics from repository (using organization_id for multi-tenant filtering)
     let statistics = state
@@ -619,6 +629,7 @@ pub async fn get_fault_statistics_report(
 pub async fn get_voting_participation_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<VotingParticipationQuery>,
 ) -> Result<Json<VotingParticipationReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Get date range (default to last 12 months if not specified)
@@ -633,7 +644,9 @@ pub async fn get_voting_participation_report(
     validate_date_range(from_date, to_date)?;
 
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query voting participation data from repository
     let participation_data = state
@@ -694,6 +707,7 @@ pub async fn get_voting_participation_report(
 pub async fn get_occupancy_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<OccupancyReportQuery>,
 ) -> Result<Json<OccupancyReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate month if provided
@@ -728,7 +742,9 @@ pub async fn get_occupancy_report(
     };
 
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query occupancy data from person_month repository
     let occupancy_data = state
@@ -807,6 +823,7 @@ pub async fn get_occupancy_report(
 pub async fn get_consumption_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ConsumptionReportQuery>,
 ) -> Result<Json<ConsumptionReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate date range
@@ -827,7 +844,9 @@ pub async fn get_consumption_report(
     }
 
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query consumption data from meter repository
     let consumption_data = state

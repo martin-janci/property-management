@@ -1,5 +1,6 @@
 //! Notification Preferences routes (Epic 8A, Story 8A.1).
 
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -47,23 +48,16 @@ pub struct GetPreferencesResponse {
 )]
 pub async fn get_preferences(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    mut rls: RlsConnection,
 ) -> Result<Json<NotificationPreferencesResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Extract and validate access token
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
+    let user_id = rls.user_id();
 
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
-
-    // Get all preferences for the user
-    // TODO: Migrate to get_by_user_rls when this handler has RLS connection
-    #[allow(deprecated)]
-    let preferences = match state.notification_pref_repo.get_by_user(user_id).await {
+    // Get all preferences for the user (RLS-scoped to the authenticated user).
+    let preferences = match state
+        .notification_pref_repo
+        .get_by_user_rls(&mut **rls.conn(), user_id)
+        .await
+    {
         Ok(prefs) => prefs,
         Err(e) => {
             tracing::error!(error = %e, user_id = %user_id, "Failed to get notification preferences");
@@ -76,6 +70,9 @@ pub async fn get_preferences(
             ));
         }
     };
+
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Check if all channels are disabled
     let all_disabled = preferences.iter().all(|p| !p.enabled);
@@ -132,20 +129,11 @@ pub struct UpdatePreferenceResponse {
 )]
 pub async fn update_preference(
     State(state): State<AppState>,
-    headers: axum::http::HeaderMap,
+    mut rls: RlsConnection,
     Path(path): Path<ChannelPath>,
     Json(req): Json<UpdateNotificationPreferenceRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
-    // Extract and validate access token
-    let token = extract_bearer_token(&headers)?;
-    let claims = validate_access_token(&state, &token)?;
-
-    let user_id: uuid::Uuid = claims.sub.parse().map_err(|_| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Invalid token format")),
-        )
-    })?;
+    let user_id = rls.user_id();
 
     // Parse channel from path
     let channel = match path.channel.as_str() {
@@ -163,18 +151,19 @@ pub async fn update_preference(
         }
     };
 
-    // If disabling, check if this would disable all channels
+    // If disabling, check if this would disable all channels.
+    // (Replaces the deprecated would_disable_all() helper with inline RLS-scoped
+    // queries: it would disable all iff exactly one channel is currently enabled
+    // and it is this channel.)
     if !req.enabled {
-        // TODO: Migrate to count_enabled_rls and get_by_user_and_channel_rls
-        #[allow(deprecated)]
-        let would_disable_all = match state
+        let enabled_count = match state
             .notification_pref_repo
-            .would_disable_all(user_id, channel)
+            .count_enabled_rls(&mut **rls.conn(), user_id)
             .await
         {
-            Ok(result) => result,
+            Ok(count) => count,
             Err(e) => {
-                tracing::error!(error = %e, user_id = %user_id, "Failed to check if would disable all");
+                tracing::error!(error = %e, user_id = %user_id, "Failed to count enabled channels");
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse::new(
@@ -185,8 +174,29 @@ pub async fn update_preference(
             }
         };
 
+        let current = match state
+            .notification_pref_repo
+            .get_by_user_and_channel_rls(&mut **rls.conn(), user_id, channel)
+            .await
+        {
+            Ok(pref) => pref,
+            Err(e) => {
+                tracing::error!(error = %e, user_id = %user_id, "Failed to load channel preference");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        "Failed to update preference",
+                    )),
+                ));
+            }
+        };
+
+        let would_disable_all = enabled_count == 1 && current.map(|p| p.enabled).unwrap_or(false);
+
         if would_disable_all && !req.confirm_disable_all {
             // Return warning response requiring confirmation
+            rls.release().await;
             return Err((
                 StatusCode::CONFLICT,
                 Json(ErrorResponse::new(
@@ -197,12 +207,10 @@ pub async fn update_preference(
         }
     }
 
-    // Update the preference
-    // TODO: Migrate to update_channel_rls
-    #[allow(deprecated)]
+    // Update the preference (RLS-scoped to the authenticated user).
     let updated = match state
         .notification_pref_repo
-        .update_channel(user_id, channel, req.enabled)
+        .update_channel_rls(&mut **rls.conn(), user_id, channel, req.enabled)
         .await
     {
         Ok(pref) => pref,
@@ -218,16 +226,21 @@ pub async fn update_preference(
         }
     };
 
-    // Check if all channels are now disabled
-    // TODO: Migrate to count_enabled_rls
-    #[allow(deprecated)]
-    let has_any_enabled = match state.notification_pref_repo.has_any_enabled(user_id).await {
-        Ok(result) => result,
+    // Check if all channels are now disabled (RLS-scoped to the authenticated user).
+    let has_any_enabled = match state
+        .notification_pref_repo
+        .count_enabled_rls(&mut **rls.conn(), user_id)
+        .await
+    {
+        Ok(count) => count > 0,
         Err(e) => {
             tracing::error!(error = %e, "Failed to check enabled channels");
             true // Assume not all disabled if check fails
         }
     };
+
+    // RLS operations complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     let all_disabled_warning = if !has_any_enabled {
         Some(
@@ -249,50 +262,4 @@ pub async fn update_preference(
         preference: updated.into(),
         all_disabled_warning,
     }))
-}
-
-// ==================== Helper Functions ====================
-
-/// Extract bearer token from Authorization header.
-fn extract_bearer_token(
-    headers: &axum::http::HeaderMap,
-) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
-    let auth_header = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok())
-        .ok_or_else(|| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new(
-                    "MISSING_TOKEN",
-                    "Authorization header required",
-                )),
-            )
-        })?;
-
-    if !auth_header.starts_with("Bearer ") {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("INVALID_TOKEN", "Bearer token required")),
-        ));
-    }
-
-    Ok(auth_header[7..].to_string())
-}
-
-/// Validate access token and return claims.
-fn validate_access_token(
-    state: &AppState,
-    token: &str,
-) -> Result<crate::services::jwt::Claims, (StatusCode, Json<ErrorResponse>)> {
-    state.jwt_service.validate_access_token(token).map_err(|e| {
-        tracing::debug!(error = %e, "Invalid access token");
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new(
-                "INVALID_TOKEN",
-                "Invalid or expired token",
-            )),
-        )
-    })
 }
