@@ -5,7 +5,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{phc::PasswordHash, PasswordHasher, PasswordVerifier},
     Argon2,
 };
 use rand::RngExt;
@@ -343,10 +343,10 @@ impl TotpService {
         // Normalize the code (remove any dashes/spaces, uppercase) to match verification behavior
         let normalized_code = code.replace(['-', ' '], "").to_uppercase();
 
-        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
+        // password-hash 0.6: `hash_password` generates a random salt internally.
         let hash = argon2
-            .hash_password(normalized_code.as_bytes(), &salt)
+            .hash_password(normalized_code.as_bytes())
             .map_err(|e| TotpError::HashError(e.to_string()))?;
         Ok(hash.to_string())
     }

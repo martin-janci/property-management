@@ -20,7 +20,7 @@
 //! cargo run -p api-server --bin ppt-seed -- --minimal
 //! ```
 
-use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
+use argon2::password_hash::PasswordHasher;
 use argon2::Argon2;
 use clap::Parser;
 use db::seed::{SeedConfig, SeedError, SeedRunner};
@@ -50,10 +50,10 @@ async fn upsert_reality_portal_client(
              (matches the validation in deploy-server's `build_service_envs`)"
         ));
     }
-    let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
+    // password-hash 0.6: `hash_password` generates a random salt internally.
     let hash = argon2
-        .hash_password(secret.as_bytes(), &salt)
+        .hash_password(secret.as_bytes())
         .map_err(|e| anyhow::anyhow!("argon2 hash failed: {e}"))?
         .to_string();
 
