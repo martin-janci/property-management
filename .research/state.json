@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-20T10:53:33Z",
-  "last_run_ms": 1779274413000,
-  "last_pr_seen": 343,
-  "last_issue_seen": 160,
-  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "last_run_iso": "2026-05-22T03:14:17Z",
+  "last_run_ms": 1779419657000,
+  "last_pr_seen": 417,
+  "last_issue_seen": 375,
+  "last_commit_sha": "235562b79057fd8921af0b79ee63615bd9943377",
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
       "runs_seen": 1,
@@ -29,13 +29,15 @@
     "unchecked-todo-rls-migration-residual",
     "unchecked-todo-integration-marketplace-stubs",
     "unchecked-todo-portfolio-dashboard-stubs",
-    "dep-update-noise-2026-05-20"
+    "dep-update-noise-2026-05-20",
+    "ci-failure-issue-375",
+    "dep-update-noise-2026-05-22"
   ],
   "auto_fix_history": {},
   "stats": {
-    "runs": 1,
-    "vectors_created": 6,
-    "plans_created": 0,
+    "runs": 2,
+    "vectors_created": 7,
+    "plans_created": 1,
     "quiet_days": 0,
     "auto_fix_count": 0
   }

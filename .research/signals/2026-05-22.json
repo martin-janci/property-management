@@ -1,0 +1,55 @@
+{
+  "run_iso": "2026-05-22T03:14:17Z",
+  "window": {
+    "since": "2026-05-20T10:53:33Z",
+    "until": "2026-05-22T03:14:17Z",
+    "note": "Normal run. Cursor commit fc8af0a (2026-05-19) predates the prior run (2026-05-20); new work delimited by PR number > 343. New-window churn is dominated by a ~40-PR dependabot/version-bump campaign drained on 2026-05-21 — no genuinely new code hotspots beyond the prior security batch (already counted on 2026-05-20)."
+  },
+  "observed": {
+    "merged_prs_new": 46,
+    "merged_pr_range_new": "#344-#417",
+    "non_noise_merged": ["#385 mobile-native toolchain upgrade", "#377 fix(ci) jvmTarget DSL + pnpm lockfile", "#395 fix(mobile) async-storage v3 API", "#416 vite 7->8 + Rolldown config fix", "#364 feat(research) Phase 5 (tooling, .research only)"],
+    "open_prs_touched": 4,
+    "open_prs": ["#405 jsonwebtoken 9->10", "#408 opentelemetry_sdk", "#418 jsonwebtoken/password-hash/argon2", "#419 opentelemetry family"],
+    "closed_not_merged": "many dependabot PRs superseded by grouped PRs after #398 regrouped dependabot; #378/#379 superseded by #377/#385 (mobile toolchain DSL migration)",
+    "new_or_updated_issues": 1,
+    "commits_on_main": 50,
+    "screen_map": { "ppt_docs": 53, "reality_docs": 46, "mobile_docs": 0, "drift_signals": 0, "orphan_signals": 0, "note": "no merged PR this run touched ppt-web/reality-web route files; mobile excluded until docs/screens/mobile exists" }
+  },
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-22.md && head -1 == '# 2026-05-22'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "compare staged state.json vs HEAD", "observed": "last_pr_seen 343->417, last_issue_seen 160->375, last_commit_sha fc8af0a->235562b, seen_signals 7->9, stats.runs 1->2", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "7 unique ids", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative signal id re-scored from seen_signals", "observed": "both signal ids new (ci-failure-issue-375, dep-update-noise-2026-05-22)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score > 8; decay applied to >14d-stale open items", "observed": "max score=4; all existing items updated 2026-05-20 (2 days old) -> no decay due", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "every new plan has adversarial-pass annotation in brief", "observed": "plans/ci-rls-pentest-deterministic-failure.md annotated 'adversarial pass: passed'", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "<=2 new plans; each has 4 metadata + 11 headings, mode declared, files resolve", "observed": "1 new plan; 4 metadata, 11 headings, Mode: cloud-ok, 3 capability ticks, 4 Files all resolve", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only subset of .research/", "observed": "all staged paths under .research/", "expected": "exit 0" },
+    { "goal": "G9", "passed": true, "command": "staged diff (excl baseline docs) has no secrets/private hostnames", "observed": "clean", "expected": "exit 0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md regenerates byte-identical from backlog.json", "observed": "diff clean", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "phase failures reflected in brief + cursors", "observed": "no phase failures", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "every prior-run plan still in plans/ or _archive/", "observed": "no prior plans existed", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count >= count at HEAD", "observed": "0 >= 0", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md regenerates byte-identical (no triage rows)", "observed": "diff clean", "expected": "exit 0" }
+  ],
+  "signals": [
+    {
+      "id": "ci-failure-issue-375",
+      "type": "ci-failure",
+      "source": "issue #375",
+      "score_delta": 4,
+      "evidence": "security-tests CI job fails deterministically on main (7 passed; 2 failed); test_cross_tenant_org_isolation + test_cross_tenant_role_isolation. --test-threads=1 already on main (backend.yml:291, commit f0ed577 / #369 change) so not concurrency. Both failing tests do unfiltered SELECT * and assert all rows belong to org_a; cleanup()/setup_as_super_admin() set is_super_admin=true on shared max_connections(1) pool -> likely context leak. Verified test code (rls_penetration_tests.rs:158-358) and CI command on disk.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "dep-update-noise-2026-05-22",
+      "type": "dep-update-noise",
+      "source": "PRs #344-#417 (dependabot + github-actions version bumps)",
+      "score_delta": 0,
+      "evidence": "~40 dependabot/version-bump PRs drained on 2026-05-21 after #398 regrouped dependabot (minor+patch grouped, majors individual). Notable majors that landed with follow-up fixes: vite 7->8 (#411/#416 Rolldown config fix), mobile-native toolchain AGP 9.2.1/Gradle 9.4.1/Kotlin 2.3/Compose 2026.05 (#385) with DSL-migration fix (#377). Still-open majors: jsonwebtoken 9->10 (#418), opentelemetry 0.21->0.32 (#419), opentelemetry_sdk (#408). Logged, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ]
+}

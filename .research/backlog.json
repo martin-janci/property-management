@@ -2,6 +2,30 @@
   "version": 1,
   "items": [
     {
+      "id": "bug-rls-pentest-ci-failure",
+      "title": "Fix deterministic security-tests CI failure: 2 RLS penetration tests fail on main",
+      "vector": "bug",
+      "score": 4,
+      "status": "ready",
+      "sources": ["issue #375", "PR #369", "commit f0ed577"],
+      "evidence": [
+        "issue #375 (bug): security-tests job fails deterministically on main — '7 passed; 2 failed' in ~1s, not flaky; failures are test_cross_tenant_org_isolation and test_cross_tenant_role_isolation",
+        "--test-threads=1 is already on main (.github/workflows/backend.yml:291, landed in commit f0ed577 / the #369 change) yet the suite still fails — a deterministic+serialized failure rules out the cross-test cleanup race the issue hypothesises",
+        "both failing tests do an unfiltered SELECT * (rls_penetration_tests.rs:239, :322) and assert every visible row belongs to org_a; cleanup()/setup_as_super_admin() set is_super_admin=true on the shared max_connections(1) pool (:160, :186)",
+        "likely RLS context leak: set_request_context(org,user,false) may not demote the super-admin GUC, so the assertion SELECTs run with super-admin visibility",
+        "security suite effectively not gating: security-tests is title-gated and not a required check, so the failure went unnoticed until the security-PR batch surfaced it"
+      ],
+      "files": [
+        "backend/crates/db/tests/rls_penetration_tests.rs",
+        ".github/workflows/backend.yml",
+        "backend/crates/db/tests/rls_smoke_tests.rs",
+        "backend/crates/db/migrations/00006_enable_rls_policies.sql"
+      ],
+      "created_at": "2026-05-22",
+      "updated_at": "2026-05-22",
+      "plan": "plans/ci-rls-pentest-deterministic-failure.md"
+    },
+    {
       "id": "security-rls-migration-residual",
       "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
       "vector": "security",

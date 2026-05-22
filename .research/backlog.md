@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-20 10:55 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-22 03:14 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -13,6 +13,7 @@ picks from here.
 
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
+| 4 | Fix deterministic security-tests CI failure: 2 RLS penetration tests fail on main | bug | issue #375 | 2026-05-22 | ready |
 | 2 | Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports) | security | issue #160 | 2026-05-20 | open |
 | 2 | Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation | dx | PR #282 | 2026-05-20 | open |
 | 2 | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dx | PR #328 | 2026-05-20 | open |
