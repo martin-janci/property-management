@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "async-trait",
  "axum",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1404,7 +1404,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "axum",
  "chrono",
@@ -1801,7 +1801,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1854,7 +1854,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3280,7 +3280,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -3447,17 +3447,19 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "9.3.1"
+version = "10.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a87cc7a48537badeae96744432de36f4be2b4a34a05a5ef32e9dd8a1c169dde"
+checksum = "eba32bfb4ffdeaca3e34431072faf01745c9b26d25504aa7a6cf5684334fc4fc"
 dependencies = [
  "base64 0.22.1",
+ "getrandom 0.2.17",
  "js-sys",
  "pem",
- "ring",
  "serde",
  "serde_json",
+ "signature 2.2.0",
  "simple_asn1",
+ "zeroize",
 ]
 
 [[package]]
@@ -4971,7 +4973,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "anyhow",
  "api-core",
@@ -6503,7 +6505,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.420"
+version = "0.2.429"
 dependencies = [
  "chrono",
  "common",
@@ -8015,6 +8017,20 @@ name = "zeroize"
 version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97154e67e32c85465826e8bcc1c59429aaaf107c1e4a9e53c8d8ccd5eff88d0"
+dependencies = [
+ "zeroize_derive",
+]
+
+[[package]]
+name = "zeroize_derive"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85a5b4158499876c763cb03bc4e49185d3cccbabb15b33c627f7884f43db852e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "zerotrie"
