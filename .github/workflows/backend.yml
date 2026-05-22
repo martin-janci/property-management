@@ -93,6 +93,18 @@ jobs:
         with:
           workspaces: backend
 
+      # The GitHub-hosted runner's root disk fills during the link step of
+      # `cargo test --workspace` (the large workspace + test binaries), failing
+      # with "No space left on device". Reclaim the preinstalled toolchains we
+      # don't use (dotnet/android/ghc/swift/CodeQL, ~25GB) before compiling.
+      - name: Free disk space
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          echo "Disk after cleanup:"; df -h /
+
       - name: Run tests
         working-directory: backend
         env:
@@ -114,6 +126,16 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: backend
+
+      # Same disk-exhaustion guard as the test job: the release build of the
+      # whole workspace also fills the runner's root disk during linking.
+      - name: Free disk space
+        run: |
+          echo "Disk before cleanup:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/swift
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          echo "Disk after cleanup:"; df -h /
 
       - name: Build release
         working-directory: backend
