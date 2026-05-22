@@ -8,5 +8,3 @@
 
 pub mod auth;
 pub mod buildings;
-pub mod faults;
-pub mod voting;
