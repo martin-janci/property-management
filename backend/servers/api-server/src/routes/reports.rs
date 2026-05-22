@@ -559,6 +559,20 @@ pub async fn get_fault_statistics_report(
     // Validate date range
     validate_date_range(from_date, to_date)?;
 
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+
     // Get building name if building_id is provided
     let building_name = get_building_name(&state, &mut rls, query.building_id).await;
     // RLS lookup complete — clear context and return the connection to the pool.
@@ -642,6 +656,20 @@ pub async fn get_voting_participation_report(
 
     // Validate date range
     validate_date_range(from_date, to_date)?;
+
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
 
     // Get building name if building_id is provided
     let building_name = get_building_name(&state, &mut rls, query.building_id).await;
@@ -740,6 +768,20 @@ pub async fn get_occupancy_report(
         // Last day of the year
         NaiveDate::from_ymd_opt(query.year, 12, 31).unwrap_or(from_date)
     };
+
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
 
     // Get building name if building_id is provided
     let building_name = get_building_name(&state, &mut rls, query.building_id).await;
@@ -841,6 +883,20 @@ pub async fn get_consumption_report(
                 )),
             ));
         }
+    }
+
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
     }
 
     // Get building name if building_id is provided
