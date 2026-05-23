@@ -76,6 +76,10 @@ echo "== .claude/skills smoke checks =="
 run "ppt-research-flow"   10 'test -d .research/plans/_archive && test -f .research/implementer-prompt.md && echo ok'
 run "ppt-research-trigger" 10 'test -f .research/routine-prompt.md && grep -q "Special trigger payloads" .research/routine-prompt.md'
 run "ppt-next-plan"       10 'test -f .research/backlog.json && jq -e ".items" .research/backlog.json >/dev/null'
+run "ppt-project-management" 10 'test -f .claude/skills/ppt-project-management/SKILL.md && test -f .claude/agents/pm-scrum-master.md && test -d .research/management/roles && jq -e ".items" .research/management/action-list.json >/dev/null && jq -e ".items" .research/management/risks.json >/dev/null && jq -e ".stories" .research/management/coverage.json >/dev/null'
+run "ppt-implement"       10 'test -f .claude/skills/ppt-implement/SKILL.md && ls .claude/skills/ppt-implement/agents/*.md | wc -l | grep -qE "^9$" && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-implement'
+run "ppt-review-merged"   10 'test -f .claude/skills/ppt-review-merged/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-review-merged'
+run "ppt-pr-merge"        10 'test -f .claude/skills/ppt-pr-merge/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-pr-merge'
 if [[ $SKIP_NETWORK -eq 1 ]]; then
   skip "ppt-bridge-mcp" "SKIP_NETWORK=1"
 else
@@ -87,6 +91,7 @@ if [[ $QUICK -eq 1 ]]; then
   # npx-tsp / stack). Suitable for cold caches and offline CI runners.
   run "ppt-tests"         10 'test -f justfile && grep -qE "^test(-(backend|frontend|integration))?:" justfile'
   run "ppt-pr-create"     10 'test -d .github && test -f .github/workflows/backend.yml'
+  run "ppt-pr-followup"   10 'test -f .claude/skills/ppt-pr-followup/SKILL.md && test -f .github/workflows/backend.yml'
   run "ppt-rust-backend"  10 'test -f backend/Cargo.toml && test -d backend/crates'
   run "ppt-frontend"      10 'test -f frontend/pnpm-workspace.yaml || test -f frontend/package.json'
   run "ppt-screens"       10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
@@ -96,6 +101,7 @@ if [[ $QUICK -eq 1 ]]; then
 else
   run "ppt-tests"          10 'just --list 2>/dev/null | grep -qE "^\s+(test-backend|test-frontend|test-integration)\b"'
   run "ppt-pr-create"      10 'gh auth status >/dev/null 2>&1 && echo ok'
+  run "ppt-pr-followup"    10 'gh auth status >/dev/null 2>&1 && command -v jq >/dev/null && test -f .github/workflows/backend.yml'
   run "ppt-rust-backend"  300 'cd backend && cargo check --workspace --message-format=short >/dev/null'
   run "ppt-frontend"       30 'cd frontend && pnpm -r list --depth -1 --json >/dev/null 2>&1'
   run "ppt-screens"        10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
