@@ -1,0 +1,41 @@
+{
+  "generated": "2026-05-23T21:43:59Z",
+  "assignments": [
+    {
+      "task_id": "pm-scrum-master-review-decision-pr-435",
+      "branch": "auto-impl/pm-scrum-master-review-decision-pr-435",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-23T21:43:59Z",
+      "last_updated": "2026-05-23T21:43:59Z",
+      "pr_number": null,
+      "pr_url": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-scrum-master-review-epic-8a",
+      "branch": "auto-impl/pm-scrum-master-review-epic-8a",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-23T21:43:59Z",
+      "last_updated": "2026-05-23T21:43:59Z",
+      "pr_number": null,
+      "pr_url": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-tech-lead-remove-dead-handler-modules",
+      "branch": "auto-impl/pm-tech-lead-remove-dead-handler-modules",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-23T21:43:59Z",
+      "last_updated": "2026-05-23T21:43:59Z",
+      "pr_number": null,
+      "pr_url": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    }
+  ]
+}
