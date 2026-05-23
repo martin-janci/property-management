@@ -99,6 +99,14 @@ jobs:
             fi
             if git push origin __dev_landing:refs/heads/dev; then
               echo "::notice::Landed research output onto dev (attempt $attempt)."
+              # The session branch's content is now on dev; delete it so it
+              # doesn't linger as an "unmerged" branch. Best-effort, non-fatal.
+              SRC_BRANCH="${PUSHED_REF#refs/heads/}"
+              if git push origin --delete "$SRC_BRANCH"; then
+                echo "::notice::Deleted replayed session branch $SRC_BRANCH."
+              else
+                echo "::warning::Could not delete $SRC_BRANCH (non-fatal)."
+              fi
               exit 0
             fi
             echo "dev moved under us — retrying ($attempt/5)…"
