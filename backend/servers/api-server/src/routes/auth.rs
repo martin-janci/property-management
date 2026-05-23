@@ -878,11 +878,69 @@ pub async fn refresh_token(
     hasher.update(req.refresh_token.as_bytes());
     let token_hash = hex::encode(hasher.finalize());
 
-    // Find the token in database
-    let stored_token = match state.session_repo.find_by_token_hash(&token_hash).await {
-        Ok(Some(token)) => token,
+    // P1-01: refresh-token rotation with replay detection (RFC 9700).
+    // Look up the token *regardless of revocation status* first. If the
+    // hash matches an already-revoked row, the legitimate user has long
+    // since rotated past it — a presenter of that token is either an
+    // attacker replaying a stolen copy OR a confused client that lagged
+    // a rotation. In either case the safe response is to revoke every
+    // active refresh token for the user (we don't have a family_id
+    // column, so we approximate the family by "all the user's tokens")
+    // and write a security audit row so SOC tooling sees the event.
+    let stored_token = match state
+        .session_repo
+        .find_by_token_hash_any_status(&token_hash)
+        .await
+    {
+        Ok(Some(token)) if token.revoked_at.is_some() => {
+            let user_id_for_log = token.user_id;
+            tracing::warn!(
+                user_id = %user_id_for_log,
+                token_id = %token.id,
+                "Revoked refresh token replayed; invalidating all user refresh tokens"
+            );
+            // Best-effort fan-out revocation. Even if this fails the
+            // caller still gets 401, but we want the security log row.
+            if let Err(err) = state
+                .session_repo
+                .revoke_all_user_tokens(user_id_for_log, None)
+                .await
+            {
+                tracing::error!(
+                    error = %err,
+                    user_id = %user_id_for_log,
+                    "Failed to fan-out-revoke after refresh-token replay"
+                );
+            }
+            let _ = state
+                .audit_log_repo
+                .create(CreateAuditLog {
+                    user_id: Some(user_id_for_log),
+                    action: AuditAction::RefreshTokenReplayDetected,
+                    resource_type: Some("refresh_tokens".to_string()),
+                    resource_id: Some(token.id),
+                    org_id: None,
+                    details: Some(serde_json::json!({
+                        "reason": "revoked_token_replayed",
+                        "remediation": "all_user_refresh_tokens_revoked",
+                    })),
+                    old_values: None,
+                    new_values: None,
+                    ip_address: None,
+                    user_agent: None,
+                })
+                .await;
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new(
+                    "TOKEN_REVOKED",
+                    "This session has been revoked",
+                )),
+            ));
+        }
+        Ok(Some(token)) => token, // active path
         Ok(None) => {
-            tracing::warn!(user_id = %claims.sub, "Refresh token not found in database (possibly revoked)");
+            tracing::warn!(user_id = %claims.sub, "Refresh token not found in database");
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ErrorResponse::new(
