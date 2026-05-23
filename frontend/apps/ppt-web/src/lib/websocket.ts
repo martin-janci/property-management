@@ -222,13 +222,23 @@ export class WebSocketService {
     this.shouldReconnect = true;
     this.clearReconnectTimeout();
 
-    // Include token in URL as query parameter
-    const urlWithToken = `${this.url}?token=${encodeURIComponent(token)}`;
-
+    // P0-11: pass the JWT through the WebSocket subprotocol header,
+    // not as a query parameter. The URL form (?token=...) ended up in
+    // browser history, reverse-proxy access logs, DevTools network
+    // tabs, and any SIEM that ships logs upstream — every one of
+    // those is a token-exfiltration surface. The subprotocol value
+    // is sent in `Sec-WebSocket-Protocol` and never logged by
+    // standard HTTP middleware.
+    //
+    // Wire format: two subprotocols, `bearer.<JWT>` for the auth
+    // payload and a `ppt.v1` discriminator so the server can negotiate
+    // future protocol versions. The server's WebSocketUpgrade handler
+    // must accept one of these subprotocols in its response — without
+    // that echo, browsers reject the handshake.
     this.setConnectionState('connecting');
 
     try {
-      this.socket = new WebSocket(urlWithToken);
+      this.socket = new WebSocket(this.url, [`bearer.${token}`, 'ppt.v1']);
       this.setupSocketHandlers();
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to create WebSocket');
