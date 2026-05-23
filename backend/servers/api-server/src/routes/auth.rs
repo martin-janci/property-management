@@ -470,7 +470,8 @@ pub async fn login(
     axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<std::net::SocketAddr>,
     headers: axum::http::HeaderMap,
     Json(req): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+    use axum::response::IntoResponse;
     let ip_address = addr.ip().to_string();
     let user_agent = headers
         .get(axum::http::header::USER_AGENT)
@@ -709,7 +710,8 @@ pub async fn login(
                         token_type: "Bearer".to_string(),
                         mfa_required: Some(true),
                         mfa_token: None,
-                    }));
+                    })
+                    .into_response());
                 }
             }
         }
@@ -822,14 +824,61 @@ pub async fn login(
         "User logged in successfully"
     );
 
-    Ok(Json(LoginResponse {
-        access_token,
-        refresh_token,
-        expires_in: state.jwt_service.access_token_lifetime(),
-        token_type: "Bearer".to_string(),
-        mfa_required: None,
-        mfa_token: None,
-    }))
+    // P0-12 (additive): emit an HttpOnly Secure SameSite=Strict cookie
+    // bearing the refresh token, alongside the JSON body refresh_token
+    // for back-compat. Once the frontend is updated to send
+    // `withCredentials: true` on /auth/refresh and stops storing the
+    // refresh in localStorage, the body field can be dropped. Scoped
+    // to /api/v1/auth so it isn't sent on unrelated API calls.
+    let cookie = build_refresh_cookie(&refresh_token, /*max_age_seconds=*/ 7 * 24 * 60 * 60);
+    let mut headers = axum::http::HeaderMap::new();
+    headers.append(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_str(&cookie).expect("cookie header is ASCII"),
+    );
+
+    Ok((
+        headers,
+        Json(LoginResponse {
+            access_token,
+            refresh_token,
+            expires_in: state.jwt_service.access_token_lifetime(),
+            token_type: "Bearer".to_string(),
+            mfa_required: None,
+            mfa_token: None,
+        }),
+    )
+        .into_response())
+}
+
+/// Build the standard `refresh_token` cookie attributes. Centralized so
+/// login, refresh, and logout all agree on Path/SameSite/Secure flags.
+fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> String {
+    // Path=/api/v1/auth — only the auth endpoints actually need this
+    // cookie; scoping reduces accidental cross-route leakage.
+    // SameSite=Strict — the refresh endpoint is same-origin POST only,
+    // so Strict gives us CSRF protection at no UX cost.
+    // Secure — non-negotiable.
+    // HttpOnly — non-negotiable; the point of moving off localStorage.
+    format!(
+        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age={}",
+        value, max_age_seconds
+    )
+}
+
+/// Parse the `refresh_token` cookie out of the `Cookie:` header. Returns
+/// `None` if the header is absent or the cookie name isn't present.
+/// Deliberately permissive whitespace handling — we don't validate the
+/// token shape here; the JWT validation downstream rejects garbage.
+fn parse_refresh_cookie(headers: &axum::http::HeaderMap) -> Option<String> {
+    let raw = headers.get(axum::http::header::COOKIE)?.to_str().ok()?;
+    for part in raw.split(';') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("refresh_token=") {
+            return Some(rest.to_string());
+        }
+    }
+    None
 }
 
 // ==================== Refresh Token (Story 1.3) ====================
@@ -855,10 +904,28 @@ pub struct RefreshTokenRequest {
 )]
 pub async fn refresh_token(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<RefreshTokenRequest>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // P0-12 (additive): prefer the HttpOnly cookie over the JSON body
+    // when present. localStorage-based clients still send the token
+    // in the body; cookie-based clients send only the cookie and an
+    // empty body. Once all clients are migrated, the body field can
+    // be removed.
+    let cookie_token = parse_refresh_cookie(&headers);
+    let token_str = cookie_token.as_deref().unwrap_or(req.refresh_token.as_str());
+    if token_str.is_empty() {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "MISSING_TOKEN",
+                "Refresh token not provided in cookie or body",
+            )),
+        ));
+    }
+
     // Validate the refresh token JWT
-    let claims = match state.jwt_service.validate_refresh_token(&req.refresh_token) {
+    let claims = match state.jwt_service.validate_refresh_token(token_str) {
         Ok(claims) => claims,
         Err(e) => {
             tracing::debug!(error = %e, "Invalid refresh token");
@@ -875,7 +942,7 @@ pub async fn refresh_token(
     // Hash the token to look it up in database
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
-    hasher.update(req.refresh_token.as_bytes());
+    hasher.update(token_str.as_bytes());
     let token_hash = hex::encode(hasher.finalize());
 
     // P1-01: refresh-token rotation with replay detection (RFC 9700).
@@ -1124,12 +1191,18 @@ pub struct LogoutResponse {
 )]
 pub async fn logout(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<LogoutRequest>,
-) -> Result<Json<LogoutResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<axum::response::Response, (StatusCode, Json<ErrorResponse>)> {
+    use axum::response::IntoResponse;
+    // P0-12 (additive): accept cookie too.
+    let cookie_token = parse_refresh_cookie(&headers);
+    let token_str = cookie_token.as_deref().unwrap_or(req.refresh_token.as_str());
+
     // Hash the token to look it up
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
-    hasher.update(req.refresh_token.as_bytes());
+    hasher.update(token_str.as_bytes());
     let token_hash = hex::encode(hasher.finalize());
 
     // Find and revoke the token
@@ -1150,10 +1223,21 @@ pub async fn logout(
         }
     }
 
-    // Always return success to prevent token enumeration
-    Ok(Json(LogoutResponse {
-        message: "Logged out successfully".to_string(),
-    }))
+    // Always return success to prevent token enumeration. Clear the
+    // refresh cookie by setting Max-Age=0 with the same attributes.
+    let clear_cookie = build_refresh_cookie("", 0);
+    let mut response_headers = axum::http::HeaderMap::new();
+    response_headers.append(
+        axum::http::header::SET_COOKIE,
+        axum::http::HeaderValue::from_str(&clear_cookie).expect("cookie header is ASCII"),
+    );
+    Ok((
+        response_headers,
+        Json(LogoutResponse {
+            message: "Logged out successfully".to_string(),
+        }),
+    )
+        .into_response())
 }
 
 // ==================== Forgot Password (Story 1.4) ====================
