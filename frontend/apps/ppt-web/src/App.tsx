@@ -1477,7 +1477,15 @@ function FaultDetailPageRoute() {
     return <div>Fault not found</div>;
   }
 
-  // Mock fault data
+  // P0-10 (deferred): this route renders hardcoded mock data because the
+  // local FaultDetailPage component's `FaultDetail` type and the
+  // api-client's `FaultWithDetails` type are divergent (FE-006: the
+  // hand-written and generated type layers both define overlapping
+  // shapes with different field sets). Wiring real `useFault()` here
+  // would require either updating FaultDetailPage to accept the
+  // api-client types, OR mapping between them at the call site.
+  // Both options are larger than the security-fix scope of this PR.
+  // Tracked as a follow-up plan; see PR description.
   const mockFault: import('./features/faults').FaultDetail = {
     id: faultId,
     organizationId: 'org-1',

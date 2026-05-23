@@ -55,7 +55,7 @@
 ### backend/
 | Component | Technology |
 |-----------|------------|
-| Framework | Rust 1.75+, Axum 0.7 |
+| Framework | Rust 1.75+, Axum 0.8 |
 | Database | PostgreSQL 16+ (RLS), SQLx |
 | Cache | Redis (sessions, pub/sub) |
 | Auth | JWT (15m access, 7d refresh), Argon2id |

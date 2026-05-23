@@ -56,6 +56,11 @@ pub enum AuditAction {
     OAuthClientSecretRegenerate,
     // Phase 6 C17: principal_kind enforcement at token issuance
     OAuthTokenDeniedPrincipalKind,
+    // Dev-team review P1-01: RFC 9700 refresh-token replay detection.
+    // Emitted when a refresh token whose hash matches an already-revoked
+    // row is replayed; on emit, every active refresh token for the
+    // affected user is revoked.
+    RefreshTokenReplayDetected,
 }
 
 /// An audit log entry.

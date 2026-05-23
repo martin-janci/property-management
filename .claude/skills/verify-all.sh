@@ -88,6 +88,7 @@ if [[ $QUICK -eq 1 ]]; then
   # npx-tsp / stack). Suitable for cold caches and offline CI runners.
   run "ppt-tests"         10 'test -f justfile && grep -qE "^test(-(backend|frontend|integration))?:" justfile'
   run "ppt-pr-create"     10 'test -d .github && test -f .github/workflows/backend.yml'
+  run "ppt-pr-followup"   10 'test -f .claude/skills/ppt-pr-followup/SKILL.md && test -f .github/workflows/backend.yml'
   run "ppt-rust-backend"  10 'test -f backend/Cargo.toml && test -d backend/crates'
   run "ppt-frontend"      10 'test -f frontend/pnpm-workspace.yaml || test -f frontend/package.json'
   run "ppt-screens"       10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
@@ -97,6 +98,7 @@ if [[ $QUICK -eq 1 ]]; then
 else
   run "ppt-tests"          10 'just --list 2>/dev/null | grep -qE "^\s+(test-backend|test-frontend|test-integration)\b"'
   run "ppt-pr-create"      10 'gh auth status >/dev/null 2>&1 && echo ok'
+  run "ppt-pr-followup"    10 'gh auth status >/dev/null 2>&1 && command -v jq >/dev/null && test -f .github/workflows/backend.yml'
   run "ppt-rust-backend"  300 'cd backend && cargo check --workspace --message-format=short >/dev/null'
   run "ppt-frontend"       30 'cd frontend && pnpm -r list --depth -1 --json >/dev/null 2>&1'
   run "ppt-screens"        10 'test -f .claude/skills/ppt-screens/SKILL.md && find docs/screens/ppt docs/screens/reality -name "*.md" -type f -not -name "_template.md" -not -name "README.md" 2>/dev/null | grep -q .'
