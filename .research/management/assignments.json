@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-23T23:30:00Z",
+  "generated": "2026-05-23T23:45:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -43,11 +43,11 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T23:00:00Z",
-      "last_updated": "2026-05-23T23:30:00Z",
+      "last_updated": "2026-05-23T23:45:00Z",
       "pr_number": 440,
       "pr_url": "https://github.com/martin-janci/property-management/pull/440",
       "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial→done; cargo check -p api-server exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
     }
   ]
 }
