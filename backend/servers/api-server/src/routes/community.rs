@@ -72,7 +72,10 @@ async fn verify_building_access(
         .ok_or_else(|| {
             (
                 StatusCode::NOT_FOUND,
-                Json(ErrorResponse::new("BUILDING_NOT_FOUND", "Building not found")),
+                Json(ErrorResponse::new(
+                    "BUILDING_NOT_FOUND",
+                    "Building not found",
+                )),
             )
         })?;
 

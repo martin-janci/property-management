@@ -10,13 +10,13 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use db::repositories::MembershipRepository;
 use db::models::{
     AddFaultComment, AddWorkNote, AiSuggestion, AssignFault, ConfirmFault, CreateFault,
     CreateFaultAttachment, Fault, FaultAttachment, FaultListQuery, FaultStatistics, FaultSummary,
     FaultTimelineEntryWithUser, FaultWithDetails, ReopenFault, ResolveFault, TriageFault,
     UpdateFault, UpdateFaultStatus,
 };
+use db::repositories::MembershipRepository;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;

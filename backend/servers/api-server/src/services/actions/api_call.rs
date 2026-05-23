@@ -190,11 +190,7 @@ impl ApiCallExecutor {
                         let is_ll = (segs[0] & 0xffc0) == 0xfe80;
                         // multicast
                         let is_mc = (segs[0] & 0xff00) == 0xff00;
-                        ipv6.is_loopback()
-                            || ipv6.is_unspecified()
-                            || is_ula
-                            || is_ll
-                            || is_mc
+                        ipv6.is_loopback() || ipv6.is_unspecified() || is_ula || is_ll || is_mc
                     }
                 }
             };

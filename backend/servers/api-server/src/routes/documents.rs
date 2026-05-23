@@ -1167,12 +1167,15 @@ async fn get_download_url(
     // Security: Storage service must be configured to serve documents
     let (url, expires_at) = match integrations::StorageService::from_env() {
         Ok(storage) => {
-            match storage.generate_download_url(
-                &document.file_key,
-                &document.file_name,
-                &document.mime_type,
-                None, // Use default 15 minute expiration
-            ).await {
+            match storage
+                .generate_download_url(
+                    &document.file_key,
+                    &document.file_name,
+                    &document.mime_type,
+                    None, // Use default 15 minute expiration
+                )
+                .await
+            {
                 Ok(presigned) => (presigned.url, presigned.expires_at),
                 Err(e) => {
                     tracing::error!(
@@ -1269,12 +1272,15 @@ async fn get_preview_url(
     let (url, expires_at) = match integrations::StorageService::from_env() {
         Ok(storage) => {
             // For preview, we use a longer expiration time
-            match storage.generate_download_url(
-                &document.file_key,
-                &document.file_name,
-                &document.mime_type,
-                Some(3600), // 1 hour for preview
-            ).await {
+            match storage
+                .generate_download_url(
+                    &document.file_key,
+                    &document.file_name,
+                    &document.mime_type,
+                    Some(3600), // 1 hour for preview
+                )
+                .await
+            {
                 Ok(presigned) => (presigned.url, presigned.expires_at),
                 Err(e) => {
                     tracing::error!(

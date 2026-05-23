@@ -63,9 +63,8 @@ static JWT_VERIFIER: OnceLock<Result<JwtVerifier, String>> = OnceLock::new();
 
 fn jwt_verifier() -> Result<&'static JwtVerifier, &'static str> {
     let cell = JWT_VERIFIER.get_or_init(|| {
-        let secret = std::env::var("JWT_SECRET").map_err(|_| {
-            "JWT_SECRET environment variable not set".to_string()
-        })?;
+        let secret = std::env::var("JWT_SECRET")
+            .map_err(|_| "JWT_SECRET environment variable not set".to_string())?;
         if secret.len() < 32 {
             return Err("JWT_SECRET must be at least 32 characters".to_string());
         }
@@ -73,8 +72,8 @@ fn jwt_verifier() -> Result<&'static JwtVerifier, &'static str> {
         // Validation::default() already requires `exp` and checks signature.
         // We accept the JwtService's default HS256 alg.
         validation.leeway = 30; // 30s clock skew tolerance
-        // iss/aud are not currently emitted by JwtService — when they
-        // are added, set_audience / set_issuer here to bind them.
+                                // iss/aud are not currently emitted by JwtService — when they
+                                // are added, set_audience / set_issuer here to bind them.
         Ok(JwtVerifier {
             key: DecodingKey::from_secret(secret.as_bytes()),
             validation,
@@ -129,7 +128,10 @@ where
         // Use cached verifier; reads JWT_SECRET only on the first request.
         let verifier = jwt_verifier().map_err(|msg| {
             tracing::error!("{}", msg);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Server configuration error")
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Server configuration error",
+            )
         })?;
 
         let token_data = decode::<Claims>(token, &verifier.key, &verifier.validation)

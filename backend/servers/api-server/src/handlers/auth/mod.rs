@@ -439,15 +439,15 @@ impl AuthHandler {
             Ok(None) => {
                 // Record failed attempt (user not found)
                 if let Err(err) = state
-                .session_repo
-                .record_login_attempt(&data.email, &data.ip_address, false)
-                .await
-            {
-                tracing::warn!(
-                    error = %err,
-                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
-                );
-            }
+                    .session_repo
+                    .record_login_attempt(&data.email, &data.ip_address, false)
+                    .await
+                {
+                    tracing::warn!(
+                        error = %err,
+                        "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                    );
+                }
                 tracing::debug!(email = %data.email, "Login failed: user not found");
                 return Err(AuthHandlerError::InvalidCredentials);
             }
@@ -550,15 +550,15 @@ impl AuthHandler {
 
                         if !is_valid && backup_result.is_none() {
                             if let Err(err) = state
-                .session_repo
-                .record_login_attempt(&data.email, &data.ip_address, false)
-                .await
-            {
-                tracing::warn!(
-                    error = %err,
-                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
-                );
-            }
+                                .session_repo
+                                .record_login_attempt(&data.email, &data.ip_address, false)
+                                .await
+                            {
+                                tracing::warn!(
+                                    error = %err,
+                                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                                );
+                            }
                             return Err(AuthHandlerError::InvalidMfaCode);
                         }
 
@@ -610,15 +610,15 @@ impl AuthHandler {
 
         // Record successful login attempt
         if let Err(err) = state
-                .session_repo
-                .record_login_attempt(&data.email, &data.ip_address, true)
-                .await
-            {
-                tracing::warn!(
-                    error = %err,
-                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
-                );
-            }
+            .session_repo
+            .record_login_attempt(&data.email, &data.ip_address, true)
+            .await
+        {
+            tracing::warn!(
+                error = %err,
+                "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+            );
+        }
 
         // Generate access token
         let access_token = state

@@ -553,10 +553,8 @@ async fn create_webhook(
     let is_production = std::env::var("PPT_ENV")
         .map(|v| v != "development" && v != "dev")
         .unwrap_or(true);
-    let url_check = db::models::integration::validate_webhook_url(
-        &payload.endpoint_url,
-        is_production,
-    );
+    let url_check =
+        db::models::integration::validate_webhook_url(&payload.endpoint_url, is_production);
     if !url_check.is_valid {
         return Err((
             StatusCode::BAD_REQUEST,

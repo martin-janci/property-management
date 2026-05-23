@@ -913,7 +913,9 @@ pub async fn refresh_token(
     // empty body. Once all clients are migrated, the body field can
     // be removed.
     let cookie_token = parse_refresh_cookie(&headers);
-    let token_str = cookie_token.as_deref().unwrap_or(req.refresh_token.as_str());
+    let token_str = cookie_token
+        .as_deref()
+        .unwrap_or(req.refresh_token.as_str());
     if token_str.is_empty() {
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -1197,7 +1199,9 @@ pub async fn logout(
     use axum::response::IntoResponse;
     // P0-12 (additive): accept cookie too.
     let cookie_token = parse_refresh_cookie(&headers);
-    let token_str = cookie_token.as_deref().unwrap_or(req.refresh_token.as_str());
+    let token_str = cookie_token
+        .as_deref()
+        .unwrap_or(req.refresh_token.as_str());
 
     // Hash the token to look it up
     use sha2::{Digest, Sha256};
