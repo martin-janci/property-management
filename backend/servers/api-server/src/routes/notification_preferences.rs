@@ -1,5 +1,6 @@
 //! Notification Preferences routes (Epic 8A, Story 8A.1).
 
+use api_core::extractors::RlsConnection;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -47,6 +48,7 @@ pub struct GetPreferencesResponse {
 )]
 pub async fn get_preferences(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<NotificationPreferencesResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
@@ -60,10 +62,14 @@ pub async fn get_preferences(
         )
     })?;
 
-    // Get all preferences for the user
-    // TODO: Migrate to get_by_user_rls when this handler has RLS connection
-    #[allow(deprecated)]
-    let preferences = match state.notification_pref_repo.get_by_user(user_id).await {
+    // P0-08: RLS-aware fetch. user_id from the verified JWT pins the
+    // query to the caller; RlsConnection enforces tenant isolation on
+    // the underlying connection.
+    let preferences = match state
+        .notification_pref_repo
+        .get_by_user_rls(&mut **rls.conn(), user_id)
+        .await
+    {
         Ok(prefs) => prefs,
         Err(e) => {
             tracing::error!(error = %e, user_id = %user_id, "Failed to get notification preferences");
@@ -132,6 +138,7 @@ pub struct UpdatePreferenceResponse {
 )]
 pub async fn update_preference(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     headers: axum::http::HeaderMap,
     Path(path): Path<ChannelPath>,
     Json(req): Json<UpdateNotificationPreferenceRequest>,
@@ -163,27 +170,38 @@ pub async fn update_preference(
         }
     };
 
-    // If disabling, check if this would disable all channels
+    // P0-08: RLS-aware "would this disable everything" check, built from
+    // the same two primitives the deprecated `would_disable_all` used.
     if !req.enabled {
-        // TODO: Migrate to count_enabled_rls and get_by_user_and_channel_rls
-        #[allow(deprecated)]
-        let would_disable_all = match state
+        let enabled_count = state
             .notification_pref_repo
-            .would_disable_all(user_id, channel)
+            .count_enabled_rls(&mut **rls.conn(), user_id)
             .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                tracing::error!(error = %e, user_id = %user_id, "Failed to check if would disable all");
-                return Err((
+            .map_err(|e| {
+                tracing::error!(error = %e, user_id = %user_id, "Failed to count enabled channels");
+                (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse::new(
                         "DATABASE_ERROR",
                         "Failed to update preference",
                     )),
-                ));
-            }
-        };
+                )
+            })?;
+        let current = state
+            .notification_pref_repo
+            .get_by_user_and_channel_rls(&mut **rls.conn(), user_id, channel)
+            .await
+            .map_err(|e| {
+                tracing::error!(error = %e, user_id = %user_id, "Failed to load current preference");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "DATABASE_ERROR",
+                        "Failed to update preference",
+                    )),
+                )
+            })?;
+        let would_disable_all = matches!(current, Some(p) if p.enabled) && enabled_count == 1;
 
         if would_disable_all && !req.confirm_disable_all {
             // Return warning response requiring confirmation
@@ -197,12 +215,10 @@ pub async fn update_preference(
         }
     }
 
-    // Update the preference
-    // TODO: Migrate to update_channel_rls
-    #[allow(deprecated)]
+    // Update the preference (RLS-aware)
     let updated = match state
         .notification_pref_repo
-        .update_channel(user_id, channel, req.enabled)
+        .update_channel_rls(&mut **rls.conn(), user_id, channel, req.enabled)
         .await
     {
         Ok(pref) => pref,
@@ -218,10 +234,13 @@ pub async fn update_preference(
         }
     };
 
-    // Check if all channels are now disabled
-    // TODO: Migrate to count_enabled_rls
-    #[allow(deprecated)]
-    let has_any_enabled = match state.notification_pref_repo.has_any_enabled(user_id).await {
+    // Check if all channels are now disabled (RLS-aware)
+    let has_any_enabled = match state
+        .notification_pref_repo
+        .count_enabled_rls(&mut **rls.conn(), user_id)
+        .await
+        .map(|c| c > 0)
+    {
         Ok(result) => result,
         Err(e) => {
             tracing::error!(error = %e, "Failed to check enabled channels");
