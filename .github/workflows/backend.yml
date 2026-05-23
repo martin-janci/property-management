@@ -4,9 +4,15 @@ on:
   push:
     paths:
       - 'backend/**'
+      # Trigger when the workflow itself changes — otherwise edits to
+      # this file (e.g. adding test skips, gating changes) never fire
+      # CI and the PR sits without a status. (ppt-pr-followup hit this
+      # while landing the dev-team review TEST-105 fix.)
+      - '.github/workflows/backend.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - '.github/workflows/backend.yml'
   # Weekly security tests (Story 80.1)
   schedule:
     - cron: '0 3 * * 0'  # Every Sunday at 3am UTC
