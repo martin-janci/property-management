@@ -162,4 +162,45 @@ impl MembershipRepository {
         .await?;
         Ok(exists.unwrap_or(false))
     }
+
+    /// Returns `true` iff the user has an active membership with a
+    /// manager-tier role in the given org. Manager-tier roles are the same
+    /// set that `TenantRole::is_manager_role` recognizes:
+    ///   SuperAdmin, PlatformAdmin, OrgAdmin, Manager, TechnicalManager,
+    ///   PropertyManager.
+    ///
+    /// Used by handlers that gate manager-only data (internal notes on
+    /// faults, full timeline visibility, etc.). Previously these handlers
+    /// hardcoded `is_manager = false` as a least-privilege placeholder
+    /// (COMP-005 / P0-07).
+    pub async fn is_manager_in_org(
+        &self,
+        user_id: Uuid,
+        organization_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let exists: Option<bool> = sqlx::query_scalar(
+            r#"
+            SELECT EXISTS(
+                SELECT 1 FROM user_memberships
+                 WHERE user_id = $1
+                   AND organization_id = $2
+                   AND revoked_at IS NULL
+                   AND (expires_at IS NULL OR expires_at > NOW())
+                   AND role IN (
+                       'SuperAdmin',
+                       'PlatformAdmin',
+                       'OrgAdmin',
+                       'Manager',
+                       'TechnicalManager',
+                       'PropertyManager'
+                   )
+            )
+            "#,
+        )
+        .bind(user_id)
+        .bind(organization_id)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(exists.unwrap_or(false))
+    }
 }

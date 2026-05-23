@@ -1,6 +1,23 @@
 # Feature Completeness Status
 
-> Last Updated: 2026-01-06 (Wave 3 Complete)
+> ⚠️ **DEPRECATED — DO NOT CITE.** Last refresh 2026-01-06. The 10-pass
+> dev team review on 2026-05-23 confirmed this file is internally
+> contradictory (header tables claim 10/10 UCs at 100% while body
+> tables list `❌ Missing` items for the same UCs) and ~4 months stale.
+> The golden-path detail routes it counts as "shipped" actually render
+> hardcoded `mockX` data in `frontend/apps/ppt-web/src/App.tsx`
+> (FaultDetail / AnnouncementView / ThreadDetail / GroupDetail).
+>
+> **Single source of truth for UC implementation status:** the
+> `apiStatus` and `buildStatus` frontmatter fields on
+> `docs/screens/<product>/*.md`. Query via `/screens query` or the
+> `screen-map` tooling. A UC is only `complete` when every screen-map
+> it maps to has `apiStatus: complete`.
+>
+> This file is kept on disk for historical reference (so existing links
+> don't break) but must not be used to make release decisions.
+
+> Last Updated: 2026-01-06 (Wave 3 Complete) — STALE; see banner above.
 
 ## Overview
 

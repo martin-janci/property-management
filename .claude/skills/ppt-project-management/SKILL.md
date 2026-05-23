@@ -39,9 +39,14 @@ Triggered when invoked with arg `scan` (or `$TRIGGER_TEXT` in `{"scan","pm-scan"
 
 1. **Enumerate epics + stories.** List `_bmad-output/epics*.md` and `_bmad-output/implementation-artifacts/stories/*.md`. Build the set of `(epic, story-id, title)`. Derive `phase` (`mvp|phase2|phase3|phase4`) from the epics catalog (`_bmad-output/epics.md` frontmatter / phase groupings).
 2. **Classify per epic, in parallel.** For EACH epic, spawn one subagent (via the Agent tool) with the **classifier prompt** below, passing it the epic id + its `(story-id, title)` list. Run them concurrently; cap concurrency to a sane number if the epic count is large.
-3. **Aggregate.** Collect every subagent's JSON. For each subagent result, **stamp `epic` (from the result's wrapper `epic` field) onto every story in its `stories[]`** — the classifier returns `epic` at the wrapper level, but the `coverage.json` schema requires `epic` on each story. Then concatenate all stories, add `last_checked = <today>` to each, set top-level `generated = <iso now>` and `scan_kind = "deep"`, and write `.research/management/coverage.json`.
-4. **Then run default mode** (below) to produce `roadmap.md` from the fresh coverage.
-5. Note in output that `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale) is superseded by this map.
+3. **Aggregate.** Collect every subagent's JSON. For each subagent result, **stamp `epic` (from the result's wrapper `epic` field) onto every story in its `stories[]`** — the classifier returns `epic` at the wrapper level, but the `coverage.json` schema requires `epic` on each story. Then concatenate all stories, add `last_checked = <today>` to each, set top-level `generated = <iso now>` and `scan_kind = "deep"`.
+4. **Screens cross-check (MANDATORY).** Spawn ONE additional subagent — the **screens-check subagent** (prompt below) — that maps each (epic, story) to its `docs/screens/<product>/<id>.md` entries via the `screens` family of skills (`screen-query`, `screen-map-validate`, `screen-map-update`), and detects orphans in both directions. Merge its output into `coverage.json`:
+   - per-story field `screen_refs: [{screen_id, buildStatus, apiStatus, redesignStatus}]` (empty array means **no UI surface for this story** — explicitly noted as a gap)
+   - top-level field `screen_gaps: {orphan_epics: [...], orphan_screens: [...], missing_use_cases: [...]}`
+   - per-story `gaps[]` is augmented with `"no screen-map (orphan epic)"` if the story belongs to an orphan epic OR has zero `screen_refs` while status is `done`/`partial` (backend without UI surface is a real gap).
+5. **Write `.research/management/coverage.json`** with the merged story + screens data.
+6. **Then run default mode** (below) to produce `roadmap.md` from the fresh coverage. The ranker treats `screen_gaps.orphan_epics` and stories with `screen_refs == []` as explicit candidate tasks (specialist hint: `react-web`/`nextjs-web`/`react-native` depending on the product).
+7. Note in output that `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale) is superseded by this map.
 
 ### Per-epic classifier subagent prompt (use verbatim, substitute `<EPIC>` and the story list)
 
@@ -58,24 +63,67 @@ Triggered when invoked with arg `scan` (or `$TRIGGER_TEXT` in `{"scan","pm-scan"
 > {"epic":"<EPIC>","stories":[{"id":"<id>","title":"<title>","phase":"<mvp|phase2|phase3|phase4>","status":"<done|partial|not-started>","confidence":"<high|medium|low>","platform":["backend|frontend|mobile"],"owner_role":"pm-<role>","evidence":["..."],"gaps":["..."]}]}
 > ```
 
+### Screens-check subagent prompt (use verbatim)
+
+> You map PPT epics + stories to their `docs/screens/<product>/<id>.md` entries to determine WHERE each story is implemented in UI, and to detect orphans in both directions. **Read-only — never modify files.**
+>
+> Use the **screens skills** (they exist as separate Skill files; invoke via `/screens query`, `/screens validate`, `/screens update`, or read their source under `.claude/skills/screen-*/SKILL.md` if not loadable). If the skills are not available in this session, fall back to direct `grep` + frontmatter parsing.
+>
+> 1. **Inventory.** `find docs/screens -name '*.md' -not -path '*/_diagrams/*'` — list every screen-map. Read each frontmatter (lines between the first two `---`): collect `id`, `product`, `epic` / `epics`, `use-cases`, and per-implementation `buildStatus`, `apiStatus`, `redesignStatus`.
+> 2. **Map stories → screens.** For each `(epic, story-id, title)` you receive:
+>    - First match: any screen whose frontmatter `epic` / `epics` list contains the epic id (`epic-6`, `epic-7a`, etc.).
+>    - Second match: any screen whose `use-cases` contains a UC code present in the story's source markdown (`grep -hE '^UC-[0-9]+' _bmad-output/implementation-artifacts/stories/<story-id>.md`).
+>    - Third (weak) match: slug similarity between story id and screen id (Jaro-Winkler ≥ 0.85 or shared 2+ tokens).
+>    Prefer strong matches; only fall back to slug when nothing else hits.
+> 3. **Per match, record:** `{screen_id, buildStatus, apiStatus, redesignStatus}` using the per-implementation values most relevant to the story's platform (e.g. for a mobile story, prefer the mobile implementation; backend-only stories may match by use-case via the parent screen).
+> 4. **Orphan detection.**
+>    - `orphan_epics`: epic ids present in the story set with ZERO screen matches across all their stories.
+>    - `orphan_screens`: screen-map ids whose frontmatter `epic`/`epics`/`use-cases` reference epics/UCs that do NOT exist in the current epics catalog or story set.
+>    - `missing_use_cases`: UC codes that appear in story files but in NO screen-map's `use-cases`.
+> 5. **Enrichment (optional).** If `/screens update` reports drift, fold its findings in. If `/screens validate` reports schema errors, list them under a `screen_validation_errors` array.
+>
+> Read at most ~60 screen-map files (sample evenly across products if the catalog is larger). Cap arrays at 30 entries each.
+>
+> Return EXACTLY this JSON and nothing after it:
+> ```json
+> {
+>   "story_screens": [
+>     {"id": "<story-id>", "screen_refs": [{"screen_id": "<path-slug>", "buildStatus": "<...>", "apiStatus": "<...>", "redesignStatus": "<...>"}]}
+>   ],
+>   "screen_gaps": {
+>     "orphan_epics": ["epic-X", "..."],
+>     "orphan_screens": ["<path-slug>", "..."],
+>     "missing_use_cases": ["UC-XX", "..."],
+>     "screen_validation_errors": ["<short message>", "..."]
+>   }
+> }
+> ```
+
 ## Default mode: rank `coverage.json` into the plan
 
 After the Scrum Master + role runs, read `.research/management/coverage.json`.
 - If `stories` is empty (never scanned), write a one-line `roadmap.md` saying "No coverage map yet — run `/ppt-project-management scan`", and skip ranking (still do the normal digest). Otherwise:
 
-1. **Candidate tasks.** Take every story with `status` in `{partial, not-started}`. Each `gaps[]` entry becomes a task `"<gap> (<story-id> <title>)"`; if `gaps` is empty, the task is `"Implement <story-id> <title>"`.
+1. **Candidate tasks.** Take every story with `status` in `{partial, not-started}`. Each `gaps[]` entry becomes a task `"<gap> (<story-id> <title>)"`; if `gaps` is empty, the task is `"Implement <story-id> <title>"`. ALSO take every entry in `screen_gaps.orphan_epics` as a task `"Add screen-map(s) for orphan epic <epic-id>"` (owner_role hint: `pm-frontend`), every `screen_gaps.orphan_screens` as `"Reconcile or remove orphan screen-map <screen-id>"`, and every `screen_gaps.missing_use_cases` as `"Link UC <code> to a screen-map"`.
 2. **Score (balanced rubric).** For each candidate:
    - `phase_weight`: mvp=4, phase2=3, phase3=2, phase4=1
    - `+2` if the story is `partial` (finish-what's-started)
    - **risk**: `+2` if `owner_role=="pm-security"` or the gap text mentions security/auth/crash/data-loss; `+1` if `platform` includes `mobile` (most-behind)
    - **dependency**: if the story/gap is foundational infra others depend on (e.g., notification/WebSocket/auth infra), rank it above its dependents — role agents flag these; add `+1` and note the dependency.
+   - **screen-gap**: `+1` if the story has `screen_refs == []` while status in `{done, partial}` (backend without UI surface); `+1` if the task itself is a screen-gap task from step 1 ("orphan epic", etc.).
    - `role_capacity`: on ties, prefer spreading `owner_role` across the top-N.
    - `priority` = `high` if score≥7, `medium` if 4–6, `low` if <4.
 3. **Write `roadmap.md`** (overwrite):
-   - `## State of the project` — `done/partial/not-started` story counts (overall + per platform), and the top 3 biggest gaps.
-   - `## Ranked plan` — grouped by phase (mvp first); each task: `- [<priority>] <action> — owner: <owner_role> — why: <one-line rationale>`.
-4. **Feed the top 10** ranked tasks into `action-list.json` (merge by id; full item schema: `{id, action, owner_role, priority, dependency, status:"open", deadline:null, source:"gap-scan"}`; `id = "gap-<story-id>-<kebab-slug>"`).
+   - `## State of the project` — `done/partial/not-started` story counts (overall + per platform), and the top 3 biggest gaps. Plus a `Screen coverage` line: `<N> stories without screen-map · <M> orphan epics · <K> orphan screens · <L> missing UC links` (from `screen_gaps`).
+   - `## Ranked plan` — grouped by phase (mvp first); each task: `- [<priority>] <action> — owner: <owner_role> — why: <one-line rationale>`. Screen-gap tasks appear under a dedicated `### Screen-map drift` subsection within the relevant phase block.
+4. **Refill `action-list.json` to a 36-task buffer.** The downstream dispatcher works at 3 concurrent implementers and runs every 2h (12 runs/day), so it consumes ≈36 task-slots per day. Target: keep ≥36 items with `status:"open"` in `action-list.json` after each run. Merge logic:
+   - Count current `open` items (exclude `in-progress`/`done`/`failed`).
+   - `slots_to_fill = max(0, 36 - open_count)`.
+   - Take the top `slots_to_fill` ranked candidates whose `id` is NOT already in `action-list.json`. If fewer candidates exist than slots, take all (queue can underflow — that's fine; means the backlog is actually drained).
+   - Item schema (unchanged): `{id, action, owner_role, priority, dependency, status:"open", deadline:null, source:"gap-scan"}` where `id = "gap-<story-id>-<kebab-slug>"`.
+   - Do NOT drop existing items; only add. Items move out of `open` only when the dispatcher / implementer marks them `done` or `failed`, or when the rotating role agents (Step 4 of "Write artifacts") resolve them.
 5. **Update `project-state.md`** "What's next" to the top 5 from the roadmap (replacing the sprint-only view).
+6. **Buffer health line.** Add a single line at the end of `roadmap.md`: `Buffer: <open_count>/36 open · <candidates_remaining> candidates ranked but unqueued`. If `<open_count> < 18` (half-empty), prepend `⚠ Buffer below half — consider running scan to refresh coverage` to the line.
 
 ## Step 2 — Run the Scrum Master
 Spawn a subagent: "Read `.claude/agents/pm-scrum-master.md` and act as that agent.

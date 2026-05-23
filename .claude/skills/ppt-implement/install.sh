@@ -13,6 +13,12 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET_PARENT="$HOME/.claude/skills"
 TARGET="$TARGET_PARENT/ppt-implement"
 
+# Fail-fast: validate the skill structure before copying anything.
+VERIFY="$(dirname "$SCRIPT_DIR")/_verify-skill.sh"
+if [[ -x "$VERIFY" ]]; then
+  bash "$VERIFY" "$SCRIPT_DIR" || { echo "Refusing to install ppt-implement: validation failed"; exit 1; }
+fi
+
 mkdir -p "$TARGET_PARENT"
 
 if [[ -L "$TARGET" ]]; then
