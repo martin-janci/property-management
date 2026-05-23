@@ -260,17 +260,17 @@ LAST_PR="$(jq -r '.last_pr_seen // 0' .research/state.json)"
 LAST_ISSUE="$(jq -r '.last_issue_seen // 0' .research/state.json)"
 
 # Merged PRs since last_pr_seen
-gh pr list --state merged --base main --limit 50 \
+gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
   --jq "map(select(.number > $LAST_PR))"
 
 # Open PRs touched since last run
-gh pr list --state open --base main --limit 50 \
+gh pr list --state open --base dev --limit 50 \
   --json number,title,updatedAt,author,reviewDecision,isDraft,body \
   --jq "map(select(.updatedAt > \"$SINCE_ISO\"))"
 
 # Closed-but-not-merged PRs since last run (mergedAt is null)
-gh pr list --state closed --base main --limit 50 \
+gh pr list --state closed --base dev --limit 50 \
   --json number,title,closedAt,mergedAt,author,body \
   --jq "map(select(.mergedAt == null and .closedAt > \"$SINCE_ISO\"))"
 
@@ -440,6 +440,39 @@ Convert signals → backlog updates. For each signal:
    ```
 4. **Score cap:** clamp to 8.
 5. **Decay:** for every `open` item with `updated_at` older than 14 days, score −1 this run. If score reaches 0, set `status = "dropped"` with an evidence line "decayed: no new signals in 14 days".
+
+6. **Resolution check** — cross-reference open items against merged PRs and current code state:
+
+   For each `open` item in `backlog.json`, run two checks:
+
+   **a. PR-body match** — search the merged-PR list fetched in Phase 1 for any PR whose `body` or `title` contains the item's `id` verbatim (e.g. `security-rls-migration-residual`). A verbatim ID match means the PR author explicitly tied that PR to this research finding.
+
+   **b. Evidence-gone grep** — extract the core TODO/FIXME pattern from the item's `evidence` array: look for the first backtick-quoted string that starts with `TODO:` or `FIXME:` (e.g. `` `TODO: Migrate to *_rls when route handlers pass RLS connection` ``). Strip backticks and convert glob chars to a grep-safe pattern, then:
+   ```bash
+   # For each path in item.files:
+   git ls-files --error-unmatch <path> 2>/dev/null || echo "DELETED"
+   grep -rn "TODO: Migrate to.*_rls" <path>   # adapt pattern per item
+   ```
+   Three outcomes:
+   - File deleted (git ls-files exits non-zero) → evidence gone for that file
+   - File exists, grep returns 0 hits → evidence gone for that file
+   - File exists, grep has hits → evidence still present
+
+   Evidence-gone applies when **all** files in `item.files` are either deleted or hit-free.
+
+   **Resolution actions:**
+
+   | PR match | Evidence-gone | Action |
+   |----------|--------------|--------|
+   | yes | yes | `status = "done"`, append `"resolved: PR #N merged YYYY-MM-DD — <title>"` |
+   | yes | no (grep has hits) | leave `open`; append `"[partial] PR #N claims resolution but patterns still found in <file>"` |
+   | yes | inconclusive (no grep-extractable pattern) | `status = "done"`, append `"resolved: PR #N — <title>; code patterns not independently verified"` |
+   | no | yes | `status = "done"`, append `"resolved: code patterns no longer present in cited files"` |
+   | no | no | leave unchanged |
+
+   In all `done` transitions: add the resolving PR number to `sources` (if not already there), set `updated_at = today`.
+
+   **Scope guard:** only run this check for items whose `evidence` contains file-path references or TODO/FIXME patterns. Items with purely narrative evidence (no quoted patterns, no file paths) skip the grep half and rely on the PR-body match alone.
 
 Then regenerate `backlog.md` from `backlog.json` (sorted by score desc, then `updated_at` desc). Write a freshness widget directly under the H1 — exact line, no other content between `# Backlog of vectors` and this:
 

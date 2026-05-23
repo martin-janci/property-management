@@ -6,13 +6,19 @@
       "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
       "vector": "security",
       "score": 2,
-      "status": "open",
-      "sources": ["issue #160"],
+      "status": "done",
+      "sources": [
+        "issue #160",
+        "PR #420",
+        "PR #421"
+      ],
       "evidence": [
         "issue #160 (HIGH, security/multi-tenancy) closed 2026-05-10 but 31 `TODO: Migrate to *_rls when route handlers pass RLS connection` markers remain across 5 files",
         "voting/mod.rs has 13 residual TODOs (create_poll, find_poll_by_id x8, cast_vote, get_poll_results, list_polls_by_building)",
         "market_pricing.rs (7), handlers/faults/mod.rs (6), notification_preferences.rs (4), reports.rs (1)",
-        "non-RLS repository calls remain on hot multitenancy paths — adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19"
+        "non-RLS repository calls remain on hot multitenancy paths — adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19",
+        "resolved: PR #420 merged 2026-05-22 — chore(api-server): remove dead voting & faults handler modules (cleared 19/31 phantom TODOs in dead code)",
+        "resolved: PR #421 merged 2026-05-22 — fix(api-server): route market_pricing, notification_preferences & reports DB lookups through RLS (cleared remaining 12 live TODOs)"
       ],
       "files": [
         "backend/servers/api-server/src/handlers/voting/mod.rs",
@@ -22,7 +28,7 @@
         "backend/servers/api-server/src/routes/reports.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {
@@ -31,7 +37,12 @@
       "vector": "dx",
       "score": 2,
       "status": "open",
-      "sources": ["PR #282", "PR #328", "commit c97781a", "commit 254f01d"],
+      "sources": [
+        "PR #282",
+        "PR #328",
+        "commit c97781a",
+        "commit 254f01d"
+      ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 — `TODO: Implement installation flow (Epic API-marketplace install)`",
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
@@ -53,7 +64,10 @@
       "vector": "dx",
       "score": 2,
       "status": "open",
-      "sources": ["PR #328", "commit 254f01d"],
+      "sources": [
+        "PR #328",
+        "commit 254f01d"
+      ],
       "evidence": [
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 — `TODO: wire to alerts API (mark-read mutation)`",
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:332 — `TODO: wire to alerts API (resolve mutation)`",
@@ -72,7 +86,9 @@
       "vector": "refactor",
       "score": 1,
       "status": "open",
-      "sources": ["git log origin/main since 2026-05-06"],
+      "sources": [
+        "git log origin/main since 2026-05-06"
+      ],
       "evidence": [
         "Top-1 code-churn file in window: 12,977 lines (additions+deletions)",
         "Currently 4,327 lines — single-file route module covering install/OAuth/sync/webhook surfaces",
@@ -91,7 +107,9 @@
       "vector": "refactor",
       "score": 1,
       "status": "open",
-      "sources": ["git log origin/main since 2026-05-06"],
+      "sources": [
+        "git log origin/main since 2026-05-06"
+      ],
       "evidence": [
         "Top-2 code-churn file in window: 12,060 lines",
         "Currently 4,018 lines",
@@ -110,7 +128,9 @@
       "vector": "refactor",
       "score": 1,
       "status": "open",
-      "sources": ["git log origin/main since 2026-05-06"],
+      "sources": [
+        "git log origin/main since 2026-05-06"
+      ],
       "evidence": [
         "Top-3 code-churn file in window: 10,659 lines",
         "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)"
