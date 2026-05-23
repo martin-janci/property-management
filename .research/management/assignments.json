@@ -40,13 +40,13 @@
     {
       "task_id": "pm-scrum-master-review-story-6-1",
       "branch": "auto-impl/pm-scrum-master-review-story-6-1",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "done",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-23T23:00:00Z",
       "last_updated": "2026-05-23T23:00:00Z",
       "pr_number": null,
       "pr_url": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=TBD status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage promoted to done; cargo check -p api-server exit 0",
       "reviewer_summary": null
     }
   ]
