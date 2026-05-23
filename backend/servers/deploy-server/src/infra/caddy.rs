@@ -218,8 +218,13 @@ impl CaddyClient {
                 max_iters = MAX_DELETE_ITERS,
                 "caddy unregister: id index appears stuck — DELETEs never returned 404",
             );
+            // The deadline-trip branch returns a SEPARATE error (see the
+            // `Err(_)` arm on the `tokio::time::timeout` below), so when
+            // this message fires the loop ran exactly MAX_DELETE_ITERS
+            // times — "after {MAX_DELETE_ITERS}" is accurate, not just
+            // an upper bound.
             Err(crate::DeployError::Internal(format!(
-                "caddy unregister: {host} still resolved after up to {MAX_DELETE_ITERS} DELETE iterations"
+                "caddy unregister: {host} still resolved after {MAX_DELETE_ITERS} DELETE iterations"
             )))
         };
         let result = match tokio::time::timeout(SWEEP_DEADLINE, sweep).await {
@@ -560,7 +565,7 @@ mod tests {
         let msg = err.to_string();
         assert!(
             msg.contains("stuck.example.com")
-                && msg.contains(&format!("up to {MAX_DELETE_ITERS} DELETE iterations")),
+                && msg.contains(&format!("after {MAX_DELETE_ITERS} DELETE iterations")),
             "unexpected exhaustion error: {msg}"
         );
         // Pin the variant alongside the message so a future refactor to a
