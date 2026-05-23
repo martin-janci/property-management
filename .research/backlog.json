@@ -141,6 +141,29 @@
       "created_at": "2026-05-20",
       "updated_at": "2026-05-20",
       "plan": null
+    },
+    {
+      "id": "refactor-caddy-rs-hot",
+      "title": "caddy.rs churn-hot — top living-code churn this run (idempotency rewrite + same-day hardening)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #431",
+        "PR #433"
+      ],
+      "evidence": [
+        "Top-1 living-code churn 2026-05-20..2026-05-23: 656 lines (additions+deletions) across PR #431 + #433, single file",
+        "PR #431 rewrote register_route from PUT-with-POST-fallback to DELETE-loop-then-POST for true idempotency; PR #433 same-day hardened three deferred P3 items from #431's 20-pass review",
+        "HEALTHY churn, not instability: 7 inline tests, two dev-team review rounds, zero TODO/FIXME, 813 LoC — informational watch, tracks for repeated-churn only",
+        "Operational follow-up deferred in #431 (one-time manual sweep of pre-@id untagged Caddy routes) is an ops runbook step, not code work"
+      ],
+      "files": [
+        "backend/servers/deploy-server/src/infra/caddy.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
     }
   ]
 }

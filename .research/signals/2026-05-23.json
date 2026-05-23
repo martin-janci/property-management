@@ -1,0 +1,66 @@
+{
+  "date": "2026-05-23",
+  "run_window": {
+    "since_iso": "2026-05-20T10:53:33Z",
+    "last_pr_seen_in": 343,
+    "last_pr_seen_out": 433,
+    "last_issue_seen_in": 160,
+    "last_issue_seen_out": 160,
+    "last_commit_sha_in": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+    "last_commit_sha_out": "f45e2b4849e0d5e0d285906c1c71d03175b556c7"
+  },
+  "observed": {
+    "merged_prs_main": 66,
+    "merged_pr_range": "#344-#432",
+    "merged_pr_dev": "#433 (caddy post-merge hardening, merged to dev)",
+    "open_prs_touched": 0,
+    "closed_not_merged": 17,
+    "new_or_updated_issues": 1,
+    "commits_on_main": 31,
+    "note": "origin/main was force-updated since last run (prior cursor fc8af0a no longer an ancestor); git --since churn was polluted by rewritten commit dates, so per-file churn was recomputed from merged-PR file diffs instead (immune to history rewrites)."
+  },
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/deploy-server/src/infra/caddy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #431, PR #433",
+      "score_delta": 1,
+      "evidence": "Top-1 living-code churn 2026-05-20..2026-05-23: 656 lines (additions+deletions) in a single file across PR #431 (idempotency rewrite) + PR #433 (same-day P3 hardening). 813 LoC, 7 inline tests, two dev-team review rounds, zero TODO/FIXME — healthy feature churn, not instability; tracked for repeated-churn only.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "dep-update-noise-2026-05-23",
+      "type": "dep-update-noise",
+      "source": "PRs #344-#361, #380-#382, #386, #387, #396, #404, #406, #407, #410, #412, #413, #415, #416, #418, #419 (dependabot + grouped bumps); #398 grouping config",
+      "score_delta": 0,
+      "evidence": "~40 dependency PRs merged this window, including several MAJOR-version jumps: jsonwebtoken 9->10 (#418), argon2 0.5->0.6 (#418), opentelemetry family 0.21->0.32 (#419), thiserror 1->2 (#407), governor 0.6->0.10 (#355), vite 7->8 (#416), jsdom 24->29 (#413), commander 12->14 (#410), mobile-native AGP 9.2.1/Gradle 9.4.1/Kotlin 2.3/Compose 2026.05 (#385). All landed green; #395/#379 carried the async-storage v3 and Kotlin 2.3 DSL adaptations. No code-evidence of regressions, but the auth/crypto/observability major bumps are a watch surface for the next run.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ],
+  "non_signals": [
+    "PR #420/#421 cleared the last 31 `TODO: Migrate to *_rls` markers (grep now returns 0) — confirms backlog item security-rls-migration-residual is genuinely done.",
+    "PR #431 caddy idempotency fix is exemplary (7 tests, two review rounds, rollback-safe) — no fixme-in-merged-code, no hotfix-no-test signal. Its only deferred item is a one-time manual Caddy route sweep (operational runbook, not code).",
+    "No reverts in window. No open PRs (zero stalled-review candidates). No frontend route files touched (frontend/apps/{ppt-web/src/{App.tsx,routes/**},reality-web/src/app/**}) -> 0 screen-map-drift, 0 screen-map-orphan. screen-map.yml CI on main: completed/success 2026-05-23T09:20:06Z.",
+    "Issue #375 (RLS pentest CI fails deterministically on main) closed+labeled, resolved by #422 (run as non-superuser) and #369 (serial) -> not untriaged, no signal.",
+    "Closed-unmerged PRs are superseded dependabot bumps (folded into grouped PRs) + #434 (research ppt-dev-review skill, closed unmerged) -> dep-update / tooling noise, no score.",
+    "Prior hotspots integrations.rs / organizations.rs / documents.rs were NOT touched this window (confirmed via PR-diff churn) -> hotspot_history stays runs_seen=1, no repeated-churn re-emit."
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-23.md && head -1 | grep '^# 2026-05-23$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state vs HEAD", "observed": "last_pr_seen 343->433, last_commit_sha changed, seen_signals 7->9, hotspot_history 3->4 keys", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id]|length==(unique|length)'", "observed": "true (7 unique ids)", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no non-cumulative seen-id re-scored", "observed": "both new signal ids absent from prior seen_signals; dep-update-noise-2026-05-23 is a fresh date-id", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq cap + decay", "observed": "max score 2 (<=8); no open item has updated_at <= 2026-05-09, so no decay due", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "0 new plans -> vacuous", "observed": "no plans/ files added", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "new-plan count <= 2", "observed": "0 new plans (top score 2 < promotion gate 3)", "expected": "<=2" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secrets/hostname grep on staged diff (excl baseline docs)", "observed": "0 matches", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "brief 'Phases that failed' vs cursors", "observed": "no phase failures; all cursors advanced", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present", "observed": "no prior plans existed -> vacuous", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count >= HEAD count", "observed": "0 >= 0", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "byte-identical (no triage rows)", "expected": "exit 0" }
+  ]
+}
