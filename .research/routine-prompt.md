@@ -694,9 +694,9 @@ Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<
 2. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
-   git push origin main
+   git push origin HEAD:dev
    ```
-   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Requires "Allow unrestricted branch pushes" on this repo. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
+   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Direct push to `dev` is allowed — no PR needed. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
 
 ## Quality gates (before every commit)
 
