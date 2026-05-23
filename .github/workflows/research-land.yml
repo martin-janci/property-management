@@ -1,0 +1,84 @@
+name: Land research routine output on dev
+
+# Why this exists
+# ---------------
+# The ppt-research routine runs as a claude.ai scheduled agent (cloud CCR).
+# Cloud CCR sessions CANNOT push directly to a shared branch: a `git push`
+# from inside the sandbox always lands on a per-run session branch named
+# `claude/<codename>-<suffix>`, never on dev. (Verified across ppt-research and
+# plex-sync — see ~/.claude memory `reference-claude-ai-routines`.)
+#
+# This workflow lands that output on dev automatically — but ONLY when it is
+# provably safe to do so:
+#   1. the push must be a clean fast-forward of dev (dev is an ancestor),
+#   2. the new commits must touch nothing outside `.research/`,
+#   3. every new commit subject must start with `research:`.
+# If any guard fails the job is a no-op, so unrelated `claude/*` branches
+# (manual experiments, security-audit branches, etc.) are never merged by
+# accident. No force-push ever happens — a non-fast-forward is simply skipped.
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+concurrency:
+  # Serialize so two runs landing near-simultaneously don't race on dev.
+  group: research-land-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  land-on-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # GITHUB_TOKEN can push to dev (unprotected — ruleset 11341260 covers
+          # only main + release/*). Its push intentionally does NOT re-trigger
+          # push workflows, so there is no risk of a self-loop here.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Land on dev if this is a clean .research/-only fast-forward
+        env:
+          PUSHED_SHA: ${{ github.sha }}
+          PUSHED_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin dev
+
+          # 1. Fast-forward only: dev must be an ancestor of the pushed commit.
+          if ! git merge-base --is-ancestor origin/dev "$PUSHED_SHA"; then
+            echo "::notice::dev is not an ancestor of $PUSHED_SHA on $PUSHED_REF — not a fast-forward. Skipping."
+            exit 0
+          fi
+          if [ "$(git rev-parse origin/dev)" = "$PUSHED_SHA" ]; then
+            echo "::notice::Pushed commit already equals dev. Nothing to land."
+            exit 0
+          fi
+
+          # 2. Scope guard: every changed path must live under .research/.
+          NON_RESEARCH="$(git diff --name-only origin/dev "$PUSHED_SHA" | grep -v '^\.research/' || true)"
+          if [ -n "$NON_RESEARCH" ]; then
+            echo "::notice::Push touches paths outside .research/ — not a research-routine commit. Skipping."
+            echo "$NON_RESEARCH" | sed 's/^/  outside-scope: /'
+            exit 0
+          fi
+
+          # 3. Subject guard: every new commit subject must start with "research:".
+          BAD_SUBJECTS="$(git log --format=%s "origin/dev..$PUSHED_SHA" | grep -vE '^research:' || true)"
+          if [ -n "$BAD_SUBJECTS" ]; then
+            echo "::notice::A new commit subject does not start with 'research:' — skipping to be safe."
+            echo "$BAD_SUBJECTS" | sed 's/^/  non-research-subject: /'
+            exit 0
+          fi
+
+          # All guards passed — fast-forward dev to the pushed commit.
+          COUNT="$(git rev-list --count "origin/dev..$PUSHED_SHA")"
+          echo "Landing $COUNT research commit(s) on dev:"
+          git log --format='  %h %s' "origin/dev..$PUSHED_SHA"
+          git push origin "$PUSHED_SHA:refs/heads/dev"
+          echo "::notice::dev fast-forwarded to $PUSHED_SHA ($COUNT commit(s))."
