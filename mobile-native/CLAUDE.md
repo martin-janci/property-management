@@ -12,12 +12,15 @@ Kotlin Multiplatform project for Reality Portal mobile apps.
 
 | Component | Version |
 |-----------|---------|
-| Kotlin | 2.1.0 |
+| Kotlin | 2.3.21 |
 | Ktor | 3.0.3 |
 | Compose BOM | 2024.12.01 |
 | AGP | 8.7.3 |
-| Kotlinx Serialization | 1.7.3 |
-| Kotlinx Coroutines | 1.9.0 |
+| Kotlinx Serialization | 1.11.0 |
+| Kotlinx Coroutines | 1.11.0 |
+| Kotlinx Datetime | 0.8.0 |
+
+> Source of truth: `mobile-native/gradle/libs.versions.toml`. Update both this table and the catalog together.
 
 ## Targets
 
