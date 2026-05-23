@@ -2,6 +2,32 @@
   "version": 1,
   "items": [
     {
+      "id": "security-voice-device-idor",
+      "title": "IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping",
+      "vector": "security",
+      "score": 3,
+      "status": "ready",
+      "confidence": "high",
+      "sources": [
+        "code-review api-core 2026-05-23",
+        "ai.rs:3002"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
+        "wired at ai.rs:2059 — DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
+        "backend/crates/db/src/repositories/llm_document.rs:1141 — `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
+        "any authenticated principal can deactivate another tenant's voice device by guessing/enumerating the UUID (IDOR / cross-tenant write)",
+        "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs",
+        "backend/crates/db/src/repositories/llm_document.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": "plans/security-voice-device-idor.md"
+    },
+    {
       "id": "security-rls-migration-residual",
       "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
       "vector": "security",
@@ -48,14 +74,15 @@
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
-        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints"
+        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
+        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
         "backend/servers/api-server/src/routes/integrations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {
@@ -84,62 +111,71 @@
       "id": "refactor-integrations-rs-hot",
       "title": "integrations.rs churn-hot — 12,977 lines over 14d, candidate for module split",
       "vector": "refactor",
-      "score": 1,
+      "score": 2,
       "status": "open",
+      "confidence": "medium",
       "sources": [
-        "git log origin/main since 2026-05-06"
+        "git log origin/main since 2026-05-06",
+        "git log origin/dev since 2026-05-20"
       ],
       "evidence": [
         "Top-1 code-churn file in window: 12,977 lines (additions+deletions)",
         "Currently 4,327 lines — single-file route module covering install/OAuth/sync/webhook surfaces",
-        "Drove most of the multitenancy + admin work in 2026-05-13..2026-05-19"
+        "Drove most of the multitenancy + admin work in 2026-05-13..2026-05-19",
+        "repeated-churn 2026-05-23: 4,327 lines this run, runs_seen=2 — still a top-3 churn file"
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {
       "id": "refactor-organizations-rs-hot",
       "title": "organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin)",
       "vector": "refactor",
-      "score": 1,
+      "score": 2,
       "status": "open",
+      "confidence": "medium",
       "sources": [
-        "git log origin/main since 2026-05-06"
+        "git log origin/main since 2026-05-06",
+        "git log origin/dev since 2026-05-20"
       ],
       "evidence": [
         "Top-2 code-churn file in window: 12,060 lines",
         "Currently 4,018 lines",
-        "Touched by Multitenancy Phases 2-5.5 (#260), Phase 6 P0 fixes (#265), tenant-context bypass fix (#335), audit forgery fix (#308)"
+        "Touched by Multitenancy Phases 2-5.5 (#260), Phase 6 P0 fixes (#265), tenant-context bypass fix (#335), audit forgery fix (#308)",
+        "repeated-churn 2026-05-23: 4,018 lines this run, runs_seen=2 — still a top-3 churn file"
       ],
       "files": [
         "backend/servers/api-server/src/routes/organizations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {
       "id": "refactor-documents-rs-hot",
       "title": "documents.rs churn-hot — 10,659 lines over 14d",
       "vector": "refactor",
-      "score": 1,
+      "score": 2,
       "status": "open",
+      "confidence": "medium",
       "sources": [
-        "git log origin/main since 2026-05-06"
+        "git log origin/main since 2026-05-06",
+        "git log origin/dev since 2026-05-20"
       ],
       "evidence": [
         "Top-3 code-churn file in window: 10,659 lines",
-        "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)"
+        "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)",
+        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file"
       ],
       "files": [
         "backend/servers/api-server/src/routes/documents.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     }
   ]

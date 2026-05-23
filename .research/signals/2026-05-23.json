@@ -1,0 +1,107 @@
+{
+  "date": "2026-05-23",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal matched the allowlist (the one promotable finding is a security code fix, which goes to the manual-plan path, not Phase 5)",
+  "signals": [
+    {
+      "id": "lag-warning-2026-05-23",
+      "type": "lag_warning",
+      "source": "state.last_run_iso",
+      "score_delta": 0,
+      "evidence": ["last run 2026-05-20T10:53:33Z; now 2026-05-23T14:56Z — ~76h (3d) since last run, > 36h threshold"],
+      "confidence": "high",
+      "candidate_vector": "none"
+    },
+    {
+      "id": "dep-update-noise-2026-05-23",
+      "type": "dep-update-noise",
+      "source": "merged dependabot PRs since #343",
+      "score_delta": 0,
+      "evidence": ["dependabot/group bumps merged in window: #398 (dependabot grouping config), #404 tar, #406 password-hash, #407 thiserror 2.0, #410 commander, #411/#416 vite 7->8, #412/#413 dev-deps, #415 npm-minor-patch group, #418 jsonwebtoken/password-hash/argon2, #419 opentelemetry 0.21->0.32, #385 mobile-native toolchain upgrade — logged, not scored"],
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-20",
+      "score_delta": 0,
+      "evidence": ["re-emit (cumulative type, already in seen_signals): 4327 lines this run — still top-1 code churn; score not re-applied"],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-20",
+      "score_delta": 0,
+      "evidence": ["re-emit (cumulative type, already in seen_signals): 4018 lines this run — still top-2 code churn; score not re-applied"],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-20",
+      "score_delta": 0,
+      "evidence": ["re-emit (cumulative type, already in seen_signals): 3553 lines this run — still top-3 code churn; score not re-applied"],
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": ["integrations.rs is a top-3 churn file for the 2nd consecutive run (runs_seen 1->2): 4327 lines this run — instability proxy"],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": ["organizations.rs is a top-3 churn file for the 2nd consecutive run (runs_seen 1->2): 4018 lines this run"],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
+      "type": "repeated-churn",
+      "source": "hotspot_history",
+      "score_delta": 1,
+      "evidence": ["documents.rs is a top-3 churn file for the 2nd consecutive run (runs_seen 1->2): 3553 lines this run"],
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-api-core-voice-device-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "evidence": ["backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device (wired to DELETE /api/v1/ai/llm/voice/devices/{id} at ai.rs:2059) ignores the authenticated _principal and calls deactivate_voice_device(id), which runs `UPDATE voice_assistant_devices SET is_active=FALSE WHERE id=$1` (llm_document.rs:1141) with no org/owner scoping — any authenticated user can deactivate another tenant's voice device by ID (IDOR). Call path traced end-to-end; verified by reading the route, handler, and query."],
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-23.md && head -1 | grep '^# 2026-05-23$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique backlog ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq non-cumulative re-emit score_delta==0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq score>8 count + decay (no items older than 14d this run)", "observed": "no caps exceeded; no decay due", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "grep plan slug + 'adversarial pass:' in brief", "observed": "passed", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "1 new plan; 4 metadata + 11 headings + cap tick + Mode + files exist", "observed": "all present; ai.rs + llm_document.rs resolve", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached (excl baseline docs) | grep secrets/hostnames | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md and diff", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "grep placeholder-rot patterns in plan + brief", "observed": "no matches", "expected": "no matches" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs still present", "observed": "no plans existed at HEAD; trivially holds", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "staged _archive count >= HEAD count", "observed": "1 >= 1", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md and diff", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency", "observed": "auto_fix_actions empty (no candidate)", "expected": "true" }
+  ]
+}

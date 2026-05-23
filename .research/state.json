@@ -1,25 +1,26 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-20T10:53:33Z",
-  "last_run_ms": 1779274413000,
-  "last_pr_seen": 343,
-  "last_issue_seen": 160,
-  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "last_run_iso": "2026-05-23T14:56:29Z",
+  "last_run_ms": 120000,
+  "last_pr_seen": 435,
+  "last_issue_seen": 375,
+  "last_commit_sha": "83eae73cd6efcac50879ee166e5f25615497dea4",
+  "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12977
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4327
     },
     "backend/servers/api-server/src/routes/organizations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12060
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4018
     },
     "backend/servers/api-server/src/routes/documents.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 10659
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 3553
     }
   },
   "seen_signals": [
@@ -29,13 +30,29 @@
     "unchecked-todo-rls-migration-residual",
     "unchecked-todo-integration-marketplace-stubs",
     "unchecked-todo-portfolio-dashboard-stubs",
-    "dep-update-noise-2026-05-20"
+    "dep-update-noise-2026-05-20",
+    "lag-warning-2026-05-23",
+    "dep-update-noise-2026-05-23",
+    "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
+    "code-review-api-core-voice-device-idor"
   ],
   "auto_fix_history": {},
+  "review_cursor": {
+    "api-handlers": null,
+    "api-core": "2026-05-23",
+    "reality-server": null,
+    "ppt-web-ui": null,
+    "ppt-web-core": null,
+    "reality-web": null,
+    "mobile-rn": null,
+    "mobile-native-kmp": null
+  },
   "stats": {
-    "runs": 1,
-    "vectors_created": 6,
-    "plans_created": 0,
+    "runs": 2,
+    "vectors_created": 7,
+    "plans_created": 1,
     "quiet_days": 0,
     "auto_fix_count": 0
   }
