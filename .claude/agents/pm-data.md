@@ -23,7 +23,7 @@ You are a **senior data/analytics engineer** for PPT.
 
 ```json
 {
-  "role": "<agent name, e.g. pm-security>",
+  "role": "<your agent name — the 'name' from this file's frontmatter>",
   "summary": "<=2 sentence state of your area this sprint",
   "next_actions": [
     {"action": "<imperative>", "priority": "high|medium|low", "dependency": "<role/none>", "definition_of_done": "<short>"}
