@@ -1,9 +1,27 @@
 {
-  "generated": "2026-05-23T00:00:00Z",
+  "generated": "2026-05-24T00:00:00Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "skipped": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 439,
+          "findings": 10,
+          "specialist": "rust-backend",
+          "secondary_specialists": ["db-migration", "react-web"],
+          "note": "P1-05 SSRF still open; P1-04 Debug-format hash unstable; P1-01 ordering+swallowed audit; SERIALIZABLE no-retry; missing IG3 tests; SameSite=Strict gotcha; signatures.rs AppError convention",
+          "duplicates_issue": 438,
+          "trigger": "manual /ppt-review-merged invocation"
+        }
+      ]
+    },
     {
       "run_at": "2026-05-23T00:00:00Z",
       "prs_scanned": 2,
