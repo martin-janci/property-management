@@ -610,7 +610,19 @@ async fn store_signed_document(
         .map_err(|e| format!("Failed to find original document: {}", e))?
         .ok_or("Original document not found")?;
 
-    // Download the signed document from the provider
+    // P1-05: SSRF + MIME / size hardening. Previously this trusted the
+    // provider response wholesale: the Content-Type header was taken
+    // verbatim and persisted as the document's mime_type, no size cap,
+    // no magic-byte check. A spoofed e-signature provider response (or
+    // a signed_url pointing at an attacker-controlled host) could land
+    // an HTML payload as a "signed PDF" which would then render
+    // inline via the next presigned GET — stored XSS.
+    //
+    // Constants are local because this is the only call site.
+    const MAX_SIGNED_DOC_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
+    const ALLOWED_MIME_TYPES: &[&str] = &["application/pdf"];
+    const PDF_MAGIC: &[u8] = b"%PDF-";
+
     let client = reqwest::Client::new();
     let response = client
         .get(signed_url)
@@ -626,18 +638,52 @@ async fn store_signed_document(
         ));
     }
 
-    // Get content type from response or default to PDF (most common for signed docs)
+    // Reject unannounced content-types early; if Content-Length is
+    // present, also reject oversize before we allocate.
     let content_type = response
         .headers()
         .get("content-type")
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/pdf")
-        .to_string();
+        .map(|s| s.split(';').next().unwrap_or(s).trim().to_lowercase())
+        .unwrap_or_else(|| "application/pdf".to_string());
+
+    if !ALLOWED_MIME_TYPES.contains(&content_type.as_str()) {
+        return Err(format!(
+            "Signed-document MIME type not allowed: {} (allowed: {})",
+            content_type,
+            ALLOWED_MIME_TYPES.join(", ")
+        ));
+    }
+    if let Some(len) = response.content_length() {
+        if len > MAX_SIGNED_DOC_BYTES {
+            return Err(format!(
+                "Signed document too large: {} bytes (max {} bytes)",
+                len, MAX_SIGNED_DOC_BYTES
+            ));
+        }
+    }
 
     let content_bytes = response
         .bytes()
         .await
         .map_err(|e| format!("Failed to read signed document content: {}", e))?;
+
+    // Re-check size after body read in case Content-Length was absent
+    // or lied.
+    if content_bytes.len() as u64 > MAX_SIGNED_DOC_BYTES {
+        return Err(format!(
+            "Signed document too large: {} bytes (max {} bytes)",
+            content_bytes.len(),
+            MAX_SIGNED_DOC_BYTES
+        ));
+    }
+
+    // Magic-byte check: every legit signed PDF starts with `%PDF-`.
+    if !content_bytes.starts_with(PDF_MAGIC) {
+        return Err(
+            "Signed document failed PDF magic-byte check (header is not %PDF-)".to_string(),
+        );
+    }
 
     let size_bytes = content_bytes.len() as i64;
 
