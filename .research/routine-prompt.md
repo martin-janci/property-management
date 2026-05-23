@@ -144,6 +144,16 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 
 - **Failure mode:** if any sub-check fails, surface it under brief's *Goal violations*. The routine commit still proceeds (the failure log is value) — but Phase 5 itself must already have aborted before any push if verify-all failed; G15 is the post-hoc audit trail, not the runtime gate. The runtime gate lives inside Phase 5.
 
+### G16 — Management artifacts valid (when Phase 1.6 ran)
+
+- **Pass when:** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op.
+- **Check:** `jq -e '.items' .research/management/action-list.json >/dev/null && jq -e '.items' .research/management/risks.json >/dev/null && test -s .research/management/project-state.md && jq -e '.pm_cursor.next_index >= 0 and .pm_cursor.next_index <= 7' .research/state.json` → expect exit 0.
+
+### G17 — No Telegram secret committed
+
+- **Pass when:** `git diff --cached` contains no `TELEGRAM_BOT_TOKEN` value, no `api.telegram.org/bot<digits>:`, and no `bot[0-9]` token pattern. (The routine-prompt.md may reference the variable *name* only.)
+- **Check:** `git diff --cached | grep -vE '^\+\+\+ b/\.research/routine-prompt\.md' | grep -E 'TELEGRAM_BOT_TOKEN=[^$]|api\.telegram\.org/bot[0-9]|bot[0-9]{6,}:' | wc -l` → expect `0`. **Abort commit if non-zero** (same severity as G8/G9).
+
 ---
 
 **Goal-check report format** (in `signals/<date>.json`):
@@ -473,6 +483,24 @@ After Phase 1.5 returns: add its signals to the Phase 1 signal list and update `
 
 ---
 
+### Phase 1.6 — Project Management & Delivery
+
+Invoke the `ppt-project-management` skill (`.claude/skills/ppt-project-management/SKILL.md`). It runs the always-on Scrum Master plus role analysis (rotating one role/day by default; all 8 on `$TRIGGER_TEXT == "full"`/`"pm-full"`; a specific role on `pm:<role>`), and writes the delivery artifacts under `.research/management/`.
+
+**Before invoking the skill:** ensure `state.pm_cursor` exists in `state.json`. If absent (fresh install or hand-edited state), initialize it now:
+```json
+"pm_cursor": {
+  "rotation": ["pm-tech-lead","pm-backend","pm-frontend","pm-qa","pm-devops","pm-security","pm-data","pm-integration"],
+  "next_index": 0,
+  "role_last_run": {"pm-tech-lead":null,"pm-backend":null,"pm-frontend":null,"pm-qa":null,"pm-devops":null,"pm-security":null,"pm-data":null,"pm-integration":null}
+}
+```
+Write it to `state.json` before proceeding.
+
+Pass the skill the Phase-1 observation data (`MERGED_PRS`, `OPEN_PRS`, `ISSUES`, `CHURN_FILES`) and `$TRIGGER_TEXT`. Keep the returned `digest` object — Phase 6 sends it to Telegram. The skill writes all `.research/management/` files and advances `state.pm_cursor`; do not write those files yourself.
+
+---
+
 ### Phase 2 — Decide
 
 Convert signals → backlog updates. For each signal:
@@ -789,13 +817,38 @@ Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<
    Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
 1. Run the **Quality gates** (below) in order against the staged index:
    - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15, G16, G17 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
 2. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
    git push origin HEAD:dev
    ```
    `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Direct push to `dev` is allowed — no PR needed. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
+3. **Send the Telegram delivery digest** (best-effort, non-fatal). Build `$DIGEST` from the Phase 1.6 `digest` object (skip entirely if `digest.quiet == true`). Never echo the bot token.
+   ```bash
+   if [ "${PM_DIGEST_QUIET:-0}" != "1" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+     curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+       --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+       --data-urlencode "text=${DIGEST}" \
+       --data-urlencode "parse_mode=Markdown" \
+       --data-urlencode "disable_web_page_preview=true" >/dev/null \
+       && echo "telegram: sent" || echo "telegram: send failed (non-fatal)"
+   else
+     echo "telegram: skipped (quiet day or TELEGRAM_BOT_TOKEN/CHAT_ID unset)"
+   fi
+   ```
+   `$DIGEST` format:
+   ```
+   📋 PPT delivery — <YYYY-MM-DD HH:MM>
+   Sprint: <sprint> — <epics_done>/<epics_total> epics done
+   Shipped since last run: <list or "nothing">
+   Next up:
+    • <action 1> — <owner>
+    • <action 2> — <owner>
+    • <action 3> — <owner>
+   Blockers: <none | list>
+   Role focus today: <roles>
+   ```
 
 ## Quality gates (before every commit)
 
@@ -821,6 +874,8 @@ Run these and verify each passes:
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
 12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
 13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
+14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op.
+15. **No Telegram secret committed.** `git diff --cached` contains no `TELEGRAM_BOT_TOKEN` value, no `api.telegram.org/bot<digits>:`, and no `bot[0-9]` token pattern. (The routine-prompt.md may reference the variable *name* only.)
 
 ## Brief template
 
@@ -909,6 +964,8 @@ When promoting a vector, copy that file to `.research/plans/<slug>.md` and repla
 - `text == ""` — normal run
 - `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset).
 - `text == "reset"` — write a brief noting state was reset, then set `last_pr_seen = 0`, `last_commit_sha = null`, `last_issue_seen = 0`, clear `seen_signals` and `hotspot_history`. Next run will do an initial 14-day sweep again.
+- `full` / `pm-full` — Phase 1.6 runs the Scrum Master + all 8 role agents (full delivery analysis), not just the daily rotating role.
+- `pm:<role>` — Phase 1.6 runs the Scrum Master + the named role only (e.g. `pm:security`, `pm:backend`). Valid roles: tech-lead, backend, frontend, qa, devops, security, data, integration.
 
 ## Operational assumptions and failure modes
 

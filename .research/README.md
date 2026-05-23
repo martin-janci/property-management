@@ -21,10 +21,20 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 │   └── YYYY-MM-DD.json       # debug trail of raw signals derived this run
 ├── briefs/
 │   └── YYYY-MM-DD.md         # daily report (one per run, overwritten on rerun)
+├── management/               # Phase 1.6 delivery artifacts (maintained by ppt-project-management skill)
+│   ├── project-state.md      # delivery dashboard (regenerated each run)
+│   ├── action-list.json      # canonical actions (machine-friendly)
+│   ├── action-list.md        # rendered action table (regenerated from action-list.json)
+│   ├── risks.json            # risk register (machine-friendly)
+│   ├── decisions.md          # decision log (append-only)
+│   ├── stakeholders.md       # static role map
+│   └── roles/                # per-role analysis snapshots (<role>.md overwritten each run)
 └── plans/
     ├── <slug>.md             # self-contained brief for the implementation agent
     └── _archive/             # plans the implementation agent has shipped
 ```
+
+- `management/` — Phase 1.6 delivery artifacts: `project-state.md` (dashboard), `action-list.json`/`.md`, `risks.json`, `decisions.md`, `stakeholders.md`, `roles/<role>.md`. Maintained by the `ppt-project-management` skill.
 
 In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
 level up, at the repo root). `.claude/skills/` is auto-discovered by any
