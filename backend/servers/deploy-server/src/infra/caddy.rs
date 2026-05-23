@@ -8,6 +8,21 @@ use tracing::{error, info, instrument, warn};
 const MAX_DELETE_ITERS: usize = 16;
 const SWEEP_DEADLINE: std::time::Duration = std::time::Duration::from_secs(15);
 
+/// UTF-8-safe byte truncation. `&s[..n]` panics if `n` falls inside a
+/// multi-byte codepoint, which would crash the error-logging path the
+/// first time Caddy ever returned a non-ASCII body at the wrong offset.
+/// Walks back to the nearest char boundary on or below `max_bytes`.
+fn truncate_utf8(s: &str, max_bytes: usize) -> &str {
+    if s.len() <= max_bytes {
+        return s;
+    }
+    let mut end = max_bytes;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    &s[..end]
+}
+
 pub struct CaddyClient {
     base: String,
     http: reqwest::Client,
@@ -111,11 +126,9 @@ impl CaddyClient {
             // limit any latent secret-disclosure surface if a future caller
             // PATCHes interpolated values through this client (SEC-004). The
             // caller-facing Err still carries the full body for diagnostics.
-            let log_body: &str = if body.len() > 512 {
-                &body[..512]
-            } else {
-                &body
-            };
+            // Use `truncate_utf8` so a non-ASCII Caddy body with a multi-byte
+            // codepoint straddling offset 512 can't panic this path.
+            let log_body = truncate_utf8(&body, 512);
             // DELETE-sweep already removed any prior route for this host, so a
             // failed POST leaves the host with ZERO routes — every request to
             // it 502s until the next successful register_route. Log loudly so
@@ -128,8 +141,16 @@ impl CaddyClient {
                 body_truncated = body.len() > 512,
                 "caddy register POST failed — host now has no route"
             );
+            // SECURITY: DeployError::Internal renders into the HTTP response
+            // body via IntoResponse, so including the Caddy admin reply here
+            // exposes it to deploy-server API callers. The deploy-server
+            // endpoints are admin-only (operator-facing), and Caddy admin
+            // error bodies are typically short schema/config messages — no
+            // user data passes through. If that trust boundary ever changes,
+            // drop `log_body` from the format string and rely on the
+            // structured log above.
             return Err(crate::DeployError::Internal(format!(
-                "caddy register POST failed: {status} — {body}"
+                "caddy register POST failed: {status} — {log_body}"
             )));
         }
         Ok(())
@@ -148,15 +169,20 @@ impl CaddyClient {
     /// DELETEs completed before the budget expired.
     ///
     /// **Which bound trips first depends on per-DELETE latency** (per-request
-    /// timeout is 5s — see `new`):
-    ///   - Fast Caddy (~10ms/req): the iter cap is the practical bound; all
-    ///     `MAX_DELETE_ITERS` DELETEs can complete in well under `SWEEP_DEADLINE`.
-    ///   - Slow Caddy (~1s/req or worse): `SWEEP_DEADLINE` trips first — only
-    ///     a handful of iterations fit in the 15s budget, so the exhaustion
-    ///     error reports "up to MAX_DELETE_ITERS" rather than asserting all
-    ///     ran. `SWEEP_DEADLINE` is the load-bearing safety bound in this
-    ///     regime; the iter count is defense in depth against a Caddy id-index
-    ///     bug that would otherwise let a fast loop spin forever.
+    /// timeout is 5s — see `new`) — and the two paths return DIFFERENT errors:
+    ///   - Fast Caddy (~10ms/req): the iter cap is the practical bound. All
+    ///     `MAX_DELETE_ITERS` DELETEs complete inside the 15s budget; the
+    ///     `for`-loop exhausts and returns the iter-count error.
+    ///   - Slow Caddy (~1s/req or worse): `SWEEP_DEADLINE` trips first. The
+    ///     `tokio::time::timeout` wrapping the loop returns the deadline
+    ///     error (with `completed_deletes = n`) without ever entering the
+    ///     exhaustion arm. `SWEEP_DEADLINE` is the load-bearing safety
+    ///     bound here; the iter count is defense in depth against a Caddy
+    ///     id-index bug that would otherwise let a fast loop spin forever.
+    ///
+    /// The two error messages are therefore precise about which bound fired:
+    /// the iter-exhaustion message asserts the full `MAX_DELETE_ITERS` ran;
+    /// the deadline-trip message reports the partial DELETE count.
     ///
     /// If the sweep removes any duplicates (iter > 1 before 404), a `warn!`
     /// is emitted so dashboards can alert on drift — duplicates appearing
@@ -195,11 +221,10 @@ impl CaddyClient {
                     // so on-call has Caddy's actual complaint, not just the
                     // bare HTTP status.
                     let body = resp.text().await.unwrap_or_default();
-                    let log_body: &str = if body.len() > 512 {
-                        &body[..512]
-                    } else {
-                        &body
-                    };
+                    // UTF-8-safe truncation (see `truncate_utf8`): a
+                    // multi-byte codepoint straddling offset 512 would
+                    // otherwise panic the error-logging path.
+                    let log_body = truncate_utf8(&body, 512);
                     error!(
                         host,
                         %status,
@@ -207,6 +232,9 @@ impl CaddyClient {
                         body_truncated = body.len() > 512,
                         "caddy unregister DELETE failed",
                     );
+                    // SECURITY: same trade-off as the register POST path
+                    // — body is echoed via IntoResponse to admin-only API
+                    // callers; Caddy admin replies are operator-facing.
                     return Err(crate::DeployError::Internal(format!(
                         "caddy unregister: {status} — {log_body}"
                     )));
@@ -659,6 +687,21 @@ mod tests {
             "must bail after the first failed DELETE, not retry"
         );
         task.abort();
+    }
+
+    #[test]
+    fn truncate_utf8_never_panics_on_multibyte_boundary() {
+        // ASCII passthrough under the cap.
+        assert_eq!(truncate_utf8("abc", 512), "abc");
+        // Bare byte-slice would panic here: each 'é' is 2 bytes, so a
+        // cap of 3 lands inside the second codepoint. `truncate_utf8`
+        // walks back to byte 2 (after the first 'é').
+        assert_eq!(truncate_utf8("éé", 3), "é");
+        // 4-byte codepoint (😀 = 0xF0 0x9F 0x98 0x80) straddling the
+        // cap — must walk back to 0 rather than slice mid-codepoint.
+        assert_eq!(truncate_utf8("😀", 2), "");
+        // Cap exactly on a char boundary keeps the whole prefix.
+        assert_eq!(truncate_utf8("héllo", 3), "hé");
     }
 
     #[test]
