@@ -171,9 +171,16 @@ impl TotpService {
     pub fn decrypt_secret(&self, encrypted: &str) -> Result<String, TotpError> {
         let key = self.encryption_key.ok_or(TotpError::MissingEncryptionKey)?;
 
-        // If it doesn't contain ':', assume it's a legacy unencrypted secret
+        // Reject any value that does not match the nonce:ciphertext format.
+        // Previously this branch silently returned the value verbatim as a
+        // "legacy unencrypted secret" — that path is a privilege-escalation
+        // surface (anyone who can write to two_factor_auth.secret controls
+        // the OTP seed). Migration of legacy rows must run through an
+        // explicit, opt-in flag, not through silent acceptance.
         if !encrypted.contains(':') {
-            return Ok(encrypted.to_string());
+            return Err(TotpError::DecryptionError(
+                "TOTP secret is not in encrypted nonce:ciphertext format; legacy plaintext secrets are rejected".to_string(),
+            ));
         }
 
         let parts: Vec<&str> = encrypted.splitn(2, ':').collect();
@@ -493,15 +500,22 @@ mod tests {
     }
 
     #[test]
-    fn test_decrypt_legacy_unencrypted() {
-        // Create service with encryption enabled
+    fn test_decrypt_legacy_unencrypted_is_rejected() {
+        // P0-14: legacy plaintext secrets used to be returned as-is — that
+        // was a privilege-escalation surface (anyone who could write to
+        // two_factor_auth.secret controlled the OTP seed). The new contract
+        // is fail-closed: any value not in nonce:ciphertext format is a
+        // hard error.
         let key: [u8; 32] = [0xaa; 32];
         let service = TotpService::with_encryption_key("Test".to_string(), key);
 
-        // Legacy secret without ':' should be returned as-is
         let legacy_secret = "JBSWY3DPEHPK3PXP";
-        let decrypted = service.decrypt_secret(legacy_secret).unwrap();
-        assert_eq!(decrypted, legacy_secret);
+        let result = service.decrypt_secret(legacy_secret);
+        assert!(
+            matches!(result, Err(TotpError::DecryptionError(_))),
+            "legacy plaintext TOTP secret must be rejected, got {:?}",
+            result
+        );
     }
 
     #[test]

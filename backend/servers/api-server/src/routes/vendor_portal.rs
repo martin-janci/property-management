@@ -10,6 +10,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use db::models::PrincipalKind;
 use chrono::Utc;
 use common::errors::ErrorResponse;
 use db::models::{
@@ -35,11 +36,29 @@ use crate::state::AppState;
 // forge tenancy. That helper has been deleted; every handler now goes
 // through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
 //
-// TODO(security): vendor-portal endpoints should additionally assert
-// `principal.kind == Staff` AND a vendor-role lookup. The previous
-// `extract_vendor_context` only contained a comment promising that check;
-// it was never wired up. Closing the auth-bypass takes priority over
-// reintroducing the missing vendor-role gate.
+// P0-02: vendor-portal endpoints reject every request whose RequestPrincipal
+// is not a Staff (operator-side) principal — Public (reality portal users)
+// get 403 before any data is touched. A finer-grained "is this user actually
+// a vendor-role member of the org" check still needs to land (TODO
+// follow-up: query vendor_companies / vendor_staff) but the broad gate
+// already closes the cross-vendor data exposure where any logged-in resident
+// saw vendor job queues. (COMP-006, SEC-009)
+
+/// Reject any principal that isn't Staff/Platform.
+fn require_vendor_principal(
+    principal: &RequestPrincipal,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    match principal.kind {
+        PrincipalKind::Staff | PrincipalKind::Platform => Ok(()),
+        PrincipalKind::Public => Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "VENDOR_PRINCIPAL_REQUIRED",
+                "Vendor portal endpoints require a staff-side principal",
+            )),
+        )),
+    }
+}
 
 /// Query parameters for invoice listing.
 #[derive(Debug, Deserialize, IntoParams)]
@@ -106,8 +125,9 @@ pub fn router() -> Router<AppState> {
 )]
 async fn get_dashboard_stats(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
 ) -> Result<Json<VendorDashboardStats>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let stats = VendorDashboardStats {
         today_jobs: 3,
         upcoming_jobs: 12,
@@ -135,9 +155,10 @@ async fn get_dashboard_stats(
 )]
 async fn list_jobs(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Query(_query): Query<VendorJobQuery>,
 ) -> Result<Json<Vec<VendorJobSummary>>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let jobs = vec![
         VendorJobSummary {
             id: Uuid::new_v4(),
@@ -182,9 +203,10 @@ async fn list_jobs(
 )]
 async fn get_job_details(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<VendorJob>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let job = VendorJob {
         id: job_id,
         work_order_id: Uuid::new_v4(),
@@ -230,10 +252,11 @@ async fn get_job_details(
 )]
 async fn accept_job(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<AcceptJobRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     Ok(StatusCode::OK)
 }
 
@@ -255,10 +278,11 @@ async fn accept_job(
 )]
 async fn decline_job(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<DeclineJobRequest>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     Ok(StatusCode::OK)
 }
 
@@ -279,10 +303,11 @@ async fn decline_job(
 )]
 async fn propose_alternative_time(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(_request): Json<db::models::ProposeAlternativeTime>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     Ok(StatusCode::OK)
 }
 
@@ -304,9 +329,10 @@ async fn propose_alternative_time(
 )]
 async fn get_access_info(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<PropertyAccessInfo>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let access_info = PropertyAccessInfo {
         job_id,
         building_id: Uuid::new_v4(),
@@ -342,10 +368,11 @@ async fn get_access_info(
 )]
 async fn generate_access_code(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_job_id): Path<Uuid>,
     Json(request): Json<GenerateAccessCode>,
 ) -> Result<Json<AccessCodeResponse>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let now = Utc::now();
     let response = AccessCodeResponse {
         code: "847291".to_string(),
@@ -376,10 +403,11 @@ async fn generate_access_code(
 )]
 async fn submit_work_completion(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
     Json(request): Json<SubmitWorkCompletion>,
 ) -> Result<Json<WorkCompletion>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let materials_total: Decimal = request.materials_used.iter().map(|m| m.total_cost).sum();
 
     let completion = WorkCompletion {
@@ -414,9 +442,10 @@ async fn submit_work_completion(
 )]
 async fn get_work_completion(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(job_id): Path<Uuid>,
 ) -> Result<Json<WorkCompletion>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let completion = WorkCompletion {
         job_id,
         completed_at: Utc::now(),
@@ -446,9 +475,10 @@ async fn get_work_completion(
 )]
 async fn list_invoices(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Query(_query): Query<InvoiceQuery>,
 ) -> Result<Json<Vec<VendorInvoiceWithTracking>>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let invoices = vec![
         VendorInvoiceWithTracking {
             id: Uuid::new_v4(),
@@ -493,8 +523,9 @@ async fn list_invoices(
 )]
 async fn get_profile(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
 ) -> Result<Json<VendorProfile>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let profile = VendorProfile {
         id: Uuid::new_v4(),
         company_name: "ABC Plumbing Services".to_string(),
@@ -531,9 +562,10 @@ async fn get_profile(
 )]
 async fn list_feedback(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Query(_query): Query<FeedbackQuery>,
 ) -> Result<Json<Vec<VendorFeedback>>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let feedback = vec![
         VendorFeedback {
             id: Uuid::new_v4(),
@@ -581,9 +613,10 @@ async fn list_feedback(
 )]
 async fn get_earnings_summary(
     State(_state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Query(query): Query<EarningsQuery>,
 ) -> Result<Json<VendorEarningsSummary>, (StatusCode, Json<ErrorResponse>)> {
+    require_vendor_principal(&principal)?;
     let months = query.period_months.unwrap_or(1);
     let today = Utc::now().date_naive();
     let period_start = today - chrono::Duration::days(months as i64 * 30);

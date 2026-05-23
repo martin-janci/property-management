@@ -10,6 +10,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
+use db::repositories::MembershipRepository;
 use db::models::{
     AddFaultComment, AddWorkNote, AiSuggestion, AssignFault, ConfirmFault, CreateFault,
     CreateFaultAttachment, Fault, FaultAttachment, FaultListQuery, FaultStatistics, FaultSummary,
@@ -439,9 +440,16 @@ async fn get_fault(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FaultDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    // TODO(security): real role lookup; previous code trusted client-supplied role.
-    let is_manager = false;
+    let tenant_id = require_tenant_id(&principal)?;
+    // P0-07: real role lookup. Previously this was hardcoded `false` as a
+    // least-privilege placeholder, which silently disabled every
+    // manager-only branch (timeline visibility, internal notes, status
+    // forces). The query goes against `user_memberships` and checks the
+    // manager-tier role set defined in TenantRole::is_manager_role.
+    let is_manager = MembershipRepository::new(state.db.clone())
+        .is_manager_in_org(principal.user_id, tenant_id)
+        .await
+        .unwrap_or(false);
 
     let fault = match state.fault_repo.find_by_id_with_details(id).await {
         Ok(Some(f)) => f,
@@ -931,9 +939,12 @@ async fn list_comments(
     principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TimelineResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let _tenant_id = require_tenant_id(&principal)?;
-    // TODO(security): real role lookup; previous code trusted client-supplied role.
-    let is_manager = false;
+    let tenant_id = require_tenant_id(&principal)?;
+    // P0-07: real role lookup (see get_fault above).
+    let is_manager = MembershipRepository::new(state.db.clone())
+        .is_manager_in_org(principal.user_id, tenant_id)
+        .await
+        .unwrap_or(false);
 
     match state.fault_repo.list_timeline(id, is_manager).await {
         Ok(entries) => Ok(Json(TimelineResponse { entries })),

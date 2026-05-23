@@ -2,7 +2,7 @@
 
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2,
+    Algorithm, Argon2, Params, Version,
 };
 use rand::{rngs::SysRng as RandSysRng, TryRng};
 use sha2::{Digest, Sha256};
@@ -38,9 +38,30 @@ impl Default for AuthService {
 
 impl AuthService {
     /// Create a new AuthService.
+    ///
+    /// P1-08: tune Argon2id above the OWASP minimum. Argon2::default()
+    /// uses (m=19456 KiB, t=2, p=1) which is the documented floor; for
+    /// 2026 production traffic we want a higher memory cost so attackers
+    /// can't trivially scale GPU/ASIC verification. Parameters are
+    /// overridable via env (PPT_ARGON2_M_COST_KIB, PPT_ARGON2_T_COST,
+    /// PPT_ARGON2_P_COST) for ops tuning on slower hardware.
     pub fn new() -> Self {
+        let m_cost: u32 = std::env::var("PPT_ARGON2_M_COST_KIB")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(65_536); // 64 MiB
+        let t_cost: u32 = std::env::var("PPT_ARGON2_T_COST")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(3);
+        let p_cost: u32 = std::env::var("PPT_ARGON2_P_COST")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(1);
+        let params = Params::new(m_cost, t_cost, p_cost, None)
+            .expect("argon2 params hard-coded above the library minimum, cannot fail");
         Self {
-            argon2: Argon2::default(),
+            argon2: Argon2::new(Algorithm::Argon2id, Version::V0x13, params),
         }
     }
 

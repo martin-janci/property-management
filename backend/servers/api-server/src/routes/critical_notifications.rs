@@ -52,12 +52,16 @@ pub async fn create_notification(
     // Extract tenant context
     let tenant_id = require_tenant_id(&principal)?;
 
-    // TODO(security): real admin role lookup against the memberships
-    // table. The previous code trusted the client-supplied role from
-    // X-Tenant-Context which was an auth-bypass. As an interim measure
-    // we only let platform principals through; the proper fix is the
-    // membership-role pattern in `routes/organizations.rs`.
-    if !principal.is_platform() {
+    // P0-07: real admin role lookup. Platform principals always pass;
+    // tenant principals must have a manager-tier membership in the
+    // effective org. Previously gated only on is_platform() which made
+    // the endpoint unreachable for org-admins.
+    let is_admin = principal.is_platform()
+        || db::repositories::MembershipRepository::new(state.db.clone())
+            .is_manager_in_org(principal.user_id, tenant_id)
+            .await
+            .unwrap_or(false);
+    if !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(
@@ -339,12 +343,13 @@ pub async fn get_stats(
     // Extract tenant context
     let tenant_id = require_tenant_id(&principal)?;
 
-    // TODO(security): real admin role lookup against the memberships
-    // table. The previous code trusted the client-supplied role from
-    // X-Tenant-Context which was an auth-bypass. As an interim measure
-    // we only let platform principals through; the proper fix is the
-    // membership-role pattern in `routes/organizations.rs`.
-    if !principal.is_platform() {
+    // P0-07: real admin role lookup (see create_notification above).
+    let is_admin = principal.is_platform()
+        || db::repositories::MembershipRepository::new(state.db.clone())
+            .is_manager_in_org(principal.user_id, tenant_id)
+            .await
+            .unwrap_or(false);
+    if !is_admin {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new(

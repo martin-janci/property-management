@@ -438,10 +438,16 @@ impl AuthHandler {
             Ok(Some(user)) => user,
             Ok(None) => {
                 // Record failed attempt (user not found)
-                let _ = state
-                    .session_repo
-                    .record_login_attempt(&data.email, &data.ip_address, false)
-                    .await;
+                if let Err(err) = state
+                .session_repo
+                .record_login_attempt(&data.email, &data.ip_address, false)
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
                 tracing::debug!(email = %data.email, "Login failed: user not found");
                 return Err(AuthHandlerError::InvalidCredentials);
             }
@@ -453,18 +459,30 @@ impl AuthHandler {
 
         // Check if user can log in
         if user.status == "suspended" {
-            let _ = state
+            if let Err(err) = state
                 .session_repo
                 .record_login_attempt(&data.email, &data.ip_address, false)
-                .await;
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
             return Err(AuthHandlerError::AccountSuspended);
         }
 
         if !user.is_verified() {
-            let _ = state
+            if let Err(err) = state
                 .session_repo
                 .record_login_attempt(&data.email, &data.ip_address, false)
-                .await;
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
             return Err(AuthHandlerError::EmailNotVerified);
         }
 
@@ -478,10 +496,16 @@ impl AuthHandler {
             })?;
 
         if !password_valid {
-            let _ = state
+            if let Err(err) = state
                 .session_repo
                 .record_login_attempt(&data.email, &data.ip_address, false)
-                .await;
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
             tracing::debug!(email = %data.email, "Login failed: invalid password");
             return Err(AuthHandlerError::InvalidCredentials);
         }
@@ -525,10 +549,16 @@ impl AuthHandler {
                         };
 
                         if !is_valid && backup_result.is_none() {
-                            let _ = state
-                                .session_repo
-                                .record_login_attempt(&data.email, &data.ip_address, false)
-                                .await;
+                            if let Err(err) = state
+                .session_repo
+                .record_login_attempt(&data.email, &data.ip_address, false)
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
                             return Err(AuthHandlerError::InvalidMfaCode);
                         }
 
@@ -579,10 +609,16 @@ impl AuthHandler {
         }
 
         // Record successful login attempt
-        let _ = state
-            .session_repo
-            .record_login_attempt(&data.email, &data.ip_address, true)
-            .await;
+        if let Err(err) = state
+                .session_repo
+                .record_login_attempt(&data.email, &data.ip_address, true)
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    "record_login_attempt failed (rate limiter may be unprotected for this attempt)"
+                );
+            }
 
         // Generate access token
         let access_token = state
