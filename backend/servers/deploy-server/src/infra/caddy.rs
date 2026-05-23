@@ -121,13 +121,16 @@ impl CaddyClient {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            // Truncate the body in the structured log to bound centralized-log
-            // storage if Caddy ever returns a multi-KB error payload, and to
-            // limit any latent secret-disclosure surface if a future caller
-            // PATCHes interpolated values through this client (SEC-004). The
-            // caller-facing Err still carries the full body for diagnostics.
-            // Use `truncate_utf8` so a non-ASCII Caddy body with a multi-byte
-            // codepoint straddling offset 512 can't panic this path.
+            // Truncate the body to bound centralized-log storage if Caddy
+            // ever returns a multi-KB error payload, and to limit any latent
+            // secret-disclosure surface if a future caller PATCHes
+            // interpolated values through this client (SEC-004). Both the
+            // structured log AND the caller-facing Err use the truncated
+            // form — Err is rendered into the HTTP response body via
+            // IntoResponse, so we want the same 512-byte bound there.
+            // `truncate_utf8` walks back to the nearest char boundary so a
+            // non-ASCII body with a multi-byte codepoint straddling offset
+            // 512 can't panic this path. The cap is 512 BYTES, not chars.
             let log_body = truncate_utf8(&body, 512);
             // DELETE-sweep already removed any prior route for this host, so a
             // failed POST leaves the host with ZERO routes — every request to
@@ -214,12 +217,12 @@ impl CaddyClient {
                 }
                 if !status.is_success() {
                     // Mirror the POST-failure path in `register_route`: read
-                    // the body, truncate to 512 chars for the structured log
-                    // (bounds centralized-log storage and limits any latent
-                    // secret-disclosure surface), and include the (possibly
-                    // truncated) body in both the log and the returned Err
-                    // so on-call has Caddy's actual complaint, not just the
-                    // bare HTTP status.
+                    // the body, truncate to 512 BYTES (not chars — see
+                    // `truncate_utf8`) to bound centralized-log storage and
+                    // limit any latent secret-disclosure surface, and
+                    // include the truncated body in both the log and the
+                    // returned Err so on-call has Caddy's actual complaint,
+                    // not just the bare HTTP status.
                     let body = resp.text().await.unwrap_or_default();
                     // UTF-8-safe truncation (see `truncate_utf8`): a
                     // multi-byte codepoint straddling offset 512 would
