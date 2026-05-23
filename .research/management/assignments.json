@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-23T22:30:00Z",
+  "generated": "2026-05-23T23:00:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -7,7 +7,7 @@
       "status": "done",
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
-      "last_updated": "2026-05-23T22:27:00Z",
+      "last_updated": "2026-05-23T23:00:00Z",
       "pr_number": 435,
       "pr_url": "https://github.com/martin-janci/property-management/pull/435",
       "implementer_summary": "pr=435 status=done specialist=generic note=PR #435 reviewed (LGTM already posted), resolved merge conflicts on Review branch, merged to dev at bddcbf46",
@@ -19,7 +19,7 @@
       "status": "review",
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
-      "last_updated": "2026-05-23T22:23:30Z",
+      "last_updated": "2026-05-23T23:00:00Z",
       "pr_number": 436,
       "pr_url": "https://github.com/martin-janci/property-management/pull/436",
       "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
@@ -31,11 +31,23 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T21:43:59Z",
-      "last_updated": "2026-05-23T22:23:30Z",
+      "last_updated": "2026-05-23T23:00:00Z",
       "pr_number": 437,
       "pr_url": "https://github.com/martin-janci/property-management/pull/437",
       "implementer_summary": "pr=437 status=done specialist=rust-backend note=deleted dead AuthHandler/BuildingHandler modules (2495 lines); cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=dead handler modules and all mod declarations removed cleanly; no remaining callers; cargo-deny green"
+    },
+    {
+      "task_id": "pm-scrum-master-review-story-6-1",
+      "branch": "auto-impl/pm-scrum-master-review-story-6-1",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-23T23:00:00Z",
+      "last_updated": "2026-05-23T23:00:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
