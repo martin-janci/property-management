@@ -215,7 +215,7 @@ class ListingModelsContractTest {
         assertTrue(encoded.contains("\"query\":\"bratislava\""))
         assertTrue(
             !encoded.contains("\"page_size\""),
-            "page_size default should be omitted: $encoded"
+            "page_size default should be omitted: $encoded",
         )
         assertTrue(!encoded.contains("\"sort\""), "sort default should be omitted: $encoded")
     }
@@ -234,8 +234,8 @@ class ListingModelsContractTest {
                         minRooms = 2,
                         radiusKm = 5.0,
                         nearLat = 48.15,
-                        nearLng = 17.10
-                    )
+                        nearLng = 17.10,
+                    ),
             )
         val encoded = json.encodeToString(request)
 
@@ -256,7 +256,7 @@ class ListingModelsContractTest {
                 filters = ListingSearchFilters(category = PropertyCategory.HOUSE, minRooms = 3),
                 sort = ListingSortOption.PRICE_ASC,
                 page = 2,
-                pageSize = 50
+                pageSize = 50,
             )
         val decoded: ListingSearchRequest = json.decodeFromString(json.encodeToString(request))
         assertEquals(request, decoded)
@@ -310,13 +310,13 @@ class ListingModelsContractTest {
                         street = "Hlavna 1",
                         city = "Bratislava",
                         postalCode = "81101",
-                        country = "SK"
+                        country = "SK",
                     ),
                 images =
                     listOf(ListingImage(id = "img-1", url = "https://x/a.jpg", isPrimary = true)),
                 features = listOf("balcony", "elevator"),
                 createdAt = "2026-04-26T10:00:00Z",
-                updatedAt = "2026-04-26T10:00:00Z"
+                updatedAt = "2026-04-26T10:00:00Z",
             )
 
         val decoded: ListingDetail = json.decodeFromString(json.encodeToString(detail))

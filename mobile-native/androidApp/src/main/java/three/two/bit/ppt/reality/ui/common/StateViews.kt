@@ -121,11 +121,7 @@ fun ErrorState(
  * platform's reduce-motion preference automatically via Compose's animation specs.
  */
 @Composable
-fun SkeletonBlock(
-    modifier: Modifier = Modifier,
-    height: Dp = 16.dp,
-    cornerRadius: Dp = 8.dp,
-) {
+fun SkeletonBlock(modifier: Modifier = Modifier, height: Dp = 16.dp, cornerRadius: Dp = 8.dp) {
     var toggled by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {

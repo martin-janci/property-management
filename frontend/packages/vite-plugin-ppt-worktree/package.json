@@ -1,6 +1,6 @@
 {
   "name": "@ppt/vite-plugin-worktree",
-  "version": "0.2.416",
+  "version": "0.2.470",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
@@ -17,12 +17,12 @@
     }
   },
   "peerDependencies": {
-    "vite": "^7.0.0"
+    "vite": "^7.0.0 || ^8.0.0"
   },
   "devDependencies": {
-    "vite": "^7.0.0",
+    "vite": "^8.0.0",
     "typescript": "^5.4.0",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.7"
   },
   "scripts": {
     "test": "vitest run"

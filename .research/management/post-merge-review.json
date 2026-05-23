@@ -1,0 +1,49 @@
+{
+  "generated": "2026-05-24T00:00:00Z",
+  "window": "14d",
+  "base": "dev",
+  "scope": null,
+  "runs": [
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "skipped": [433, 435],
+      "with_issues": [],
+      "trigger": "manual /ppt-review-merged invocation",
+      "note": "all in-window PRs already labeled post-merge-reviewed; no-op"
+    },
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "skipped": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 439,
+          "findings": 10,
+          "specialist": "rust-backend",
+          "secondary_specialists": ["db-migration", "react-web"],
+          "note": "P1-05 SSRF still open; P1-04 Debug-format hash unstable; P1-01 ordering+swallowed audit; SERIALIZABLE no-retry; missing IG3 tests; SameSite=Strict gotcha; signatures.rs AppError convention",
+          "duplicates_issue": 438,
+          "trigger": "manual /ppt-review-merged invocation"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-05-23T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 438,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "build_refresh_cookie panic on non-ASCII token; WS subprotocol server-side echo absent; vendor-role membership check still TODO; P0-03 rejection path has no integration test"
+        }
+      ]
+    }
+  ]
+}

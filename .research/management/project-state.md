@@ -14,7 +14,7 @@ _Generated: 2026-05-23 — produced by `/ppt-project-management scan` (deep cove
 |---|---|---|
 | 6 — Announcements & Communication | in-progress (1/6 done) | 6 partial, 0 done — backend done, frontend apiStatus stub |
 | 7A — Basic Document Management | in-progress (0/5 done) | 5 partial — backend merged in #6, mobile + API integration missing |
-| 8A — Basic Notification Preferences | done (3/3 done) | 3 done — code review complete 2026-05-23; 8a-3 WebSocket sync deferred to gap-8a-3 task |
+| 8A — Basic Notification Preferences | review (0/3 done) | 2 done, 1 partial (8a-3 awaits WebSocket) |
 | 10A — OAuth Provider Foundation | in-progress (0/3 done) | 3 done — backend complete, tests + admin UI noted as gaps |
 | 10B — Platform Administration | in-progress (3/7 done) | 3 done, 4 partial (handler stubs) |
 

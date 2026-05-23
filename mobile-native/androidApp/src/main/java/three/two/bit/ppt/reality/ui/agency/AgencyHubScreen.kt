@@ -45,10 +45,7 @@ fun AgencyHubScreen(
     onAnalyticsClick: () -> Unit,
     onNotificationsClick: () -> Unit = onInquiriesClick,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -58,7 +55,7 @@ fun AgencyHubScreen(
                 item {
                     StatsGrid(
                         onInquiriesClick = onInquiriesClick,
-                        onAnalyticsClick = onAnalyticsClick
+                        onAnalyticsClick = onAnalyticsClick,
                     )
                 }
                 item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -114,17 +111,12 @@ private fun AgencyHeader(onNotificationsClick: () -> Unit) {
                                 colors = listOf(Brand800, Brand500),
                                 start = Offset(0f, 0f),
                                 end = Offset(size.width, size.height),
-                            ),
+                            )
                     )
                 },
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "RP",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-            )
+            Text(text = "RP", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -158,17 +150,14 @@ private fun AgencyHeader(onNotificationsClick: () -> Unit) {
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.error)
-                        .align(Alignment.TopEnd),
+                        .align(Alignment.TopEnd)
             )
         }
     }
 }
 
 @Composable
-private fun StatsGrid(
-    onInquiriesClick: () -> Unit,
-    onAnalyticsClick: () -> Unit,
-) {
+private fun StatsGrid(onInquiriesClick: () -> Unit, onAnalyticsClick: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -224,7 +213,7 @@ private fun StatCard(
             CardDefaults.cardColors(
                 containerColor =
                     if (accent) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.surface,
+                    else MaterialTheme.colorScheme.surface
             ),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -326,12 +315,7 @@ private fun AgencyActions(
 }
 
 @Composable
-private fun ActionRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-) {
+private fun ActionRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
         modifier =
             Modifier.fillMaxWidth()
@@ -387,19 +371,14 @@ private fun ActionDivider() {
 
 @Composable
 private fun ActivityRow(activity: ActivitySample) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-    ) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
-            Row(
-                modifier = Modifier.padding(14.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
+            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.Top) {
                 Box(
                     modifier =
                         Modifier.size(36.dp)
@@ -429,10 +408,7 @@ private fun ActivityRow(activity: ActivitySample) {
                     )
                 }
                 activity.tag?.let { tag ->
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = tag.bg,
-                    ) {
+                    Surface(shape = RoundedCornerShape(999.dp), color = tag.bg) {
                         Text(
                             text = tag.label.uppercase(),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),

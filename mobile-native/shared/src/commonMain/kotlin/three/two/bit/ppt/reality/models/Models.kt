@@ -13,21 +13,21 @@ data class User(
     val id: String,
     val email: String,
     @SerialName("display_name") val displayName: String,
-    @SerialName("avatar_url") val avatarUrl: String? = null
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable
 data class TenantContext(
     @SerialName("tenant_id") val tenantId: String,
     @SerialName("tenant_name") val tenantName: String,
-    val role: String
+    val role: String,
 )
 
 @Serializable
 data class LoginRequest(
     val email: String,
     val password: String,
-    @SerialName("two_factor_code") val twoFactorCode: String? = null
+    @SerialName("two_factor_code") val twoFactorCode: String? = null,
 )
 
 @Serializable
@@ -36,14 +36,14 @@ data class LoginResponse(
     @SerialName("refresh_token") val refreshToken: String,
     @SerialName("expires_in") val expiresIn: Int,
     val user: User,
-    val tenants: List<TenantMembership>
+    val tenants: List<TenantMembership>,
 )
 
 @Serializable
 data class TenantMembership(
     @SerialName("tenant_id") val tenantId: String,
     @SerialName("tenant_name") val tenantName: String,
-    val role: String
+    val role: String,
 )
 
 @Serializable
@@ -51,5 +51,5 @@ data class ErrorResponse(
     val code: String,
     val message: String,
     @SerialName("request_id") val requestId: String? = null,
-    val timestamp: String
+    val timestamp: String,
 )

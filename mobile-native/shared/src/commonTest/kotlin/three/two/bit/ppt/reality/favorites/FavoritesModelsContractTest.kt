@@ -76,7 +76,7 @@ class FavoritesModelsContractTest {
         val encoded = json.encodeToString(request)
         assertTrue(
             encoded.contains("\"listing_id\":\"lst-42\""),
-            "missing snake_case key: $encoded"
+            "missing snake_case key: $encoded",
         )
         assertTrue(!encoded.contains("listingId"), "leaked camelCase key: $encoded")
     }
@@ -156,7 +156,7 @@ class FavoritesModelsContractTest {
                 name = "Penthouses",
                 query = "penthouse",
                 filters = SavedSearchFilters(type = "sale", city = "Bratislava", minRooms = 3),
-                alertEnabled = true
+                alertEnabled = true,
             )
         val encoded = json.encodeToString(req)
         assertTrue(encoded.contains("\"alert_enabled\":true"))
@@ -186,10 +186,10 @@ class FavoritesModelsContractTest {
                             id = "ss-1",
                             name = "A",
                             alertEnabled = true,
-                            createdAt = "2026-04-26T10:00:00Z"
+                            createdAt = "2026-04-26T10:00:00Z",
                         )
                     ),
-                total = 1
+                total = 1,
             )
         val decoded: SavedSearchesResponse = json.decodeFromString(json.encodeToString(resp))
         assertEquals(resp, decoded)

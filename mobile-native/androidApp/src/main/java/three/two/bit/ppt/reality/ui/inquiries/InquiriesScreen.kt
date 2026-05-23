@@ -119,18 +119,12 @@ fun InquiriesScreen(
         }
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (authState) {
             is AuthState.Unauthenticated,
             is AuthState.Error -> NotSignedInContent(onSignInClick = onSignInClick)
             is AuthState.Loading ->
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             is AuthState.Authenticated -> {
@@ -310,10 +304,7 @@ private fun InquiriesList(inquiries: List<Inquiry>, onInquiryClick: (Inquiry) ->
         EmptyInquiries()
         return
     }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 96.dp),
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
         items(inquiries, key = { it.id }) { inquiry ->
             InquiryRow(inquiry = inquiry, onClick = { onInquiryClick(inquiry) })
         }
@@ -327,7 +318,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
     ) {
         if (isUnread) {
             Box(
@@ -337,7 +328,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(topEnd = 3.dp, bottomEnd = 3.dp))
                         .background(MaterialTheme.colorScheme.primary)
-                        .align(Alignment.CenterStart),
+                        .align(Alignment.CenterStart)
             )
         }
         Row(
@@ -368,7 +359,7 @@ private fun InquiryRow(inquiry: Inquiry, onClick: () -> Unit) {
                                             colors = listOf(Brand800, Brand500),
                                             start = Offset(0f, 0f),
                                             end = Offset(size.width, size.height),
-                                        ),
+                                        )
                                 )
                             }
                             .align(Alignment.TopStart),
@@ -465,10 +456,7 @@ private fun InquiryStatusPill(status: InquiryStatus) {
                     stringResource(R.string.status_closed),
                 )
         }
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = bg,
-    ) {
+    Surface(shape = RoundedCornerShape(999.dp), color = bg) {
         Text(
             text = label.uppercase(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
@@ -510,11 +498,7 @@ private fun ViewingsList(
 }
 
 @Composable
-private fun ViewingCard(
-    viewing: ViewingRequest,
-    onClick: () -> Unit,
-    onCancel: () -> Unit,
-) {
+private fun ViewingCard(viewing: ViewingRequest, onClick: () -> Unit, onCancel: () -> Unit) {
     var showCancelDialog by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -597,7 +581,7 @@ private fun ViewingCard(
                     },
                     colors =
                         ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
                 ) {
                     Text(stringResource(R.string.viewing_cancel_confirm))

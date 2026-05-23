@@ -13,7 +13,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.416"
+version = "0.2.470"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT"
@@ -46,13 +46,16 @@ rust_decimal = { version = "1.34", features = ["serde", "serde-str"] }
 rust_decimal_macros = "1.34"
 
 # Auth
-jsonwebtoken = "9.2"
-argon2 = "0.5"
+# jsonwebtoken 10 split its crypto backend into a cargo feature; without one it
+# panics at runtime ("Could not determine the CryptoProvider"). `rust_crypto` is
+# the pure-Rust backend (matches the provider jsonwebtoken 9 had built in).
+jsonwebtoken = { version = "10", features = ["rust_crypto"] }
+argon2 = "=0.6.0-rc.8"
 
 # Utilities
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-thiserror = "1.0"
+thiserror = "2.0"
 anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
@@ -74,10 +77,10 @@ url = "2.5"
 reqwest = { version = "0.13", features = ["json", "form", "query"] }
 
 # Observability (Epic 95)
-opentelemetry = { version = "0.21", features = ["metrics", "trace"] }
-opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.14", features = ["tonic"] }
-tracing-opentelemetry = "0.22"
+opentelemetry = { version = "0.32", features = ["metrics", "trace"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.32", features = ["grpc-tonic"] }
+tracing-opentelemetry = "0.33"
 metrics = "0.21"
 metrics-exporter-prometheus = "0.12"
 
@@ -98,7 +101,7 @@ dialoguer = "0.12"
 
 # i18n (Epic 111)
 fluent = "0.16"
-fluent-bundle = "0.15"
+fluent-bundle = "0.16"
 fluent-syntax = "0.11"
 unic-langid = "0.9"
 intl-memoizer = "0.5"

@@ -1,7 +1,7 @@
 //! Authentication service (Epic 1).
 
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{phc::PasswordHash, PasswordHasher, PasswordVerifier},
     Algorithm, Argon2, Params, Version,
 };
 use rand::{rngs::SysRng as RandSysRng, TryRng};
@@ -67,10 +67,10 @@ impl AuthService {
 
     /// Hash a password using Argon2id (NFR11).
     pub fn hash_password(&self, password: &str) -> Result<String, AuthError> {
-        let salt = SaltString::generate(&mut OsRng);
+        // password-hash 0.6: `hash_password` generates a random salt internally.
         let password_hash = self
             .argon2
-            .hash_password(password.as_bytes(), &salt)
+            .hash_password(password.as_bytes())
             .map_err(|_| AuthError::HashingFailed)?
             .to_string();
         Ok(password_hash)

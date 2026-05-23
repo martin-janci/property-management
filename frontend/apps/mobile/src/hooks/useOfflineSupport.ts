@@ -186,7 +186,7 @@ export function useOfflineSupport(): UseOfflineSupportReturn {
         // Clear all cache entries
         const keys = await AsyncStorage.getAllKeys();
         const cacheKeys = keys.filter((k: string) => k.startsWith(CACHE_PREFIX));
-        await AsyncStorage.multiRemove(cacheKeys);
+        await AsyncStorage.removeMany(cacheKeys);
       }
     } catch (error) {
       console.error('Failed to clear cache:', error);

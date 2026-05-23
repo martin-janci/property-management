@@ -97,7 +97,12 @@ async fn unregister_worktree_routes(ctx: &GcContext, wt: &crate::domain::Worktre
     ] {
         if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
             if let Err(e) = ctx.svc.caddy.unregister_route(host).await {
-                tracing::debug!(host = %host, error = %e, "caddy unregister failed during gc (ignored)");
+                // Pre-fix this was always 404→Ok or transport error. The new
+                // `caddy.rs` returns Err on (a) 16-iter exhaustion and (b)
+                // 15s sweep-deadline trip, both of which mean Caddy's id
+                // index is misbehaving — worth a warn (not debug) so the
+                // GC loop's silence-by-default doesn't hide drift (PO2-001).
+                tracing::warn!(host = %host, error = %e, "caddy unregister failed during gc");
             }
         }
     }

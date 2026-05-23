@@ -1,0 +1,75 @@
+{
+  "generated": "2026-05-23T17:45:00Z",
+  "items": [
+    {
+      "id": "pm-scrum-master-epic-2b-foundation-missing",
+      "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Promote Epic 2B into the sprint or explicitly defer 6.2+/8A.2 until 2B lands",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-review-backlog-stall",
+      "risk": "8A fully in review with 0 merged — review backlog stalling the sprint",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Prioritize 8A review this run; one reviewer-owner",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-pr-435-unreviewed",
+      "risk": "PR #435 (security fixes) lingering open un-reviewed",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Assign review owner; treat as P0 given auth scope",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-notification-ws-foundation-rework",
+      "risk": "Epics 6 & 8A built against a notification/WS foundation (Epic 2B, ADR-008) that does not yet exist — rework when it lands",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Sequence 2B first or freeze dependent story slices behind feature flags",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-duplicate-auth-handler-divergence",
+      "risk": "Duplicate AuthHandler/BuildingHandler modules: a security/correctness fix to the live route copy won't propagate to the dead handler copy, misleading reviewers",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Delete dead modules; enforce single implementation per auth/building op",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-oauth-10a-no-token-design",
+      "risk": "OAuth provider (10A) started with no agreed token/rotation/storage design — divergent implementation across 3 stories",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Lock ADR for 10A before pickup",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-churn-hot-route-files",
+      "risk": "Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Module split; RLS-predicate checklist on these files",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    }
+  ]
+}

@@ -2,12 +2,12 @@ name: Version Bump
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
 
-# Serialize runs so rapid merges to main don't race each other.
+# Serialize runs so rapid merges to dev don't race each other.
 # cancel-in-progress: false means later runs queue instead of being dropped.
 concurrency:
-  group: version-bump-main
+  group: version-bump-dev
   cancel-in-progress: false
 
 jobs:
@@ -19,19 +19,13 @@ jobs:
 
     permissions:
       contents: write
-      pull-requests: write
-      # Needed to post synthetic status checks on the version-bump PR's head
-      # commit so branch protection treats the auto-generated bump as passing.
-      statuses: write
 
     steps:
       - uses: actions/checkout@v6
         with:
           # GITHUB_TOKEN push does not re-trigger push-based workflows (GitHub
           # prevents workflow recursion). That is intentional here — the version
-          # bump commit does not need to kick off CI again. If downstream
-          # workflows ever need to react to it, switch to a PAT/GitHub App token
-          # or trigger them via workflow_run instead.
+          # bump commit does not need to kick off CI again.
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -48,9 +42,7 @@ jobs:
       - name: Bump patch version
         run: ./scripts/bump-version.sh patch
 
-      - name: Create PR with version bump
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit and push version bump
         run: |
           VERSION=$(cat VERSION | tr -d '[:space:]')
           git add VERSION
@@ -62,94 +54,6 @@ jobs:
           git add docs/api/typespec/main.tsp 2>/dev/null || true
           git diff --cached --quiet && echo "No version files changed" && exit 0
 
-          BRANCH="chore/version-${VERSION}"
-          git checkout -b "$BRANCH"
           git commit -m "chore(version): bump to $VERSION"
-          git push origin "$BRANCH"
-
-          PR_URL=$(gh pr create \
-            --title "chore(version): bump to $VERSION" \
-            --body "Automated patch version bump triggered by merge to \`main\`." \
-            --base main \
-            --head "$BRANCH")
-
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
-          echo "Created PR #$PR_NUMBER: $PR_URL"
-
-          # Synthesize success statuses for every required check. PRs opened by
-          # GITHUB_TOKEN don't trigger `pull_request` workflows (GitHub
-          # anti-recursion), so required contexts never report and branch
-          # protection blocks the merge indefinitely. The bump only touches
-          # version strings; running the full CI on it adds no signal.
-          #
-          # KEEP THIS LIST IN SYNC with main's required status checks under
-          # Settings → Branches → Branch protection rules. GITHUB_TOKEN cannot
-          # read branch protection (needs admin scope) so we cannot derive it
-          # at runtime.
-          HEAD_SHA=$(git rev-parse HEAD)
-          REQUIRED_CONTEXTS=(
-            "check"
-            "test"
-            "rls-smoke-test"
-            "cargo-deny"
-            "Lint & Format Check"
-            "Build Reality Portal Web"
-            "Build Property Management Web"
-          )
-          # Fail the step if any required context can't be posted — otherwise
-          # the workflow appears successful while leaving the PR blocked on
-          # missing checks.
-          for ctx in "${REQUIRED_CONTEXTS[@]}"; do
-            if ! gh api -X POST "repos/${{ github.repository }}/statuses/$HEAD_SHA" \
-                  -f state=success \
-                  -f context="$ctx" \
-                  -f description="Skipped — auto-generated version bump" \
-                  -f target_url="$PR_URL" >/dev/null; then
-              echo "  ✗ failed to post status for context: $ctx"
-              exit 1
-            fi
-            echo "  ✓ status posted: $ctx"
-          done
-
-      - name: Approve and admin-merge with PAT
-        # AUTO_APPROVE_TOKEN is a PAT under a non-bot identity (admin perms).
-        # Two reasons we need it instead of GITHUB_TOKEN:
-        #   1. GITHUB_TOKEN can't approve a PR it authored (self-approval).
-        #   2. The `copilot_code_review` rule in our repo ruleset blocks merge
-        #      until Copilot reviews the PR. Copilot never auto-fires on PRs
-        #      opened by GITHUB_TOKEN (anti-recursion), so we admin-merge to
-        #      bypass. This is safe — version bumps only touch version strings.
-        continue-on-error: true
-        env:
-          AUTO_APPROVE_TOKEN: ${{ secrets.AUTO_APPROVE_TOKEN }}
-        run: |
-          if [ -z "$AUTO_APPROVE_TOKEN" ]; then
-            echo "AUTO_APPROVE_TOKEN secret not set — skipping approval+admin-merge. The PR will need manual handling."
-            exit 0
-          fi
-
-          # Re-derive PR number with the default GITHUB_TOKEN (already in env
-          # as GH_TOKEN from the previous step is gone — fresh shell). The
-          # `gh pr list` call doesn't need the elevated PAT.
-          VERSION=$(cat VERSION | tr -d '[:space:]')
-          BRANCH="chore/version-${VERSION}"
-          PR_NUMBER=$(GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr list \
-            --head "$BRANCH" --state open \
-            --json number --jq '.[0].number // empty')
-          if [ -z "$PR_NUMBER" ]; then
-            echo "No open PR found for $BRANCH — nothing to merge."
-            exit 0
-          fi
-
-          # Approve and admin-merge with the elevated PAT. Scoped to these two
-          # commands only — never exported into the shell environment — to
-          # reduce the chance a future change leaks it via subprocess or log.
-          GH_TOKEN="$AUTO_APPROVE_TOKEN" gh pr review "$PR_NUMBER" --approve \
-            --body "✅ Auto-approved: auto-generated version bump (no functional changes)." \
-            && echo "Approved PR #$PR_NUMBER" \
-            || echo "Approval failed (continuing anyway)"
-
-          GH_TOKEN="$AUTO_APPROVE_TOKEN" gh pr merge "$PR_NUMBER" \
-            --admin --squash --delete-branch \
-            && echo "Admin-merged PR #$PR_NUMBER" \
-            || echo "Admin merge failed — PR #$PR_NUMBER needs manual handling"
+          git push origin HEAD:dev
+          echo "Version bumped to $VERSION and pushed to dev"
