@@ -206,7 +206,7 @@ If **G8, G9, or G17 fails, abort before commit.** All other failures are recorde
 6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run, including `auto_fix_actions[]` populated by Phase 5
 7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats, append to `auto_fix_history` for each signal Phase 5 acted on
 
-Then `git add .research/`, run the **quality gates** below, commit, push to `main`. Phase 5 may *also* push to a separate `auto-fix/<slug>` branch and open a PR — that's a side effect, not part of the `.research/` commit.
+Then `git add .research/`, run the **quality gates** below, commit, and push (Phase 6 lands the `.research/` commit on `dev` via the session branch + `research-land.yml` replay — see Phase 6). Phase 5 may *also* push to a separate `auto-fix/<slug>` branch and open a PR — that's a side effect, not part of the `.research/` commit.
 
 ### `state.json` shape (relevant keys)
 
@@ -835,7 +835,9 @@ Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
    git push origin HEAD:dev
    ```
-   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Direct push to `dev` is allowed — no PR needed. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
+   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op).
+
+   **How the push lands (cloud CCR — read this, do not improvise).** In the cloud sandbox, `git push origin HEAD:dev` is routed to *this run's session branch* (`claude/<codename>-<suffix>`), **not** to `dev` directly. **This is expected and correct — it is NOT a failure or a deviation.** The `research-land.yml` GitHub Action then automatically replays your `.research/`-only commit onto `dev` and deletes the session branch. So: run the push above and trust CI to land it on `dev`. Do **not** treat the session-branch landing as an error, do **not** invent an alternative branch, and do **not** narrate it as a policy deviation. Only if the `git push` command itself returns a non-zero exit code should you leave the local commit and note the error in the brief.
 3. **Send the Telegram delivery digest** (best-effort, non-fatal). Build `$DIGEST` from the Phase 1.6 `digest` object (skip entirely if `digest.quiet == true`). Never echo the bot token.
    ```bash
    if [ "${PM_DIGEST_QUIET:-0}" != "1" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
