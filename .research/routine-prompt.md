@@ -242,6 +242,16 @@ Then `git add .research/`, run the **quality gates** below, commit, and push (Ph
     "mobile-rn":          null,            // frontend/mobile/src/
     "mobile-native-kmp":  null             // mobile-native/
   },
+  "pm_cursor": {
+    // Phase 1.6 role rotation: which of the 8 pm-* role agents runs next, + last-run dates.
+    "rotation": ["pm-tech-lead","pm-backend","pm-frontend","pm-qa","pm-devops","pm-security","pm-data","pm-integration"],
+    "next_index": 0,
+    "role_last_run": { "pm-tech-lead": null }   // … one entry per role
+  },
+  "coverage_cursor": {
+    // Phase 1.6 coverage upkeep: numeric index into the sorted distinct epics in coverage.json (one epic re-checked per run).
+    "next_index": 0
+  },
   "paused": false
 }
 ```
@@ -515,7 +525,7 @@ Pass the skill the Phase-1 observation data (`MERGED_PRS`, `OPEN_PRS`, `ISSUES`,
 1. **Init guard:** if `state.coverage_cursor` is absent, set it to `{"next_index": 0}` and write `state.json`.
 2. **Mark progress from merged PRs:** for each merged PR this run (Phase 1 data), if it maps to a coverage story (story-id or keyword match), advance that story's `status` toward `done` and append to its `evidence`; set `last_checked = <today>`.
 3. **Re-check one rotating epic:** from `coverage.json`, take the sorted distinct epic list; pick the epic at `coverage_cursor.next_index`; cheaply refresh its stories' evidence (sprint-status + screen-map + a light keyword grep — NOT a full code read); then set `coverage_cursor.next_index = (next_index + 1) mod <#epics>`.
-4. **Re-rank:** the skill's default mode then regenerates `roadmap.md` / `action-list.json` / `project-state.md` from the updated `coverage.json`.
+4. **Re-rank:** set the coverage map's top-level `scan_kind = "upkeep"` and `generated = <now>`, then run the skill's default mode to regenerate `roadmap.md` / `action-list.json` / `project-state.md` from the updated `coverage.json`.
 
 Do **NOT** run the skill's `scan` mode here — the authoritative full rebuild is the on-demand local `/ppt-project-management scan`.
 

@@ -31,7 +31,7 @@ Produces the delivery picture for the PPT project and writes it under
 | `full` or `pm-full` | all 8 rotation roles |
 | `pm:<role>` (e.g. `pm:security` → `pm-security`) | that one role |
 
-The **Scrum Master always runs**, regardless of mode (except a pure `scan` invocation, which runs the scan + ranking and may skip the role rotation).
+The **Scrum Master always runs**, regardless of mode — **except a pure `scan` invocation**, which runs only the deep scan + default ranking and **skips the role-set steps (Step 2 Scrum Master synthesis + Step 3 role rotation)**; scan is a focused coverage+plan operation, not a daily digest run.
 
 ## Mode: `scan` (deep coverage scan — LOCAL ONLY, full toolchain)
 
