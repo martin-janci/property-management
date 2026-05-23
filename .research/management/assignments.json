@@ -20,9 +20,9 @@
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
       "last_updated": "2026-05-23T22:00:00Z",
-      "pr_number": null,
-      "pr_url": null,
-      "implementer_summary": "pr=none status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
+      "pr_number": 436,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/436",
+      "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
       "reviewer_summary": null
     },
     {
