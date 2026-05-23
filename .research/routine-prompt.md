@@ -259,6 +259,15 @@ SINCE_ISO="$(jq -r '.last_run_iso // "1970-01-01T00:00:00Z"' .research/state.jso
 LAST_PR="$(jq -r '.last_pr_seen // 0' .research/state.json)"
 LAST_ISSUE="$(jq -r '.last_issue_seen // 0' .research/state.json)"
 
+# Routine lag check — emit lag_warning if last run was more than 36 hours ago
+NOW_EPOCH=$(date -u +%s)
+LAST_EPOCH=$(date -u -d "$SINCE_ISO" +%s 2>/dev/null || date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$SINCE_ISO" +%s 2>/dev/null || echo 0)
+LAG_HOURS=$(( (NOW_EPOCH - LAST_EPOCH) / 3600 ))
+LAG_DAYS=$(( LAG_HOURS / 24 ))
+if [ "$LAG_HOURS" -gt 36 ]; then
+  echo "lag_warning: routine has not run in ${LAG_DAYS}d ${LAG_HOURS}h — surface in brief Since last run"
+fi
+
 # Merged PRs since last_pr_seen
 gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
@@ -307,6 +316,7 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
+| `lag_warning` | `(now − last_run_iso) > 36h` — routine missed a run | 0 | log in brief under "Since last run", don't score; signal id `lag-warning-<YYYY-MM-DD>` |
 | `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** updating the matching product's `docs/screens/<product>/*.md` — emit **one signal per drifting product** with id `screen-map-drift-pr-<num>-<product>` | +2 | vector=`test-gap`; flags screen docs falling behind code |
 | `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
 | `code-review-finding` | rotating expert review of a scope segment surfaced a concrete issue (bug, security flaw, missing test, architectural smell) | +1 / +2 / +3 | delta = Low(+1) / Medium(+2) / High(+3); vector = `bug` / `security` / `refactor` / `test-gap`; signal id `code-review-<segment>-<short-slug>` |
@@ -821,7 +831,8 @@ Run these and verify each passes:
 - Merged PRs: <N> (range #<lo>–#<hi>)
 - Open PRs touched: <N>
 - New / updated issues: <N>
-- Commits: <N> on `main`
+- Commits: <N> on `dev`
+- Routine lag: <Nd Nh since last run | on schedule>
 - Phases that failed: <none | phase-1-gh-pr-list | ...>
 
 ## Shipped
