@@ -1,0 +1,22 @@
+{
+  "generated": "2026-05-23T00:00:00Z",
+  "window": "14d",
+  "base": "dev",
+  "scope": null,
+  "runs": [
+    {
+      "run_at": "2026-05-23T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 438,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "build_refresh_cookie panic on non-ASCII token; WS subprotocol server-side echo absent; vendor-role membership check still TODO; P0-03 rejection path has no integration test"
+        }
+      ]
+    }
+  ]
+}
