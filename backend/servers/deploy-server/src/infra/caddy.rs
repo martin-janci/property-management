@@ -208,16 +208,19 @@ impl CaddyClient {
                 )))
             }
         };
-        // Successful sweep that removed at least one duplicate is a drift
-        // signal — log so dashboards can count it. Single iter (404 on
-        // first call OR 200 then nothing) is the boring path.
+        // Drift signal: warn ONLY when we removed MORE than one prior route.
+        // `iters` counts every completed DELETE including the terminal 404,
+        // so `swept = iters - 1` is the count of 2xx DELETEs. One 2xx is the
+        // expected steady state (register_route calls unregister_route first
+        // to sweep its own prior entry); two or more means somebody else
+        // wrote a route under our `@id`, which is what we want paged on.
         if result.is_ok() {
             let n = iters.load(std::sync::atomic::Ordering::SeqCst);
-            if n > 1 {
+            let swept = n.saturating_sub(1);
+            if swept > 1 {
                 warn!(
                     host,
-                    swept = n - 1,
-                    "caddy: removed stale duplicate routes (drift signal)",
+                    swept, "caddy: removed stale duplicate routes (drift signal)",
                 );
             }
         }
