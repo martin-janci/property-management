@@ -2,28 +2,27 @@
   "version": 1,
   "items": [
     {
-      "id": "security-rls-migration-residual",
-      "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
-      "vector": "security",
-      "score": 2,
-      "status": "open",
-      "sources": ["issue #160"],
+      "id": "test-gap-rls-idor-regression-421",
+      "title": "Cross-tenant IDOR regression tests for routes RLS-migrated in #421",
+      "vector": "test-gap",
+      "score": 4,
+      "status": "ready",
+      "sources": ["PR #421", "PR #420", "issue #160"],
       "evidence": [
-        "issue #160 (HIGH, security/multi-tenancy) closed 2026-05-10 but 31 `TODO: Migrate to *_rls when route handlers pass RLS connection` markers remain across 5 files",
-        "voting/mod.rs has 13 residual TODOs (create_poll, find_poll_by_id x8, cast_vote, get_poll_results, list_polls_by_building)",
-        "market_pricing.rs (7), handlers/faults/mod.rs (6), notification_preferences.rs (4), reports.rs (1)",
-        "non-RLS repository calls remain on hot multitenancy paths — adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19"
+        "PR #421 RLS-routed market_pricing.rs (7 sites), notification_preferences.rs (4), reports.rs (1) — its own body documents two genuine cross-tenant IDOR surfaces it closed: market_pricing's unit_repo.find_by_id/building_repo.find_by_id fetched any unit/building regardless of tenant; reports::get_building_name leaked arbitrary building names across tenants",
+        "PR #421 shipped 0 test files (verified: no file under backend/servers/api-server/tests/ references market_pricing, notification_preferences, get_building_name, or record_price_change)",
+        "hotfix-no-test (+2): #421 is a fix(api-server) PR with no test diff; risky-churn (+2): the three route files churned this run (market_pricing 104, reports 97, notification_preferences 143 lines) via a bugfix with no regression test",
+        "established pattern to follow: backend/servers/api-server/tests/workflow_cross_tenant_idor_tests.rs already guards the analogous /workflows/* IDOR closure from #336/#340"
       ],
       "files": [
-        "backend/servers/api-server/src/handlers/voting/mod.rs",
         "backend/servers/api-server/src/routes/market_pricing.rs",
-        "backend/servers/api-server/src/handlers/faults/mod.rs",
+        "backend/servers/api-server/src/routes/reports.rs",
         "backend/servers/api-server/src/routes/notification_preferences.rs",
-        "backend/servers/api-server/src/routes/reports.rs"
+        "backend/servers/api-server/tests/workflow_cross_tenant_idor_tests.rs"
       ],
-      "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
-      "plan": null
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": "plans/test-gap-rls-idor-regression-421.md"
     },
     {
       "id": "dx-integration-marketplace-stubs",
@@ -37,14 +36,40 @@
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
         "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
-        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints"
+        "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
+        "2026-05-23: backend half resolved — integrations.rs now has 0 TODO markers (OAuth-URL generation wired in a PR ≤#343); only the two frontend stubs at IntegrationMarketplacePage.tsx:234/238 remain. Item narrowed to the UI install/details navigation."
       ],
       "files": [
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
-        "backend/servers/api-server/src/routes/integrations.rs"
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-20",
+      "updated_at": "2026-05-23",
+      "plan": null
+    },
+    {
+      "id": "security-rls-migration-residual",
+      "title": "Complete RLS migration in 31 remaining handlers (voting, market_pricing, faults, notif_prefs, reports)",
+      "vector": "security",
+      "score": 2,
+      "status": "done",
+      "sources": ["issue #160", "PR #420", "PR #421"],
+      "evidence": [
+        "issue #160 (HIGH, security/multi-tenancy) closed 2026-05-10 but 31 `TODO: Migrate to *_rls when route handlers pass RLS connection` markers remain across 5 files",
+        "voting/mod.rs has 13 residual TODOs (create_poll, find_poll_by_id x8, cast_vote, get_poll_results, list_polls_by_building)",
+        "market_pricing.rs (7), handlers/faults/mod.rs (6), notification_preferences.rs (4), reports.rs (1)",
+        "non-RLS repository calls remain on hot multitenancy paths — adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19",
+        "2026-05-23 RESOLVED: PR #420 removed handlers/voting + handlers/faults as dead code (19 of 31 markers — zero call sites, superseded by RLS-migrated routes/). PR #421 RLS-migrated the 12 live markers in market_pricing/notification_preferences/reports. Verified: `grep -rn 'Migrate to .*_rls' backend/servers/api-server/src` now returns 0; handlers/voting and handlers/faults dirs are gone.",
+        "follow-up (not blocking closure): documents.rs:1630 carries a separate `TODO: Migrate restore_version to RLS pattern`, and documents.rs:2480/2605 are intentionally-public endpoints with no RLS context — tracked in the brief, outside the original 5-file/31-marker scope."
+      ],
+      "files": [
+        "backend/servers/api-server/src/handlers/voting/mod.rs",
+        "backend/servers/api-server/src/routes/market_pricing.rs",
+        "backend/servers/api-server/src/handlers/faults/mod.rs",
+        "backend/servers/api-server/src/routes/notification_preferences.rs",
+        "backend/servers/api-server/src/routes/reports.rs"
+      ],
+      "created_at": "2026-05-20",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {
@@ -57,13 +82,68 @@
       "evidence": [
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 — `TODO: wire to alerts API (mark-read mutation)`",
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:332 — `TODO: wire to alerts API (resolve mutation)`",
-        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:366 — `TODO: navigate to property detail route`"
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:366 — `TODO: navigate to property detail route`",
+        "2026-05-23: re-verified — all three TODO stubs still present at the same lines."
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
       ],
       "created_at": "2026-05-20",
       "updated_at": "2026-05-20",
+      "plan": null
+    },
+    {
+      "id": "refactor-ai-rs-hot",
+      "title": "ai.rs churn-hot — 420 lines over 3d (AI auth / JWT enforcement work)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "sources": ["git log origin/main since 2026-05-20"],
+      "evidence": [
+        "Top-1 live code-churn file this run: 420 lines (additions+deletions) since cursor fc8af0a",
+        "Informational watch — churn is explained by the /api/v1/ai/* JWT-enforcement hardening (paired with tests/ai_auth_tests.rs, 219 lines this run), not architectural pressure yet. Promote only if it recurs (repeated-churn)."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-notification-preferences-rs-hot",
+      "title": "notification_preferences.rs churn-hot — 143 lines over 3d (RLS migration #421)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "sources": ["git log origin/main since 2026-05-20"],
+      "evidence": [
+        "Top-3 live code-churn file this run: 143 lines since cursor fc8af0a",
+        "Informational watch — churn is the RLS migration in PR #421 (removed hand-rolled extract_bearer_token/validate_access_token, inlined would_disable_all). Explained, not instability. Test coverage tracked separately under test-gap-rls-idor-regression-421."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/notification_preferences.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
+    },
+    {
+      "id": "refactor-url-validator-rs-hot",
+      "title": "reality-server url_validator.rs churn-hot — 302 lines over 3d (SSRF hardening)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "sources": ["git log origin/main since 2026-05-20"],
+      "evidence": [
+        "Top-2 live code-churn file this run: 302 lines since cursor fc8af0a",
+        "Informational watch — reality-server URL validation hardening (SSRF surface). Explained churn; promote only on recurrence."
+      ],
+      "files": [
+        "backend/servers/reality-server/src/util/url_validator.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
       "plan": null
     },
     {

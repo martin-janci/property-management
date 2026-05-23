@@ -1,0 +1,83 @@
+{
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-23.md && head -1 | grep '^# 2026-05-23$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged vs HEAD state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique ids", "observed": "true (10 unique)", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq non-cumulative double-count check", "observed": "true (all 7 signal ids new)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq cap<=8 and decay; no open item >14d", "observed": "max score 4; no decay candidates (all items <=3d old)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "grep plan path + 'adversarial pass:' same line in brief", "observed": "passed", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "metadata=4 headings=11 ticks=3 mode=1 files-exist", "observed": "1 new plan; all checks pass", "expected": "<=2 plans, all gates" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff (baseline docs excluded)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md rows vs backlog.json sort_by(-score,updated desc,id)", "observed": "10 rows == 10 items, order identical", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "grep placeholder rot in plan+brief", "observed": "no matches", "expected": "no matches" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs present in tree or _archive", "observed": "no prior-run plans (vacuous)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count this run >= count at HEAD", "observed": "1 >= 1", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE.md vs triage rows in backlog.json", "observed": "0 triage rows; empty placeholder preserved", "expected": "byte-identical" }
+  ],
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-421",
+      "type": "hotfix-no-test",
+      "source": "PR #421",
+      "score_delta": 2,
+      "evidence": "fix(api-server) RLS-routed market_pricing/notification_preferences/reports and closed two cross-tenant IDOR surfaces (per PR body), but shipped 0 test files — verified no file under tests/ references market_pricing, notification_preferences, get_building_name, or record_price_change",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-421",
+      "type": "risky-churn",
+      "source": "PR #421",
+      "score_delta": 2,
+      "evidence": "market_pricing.rs (104), reports.rs (97), notification_preferences.rs (143 lines) churned this run via a bugfix PR with no test diff; the touched code paths were cross-tenant IDOR surfaces — combines with the hotfix-no-test signal into test-gap-rls-idor-regression-421",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+      "type": "churn-hotspot",
+      "source": "git log fc8af0a..HEAD",
+      "score_delta": 1,
+      "evidence": "Top-1 live code-churn file this run: 420 lines (additions+deletions). Explained by /api/v1/ai/* JWT-enforcement hardening (tests/ai_auth_tests.rs +219). Informational watch.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/reality-server/src/util/url_validator.rs",
+      "type": "churn-hotspot",
+      "source": "git log fc8af0a..HEAD",
+      "score_delta": 1,
+      "evidence": "Top-2 live code-churn file this run: 302 lines. reality-server URL validation / SSRF hardening. Informational watch.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/notification_preferences.rs",
+      "type": "churn-hotspot",
+      "source": "git log fc8af0a..HEAD",
+      "score_delta": 1,
+      "evidence": "Top-3 live code-churn file this run: 143 lines. RLS migration in PR #421. Informational watch; test coverage tracked under test-gap-rls-idor-regression-421.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-364",
+      "type": "unchecked-todo",
+      "source": "PR #364",
+      "score_delta": 0,
+      "evidence": "4 unchecked checkboxes in body, but they are a PR test-plan checklist for a .research/-infra feature (Phase 5 auto-fix), not application work; 3 are satisfied by the merge and the 4th ('live dry-run, separate follow-up') is research-routine infra. Recorded for audit, not scored, no backlog item.",
+      "confidence": "low",
+      "candidate_vector": "triage"
+    },
+    {
+      "id": "dep-update-noise-2026-05-23",
+      "type": "dep-update-noise",
+      "source": "dependabot PRs #344-415 + 22 closed-unmerged supersessions",
+      "score_delta": 0,
+      "evidence": "~40 dependabot bumps merged (actions/cargo/npm/gradle/compose/ktor groups) plus major bumps #416 vite, #418 jsonwebtoken/argon2, #419 opentelemetry; 22 closed-unmerged were all benign supersessions. Logged, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ]
+}
