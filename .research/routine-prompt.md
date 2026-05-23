@@ -321,6 +321,24 @@ VERSION
 *.lock, *.lockb
 ```
 
+**Risky-churn detection** — cross-reference the per-PR changed-file list against the churn hotspot set to find files that are both frequently churning AND touched by a fix/revert PR without test coverage:
+
+1. **Build the hotspot set** — the files that generated `churn-hotspot` or `repeated-churn` signals this run (after churn exclusions).
+
+2. **Identify risky PRs** — from the merged PR list, select PRs where:
+   - Title starts with `fix`, `hotfix`, `bugfix`, or `revert` (case-insensitive), **or** any of those words appear in a `label.name`, **or** the PR is a revert (checked via `revert` signal already fired for this PR); **and**
+   - The PR's changed files contain **no test files** — i.e., no path matching `*test*`, `*spec*`, `*__tests__*`, `*_test.rs`, `*_spec.*`.
+
+3. **Intersect** — for each risky PR, check whether any file in `pr.files` is also in the hotspot set. For each match:
+   - Emit signal `risky-churn-pr-<N>-<slug>` where `<slug>` is the churn file's basename without extension (e.g. `integrations-rs`)
+   - `score_delta: +2`
+   - `candidate_vector: "bug"` (instability signal — the churn file is being patched without tests)
+   - `evidence`: `"PR #N (<fix|hotfix|revert>) modified <churn-file> — a top-churn file — with no test diff"`
+
+4. **Dedup note** — one `risky-churn` signal per PR × churn-file pair. If `integrations.rs` was a hotspot and PRs #345 and #351 both touched it without tests, emit two signals: `risky-churn-pr-345-integrations-rs` and `risky-churn-pr-351-integrations-rs`.
+
+*Why this matters:* the churn hotspot list shows which files are changing fastest. A fix PR without tests touching those same files is the canonical instability pattern — repeated changes to code that isn't covered by tests. The two observations need to be correlated at the PR level; scanning the 14-day window for hotspots and scanning per-PR diffs as separate passes means the correlation never fires otherwise.
+
 **Reachability gate (dead-code filter)** — apply before finalising any signal with `score_delta >= 2` that cites a Rust file under `backend/.../handlers/`:
 
 1. **Derive the module name** from the file path:
