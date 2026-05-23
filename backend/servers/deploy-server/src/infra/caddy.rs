@@ -533,6 +533,12 @@ mod tests {
             err.to_string().contains("caddy register POST failed"),
             "unexpected error: {err}"
         );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
+        );
         assert_eq!(*log.lock().unwrap(), vec!["DELETE", "POST"]);
         task.abort();
     }
@@ -556,6 +562,12 @@ mod tests {
             msg.contains("stuck.example.com")
                 && msg.contains(&format!("up to {MAX_DELETE_ITERS} DELETE iterations")),
             "unexpected exhaustion error: {msg}"
+        );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
         );
         assert_eq!(
             log.lock().unwrap().len(),
@@ -629,6 +641,12 @@ mod tests {
         assert!(
             msg.contains("caddy unregister") && msg.contains("500"),
             "unexpected DELETE-failure error: {msg}"
+        );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
         );
         assert_eq!(
             log.lock().unwrap().len(),
