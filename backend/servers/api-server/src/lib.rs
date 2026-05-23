@@ -2,11 +2,10 @@
 //!
 //! This module exposes the application components for integration testing.
 
-// Allow dead code for stub implementations during development
+// Allow dead code in stub route/service implementations during development
 #![allow(clippy::doc_overindented_list_items)]
 #![allow(dead_code)]
 
-pub mod handlers;
 pub mod observability;
 pub mod routes;
 pub mod services;
