@@ -823,6 +823,39 @@ impl AuthHandler {
         // Try to find user and send email
         match state.user_repo.find_by_email(&data.email).await {
             Ok(Some(user)) if user.status == "active" => {
+                // P1-07: cap reset requests per user. Without this, an
+                // attacker can use forgot_password to flood the victim's
+                // inbox (each request sends a real email) and to confirm
+                // which emails are registered via timing differences.
+                // Default: 3 requests / 15 min. The same generic 200 OK
+                // is returned on rate-limit to preserve the
+                // non-enumeration property.
+                const MAX_RESETS_PER_WINDOW: i64 = 3;
+                const WINDOW_MINUTES: i32 = 15;
+                match state
+                    .password_reset_repo
+                    .count_recent_for_user(user.id, WINDOW_MINUTES)
+                    .await
+                {
+                    Ok(count) if count >= MAX_RESETS_PER_WINDOW => {
+                        tracing::warn!(
+                            user_id = %user.id,
+                            count = count,
+                            "Password reset rate limit hit; silently dropping request"
+                        );
+                        return Ok(());
+                    }
+                    Err(err) => {
+                        tracing::warn!(
+                            error = %err,
+                            "count_recent_for_user failed; falling open (proceeding without rate limit on this request)"
+                        );
+                        // Fall through — better to send the email than
+                        // to deny a legitimate user when our DB is sick.
+                    }
+                    _ => { /* under the cap, continue */ }
+                }
+
                 // Invalidate any existing reset tokens for this user
                 let _ = state
                     .password_reset_repo
