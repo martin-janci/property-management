@@ -80,6 +80,7 @@ run "ppt-project-management" 10 'test -f .claude/skills/ppt-project-management/S
 run "ppt-implement"       10 'test -f .claude/skills/ppt-implement/SKILL.md && ls .claude/skills/ppt-implement/agents/*.md | wc -l | grep -qE "^9$" && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-implement'
 run "ppt-review-merged"   10 'test -f .claude/skills/ppt-review-merged/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-review-merged'
 run "ppt-pr-merge"        10 'test -f .claude/skills/ppt-pr-merge/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-pr-merge'
+run "ppt-dev-team"        10 'test -f .claude/skills/ppt-dev-team/SKILL.md && bash .claude/skills/_verify-skill.sh .claude/skills/ppt-dev-team'
 if [[ $SKIP_NETWORK -eq 1 ]]; then
   skip "ppt-bridge-mcp" "SKIP_NETWORK=1"
 else
