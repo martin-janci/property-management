@@ -1172,7 +1172,7 @@ async fn get_download_url(
                 &document.file_name,
                 &document.mime_type,
                 None, // Use default 15 minute expiration
-            ) {
+            ).await {
                 Ok(presigned) => (presigned.url, presigned.expires_at),
                 Err(e) => {
                     tracing::error!(
@@ -1274,7 +1274,7 @@ async fn get_preview_url(
                 &document.file_name,
                 &document.mime_type,
                 Some(3600), // 1 hour for preview
-            ) {
+            ).await {
                 Ok(presigned) => (presigned.url, presigned.expires_at),
                 Err(e) => {
                     tracing::error!(

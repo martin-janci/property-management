@@ -333,7 +333,7 @@ impl StorageService {
     /// # Returns
     ///
     /// A presigned URL that allows temporary download access.
-    pub fn generate_download_url(
+    pub async fn generate_download_url(
         &self,
         key: &str,
         filename: &str,
@@ -343,9 +343,9 @@ impl StorageService {
         let expires_in = expires_in_secs.unwrap_or(DEFAULT_DOWNLOAD_EXPIRATION_SECS);
         let expires_at = Utc::now() + Duration::seconds(expires_in);
 
-        // Build the presigned URL using AWS Signature Version 4
-        // This is a simplified implementation - in production, use aws-sdk-s3
-        let url = self.build_presigned_get_url(key, filename, content_type, expires_in)?;
+        let url = self
+            .build_presigned_get_url(key, filename, content_type, expires_in)
+            .await?;
 
         Ok(PresignedUrl { url, expires_at })
     }
@@ -361,7 +361,7 @@ impl StorageService {
     /// # Returns
     ///
     /// A presigned PUT URL that allows temporary upload access.
-    pub fn generate_upload_url(
+    pub async fn generate_upload_url(
         &self,
         key: &str,
         content_type: &str,
@@ -375,38 +375,44 @@ impl StorageService {
         let expires_in = expires_in_secs.unwrap_or(DEFAULT_UPLOAD_EXPIRATION_SECS);
         let expires_at = Utc::now() + Duration::seconds(expires_in);
 
-        // Build the presigned URL for PUT operation
-        let url = self.build_presigned_put_url(key, content_type, expires_in)?;
+        let url = self
+            .build_presigned_put_url(key, content_type, expires_in)
+            .await?;
 
         Ok(PresignedUrl { url, expires_at })
     }
 
     /// Build a presigned GET URL with AWS Signature V4.
     ///
-    /// Note: This is a simplified implementation. For production use,
-    /// consider using the aws-sdk-s3 crate with proper presigning support.
-    fn build_presigned_get_url(
+    /// P0-05 (dev-team review): this function previously returned an
+    /// unsigned URL string labelled "placeholder URL structure … in
+    /// production, this would use AWS SigV4 signing", so any S3 bucket
+    /// that actually required SigV4 (i.e. real S3 / authenticated MinIO)
+    /// rejected every download link. Now uses `aws_sdk_s3`'s built-in
+    /// presigner which emits an SigV4 URL with the correct X-Amz-*
+    /// query parameters.
+    async fn build_presigned_get_url(
         &self,
         key: &str,
         filename: &str,
         content_type: &str,
         expires_in: i64,
     ) -> Result<String, StorageError> {
-        let endpoint = self.get_endpoint();
-        let encoded_key = urlencoding::encode(key);
-        let encoded_filename = urlencoding::encode(filename);
+        let client = self.get_s3_client()?;
+        let expires = std::time::Duration::from_secs(expires_in.max(1) as u64);
+        let presign_cfg = PresigningConfig::expires_in(expires)
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
 
-        // For now, return a placeholder URL structure
-        // In production, this would use AWS SigV4 signing
-        let url = format!(
-            "{}/{}/{}?response-content-disposition=attachment%3B%20filename%3D%22{}%22&response-content-type={}&X-Amz-Expires={}",
-            endpoint,
-            self.config.bucket,
-            encoded_key,
-            encoded_filename,
-            urlencoding::encode(content_type),
-            expires_in
-        );
+        let disposition = format!("attachment; filename=\"{}\"", filename);
+        let presigned = client
+            .get_object()
+            .bucket(&self.config.bucket)
+            .key(key)
+            .response_content_disposition(disposition)
+            .response_content_type(content_type)
+            .presigned(presign_cfg)
+            .await
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
 
         tracing::debug!(
             key = %key,
@@ -415,29 +421,32 @@ impl StorageService {
             "Generated presigned download URL"
         );
 
-        Ok(url)
+        Ok(presigned.uri().to_string())
     }
 
     /// Build a presigned PUT URL with AWS Signature V4.
-    fn build_presigned_put_url(
+    ///
+    /// P0-05 (see build_presigned_get_url comment): real SigV4 via
+    /// aws_sdk_s3 instead of the previous unsigned-URL placeholder.
+    async fn build_presigned_put_url(
         &self,
         key: &str,
         content_type: &str,
         expires_in: i64,
     ) -> Result<String, StorageError> {
-        let endpoint = self.get_endpoint();
-        let encoded_key = urlencoding::encode(key);
+        let client = self.get_s3_client()?;
+        let expires = std::time::Duration::from_secs(expires_in.max(1) as u64);
+        let presign_cfg = PresigningConfig::expires_in(expires)
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
 
-        // For now, return a placeholder URL structure
-        // In production, this would use AWS SigV4 signing
-        let url = format!(
-            "{}/{}/{}?Content-Type={}&X-Amz-Expires={}",
-            endpoint,
-            self.config.bucket,
-            encoded_key,
-            urlencoding::encode(content_type),
-            expires_in
-        );
+        let presigned = client
+            .put_object()
+            .bucket(&self.config.bucket)
+            .key(key)
+            .content_type(content_type)
+            .presigned(presign_cfg)
+            .await
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
 
         tracing::debug!(
             key = %key,
@@ -446,15 +455,7 @@ impl StorageService {
             "Generated presigned upload URL"
         );
 
-        Ok(url)
-    }
-
-    /// Get the S3 endpoint URL.
-    fn get_endpoint(&self) -> String {
-        self.config
-            .endpoint
-            .clone()
-            .unwrap_or_else(|| format!("https://s3.{}.amazonaws.com", self.config.region))
+        Ok(presigned.uri().to_string())
     }
 
     /// Get the bucket name.
