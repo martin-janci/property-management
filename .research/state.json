@@ -80,5 +80,8 @@
       "pm-data": null,
       "pm-integration": null
     }
+  },
+  "coverage_cursor": {
+    "next_index": 0
   }
 }
