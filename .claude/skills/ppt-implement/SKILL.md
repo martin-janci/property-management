@@ -67,6 +67,12 @@ backend task instead of merging a half-PR.
 
 ## Step 3 — Verify gate (MANDATORY before PR)
 
+Three escalating bands. **Band A is mandatory** — never skip. Run Band B when
+the change is non-trivial (≥50 LOC or touches a public API / migration / config).
+Run Band C when the PR is hot-path (security, billing, auth, data integrity).
+
+### Band A — fast check (per-stack, ALWAYS)
+
 | Specialist     | Minimum verify command(s)                                                                    |
 | ---            | ---                                                                                          |
 | `rust-backend` | `cd backend && cargo check -p <crate>` then `cargo test -p <crate> -- <filter>`              |
@@ -79,9 +85,52 @@ backend task instead of merging a half-PR.
 | `ios-swiftui`  | `cd mobile-native && ./gradlew :shared:linkPodReleaseFrameworkIosArm64` (compile only)       |
 | `generic`      | `git diff --check` + `pre-commit run --files <changed>` if `.pre-commit-config.yaml` exists  |
 
-Quote command + exit code in the PR body under `## Tested`. If any verify
-command fails: do NOT open a PR. Push partial work to the branch and return
-`pr=none status=partial note=<command-that-failed>`.
+### Band B — full build (when change is non-trivial)
+
+Triggers Band B: ≥50 LOC of substantive change, OR public API surface change,
+OR a new migration, OR config that affects build output. Run AFTER Band A.
+
+| Specialist     | Full-build command(s)                                                                        |
+| ---            | ---                                                                                          |
+| `rust-backend` | `cd backend && cargo build --release -p <crate>` + `cargo clippy -p <crate> -- -D warnings`  |
+| `db-migration` | `cd backend && cargo build -p db` + apply migration on an ephemeral DB (`./scripts/dev-db reset && cargo run -p db --bin migrate`) |
+| `typespec`     | `cd docs/api/typespec && npx tsp compile . --emit '@typespec/openapi3'` then `pnpm -F @ppt/api-client typecheck` |
+| `react-web`    | `pnpm -F ppt-web build` (Vite production build — catches import-time errors lint misses)    |
+| `nextjs-web`   | `pnpm -F reality-web build` (catches SSR-only failures + i18n key drift)                     |
+| `react-native` | `pnpm -F mobile build` (Metro bundle dry-run if available; else `expo prebuild --no-install --clean` to verify config) |
+| `kotlin-mp`    | `cd mobile-native && ./gradlew :androidApp:assembleRelease`                                  |
+| `ios-swiftui`  | `cd mobile-native && ./gradlew :shared:linkPodReleaseFrameworkIosArm64 :shared:assemble`     |
+| `generic`      | (none — Band B doesn't apply to generic)                                                     |
+
+### Band C — CI parity (hot-path PRs only)
+
+Replicate what `.github/workflows/ci.yaml` would run on this PR — locally, so
+red-CI surprises don't happen on push. Use whichever applies:
+
+```bash
+# Inspect what CI runs for the changed paths:
+gh workflow view ci --repo martin-janci/property-management --yaml | head -200
+
+# Replicate the relevant job. Examples:
+just check                           # repo-wide check target (Justfile)
+just test                            # repo-wide test target
+just lint                            # repo-wide lint target
+
+# Or, with the `act` tool if installed, re-run a single workflow job:
+act -j backend-check  pull_request   # runs the backend-check job locally
+act -j frontend-build pull_request
+```
+
+Report Band C results under `## CI parity` in the PR body. If `act` isn't
+available, run the equivalent commands from the workflow file directly and
+note "act not installed — ran workflow commands manually".
+
+### Verify reporting
+
+Quote each command + exit code in the PR body under `## Tested` (Band A),
+`## Built` (Band B), and `## CI parity` (Band C). If any verify command at
+the required band fails: do NOT open a PR. Push partial work to the branch
+and return `pr=none status=partial note=<command-that-failed>`.
 
 ## Step 4 — (Optional) Remote verify
 
@@ -104,12 +153,18 @@ gh pr create \
 ## Owner
 <owner_role>
 
-## Tested
+## Tested (Band A — fast check)
 <command>
 <short output / exit 0>
 
+## Built (Band B — full build)
+<command(s) and exit codes — or "skipped: change <50 LOC, no public API/config touch">
+
+## CI parity (Band C — hot-path only)
+<command(s) and exit codes — or "skipped: not a hot-path PR (no security/auth/billing/data-integrity change)">
+
 ## Remote-tested
-<paste short output, or "skipped">
+<paste short output if ppt-bridge MCP was used, else "skipped">
 
 ## Notes
 <anything the reviewer must know>
