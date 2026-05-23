@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-23T14:56:29Z",
-  "last_run_ms": 120000,
+  "last_run_iso": "2026-05-23T16:04:35Z",
+  "last_run_ms": 90000,
   "last_pr_seen": 435,
   "last_issue_seen": 375,
-  "last_commit_sha": "83eae73cd6efcac50879ee166e5f25615497dea4",
+  "last_commit_sha": "43d8adcaebba14cf2ccdba6f4275f3a3b819749d",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -36,11 +36,12 @@
     "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
-    "code-review-api-core-voice-device-idor"
+    "code-review-api-core-voice-device-idor",
+    "code-review-api-handlers-dead-dup-auth-bldg-handlers"
   ],
   "auto_fix_history": {},
   "review_cursor": {
-    "api-handlers": null,
+    "api-handlers": "2026-05-23",
     "api-core": "2026-05-23",
     "reality-server": null,
     "ppt-web-ui": null,
@@ -50,8 +51,8 @@
     "mobile-native-kmp": null
   },
   "stats": {
-    "runs": 2,
-    "vectors_created": 7,
+    "runs": 3,
+    "vectors_created": 8,
     "plans_created": 1,
     "quiet_days": 0,
     "auto_fix_count": 0
