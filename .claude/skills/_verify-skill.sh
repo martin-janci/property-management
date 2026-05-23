@@ -71,8 +71,12 @@ if [[ -f "$SKILL_DIR/install.sh" ]]; then
 fi
 
 # --- 5. agents/*.md references in SKILL.md must exist on disk
-# Look for patterns like `agents/<name>.md` mentioned in SKILL.md body.
-REFERENCED_AGENTS=$(grep -oE 'agents/[a-z0-9_-]+\.md' "$SKILL_MD" 2>/dev/null | sort -u)
+# Only treat *relative* references — `agents/<name>.md` — as local-to-skill.
+# Skip absolute or .claude/agents/ paths (those live elsewhere, outside this skill).
+# Char-before-`agents/` must NOT be in [a-zA-Z0-9./_-], so `.claude/agents/x.md` is excluded.
+REFERENCED_AGENTS=$(grep -oE '(^|[^a-zA-Z0-9./_-])agents/[a-z0-9_-]+\.md' "$SKILL_MD" 2>/dev/null \
+  | grep -oE 'agents/[a-z0-9_-]+\.md' \
+  | sort -u)
 if [[ -n "$REFERENCED_AGENTS" ]]; then
   for ref in $REFERENCED_AGENTS; do
     if [[ ! -f "$SKILL_DIR/$ref" ]]; then
