@@ -203,6 +203,32 @@
       "created_at": "2026-05-23",
       "updated_at": "2026-05-23",
       "plan": null
+    },
+    {
+      "id": "security-inquiry-read-idor",
+      "title": "IDOR: reality-server mark_as_read flips any realtor's inquiry by ID with no owner scoping",
+      "vector": "security",
+      "score": 2,
+      "status": "ready",
+      "confidence": "high",
+      "sources": [
+        "code-review reality-server 2026-05-23",
+        "inquiries.rs:554"
+      ],
+      "evidence": [
+        "backend/servers/reality-server/src/routes/inquiries.rs:554 — mark_as_read binds `_principal: RequestPrincipal` but discards it, calling mark_inquiry_read(id) with only the path id",
+        "wired at inquiries.rs:66 — PUT /api/v1/inquiries/{id}/read -> mark_as_read (reachable production route)",
+        "backend/crates/db/src/repositories/reality_portal.rs:768 — `UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL` has no realtor/owner predicate",
+        "sibling handlers scope correctly: get_inquiry uses get_inquiry_for_realtor(id, principal.user_id) and respond_to_inquiry(id, ...) — mark_as_read is the lone unscoped write",
+        "any authenticated portal user can flip another realtor's inquiry to read by enumerating the UUID (cross-account write IDOR); not covered by open PR #435, which defers a separate community-routes IDOR cluster"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": "plans/security-inquiry-read-idor.md"
     }
   ]
 }

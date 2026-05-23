@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: 2026-05-23 16:04 UTC by routine</sub>
+<sub>Last regenerated: 2026-05-23 17:47 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -20,6 +20,7 @@ picks from here.
 | 2 | organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin) | refactor | git log origin/main since 2026-05-06, git log origin/dev since 2026-05-20 | 2026-05-23 | open |
 | 2 | documents.rs churn-hot — 10,659 lines over 14d | refactor | git log origin/main since 2026-05-06, git log origin/dev since 2026-05-20 | 2026-05-23 | open |
 | 2 | Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline | refactor | code-review api-handlers 2026-05-23 | 2026-05-23 | open |
+| 2 | IDOR: reality-server mark_as_read flips any realtor's inquiry by ID with no owner scoping | security | code-review reality-server 2026-05-23, inquiries.rs:554 | 2026-05-23 | ready |
 | 2 | Portfolio dashboard: alert mark-read/resolve mutations + property-card click navigation are no-op stubs | dx | PR #328, commit 254f01d | 2026-05-20 | open |
 
 ## Scoring rubric

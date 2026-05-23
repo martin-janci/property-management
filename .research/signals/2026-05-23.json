@@ -1,40 +1,43 @@
 {
   "date": "2026-05-23",
-  "note": "Second (incremental) routine run on 2026-05-23, at ~16:04Z, ~1h after the morning deep-catch-up run (14:56Z). This file documents only the signals derived in THIS run's window (since 14:56Z). The morning run's signals (lag-warning, dep-update-noise, churn/repeated-churn x3, code-review-api-core-voice-device-idor) are preserved in git history at HEAD and in state.seen_signals; they are not re-emitted here because no new churn/PRs/issues landed since 14:56Z.",
+  "note": "Third routine run on 2026-05-23 (~17:47Z), ~1.7h after the 16:04Z incremental run. This file documents only the signal derived in THIS run's window. External activity was quiet (no new merged PRs to dev since #433, #435 still open, no new/updated issues). All churn since 16:04Z is the in-flight ppt-project-management feature (.research/, .claude/skills/, .claude/agents/, docs/superpowers/) plus version-bump noise — no application-code churn, so the tracked hotspots (integrations/organizations/documents.rs) did not re-emit. Phase 1.5 rotated to reality-server; Phase 1.6 ran for the first time (PM artifacts populated). Earlier runs' signals are preserved in git history and in state.seen_signals.",
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — the only signal this run is a medium-confidence refactor (dead/duplicate handler modules), which does not meet the Phase 5 certainty bar (needs confidence=high + score>=3 + allowlist match)",
+  "auto_fix_skipped_reason": "no candidate — the only signal this run is a security code-review finding (reality-server inquiry-read IDOR); security code fixes are not on the Phase 5 allowlist (only screen-map-drift/orphan, fixme-in-merged-code, dep lockfile-drift, stalled-review). Routed to the manual plan path instead.",
   "signals": [
     {
-      "id": "code-review-api-handlers-dead-dup-auth-bldg-handlers",
+      "id": "code-review-reality-server-inquiry-read-idor",
       "type": "code-review-finding",
       "source": "rotating-expert-review",
-      "segment": "api-handlers",
+      "segment": "reality-server",
       "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "security",
       "evidence": [
-        "backend/servers/api-server/src/handlers/auth/mod.rs:217 — `pub struct AuthHandler;` (login/refresh_token/register/reset_password/sessions) declared via `pub mod auth;` but ZERO references outside handlers/auth/ (verified by grep). The live /api/v1/auth/* routes reimplement this inline in routes/auth.rs (login at :468).",
-        "backend/servers/api-server/src/handlers/buildings/mod.rs:326 — `pub struct BuildingHandler;` (create_building/get_building/assign_owner/etc) ZERO references outside handlers/buildings/; routes/buildings.rs reimplements the same operations inline. Two parallel multi-tenant CRUD/auth implementations: a fix to one path won't propagate to the other.",
-        "handlers/mod.rs:9-10 still `pub mod auth; pub mod buildings;` — reachability gate NOT triggered (mod declarations present, code compiles); classified refactor (dead duplication), not a phantom-TODO and not a security bug inside the handler (the handler code itself is clean)."
+        "backend/servers/reality-server/src/routes/inquiries.rs:554 — mark_as_read binds `_principal: RequestPrincipal` (discarded) and calls mark_inquiry_read(id) with only the path id; route wired at inquiries.rs:66 (PUT /api/v1/inquiries/{id}/read), reachable in production",
+        "backend/crates/db/src/repositories/reality_portal.rs:768 — `UPDATE listing_inquiries SET status='read', read_at=NOW() WHERE id=$1 AND read_at IS NULL` has no realtor/owner predicate; sibling get_inquiry_for_realtor / respond_to_inquiry scope by principal.user_id",
+        "verified: open PR #435 does not touch inquiries.rs and explicitly defers a separate community-routes IDOR cluster — this finding is unaddressed",
+        "cross-account write IDOR: any authenticated portal user can flip another realtor's inquiry to read by enumerating the UUID; full call path traced route -> handler -> unscoped UPDATE (confidence high)"
       ],
-      "confidence": "medium",
-      "candidate_vector": "refactor",
-      "expert": "security"
+      "expert": "rust"
     }
   ],
   "goal_checks": [
     { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-23.md && head -1 | grep '^# 2026-05-23$'", "observed": "exit 0", "expected": "exit 0" },
-    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD (seen_signals length 13->14, review_cursor.api-handlers null->date, stats.runs 2->3)", "observed": "true", "expected": "true" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD", "observed": "true (seen_signals 14->15, review_cursor.reality-server null->date, stats.runs 3->4, pm_cursor.next_index 0->1)", "expected": "true" },
     { "goal": "G3", "passed": true, "command": "jq '[.items[].id]|length==(unique|length)' backlog.json", "observed": "true", "expected": "true" },
-    { "goal": "G4", "passed": true, "command": "no signal id from this run's file was in prev seen_signals (the one signal is net-new this run)", "observed": "true", "expected": "true" },
-    { "goal": "G5", "passed": true, "command": "no score>8; no open item older than 14d (oldest updated_at 2026-05-20, 3d) so no decay due", "observed": "true", "expected": "true" },
-    { "goal": "G6", "passed": true, "command": "no new plans/ files this run → vacuously satisfied", "observed": "0 new plans", "expected": "true" },
-    { "goal": "G7", "passed": true, "command": "0 new plans this run (<=2); no readiness gates to enforce", "observed": "0 new plans", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "this run's only signal id is net-new (not in prev seen_signals)", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score>8; no open item with updated_at<=today-14 (oldest 2026-05-20) so no decay due", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "new plan security-inquiry-read-idor.md has brief annotation 'adversarial pass: passed'", "observed": "annotated", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "1 new plan (<=2); 4 metadata + 11 headings present; capability ticked; Mode declared; Files paths resolve on disk", "observed": "true", "expected": "true" },
     { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
     { "goal": "G9", "passed": true, "command": "git diff --cached (excl baseline docs) | grep secrets/hostnames | wc -l", "observed": "0", "expected": "0" },
     { "goal": "G10", "passed": true, "command": "regenerate backlog.md from backlog.json and diff", "observed": "byte-identical", "expected": "exit 0" },
-    { "goal": "G11", "passed": true, "command": "grep placeholder-rot patterns in brief (no new plans)", "observed": "no matches", "expected": "no matches" },
+    { "goal": "G11", "passed": true, "command": "grep placeholder-rot patterns in new plan + brief", "observed": "no matches", "expected": "no matches" },
     { "goal": "G12", "passed": true, "command": "prior-run plan slug security-voice-device-idor still present in plans/", "observed": "present", "expected": "true" },
-    { "goal": "G13", "passed": true, "command": "staged _archive count >= HEAD count", "observed": "equal", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "staged _archive count >= HEAD count", "observed": "equal (0==0)", "expected": "true" },
     { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md (no triage rows) and diff", "observed": "byte-identical", "expected": "exit 0" },
-    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty (no candidate met certainty bar)", "observed": "true", "expected": "true" }
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty (security fix not on allowlist)", "observed": "true", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "jq -e .items action-list.json & risks.json; project-state.md non-empty; pm_cursor.next_index in 0..7", "observed": "true (10 actions, 7 risks, next_index=1)", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached added lines grep telegram token value | wc -l", "observed": "0", "expected": "0" }
   ]
 }
