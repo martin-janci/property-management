@@ -1,7 +1,7 @@
 {
   "name": "property-management",
   "private": true,
-  "version": "0.2.436",
+  "version": "0.2.437",
   "description": "Property Management System - Monorepo Root",
   "repository": "https://github.com/hanibalsk/property-management",
   "license": "MIT",

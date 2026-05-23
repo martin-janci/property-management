@@ -457,6 +457,7 @@ Convert signals → backlog updates. For each signal:
    - Append signal source to `sources` if new.
    - Append signal evidence to `evidence` only if **materially new** (don't restate "PR #123 added validation").
    - Add `score_delta` to its score **only if this signal's ID is not in `state.seen_signals`** — never score the same signal twice.
+   - Update `confidence` to the higher of the existing item value and the incoming signal's confidence (`high > medium > low`); if the item has no `confidence` field yet, inherit it directly from the signal.
    - Update `updated_at = today`.
 3. If not found, create a new item:
    ```json
@@ -465,6 +466,7 @@ Convert signals → backlog updates. For each signal:
      "title": "<imperative title under 80 chars>",
      "vector": "bug | refactor | perf | test-gap | dx | security | dep-update | triage",
      // triage = lowest-effort vector, never promoted to a plan (Phase 3 readiness gate excludes it)
+     "confidence": "<signal confidence — low | medium | high>",
      "score": <initial score_delta>,
      "status": "open",
      "sources": ["PR #123", "commit abc123"],
@@ -552,7 +554,7 @@ If no items qualify, render the headers with one empty separator row (same shape
 
 A backlog item is **ready** if **all** of these hold:
 
-- `score >= 3`
+- `score >= 3`  *(see security exception below)*
 - `status == "open"`
 - has at least one concrete source: PR #, issue #, or commit sha
 - has at least one entry in `files` (a real path under the repo)
@@ -561,6 +563,8 @@ A backlog item is **ready** if **all** of these hold:
 - not blocked by an open question (`status != "needs-human-judgement"`)
 - no existing active plan references the same `sources` (check `plans/` + `plans/_archive/`)
 - vector is not `triage` (triage items stay in backlog for human review)
+
+**Security fast-track:** if `vector == "security"` **and** `confidence == "high"` **and** `score >= 2`, the score threshold drops from 3 to 2 — all other gates still apply. A single high-confidence security signal is enough evidence to act; waiting for score compounding means a multi-tenant isolation gap or auth bypass sits open for two extra runs. The `security-rls-migration-residual` item from 2026-05-20 (score 2, confidence high) would have promoted immediately under this rule, not stayed open while the team fixed it manually.
 
 For each ready item not already in `plans/`, write `plans/<slug>.md` from the template below. **Cap at 2 new plans per run.** If more vectors are ready, leave them for the next run — quality over volume.
 
