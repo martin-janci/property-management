@@ -1196,7 +1196,7 @@ fn oauth_env(integration: &str, key: &str) -> Result<String, (StatusCode, Json<E
             StatusCode::SERVICE_UNAVAILABLE,
             Json(ErrorResponse::new(
                 "OAUTH_NOT_CONFIGURED",
-                &format!(
+                format!(
                     "Integration {} is not configured ({} unset)",
                     integration, var
                 ),
