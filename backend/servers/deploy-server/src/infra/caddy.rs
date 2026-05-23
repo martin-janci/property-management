@@ -147,6 +147,17 @@ impl CaddyClient {
     /// messages identify the host and (for the deadline path) how many
     /// DELETEs completed before the budget expired.
     ///
+    /// **Which bound trips first depends on per-DELETE latency** (per-request
+    /// timeout is 5s — see `new`):
+    ///   - Fast Caddy (~10ms/req): the iter cap is the practical bound; all
+    ///     `MAX_DELETE_ITERS` DELETEs can complete in well under `SWEEP_DEADLINE`.
+    ///   - Slow Caddy (~1s/req or worse): `SWEEP_DEADLINE` trips first — only
+    ///     a handful of iterations fit in the 15s budget, so the exhaustion
+    ///     error reports "up to MAX_DELETE_ITERS" rather than asserting all
+    ///     ran. `SWEEP_DEADLINE` is the load-bearing safety bound in this
+    ///     regime; the iter count is defense in depth against a Caddy id-index
+    ///     bug that would otherwise let a fast loop spin forever.
+    ///
     /// If the sweep removes any duplicates (iter > 1 before 404), a `warn!`
     /// is emitted so dashboards can alert on drift — duplicates appearing
     /// in steady-state means somebody is writing untracked routes.
@@ -189,7 +200,7 @@ impl CaddyClient {
                 "caddy unregister: id index appears stuck — DELETEs never returned 404",
             );
             Err(crate::DeployError::Internal(format!(
-                "caddy unregister: {host} still resolved after {MAX_DELETE_ITERS} DELETE iterations"
+                "caddy unregister: {host} still resolved after up to {MAX_DELETE_ITERS} DELETE iterations"
             )))
         };
         let result = match tokio::time::timeout(SWEEP_DEADLINE, sweep).await {
@@ -524,7 +535,7 @@ mod tests {
         let msg = err.to_string();
         assert!(
             msg.contains("stuck.example.com")
-                && msg.contains(&format!("{MAX_DELETE_ITERS} DELETE iterations")),
+                && msg.contains(&format!("up to {MAX_DELETE_ITERS} DELETE iterations")),
             "unexpected exhaustion error: {msg}"
         );
         assert_eq!(
