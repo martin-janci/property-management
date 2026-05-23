@@ -511,6 +511,14 @@ Write it to `state.json` before proceeding.
 
 Pass the skill the Phase-1 observation data (`MERGED_PRS`, `OPEN_PRS`, `ISSUES`, `CHURN_FILES`) and `$TRIGGER_TEXT`. Keep the returned `digest` object — Phase 6 sends it to Telegram. The skill writes all `.research/management/` files and advances `state.pm_cursor`; do not write those files yourself.
 
+**Coverage upkeep (cheap — never deep-scan in the cloud).** If `.research/management/coverage.json` has stories:
+1. **Init guard:** if `state.coverage_cursor` is absent, set it to `{"next_index": 0}` and write `state.json`.
+2. **Mark progress from merged PRs:** for each merged PR this run (Phase 1 data), if it maps to a coverage story (story-id or keyword match), advance that story's `status` toward `done` and append to its `evidence`; set `last_checked = <today>`.
+3. **Re-check one rotating epic:** from `coverage.json`, take the sorted distinct epic list; pick the epic at `coverage_cursor.next_index`; cheaply refresh its stories' evidence (sprint-status + screen-map + a light keyword grep — NOT a full code read); then set `coverage_cursor.next_index = (next_index + 1) mod <#epics>`.
+4. **Re-rank:** the skill's default mode then regenerates `roadmap.md` / `action-list.json` / `project-state.md` from the updated `coverage.json`.
+
+Do **NOT** run the skill's `scan` mode here — the authoritative full rebuild is the on-demand local `/ppt-project-management scan`.
+
 ---
 
 ### Phase 2 — Decide
