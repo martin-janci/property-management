@@ -68,7 +68,7 @@ the Scrum Master in one run.)
    "blockers":["..."],"role_focus":["pm-..."],"quiet":false}
   ```
   Build it from the Scrum Master output by mapping its keys: `sprint`/`epics_done`/`epics_total` ← flatten `sprint_progress`; `shipped` ← `shipped_since_last_run`; `next` ← top 3 `next_actions` (`action` + `owner` = `owner_role`); `blockers` ← `blockers[].item`; `role_focus` ← the roles that ran this run.
-  Set `"quiet": true` when nothing shipped AND no new/changed action AND no blocker change.
+  Set `"quiet": true` **only when the run is genuinely empty** — ALL of these hold: zero PRs merged since last run, AND zero new backlog vectors added this run, AND zero plans promoted this run, AND zero new actions added to `action-list.json`, AND no blocker added or cleared. **A run is NEVER quiet if it promoted a plan, added a backlog vector, or surfaced a security/bug finding** — "nothing merged" is not "nothing worth reporting". When in doubt, send (`quiet: false`). The digest skip is only meant to suppress truly dead days, not findings-heavy ones.
 
 ## Token budget
 Scrum Master + 1 role on a normal run. `full` is opt-in. Each agent reads ≤8 files,
