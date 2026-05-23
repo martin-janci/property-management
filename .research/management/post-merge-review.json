@@ -8,6 +8,15 @@
       "run_at": "2026-05-24T00:00:00Z",
       "prs_scanned": 2,
       "clean": [],
+      "skipped": [433, 435],
+      "with_issues": [],
+      "trigger": "manual /ppt-review-merged invocation",
+      "note": "all in-window PRs already labeled post-merge-reviewed; no-op"
+    },
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
       "skipped": [433],
       "with_issues": [
         {
