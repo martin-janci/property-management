@@ -151,8 +151,20 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 
 ### G17 — No Telegram secret committed
 
-- **Pass when:** `git diff --cached` contains no `TELEGRAM_BOT_TOKEN` value, no `api.telegram.org/bot<digits>:`, and no `bot[0-9]` token pattern. (The routine-prompt.md may reference the variable *name* only.)
-- **Check:** `git diff --cached | grep -vE '^\+\+\+ b/\.research/routine-prompt\.md' | grep -E 'TELEGRAM_BOT_TOKEN=[^$]|api\.telegram\.org/bot[0-9]|bot[0-9]{6,}:' | wc -l` → expect `0`. **Abort commit if non-zero** (same severity as G8/G9).
+- **Pass when:** the staged diff contains no literal Telegram bot-token value — either the URL form (`api.telegram.org/bot<digits>:<secret>`) or the bare token form (`<8-10 digits>:<35+ chars>`). References to the variable *name* (`TELEGRAM_BOT_TOKEN`) and `${TELEGRAM_BOT_TOKEN}` interpolations are permitted; only an actual token value must be absent.
+- **Check:** scan `git diff --cached` for added lines only (`^+`, excluding `^+++` file-header lines), excluding the four baseline doc files exactly as G9 does, then grep for a real token value pattern:
+  ```bash
+  git diff --cached \
+    -- '.research/' \
+    ':(exclude).research/README.md' \
+    ':(exclude).research/routine-prompt.md' \
+    ':(exclude).research/implementer-prompt.md' \
+    ':(exclude).research/IMPROVEMENT_IDEAS.md' \
+  | grep -E '^\+' | grep -v '^\+\+\+' \
+  | grep -E 'api\.telegram\.org/bot[0-9]{6,}:[A-Za-z0-9_-]{20,}|[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
+  | wc -l
+  ```
+  → expect `0`. **Abort commit if non-zero** (same severity as G8/G9 — a token leak must not land in the commit).
 
 ---
 
@@ -169,7 +181,7 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 }
 ```
 
-If **G8 or G9 fails, abort before commit.** All other failures are recorded and surfaced in the brief but do not block the commit — the failure log itself is value.
+If **G8, G9, or G17 fails, abort before commit.** All other failures are recorded and surfaced in the brief but do not block the commit — the failure log itself is value.
 
 ## Inputs you read
 
@@ -816,8 +828,8 @@ Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<
    ```
    Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
 1. Run the **Quality gates** (below) in order against the staged index:
-   - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15, G16, G17 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+   - **G8, G9, or G17 failure → abort the commit.** No fallback. Files outside `.research/`, any secret/private-hostname leak, or a literal Telegram token value halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15, G16 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
 2. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
@@ -874,8 +886,8 @@ Run these and verify each passes:
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
 12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
 13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
-14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op.
-15. **No Telegram secret committed.** `git diff --cached` contains no `TELEGRAM_BOT_TOKEN` value, no `api.telegram.org/bot<digits>:`, and no `bot[0-9]` token pattern. (The routine-prompt.md may reference the variable *name* only.)
+14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op. (see G16)
+15. **No Telegram secret committed.** `git diff --cached` added lines contain no literal Telegram bot-token value (URL form or bare token form). The variable name and `${…}` references are permitted; only an actual token value must be absent. Exempt: the four baseline doc files (`.research/{README,routine-prompt,implementer-prompt,IMPROVEMENT_IDEAS}.md`). **Abort commit if non-zero** matches — same severity as gate 8. (see G17)
 
 ## Brief template
 
@@ -964,8 +976,8 @@ When promoting a vector, copy that file to `.research/plans/<slug>.md` and repla
 - `text == ""` — normal run
 - `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset).
 - `text == "reset"` — write a brief noting state was reset, then set `last_pr_seen = 0`, `last_commit_sha = null`, `last_issue_seen = 0`, clear `seen_signals` and `hotspot_history`. Next run will do an initial 14-day sweep again.
-- `full` / `pm-full` — Phase 1.6 runs the Scrum Master + all 8 role agents (full delivery analysis), not just the daily rotating role.
-- `pm:<role>` — Phase 1.6 runs the Scrum Master + the named role only (e.g. `pm:security`, `pm:backend`). Valid roles: tech-lead, backend, frontend, qa, devops, security, data, integration.
+- `text == "full"` / `text == "pm-full"` — Phase 1.6 runs the Scrum Master + all 8 role agents (full delivery analysis), not just the daily rotating role.
+- `text == "pm:<role>"` — Phase 1.6 runs the Scrum Master + the named role only (e.g. `pm:security`, `pm:backend`). Valid roles: tech-lead, backend, frontend, qa, devops, security, data, integration.
 
 ## Operational assumptions and failure modes
 
