@@ -9,7 +9,7 @@ description: >
   standalone for a delivery snapshot.
 when_to_use: Called by the research routine Phase 1.6. Also useful standalone for a
   project-delivery snapshot (what shipped, what's next, blockers, per-role analysis).
-mode: cloud-ok
+mode: cloud-ok  # applies to the DEFAULT (rank/role) mode; the `scan` sub-mode is LOCAL-ONLY (never run it in the cloud routine)
 ---
 
 # PPT Project Management — Research Routine Skill
@@ -26,11 +26,12 @@ Produces the delivery picture for the PPT project and writes it under
 ## Step 1 — Decide the role set from `$TRIGGER_TEXT`
 | `$TRIGGER_TEXT` | Roles |
 |---|---|
+| `scan` or `pm-scan` | **scan mode** (see below) — run the deep coverage scan + default ranking; do NOT rotate a role agent. LOCAL ONLY. |
 | empty / anything not below | rotating: `state.pm_cursor.rotation[next_index]` |
 | `full` or `pm-full` | all 8 rotation roles |
 | `pm:<role>` (e.g. `pm:security` → `pm-security`) | that one role |
 
-The **Scrum Master always runs**, regardless of mode.
+The **Scrum Master always runs**, regardless of mode (except a pure `scan` invocation, which runs the scan + ranking and may skip the role rotation).
 
 ## Mode: `scan` (deep coverage scan — LOCAL ONLY, full toolchain)
 
@@ -38,7 +39,7 @@ Triggered when invoked with arg `scan` (or `$TRIGGER_TEXT` in `{"scan","pm-scan"
 
 1. **Enumerate epics + stories.** List `_bmad-output/epics*.md` and `_bmad-output/implementation-artifacts/stories/*.md`. Build the set of `(epic, story-id, title)`. Derive `phase` (`mvp|phase2|phase3|phase4`) from the epics catalog (`_bmad-output/epics.md` frontmatter / phase groupings).
 2. **Classify per epic, in parallel.** For EACH epic, spawn one subagent (via the Agent tool) with the **classifier prompt** below, passing it the epic id + its `(story-id, title)` list. Run them concurrently; cap concurrency to a sane number if the epic count is large.
-3. **Aggregate.** Collect every subagent's JSON, concatenate the `stories[]`, add `last_checked = <today>` to each, set top-level `generated = <iso now>` and `scan_kind = "deep"`, and write `.research/management/coverage.json`.
+3. **Aggregate.** Collect every subagent's JSON. For each subagent result, **stamp `epic` (from the result's wrapper `epic` field) onto every story in its `stories[]`** — the classifier returns `epic` at the wrapper level, but the `coverage.json` schema requires `epic` on each story. Then concatenate all stories, add `last_checked = <today>` to each, set top-level `generated = <iso now>` and `scan_kind = "deep"`, and write `.research/management/coverage.json`.
 4. **Then run default mode** (below) to produce `roadmap.md` from the fresh coverage.
 5. Note in output that `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale) is superseded by this map.
 
