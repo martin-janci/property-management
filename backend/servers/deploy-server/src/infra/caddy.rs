@@ -8,6 +8,21 @@ use tracing::{error, info, instrument, warn};
 const MAX_DELETE_ITERS: usize = 16;
 const SWEEP_DEADLINE: std::time::Duration = std::time::Duration::from_secs(15);
 
+/// UTF-8-safe byte truncation. `&s[..n]` panics if `n` falls inside a
+/// multi-byte codepoint, which would crash the error-logging path the
+/// first time Caddy ever returned a non-ASCII body at the wrong offset.
+/// Walks back to the nearest char boundary on or below `max_bytes`.
+fn truncate_utf8(s: &str, max_bytes: usize) -> &str {
+    if s.len() <= max_bytes {
+        return s;
+    }
+    let mut end = max_bytes;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    &s[..end]
+}
+
 pub struct CaddyClient {
     base: String,
     http: reqwest::Client,
@@ -106,16 +121,17 @@ impl CaddyClient {
         if !resp.status().is_success() {
             let status = resp.status();
             let body = resp.text().await.unwrap_or_default();
-            // Truncate the body in the structured log to bound centralized-log
-            // storage if Caddy ever returns a multi-KB error payload, and to
-            // limit any latent secret-disclosure surface if a future caller
-            // PATCHes interpolated values through this client (SEC-004). The
-            // caller-facing Err still carries the full body for diagnostics.
-            let log_body: &str = if body.len() > 512 {
-                &body[..512]
-            } else {
-                &body
-            };
+            // Truncate the body to bound centralized-log storage if Caddy
+            // ever returns a multi-KB error payload, and to limit any latent
+            // secret-disclosure surface if a future caller PATCHes
+            // interpolated values through this client (SEC-004). Both the
+            // structured log AND the caller-facing Err use the truncated
+            // form — Err is rendered into the HTTP response body via
+            // IntoResponse, so we want the same 512-byte bound there.
+            // `truncate_utf8` walks back to the nearest char boundary so a
+            // non-ASCII body with a multi-byte codepoint straddling offset
+            // 512 can't panic this path. The cap is 512 BYTES, not chars.
+            let log_body = truncate_utf8(&body, 512);
             // DELETE-sweep already removed any prior route for this host, so a
             // failed POST leaves the host with ZERO routes — every request to
             // it 502s until the next successful register_route. Log loudly so
@@ -128,8 +144,16 @@ impl CaddyClient {
                 body_truncated = body.len() > 512,
                 "caddy register POST failed — host now has no route"
             );
+            // SECURITY: DeployError::Internal renders into the HTTP response
+            // body via IntoResponse, so including the Caddy admin reply here
+            // exposes it to deploy-server API callers. The deploy-server
+            // endpoints are admin-only (operator-facing), and Caddy admin
+            // error bodies are typically short schema/config messages — no
+            // user data passes through. If that trust boundary ever changes,
+            // drop `log_body` from the format string and rely on the
+            // structured log above.
             return Err(crate::DeployError::Internal(format!(
-                "caddy register POST failed: {status} — {body}"
+                "caddy register POST failed: {status} — {log_body}"
             )));
         }
         Ok(())
@@ -146,6 +170,22 @@ impl CaddyClient {
     /// indefinitely. Both bounds surface as distinct `Err` variants whose
     /// messages identify the host and (for the deadline path) how many
     /// DELETEs completed before the budget expired.
+    ///
+    /// **Which bound trips first depends on per-DELETE latency** (per-request
+    /// timeout is 5s — see `new`) — and the two paths return DIFFERENT errors:
+    ///   - Fast Caddy (~10ms/req): the iter cap is the practical bound. All
+    ///     `MAX_DELETE_ITERS` DELETEs complete inside the 15s budget; the
+    ///     `for`-loop exhausts and returns the iter-count error.
+    ///   - Slow Caddy (~1s/req or worse): `SWEEP_DEADLINE` trips first. The
+    ///     `tokio::time::timeout` wrapping the loop returns the deadline
+    ///     error (with `completed_deletes = n`) without ever entering the
+    ///     exhaustion arm. `SWEEP_DEADLINE` is the load-bearing safety
+    ///     bound here; the iter count is defense in depth against a Caddy
+    ///     id-index bug that would otherwise let a fast loop spin forever.
+    ///
+    /// The two error messages are therefore precise about which bound fired:
+    /// the iter-exhaustion message asserts the full `MAX_DELETE_ITERS` ran;
+    /// the deadline-trip message reports the partial DELETE count.
     ///
     /// If the sweep removes any duplicates (iter > 1 before 404), a `warn!`
     /// is emitted so dashboards can alert on drift — duplicates appearing
@@ -176,9 +216,30 @@ impl CaddyClient {
                     return Ok(());
                 }
                 if !status.is_success() {
-                    error!(host, %status, "caddy unregister DELETE failed");
+                    // Mirror the POST-failure path in `register_route`: read
+                    // the body, truncate to 512 BYTES (not chars — see
+                    // `truncate_utf8`) to bound centralized-log storage and
+                    // limit any latent secret-disclosure surface, and
+                    // include the truncated body in both the log and the
+                    // returned Err so on-call has Caddy's actual complaint,
+                    // not just the bare HTTP status.
+                    let body = resp.text().await.unwrap_or_default();
+                    // UTF-8-safe truncation (see `truncate_utf8`): a
+                    // multi-byte codepoint straddling offset 512 would
+                    // otherwise panic the error-logging path.
+                    let log_body = truncate_utf8(&body, 512);
+                    error!(
+                        host,
+                        %status,
+                        body = %log_body,
+                        body_truncated = body.len() > 512,
+                        "caddy unregister DELETE failed",
+                    );
+                    // SECURITY: same trade-off as the register POST path
+                    // — body is echoed via IntoResponse to admin-only API
+                    // callers; Caddy admin replies are operator-facing.
                     return Err(crate::DeployError::Internal(format!(
-                        "caddy unregister: {status}"
+                        "caddy unregister: {status} — {log_body}"
                     )));
                 }
                 // 200/2xx → an entry was removed. Loop again to sweep duplicates.
@@ -188,6 +249,11 @@ impl CaddyClient {
                 max_iters = MAX_DELETE_ITERS,
                 "caddy unregister: id index appears stuck — DELETEs never returned 404",
             );
+            // The deadline-trip branch returns a SEPARATE error (see the
+            // `Err(_)` arm on the `tokio::time::timeout` below), so when
+            // this message fires the loop ran exactly MAX_DELETE_ITERS
+            // times — "after {MAX_DELETE_ITERS}" is accurate, not just
+            // an upper bound.
             Err(crate::DeployError::Internal(format!(
                 "caddy unregister: {host} still resolved after {MAX_DELETE_ITERS} DELETE iterations"
             )))
@@ -503,6 +569,12 @@ mod tests {
             err.to_string().contains("caddy register POST failed"),
             "unexpected error: {err}"
         );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
+        );
         assert_eq!(*log.lock().unwrap(), vec!["DELETE", "POST"]);
         task.abort();
     }
@@ -524,13 +596,68 @@ mod tests {
         let msg = err.to_string();
         assert!(
             msg.contains("stuck.example.com")
-                && msg.contains(&format!("{MAX_DELETE_ITERS} DELETE iterations")),
+                && msg.contains(&format!("after {MAX_DELETE_ITERS} DELETE iterations")),
             "unexpected exhaustion error: {msg}"
+        );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
         );
         assert_eq!(
             log.lock().unwrap().len(),
             MAX_DELETE_ITERS,
             "loop must run exactly MAX_DELETE_ITERS times before bailing"
+        );
+        task.abort();
+    }
+
+    /// Bespoke stub for the body-on-DELETE-failure test: returns a fixed
+    /// status + body on every DELETE. The shared `spawn_caddy_stub` returns
+    /// bare `StatusCode` (empty body), which can't exercise the new code
+    /// path that surfaces Caddy's complaint in the log + Err.
+    async fn spawn_delete_body_stub(
+        status: u16,
+        body: &'static str,
+    ) -> (std::net::SocketAddr, tokio::task::JoinHandle<()>) {
+        let app = axum::Router::new().route(
+            "/id/{*tail}",
+            axum::routing::delete(move || async move {
+                (axum::http::StatusCode::from_u16(status).unwrap(), body)
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server_task = tokio::spawn(async move {
+            axum::serve(listener, app).await.ok();
+        });
+        (addr, server_task)
+    }
+
+    #[tokio::test]
+    async fn unregister_route_delete_500_logs_body_and_returns_err() {
+        // Caddy returns 500 with an informative body on DELETE. The Err
+        // must carry the body substring (not just the bare HTTP status)
+        // so on-call sees Caddy's actual complaint without grepping the
+        // structured log. Pins the body-in-Err half of the Copilot #2 fix;
+        // the log-with-body half is verified by code review of the
+        // structured `error!` call (no tracing harness in this crate).
+        const BODY: &str = "unknown id: caddy lost its index";
+        let (addr, task) = spawn_delete_body_stub(500, BODY).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
+        let err = client
+            .unregister_route("dies.example.com")
+            .await
+            .expect_err("DELETE 500 must surface as Err");
+        let msg = err.to_string();
+        assert!(
+            msg.contains(BODY),
+            "Err must include response body for on-call diagnostics: {msg}"
+        );
+        assert!(
+            msg.contains("500"),
+            "Err must still include the HTTP status: {msg}"
         );
         task.abort();
     }
@@ -551,12 +678,33 @@ mod tests {
             msg.contains("caddy unregister") && msg.contains("500"),
             "unexpected DELETE-failure error: {msg}"
         );
+        // Pin the variant alongside the message so a future refactor to a
+        // typed CaddyError can't silently pass the substring check (ERR2-001).
+        assert!(
+            matches!(err, crate::DeployError::Internal(_)),
+            "expected DeployError::Internal, got {err:?}"
+        );
         assert_eq!(
             log.lock().unwrap().len(),
             1,
             "must bail after the first failed DELETE, not retry"
         );
         task.abort();
+    }
+
+    #[test]
+    fn truncate_utf8_never_panics_on_multibyte_boundary() {
+        // ASCII passthrough under the cap.
+        assert_eq!(truncate_utf8("abc", 512), "abc");
+        // Bare byte-slice would panic here: each 'é' is 2 bytes, so a
+        // cap of 3 lands inside the second codepoint. `truncate_utf8`
+        // walks back to byte 2 (after the first 'é').
+        assert_eq!(truncate_utf8("éé", 3), "é");
+        // 4-byte codepoint (😀 = 0xF0 0x9F 0x98 0x80) straddling the
+        // cap — must walk back to 0 rather than slice mid-codepoint.
+        assert_eq!(truncate_utf8("😀", 2), "");
+        // Cap exactly on a char boundary keeps the whole prefix.
+        assert_eq!(truncate_utf8("héllo", 3), "hé");
     }
 
     #[test]
