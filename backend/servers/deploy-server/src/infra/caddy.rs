@@ -187,9 +187,28 @@ impl CaddyClient {
                     return Ok(());
                 }
                 if !status.is_success() {
-                    error!(host, %status, "caddy unregister DELETE failed");
+                    // Mirror the POST-failure path in `register_route`: read
+                    // the body, truncate to 512 chars for the structured log
+                    // (bounds centralized-log storage and limits any latent
+                    // secret-disclosure surface), and include the (possibly
+                    // truncated) body in both the log and the returned Err
+                    // so on-call has Caddy's actual complaint, not just the
+                    // bare HTTP status.
+                    let body = resp.text().await.unwrap_or_default();
+                    let log_body: &str = if body.len() > 512 {
+                        &body[..512]
+                    } else {
+                        &body
+                    };
+                    error!(
+                        host,
+                        %status,
+                        body = %log_body,
+                        body_truncated = body.len() > 512,
+                        "caddy unregister DELETE failed",
+                    );
                     return Err(crate::DeployError::Internal(format!(
-                        "caddy unregister: {status}"
+                        "caddy unregister: {status} — {log_body}"
                     )));
                 }
                 // 200/2xx → an entry was removed. Loop again to sweep duplicates.
@@ -542,6 +561,55 @@ mod tests {
             log.lock().unwrap().len(),
             MAX_DELETE_ITERS,
             "loop must run exactly MAX_DELETE_ITERS times before bailing"
+        );
+        task.abort();
+    }
+
+    /// Bespoke stub for the body-on-DELETE-failure test: returns a fixed
+    /// status + body on every DELETE. The shared `spawn_caddy_stub` returns
+    /// bare `StatusCode` (empty body), which can't exercise the new code
+    /// path that surfaces Caddy's complaint in the log + Err.
+    async fn spawn_delete_body_stub(
+        status: u16,
+        body: &'static str,
+    ) -> (std::net::SocketAddr, tokio::task::JoinHandle<()>) {
+        let app = axum::Router::new().route(
+            "/id/{*tail}",
+            axum::routing::delete(move || async move {
+                (axum::http::StatusCode::from_u16(status).unwrap(), body)
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server_task = tokio::spawn(async move {
+            axum::serve(listener, app).await.ok();
+        });
+        (addr, server_task)
+    }
+
+    #[tokio::test]
+    async fn unregister_route_delete_500_logs_body_and_returns_err() {
+        // Caddy returns 500 with an informative body on DELETE. The Err
+        // must carry the body substring (not just the bare HTTP status)
+        // so on-call sees Caddy's actual complaint without grepping the
+        // structured log. Pins the body-in-Err half of the Copilot #2 fix;
+        // the log-with-body half is verified by code review of the
+        // structured `error!` call (no tracing harness in this crate).
+        const BODY: &str = "unknown id: caddy lost its index";
+        let (addr, task) = spawn_delete_body_stub(500, BODY).await;
+        let client = CaddyClient::new(format!("http://{addr}"));
+        let err = client
+            .unregister_route("dies.example.com")
+            .await
+            .expect_err("DELETE 500 must surface as Err");
+        let msg = err.to_string();
+        assert!(
+            msg.contains(BODY),
+            "Err must include response body for on-call diagnostics: {msg}"
+        );
+        assert!(
+            msg.contains("500"),
+            "Err must still include the HTTP status: {msg}"
         );
         task.abort();
     }
