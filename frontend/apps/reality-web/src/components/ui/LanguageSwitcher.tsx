@@ -25,19 +25,14 @@ export function LanguageSwitcher() {
   // locale and moves with Arrow keys. aria-activedescendant is set on the
   // listbox so the assistive-tech focus indicator follows it without us
   // having to move DOM focus around.
-  const [activeIndex, setActiveIndex] = useState(() =>
-    Math.max(
-      0,
-      locales.findIndex((l) => l === locale)
-    )
-  );
+  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, locales.indexOf(locale)));
   const wrapRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Re-sync the highlight to the active locale whenever it changes from
   // outside (e.g. URL-driven locale swap).
   useEffect(() => {
-    const i = locales.findIndex((l) => l === locale);
+    const i = locales.indexOf(locale);
     if (i >= 0) setActiveIndex(i);
   }, [locale]);
 

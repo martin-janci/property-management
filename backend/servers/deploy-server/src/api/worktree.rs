@@ -227,8 +227,15 @@ pub async fn open_handler(
             "frontend bridge-IP/route registration failed; cleaning up containers"
         );
         svc.docker.cleanup_containers(&started).await;
-        let _ = svc.caddy.unregister_route(&host_ppt).await;
-        let _ = svc.caddy.unregister_route(&host_reality).await;
+        // Best-effort cleanup: an `unregister_route` failure here means the
+        // route is still in Caddy pointing at the dead container we just
+        // killed. Log so on-call sees the orphan (PO2-001).
+        if let Err(unreg_err) = svc.caddy.unregister_route(&host_ppt).await {
+            tracing::warn!(host = %host_ppt, error = %unreg_err, "caddy unregister failed during open-rollback");
+        }
+        if let Err(unreg_err) = svc.caddy.unregister_route(&host_reality).await {
+            tracing::warn!(host = %host_reality, error = %unreg_err, "caddy unregister failed during open-rollback");
+        }
         return Err(e);
     }
 
@@ -451,10 +458,14 @@ pub async fn open_handler(
                     "dedicated backend bring-up failed; cleaning up all worktree containers"
                 );
                 svc.docker.cleanup_containers(&to_clean).await;
-                let _ = svc.caddy.unregister_route(&host_ppt).await;
-                let _ = svc.caddy.unregister_route(&host_reality).await;
-                let _ = svc.caddy.unregister_route(&host_api).await;
-                let _ = svc.caddy.unregister_route(&host_reality_api).await;
+                // Best-effort cleanup: log Caddy unregister failures so a
+                // dedicated-backend bring-up rollback doesn't silently
+                // orphan routes (PO2-001).
+                for h in [&host_ppt, &host_reality, &host_api, &host_reality_api] {
+                    if let Err(unreg_err) = svc.caddy.unregister_route(h).await {
+                        tracing::warn!(host = %h, error = %unreg_err, "caddy unregister failed during dedicated-backend rollback");
+                    }
+                }
                 return Err(e);
             }
             api_url = Some(format!("https://{host_api}"));
@@ -554,7 +565,13 @@ pub async fn close_handler(
         wt.urls.api.as_deref(),
     ] {
         if let Some(host) = url_opt.and_then(|u| u.strip_prefix("https://")) {
-            let _ = svc.caddy.unregister_route(host).await;
+            // Best-effort: close runs on a healthy worktree, so 404 (most
+            // common case) is already Ok. The new Err paths from caddy.rs
+            // (16-iter exhaustion, 15s deadline) are worth surfacing so
+            // operators notice a wedged Caddy admin (PO2-001).
+            if let Err(unreg_err) = svc.caddy.unregister_route(host).await {
+                tracing::warn!(host = %host, error = %unreg_err, "caddy unregister failed during worktree close");
+            }
         }
     }
     // Dedicated mode also has a reality-API route at
@@ -564,7 +581,9 @@ pub async fn close_handler(
     // mode — the route doesn't exist, unregister is a 404.
     if matches!(wt.backend_mode, BackendMode::Dedicated) {
         let host_reality_api = format!("api.wt-{}.{}", wt.name, svc.domain_dev_reality);
-        let _ = svc.caddy.unregister_route(&host_reality_api).await;
+        if let Err(unreg_err) = svc.caddy.unregister_route(&host_reality_api).await {
+            tracing::warn!(host = %host_reality_api, error = %unreg_err, "caddy unregister (reality-api) failed during worktree close");
+        }
     }
 
     // Dedicated backend: dump → drop the per-worktree Postgres DB so resume-from-dump

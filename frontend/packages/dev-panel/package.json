@@ -1,21 +1,21 @@
 {
   "name": "@ppt/dev-panel",
-  "version": "0.2.416",
+  "version": "0.2.433",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "peerDependencies": {
-    "react": "^19.2.0",
+    "react": "^19.2.6",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "react": "^19.2.0",
+    "@types/react": "^19.2.15",
+    "react": "^19.2.6",
     "typescript": "^5.4.0",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.7",
     "@testing-library/react": "^16.0.0",
-    "jsdom": "^24.0.0"
+    "jsdom": "^29.1.1"
   },
   "scripts": {
     "test": "vitest run"

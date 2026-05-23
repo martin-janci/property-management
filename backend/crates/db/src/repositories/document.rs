@@ -2628,14 +2628,12 @@ fn generate_share_token() -> String {
 
 /// Hash a password using Argon2.
 fn hash_password(password: &str) -> Result<String, SqlxError> {
-    use argon2::{
-        password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-        Argon2,
-    };
-    let salt = SaltString::generate(&mut OsRng);
+    use argon2::{password_hash::PasswordHasher, Argon2};
     let argon2 = Argon2::default();
+    // password-hash 0.6: `hash_password` generates a random salt internally
+    // (via the `getrandom` feature) — no explicit `SaltString` needed.
     argon2
-        .hash_password(password.as_bytes(), &salt)
+        .hash_password(password.as_bytes())
         .map(|h| h.to_string())
         .map_err(|e| {
             tracing::error!("Failed to hash password: {}", e);
@@ -2646,7 +2644,7 @@ fn hash_password(password: &str) -> Result<String, SqlxError> {
 /// Verify a password against a hash.
 fn verify_password(password: &str, hash: &str) -> bool {
     use argon2::{
-        password_hash::{PasswordHash, PasswordVerifier},
+        password_hash::{phc::PasswordHash, PasswordVerifier},
         Argon2,
     };
     let parsed_hash = match PasswordHash::new(hash) {

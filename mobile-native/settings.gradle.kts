@@ -1,4 +1,4 @@
-// JDK version check - AGP 8.x requires JDK 17-21 (JDK 25+ is not supported)
+// JDK version check - AGP 9.x requires JDK 17+ (JDK 25+ is not supported; range capped at 21)
 val javaVersion = System.getProperty("java.version")
 val javaMajor = javaVersion.split(".").first().toIntOrNull() ?: 0
 

@@ -8,8 +8,8 @@
 use metrics::{counter, histogram};
 use metrics_exporter_prometheus::{PrometheusBuilder, PrometheusHandle};
 use opentelemetry::trace::TracerProvider;
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::Tracer;
+use opentelemetry_otlp::{SpanExporter, WithExportConfig};
+use opentelemetry_sdk::trace::SdkTracer;
 use sentry::ClientInitGuard;
 use std::sync::OnceLock;
 use std::time::Instant;
@@ -98,7 +98,7 @@ impl Default for MetricsConfig {
 }
 
 /// Initialize OpenTelemetry tracing.
-fn init_otel_tracer(config: &OtelConfig) -> Option<Tracer> {
+fn init_otel_tracer(config: &OtelConfig) -> Option<SdkTracer> {
     if !config.enabled {
         tracing::info!("OpenTelemetry tracing disabled");
         return None;
@@ -110,11 +110,11 @@ fn init_otel_tracer(config: &OtelConfig) -> Option<Tracer> {
         endpoint
     );
 
-    // Create OTLP exporter
-    let exporter = match opentelemetry_otlp::new_exporter()
-        .tonic()
+    // Create OTLP span exporter (tonic/gRPC transport).
+    let exporter = match SpanExporter::builder()
+        .with_tonic()
         .with_endpoint(endpoint)
-        .build_span_exporter()
+        .build()
     {
         Ok(e) => e,
         Err(e) => {
@@ -123,20 +123,23 @@ fn init_otel_tracer(config: &OtelConfig) -> Option<Tracer> {
         }
     };
 
-    // Build tracer provider
-    let provider = opentelemetry_sdk::trace::TracerProvider::builder()
-        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio)
-        .with_config(opentelemetry_sdk::trace::Config::default().with_resource(
-            opentelemetry_sdk::Resource::new(vec![
-                opentelemetry::KeyValue::new("service.name", config.service_name.clone()),
-                opentelemetry::KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
-            ]),
-        ))
+    // Build the resource describing this service.
+    let resource = opentelemetry_sdk::Resource::builder()
+        .with_attributes([
+            opentelemetry::KeyValue::new("service.name", config.service_name.clone()),
+            opentelemetry::KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+        ])
+        .build();
+
+    // Build tracer provider with a batch span processor.
+    let provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+        .with_batch_exporter(exporter)
+        .with_resource(resource)
         .build();
 
     let tracer = provider.tracer(config.service_name.clone());
 
-    // Set global provider
+    // Set global provider.
     opentelemetry::global::set_tracer_provider(provider);
 
     Some(tracer)

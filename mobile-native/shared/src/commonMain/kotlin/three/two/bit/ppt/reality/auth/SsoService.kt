@@ -328,9 +328,9 @@ class SsoService {
                                 SsoUserInfo(
                                     userId = session.userId,
                                     email = session.email,
-                                    name = session.name
+                                    name = session.name,
                                 ),
-                            sessionToken = token
+                            sessionToken = token,
                         )
                     true
                 },
@@ -338,7 +338,7 @@ class SsoService {
                     sessionToken = null
                     _authState.value = AuthState.Unauthenticated
                     false
-                }
+                },
             )
     }
 }

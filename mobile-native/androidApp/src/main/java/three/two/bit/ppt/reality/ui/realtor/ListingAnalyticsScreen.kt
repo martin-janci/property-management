@@ -50,24 +50,24 @@ fun ListingAnalyticsScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* share */}) {
+                    IconButton(onClick = { /* share */ }) {
                         Icon(
                             Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share)
+                            contentDescription = stringResource(R.string.share),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
-        },
+        }
     ) { padding ->
         if (isLoading) {
             Box(
@@ -135,9 +135,7 @@ private fun MetricCard(metric: AnalyticsMetric) {
 private fun Sparkline(values: List<Int>, color: Color) {
     if (values.isEmpty()) return
     val maxVal = (values.maxOrNull()?.toFloat() ?: 1f).coerceAtLeast(1f)
-    Canvas(
-        modifier = Modifier.fillMaxWidth().height(32.dp),
-    ) {
+    Canvas(modifier = Modifier.fillMaxWidth().height(32.dp)) {
         val w = size.width
         val h = size.height
         val stepX = if (values.size > 1) w / (values.size - 1) else w
@@ -157,15 +155,8 @@ private fun Sparkline(values: List<Int>, color: Color) {
         }
         fillPath.lineTo(w, h)
         fillPath.close()
-        drawPath(
-            path = fillPath,
-            color = color.copy(alpha = 0.12f),
-        )
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(width = 2.dp.toPx()),
-        )
+        drawPath(path = fillPath, color = color.copy(alpha = 0.12f))
+        drawPath(path = path, color = color, style = Stroke(width = 2.dp.toPx()))
     }
 }
 

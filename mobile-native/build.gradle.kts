@@ -1,11 +1,14 @@
 plugins {
+    // AGP 9: Kotlin support is built into com.android.application / .library — the
+    // org.jetbrains.kotlin.android plugin is no longer declared. See
+    // https://developer.android.com/build/migrate-to-built-in-kotlin
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
-    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.compose) apply false
-    id("com.diffplug.spotless") version "6.25.0"
+    // Spotless 8.5.0+ is required for Gradle 9 support.
+    id("com.diffplug.spotless") version "8.5.1"
 }
 
 spotless {

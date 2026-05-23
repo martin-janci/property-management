@@ -59,20 +59,18 @@ fun ResetPasswordScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 colors =
                     TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
             )
-        },
+        }
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (token.isBlank()) {
                 AuthIconHero(
                     iconBg = MaterialTheme.colorScheme.errorContainer,
@@ -118,7 +116,7 @@ fun ResetPasswordScreen(
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp)
             ) {
                 Text(
                     text = stringResource(R.string.auth_reset_body),
@@ -180,10 +178,7 @@ fun ResetPasswordScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 val passwordRequiredMsg = stringResource(R.string.auth_validation_password_required)
                 val passwordTooShortMsg =
-                    stringResource(
-                        R.string.auth_validation_password_too_short,
-                        MIN_PASSWORD_LENGTH,
-                    )
+                    stringResource(R.string.auth_validation_password_too_short, MIN_PASSWORD_LENGTH)
                 val passwordMismatchMsg = stringResource(R.string.auth_validation_password_mismatch)
                 val resetFailedMsg = stringResource(R.string.auth_validation_reset_failed)
                 val networkErrorMsg = stringResource(R.string.error_network)
@@ -237,10 +232,7 @@ fun ResetPasswordScreen(
 @Composable
 private fun StrengthBars(password: String) {
     val strength = passwordStrength(password)
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         repeat(4) { idx ->
             val fillColor =
                 when {
@@ -254,7 +246,7 @@ private fun StrengthBars(password: String) {
                     Modifier.weight(1f)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(fillColor),
+                        .background(fillColor)
             )
         }
     }
