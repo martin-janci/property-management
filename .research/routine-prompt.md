@@ -321,6 +321,25 @@ VERSION
 *.lock, *.lockb
 ```
 
+**Reachability gate (dead-code filter)** — apply before finalising any signal with `score_delta >= 2` that cites a Rust file under `backend/.../handlers/`:
+
+1. **Derive the module name** from the file path:
+   - `mod.rs` inside a subdirectory: use the subdirectory name (`handlers/voting/mod.rs` → `voting`)
+   - Any other `.rs` file: use the file stem (`handlers/faults.rs` → `faults`)
+
+2. **Grep for a `mod <name>` declaration** in the parent (handlers) directory:
+   ```bash
+   grep -rn "mod voting\b" backend/servers/api-server/src/handlers/ --include="*.rs"
+   ```
+
+3. **If grep returns 0 hits** → the module is not declared from any active code path = dead code.
+   - Set `score_delta = 0` for the signal
+   - Append `"dead-code: no \`mod <name>\` declaration found — score suppressed"` to the signal's evidence
+   - Still emit the signal (visibility), but treat it like `dep-update-noise`: log in the brief, do not create or update a backlog item, do add to `state.seen_signals`
+   - Do NOT treat as a security finding, even if the TODO pattern looks security-related
+
+   *Background:* the `handlers/voting` and `handlers/faults` modules in the 2026-05-20 run held 19 of 31 `TODO: Migrate to *_rls` markers but had zero call sites — dead compilation artifacts. PR #420 deleted them. Scoring dead TODO patterns as security issues pollutes the backlog with phantom work that deletion resolves without implementation effort.
+
 **Screen-map drift detection** — for each merged PR this run, fetch its file
 list (`gh pr view <num> --json files --jq '.files[].path'`) and apply:
 
