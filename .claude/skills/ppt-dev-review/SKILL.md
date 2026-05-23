@@ -163,6 +163,24 @@ grep -rn "TODO()\|NotImplementedError" <segment-root> --include="*.kt" | grep "a
 - Integration test that mocks the very thing being tested (e.g. mocking the repository inside a repository test)
 ```
 
+### Dependency & version hygiene (all experts — apply when reviewing manifest files)
+
+This applies whenever a finding involves a dependency version (`Cargo.toml`, `package.json`, `build.gradle.kts`, `gradle.properties`).
+
+**Key rules:**
+- **Check for net-new versions first.** Before flagging a dep as outdated or suggesting a version change, look up the current latest:
+  - Rust: `gh api "https://crates.io/api/v1/crates/<name>" --jq '.crate.newest_version'`
+  - Node: `gh api "https://registry.npmjs.org/<name>/latest" --jq '.version'`
+  - Kotlin/Gradle: check Maven Central or the library's release page via `gh api` or `Read` on known version URLs
+- **Respect dependabot history.** This repo uses dependabot/Renovate for routine updates. Before suggesting any version change, check recent dep-update PRs:
+  ```bash
+  gh pr list --state merged --base dev --limit 50 \
+    --json number,title,labels --jq '[.[] | select(.labels[].name == "dependencies")]'
+  ```
+  If a dep was bumped recently by dependabot, it is already at (or near) the latest — don't re-flag it as stale.
+- **Never suggest a downgrade without evidence.** Downgrades are rare and must be justified by a specific, confirmed problem: a known regression in the newer version, a breaking API change that isn't yet fixed upstream, or a security revert where the patch version introduced a worse vulnerability. A feeling that "the old version was more stable" is not sufficient. If a downgrade seems warranted, emit the finding with `candidate_vector: "bug"` and include a concrete reference (issue URL, changelog entry, test failure) in `evidence`.
+- **Don't flag dependabot noise.** If the only finding in a manifest file is "version X.Y.Z could be X.Y.(Z+1)", that is dependabot's job, not a code-review finding. Emit findings only for: pinned versions that are several major versions behind with known CVEs, versions explicitly pinned to an old release with no comment explaining why, or `*`/`latest` wildcards in production manifests.
+
 ---
 
 ## Step 4 — Output format
