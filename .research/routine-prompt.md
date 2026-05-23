@@ -432,6 +432,21 @@ Write the full signal list to `.research/signals/<YYYY-MM-DD>.json`. Each entry 
 
 Invoke the `ppt-dev-review` skill (`.claude/skills/ppt-dev-review/SKILL.md`). The full protocol lives there — segment map, expert assignment, grep patterns, signal format, and token budget rules.
 
+**Before invoking the skill:** check that `state.review_cursor` exists in `state.json`. If the key is absent (fresh install or hand-edited state), initialize it now with all 8 segments set to `null`:
+```json
+"review_cursor": {
+  "api-handlers":      null,
+  "api-core":          null,
+  "reality-server":    null,
+  "ppt-web-ui":        null,
+  "ppt-web-core":      null,
+  "reality-web":       null,
+  "mobile-rn":         null,
+  "mobile-native-kmp": null
+}
+```
+Write this to `state.json` before proceeding, so the skill always receives a complete cursor map.
+
 Pass it:
 - `CHURN_FILES` — churn hotspot file paths from Phase 1
 - `REVIEW_CURSOR` — `state.review_cursor` from `state.json`
