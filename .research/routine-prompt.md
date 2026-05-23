@@ -207,6 +207,19 @@ Then `git add .research/`, run the **quality gates** below, commit, push to `mai
     }
   },
   "stats": { "runs": 17, "vectors_created": 9, "plans_created": 4, "quiet_days": 2, "auto_fix_count": 3 },
+  "review_cursor": {
+    // Tracks which scope segment was last reviewed and when.
+    // Phase 1.5 advances the entry for the segment it reviews this run.
+    // Null = never reviewed (highest priority for selection).
+    "api-handlers":       "2026-05-20",   // backend/api-server/src/handlers/
+    "api-core":           null,            // backend/api-server/src/ (non-handlers: middleware, models, etc.)
+    "reality-server":     null,            // backend/reality-server/src/
+    "ppt-web-ui":         null,            // frontend/ppt-web/src/pages/ + components/
+    "ppt-web-core":       null,            // frontend/ppt-web/src/ (hooks, api, stores, router)
+    "reality-web":        null,            // frontend/reality-web/src/
+    "mobile-rn":          null,            // frontend/mobile/src/
+    "mobile-native-kmp":  null             // mobile-native/
+  },
   "paused": false
 }
 ```
@@ -296,6 +309,7 @@ Then derive signals. Types and `score_delta`:
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
 | `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** updating the matching product's `docs/screens/<product>/*.md` — emit **one signal per drifting product** with id `screen-map-drift-pr-<num>-<product>` | +2 | vector=`test-gap`; flags screen docs falling behind code |
 | `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
+| `code-review-finding` | rotating expert review of a scope segment surfaced a concrete issue (bug, security flaw, missing test, architectural smell) | +1 / +2 / +3 | delta = Low(+1) / Medium(+2) / High(+3); vector = `bug` / `security` / `refactor` / `test-gap`; signal id `code-review-<segment>-<short-slug>` |
 
 **Churn exclusions** — never score these files as hotspots:
 ```
@@ -376,6 +390,26 @@ Upgrade `low` → `medium`/`high` by opening the diff *during this run*. When pr
 Write the full signal list to `.research/signals/<YYYY-MM-DD>.json`. Each entry must include `id`, `type`, `source`, `score_delta`, `evidence`, `confidence`, and `candidate_vector`. This is the audit trail.
 
 **Don't rely only on PR title/body.** When deriving a signal that names a file, *open the file or read the diff via `gh pr diff <num>`* and confirm the evidence exists. If the code doesn't back up the PR body, keep the item in backlog at low score instead of promoting later.
+
+### Phase 1.5 — Rotating Expert Review
+
+Invoke the `ppt-dev-review` skill (`.claude/skills/ppt-dev-review/SKILL.md`). The full protocol lives there — segment map, expert assignment, grep patterns, signal format, and token budget rules.
+
+Pass it:
+- `CHURN_FILES` — churn hotspot file paths from Phase 1
+- `REVIEW_CURSOR` — `state.review_cursor` from `state.json`
+
+**Skip Phase 1.5 when:**
+- `state.json` has `paused: true`
+- Phase 1 completely failed (no signals at all)
+
+The skill returns:
+- `segment_reviewed` — which segment was picked and why
+- `signals[]` — up to 3 `code-review-finding` signals to add to `signals/<today>.json`
+
+After Phase 1.5 returns: add its signals to the Phase 1 signal list and update `state.review_cursor.<segment_reviewed>` to today's ISO date.
+
+---
 
 ### Phase 2 — Decide
 
@@ -708,6 +742,13 @@ Run these and verify each passes:
 - Stalled review: #<num> — <days idle>, <author>
 - Reverted: #<num> reverted #<orig> — <hypothesis>
 - Churn hotspots: <file> (<additions+deletions> lines this run, runs_seen=<N>)
+
+## Code review slice
+- Segment reviewed: <SEGMENT> (reason: churn-aligned | oldest-unreviewed | fallback)
+- Experts: <rust | frontend | kotlin> [+ <security | completeness | tester>]
+- Findings: <N> (see Backlog deltas for `code-review-finding` signals)
+- Next segment: <SEGMENT> (oldest unreviewed after this run)
+- Skipped: <no — reviewed | yes — reason>
 
 ## Screen-map status
 - Total `docs/screens/` files: <N> (across `ppt/` + `reality/`; `mobile/` not yet seeded → 0)
