@@ -44,9 +44,9 @@
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T23:00:00Z",
       "last_updated": "2026-05-23T23:00:00Z",
-      "pr_number": null,
-      "pr_url": null,
-      "implementer_summary": "pr=TBD status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage promoted to done; cargo check -p api-server exit 0",
+      "pr_number": 440,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/440",
+      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage promoted to done; cargo check -p api-server exit 0",
       "reviewer_summary": null
     }
   ]
