@@ -8,14 +8,19 @@ name: Land research routine output on dev
 # `claude/<codename>-<suffix>`, never on dev. (Verified across ppt-research and
 # plex-sync — see ~/.claude memory `reference-claude-ai-routines`.)
 #
-# This workflow lands that output on dev automatically — but ONLY when it is
-# provably safe to do so:
-#   1. the push must be a clean fast-forward of dev (dev is an ancestor),
-#   2. the new commits must touch nothing outside `.research/`,
-#   3. every new commit subject must start with `research:`.
-# If any guard fails the job is a no-op, so unrelated `claude/*` branches
-# (manual experiments, security-audit branches, etc.) are never merged by
-# accident. No force-push ever happens — a non-fast-forward is simply skipped.
+# This workflow lands that output on dev automatically. It does NOT require a
+# fast-forward: this repo bumps the version on every push to dev, so dev almost
+# always advances during the ~20-min run. Since research commits touch only
+# `.research/` and the version-bump / feature commits never do, we can simply
+# REPLAY the research commits onto the current dev tip with zero conflicts.
+#
+# Safety guards (any failure => no-op, never a force-push):
+#   1. every new commit (merge-base..pushed) touches nothing outside .research/
+#   2. every new commit subject starts with `research:`
+# Unrelated `claude/*` branches (manual experiments, security-audit work) fail
+# guard 1 or 2 and are ignored. A cherry-pick conflict (only possible if dev's
+# own .research/ diverged, e.g. two runs racing) is treated as "skip, let the
+# next run reconcile" rather than forced.
 
 on:
   push:
@@ -23,7 +28,7 @@ on:
       - 'claude/**'
 
 concurrency:
-  # Serialize so two runs landing near-simultaneously don't race on dev.
+  # Serialize landings so two runs don't both try to move dev at once.
   group: research-land-dev
   cancel-in-progress: false
 
@@ -37,48 +42,67 @@ jobs:
       - uses: actions/checkout@v6
         with:
           # GITHUB_TOKEN can push to dev (unprotected — ruleset 11341260 covers
-          # only main + release/*). Its push intentionally does NOT re-trigger
-          # push workflows, so there is no risk of a self-loop here.
+          # only main + release/*). Its push does NOT re-trigger push workflows,
+          # so there is no self-loop. fetch-depth: 0 for full history.
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Land on dev if this is a clean .research/-only fast-forward
+      - name: Replay .research/ commits onto dev
         env:
           PUSHED_SHA: ${{ github.sha }}
           PUSHED_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git fetch origin dev
+          BASE="$(git merge-base origin/dev "$PUSHED_SHA")"
 
-          # 1. Fast-forward only: dev must be an ancestor of the pushed commit.
-          if ! git merge-base --is-ancestor origin/dev "$PUSHED_SHA"; then
-            echo "::notice::dev is not an ancestor of $PUSHED_SHA on $PUSHED_REF — not a fast-forward. Skipping."
-            exit 0
-          fi
-          if [ "$(git rev-parse origin/dev)" = "$PUSHED_SHA" ]; then
-            echo "::notice::Pushed commit already equals dev. Nothing to land."
+          if [ "$BASE" = "$PUSHED_SHA" ]; then
+            echo "::notice::$PUSHED_REF has no commits beyond dev's history. Nothing to land."
             exit 0
           fi
 
-          # 2. Scope guard: every changed path must live under .research/.
-          NON_RESEARCH="$(git diff --name-only origin/dev "$PUSHED_SHA" | grep -v '^\.research/' || true)"
+          # Guard 1 — scope: only .research/ may change.
+          NON_RESEARCH="$(git diff --name-only "$BASE" "$PUSHED_SHA" | grep -v '^\.research/' || true)"
           if [ -n "$NON_RESEARCH" ]; then
-            echo "::notice::Push touches paths outside .research/ — not a research-routine commit. Skipping."
+            echo "::notice::$PUSHED_REF changes paths outside .research/ — not a research-routine push. Skipping."
             echo "$NON_RESEARCH" | sed 's/^/  outside-scope: /'
             exit 0
           fi
 
-          # 3. Subject guard: every new commit subject must start with "research:".
-          BAD_SUBJECTS="$(git log --format=%s "origin/dev..$PUSHED_SHA" | grep -vE '^research:' || true)"
+          # Guard 2 — subjects: every new commit must be a research: commit.
+          BAD_SUBJECTS="$(git log --format=%s "$BASE..$PUSHED_SHA" | grep -vE '^research:' || true)"
           if [ -n "$BAD_SUBJECTS" ]; then
-            echo "::notice::A new commit subject does not start with 'research:' — skipping to be safe."
+            echo "::notice::$PUSHED_REF has a non-research commit subject — skipping to be safe."
             echo "$BAD_SUBJECTS" | sed 's/^/  non-research-subject: /'
             exit 0
           fi
 
-          # All guards passed — fast-forward dev to the pushed commit.
-          COUNT="$(git rev-list --count "origin/dev..$PUSHED_SHA")"
-          echo "Landing $COUNT research commit(s) on dev:"
-          git log --format='  %h %s' "origin/dev..$PUSHED_SHA"
-          git push origin "$PUSHED_SHA:refs/heads/dev"
-          echo "::notice::dev fast-forwarded to $PUSHED_SHA ($COUNT commit(s))."
+          echo "Candidate research commit(s) on $PUSHED_REF:"
+          git log --format='  %h %s' "$BASE..$PUSHED_SHA"
+
+          # Replay onto the live dev tip, retrying if another push moves dev
+          # between our fetch and our push (version bumps, feature merges).
+          for attempt in 1 2 3 4 5; do
+            git fetch origin dev
+            git checkout -B __dev_landing origin/dev
+            if ! git cherry-pick --empty=drop "$BASE..$PUSHED_SHA"; then
+              git cherry-pick --abort 2>/dev/null || true
+              echo "::warning::cherry-pick hit a conflict (dev's .research/ diverged). Skipping; the next run will reconcile."
+              exit 0
+            fi
+            if [ "$(git rev-parse __dev_landing)" = "$(git rev-parse origin/dev)" ]; then
+              echo "::notice::Replay produced no net change (idempotent rerun). Nothing to push."
+              exit 0
+            fi
+            if git push origin __dev_landing:refs/heads/dev; then
+              echo "::notice::Landed research output onto dev (attempt $attempt)."
+              exit 0
+            fi
+            echo "dev moved under us — retrying ($attempt/5)…"
+          done
+
+          echo "::error::Could not land on dev after 5 attempts (dev is unusually busy). The commit remains on $PUSHED_REF; a later run or manual fast-forward will pick it up."
+          exit 1
