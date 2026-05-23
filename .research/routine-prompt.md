@@ -305,7 +305,7 @@ Then derive signals. Types and `score_delta`:
 
 | Signal type | Trigger | Δscore | Notes |
 |---|---|---|---|
-| `unchecked-todo` | PR body has `- [ ]` after merge | +2 | warm context, name file paths |
+| `unchecked-todo` | PR body has `- [ ]` after merge | +2 (+3 if `candidate_vector` is `security` or `bug`) | warm context, name file paths; the extra +1 for security/bug reflects that an unchecked TODO in a security or correctness fix is higher risk than in a refactor or DX task |
 | `revert` | PR is a revert or title contains "Revert" | +3 | dig into original PR for root cause |
 | `stalled-review` | open PR >7 days, no reviewDecision | +1 | process signal, not a code vector |
 | `churn-hotspot` | top-3 raw churn this run | +1 | filter exclusions first (see below) |
