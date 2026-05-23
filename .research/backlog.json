@@ -177,6 +177,32 @@
       "created_at": "2026-05-20",
       "updated_at": "2026-05-23",
       "plan": null
+    },
+    {
+      "id": "refactor-dead-dup-handler-modules",
+      "title": "Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline",
+      "vector": "refactor",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "code-review api-handlers 2026-05-23"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/handlers/auth/mod.rs:217 — `pub struct AuthHandler;` (login/refresh_token/register/reset_password/etc) is declared via `pub mod auth;` but has ZERO references anywhere outside its own file (verified: grep `AuthHandler` excluding handlers/auth/ = empty)",
+        "backend/servers/api-server/src/handlers/buildings/mod.rs:326 — `pub struct BuildingHandler;` (create_building/get_building/assign_owner/etc) likewise has ZERO references outside its own file",
+        "the live /api/v1/auth/* and /api/v1/buildings/* routes reimplement this logic inline in routes/auth.rs (login at routes/auth.rs:468) and routes/buildings.rs — two parallel implementations means a security/correctness fix to the route version won't propagate to the handler version, and reviewers can be misled about which path is live",
+        "modules are still declared (`pub mod auth; pub mod buildings;` in handlers/mod.rs:9-10) so the dead code compiles and is discoverable — reachability gate not triggered (mod declarations exist); flagged as refactor, not phantom-TODO",
+        "found by rotating expert review (api-handlers segment, rust+security lenses); the handler code itself is clean (signature-verified refresh, token rotation, rate limiting, org-membership + RLS scoping) — the issue is the dead duplication, not a bug inside it"
+      ],
+      "files": [
+        "backend/servers/api-server/src/handlers/auth/mod.rs",
+        "backend/servers/api-server/src/handlers/buildings/mod.rs",
+        "backend/servers/api-server/src/handlers/mod.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
     }
   ]
 }
