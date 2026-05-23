@@ -19,7 +19,6 @@ use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-mod handlers;
 mod observability;
 mod routes;
 mod services;
