@@ -47,11 +47,13 @@ the Scrum Master in one run.)
 - `project-state.md` — regenerate from the Scrum Master output: exec summary, sprint
   progress, shipped-since-last-run, what's next (top actions w/ owner), blockers, and
   "Role focus today: <roles run>". Append a one-line per-role summary for roles that ran.
-- `action-list.json` — merge: keep existing items (update status if a PR closed them),
-  add new `next_actions` from all roles with a stable `id` (`<role>-<kebab-slug>`),
-  `owner_role`, `priority`, `dependency`, `status:"open"`, `source`. Set `.generated` = now.
+- `action-list.json` — merge: keep existing items (update `status` to `done` when a merged PR / closed issue resolved them). Add one item per role `next_action`, using this exact item schema:
+  `{"id":"<role>-<kebab-slug>", "action":"<next_actions[].action>", "owner_role":"<the role that returned it>", "priority":"<next_actions[].priority>", "dependency":"<next_actions[].dependency>", "status":"open", "deadline":null, "source":"pm-analysis <today>"}`.
+  Agents do not return `deadline` — default it to `null` (set a date only if one is explicit in the evidence). Set `.generated` = now.
 - `action-list.md` — regenerate the table from `action-list.json`.
-- `risks.json` — merge role `risks` (dedupe by slug), set `.generated` = now.
+- `risks.json` — merge role `risks`, dedupe by slug, using this exact item schema:
+  `{"id":"<role>-<kebab-slug>", "risk":"<risks[].risk>", "probability":"<risks[].probability>", "impact":"<risks[].impact>", "mitigation":"<risks[].mitigation>", "owner_role":"<the role that returned it>", "trigger":null, "status":"open"}`.
+  Agents do not return `trigger` — default it to `null` (fill it only if an early-warning sign is stated). Set `.generated` = now.
 - `decisions.md` — append any `decisions_needed` not already listed.
 - `roles/<role>.md` — overwrite with that role's returned JSON rendered as markdown,
   for each role that ran this run.
@@ -65,6 +67,7 @@ the Scrum Master in one run.)
    "shipped":["..."],"next":[{"action":"..","owner":".."}],
    "blockers":["..."],"role_focus":["pm-..."],"quiet":false}
   ```
+  Build it from the Scrum Master output by mapping its keys: `sprint`/`epics_done`/`epics_total` ← flatten `sprint_progress`; `shipped` ← `shipped_since_last_run`; `next` ← top 3 `next_actions` (`action` + `owner` = `owner_role`); `blockers` ← `blockers[].item`; `role_focus` ← the roles that ran this run.
   Set `"quiet": true` when nothing shipped AND no new/changed action AND no blocker change.
 
 ## Token budget
