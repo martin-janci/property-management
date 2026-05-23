@@ -28,6 +28,8 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 │   ├── risks.json            # risk register (machine-friendly)
 │   ├── decisions.md          # decision log (append-only)
 │   ├── stakeholders.md       # static role map
+│   ├── coverage.json         # 134-story delivery coverage map (done/partial/not-started + evidence + gaps)
+│   ├── roadmap.md            # ranked gap plan generated from coverage.json (balanced rubric)
 │   └── roles/                # per-role analysis snapshots (<role>.md overwritten each run)
 └── plans/
     ├── <slug>.md             # self-contained brief for the implementation agent
@@ -35,6 +37,8 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 ```
 
 - `management/` — Phase 1.6 delivery artifacts: `project-state.md` (dashboard), `action-list.json`/`.md`, `risks.json`, `decisions.md`, `stakeholders.md`, `roles/<role>.md`. Maintained by the `ppt-project-management` skill.
+  - `coverage.json` — 134-story delivery coverage map (done/partial/not-started + evidence + gaps), built by `/ppt-project-management scan` (local deep scan) and maintained cheaply by the daily routine.
+  - `roadmap.md` — ranked gap plan generated from `coverage.json` (balanced rubric, owner + rationale per task).
 
 In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
 level up, at the repo root). `.claude/skills/` is auto-discovered by any
