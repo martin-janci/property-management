@@ -56,5 +56,28 @@
     "plans_created": 1,
     "quiet_days": 0,
     "auto_fix_count": 0
+  },
+  "pm_cursor": {
+    "rotation": [
+      "pm-tech-lead",
+      "pm-backend",
+      "pm-frontend",
+      "pm-qa",
+      "pm-devops",
+      "pm-security",
+      "pm-data",
+      "pm-integration"
+    ],
+    "next_index": 0,
+    "role_last_run": {
+      "pm-tech-lead": null,
+      "pm-backend": null,
+      "pm-frontend": null,
+      "pm-qa": null,
+      "pm-devops": null,
+      "pm-security": null,
+      "pm-data": null,
+      "pm-integration": null
+    }
   }
 }
