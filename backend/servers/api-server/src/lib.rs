@@ -6,7 +6,6 @@
 #![allow(clippy::doc_overindented_list_items)]
 #![allow(dead_code)]
 
-pub mod handlers;
 pub mod observability;
 pub mod routes;
 pub mod services;
