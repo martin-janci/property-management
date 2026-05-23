@@ -23,7 +23,7 @@
       "pr_number": 436,
       "pr_url": "https://github.com/martin-janci/property-management/pull/436",
       "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=epic-8a marked done (3/3), handler mod refs fully cleaned, check+security+deny CI pass"
     },
     {
       "task_id": "pm-tech-lead-remove-dead-handler-modules",
