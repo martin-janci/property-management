@@ -115,8 +115,19 @@ parallel.** Subagent prompt (verbatim, substitute placeholders):
 > ```
 >
 > One issue per PR, grouping all findings — not one issue per finding.
-> If you find nothing actionable: `gh pr edit <n> --add-label post-merge-reviewed`
-> (so we don't re-review on next run).
+>
+> **ALWAYS label the PR after review, regardless of verdict** — this is what prevents the next run from re-reviewing and creating duplicate issues.
+>
+> ```bash
+> # After issue creation OR if no findings:
+> gh pr edit <n> --repo <repo> --add-label post-merge-reviewed
+> ```
+>
+> If an issue was opened, also leave a one-line breadcrumb on the PR pointing at it (so the link is visible in the PR's conversation tab):
+>
+> ```bash
+> gh pr comment <n> --repo <repo> --body "Post-merge review filed follow-up: #<issue-number>"
+> ```
 >
 > Return EXACTLY one line:
 > `pr=<n> verdict=<clean|issues> issue=<issue-number|none> findings=<count> note=<short>`
