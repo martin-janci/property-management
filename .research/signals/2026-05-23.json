@@ -1,0 +1,65 @@
+{
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f .research/briefs/2026-05-23.md && head -1 | grep '^# 2026-05-23$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state vs HEAD", "observed": "cursors advanced from null/0 to f45e2b48.../433/375", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id] | (length == (unique|length))'", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no prior seen_signals (fresh state)", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq cap+decay; all scores <=8, no open item older than 14d", "observed": "max score 4; all items created today", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "grep brief for plans/<slug>.md + 'adversarial pass:'", "observed": "rls-endpoint-regression-tests.md annotated 'adversarial pass: passed'", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "1 new plan; 15 sections; Mode: cloud-ok; Files resolve", "observed": "1 plan, all sections present, files exist on disk", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep staged diff for secrets/private hostnames (exempt baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff -q backlog.md regen", "observed": "identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "verify failed phases vs cursors", "observed": "no phases failed", "expected": "true" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present", "observed": "no prior plans (fresh)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "_archive count >= HEAD", "observed": "0 >= 0", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "diff -q IDEAS_TRIAGE.md regen", "observed": "identical (no triage rows)", "expected": "exit 0" }
+  ],
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-421",
+      "type": "hotfix-no-test",
+      "source": "PR #421",
+      "score_delta": 2,
+      "evidence": "Merged PR #421 'fix(api-server): route market_pricing, notification_preferences & reports DB lookups through RLS' changed exactly 3 production files (market_pricing.rs +62/-42, notification_preferences.rs +55/-88, reports.rs +86/-11) with no test file in the diff. It is a fix-titled PR migrating 13 endpoints to *_rls.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "risky-churn-pr-421",
+      "type": "risky-churn",
+      "source": "PR #421",
+      "score_delta": 2,
+      "evidence": "reports.rs in PR #421 added a new cross-tenant IDOR guard in all 4 report handlers (FORBIDDEN when query.organization_id != rls.tenant_id() and not super-admin) — a security-relevant behavior change shipped with no test exercising the 403 branch. notification_preferences.rs (+143 changes) was also reworked in the same untested bugfix PR.",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/deploy-server/src/infra/caddy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #431, PR #433",
+      "score_delta": 1,
+      "evidence": "caddy.rs is the top churn file this run: PR #431 (+441/-37) idempotency rewrite of register_route/unregister_route plus purge_legacy_untagged_routes, then same-day PR #433 (+162/-14) post-merge hardening (UTF-8-safe truncation, body-in-Err, variant pins). ~654 lines churned 2026-05-22..23. Well covered by 11 inline tests.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "unchecked-todo-pr-431",
+      "type": "unchecked-todo",
+      "source": "PR #431",
+      "score_delta": 2,
+      "evidence": "Merged PR #431 Test plan leaves 3 unchecked boxes: CI backend.yml `cargo test --workspace` pass; staging worktree open->close->re-open smoke verifying exactly one Caddy route per host; on-call confirmation that 'caddy: removed stale duplicate routes (drift signal)' warn events stop after one deploy cycle. These are post-merge verification items requiring a real Caddy, not code TODOs.",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "unchecked-todo-pr-395",
+      "type": "unchecked-todo",
+      "source": "PR #395",
+      "score_delta": 2,
+      "evidence": "Merged mobile PR #395 (async-storage v3: multiRemove -> removeMany in useOfflineSupport.ts) body flagged an unchecked task box. The diff includes a matching test update (offline-support.integration.test.tsx) and a type-decl update (expo-modules.d.ts). PR body not fully read this run; treat as low-confidence until verified.",
+      "confidence": "low",
+      "candidate_vector": "dx"
+    }
+  ]
+}

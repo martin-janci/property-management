@@ -1,4 +1,62 @@
 {
   "version": 1,
-  "items": []
+  "items": [
+    {
+      "id": "test-gap-rls-endpoint-regression-tests",
+      "title": "Add RLS/IDOR regression tests for endpoints migrated in PR #421",
+      "vector": "test-gap",
+      "score": 4,
+      "status": "ready",
+      "sources": ["PR #421", "Issue #160", "Issue #375"],
+      "evidence": [
+        "PR #421 migrated 13 endpoints (market_pricing, notification_preferences, reports) to *_rls with zero test files in the diff.",
+        "reports.rs gained a new cross-tenant IDOR guard (403 when organization_id != tenant_id and not super-admin) with no test covering the branch.",
+        "Issue #160 lists 'Add RLS tests for migrated endpoints' as required work for these exact modules.",
+        "Issue #375: RLS penetration suite ran broken and is title-gated, so RLS regressions are not reliably caught on main."
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/reports.rs",
+        "backend/servers/api-server/src/routes/notification_preferences.rs",
+        "backend/servers/api-server/src/routes/market_pricing.rs",
+        "backend/servers/api-server/tests/workflow_cross_tenant_idor_tests.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": "plans/rls-endpoint-regression-tests.md"
+    },
+    {
+      "id": "refactor-caddy-register-route-followup",
+      "title": "Verify caddy register_route idempotency on staging + watch infra/caddy.rs churn",
+      "vector": "refactor",
+      "score": 3,
+      "status": "open",
+      "sources": ["PR #431", "PR #433"],
+      "evidence": [
+        "caddy.rs is the top churn file this run (~654 lines across #431 and same-day hardening #433).",
+        "PR #431 leaves 3 unchecked post-merge verification items: CI cargo test --workspace pass, a staging open->close->re-open one-route-per-host smoke, and confirmation that duplicate-sweep drift-warn events stop after a deploy cycle.",
+        "not promoted: the open items are a manual staging smoke (needs a real Caddy admin) and dashboard observation, not an automatable failing-on-main test; the file's logic is already covered by 11 passing inline unit tests."
+      ],
+      "files": ["backend/servers/deploy-server/src/infra/caddy.rs"],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
+    },
+    {
+      "id": "dx-mobile-async-storage-v3-followup",
+      "title": "Verify async-storage v3 migration follow-up (PR #395 unchecked box)",
+      "vector": "dx",
+      "score": 2,
+      "status": "open",
+      "sources": ["PR #395"],
+      "evidence": [
+        "Merged mobile PR #395 (multiRemove -> removeMany) body has an unchecked task box.",
+        "Diff already includes a matching test update and an expo-modules.d.ts type-decl change; coverage appears present.",
+        "low confidence: PR body not fully reviewed this run — verify what the unchecked box refers to before acting."
+      ],
+      "files": ["frontend/apps/mobile/src/hooks/useOfflineSupport.ts"],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
+    }
+  ]
 }

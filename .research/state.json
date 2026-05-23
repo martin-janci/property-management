@@ -1,16 +1,28 @@
 {
   "version": 2,
-  "last_run_iso": null,
-  "last_run_ms": 0,
-  "last_pr_seen": 0,
-  "last_issue_seen": 0,
-  "last_commit_sha": null,
-  "hotspot_history": {},
-  "seen_signals": [],
+  "last_run_iso": "2026-05-23T14:58:00Z",
+  "last_run_ms": 1779548280000,
+  "last_pr_seen": 433,
+  "last_issue_seen": 375,
+  "last_commit_sha": "f45e2b4849e0d5e0d285906c1c71d03175b556c7",
+  "hotspot_history": {
+    "backend/servers/deploy-server/src/infra/caddy.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-23",
+      "recent_churn": 654
+    }
+  },
+  "seen_signals": [
+    "hotfix-no-test-pr-421",
+    "risky-churn-pr-421",
+    "churn-hotspot-backend/servers/deploy-server/src/infra/caddy.rs",
+    "unchecked-todo-pr-431",
+    "unchecked-todo-pr-395"
+  ],
   "stats": {
-    "runs": 0,
-    "vectors_created": 0,
-    "plans_created": 0,
+    "runs": 1,
+    "vectors_created": 3,
+    "plans_created": 1,
     "quiet_days": 0
   }
 }

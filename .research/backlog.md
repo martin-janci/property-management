@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: never (scaffold — first routine run will overwrite this)</sub>
+<sub>Last regenerated: 2026-05-23 14:58 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -13,7 +13,9 @@ picks from here.
 
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
-|       |       |        |        |         |        |
+| 4 | Add RLS/IDOR regression tests for endpoints migrated in PR #421 | test-gap | PR #421 | 2026-05-23 | ready |
+| 3 | Verify caddy register_route idempotency on staging + watch infra/caddy.rs churn | refactor | PR #431 | 2026-05-23 | open |
+| 2 | Verify async-storage v3 migration follow-up (PR #395 unchecked box) | dx | PR #395 | 2026-05-23 | open |
 
 ## Scoring rubric
 
