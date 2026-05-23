@@ -42,3 +42,13 @@ Limits: ≤6 `next_actions`, ≤5 `risks`, ≤5 `open_questions`.
 - "shipped_since_last_run": ["<PR #/title or story id moved to done>"]
 - "sprint_progress": {"sprint": "<name>", "epics_done": <n>, "epics_total": <n>}
 - "blockers": [{"item": "<epic/story>", "reason": "<why>", "owner_role": "<role>"}]
+
+## Gap-driven planning (when `coverage.json` exists)
+
+If `.research/management/coverage.json` has stories, your plan must be driven by it, not just the current sprint:
+- Treat every `partial` / `not-started` story as candidate work; finishing `partial` stories outranks starting new ones.
+- Rank with the **balanced rubric**: phase weight (mvp>phase2>phase3>phase4), dependency order (foundational infra before dependents), partial-before-not-started, risk boost (security/crash/mobile), and role capacity (spread owners). Give each ranked item a one-line rationale.
+- Your `next_actions` should be the top gap tasks (with `owner_role`), not "land the current sprint PR" unless that genuinely tops the rubric.
+- The other `pm-*` role agents contribute domain judgment to the ranking (e.g. `pm-security` boosts security gaps; `pm-tech-lead` flags dependency/infra ordering).
+
+If `coverage.json` is empty/absent, fall back to the sprint-status view and note that a `scan` is needed for full planning.
