@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# install.sh — copy the ppt-review-merged skill into ~/.claude/skills/
+# install.sh — copy the ppt-project-management skill into ~/.claude/skills/
 set -euo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TARGET_PARENT="$HOME/.claude/skills"
-TARGET="$TARGET_PARENT/ppt-review-merged"
+TARGET="$TARGET_PARENT/ppt-project-management"
 
 VERIFY="$(dirname "$SCRIPT_DIR")/_verify-skill.sh"
 if [[ -x "$VERIFY" ]]; then
-  bash "$VERIFY" "$SCRIPT_DIR" || { echo "Refusing to install ppt-review-merged: validation failed"; exit 1; }
+  bash "$VERIFY" "$SCRIPT_DIR" || { echo "Refusing to install ppt-project-management: validation failed"; exit 1; }
 fi
 
 mkdir -p "$TARGET_PARENT"
@@ -25,5 +25,5 @@ cp -r "$SCRIPT_DIR" "$TARGET"
 rm -f "$TARGET/install.sh"
 
 echo
-echo "Installed ppt-review-merged skill to: $TARGET"
+echo "Installed ppt-project-management skill to: $TARGET"
 ls -la "$TARGET"
