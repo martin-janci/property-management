@@ -1,35 +1,38 @@
-# PPT delivery state
+# PPT Project State
 
-_Generated 2026-05-23T17:45:00Z by Phase 1.6 (rotating run). Role focus today: pm-scrum-master, pm-tech-lead._
+_Generated: 2026-05-23 — produced by `/ppt-project-management scan` (deep coverage scan, role rotation skipped per scan-mode spec)._
 
 ## Executive summary
 
-Quiet delivery run: nothing merged to `dev` since PR #433. The sprint "Epic 6, 7A, 8A & 10A" is mid-flight with a growing **review backlog** (Epic 8A's 3 stories plus story 6.1 all sit in `review`) and an open **security PR #435** (10-pass auth/security fixes) awaiting a review decision. The structural theme from the tech-lead lens: Epics 6 and 8A are being built on a notification/WebSocket foundation (Epic 2B, ADR-008) that does not yet exist, so dispatch and sync slices are deferred — a sequencing decision is needed.
+- **49 stories** scanned across 13 epics. **16 done (33%) · 32 partial (65%) · 1 not-started (2%)**.
+- The codebase is further along than `sprint-status.yaml` suggests — multiple Epic 7A / Epic 80 / Epic 81 stories have shipped code that isn't reflected in the sprint tracker, but most are `partial` because the apiStatus stub flag in `docs/screens/` means web UIs render without invoking the real backend endpoints.
+- Three structural gaps drive most of the partial bucket: **(1)** apiStatus-stub frontend wiring across Epics 6 + 7A; **(2)** missing WebSocket realtime infra blocking 8a-3 + 6-5 closure; **(3)** Epic 10B backend route stubs (10b-4/5/6/7) plus missing 81-x backend pause/resume/history endpoints the frontend already calls.
 
-## Sprint progress
+## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-- **Sprint:** Epic 6, 7A, 8A & 10A — Announcements, Documents, Notifications & OAuth
-- **Epics done:** 0 / 5 in-flight
-- **Status:** 10B 3/7 done; 8A 3/3 in review; 6.1 in review; 7A & 10A entirely `ready-for-dev`
+| Epic | Tracked status | Real status (from scan) |
+|---|---|---|
+| 6 — Announcements & Communication | in-progress (1/6 done) | 6 partial, 0 done — backend done, frontend apiStatus stub |
+| 7A — Basic Document Management | in-progress (0/5 done) | 5 partial — backend merged in #6, mobile + API integration missing |
+| 8A — Basic Notification Preferences | review (0/3 done) | 2 done, 1 partial (8a-3 awaits WebSocket) |
+| 10A — OAuth Provider Foundation | in-progress (0/3 done) | 3 done — backend complete, tests + admin UI noted as gaps |
+| 10B — Platform Administration | in-progress (3/7 done) | 3 done, 4 partial (handler stubs) |
 
-## Shipped since last run
+## What's next (top 5)
 
-- _(none — no PRs merged to `dev` since #433)_
+1. **[high · pm-security]** Wire `TwoFactorAuthPage` to `/api/v1/auth/mfa/*` — add `useMfa` hooks to `@ppt/api-client` and ship 2FA end-to-end. _Why:_ security feature silently disabled (UI scaffold only).
+2. **[high · pm-backend]** Build WebSocket realtime sync infra for notification preferences (8a-3). _Why:_ blocks Epic 8A closure and unblocks direct-messaging realtime (6-5). Dependency: Epic 2B.
+3. **[high · pm-backend]** Complete frontend API integration for documents permission-based access (7a-3). _Why:_ apiStatus stub means RLS enforcement isn't user-visible.
+4. **[high · pm-frontend]** Wire login form/logout/session cleanup to `AuthContext` (79-2). _Why:_ auth plumbing missing despite context fully built.
+5. **[high · pm-frontend]** Implement mobile (RN) document upload UI with metadata (7a-1). _Why:_ mobile slice missing on a shipped backend; representative of broader mobile lag across Epic 7A.
 
-## What's next (top actions)
-
-1. **[high]** Get a review decision on PR #435 (security auth/security fixes) and merge — owner: pm-scrum-master
-2. **[high]** Complete code review of Epic 8A (8a-1/2/3, all in review) — owner: pm-scrum-master
-3. **[high]** Decide build order for Epic 2B notification infra vs. dependent Epic 6/8A slices — owner: pm-tech-lead
-4. **[high]** Remove dead duplicate AuthHandler/BuildingHandler modules to prevent security-fix divergence — owner: pm-tech-lead
-5. **[medium]** Review/merge story 6.1; split churn-hot route files; lock OAuth (10A) token design
+See `roadmap.md` for the full ranked plan (17 MVP items + Phase 2/4 follow-ups), and `action-list.json`/`action-list.md` for the top-10 in tracker form.
 
 ## Blockers
 
-- **Epic 6 (6.2–6.6)** — depends on Epic 2B notification infrastructure for publish notifications (owner: pm-tech-lead)
-- **Story 8A.2 / 8A.3** — dispatch logic + WebSocket sync deferred pending Epic 2B + WS infra (owner: pm-tech-lead)
+- **Epic 2B WebSocket infrastructure** — gating story 8a-3 (preference sync), 6-5 (DM realtime), and broader notification dispatch flows. Not started per gap-scan evidence.
+- **Sprint-status drift** — multiple stories show `ready-for-dev` despite merged PRs (7a-*, 81-*, 80-2/3). Tracker is stale; update once apiStatus is verified.
 
 ## Role focus today
 
-- **pm-scrum-master:** Review backlog (4 stories + PR #435) is the throughput bottleneck; Epic 2B sequencing needs a decision.
-- **pm-tech-lead:** Notification/WS foundation missing under Epics 6/8A; dead duplicate auth handlers and three ~4k-line churn-hot route files are accruing maintainability/security-divergence risk.
+_Scan mode — no `pm-*` role rotation executed (per skill spec, scan-mode runs only the deep coverage scan + ranking)._

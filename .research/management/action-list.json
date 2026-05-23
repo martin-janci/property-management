@@ -1,105 +1,25 @@
 {
-  "generated": "2026-05-23T17:45:00Z",
+  "generated": "2026-05-23T00:00:00Z",
   "items": [
-    {
-      "id": "pm-scrum-master-review-decision-pr-435",
-      "action": "Get a review decision on PR #435 (security auth/security fixes) and merge to dev",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-scrum-master-review-epic-8a",
-      "action": "Complete code review of Epic 8A (8a-1/8a-2/8a-3, all in review) and move to done",
-      "owner_role": "pm-scrum-master",
-      "priority": "high",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-scrum-master-review-story-6-1",
-      "action": "Review and merge story 6.1 (announcement creation/targeting)",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-scrum-master-sequence-epic-2b",
-      "action": "Sequence Epic 2B notification infrastructure ahead of Epic 6 publish + 8A.2 dispatch",
-      "owner_role": "pm-scrum-master",
-      "priority": "medium",
-      "dependency": "pm-tech-lead",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-scrum-master-land-voice-device-idor",
-      "action": "Land the security-voice-device-idor plan (ready in .research/plans/)",
-      "owner_role": "pm-scrum-master",
-      "priority": "low",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-tech-lead-decide-2b-build-order",
-      "action": "Decide build order: land Epic 2B notification infra before Epic 6 publish + 8A dispatch, or formally defer those slices",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "dependency": "pm-scrum-master",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-tech-lead-remove-dead-handler-modules",
-      "action": "Remove dead duplicate AuthHandler/BuildingHandler modules so security fixes cannot diverge between handler/route copies",
-      "owner_role": "pm-tech-lead",
-      "priority": "high",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-tech-lead-split-churn-hot-routes",
-      "action": "Split churn-hot route modules (integrations.rs, organizations.rs, documents.rs) by surface (install/oauth/sync/webhook)",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-tech-lead-define-oauth-provider-design",
-      "action": "Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup to avoid rework",
-      "owner_role": "pm-tech-lead",
-      "priority": "medium",
-      "dependency": "none",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    },
-    {
-      "id": "pm-tech-lead-confirm-websocket-infra-ownership",
-      "action": "Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed",
-      "owner_role": "pm-tech-lead",
-      "priority": "low",
-      "dependency": "pm-scrum-master",
-      "status": "open",
-      "deadline": null,
-      "source": "pm-analysis 2026-05-23"
-    }
+    {"id":"pm-scrum-master-review-decision-pr-435","action":"Get a review decision on PR #435 (security auth/security fixes) and merge to dev","owner_role":"pm-scrum-master","priority":"high","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-scrum-master-review-epic-8a","action":"Complete code review of Epic 8A (8a-1/8a-2/8a-3, all in review) and move to done","owner_role":"pm-scrum-master","priority":"high","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-scrum-master-review-story-6-1","action":"Review and merge story 6.1 (announcement creation/targeting)","owner_role":"pm-scrum-master","priority":"medium","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-scrum-master-sequence-epic-2b","action":"Sequence Epic 2B notification infrastructure ahead of Epic 6 publish + 8A.2 dispatch","owner_role":"pm-scrum-master","priority":"medium","dependency":"pm-tech-lead","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-scrum-master-land-voice-device-idor","action":"Land the security-voice-device-idor plan (ready in .research/plans/)","owner_role":"pm-scrum-master","priority":"low","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-tech-lead-decide-2b-build-order","action":"Decide build order: land Epic 2B notification infra before Epic 6 publish + 8A dispatch, or formally defer those slices","owner_role":"pm-tech-lead","priority":"high","dependency":"pm-scrum-master","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-tech-lead-remove-dead-handler-modules","action":"Remove dead duplicate AuthHandler/BuildingHandler modules so security fixes cannot diverge between handler/route copies","owner_role":"pm-tech-lead","priority":"high","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-tech-lead-split-churn-hot-routes","action":"Split churn-hot route modules (integrations.rs, organizations.rs, documents.rs) by surface (install/oauth/sync/webhook)","owner_role":"pm-tech-lead","priority":"medium","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-tech-lead-define-oauth-provider-design","action":"Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup to avoid rework","owner_role":"pm-tech-lead","priority":"medium","dependency":"none","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"pm-tech-lead-confirm-websocket-infra-ownership","action":"Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled, not implicitly assumed","owner_role":"pm-tech-lead","priority":"low","dependency":"pm-scrum-master","status":"open","deadline":null,"source":"pm-analysis 2026-05-23"},
+    {"id":"gap-9-1-mfa-frontend-integration","action":"Wire TwoFactorAuthPage to /api/v1/auth/mfa/* — add useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client and remove 'feature not exposed' scaffold (9-1 TOTP Two-Factor Authentication Setup)","owner_role":"pm-security","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-8a-3-websocket-realtime-sync","action":"Build WebSocket realtime sync infra for notification preferences and integrate with notification preference flow (8a-3 Notification Preference Sync)","owner_role":"pm-backend","priority":"high","dependency":"Epic 2B WebSocket infrastructure","status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-7a-3-frontend-api-integration","action":"Complete frontend API integration for documents permission-based access — promote screen apiStatus from partial to complete; surface RLS-aware filtering in UI (7a-3 Permission-Based Document Access)","owner_role":"pm-backend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-79-2-login-flow-wiring","action":"Wire login form, logout button, and session cleanup to AuthContext (79-2 Authentication Flow Implementation)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-7a-1-mobile-document-upload","action":"Implement mobile (React Native) document upload UI with metadata against existing backend (7a-1 Document Upload with Metadata)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-7a-5-mobile-share-ui","action":"Implement mobile document sharing UI (user/role/public link/password) — backend share workflows already exist (7a-5 Document Sharing)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-7a-4-pdf-preview","action":"Implement PDF.js client-side rendering for document preview — backend presigned URLs already wired (7a-4 Document Download & Preview)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-6-5-direct-messaging-apistatus","action":"Promote direct messaging screens (messages, message-thread, messages-new) from apiStatus: stub to integrated (6-5 Direct Messaging)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-7a-2-folder-tree-ui","action":"Build dedicated folder-tree UI page for document organization — backend supports 5-level hierarchy + circular check (7a-2 Folder Organization)","owner_role":"pm-frontend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"},
+    {"id":"gap-10b-stub-handlers","action":"Implement handler bodies for 10b-4 system announcements, 10b-5 support data access, 10b-6 user onboarding tour, 10b-7 contextual help — routes mounted but handlers are stubs","owner_role":"pm-backend","priority":"high","dependency":null,"status":"open","deadline":null,"source":"gap-scan"}
   ]
 }
