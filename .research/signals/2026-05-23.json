@@ -1,0 +1,93 @@
+{
+  "run": "2026-05-23",
+  "mode": "first-run 14-day sweep (state was null/zero)",
+  "window": "merged/closed PRs and issues since 2026-05-09; commits fc8af0a..f45e2b4",
+  "notes": [
+    "Local HEAD was fc8af0a (#343, 2026-05-19); origin/main advanced to f45e2b4 (#432, 2026-05-23). Fetched origin/main for accurate code reads.",
+    "gh CLI unavailable in this environment; PR/issue data pulled via GitHub MCP tools.",
+    "No open PRs → no stalled-review signals. Only 3 issues exist (all CLOSED) → no untriaged-issue signals.",
+    "Drift detection scoped to newly-arrived commits (#344..#432): no frontend route files (ppt-web App.tsx/routes, reality-web app) changed → 0 drift, 0 orphan signals. The large 14-day route-change list predates the local HEAD's redesign batch, which already has matching screen docs.",
+    "Churn-hotspot signals recorded + hotspot_history seeded, but NO score-1 backlog rows minted: all three top-churn files are single, well-tested intentional refactors (not instability). repeated-churn will fire next run if they churn again."
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 | grep '^# <today>$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq slurpfile prev vs HEAD state.json", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq backlog ids unique", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "no already-seen non-cumulative signal re-scored", "observed": "true (prev seen_signals empty — first run)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq score>8 cap + 14d decay", "observed": "cap true; decay N/A (no item older than 14d on first run)", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "each new plan annotated 'adversarial pass:' in brief", "observed": "rls-restore-version annotated 'passed'", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "<=2 plans; 4 metadata + 11 headings; tick; mode; files exist", "observed": "1 plan, all sections present, files resolve", "expected": "all pass" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff (baseline docs excluded)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "backlog.md table matches backlog.json", "observed": "2 rows, scores [3,2] match", "expected": "byte-identical" },
+    { "goal": "G11", "passed": true, "command": "phases-that-failed honesty", "observed": "none failed; no cursor held back", "expected": "consistent" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans still present", "observed": "0 prior plans (first run)", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "archive count now >= HEAD", "observed": "1 >= 1", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "IDEAS_TRIAGE matches triage rows in backlog.json", "observed": "0 triage rows; empty table", "expected": "byte-identical" }
+  ],
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/deploy-server/src/infra/caddy.rs",
+      "type": "churn-hotspot",
+      "source": "PR #431",
+      "score_delta": 1,
+      "evidence": "478 changes (441+/37-) in #431 making register_route truly idempotent + observability + drift signal; comprehensive new tests added in the same PR",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/notification_preferences.rs",
+      "type": "churn-hotspot",
+      "source": "PR #421",
+      "score_delta": 1,
+      "evidence": "143 changes (55+/88-) in #421 routing notification-preference DB lookups through RLS and deleting the old bearer-token helper block",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/market_pricing.rs",
+      "type": "churn-hotspot",
+      "source": "PR #421",
+      "score_delta": 1,
+      "evidence": "104 changes (62+/42-) in #421 migrating pricing handlers to find_by_id_rls + rls.release()",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "rls-migration-gap-restore-version",
+      "type": "fixme-in-merged-code",
+      "source": "PR #421 / Issue #160 / documents.rs:1631",
+      "score_delta": 3,
+      "evidence": "Verified on origin/main: documents.rs:1631 has `// TODO: Migrate restore_version to RLS pattern` over a deprecated non-RLS call while the handler already holds RlsConnection; repo deprecation note (document.rs:1873) references a restore_version_rls that does not exist; primitives find_by_id_rls (547) + create_version_rls (1505) exist to compose it",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "rls-migration-gap-remaining",
+      "type": "fixme-in-merged-code",
+      "source": "Issue #160 / budgets.rs / lease_abstraction.rs",
+      "score_delta": 2,
+      "evidence": "Verified on origin/main: budgets.rs:1060 (dashboard query) + budgets.rs:1513 (reserve transaction needs record_reserve_transaction_rls) carry migration TODOs; lease_abstraction.rs:87/716/798 carry function-level #[allow(deprecated)] needing triage. The documents/subscriptions/auth deprecated markers are deliberate public/pre-auth endpoints, not candidates.",
+      "confidence": "medium",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "closed-not-merged-pr-434",
+      "type": "closed-not-merged-pr",
+      "source": "PR #434",
+      "score_delta": 0,
+      "evidence": "feat(research): ppt-dev-review skill — rotating expert review for cloud routine, closed unmerged 2026-05-23. Maintainer research-tooling iteration; surfaced as an open question in the brief, not actioned into the backlog.",
+      "confidence": "medium",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "dep-update-noise-2026-05-21-batch",
+      "type": "dep-update-noise",
+      "source": "PRs #353,#355,#361,#381,#382,#386,#387,#396,#404,#406,#407,#410,#412,#413,#415,#416,#418,#419 (merged); #354,#384,#400,#401,#402,#403,#405,#408,#409,#411 (closed-superseded)",
+      "score_delta": 0,
+      "evidence": "Large dependabot/grouped dependency batch on 2026-05-21..22 (cargo, npm, gradle, ktor, compose) plus mobile-native toolchain upgrade #385. Superseded singletons (#405/#408/#411) were rolled into grouped bumps (#418/#419/#416). Logged, not scored.",
+      "confidence": "high",
+      "candidate_vector": "dep-update"
+    }
+  ]
+}

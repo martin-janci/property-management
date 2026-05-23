@@ -1,6 +1,6 @@
 # Backlog of vectors
 
-<sub>Last regenerated: never (scaffold — first routine run will overwrite this)</sub>
+<sub>Last regenerated: 2026-05-23 14:58 UTC by routine</sub>
 
 > **Canonical source:** `backlog.json`. This file is **regenerated** from it
 > each run — do not edit by hand. To drop, defer, or re-score a vector, edit
@@ -13,7 +13,8 @@ picks from here.
 
 | Score | Title | Vector | Source | Updated | Status |
 |-------|-------|--------|--------|---------|--------|
-|       |       |        |        |         |        |
+| 3 | Migrate document restore_version to RLS-scoped repository method | security | PR #421 | 2026-05-23 | ready |
+| 2 | Triage + migrate remaining non-RLS tenant-scoped endpoints (budgets, lease_abstraction) | security | PR #421 | 2026-05-23 | open |
 
 ## Scoring rubric
 

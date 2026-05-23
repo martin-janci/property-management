@@ -1,4 +1,50 @@
 {
   "version": 1,
-  "items": []
+  "items": [
+    {
+      "id": "security-rls-restore-version",
+      "title": "Migrate document restore_version to RLS-scoped repository method",
+      "vector": "security",
+      "score": 3,
+      "status": "ready",
+      "sources": ["PR #421", "Issue #160"],
+      "evidence": [
+        "backend/servers/api-server/src/routes/documents.rs:1631 still calls the deprecated non-RLS document_repo.restore_version under #[allow(deprecated)] with a literal `// TODO: Migrate restore_version to RLS pattern`",
+        "The handler already takes `mut rls: RlsConnection` (it calls rls.release() in the Ok branch), so the RLS connection is in scope but unused for this write",
+        "document.rs:1873 deprecation note says `Use restore_version_rls` but that method does not exist; restore_version (1879) composes find_by_id (non-RLS) x2 + create_version (non-RLS) via self.pool",
+        "RLS primitives already exist to compose the variant: find_by_id_rls (document.rs:547) and create_version_rls (document.rs:1505)",
+        "PR #421 (2026-05-22) migrated the analogous market_pricing/notification_preferences/reports handlers using the identical `*_rls(&mut **rls.conn(), ...)` pattern"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/documents.rs",
+        "backend/crates/db/src/repositories/document.rs",
+        "backend/crates/db/tests/rls_penetration_tests.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": "plans/rls-restore-version.md"
+    },
+    {
+      "id": "security-rls-migration-remaining",
+      "title": "Triage + migrate remaining non-RLS tenant-scoped endpoints (budgets, lease_abstraction)",
+      "vector": "security",
+      "score": 2,
+      "status": "open",
+      "sources": ["PR #421", "Issue #160"],
+      "evidence": [
+        "backend/servers/api-server/src/routes/budgets.rs:1060 — dashboard query left non-RLS with a comment that it needs rewriting into a combined query over the RLS-aware connection",
+        "backend/servers/api-server/src/routes/budgets.rs:1513 — reserve-transaction path needs a new record_reserve_transaction_rls(...) repo method to run its multi-query transaction under RlsConnection",
+        "backend/servers/api-server/src/routes/lease_abstraction.rs:87/716/798 — upload/validate/import_to_lease handlers carry function-level #[allow(deprecated)] with no migration TODO; need triage to confirm whether tenant-scoped or deliberately context-free",
+        "Verified on origin/main 2026-05-23: the documents.rs/subscriptions.rs/auth.rs deprecated markers are deliberate (public or pre-auth/user-level endpoints), not migration candidates",
+        "Each item is a separate unit of work; budgets reserve-transaction requires new transactional repo plumbing so it is higher-risk than the restore_version one-liner"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/budgets.rs",
+        "backend/servers/api-server/src/routes/lease_abstraction.rs"
+      ],
+      "created_at": "2026-05-23",
+      "updated_at": "2026-05-23",
+      "plan": null
+    }
+  ]
 }
