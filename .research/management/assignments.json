@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-23T22:30:00Z",
+  "generated": "2026-05-23T23:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -16,10 +16,10 @@
     {
       "task_id": "pm-scrum-master-review-epic-8a",
       "branch": "auto-impl/pm-scrum-master-review-epic-8a",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
-      "last_updated": "2026-05-23T22:23:30Z",
+      "last_updated": "2026-05-23T23:50:00Z",
       "pr_number": 436,
       "pr_url": "https://github.com/martin-janci/property-management/pull/436",
       "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
@@ -31,11 +31,23 @@
       "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T21:43:59Z",
-      "last_updated": "2026-05-23T22:35:00Z",
+      "last_updated": "2026-05-23T23:00:00Z",
       "pr_number": 437,
       "pr_url": "https://github.com/martin-janci/property-management/pull/437",
       "implementer_summary": "pr=437 status=done specialist=rust-backend note=deleted dead AuthHandler/BuildingHandler modules (2495 lines); cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=dead handler modules and all mod declarations removed cleanly; no remaining callers; cargo-deny green"
+    },
+    {
+      "task_id": "pm-scrum-master-review-story-6-1",
+      "branch": "auto-impl/pm-scrum-master-review-story-6-1",
+      "status": "review",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-23T23:00:00Z",
+      "last_updated": "2026-05-23T23:45:00Z",
+      "pr_number": 440,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/440",
+      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial→done; cargo check -p api-server exit 0",
+      "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
     }
   ]
 }
