@@ -32,6 +32,50 @@ Produces the delivery picture for the PPT project and writes it under
 
 The **Scrum Master always runs**, regardless of mode.
 
+## Mode: `scan` (deep coverage scan — LOCAL ONLY, full toolchain)
+
+Triggered when invoked with arg `scan` (or `$TRIGGER_TEXT` in `{"scan","pm-scan"}`). **Never run this mode in the cloud routine** — it spawns many subagents and greps code broadly. It rebuilds `.research/management/coverage.json`.
+
+1. **Enumerate epics + stories.** List `_bmad-output/epics*.md` and `_bmad-output/implementation-artifacts/stories/*.md`. Build the set of `(epic, story-id, title)`. Derive `phase` (`mvp|phase2|phase3|phase4`) from the epics catalog (`_bmad-output/epics.md` frontmatter / phase groupings).
+2. **Classify per epic, in parallel.** For EACH epic, spawn one subagent (via the Agent tool) with the **classifier prompt** below, passing it the epic id + its `(story-id, title)` list. Run them concurrently; cap concurrency to a sane number if the epic count is large.
+3. **Aggregate.** Collect every subagent's JSON, concatenate the `stories[]`, add `last_checked = <today>` to each, set top-level `generated = <iso now>` and `scan_kind = "deep"`, and write `.research/management/coverage.json`.
+4. **Then run default mode** (below) to produce `roadmap.md` from the fresh coverage.
+5. Note in output that `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale) is superseded by this map.
+
+### Per-epic classifier subagent prompt (use verbatim, substitute `<EPIC>` and the story list)
+
+> You classify the delivery status of the stories in ONE epic of the PPT (`property-management`) project. **Read-only — never modify files.** For each story below, determine `status` = `done | partial | not-started` with evidence, using these sources:
+> - **sprint-status** (authoritative when present): `_bmad-output/implementation-artifacts/sprint-status.yaml` → `development_status.<story-id>`.
+> - **code greps**: derive 2–4 keywords from the story title; grep `backend/servers/*/src/routes`, `backend/servers/*/src/handlers`, and `frontend/*/src` for them (filenames + symbols). Presence of a matching route/handler/component is evidence of implementation.
+> - **screen-map**: `docs/screens/` frontmatter `buildStatus` for screens whose slug matches the story.
+> - **merged PRs**: `gh pr list --state merged -R martin-janci/property-management --search "<keyword>"` or `git log --grep="<keyword>" --oneline`.
+>
+> **Classification rules:** `done` = sprint-status `done` OR (matching code present AND related screen(s) `shipped` AND a merged PR). `partial` = sprint-status `in-progress`/`review`, OR code present but a platform slice missing / a stub / no test. `not-started` = no code/screen/PR evidence AND absent or `backlog` in sprint-status. `confidence` = `high` when ≥2 signals agree, else `medium`/`low` (say why in `evidence`). Infer `owner_role` from the platform (`pm-backend` for routes/handlers, `pm-frontend` for screens/components, `pm-mobile`→use `pm-frontend`, security-sensitive→note for `pm-security`). `gaps[]` lists what's missing (empty if `done`). Read at most ~8 files; cap `evidence`/`gaps` at 4 entries each.
+>
+> Return EXACTLY this JSON and nothing after it:
+> ```json
+> {"epic":"<EPIC>","stories":[{"id":"<id>","title":"<title>","phase":"<mvp|phase2|phase3|phase4>","status":"<done|partial|not-started>","confidence":"<high|medium|low>","platform":["backend|frontend|mobile"],"owner_role":"pm-<role>","evidence":["..."],"gaps":["..."]}]}
+> ```
+
+## Default mode: rank `coverage.json` into the plan
+
+After the Scrum Master + role runs, read `.research/management/coverage.json`.
+- If `stories` is empty (never scanned), write a one-line `roadmap.md` saying "No coverage map yet — run `/ppt-project-management scan`", and skip ranking (still do the normal digest). Otherwise:
+
+1. **Candidate tasks.** Take every story with `status` in `{partial, not-started}`. Each `gaps[]` entry becomes a task `"<gap> (<story-id> <title>)"`; if `gaps` is empty, the task is `"Implement <story-id> <title>"`.
+2. **Score (balanced rubric).** For each candidate:
+   - `phase_weight`: mvp=4, phase2=3, phase3=2, phase4=1
+   - `+2` if the story is `partial` (finish-what's-started)
+   - **risk**: `+2` if `owner_role=="pm-security"` or the gap text mentions security/auth/crash/data-loss; `+1` if `platform` includes `mobile` (most-behind)
+   - **dependency**: if the story/gap is foundational infra others depend on (e.g., notification/WebSocket/auth infra), rank it above its dependents — role agents flag these; add `+1` and note the dependency.
+   - `role_capacity`: on ties, prefer spreading `owner_role` across the top-N.
+   - `priority` = `high` if score≥7, `medium` if 4–6, `low` if <4.
+3. **Write `roadmap.md`** (overwrite):
+   - `## State of the project` — `done/partial/not-started` story counts (overall + per platform), and the top 3 biggest gaps.
+   - `## Ranked plan` — grouped by phase (mvp first); each task: `- [<priority>] <action> — owner: <owner_role> — why: <one-line rationale>`.
+4. **Feed the top 10** ranked tasks into `action-list.json` (merge by id; full item schema: `{id, action, owner_role, priority, dependency, status:"open", deadline:null, source:"gap-scan"}`; `id = "gap-<story-id>-<kebab-slug>"`).
+5. **Update `project-state.md`** "What's next" to the top 5 from the roadmap (replacing the sprint-only view).
+
 ## Step 2 — Run the Scrum Master
 Spawn a subagent: "Read `.claude/agents/pm-scrum-master.md` and act as that agent.
 Phase-1 data: <MERGED_PRS/OPEN_PRS/ISSUES summary>. Return your JSON shape."
