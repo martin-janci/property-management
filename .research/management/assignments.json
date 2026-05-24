@@ -133,13 +133,13 @@
       "status": "review",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:38:00Z",
+      "last_updated": "2026-05-24T03:10:00Z",
       "status_changed_at": "2026-05-24T02:38:00Z",
       "pr_number": 445,
       "pr_url": "https://github.com/martin-janci/property-management/pull/445",
       "merged_at": null,
       "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet (user/role/building/link types, Argon2 passwords server-side, revoke flow); 6 locales; fixed stray DocumentUploadScreen re-export that broke mobile CI",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=useApi imports confirmed (apiRequest+useApiMutation+useApiQuery all present), clipboard is client-only expo-clipboard no external API, all 4 share types covered with exhaustive switch, revoke flow has finally cleanup, index.ts has no stray DocumentUploadScreen export, 34 documentShare keys consistent across all 6 locales; posted as COMMENT (self-PR restriction); CI all green"
     },
     {
       "task_id": "gap-7a-4-pdf-preview",
@@ -153,7 +153,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/446",
       "merged_at": null,
       "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client documents/hooks.ts re-exported through index chain; pdfjs worker uses new URL(import.meta.url) no CDN; IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime helper present; @tailwindcss/postcss moved to devDeps; all CI green; posted as COMMENT (self-PR restriction)",
+      "last_updated": "2026-05-24T10:00:00Z"
     }
   ]
 }
