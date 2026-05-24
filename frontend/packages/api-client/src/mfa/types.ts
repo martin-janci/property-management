@@ -1,60 +1,73 @@
 /**
  * MFA Types
  *
- * Type definitions for the Multi-Factor Authentication API (UC-14, Epic 9, Story 9.1).
- * Mirrors the backend MFA route structs in api-server/src/routes/mfa.rs.
+ * Type definitions for the Multi-Factor Authentication API (UC-14.10, Epic 9).
  */
 
 /** Response from POST /api/v1/auth/mfa/setup */
 export interface MfaSetupResponse {
-  /** The TOTP secret (only shown once, for manual QR/manual entry) */
-  secret: string;
-  /** otpauth:// URI for QR code generation */
-  qrUri: string;
-  /** Backup codes (only shown once — user must save them) */
-  backupCodes: string[];
+	/** The TOTP secret (only shown once, for manual entry) */
+	secret: string;
+	/** URI for QR code generation (otpauth:// scheme) */
+	qrUri: string;
+	/** Backup codes (only shown once, user must save them) */
+	backupCodes: string[];
 }
 
 /** Request body for POST /api/v1/auth/mfa/verify */
-export interface MfaVerifyRequest {
-  /** The 6-digit TOTP code from the authenticator app */
-  code: string;
+export interface VerifyMfaRequest {
+	/** The 6-digit TOTP code from authenticator app */
+	code: string;
 }
 
 /** Response from POST /api/v1/auth/mfa/verify */
-export interface MfaVerifyResponse {
-  message: string;
-  enabled: boolean;
+export interface VerifyMfaResponse {
+	/** Success message */
+	message: string;
+	/** Whether MFA is now enabled */
+	enabled: boolean;
 }
 
 /** Request body for POST /api/v1/auth/mfa/disable */
-export interface MfaDisableRequest {
-  /** Current TOTP code or backup code to confirm intent */
-  code: string;
+export interface DisableMfaRequest {
+	/** Current TOTP code or backup code to confirm */
+	code: string;
 }
 
 /** Response from POST /api/v1/auth/mfa/disable */
-export interface MfaDisableResponse {
-  message: string;
+export interface DisableMfaResponse {
+	/** Success message */
+	message: string;
 }
 
 /** Response from GET /api/v1/auth/mfa/status */
 export interface MfaStatusResponse {
-  enabled: boolean;
-  /** ISO-8601 timestamp when MFA was enabled, or null if disabled */
-  enabledAt: string | null;
-  backupCodesRemaining: number;
+	/** Whether MFA is enabled */
+	enabled: boolean;
+	/** ISO-8601 timestamp when MFA was enabled (if enabled) */
+	enabledAt: string | null;
+	/** Remaining backup codes count */
+	backupCodesRemaining: number;
 }
 
 /** Request body for POST /api/v1/auth/mfa/backup-codes/regenerate */
-export interface MfaRegenerateBackupCodesRequest {
-  /** Current TOTP code to authorize regeneration */
-  code: string;
+export interface RegenerateBackupCodesRequest {
+	/** Current TOTP code to authorize regeneration */
+	code: string;
 }
 
 /** Response from POST /api/v1/auth/mfa/backup-codes/regenerate */
-export interface MfaRegenerateBackupCodesResponse {
-  /** New backup codes (only shown once) */
-  backupCodes: string[];
-  message: string;
+export interface RegenerateBackupCodesResponse {
+	/** New backup codes (only shown once) */
+	backupCodes: string[];
+	/** Success message */
+	message: string;
 }
+
+export type MfaErrorCode =
+	| "ENCRYPTION_NOT_CONFIGURED"
+	| "INVALID_CODE"
+	| "MFA_ALREADY_ENABLED"
+	| "MFA_NOT_ENABLED"
+	| "MFA_NOT_SETUP"
+	| "UNKNOWN_ERROR";
