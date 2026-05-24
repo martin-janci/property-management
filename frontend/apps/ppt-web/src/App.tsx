@@ -46,6 +46,17 @@ import {
   ToastProvider,
   useToast,
 } from './components';
+import {
+  toApiSendMessageRequest,
+  toStartThreadRequest,
+  useMarkThreadRead,
+  useMessageRecipients,
+  useSendMessage,
+  useStartThread,
+  useThread,
+  useThreads,
+  useUnreadCount,
+} from './features/messaging/hooks/useMessaging';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
@@ -1409,15 +1420,39 @@ function EditAnnouncementPageRoute() {
 
 function MessagesPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const [msgQueryParams, setMsgQueryParams] = useState<{ limit: number; offset: number }>({
+    limit: 20,
+    offset: 0,
+  });
+
+  const { threads, total, isLoading: threadsLoading } = useThreads(msgQueryParams);
+  const { data: unreadData } = useUnreadCount();
+  const unreadCount = unreadData?.unreadCount ?? 0;
 
   return (
     <MessagesPage
-      threads={[]}
-      total={0}
-      unreadCount={0}
+      threads={threads}
+      total={total}
+      unreadCount={unreadCount}
+      isLoading={threadsLoading}
       onNavigateToThread={(threadId) => navigate(`/messages/${threadId}`)}
       onNavigateToCreate={() => navigate('/messages/new')}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setMsgQueryParams({
+          limit: params.pageSize ?? 20,
+          offset: ((params.page ?? 1) - 1) * (params.pageSize ?? 20),
+        });
+      }}
+      onDeleteThreads={() => {
+        // Thread deletion is not yet supported by the API
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('messaging.deleteNotSupported', 'Deleting threads is not yet supported'),
+        });
+      }}
     />
   );
 }
@@ -1425,14 +1460,38 @@ function MessagesPageRoute() {
 function NewMessagePageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  // Fetch potential recipients from neighbors.
+  // buildingId is not part of the auth token; the hook handles undefined gracefully.
+  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(undefined);
+  const startThread = useStartThread();
+
+  const handleNewMsgSubmit = async (data: import('./features/messaging').CreateThreadRequest) => {
+    if (!data.recipientIds[0]) return;
+    try {
+      const result = await startThread.mutateAsync(toStartThreadRequest(data));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('messaging.messageSent', 'Message sent'),
+      });
+      navigate(`/messages/${result.thread.id}`);
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
+  };
 
   return (
     <NewMessagePage
-      recipients={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Sent', message: 'Message sent' });
-        navigate('/messages');
-      }}
+      recipients={recipients}
+      isLoadingRecipients={isLoadingRecipients}
+      isSubmitting={startThread.isPending}
+      onSubmit={handleNewMsgSubmit}
       onCancel={() => navigate('/messages')}
     />
   );
@@ -1442,31 +1501,52 @@ function ThreadDetailPageRoute() {
   const { threadId } = useParams<{ threadId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const { thread, isLoading: threadLoading } = useThread(threadId ?? '', !!threadId);
+  const sendMessage = useSendMessage();
+  const markRead = useMarkThreadRead();
 
   if (!threadId) {
     return <div>Thread not found</div>;
   }
 
-  // Mock thread data
-  const mockThread: import('./features/messaging').ThreadWithMessages = {
-    id: threadId,
-    subject: 'Sample Thread',
-    participants: [],
-    participantCount: 2,
-    messageCount: 0,
-    messages: [],
-    unreadCount: 0,
-    lastMessageAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+  const handleThreadSendMessage = async (
+    data: import('./features/messaging').SendMessageRequest
+  ) => {
+    try {
+      await sendMessage.mutateAsync({ threadId, data: toApiSendMessageRequest(data) });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
   };
+
+  const handleThreadMarkAsRead = () => {
+    markRead.mutate(threadId);
+  };
+
+  // Show loading skeleton until thread data arrives
+  if (threadLoading || !thread) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <ThreadDetailPage
-      thread={mockThread}
+      thread={thread}
       currentUserId={user?.id ?? ''}
-      onSendMessage={() => {}}
-      onMarkAsRead={() => {}}
+      isLoading={false}
+      isSending={sendMessage.isPending}
+      onSendMessage={handleThreadSendMessage}
+      onMarkAsRead={handleThreadMarkAsRead}
       onBack={() => navigate('/messages')}
     />
   );
