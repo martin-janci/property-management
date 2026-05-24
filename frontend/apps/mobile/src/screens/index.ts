@@ -26,7 +26,6 @@ export { LeaseDetailScreen, LeasesScreen } from './leases';
 export { MessagesScreen, ThreadDetailScreen } from './messages';
 export type { Meter, MeterCommodity } from './meters';
 export { MeterDetailScreen, MeterReadingScreen, MetersScreen } from './meters';
-export type { Neighbor } from './neighbors';
 export { NeighborsScreen } from './neighbors';
 export type { NewsArticle } from './news';
 export { NewsScreen } from './news';
