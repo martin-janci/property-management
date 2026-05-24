@@ -136,7 +136,10 @@ export async function updateFolder(
   });
 }
 
-export async function deleteFolder(id: string, cascade = false): Promise<{ message: string }> {
+export async function deleteFolder(
+  id: string,
+  cascade = false
+): Promise<{ message: string }> {
   return fetchApi(`${API_BASE}/folders/${id}?cascade=${cascade}`, {
     method: 'DELETE',
   });

@@ -11,6 +11,8 @@ import type {
   GenerateSummaryRequest,
 } from './types';
 
+export type { CreateFolderRequest, UpdateFolderRequest } from './api';
+
 // Query keys
 export const documentKeys = {
   all: ['documents'] as const,
@@ -179,9 +181,7 @@ export function useUploadDocument() {
   });
 }
 
-// ── Folder management (gap-7a-2) ─────────────────────────────────────────────
-
-// Create folder
+// Create folder (gap-7a-2)
 export function useCreateFolder() {
   const queryClient = useQueryClient();
 
@@ -193,7 +193,7 @@ export function useCreateFolder() {
   });
 }
 
-// Update folder (rename / move parent)
+// Update folder (gap-7a-2)
 export function useUpdateFolder() {
   const queryClient = useQueryClient();
 
@@ -206,7 +206,7 @@ export function useUpdateFolder() {
   });
 }
 
-// Delete folder
+// Delete folder (gap-7a-2)
 export function useDeleteFolder() {
   const queryClient = useQueryClient();
 
@@ -220,7 +220,7 @@ export function useDeleteFolder() {
   });
 }
 
-// Move document to folder
+// Move document to folder (gap-7a-2)
 export function useMoveDocument() {
   const queryClient = useQueryClient();
 
