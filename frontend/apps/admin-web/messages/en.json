@@ -111,6 +111,35 @@
       "verify": "Verify",
       "verifying": "Verifying…"
     },
+    "oauthClients": {
+      "actions": {
+        "edit": "Edit",
+        "regenerateSecret": "Regenerate secret",
+        "register": "Register client",
+        "registerFirst": "Register the first client",
+        "revoke": "Revoke"
+      },
+      "description": "Manage third-party OAuth 2.0 clients that can obtain tokens on behalf of your users. Capability required: oauth_client_write.",
+      "empty": "No OAuth clients registered yet.",
+      "loadError": "Failed to load OAuth clients: {{message}}",
+      "navLabel": "OAuth Clients",
+      "revokeDialog": {
+        "body": "This will permanently deactivate client {{name}}. Active tokens issued to this client will continue to work until they expire, but no new tokens can be obtained.",
+        "confirmLabel": "Type the client name to confirm:",
+        "title": "Revoke OAuth client"
+      },
+      "title": "OAuth Clients",
+      "toast": {
+        "regenerateFailedTitle": "Regeneration failed",
+        "registeredMessage": "Save the client secret now — it won't be shown again.",
+        "registeredTitle": "Client registered",
+        "revokeFailedTitle": "Revoke failed",
+        "revokedMessage": "{{name}} has been revoked.",
+        "revokedTitle": "Client revoked",
+        "secretRegeneratedMessage": "Save the new secret now — it won't be shown again.",
+        "secretRegeneratedTitle": "Secret regenerated"
+      }
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Maintenance mode",

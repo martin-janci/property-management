@@ -92,6 +92,9 @@ export function AdminLayout() {
   const canSiteSettingsWrite = useCapability('site_settings_write');
   const canMobileConfigWrite = useCapability('mobile_config_write');
 
+  // DEVELOPER
+  const canOauthClientWrite = useCapability('oauth_client_write');
+
   return (
     <div className="admin-shell">
       <aside>
@@ -151,6 +154,15 @@ export function AdminLayout() {
             ) : null}
             {canMobileConfigWrite ? (
               <NavItem to="/platform/mobile" label={t('admin.platform.mobile', 'Mobile config')} />
+            ) : null}
+          </SidebarGroup>
+
+          <SidebarGroup label="DEVELOPER">
+            {canOauthClientWrite ? (
+              <NavItem
+                to="/identity/oauth-clients"
+                label={t('admin.oauthClients.navLabel', 'OAuth Clients')}
+              />
             ) : null}
           </SidebarGroup>
         </nav>

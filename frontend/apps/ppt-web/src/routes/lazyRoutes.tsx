@@ -65,6 +65,11 @@ export const PrivacySettingsPage = lazy(() =>
   import('../features/privacy').then((m) => ({ default: m.PrivacySettingsPage }))
 );
 
+// OAuth Grants feature (Epic 10A, Story 10A-3)
+export const OAuthGrantsPage = lazy(() =>
+  import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
+);
+
 // Error / empty / loading state surfaces
 export const NotFoundPage = lazy(() =>
   import('../features/errors').then((m) => ({ default: m.NotFoundPage }))

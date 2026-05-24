@@ -111,6 +111,35 @@
       "verify": "Ověřit",
       "verifying": "Ověřuje se…"
     },
+    "oauthClients": {
+      "actions": {
+        "edit": "Upravit",
+        "regenerateSecret": "Obnovit tajemství",
+        "register": "Registrovat klienta",
+        "registerFirst": "Registrovat prvního klienta",
+        "revoke": "Zrušit"
+      },
+      "description": "Spravujte OAuth 2.0 klienty třetích stran, kteří mohou získávat tokeny jménem vašich uživatelů. Vyžadováno oprávnění: oauth_client_write.",
+      "empty": "Zatím nejsou zaregistrováni žádní OAuth klienti.",
+      "loadError": "Nepodařilo se načíst OAuth klienty: {{message}}",
+      "navLabel": "OAuth klienti",
+      "revokeDialog": {
+        "body": "Toto trvale deaktivuje klienta {{name}}. Aktivní tokeny vydané tomuto klientovi budou fungovat až do vypršení platnosti, ale nové tokeny nelze získat.",
+        "confirmLabel": "Zadejte název klienta pro potvrzení:",
+        "title": "Zrušit OAuth klienta"
+      },
+      "title": "OAuth klienti",
+      "toast": {
+        "regenerateFailedTitle": "Obnova selhala",
+        "registeredMessage": "Uložte tajemství klienta nyní — nebude znovu zobrazeno.",
+        "registeredTitle": "Klient zaregistrován",
+        "revokeFailedTitle": "Zrušení selhalo",
+        "revokedMessage": "{{name}} byl zrušen.",
+        "revokedTitle": "Klient zrušen",
+        "secretRegeneratedMessage": "Uložte nové tajemství nyní — nebude znovu zobrazeno.",
+        "secretRegeneratedTitle": "Tajemství obnoveno"
+      }
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Režim údržby",

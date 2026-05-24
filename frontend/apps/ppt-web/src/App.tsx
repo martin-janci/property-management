@@ -118,6 +118,7 @@ import {
   NewMessagePage,
   NewsListPage,
   NotFoundPage,
+  OAuthGrantsPage,
   OutagesPage,
   PaymentManagementPage,
   PrivacySettingsPage,
@@ -507,6 +508,15 @@ function App() {
                                 />
                                 {/* Privacy settings route (Epic 63) */}
                                 <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                                {/* OAuth Grants management route (Epic 10A, Story 10A-3) */}
+                                <Route
+                                  path="/settings/oauth-grants"
+                                  element={
+                                    <ProtectedRoute>
+                                      <OAuthGrantsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
                                 {/* Dispute Resolution routes (Epic 77) */}
                                 <Route path="/disputes" element={<DisputesPageRoute />} />
                                 <Route path="/disputes/new" element={<FileDisputePageRoute />} />
