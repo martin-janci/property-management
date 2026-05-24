@@ -9,7 +9,7 @@ implementations:
     component: AnnouncementsPage
     buildStatus: planned
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile:
     component: AnnouncementsScreen
     buildStatus: shipped
@@ -112,6 +112,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-24 — agent: gap-79-1 — wired AnnouncementsPage to useAnnouncements+useDeleteAnnouncement+usePublishAnnouncement+useArchiveAnnouncement+usePinAnnouncement hooks; ppt-web.apiStatus stub→partial; auth header fix applied (Authorization: Bearer from getToken())
 
 - 2026-05-09 (later) — agent: integrated Batch D (pages/ppt-announcements.html — list now designed: 4 artboards loaded-2-selected-1-pinned/empty/loading-8/error); replaced design list-as-TBD with real list specs; updated states; attached new pages/ppt-announcements.html as primary designSource; mobile reference updated to MobAnnouncementsScreen + MobAnnouncementDetailScreen
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/announcement-detail.html — DETAIL only; list pending + ui_kits/mobile/screens.jsx for mobile list); flipped ppt-web from n/a → planned + redesignStatus in-progress (drift: route not in sitemap); flipped mobile redesignStatus → in-progress; attached 2 designSources (with note on detail-only coverage); populated functionality checklist (5 sections + 5-state pill set), states, design-specific notes; declared 4 sharedComponents; added 1 relatedScreen

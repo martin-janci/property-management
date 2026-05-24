@@ -4,22 +4,30 @@ import type {
   Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
+  FaultSummary as ApiFaultSummary,
   OutageCommodity as ApiOutageCommodity,
   OutageSeverity as ApiOutageSeverity,
   OutageStatus as ApiOutageStatus,
   OutageSummary as ApiOutageSummary,
+  FaultListQuery,
   OutageListQuery,
 } from '@ppt/api-client';
 import {
   setMfaChallengeHandler,
+  useAnnouncements,
+  useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
   useCreateDispute,
   useCreateOutage,
+  useDeleteAnnouncement,
   useDispute,
   useDisputes,
+  useFaults,
   useOutage,
   useOutages,
+  usePinAnnouncement,
+  usePublishAnnouncement,
   useResolveOutage,
   useStartOutage,
   useUpdateOutage,
@@ -1279,31 +1287,127 @@ function EditOutagePageRoute() {
 // Announcements Route Wrappers (UC-06)
 // ============================================
 
+/**
+ * Route wrapper for announcements list page (UC-06, gap-79-1).
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useAnnouncements — TanStack Query list with filter params
+ *   useDeleteAnnouncement / usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement
+ *
+ * AnnouncementSummary from @ppt/api-client matches the page's prop type
+ * directly — no type mapping required.
+ */
 function AnnouncementsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [listParams, setListParams] = useState<import('@ppt/api-client').ListAnnouncementsParams>({
+    page: 1,
+    pageSize: 10,
+  });
 
-  // Mock data for now - would use useAnnouncements hook with real API
-  const announcements: import('@ppt/api-client').AnnouncementSummary[] = [];
-  const isLoading = false;
+  const { data, isLoading, error } = useAnnouncements(listParams);
+  const deleteAnnouncement = useDeleteAnnouncement();
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcements' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcements = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.deleted', { defaultValue: 'Deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.deleteFailed', { defaultValue: 'Delete failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePublish = async (id: string) => {
+    try {
+      await publishAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.published', { defaultValue: 'Published' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.publishFailed', { defaultValue: 'Publish failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleArchive = async (id: string) => {
+    try {
+      await archiveAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'info',
+        title: t('announcements.archived', { defaultValue: 'Archived' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.archiveFailed', { defaultValue: 'Archive failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePin = async (id: string, pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id, pinned });
+      showToast({
+        type: 'info',
+        title: pinned
+          ? t('announcements.pinned', { defaultValue: 'Pinned' })
+          : t('announcements.unpinned', { defaultValue: 'Unpinned' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.pinFailed', { defaultValue: 'Pin action failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
 
   return (
     <AnnouncementsPage
       announcements={announcements}
-      total={0}
+      total={total}
       isLoading={isLoading}
       onNavigateToCreate={() => navigate('/announcements/new')}
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
       onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
-      onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
-      onPublish={(id) =>
-        showToast({ type: 'success', title: 'Published', message: `Published ${id}` })
-      }
-      onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
-      onPin={(id, pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })
-      }
-      onFilterChange={() => {}}
+      onDelete={handleDelete}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onFilterChange={(params) => setListParams({ ...listParams, ...params })}
     />
   );
 }
@@ -1556,18 +1660,111 @@ function ThreadDetailPageRoute() {
 // Faults Route Wrappers (UC-03)
 // ============================================
 
+/**
+ * Map API FaultStatus (snake_case values) → UI FaultStatus.
+ *
+ * API: 'reported' | 'triaged' | 'in_progress' | 'scheduled' | 'on_hold' | 'resolved' | 'closed' | 'reopened'
+ * UI:  'new'      | 'triaged' | 'in_progress' | 'scheduled' | 'waiting_parts' | 'resolved' | 'closed' | 'reopened'
+ */
+function mapApiFaultStatusToUi(
+  status: ApiFaultSummary['status']
+): import('./features/faults/components/FaultCard').FaultStatus {
+  const mapping: Record<
+    ApiFaultSummary['status'],
+    import('./features/faults/components/FaultCard').FaultStatus
+  > = {
+    reported: 'new',
+    triaged: 'triaged',
+    in_progress: 'in_progress',
+    scheduled: 'scheduled',
+    on_hold: 'waiting_parts',
+    resolved: 'resolved',
+    closed: 'closed',
+    reopened: 'reopened',
+  };
+  return mapping[status] ?? 'new';
+}
+
+/** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
+function transformApiFaultToUi(
+  fault: ApiFaultSummary
+): import('./features/faults/components/FaultCard').FaultSummary {
+  return {
+    id: fault.id,
+    buildingId: fault.building_id,
+    unitId: fault.unit_id,
+    title: fault.title,
+    category: fault.category,
+    priority: fault.priority ?? 'medium',
+    status: mapApiFaultStatusToUi(fault.status),
+    createdAt: fault.created_at,
+  };
+}
+
+/**
+ * Route wrapper for faults list page (UC-03, gap-79-1).
+ *
+ * Wired to useFaults from @ppt/api-client (TanStack Query).
+ * API FaultSummary uses snake_case and a slightly different status enum;
+ * transformApiFaultToUi() bridges the gap to the UI FaultCard type.
+ */
 function FaultsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
+
+  const { data, isLoading, error } = useFaults(faultQuery);
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('faults.failedToLoad', { defaultValue: 'Failed to load faults' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const faults = (data?.faults ?? []).map(transformApiFaultToUi);
+  const total = data?.count ?? 0;
 
   return (
     <FaultsPage
-      faults={[]}
-      total={0}
+      faults={faults}
+      total={total}
+      isLoading={isLoading}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setFaultQuery({
+          status: params.status
+            ? (() => {
+                const statusMap: Record<
+                  import('./features/faults/components/FaultCard').FaultStatus,
+                  ApiFaultSummary['status'] | undefined
+                > = {
+                  new: 'reported',
+                  triaged: 'triaged',
+                  in_progress: 'in_progress',
+                  waiting_parts: 'on_hold',
+                  scheduled: 'scheduled',
+                  resolved: 'resolved',
+                  closed: 'closed',
+                  reopened: 'reopened',
+                };
+                return statusMap[params.status];
+              })()
+            : undefined,
+          category: params.category,
+          priority: params.priority,
+          search: params.search,
+          page: params.page,
+          limit: params.pageSize,
+        });
+      }}
     />
   );
 }
