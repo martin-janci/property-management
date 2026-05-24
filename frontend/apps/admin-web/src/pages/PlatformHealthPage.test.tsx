@@ -109,7 +109,7 @@ function renderPage({ capabilities = [] }: WrapperOpts = {}) {
           </CapabilityProvider>
         </AdminAuthProvider>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }
 
@@ -138,9 +138,7 @@ describe('PlatformHealthPage', () => {
   it('shows error banner when dashboard endpoint fails', async () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as Response);
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByRole('alert')).toBeDefined(),
-    );
+    await waitFor(() => expect(screen.getByRole('alert')).toBeDefined());
     expect(screen.getByRole('alert').textContent).toContain('Failed to load health dashboard');
   });
 
@@ -243,7 +241,7 @@ describe('PlatformHealthPage', () => {
 
     // Panel should open
     await waitFor(() =>
-      expect(screen.getByRole('dialog', { name: /metric history/i })).toBeDefined(),
+      expect(screen.getByRole('dialog', { name: /metric history/i })).toBeDefined()
     );
 
     // Stats should render
@@ -269,7 +267,7 @@ describe('PlatformHealthPage', () => {
     await user.click(screen.getAllByText('History')[0]);
 
     await waitFor(() =>
-      expect(screen.getByRole('dialog', { name: /metric history/i })).toBeDefined(),
+      expect(screen.getByRole('dialog', { name: /metric history/i })).toBeDefined()
     );
 
     // Range buttons
