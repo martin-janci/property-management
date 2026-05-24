@@ -1037,9 +1037,9 @@
         "path": "/api/v1/announcements/:id/read",
         "description": "Mark announcement as read by current user",
         "tags": ["Announcements"],
-        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
-        "responses": [{"statusCode": 200, "description": "Marked as read"}],
-        "auth": {"required": true, "tenantContext": {"required": true}},
+        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
+        "responses": [{ "statusCode": 200, "description": "Marked as read" }],
+        "auth": { "required": true, "tenantContext": { "required": true } },
         "feature": "Epic-6"
       },
       {
@@ -1049,9 +1049,9 @@
         "path": "/api/v1/announcements/:id/acknowledge",
         "description": "Acknowledge an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
-        "responses": [{"statusCode": 200, "description": "Acknowledged"}],
-        "auth": {"required": true, "tenantContext": {"required": true}},
+        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
+        "responses": [{ "statusCode": 200, "description": "Acknowledged" }],
+        "auth": { "required": true, "tenantContext": { "required": true } },
         "feature": "Epic-6"
       },
       {
@@ -1061,9 +1061,9 @@
         "path": "/api/v1/announcements/:id/acknowledgments",
         "description": "Get acknowledgment stats for an announcement",
         "tags": ["Announcements"],
-        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
-        "responses": [{"statusCode": 200, "description": "Acknowledgment stats"}],
-        "auth": {"required": true, "tenantContext": {"required": true}},
+        "pathParams": [{ "name": "id", "type": "uuid", "required": true }],
+        "responses": [{ "statusCode": 200, "description": "Acknowledgment stats" }],
+        "auth": { "required": true, "tenantContext": { "required": true } },
         "feature": "Epic-6"
       },
       {
