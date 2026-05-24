@@ -157,6 +157,25 @@
     "emptyTitle": "Ziadne dokumenty",
     "noMatches": "Ziadne dokumenty nezodpovedaju hladaniu",
     "folderEmpty": "Tento priecinok je prazdny",
+    "searchPlaceholder": "Hladat dokumenty…",
+    "filter": {
+      "all": "Vsetky",
+      "audience": "Publikum"
+    },
+    "permissions": {
+      "title": "Opravnenia dokumentu",
+      "audience": "Publikum",
+      "status": "Stav",
+      "metadata": "Podrobnosti",
+      "category": "Kategoria",
+      "created": "Vytvorene",
+      "updated": "Naposledy aktualizovane",
+      "loadError": "Nepodarilo sa nacitat podrobnosti dokumentu",
+      "draftNote": "Tento dokument je koncept a je viditelny iba pre autora a spravcu.",
+      "archivedNote": "Tento dokument bol archivovany a uz nie je aktyvne zdielany.",
+      "rlsTitle": "Zabezpecenie na urovni riadkov",
+      "rlsBody": "Pristup k tomuto dokumentu je vynuceny serverom. Zobrazene publikum odrazaj tych, kto ho moze vidiet — toto nie je mozne obist na zariadeni."
+    },
     "preview": {
       "fetching": "Pripravujem nahled…",
       "urlReady": "Dokument je pripraveny",

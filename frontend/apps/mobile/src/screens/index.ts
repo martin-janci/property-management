@@ -13,9 +13,10 @@ export type { Building } from './buildings';
 export { BuildingsScreen } from './buildings';
 // Main screens
 export { DashboardScreen } from './dashboard';
-export type { Document, DocumentType } from './documents';
+export type { Document, DocumentStatus, DocumentType } from './documents';
 export {
   DocumentDetailScreen,
+  DocumentPermissionsScreen,
   DocumentPreviewScreen,
   DocumentsScreen,
   DocumentUploadScreen,
