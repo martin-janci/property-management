@@ -186,15 +186,15 @@
     {
       "task_id": "pm-backend-implement-81-schedule-endpoints",
       "branch": "auto-impl/pm-backend-implement-81-schedule-endpoints",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-24T04:04:19Z",
-      "last_updated": "2026-05-24T04:04:19Z",
-      "status_changed_at": "2026-05-24T04:04:19Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T05:00:00Z",
+      "status_changed_at": "2026-05-24T05:00:00Z",
+      "pr_number": 448,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/448",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints (pause/resume schedule, list/get/download/retry executions); stub repo compiles clean; Band A cargo check exit 0; CI fixes: removed premature pub mod ssrf, fixed rustfmt line-length on 2 route lines",
       "reviewer_summary": null
     }
   ]
