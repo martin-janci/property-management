@@ -43,10 +43,15 @@ impl std::fmt::Display for UrlValidationError {
             Self::InvalidFormat(e) => write!(f, "Invalid URL format: {}", e),
             Self::DisallowedScheme(s) => write!(f, "URL scheme '{}' is not allowed", s),
             Self::PlainHttpNotAllowed => {
-                write!(f, "Plain http:// URLs are not allowed in production; use https://")
+                write!(
+                    f,
+                    "Plain http:// URLs are not allowed in production; use https://"
+                )
             }
             Self::MissingHost => write!(f, "URL must have a host component"),
-            Self::BlockedHost(h) => write!(f, "Host '{}' is not permitted for outbound requests", h),
+            Self::BlockedHost(h) => {
+                write!(f, "Host '{}' is not permitted for outbound requests", h)
+            }
             Self::PrivateOrReservedIp(reason) => {
                 write!(f, "URL points to a forbidden network range: {}", reason)
             }
@@ -82,8 +87,7 @@ fn is_development() -> bool {
 /// On success returns the parsed [`Url`]. On failure returns a
 /// [`UrlValidationError`] that the caller can map to a 400/422 response.
 pub fn validate_external_url(raw: &str) -> Result<Url, UrlValidationError> {
-    let parsed =
-        Url::parse(raw).map_err(|e| UrlValidationError::InvalidFormat(e.to_string()))?;
+    let parsed = Url::parse(raw).map_err(|e| UrlValidationError::InvalidFormat(e.to_string()))?;
 
     // Scheme allowlist: only http(s).
     match parsed.scheme() {
