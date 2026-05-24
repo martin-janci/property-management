@@ -217,13 +217,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T06:11:00Z",
-      "last_updated": "2026-05-24T08:02:00Z",
+      "last_updated": "2026-05-24T08:10:00Z",
       "status_changed_at": "2026-05-24T08:02:00Z",
       "pr_number": 451,
       "pr_url": "https://github.com/martin-janci/property-management/pull/451",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct; follow-ups: (1) documents.md relatedScreens cross-ref not committed — add ppt/document-folders entry; (2) mutation catch blocks discard errors silently — wire toast.error per react-web convention"
     },
     {
       "task_id": "gap-10b-stub-handlers",
