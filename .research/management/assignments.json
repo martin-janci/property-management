@@ -119,13 +119,13 @@
       "status": "review",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:45:00Z",
+      "last_updated": "2026-05-24T02:50:00Z",
       "status_changed_at": "2026-05-24T02:45:00Z",
       "pr_number": 447,
       "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": null,
       "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; two non-blocking issues: onProgress callback is dead code (fetch has no upload progress events, bar stuck at 0%), typo in sk.json successMessage 'nahrary' should be 'nahraný'; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-7a-5-mobile-share-ui",
