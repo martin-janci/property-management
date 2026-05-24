@@ -1,23 +1,22 @@
 /**
- * Epic 10A-2 — `/admin/identity/oauth-clients` page.
+ * OAuthClientsPage — `/identity/oauth-clients`
  *
- * OAuth Client Management console for platform admins. Provides:
- *   - List all registered OAuth clients (GET /api/v1/admin/oauth/clients)
- *   - Register new client with name, description, redirect URIs, scopes,
- *     confidential flag (POST /api/v1/admin/oauth/clients)
- *   - Edit client name / description / redirect URIs / scopes / active flag
- *     (PATCH /api/v1/admin/oauth/clients/{id})
- *   - Revoke (deactivate) a client with destructive-confirm dialog
- *     (DELETE /api/v1/admin/oauth/clients/{id})
- *   - Regenerate client secret — shown plaintext exactly once
- *     (POST /api/v1/admin/oauth/clients/{id}/regenerate-secret)
+ * Admin console for managing OAuth 2.0 clients registered in the PPT
+ * Authorization Server (Epic 10A-2).
  *
- * Capability required: `oauth_client_write`
+ * Wired to:
+ *   GET    /api/v1/admin/oauth/clients           — list all clients
+ *   POST   /api/v1/admin/oauth/clients           — register new client
+ *   GET    /api/v1/admin/oauth/clients/{id}      — get single client
+ *   PATCH  /api/v1/admin/oauth/clients/{id}      — update client
+ *   DELETE /api/v1/admin/oauth/clients/{id}      — revoke client
+ *   POST   /api/v1/admin/oauth/clients/{id}/regenerate-secret
+ *
+ * All endpoints are gated by the oauth_client_write capability.
  */
 
 import {
   KNOWN_OAUTH_SCOPES,
-  type KnownOAuthScope,
   type OAuthClientSummary,
   type RegisterOAuthClientRequest,
   type UpdateOAuthClientRequest,
@@ -27,1390 +26,952 @@ import {
   useRevokeOAuthClient,
   useUpdateOAuthClient,
 } from '@ppt/api-client';
-import type React from 'react';
-import { useCallback, useId, useRef, useState } from 'react';
+import {
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { DestructiveConfirmDialog } from '../components/DestructiveConfirmDialog';
 import { useToast } from '../components/Toast';
-import { useFocusTrap } from '../components/useFocusTrap';
 
-// ---------------------------------------------------------------------------
-// Scope selector helper
-// ---------------------------------------------------------------------------
+// ============================================================
+// Utility helpers
+// ============================================================
 
-const SCOPE_DESCRIPTIONS: Record<KnownOAuthScope, string> = {
-  profile: 'Basic profile (name, avatar)',
-  email: 'Email address',
-  'org:read': 'Read-only organization data',
-  full: 'Full account access',
-};
+function formatDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
+
+async function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard) {
+    return navigator.clipboard.writeText(text);
+  }
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+}
+
+// ============================================================
+// Inline styles (injected once)
+// ============================================================
+
+const STYLE_ID = 'ppt-oauth-clients-styles';
+
+function ensureStyles() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(STYLE_ID)) return;
+  const el = document.createElement('style');
+  el.id = STYLE_ID;
+  el.textContent = `
+    .ppt-oc-page { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+    .ppt-oc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .ppt-oc-title { font-size: 22px; font-weight: 700; color: var(--ppt-fg-primary,#111827); margin: 0; }
+    .ppt-oc-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 2px dashed var(--ppt-border-default,#e5e7eb); border-radius: 12px;
+      padding: 64px 24px; gap: 16px; color: var(--ppt-fg-secondary,#6b7280);
+    }
+    .ppt-oc-empty-icon { font-size: 40px; }
+    .ppt-oc-empty-text { font-size: 15px; }
+    .ppt-oc-status { padding: 32px; text-align: center; color: var(--ppt-fg-secondary,#6b7280); }
+    .ppt-oc-retry { margin-top: 12px; }
+    .ppt-oc-list { display: flex; flex-direction: column; gap: 14px; }
+    .ppt-oc-card {
+      border: 1px solid var(--ppt-border-default,#e5e7eb);
+      border-radius: 10px; padding: 18px 20px;
+      background: var(--ppt-bg-surface,#fff);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .ppt-oc-card--revoked { opacity: 0.5; }
+    .ppt-oc-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .ppt-oc-card-info { flex: 1; min-width: 0; }
+    .ppt-oc-card-name { font-size: 15px; font-weight: 600; color: var(--ppt-fg-primary,#111827); margin: 0 0 2px; }
+    .ppt-oc-card-desc { font-size: 13px; color: var(--ppt-fg-secondary,#6b7280); margin: 0 0 6px; }
+    .ppt-oc-card-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--ppt-fg-muted,#9ca3af); }
+    .ppt-oc-client-id { font-family: var(--ppt-font-mono,monospace); font-size: 12px; }
+    .ppt-oc-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .ppt-oc-badge--active { background: #d1fae5; color: #065f46; }
+    .ppt-oc-badge--revoked { background: #fee2e2; color: #991b1b; }
+    .ppt-oc-scopes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ppt-oc-scope-chip {
+      background: var(--ppt-bg-subtle,#f3f4f6); color: var(--ppt-fg-secondary,#374151);
+      border-radius: 4px; padding: 2px 7px; font-size: 12px;
+      font-family: var(--ppt-font-mono,monospace);
+    }
+    .ppt-oc-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .ppt-oc-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: 1px solid transparent; transition: background 120ms ease;
+    }
+    .ppt-oc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ppt-oc-btn--primary { background: var(--ppt-brand-500,#3b82f6); color: #fff; border-color: var(--ppt-brand-500,#3b82f6); }
+    .ppt-oc-btn--primary:hover:not(:disabled) { background: var(--ppt-brand-600,#2563eb); }
+    .ppt-oc-btn--secondary { background: transparent; color: var(--ppt-fg-secondary,#374151); border-color: var(--ppt-border-default,#e5e7eb); }
+    .ppt-oc-btn--secondary:hover:not(:disabled) { background: var(--ppt-bg-hover,#f3f4f6); }
+    .ppt-oc-btn--danger { background: transparent; color: var(--ppt-danger-600,#dc2626); border-color: var(--ppt-danger-300,#fca5a5); }
+    .ppt-oc-btn--danger:hover:not(:disabled) { background: #fee2e2; }
+    .ppt-oc-modal-backdrop {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .ppt-oc-modal-panel {
+      max-width: 540px; width: 100%;
+      background: var(--ppt-bg-surface,#fff);
+      border-radius: 12px; padding: 28px 28px 24px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+      display: flex; flex-direction: column; gap: 18px;
+      max-height: calc(100vh - 64px); overflow-y: auto;
+    }
+    .ppt-oc-modal-title { font-size: 17px; font-weight: 700; margin: 0; color: var(--ppt-fg-primary,#111827); }
+    .ppt-oc-modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+    .ppt-oc-field { display: flex; flex-direction: column; gap: 5px; }
+    .ppt-oc-label { font-size: 13px; font-weight: 500; color: var(--ppt-fg-secondary,#374151); }
+    .ppt-oc-input, .ppt-oc-textarea {
+      width: 100%; box-sizing: border-box;
+      padding: 8px 10px; font-size: 14px;
+      border: 1px solid var(--ppt-border-default,#e5e7eb); border-radius: 7px;
+      background: var(--ppt-bg-input,#fff); color: var(--ppt-fg-primary,#111827);
+      outline: none; transition: border-color 120ms;
+    }
+    .ppt-oc-input:focus, .ppt-oc-textarea:focus { border-color: var(--ppt-brand-500,#3b82f6); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+    .ppt-oc-textarea { resize: vertical; min-height: 72px; font-family: inherit; }
+    .ppt-oc-scope-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .ppt-oc-scope-label { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; color: var(--ppt-fg-secondary,#374151); }
+    .ppt-oc-uri-list { display: flex; flex-direction: column; gap: 6px; }
+    .ppt-oc-uri-row { display: flex; gap: 6px; align-items: center; }
+    .ppt-oc-uri-input { flex: 1; }
+    .ppt-oc-uri-remove { padding: 6px 10px; font-size: 16px; line-height: 1; }
+    .ppt-oc-uri-add { align-self: flex-start; margin-top: 2px; }
+    .ppt-oc-secret-box {
+      background: var(--ppt-bg-subtle,#f3f4f6); border-radius: 7px; padding: 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .ppt-oc-secret-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ppt-fg-muted,#6b7280); }
+    .ppt-oc-secret-value { font-family: var(--ppt-font-mono,monospace); font-size: 13px; word-break: break-all; color: var(--ppt-fg-primary,#111827); }
+    .ppt-oc-secret-warning { font-size: 12px; color: var(--ppt-warning-700,#b45309); background: #fef3c7; border-radius: 5px; padding: 8px 10px; }
+    .ppt-oc-copy-btn { align-self: flex-start; font-size: 12px; padding: 4px 10px; }
+    .ppt-oc-toggle-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ppt-fg-secondary,#374151); cursor: pointer; }
+    .ppt-oc-spinner {
+      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: ppt-oc-spin 0.7s linear infinite; flex-shrink: 0; display: inline-block;
+    }
+    .ppt-oc-spinner--dark { border-color: rgba(55,65,81,0.3); border-top-color: #374151; }
+    @keyframes ppt-oc-spin { to { transform: rotate(360deg); } }
+  `;
+  document.head.appendChild(el);
+}
+
+// ============================================================
+// ScopeSelector
+// ============================================================
 
 interface ScopeSelectorProps {
-  value: string[];
+  selected: string[];
   onChange: (scopes: string[]) => void;
-  disabled?: boolean;
 }
 
-function ScopeSelector({ value, onChange, disabled }: ScopeSelectorProps) {
-  const toggle = (scope: string) => {
-    if (disabled) return;
-    if (value.includes(scope)) {
-      onChange(value.filter((s) => s !== scope));
-    } else {
-      onChange([...value, scope]);
-    }
-  };
-
+function ScopeSelector({ selected, onChange }: ScopeSelectorProps) {
+  function toggle(scope: string) {
+    onChange(selected.includes(scope) ? selected.filter((s) => s !== scope) : [...selected, scope]);
+  }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {KNOWN_OAUTH_SCOPES.map((scope) => {
-        const checked = value.includes(scope);
-        return (
-          <label
-            key={scope}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              opacity: disabled ? 0.6 : 1,
-              padding: '6px 10px',
-              borderRadius: 6,
-              border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              background: checked
-                ? 'var(--ppt-accent-soft-bg, #eff6ff)'
-                : 'var(--ppt-bg-surface, #fff)',
-              transition: 'background 120ms ease',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={() => toggle(scope)}
-              disabled={disabled}
-              style={{ width: 16, height: 16, flexShrink: 0 }}
-            />
-            <span style={{ flex: 1 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--ppt-font-mono, monospace)',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--ppt-brand-700, #1d4ed8)',
-                }}
-              >
-                {scope}
-              </span>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: 'var(--ppt-fg-muted, #6b7280)',
-                  marginLeft: 8,
-                }}
-              >
-                — {SCOPE_DESCRIPTIONS[scope]}
-              </span>
-            </span>
-          </label>
-        );
-      })}
+    <div className="ppt-oc-scope-grid">
+      {KNOWN_OAUTH_SCOPES.map((scope) => (
+        <label key={scope} className="ppt-oc-scope-label">
+          <input
+            type="checkbox"
+            checked={selected.includes(scope)}
+            onChange={() => toggle(scope)}
+          />
+          <code>{scope}</code>
+        </label>
+      ))}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Redirect URI editor
-// ---------------------------------------------------------------------------
+// ============================================================
+// RedirectUriEditor
+// ============================================================
 
 interface RedirectUriEditorProps {
-  value: string[];
+  uris: string[];
   onChange: (uris: string[]) => void;
-  disabled?: boolean;
 }
 
-function RedirectUriEditor({ value, onChange, disabled }: RedirectUriEditorProps) {
-  const [newUri, setNewUri] = useState('');
-
-  const addUri = () => {
-    const trimmed = newUri.trim();
-    if (!trimmed || value.includes(trimmed)) return;
-    onChange([...value, trimmed]);
-    setNewUri('');
-  };
-
-  const removeUri = (uri: string) => {
-    onChange(value.filter((u) => u !== uri));
-  };
-
+function RedirectUriEditor({ uris, onChange }: RedirectUriEditorProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {value.map((uri) => (
-        <div
-          key={uri}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '4px 8px',
-            borderRadius: 6,
-            background: 'var(--ppt-bg-subtle, #f3f4f6)',
-            fontSize: 12,
-            fontFamily: 'var(--ppt-font-mono, monospace)',
-          }}
-        >
-          <span style={{ flex: 1, wordBreak: 'break-all', color: 'var(--ppt-fg-primary, #111827)' }}>
-            {uri}
-          </span>
-          {!disabled && (
-            <button
-              type="button"
-              onClick={() => removeUri(uri)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--ppt-danger-600, #dc2626)',
-                fontSize: 14,
-                padding: '0 2px',
-                lineHeight: 1,
-              }}
-              aria-label={`Remove ${uri}`}
-            >
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      {!disabled && (
-        <div style={{ display: 'flex', gap: 6 }}>
+    <div className="ppt-oc-uri-list">
+      {uris.map((uri, i) => (
+        <div key={i} className="ppt-oc-uri-row">
           <input
             type="url"
-            value={newUri}
-            onChange={(e) => setNewUri(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addUri();
-              }
-            }}
+            className="ppt-oc-input ppt-oc-uri-input"
+            value={uri}
             placeholder="https://example.com/callback"
-            style={{
-              flex: 1,
-              fontSize: 12,
-              padding: '6px 8px',
-              border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              borderRadius: 6,
-              background: 'var(--ppt-bg-input, #fff)',
-              color: 'var(--ppt-fg-primary, #111827)',
-              outline: 'none',
-              fontFamily: 'var(--ppt-font-mono, monospace)',
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const next = [...uris];
+              next[i] = e.target.value;
+              onChange(next);
             }}
           />
           <button
             type="button"
-            onClick={addUri}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 500,
-              color: 'var(--ppt-fg-secondary, #374151)',
-            }}
+            className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-uri-remove"
+            onClick={() => onChange(uris.filter((_, j) => j !== i))}
+            aria-label="Remove URI"
           >
-            Add
+            &#x2715;
           </button>
         </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Form field component
-// ---------------------------------------------------------------------------
-
-interface FormFieldProps {
-  label: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
-  htmlFor?: string;
-}
-
-function FormField({ label, required, error, children, htmlFor }: FormFieldProps) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label
-        htmlFor={htmlFor}
-        style={{
-          fontSize: 13,
-          fontWeight: 500,
-          color: 'var(--ppt-fg-secondary, #374151)',
-        }}
+      ))}
+      <button
+        type="button"
+        className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-uri-add"
+        onClick={() => onChange([...uris, ''])}
       >
-        {label}
-        {required && (
-          <span
-            style={{ color: 'var(--ppt-danger-600, #dc2626)', marginLeft: 3 }}
-            aria-hidden="true"
-          >
-            *
-          </span>
-        )}
-      </label>
-      {children}
-      {error && (
-        <span style={{ fontSize: 11, color: 'var(--ppt-danger-600, #dc2626)' }}>{error}</span>
-      )}
+        + Add URI
+      </button>
     </div>
   );
 }
 
-const INPUT_STYLE: React.CSSProperties = {
-  fontSize: 13,
-  padding: '7px 10px',
-  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-  borderRadius: 8,
-  background: 'var(--ppt-bg-input, #fff)',
-  color: 'var(--ppt-fg-primary, #111827)',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
+// ============================================================
+// Modal shell
+// ============================================================
 
-// ---------------------------------------------------------------------------
-// Register client dialog
-// ---------------------------------------------------------------------------
+const FOCUSABLE_SEL =
+  'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-interface RegisterDialogState {
-  name: string;
-  description: string;
-  redirectUris: string[];
-  scopes: string[];
-  isConfidential: boolean;
-  rotateRefreshTokens: boolean;
-}
-
-const DEFAULT_REGISTER_STATE: RegisterDialogState = {
-  name: '',
-  description: '',
-  redirectUris: [],
-  scopes: ['profile'],
-  isConfidential: true,
-  rotateRefreshTokens: false,
-};
-
-interface RegisterDialogProps {
+interface ModalProps {
+  open: boolean;
+  title: string;
   onClose: () => void;
-  onSuccess: (clientId: string, clientSecret: string) => void;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+  labelledById: string;
 }
 
-function RegisterDialog({ onClose, onSuccess }: RegisterDialogProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
-  const [form, setForm] = useState<RegisterDialogState>(DEFAULT_REGISTER_STATE);
-  const [errors, setErrors] = useState<Partial<Record<keyof RegisterDialogState, string>>>({});
-  const { mutateAsync, isPending } = useRegisterOAuthClient();
+function Modal({ open, title, onClose, children, footer, labelledById }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  useFocusTrap(dialogRef, () => {
-    if (!isPending) onClose();
-  });
+  useEffect(() => {
+    if (!open || !panelRef.current) return;
+    const nodes = panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SEL);
+    if (nodes.length > 0) setTimeout(() => nodes[0].focus(), 0);
+  }, [open]);
 
-  const validate = (): boolean => {
-    const e: Partial<Record<keyof RegisterDialogState, string>> = {};
-    if (!form.name.trim()) e.name = 'Name is required';
-    if (form.redirectUris.length === 0) e.redirectUris = 'At least one redirect URI is required';
-    if (form.scopes.length === 0) e.scopes = 'At least one scope is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    const req: RegisterOAuthClientRequest = {
-      name: form.name.trim(),
-      description: form.description.trim() || undefined,
-      redirectUris: form.redirectUris,
-      scopes: form.scopes,
-      isConfidential: form.isConfidential,
-      rotateRefreshTokens: form.rotateRefreshTokens,
-    };
-    try {
-      const res = await mutateAsync(req);
-      onSuccess(res.clientId, res.clientSecret);
-    } catch {
-      // errors shown by caller toast
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Escape') {
+      onClose();
+      return;
     }
-  };
+    if (e.key !== 'Tab' || !panelRef.current) return;
+    const focusable = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SEL));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
 
-  return (
+  if (!open) return null;
+
+  return createPortal(
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 900,
-        background: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        overflow: 'auto',
+      className="ppt-oc-modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={labelledById}
+      onKeyDown={handleKeyDown}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        style={{
-          maxWidth: 560,
-          width: '100%',
-          background: 'var(--ppt-bg-surface, #fff)',
-          borderRadius: 'var(--ppt-radius-lg, 12px)',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-          boxShadow: 'var(--ppt-shadow-modal, 0 10px 40px rgba(0,0,0,0.15))',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <h2
-          id={titleId}
-          style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--ppt-fg-primary, #111827)' }}
-        >
-          Register OAuth Client
+      <div ref={panelRef} className="ppt-oc-modal-panel" onClick={(e) => e.stopPropagation()}>
+        <h2 id={labelledById} className="ppt-oc-modal-title">
+          {title}
         </h2>
+        {children}
+        <div className="ppt-oc-modal-footer">{footer}</div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
-        <FormField label="Name" required htmlFor="reg-name" error={errors.name}>
-          <input
-            id="reg-name"
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            disabled={isPending}
-            style={INPUT_STYLE}
-            placeholder="My Integration App"
-          />
-        </FormField>
+// ============================================================
+// RegisterDialog
+// ============================================================
 
-        <FormField label="Description" htmlFor="reg-desc">
-          <textarea
-            id="reg-desc"
-            value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            disabled={isPending}
-            rows={2}
-            style={{ ...INPUT_STYLE, resize: 'vertical', fontFamily: 'inherit' }}
-            placeholder="Optional description of this OAuth client"
-          />
-        </FormField>
+interface RegisterDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-        <FormField label="Redirect URIs" required error={errors.redirectUris}>
-          <RedirectUriEditor
-            value={form.redirectUris}
-            onChange={(uris) => setForm((f) => ({ ...f, redirectUris: uris }))}
-            disabled={isPending}
-          />
-        </FormField>
+function RegisterDialog({ open, onClose }: RegisterDialogProps) {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const registerMutation = useRegisterOAuthClient();
+  const titleId = useId();
 
-        <FormField label="Scopes" required error={errors.scopes}>
-          <ScopeSelector
-            value={form.scopes}
-            onChange={(scopes) => setForm((f) => ({ ...f, scopes }))}
-            disabled={isPending}
-          />
-        </FormField>
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [redirectUris, setRedirectUris] = useState<string[]>(['']);
+  const [scopes, setScopes] = useState<string[]>(['profile']);
+  const [isConfidential, setIsConfidential] = useState(true);
+  const [rotateRefreshTokens, setRotateRefreshTokens] = useState(false);
+  const [showSecret, setShowSecret] = useState<{ clientId: string; clientSecret: string } | null>(
+    null
+  );
+  const [copiedField, setCopiedField] = useState<'id' | 'secret' | null>(null);
 
-        <FormField label="Client type">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                fontSize: 13,
-                color: 'var(--ppt-fg-secondary, #374151)',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.isConfidential}
-                onChange={(e) => setForm((f) => ({ ...f, isConfidential: e.target.checked }))}
-                disabled={isPending}
-              />
-              Confidential client (server-side app, can keep a secret)
-            </label>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: isPending ? 'not-allowed' : 'pointer',
-                fontSize: 13,
-                color: 'var(--ppt-fg-secondary, #374151)',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.rotateRefreshTokens}
-                onChange={(e) => setForm((f) => ({ ...f, rotateRefreshTokens: e.target.checked }))}
-                disabled={isPending}
-              />
-              Rotate refresh tokens on use
-            </label>
-          </div>
-        </FormField>
+  function reset() {
+    setName('');
+    setDescription('');
+    setRedirectUris(['']);
+    setScopes(['profile']);
+    setIsConfidential(true);
+    setRotateRefreshTokens(false);
+    setShowSecret(null);
+    setCopiedField(null);
+  }
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
+  function handleClose() {
+    reset();
+    onClose();
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const req: RegisterOAuthClientRequest = {
+      name: name.trim(),
+      description: description.trim() || undefined,
+      redirectUris: redirectUris.filter((u) => u.trim().length > 0),
+      scopes,
+      isConfidential,
+      rotateRefreshTokens,
+    };
+    try {
+      const res = await registerMutation.mutateAsync(req);
+      setShowSecret({ clientId: res.clientId, clientSecret: res.clientSecret });
+      showToast({
+        type: 'success',
+        title: t('admin.oauthClients.toast.registerSuccess'),
+        duration: 4000,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('admin.oauthClients.toast.registerError'),
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  async function handleCopy(field: 'id' | 'secret', value: string) {
+    await copyToClipboard(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  if (showSecret) {
+    return (
+      <Modal
+        open={open}
+        title={t('admin.oauthClients.actions.register')}
+        onClose={handleClose}
+        labelledById={titleId}
+        footer={
+          <button type="button" className="ppt-oc-btn ppt-oc-btn--primary" onClick={handleClose}>
+            Done
+          </button>
+        }
+      >
+        <p style={{ fontSize: 13, color: 'var(--ppt-fg-secondary,#374151)', margin: 0 }}>
+          {t('admin.oauthClients.toast.registerSuccess')}
+        </p>
+        <div className="ppt-oc-secret-warning">
+          Copy the client secret now — it will not be shown again.
+        </div>
+        <div className="ppt-oc-secret-box">
+          <span className="ppt-oc-secret-label">Client ID</span>
+          <span className="ppt-oc-secret-value">{showSecret.clientId}</span>
           <button
             type="button"
-            onClick={onClose}
-            disabled={isPending}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-            }}
+            className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-copy-btn"
+            onClick={() => handleCopy('id', showSecret.clientId)}
+          >
+            {copiedField === 'id' ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+        <div className="ppt-oc-secret-box">
+          <span className="ppt-oc-secret-label">Client Secret</span>
+          <span className="ppt-oc-secret-value">{showSecret.clientSecret}</span>
+          <button
+            type="button"
+            className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-copy-btn"
+            onClick={() => handleCopy('secret', showSecret.clientSecret)}
+          >
+            {copiedField === 'secret' ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={t('admin.oauthClients.actions.register')}
+      onClose={handleClose}
+      labelledById={titleId}
+      footer={
+        <>
+          <button
+            type="button"
+            className="ppt-oc-btn ppt-oc-btn--secondary"
+            onClick={handleClose}
+            disabled={registerMutation.isPending}
           >
             Cancel
           </button>
           <button
-            type="button"
-            onClick={() => {
-              void handleSubmit();
-            }}
-            disabled={isPending}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--ppt-brand-600, #2563eb)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              opacity: isPending ? 0.6 : 1,
-            }}
+            type="submit"
+            form="register-oauth-form"
+            className="ppt-oc-btn ppt-oc-btn--primary"
+            disabled={registerMutation.isPending || !name.trim()}
           >
-            {isPending ? 'Registering…' : 'Register client'}
+            {registerMutation.isPending && <span className="ppt-oc-spinner" aria-hidden="true" />}
+            Register
           </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// New secret display dialog (shown once after register / regenerate)
-// ---------------------------------------------------------------------------
-
-interface SecretDisplayDialogProps {
-  clientId: string;
-  clientSecret: string;
-  onClose: () => void;
-  title?: string;
-}
-
-function SecretDisplayDialog({
-  clientId,
-  clientSecret,
-  onClose,
-  title = 'Client registered',
-}: SecretDisplayDialogProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
-  const [copied, setCopied] = useState<'id' | 'secret' | null>(null);
-
-  useFocusTrap(dialogRef, () => {
-    onClose();
-  });
-
-  const copy = (text: string, field: 'id' | 'secret') => {
-    void navigator.clipboard.writeText(text).then(() => {
-      setCopied(field);
-      setTimeout(() => setCopied(null), 2000);
-    });
-  };
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 950,
-        background: 'rgba(0,0,0,0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
+        </>
+      }
     >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        style={{
-          maxWidth: 520,
-          width: '100%',
-          background: 'var(--ppt-bg-surface, #fff)',
-          borderRadius: 'var(--ppt-radius-lg, 12px)',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-          boxShadow: 'var(--ppt-shadow-modal, 0 10px 40px rgba(0,0,0,0.15))',
-        }}
+      <form
+        id="register-oauth-form"
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
       >
-        <h2
-          id={titleId}
-          style={{
-            margin: 0,
-            fontSize: 16,
-            fontWeight: 600,
-            color: 'var(--ppt-fg-primary, #111827)',
-          }}
-        >
-          {title}
-        </h2>
-
-        <div
-          style={{
-            padding: '12px 14px',
-            background: 'var(--ppt-warning-50, #fffbeb)',
-            border: '1px solid var(--ppt-warning-300, #fcd34d)',
-            borderRadius: 8,
-            fontSize: 13,
-            color: 'var(--ppt-warning-800, #92400e)',
-          }}
-        >
-          <strong>Save the client secret now.</strong> It will not be shown again after you close
-          this dialog.
+        <div className="ppt-oc-field">
+          <label className="ppt-oc-label" htmlFor="oc-name">
+            Name *
+          </label>
+          <input
+            id="oc-name"
+            className="ppt-oc-input"
+            value={name}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            required
+            autoComplete="off"
+            placeholder="My Integration"
+          />
         </div>
-
-        {[
-          { label: 'Client ID', value: clientId, field: 'id' as const },
-          { label: 'Client Secret', value: clientSecret, field: 'secret' as const },
-        ].map(({ label, value, field }) => (
-          <div key={field} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--ppt-fg-muted, #6b7280)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              {label}
-            </span>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 10px',
-                background: 'var(--ppt-bg-subtle, #f3f4f6)',
-                borderRadius: 8,
-                border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              }}
-            >
-              <code
-                style={{
-                  flex: 1,
-                  fontFamily: 'var(--ppt-font-mono, monospace)',
-                  fontSize: 12,
-                  color: 'var(--ppt-fg-primary, #111827)',
-                  wordBreak: 'break-all',
-                  userSelect: 'all',
-                }}
-              >
-                {value}
-              </code>
-              <button
-                type="button"
-                onClick={() => copy(value, field)}
-                style={{
-                  flexShrink: 0,
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                  background: 'var(--ppt-bg-surface, #fff)',
-                  cursor: 'pointer',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color:
-                    copied === field
-                      ? 'var(--ppt-success-700, #15803d)'
-                      : 'var(--ppt-fg-secondary, #374151)',
-                }}
-              >
-                {copied === field ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-          </div>
-        ))}
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '7px 18px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--ppt-brand-600, #2563eb)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-            }}
-          >
-            Done — I saved the secret
-          </button>
+        <div className="ppt-oc-field">
+          <label className="ppt-oc-label" htmlFor="oc-desc">
+            Description
+          </label>
+          <textarea
+            id="oc-desc"
+            className="ppt-oc-textarea"
+            value={description}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+            placeholder="Optional description"
+          />
         </div>
-      </div>
-    </div>
+        <div className="ppt-oc-field">
+          <span className="ppt-oc-label">Redirect URIs</span>
+          <RedirectUriEditor uris={redirectUris} onChange={setRedirectUris} />
+        </div>
+        <div className="ppt-oc-field">
+          <span className="ppt-oc-label">Scopes</span>
+          <ScopeSelector selected={scopes} onChange={setScopes} />
+        </div>
+        <label className="ppt-oc-toggle-row">
+          <input
+            type="checkbox"
+            checked={isConfidential}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setIsConfidential(e.target.checked)}
+          />
+          Confidential client (server-side app with client secret)
+        </label>
+        <label className="ppt-oc-toggle-row">
+          <input
+            type="checkbox"
+            checked={rotateRefreshTokens}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setRotateRefreshTokens(e.target.checked)
+            }
+          />
+          Rotate refresh tokens on use
+        </label>
+      </form>
+    </Modal>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Edit client dialog
-// ---------------------------------------------------------------------------
+// ============================================================
+// EditDialog
+// ============================================================
 
 interface EditDialogProps {
-  client: OAuthClientSummary;
+  open: boolean;
+  client: OAuthClientSummary | null;
   onClose: () => void;
 }
 
-function EditDialog({ client, onClose }: EditDialogProps) {
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const titleId = useId();
+function EditDialog({ open, client, onClose }: EditDialogProps) {
+  const { t } = useTranslation();
   const { showToast } = useToast();
+  const updateMutation = useUpdateOAuthClient(client?.id ?? '');
+  const titleId = useId();
 
-  // Initialise form from existing client values.
-  // OAuthClientSummary doesn't expose redirectUris, so we can only edit
-  // scopes, name, description, and active status in this view.
-  const [name, setName] = useState(client.name);
-  const [description, setDescription] = useState(client.description ?? '');
-  const [scopes, setScopes] = useState<string[]>(client.scopes);
-  const [isActive, setIsActive] = useState(client.isActive);
-  const [nameError, setNameError] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [scopes, setScopes] = useState<string[]>([]);
+  const [isActive, setIsActive] = useState(true);
 
-  const { mutateAsync, isPending } = useUpdateOAuthClient(client.id);
-
-  useFocusTrap(dialogRef, () => {
-    if (!isPending) onClose();
-  });
-
-  const handleSave = async () => {
-    if (!name.trim()) {
-      setNameError('Name is required');
-      return;
+  useEffect(() => {
+    if (client) {
+      setName(client.name);
+      setDescription(client.description ?? '');
+      setScopes(client.scopes);
+      setIsActive(client.isActive);
     }
-    setNameError('');
-    const update: UpdateOAuthClientRequest = {
+  }, [client]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const req: UpdateOAuthClientRequest = {
       name: name.trim(),
       description: description.trim() || undefined,
       scopes,
       isActive,
     };
     try {
-      await mutateAsync(update);
-      showToast({ type: 'success', title: 'Client updated', message: `${name} has been updated.` });
+      await updateMutation.mutateAsync(req);
+      showToast({
+        type: 'success',
+        title: t('admin.oauthClients.toast.updateSuccess'),
+        duration: 3000,
+      });
       onClose();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update failed',
-        message: err instanceof Error ? err.message : 'Unknown error',
+        title: t('admin.oauthClients.toast.updateError'),
+        message: err instanceof Error ? err.message : String(err),
       });
     }
-  };
+  }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 900,
-        background: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        overflow: 'auto',
-      }}
-    >
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        style={{
-          maxWidth: 560,
-          width: '100%',
-          background: 'var(--ppt-bg-surface, #fff)',
-          borderRadius: 'var(--ppt-radius-lg, 12px)',
-          padding: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-          boxShadow: 'var(--ppt-shadow-modal, 0 10px 40px rgba(0,0,0,0.15))',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <h2
-          id={titleId}
-          style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--ppt-fg-primary, #111827)' }}
-        >
-          Edit OAuth Client
-        </h2>
-
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--ppt-fg-muted, #6b7280)',
-            padding: '6px 10px',
-            background: 'var(--ppt-bg-subtle, #f3f4f6)',
-            borderRadius: 6,
-            fontFamily: 'var(--ppt-font-mono, monospace)',
-          }}
-        >
-          {client.clientId}
-        </div>
-
-        <FormField label="Name" required htmlFor="edit-name" error={nameError}>
-          <input
-            id="edit-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isPending}
-            style={INPUT_STYLE}
-          />
-        </FormField>
-
-        <FormField label="Description" htmlFor="edit-desc">
-          <textarea
-            id="edit-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isPending}
-            rows={2}
-            style={{ ...INPUT_STYLE, resize: 'vertical', fontFamily: 'inherit' }}
-          />
-        </FormField>
-
-        <FormField label="Scopes">
-          <ScopeSelector value={scopes} onChange={setScopes} disabled={isPending} />
-        </FormField>
-
-        <FormField label="Status">
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              cursor: isPending ? 'not-allowed' : 'pointer',
-              fontSize: 13,
-              color: 'var(--ppt-fg-secondary, #374151)',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              disabled={isPending}
-            />
-            Active (uncheck to deactivate without revoking)
-          </label>
-        </FormField>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
+    <Modal
+      open={open}
+      title={t('admin.oauthClients.actions.edit')}
+      onClose={onClose}
+      labelledById={titleId}
+      footer={
+        <>
           <button
             type="button"
+            className="ppt-oc-btn ppt-oc-btn--secondary"
             onClick={onClose}
-            disabled={isPending}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: '1px solid var(--ppt-border-default, #e5e7eb)',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-            }}
+            disabled={updateMutation.isPending}
           >
             Cancel
           </button>
           <button
-            type="button"
-            onClick={() => {
-              void handleSave();
-            }}
-            disabled={isPending}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--ppt-brand-600, #2563eb)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-              opacity: isPending ? 0.6 : 1,
-            }}
+            type="submit"
+            form="edit-oauth-form"
+            className="ppt-oc-btn ppt-oc-btn--primary"
+            disabled={updateMutation.isPending || !name.trim()}
           >
-            {isPending ? 'Saving…' : 'Save changes'}
+            {updateMutation.isPending && <span className="ppt-oc-spinner" aria-hidden="true" />}
+            Save
           </button>
+        </>
+      }
+    >
+      <form
+        id="edit-oauth-form"
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
+        <div className="ppt-oc-field">
+          <label className="ppt-oc-label" htmlFor="oc-edit-name">
+            Name *
+          </label>
+          <input
+            id="oc-edit-name"
+            className="ppt-oc-input"
+            value={name}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            required
+            autoComplete="off"
+          />
         </div>
-      </div>
-    </div>
+        <div className="ppt-oc-field">
+          <label className="ppt-oc-label" htmlFor="oc-edit-desc">
+            Description
+          </label>
+          <textarea
+            id="oc-edit-desc"
+            className="ppt-oc-textarea"
+            value={description}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+          />
+        </div>
+        <div className="ppt-oc-field">
+          <span className="ppt-oc-label">Scopes</span>
+          <ScopeSelector selected={scopes} onChange={setScopes} />
+        </div>
+        <label className="ppt-oc-toggle-row">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setIsActive(e.target.checked)}
+          />
+          Active
+        </label>
+      </form>
+    </Modal>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Client row card
-// ---------------------------------------------------------------------------
+// ============================================================
+// RegenerateSecretDialog
+// ============================================================
+
+interface RegenerateSecretDialogProps {
+  open: boolean;
+  client: OAuthClientSummary | null;
+  onClose: () => void;
+}
+
+function RegenerateSecretDialog({ open, client, onClose }: RegenerateSecretDialogProps) {
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const regenMutation = useRegenerateOAuthClientSecret();
+  const titleId = useId();
+
+  const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setNewSecret(null);
+      setCopied(false);
+    }
+  }, [open]);
+
+  async function handleRegenerate() {
+    if (!client) return;
+    try {
+      const res = await regenMutation.mutateAsync(client.id);
+      setNewSecret(res.clientSecret);
+      showToast({
+        type: 'success',
+        title: t('admin.oauthClients.toast.regenerateSuccess'),
+        duration: 4000,
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('admin.oauthClients.toast.regenerateError'),
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  async function handleCopy() {
+    if (!newSecret) return;
+    await copyToClipboard(newSecret);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <Modal
+      open={open}
+      title={t('admin.oauthClients.actions.regenerateSecret')}
+      onClose={onClose}
+      labelledById={titleId}
+      footer={
+        newSecret ? (
+          <button type="button" className="ppt-oc-btn ppt-oc-btn--primary" onClick={onClose}>
+            Done
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--secondary"
+              onClick={onClose}
+              disabled={regenMutation.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--danger"
+              onClick={handleRegenerate}
+              disabled={regenMutation.isPending}
+            >
+              {regenMutation.isPending && (
+                <span className="ppt-oc-spinner ppt-oc-spinner--dark" aria-hidden="true" />
+              )}
+              Regenerate Secret
+            </button>
+          </>
+        )
+      }
+    >
+      {newSecret ? (
+        <>
+          <div className="ppt-oc-secret-warning">
+            Copy the new secret now — it will not be shown again.
+          </div>
+          <div className="ppt-oc-secret-box">
+            <span className="ppt-oc-secret-label">New Client Secret</span>
+            <span className="ppt-oc-secret-value">{newSecret}</span>
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-copy-btn"
+              onClick={handleCopy}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </>
+      ) : (
+        <p style={{ fontSize: 14, color: 'var(--ppt-fg-secondary,#374151)', margin: 0 }}>
+          This will invalidate the current secret for <strong>{client?.name}</strong>. Any
+          integrations using the old secret will stop working immediately.
+        </p>
+      )}
+    </Modal>
+  );
+}
+
+// ============================================================
+// ClientCard
+// ============================================================
 
 interface ClientCardProps {
   client: OAuthClientSummary;
-  onEdit: () => void;
-  onRevoke: () => void;
-  onRegenerate: () => void;
+  onEdit: (c: OAuthClientSummary) => void;
+  onRevoke: (c: OAuthClientSummary) => void;
+  onRegenerate: (c: OAuthClientSummary) => void;
 }
 
 function ClientCard({ client, onEdit, onRevoke, onRegenerate }: ClientCardProps) {
   const { t } = useTranslation();
-
+  const isRevoked = !client.isActive;
   return (
-    <div
-      style={{
-        border: '1px solid var(--ppt-border-default, #e5e7eb)',
-        borderRadius: 'var(--ppt-radius-lg, 12px)',
-        padding: '16px 20px',
-        background: client.isActive
-          ? 'var(--ppt-bg-surface, #fff)'
-          : 'var(--ppt-bg-subtle, #f3f4f6)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        opacity: client.isActive ? 1 : 0.75,
-      }}
-    >
-      {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: 'var(--ppt-fg-primary, #111827)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {client.name}
-            {!client.isActive && (
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  padding: '2px 6px',
-                  borderRadius: 4,
-                  background: 'var(--ppt-danger-100, #fee2e2)',
-                  color: 'var(--ppt-danger-700, #b91c1c)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Revoked
-              </span>
-            )}
+    <div className={`ppt-oc-card${isRevoked ? ' ppt-oc-card--revoked' : ''}`}>
+      <div className="ppt-oc-card-top">
+        <div className="ppt-oc-card-info">
+          <p className="ppt-oc-card-name">{client.name}</p>
+          {client.description && <p className="ppt-oc-card-desc">{client.description}</p>}
+          <div className="ppt-oc-card-meta">
+            <span className="ppt-oc-client-id">ID: {client.clientId}</span>
+            <span>Registered: {formatDate(client.createdAt)}</span>
           </div>
-          {client.description && (
-            <div
-              style={{
-                fontSize: 12,
-                color: 'var(--ppt-fg-muted, #6b7280)',
-                marginTop: 2,
-              }}
-            >
-              {client.description}
-            </div>
-          )}
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--ppt-fg-muted, #6b7280)',
-            flexShrink: 0,
-            paddingTop: 2,
-          }}
-        >
-          {new Date(client.createdAt).toLocaleDateString()}
-        </div>
-      </div>
-
-      {/* Client ID */}
-      <div
-        style={{
-          fontFamily: 'var(--ppt-font-mono, monospace)',
-          fontSize: 11,
-          color: 'var(--ppt-fg-muted, #6b7280)',
-          background: 'var(--ppt-bg-subtle, #f3f4f6)',
-          padding: '4px 8px',
-          borderRadius: 6,
-          wordBreak: 'break-all',
-        }}
-      >
-        {client.clientId}
-      </div>
-
-      {/* Scopes */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        {client.scopes.map((scope) => (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
           <span
-            key={scope}
-            style={{
-              fontSize: 11,
-              padding: '2px 6px',
-              borderRadius: 4,
-              background: 'var(--ppt-accent-soft-bg, #eff6ff)',
-              color: 'var(--ppt-brand-700, #1d4ed8)',
-              fontFamily: 'var(--ppt-font-mono, monospace)',
-              fontWeight: 500,
-            }}
+            className={`ppt-oc-badge ${isRevoked ? 'ppt-oc-badge--revoked' : 'ppt-oc-badge--active'}`}
           >
-            {scope}
+            {isRevoked ? 'REVOKED' : 'ACTIVE'}
           </span>
-        ))}
+          <div className="ppt-oc-actions">
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--secondary"
+              onClick={() => onEdit(client)}
+              disabled={isRevoked}
+              title={t('admin.oauthClients.actions.edit')}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--secondary"
+              onClick={() => onRegenerate(client)}
+              disabled={isRevoked}
+              title={t('admin.oauthClients.actions.regenerateSecret')}
+            >
+              Regen Secret
+            </button>
+            <button
+              type="button"
+              className="ppt-oc-btn ppt-oc-btn--danger"
+              onClick={() => onRevoke(client)}
+              disabled={isRevoked}
+              title={t('admin.oauthClients.actions.revoke')}
+            >
+              Revoke
+            </button>
+          </div>
+        </div>
       </div>
-
-      {/* Actions */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          paddingTop: 4,
-          borderTop: '1px solid var(--ppt-border-default, #e5e7eb)',
-        }}
-      >
-        <button
-          type="button"
-          onClick={onEdit}
-          style={{
-            padding: '5px 12px',
-            borderRadius: 6,
-            border: '1px solid var(--ppt-border-default, #e5e7eb)',
-            background: 'transparent',
-            cursor: 'pointer',
-            fontSize: 12,
-            fontWeight: 500,
-            color: 'var(--ppt-fg-secondary, #374151)',
-          }}
-        >
-          {t('admin.oauthClients.actions.edit', 'Edit')}
-        </button>
-        <button
-          type="button"
-          onClick={onRegenerate}
-          disabled={!client.isActive}
-          style={{
-            padding: '5px 12px',
-            borderRadius: 6,
-            border: '1px solid var(--ppt-border-default, #e5e7eb)',
-            background: 'transparent',
-            cursor: client.isActive ? 'pointer' : 'not-allowed',
-            fontSize: 12,
-            fontWeight: 500,
-            color: 'var(--ppt-fg-secondary, #374151)',
-            opacity: client.isActive ? 1 : 0.5,
-          }}
-        >
-          {t('admin.oauthClients.actions.regenerateSecret', 'Regenerate secret')}
-        </button>
-        {client.isActive && (
-          <button
-            type="button"
-            onClick={onRevoke}
-            style={{
-              padding: '5px 12px',
-              borderRadius: 6,
-              border: '1px solid var(--ppt-danger-300, #fca5a5)',
-              background: 'transparent',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 500,
-              color: 'var(--ppt-danger-600, #dc2626)',
-              marginLeft: 'auto',
-            }}
-          >
-            {t('admin.oauthClients.actions.revoke', 'Revoke')}
-          </button>
-        )}
-      </div>
+      {client.scopes.length > 0 && (
+        <div className="ppt-oc-scopes">
+          {client.scopes.map((scope) => (
+            <span key={scope} className="ppt-oc-scope-chip">
+              {scope}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
+// ============================================================
+// OAuthClientsPage
+// ============================================================
 
-const OAuthClientsPage: React.FC = () => {
+export default function OAuthClientsPage() {
+  ensureStyles();
   const { t } = useTranslation();
   const { showToast } = useToast();
-
   const { data: clients, isLoading, isError, error, refetch } = useOAuthClients();
-  const revokeClient = useRevokeOAuthClient();
-  const regenerateSecret = useRegenerateOAuthClientSecret();
+  const revokeMutation = useRevokeOAuthClient();
 
-  // Dialog state
   const [showRegister, setShowRegister] = useState(false);
-  const [newSecret, setNewSecret] = useState<{
-    clientId: string;
-    secret: string;
-    title: string;
-  } | null>(null);
-  const [editTarget, setEditTarget] = useState<OAuthClientSummary | null>(null);
-  const [revokeTarget, setRevokeTarget] = useState<OAuthClientSummary | null>(null);
-  const [regenerateTarget, setRegenerateTarget] = useState<OAuthClientSummary | null>(null);
+  const [editingClient, setEditingClient] = useState<OAuthClientSummary | null>(null);
+  const [revokingClient, setRevokingClient] = useState<OAuthClientSummary | null>(null);
+  const [regeneratingClient, setRegeneratingClient] = useState<OAuthClientSummary | null>(null);
 
-  const handleRegisterSuccess = useCallback(
-    (clientId: string, clientSecret: string) => {
-      setShowRegister(false);
-      setNewSecret({ clientId, secret: clientSecret, title: 'Client registered' });
-      showToast({
-        type: 'success',
-        title: t('admin.oauthClients.toast.registeredTitle', 'Client registered'),
-        message: t('admin.oauthClients.toast.registeredMessage', 'Save the client secret now.'),
-      });
-    },
-    [showToast, t]
-  );
-
-  const handleRevoke = useCallback(
-    async (client: OAuthClientSummary) => {
-      try {
-        await revokeClient.mutateAsync(client.id);
-        setRevokeTarget(null);
-        showToast({
-          type: 'success',
-          title: t('admin.oauthClients.toast.revokedTitle', 'Client revoked'),
-          message: t('admin.oauthClients.toast.revokedMessage', '{{name}} has been revoked.', {
-            name: client.name,
-          }),
-        });
-      } catch (err) {
-        showToast({
-          type: 'error',
-          title: t('admin.oauthClients.toast.revokeFailedTitle', 'Revoke failed'),
-          message: err instanceof Error ? err.message : 'Unknown error',
-        });
-        throw err; // Let DestructiveConfirmDialog know to stay open
-      }
-    },
-    [revokeClient, showToast, t]
-  );
-
-  const handleRegenerate = useCallback(
-    async (client: OAuthClientSummary) => {
-      try {
-        const result = await regenerateSecret.mutateAsync(client.id);
-        setRegenerateTarget(null);
-        setNewSecret({
-          clientId: client.clientId,
-          secret: result.clientSecret,
-          title: 'Secret regenerated',
-        });
-        showToast({
-          type: 'success',
-          title: t('admin.oauthClients.toast.secretRegeneratedTitle', 'Secret regenerated'),
-          message: t(
-            'admin.oauthClients.toast.secretRegeneratedMessage',
-            'Save the new secret now.'
-          ),
-        });
-      } catch (err) {
-        showToast({
-          type: 'error',
-          title: t('admin.oauthClients.toast.regenerateFailedTitle', 'Regeneration failed'),
-          message: err instanceof Error ? err.message : 'Unknown error',
-        });
-      }
-    },
-    [regenerateSecret, showToast, t]
-  );
+  const handleRevoke = useCallback(async () => {
+    if (!revokingClient) return;
+    await revokeMutation.mutateAsync(revokingClient.id);
+    showToast({
+      type: 'success',
+      title: t('admin.oauthClients.toast.revokeSuccess'),
+      message: revokingClient.name,
+      duration: 3000,
+    });
+    setRevokingClient(null);
+  }, [revokingClient, revokeMutation, showToast, t]);
 
   return (
-    <>
-      {/* Register dialog */}
-      {showRegister && (
-        <RegisterDialog
-          onClose={() => setShowRegister(false)}
-          onSuccess={handleRegisterSuccess}
-        />
-      )}
-
-      {/* New / regenerated secret display */}
-      {newSecret && (
-        <SecretDisplayDialog
-          clientId={newSecret.clientId}
-          clientSecret={newSecret.secret}
-          title={newSecret.title}
-          onClose={() => setNewSecret(null)}
-        />
-      )}
-
-      {/* Edit dialog */}
-      {editTarget && (
-        <EditDialog client={editTarget} onClose={() => setEditTarget(null)} />
-      )}
-
-      {/* Regenerate confirm — simple confirm dialog before calling API */}
-      {regenerateTarget && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 900,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
+    <div className="ppt-oc-page">
+      <div className="ppt-oc-header">
+        <h1 className="ppt-oc-title">{t('admin.oauthClients.title')}</h1>
+        <button
+          type="button"
+          className="ppt-oc-btn ppt-oc-btn--primary"
+          onClick={() => setShowRegister(true)}
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            style={{
-              maxWidth: 440,
-              width: '100%',
-              background: 'var(--ppt-bg-surface, #fff)',
-              borderRadius: 'var(--ppt-radius-lg, 12px)',
-              padding: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-              boxShadow: 'var(--ppt-shadow-modal, 0 10px 40px rgba(0,0,0,0.15))',
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--ppt-warning-800, #92400e)' }}>
-              Regenerate client secret
-            </h2>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--ppt-fg-secondary, #374151)' }}>
-              The current secret for <strong>{regenerateTarget.name}</strong> will be invalidated
-              immediately. Any integration using the old secret will stop working. The new secret is
-              shown only once.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => setRegenerateTarget(null)}
-                disabled={regenerateSecret.isPending}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 8,
-                  border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: 500,
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleRegenerate(regenerateTarget);
-                }}
-                disabled={regenerateSecret.isPending}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'var(--ppt-warning-600, #d97706)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  opacity: regenerateSecret.isPending ? 0.6 : 1,
-                }}
-              >
-                {regenerateSecret.isPending ? 'Regenerating…' : 'Regenerate secret'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          {t('admin.oauthClients.actions.register')}
+        </button>
+      </div>
 
-      {/* Revoke destructive confirm */}
-      <DestructiveConfirmDialog
-        open={revokeTarget !== null}
-        title={t('admin.oauthClients.revokeDialog.title', 'Revoke OAuth client')}
-        body={
-          <span>
-            {t(
-              'admin.oauthClients.revokeDialog.body',
-              'This will permanently deactivate client <strong>{{name}}</strong>. Active tokens issued to this client will continue to work until they expire, but no new tokens can be obtained.',
-              { name: revokeTarget?.name ?? '' }
-            )}
-          </span>
-        }
-        confirmText={revokeTarget?.name ?? ''}
-        confirmLabel={t(
-          'admin.oauthClients.revokeDialog.confirmLabel',
-          'Type the client name to confirm:'
-        )}
-        delayMs={2000}
-        onConfirm={async () => {
-          if (revokeTarget) await handleRevoke(revokeTarget);
-        }}
-        onCancel={() => setRevokeTarget(null)}
-      />
+      {isLoading && <div className="ppt-oc-status">Loading…</div>}
 
-      {/* Page body */}
-      <section style={{ padding: '24px', maxWidth: 900 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: 20,
-            gap: 12,
-          }}
-        >
-          <h1 style={{ margin: 0, flex: 1, fontSize: 20, fontWeight: 700 }}>
-            {t('admin.oauthClients.title', 'OAuth Clients')}
-          </h1>
+      {isError && (
+        <div className="ppt-oc-status">
+          <p>
+            {t('admin.oauthClients.loadError', {
+              message: error instanceof Error ? error.message : String(error),
+            })}
+          </p>
           <button
             type="button"
-            onClick={() => setShowRegister(true)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--ppt-brand-600, #2563eb)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: 500,
-            }}
+            className="ppt-oc-btn ppt-oc-btn--secondary ppt-oc-retry"
+            onClick={() => void refetch()}
           >
-            {t('admin.oauthClients.actions.register', 'Register client')}
+            Retry
           </button>
         </div>
+      )}
 
-        <p style={{ margin: '0 0 24px', fontSize: 13, color: 'var(--ppt-fg-secondary, #374151)' }}>
-          {t(
-            'admin.oauthClients.description',
-            'Manage third-party OAuth 2.0 clients that can obtain tokens on behalf of your users. Capability required: oauth_client_write.'
-          )}
-        </p>
-
-        {isLoading && (
-          <div
-            role="status"
-            aria-live="polite"
-            style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: 13 }}
+      {!isLoading && !isError && clients?.length === 0 && (
+        <div className="ppt-oc-empty">
+          <p className="ppt-oc-empty-text">{t('admin.oauthClients.empty')}</p>
+          <button
+            type="button"
+            className="ppt-oc-btn ppt-oc-btn--primary"
+            onClick={() => setShowRegister(true)}
           >
-            {t('admin.common.loading', 'Loading…')}
-          </div>
-        )}
+            {t('admin.oauthClients.actions.registerFirst')}
+          </button>
+        </div>
+      )}
 
-        {isError && (
-          <div role="alert" className="ppt-admin-error">
-            <p style={{ color: 'var(--ppt-danger-700, #b91c1c)', fontSize: 13 }}>
-              {t('admin.oauthClients.loadError', 'Failed to load OAuth clients: {{message}}', {
-                message: error instanceof Error ? error.message : 'Unknown error',
-              })}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                void refetch();
-              }}
-              style={{
-                padding: '5px 12px',
-                borderRadius: 6,
-                border: '1px solid var(--ppt-border-default, #e5e7eb)',
-                background: 'transparent',
-                cursor: 'pointer',
-                fontSize: 12,
-              }}
-            >
-              {t('admin.common.retry', 'Retry')}
-            </button>
-          </div>
-        )}
+      {!isLoading && !isError && clients && clients.length > 0 && (
+        <div className="ppt-oc-list">
+          {clients.map((client) => (
+            <ClientCard
+              key={client.id}
+              client={client}
+              onEdit={setEditingClient}
+              onRevoke={setRevokingClient}
+              onRegenerate={setRegeneratingClient}
+            />
+          ))}
+        </div>
+      )}
 
-        {!isLoading && !isError && (
-          <>
-            {(clients ?? []).length === 0 ? (
-              <div
-                style={{
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  color: 'var(--ppt-fg-muted, #6b7280)',
-                  fontSize: 13,
-                  border: '2px dashed var(--ppt-border-default, #e5e7eb)',
-                  borderRadius: 12,
-                }}
-              >
-                {t('admin.oauthClients.empty', 'No OAuth clients registered yet.')}{' '}
-                <button
-                  type="button"
-                  onClick={() => setShowRegister(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--ppt-brand-600, #2563eb)',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    padding: 0,
-                    textDecoration: 'underline',
-                  }}
-                >
-                  {t('admin.oauthClients.actions.registerFirst', 'Register the first client')}
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {(clients ?? []).map((client) => (
-                  <ClientCard
-                    key={client.id}
-                    client={client}
-                    onEdit={() => setEditTarget(client)}
-                    onRevoke={() => setRevokeTarget(client)}
-                    onRegenerate={() => setRegenerateTarget(client)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-    </>
+      <RegisterDialog open={showRegister} onClose={() => setShowRegister(false)} />
+      <EditDialog
+        open={editingClient !== null}
+        client={editingClient}
+        onClose={() => setEditingClient(null)}
+      />
+      <RegenerateSecretDialog
+        open={regeneratingClient !== null}
+        client={regeneratingClient}
+        onClose={() => setRegeneratingClient(null)}
+      />
+      <DestructiveConfirmDialog
+        open={revokingClient !== null}
+        title={t('admin.oauthClients.revokeDialog.title')}
+        body={
+          <span>
+            {t('admin.oauthClients.revokeDialog.body', { name: revokingClient?.name ?? '' })}
+          </span>
+        }
+        confirmText={revokingClient?.name ?? ''}
+        confirmLabel={t('admin.oauthClients.revokeDialog.confirmLabel')}
+        delayMs={2000}
+        onConfirm={handleRevoke}
+        onCancel={() => setRevokingClient(null)}
+      />
+    </div>
   );
-};
-
-export default OAuthClientsPage;
+}

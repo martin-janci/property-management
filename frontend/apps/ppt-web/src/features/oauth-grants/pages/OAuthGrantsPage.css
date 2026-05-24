@@ -161,7 +161,9 @@
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   white-space: nowrap;
 }
 
