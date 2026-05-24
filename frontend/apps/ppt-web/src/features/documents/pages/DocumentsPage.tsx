@@ -27,6 +27,20 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
       <div className="page-header">
         <h1 className="page-title">Documents</h1>
         <div className="header-actions">
+          <Link to="/documents/folders" className="folders-link">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+            </svg>
+            Priečinky
+          </Link>
           <Link to="/documents/upload" className="upload-link">
             <svg
               width="16"
@@ -150,6 +164,26 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
           display: flex;
           align-items: center;
           gap: 1rem;
+        }
+
+        .folders-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          text-decoration: none;
+          background: var(--ppt-bg-surface);
+          color: var(--ppt-fg-muted);
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 0.375rem;
+          transition: all 0.15s;
+        }
+
+        .folders-link:hover {
+          color: var(--ppt-fg-primary);
+          border-color: var(--ppt-fg-muted);
         }
 
         .upload-link {

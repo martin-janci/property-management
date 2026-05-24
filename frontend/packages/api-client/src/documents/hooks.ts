@@ -178,3 +178,58 @@ export function useUploadDocument() {
     },
   });
 }
+
+// ── Folder management (gap-7a-2) ─────────────────────────────────────────────
+
+// Create folder
+export function useCreateFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: api.CreateFolderRequest) => api.createFolder(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// Update folder (rename / move parent)
+export function useUpdateFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: api.UpdateFolderRequest }) =>
+      api.updateFolder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// Delete folder
+export function useDeleteFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, cascade = false }: { id: string; cascade?: boolean }) =>
+      api.deleteFolder(id, cascade),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+      queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+    },
+  });
+}
+
+// Move document to folder
+export function useMoveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ documentId, folderId }: { documentId: string; folderId: string | null }) =>
+      api.moveDocument(documentId, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}

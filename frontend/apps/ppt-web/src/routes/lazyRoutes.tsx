@@ -18,6 +18,9 @@ export const DocumentUploadPage = lazy(() =>
 export const DocumentDetailPage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.DocumentDetailPage }))
 );
+export const FolderTreePage = lazy(() =>
+  import('../features/documents').then((m) => ({ default: m.FolderTreePage }))
+);
 
 // News feature (Epic 59)
 export const NewsListPage = lazy(() =>
