@@ -1,8 +1,7 @@
 /**
  * Document Search Result Card (Story 39.1).
  *
- * Displays a search result with highlighted snippets and the RLS-resolved
- * audience badge (access_scope) returned by the backend (7a-3).
+ * Displays a search result with highlighted snippets.
  */
 
 import type {
@@ -10,11 +9,8 @@ import type {
   SearchHighlight,
   DocumentSearchResult as SearchResult,
 } from '@ppt/api-client';
-import DOMPurify from 'dompurify';
-import { ClassificationBadge } from './ClassificationBadge';
-import { OcrStatusBadge } from './OcrStatusBadge';
 
-/** Maps backend `access_scope` values to human-readable audience labels. */
+/** Maps backend access_scope values to human-readable audience labels (7a-3). */
 const SCOPE_LABEL: Record<AccessScope, string> = {
   organization: 'All members',
   building: 'Building',
@@ -23,11 +19,10 @@ const SCOPE_LABEL: Record<AccessScope, string> = {
   public: 'Public',
 };
 
-/** Shows a small pill indicating who can see the document (RLS-resolved, 7a-3). */
+/** Shows a pill indicating who can see the document (RLS-resolved audience, 7a-3). */
 function AudienceBadge({ scope }: { scope: AccessScope }) {
   return (
     <span className="badge badge-audience" title={`Visible to: ${SCOPE_LABEL[scope]}`}>
-      {/* Eye icon */}
       <svg
         width="10"
         height="10"
@@ -36,7 +31,7 @@ function AudienceBadge({ scope }: { scope: AccessScope }) {
         stroke="currentColor"
         strokeWidth="2"
         aria-hidden="true"
-        style={{ marginRight: '3px' }}
+        style={{ marginRight: '3px', verticalAlign: 'middle' }}
       >
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
         <circle cx="12" cy="12" r="3" />
@@ -45,6 +40,10 @@ function AudienceBadge({ scope }: { scope: AccessScope }) {
     </span>
   );
 }
+
+import DOMPurify from 'dompurify';
+import { ClassificationBadge } from './ClassificationBadge';
+import { OcrStatusBadge } from './OcrStatusBadge';
 
 interface DocumentSearchResultProps {
   result: SearchResult;

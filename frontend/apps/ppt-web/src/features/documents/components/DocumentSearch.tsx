@@ -2,8 +2,6 @@
  * Document Search Interface (Story 39.1).
  *
  * Full-text search with highlighted snippets and filters.
- * Now surfaces RLS-aware access_scope (audience) filter so the backend
- * can pre-filter results before applying row-level security (7a-3).
  */
 
 import {
@@ -17,12 +15,12 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { DocumentSearchResult as SearchResultCard } from './DocumentSearchResult';
 
-/** Human-readable labels for the audience filter chips. */
+/** Human-readable labels for the audience filter chips (7a-3). */
 const ACCESS_SCOPE_LABELS: Record<AccessScope, string> = {
   organization: 'All members',
-  building: 'Building members',
-  unit: 'Unit members',
-  user: 'Specific users',
+  building: 'Building',
+  unit: 'Unit',
+  user: 'Private',
   public: 'Public',
 };
 
@@ -44,8 +42,7 @@ export function DocumentSearch({
   const [hasSummaryFilter, setHasSummaryFilter] = useState<boolean | undefined>();
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
-  // RLS-aware audience filter — sent to backend so it can pre-filter before
-  // applying row-level security. Undefined means "show all I can access".
+  // RLS-aware audience filter (7a-3): forwarded to backend; server enforces RLS on top.
   const [accessScopeFilter, setAccessScopeFilter] = useState<AccessScope | undefined>();
 
   // Debounce search query
@@ -77,7 +74,7 @@ export function DocumentSearch({
       has_summary: hasSummaryFilter,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
-      // RLS-aware audience filter: forwarded to backend; server enforces RLS on top.
+      // Audience pre-filter: sent to backend; RLS is enforced server-side on top.
       access_scope: accessScopeFilter,
       limit: 20,
     }),
@@ -182,22 +179,18 @@ export function DocumentSearch({
         <fieldset className="filter-group">
           <legend className="filter-label">Audience</legend>
           <div className="filter-chips">
-            {(Object.entries(ACCESS_SCOPE_LABELS) as [AccessScope, string][]).map(
-              ([scope, label]) => (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() =>
-                    setAccessScopeFilter((prev) => (prev === scope ? undefined : scope))
-                  }
-                  className={`filter-chip ${accessScopeFilter === scope ? 'active' : ''}`}
-                  aria-pressed={accessScopeFilter === scope}
-                  title={`Show only documents visible to: ${label}`}
-                >
-                  {label}
-                </button>
-              )
-            )}
+            {(Object.keys(ACCESS_SCOPE_LABELS) as AccessScope[]).map((scope) => (
+              <button
+                key={scope}
+                type="button"
+                onClick={() => setAccessScopeFilter((prev) => (prev === scope ? undefined : scope))}
+                className={`filter-chip ${accessScopeFilter === scope ? 'active' : ''}`}
+                aria-pressed={accessScopeFilter === scope}
+                title={`Show only documents visible to: ${ACCESS_SCOPE_LABELS[scope]}`}
+              >
+                {ACCESS_SCOPE_LABELS[scope]}
+              </button>
+            ))}
           </div>
         </fieldset>
 
