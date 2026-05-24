@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T06:42:00Z",
+  "generated": "2026-05-24T06:53:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -172,28 +172,28 @@
     {
       "task_id": "pm-backend-fix-ssrf-outbound",
       "branch": "auto-impl/pm-backend-fix-ssrf-outbound",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T04:04:19Z",
-      "last_updated": "2026-05-24T06:42:00Z",
-      "status_changed_at": "2026-05-24T06:42:00Z",
+      "last_updated": "2026-05-24T06:52:00Z",
+      "status_changed_at": "2026-05-24T06:52:00Z",
       "pr_number": 450,
       "pr_url": "https://github.com/martin-janci/property-management/pull/450",
-      "merged_at": null,
+      "merged_at": "2026-05-24T06:52:00Z",
       "implementer_summary": "pr=450 status=done specialist=rust-backend note=validate_external_url in common/url_validation.rs (19 tests); SSRF gate in integrations.rs webhook + signatures.rs presigned-URL; cargo check exit 0; cargo fmt fixed",
       "reviewer_summary": null
     },
     {
       "task_id": "pm-backend-implement-81-schedule-endpoints",
       "branch": "auto-impl/pm-backend-implement-81-schedule-endpoints",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T04:04:19Z",
-      "last_updated": "2026-05-24T05:00:00Z",
-      "status_changed_at": "2026-05-24T05:00:00Z",
+      "last_updated": "2026-05-24T06:53:00Z",
+      "status_changed_at": "2026-05-24T06:53:00Z",
       "pr_number": 448,
       "pr_url": "https://github.com/martin-janci/property-management/pull/448",
-      "merged_at": null,
+      "merged_at": "2026-05-24T06:53:00Z",
       "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints (pause/resume schedule, list/get/download/retry executions); stub repo compiles clean; Band A cargo check exit 0; CI fixes: removed premature pub mod ssrf, fixed rustfmt line-length on 2 route lines",
       "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated, zero unwrap in prod paths, extractor ordering correct; CI run 26352415102 all-green (check/test/build/security/rls/deny); follow-up notes: tenant isolation in real SQL, get_by_id unused, retry needs failed-state guard, download URL must be absolute presigned; PR still draft \u2014 safe to merge once follow-up migration tracked"
     },
