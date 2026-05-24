@@ -318,13 +318,5 @@ export async function createDocumentShare(
 }
 
 export async function revokeDocumentShare(documentId: string, shareId: string): Promise<void> {
-  const url = `${API_BASE}/${documentId}/shares/${shareId}`;
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok && response.status !== 204) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${response.status}`);
-  }
+  await fetchApi(`${API_BASE}/${documentId}/shares/${shareId}`, { method: 'DELETE' });
 }
