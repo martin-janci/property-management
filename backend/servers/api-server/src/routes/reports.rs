@@ -212,12 +212,18 @@ pub fn router() -> Router<AppState> {
         .route("/export/{job_id}/status", get(get_export_job_status))
         // Epic 81: Story 81.1 — Schedule pause/resume
         .route("/schedules/{id}/pause", axum::routing::put(pause_schedule))
-        .route("/schedules/{id}/resume", axum::routing::put(resume_schedule))
+        .route(
+            "/schedules/{id}/resume",
+            axum::routing::put(resume_schedule),
+        )
         // Epic 81: Story 81.2 — Execution history
         .route("/schedules/{id}/executions", get(list_schedule_executions))
         .route("/executions/{id}", get(get_execution))
         .route("/executions/{id}/download", get(get_execution_download_url))
-        .route("/executions/{id}/retry", axum::routing::post(retry_execution))
+        .route(
+            "/executions/{id}/retry",
+            axum::routing::post(retry_execution),
+        )
 }
 
 // ============================================================================
