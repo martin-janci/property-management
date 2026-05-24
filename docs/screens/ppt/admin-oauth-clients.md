@@ -4,7 +4,7 @@ name: OAuth Client Management (Admin)
 product: ppt
 sitemapRefs: {}
 implementations:
-  admin-web:
+  ppt-web:
     route: /identity/oauth-clients
     component: OAuthClientsPage
     buildStatus: shipped
@@ -17,8 +17,7 @@ endpoints:
   - update_oauth_client
   - revoke_oauth_client
   - regenerate_oauth_client_secret
-relatedScreens:
-  - ppt/settings-oauth-grants
+relatedScreens: []
 sharedComponents:
   - DestructiveConfirmDialog
   - ScopeSelector
