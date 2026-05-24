@@ -226,7 +226,7 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
       const n = encodeURIComponent(metricName);
       return fetchJson<MetricHistory>(
         `/api/v1/platform-admin/health/metrics/${n}/history?range=${range}`,
-        token,
+        token
       );
     },
     staleTime: 30_000,
@@ -264,9 +264,7 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-            Metric history: {metricName}
-          </h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Metric history: {metricName}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -311,9 +309,7 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
           <div style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: 13 }}>Loading…</div>
         )}
         {isError && (
-          <div style={{ color: '#dc2626', fontSize: 13 }}>
-            Failed to load metric history.
-          </div>
+          <div style={{ color: '#dc2626', fontSize: 13 }}>Failed to load metric history.</div>
         )}
 
         {data && (
@@ -519,9 +515,7 @@ function AlertsTable({ alerts, canAcknowledge, onAcknowledge, isAcknowledging }:
                     Acknowledge
                   </button>
                 ) : (
-                  <span style={{ fontSize: 11, color: 'var(--ppt-fg-muted, #6b7280)' }}>
-                    —
-                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--ppt-fg-muted, #6b7280)' }}>—</span>
                 )}
               </td>
             </tr>
@@ -570,7 +564,7 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
         {
           method: 'PUT',
           body: JSON.stringify(body),
-        },
+        }
       );
       showToast({
         type: 'success',
@@ -675,7 +669,9 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
               </button>
               <button
                 type="button"
-                onClick={() => { void handleSave(); }}
+                onClick={() => {
+                  void handleSave();
+                }}
                 disabled={savePending}
                 style={{
                   padding: '7px 14px',
@@ -713,7 +709,7 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
                   >
                     {h}
                   </th>
-                ),
+                )
               )}
             </tr>
           </thead>
@@ -820,8 +816,7 @@ const PlatformHealthPage: React.FC = () => {
     refetch,
   } = useQuery<HealthDashboard>({
     queryKey: ['admin', 'health', 'dashboard'],
-    queryFn: () =>
-      fetchJson<HealthDashboard>('/api/v1/platform-admin/health/dashboard', token),
+    queryFn: () => fetchJson<HealthDashboard>('/api/v1/platform-admin/health/dashboard', token),
     staleTime: 30_000,
     refetchInterval: 60_000, // auto-refresh every minute
   });
@@ -832,7 +827,7 @@ const PlatformHealthPage: React.FC = () => {
     queryFn: () =>
       fetchJson<MetricAlert[]>(
         `/api/v1/platform-admin/health/alerts?active_only=${activeOnly}`,
-        token,
+        token
       ),
     staleTime: 30_000,
   });
@@ -843,7 +838,7 @@ const PlatformHealthPage: React.FC = () => {
       fetchJson(
         `/api/v1/platform-admin/health/alerts/${encodeURIComponent(alertId)}/acknowledge`,
         token,
-        { method: 'POST' },
+        { method: 'POST' }
       ),
     onSuccess: () => {
       showToast({
@@ -903,7 +898,7 @@ const PlatformHealthPage: React.FC = () => {
         >
           {t(
             'admin.health.loadError',
-            'Failed to load health dashboard. Check your connection and try again.',
+            'Failed to load health dashboard. Check your connection and try again.'
           )}
         </div>
       )}
@@ -980,9 +975,7 @@ const PlatformHealthPage: React.FC = () => {
           token={token}
         />
       ) : (
-        !isLoading && (
-          <div style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: 13 }}>—</div>
-        )
+        !isLoading && <div style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: 13 }}>—</div>
       )}
 
       {/* Metric history drill-down panel */}
