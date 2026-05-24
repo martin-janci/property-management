@@ -165,7 +165,8 @@ merged=<true|false|queued> pr=<n> note=<short text>
 
 The dispatcher does NOT manually update assignments.json on merge — Phase 2
 of the next cron cycle will catch the GH MERGED state and flip the row to
-`done`. This skill never touches assignments.json directly.
+`merged` (terminal). Legacy rows with `done` are treated as equivalent. This
+skill never touches assignments.json directly.
 
 ## Hard rules
 
