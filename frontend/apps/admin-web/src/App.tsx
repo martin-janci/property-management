@@ -20,8 +20,8 @@ import { LoginPage } from './pages/LoginPage';
 import MembershipsPage from './pages/MembershipsPage';
 import MobileConfigPage from './pages/MobileConfigPage';
 import OAuthClientsPage from './pages/OAuthClientsPage';
-import PlatformPage from './pages/platform';
 import PlatformHealthPage from './pages/PlatformHealthPage';
+import PlatformPage from './pages/platform';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
 
