@@ -39,6 +39,7 @@ export interface OAuthClientSummary {
   clientId: string;
   name: string;
   description: string | null;
+  redirectUris: string[];
   scopes: string[];
   isActive: boolean;
   createdAt: string;
