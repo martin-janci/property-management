@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "async-trait",
  "axum",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -894,6 +894,7 @@ checksum = "31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90"
 dependencies = [
  "axum-core",
  "axum-macros",
+ "base64 0.22.1",
  "bytes",
  "form_urlencoded",
  "futures-util",
@@ -912,8 +913,10 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "serde_urlencoded",
+ "sha1",
  "sync_wrapper",
  "tokio",
+ "tokio-tungstenite",
  "tower",
  "tower-layer",
  "tower-service",
@@ -1410,7 +1413,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "async-trait",
  "axum",
@@ -1837,8 +1840,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
+
+[[package]]
 name = "db"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1891,7 +1900,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3404,7 +3413,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -5141,7 +5150,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "anyhow",
  "api-core",
@@ -6697,7 +6706,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.523"
+version = "0.2.553"
 dependencies = [
  "chrono",
  "common",
@@ -6906,6 +6915,18 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "tokio-tungstenite"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f72a05e828585856dacd553fba484c242c46e391fb0e58917c942ee9202915c"
+dependencies = [
+ "futures-util",
+ "log",
+ "tokio",
+ "tungstenite",
 ]
 
 [[package]]
@@ -7179,6 +7200,22 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tungstenite"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
+dependencies = [
+ "bytes",
+ "data-encoding",
+ "http 1.4.0",
+ "httparse",
+ "log",
+ "rand 0.9.4",
+ "sha1",
+ "thiserror 2.0.18",
+]
 
 [[package]]
 name = "type-map"
