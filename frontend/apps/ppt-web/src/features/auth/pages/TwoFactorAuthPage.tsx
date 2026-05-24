@@ -16,12 +16,33 @@ import {
   useMfaStatus,
   useMfaVerify,
 } from '@ppt/api-client';
+import QRCode from 'qrcode';
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '../../../components/Toast';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
+
+// ─── QR code canvas renderer ─────────────────────────────────────────────────
+
+function QrCodeCanvas({ uri }: { uri: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCode.toCanvas(canvasRef.current, uri, { width: 200, margin: 2 }).catch(() => {});
+    }
+  }, [uri]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-label="Scan this QR code with your authenticator app"
+      style={{ border: '1px solid #ddd', borderRadius: 4 }}
+    />
+  );
+}
 
 // ─── Step state ──────────────────────────────────────────────────────────────
 
@@ -227,15 +248,8 @@ export function TwoFactorAuthPage() {
               etc.), or enter the secret manually.
             </p>
 
-            {/* QR code: rendered via a browser-native img using Google Charts API as a zero-dep fallback */}
             <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-              <img
-                src={`https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=${encodeURIComponent(setupData.qrUri)}`}
-                alt="Scan this QR code with your authenticator app"
-                width={200}
-                height={200}
-                style={{ border: '1px solid #ddd', borderRadius: 4 }}
-              />
+              <QrCodeCanvas uri={setupData.qrUri} />
             </div>
 
             <div className="auth-field">

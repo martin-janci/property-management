@@ -5,8 +5,8 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { mfaDisable, mfaRegenerateBackupCodes, mfaSetup, mfaStatus, mfaVerify } from './api';
-import type { MfaDisableRequest, MfaRegenerateBackupCodesRequest, MfaVerifyRequest } from './types';
+import { disableMfa, getMfaStatus, regenerateBackupCodes, setupMfa, verifyMfaSetup } from './api';
+import type { DisableMfaRequest, RegenerateBackupCodesRequest, VerifyMfaRequest } from './types';
 
 // ============================================
 // Query Key Factory
@@ -30,7 +30,7 @@ export const mfaKeys = {
 export function useMfaStatus() {
   return useQuery({
     queryKey: mfaKeys.status(),
-    queryFn: ({ signal }) => mfaStatus(signal),
+    queryFn: () => getMfaStatus(),
     staleTime: 30_000,
   });
 }
@@ -45,7 +45,7 @@ export function useMfaStatus() {
 export function useMfaSetup() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => mfaSetup(),
+    mutationFn: () => setupMfa(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mfaKeys.status() });
     },
@@ -61,7 +61,7 @@ export function useMfaSetup() {
 export function useMfaVerify() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MfaVerifyRequest) => mfaVerify(data),
+    mutationFn: (data: VerifyMfaRequest) => verifyMfaSetup(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mfaKeys.status() });
     },
@@ -77,7 +77,7 @@ export function useMfaVerify() {
 export function useMfaDisable() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MfaDisableRequest) => mfaDisable(data),
+    mutationFn: (data: DisableMfaRequest) => disableMfa(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mfaKeys.status() });
     },
@@ -94,7 +94,7 @@ export function useMfaDisable() {
 export function useMfaRegenerateBackupCodes() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: MfaRegenerateBackupCodesRequest) => mfaRegenerateBackupCodes(data),
+    mutationFn: (data: RegenerateBackupCodesRequest) => regenerateBackupCodes(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: mfaKeys.status() });
     },
