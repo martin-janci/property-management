@@ -222,12 +222,13 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
 
   const { data, isLoading, isError } = useQuery<MetricHistory>({
     queryKey: ['admin', 'health', 'history', metricName, range],
-    queryFn: () =>
-      fetchJson<MetricHistory>(
-        `/api/v1/platform-admin/health/metrics/${encodeURIComponent(metricName)}/history` +
-          `?range=${range}`,
+    queryFn: () => {
+      const n = encodeURIComponent(metricName);
+      return fetchJson<MetricHistory>(
+        `/api/v1/platform-admin/health/metrics/${n}/history?range=${range}`,
         token,
-      ),
+      );
+    },
     staleTime: 30_000,
   });
 
