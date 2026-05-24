@@ -341,7 +341,6 @@ export function MfaEnrollmentScreen({
             <p style={mutedText}>{l.stepCodesDescription}</p>
             <div style={codesGridStyle}>
               {recoveryCodes.map((c, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: index is stable for a fixed list
                 <code key={i} style={codeChipStyle}>
                   {c}
                 </code>
