@@ -229,17 +229,16 @@ impl InAppTransport for DbInAppAdapter {
         // Publish real-time event when Redis pubsub is available (8A.3)
         if let Some(ref pubsub) = self.pubsub {
             let channel = format!("notifications:{user_id}");
-            let msg = integrations::PubSubMessage {
-                id: Uuid::new_v4(),
-                event_type: "notification.created".to_string(),
-                payload: serde_json::json!({
+            let msg = integrations::PubSubMessage::new(
+                &channel,
+                "notification.created",
+                serde_json::json!({
                     "notification_id": notification.id,
                     "category": notification.category,
                     "title": notification.title,
                     "entity_id": eid,
                 }),
-                source_instance: None,
-            };
+            );
             if let Err(e) = pubsub.publish(&channel, msg).await {
                 // Non-fatal: in-app was persisted; real-time push failed
                 tracing::warn!(
