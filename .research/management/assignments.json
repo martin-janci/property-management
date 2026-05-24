@@ -368,15 +368,15 @@
     {
       "task_id": "gap-7a-3-mobile-rls-ui",
       "branch": "auto-impl/gap-7a-3-mobile-rls-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-native",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T14:07:53Z",
-      "status_changed_at": "2026-05-24T14:07:53Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T14:24:00Z",
+      "status_changed_at": "2026-05-24T14:24:00Z",
+      "pr_number": 465,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/465",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=465 status=done specialist=react-native note=DocumentPermissionsScreen + access_scope filter chips in DocumentsScreen; typecheck+biome clean; ci-fix=d8132aed (biome format fix)",
       "reviewer_summary": null
     },
     {
