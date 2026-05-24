@@ -130,14 +130,14 @@
     {
       "task_id": "gap-7a-5-mobile-share-ui",
       "branch": "auto-impl/gap-7a-5-mobile-share-ui",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T04:35:00Z",
-      "status_changed_at": "2026-05-24T02:38:00Z",
+      "last_updated": "2026-05-24T03:00:00Z",
+      "status_changed_at": "2026-05-24T03:00:00Z",
       "pr_number": 445,
       "pr_url": "https://github.com/martin-janci/property-management/pull/445",
-      "merged_at": null,
+      "merged_at": "2026-05-24T02:59:00Z",
       "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet (user/role/building/link types, Argon2 passwords server-side, revoke flow); 6 locales; fixed stray DocumentUploadScreen re-export that broke mobile CI",
       "reviewer_summary": "verdict=approve note=useApi imports confirmed (apiRequest+useApiMutation+useApiQuery all present), clipboard is client-only expo-clipboard no external API, all 4 share types covered with exhaustive switch, revoke flow has finally cleanup, index.ts has no stray DocumentUploadScreen export, 34 documentShare keys consistent across all 6 locales; posted as COMMENT (self-PR restriction); CI all green"
     },
