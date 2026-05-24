@@ -1,13 +1,29 @@
 /**
- * Admin Module — Super-admin Control Plane (Phase 5).
+ * Admin Module — Super-admin Control Plane (Phase 5 / Epic 10A-2).
  *
- * API client + hooks for `/api/v1/admin/*` endpoints. Currently surfaces
- * the agency list; will grow to cover users, audit, feature flags, and
- * platform settings as those endpoints land.
+ * API client + hooks for `/api/v1/admin/*` endpoints.
  */
 
-export { listAgencies, suspendAgency } from './api';
-export { adminKeys, useAgencies } from './hooks';
+export {
+  getOAuthClient,
+  listAgencies,
+  listOAuthClients,
+  regenerateOAuthClientSecret,
+  registerOAuthClient,
+  revokeOAuthClient,
+  suspendAgency,
+  updateOAuthClient,
+} from './api';
+export {
+  adminKeys,
+  useAgencies,
+  useOAuthClient,
+  useOAuthClients,
+  useRegenerateOAuthClientSecret,
+  useRegisterOAuthClient,
+  useRevokeOAuthClient,
+  useUpdateOAuthClient,
+} from './hooks';
 export {
   hasMfaChallengeHandler,
   type MfaChallengeHandler,
@@ -17,5 +33,12 @@ export type {
   AdminPaginatedResponse,
   Agency,
   AgencyStatus,
+  KnownOAuthScope,
   ListAgenciesParams,
+  OAuthClientSummary,
+  RegenerateSecretResponse,
+  RegisterOAuthClientRequest,
+  RegisterOAuthClientResponse,
+  UpdateOAuthClientRequest,
 } from './types';
+export { KNOWN_OAUTH_SCOPES } from './types';
