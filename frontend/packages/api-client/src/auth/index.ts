@@ -28,4 +28,6 @@ export type {
   RegisterResponse,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  TenantMembership,
+  TenantRole,
 } from './types';
