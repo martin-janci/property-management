@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T17:55:00Z",
+  "generated": "2026-05-24T18:15:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -273,7 +273,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
       "status_changed_at": "2026-05-24T11:00:00Z",
       "pr_number": 459,
       "pr_url": "https://github.com/martin-janci/property-management/pull/459",
@@ -287,7 +287,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
       "status_changed_at": "2026-05-24T11:00:00Z",
       "pr_number": 458,
       "pr_url": "https://github.com/martin-janci/property-management/pull/458",
@@ -399,7 +399,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T17:55:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
       "status_changed_at": "2026-05-24T17:15:00Z",
       "pr_number": 470,
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
@@ -434,6 +434,48 @@
       "merged_at": null,
       "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
       "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key — all green"
+    },
+    {
+      "task_id": "gap-8a-3-websocket-realtime-sync",
+      "branch": "auto-impl/gap-8a-3-websocket-realtime-sync",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
+      "status_changed_at": "2026-05-24T18:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-3-admin-health-ui",
+      "branch": "auto-impl/gap-10b-3-admin-health-ui",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
+      "status_changed_at": "2026-05-24T18:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-9-1-mfa-e2e-verify",
+      "branch": "auto-impl/gap-9-1-mfa-e2e-verify",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T18:15:00Z",
+      "status_changed_at": "2026-05-24T18:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
