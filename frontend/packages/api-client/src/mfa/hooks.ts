@@ -6,11 +6,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { mfaDisable, mfaRegenerateBackupCodes, mfaSetup, mfaStatus, mfaVerify } from './api';
-import type {
-  MfaDisableRequest,
-  MfaRegenerateBackupCodesRequest,
-  MfaVerifyRequest,
-} from './types';
+import type { MfaDisableRequest, MfaRegenerateBackupCodesRequest, MfaVerifyRequest } from './types';
 
 // ============================================
 // Query Key Factory

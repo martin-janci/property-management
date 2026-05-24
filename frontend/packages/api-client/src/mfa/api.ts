@@ -54,7 +54,7 @@ async function mfaRequest<T>(url: string, options: RequestInit = {}): Promise<T>
  * POST /api/v1/auth/mfa/setup
  */
 export async function mfaSetup(): Promise<MfaSetupResponse> {
-  return mfaRequest<MfaSetupResponse>(MFA_BASE + '/setup', { method: 'POST' });
+  return mfaRequest<MfaSetupResponse>(`${MFA_BASE}/setup`, { method: 'POST' });
 }
 
 /**
@@ -62,7 +62,7 @@ export async function mfaSetup(): Promise<MfaSetupResponse> {
  * POST /api/v1/auth/mfa/verify
  */
 export async function mfaVerify(data: MfaVerifyRequest): Promise<MfaVerifyResponse> {
-  return mfaRequest<MfaVerifyResponse>(MFA_BASE + '/verify', {
+  return mfaRequest<MfaVerifyResponse>(`${MFA_BASE}/verify`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -73,7 +73,7 @@ export async function mfaVerify(data: MfaVerifyRequest): Promise<MfaVerifyRespon
  * POST /api/v1/auth/mfa/disable
  */
 export async function mfaDisable(data: MfaDisableRequest): Promise<MfaDisableResponse> {
-  return mfaRequest<MfaDisableResponse>(MFA_BASE + '/disable', {
+  return mfaRequest<MfaDisableResponse>(`${MFA_BASE}/disable`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -84,7 +84,7 @@ export async function mfaDisable(data: MfaDisableRequest): Promise<MfaDisableRes
  * GET /api/v1/auth/mfa/status
  */
 export async function mfaStatus(signal?: AbortSignal): Promise<MfaStatusResponse> {
-  return mfaRequest<MfaStatusResponse>(MFA_BASE + '/status', { method: 'GET', signal });
+  return mfaRequest<MfaStatusResponse>(`${MFA_BASE}/status`, { method: 'GET', signal });
 }
 
 /**
@@ -94,7 +94,7 @@ export async function mfaStatus(signal?: AbortSignal): Promise<MfaStatusResponse
 export async function mfaRegenerateBackupCodes(
   data: MfaRegenerateBackupCodesRequest
 ): Promise<MfaRegenerateBackupCodesResponse> {
-  return mfaRequest<MfaRegenerateBackupCodesResponse>(MFA_BASE + '/backup-codes/regenerate', {
+  return mfaRequest<MfaRegenerateBackupCodesResponse>(`${MFA_BASE}/backup-codes/regenerate`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
