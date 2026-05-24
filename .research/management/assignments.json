@@ -354,16 +354,16 @@
     {
       "task_id": "gap-7a-5-web-share-ui",
       "branch": "auto-impl/gap-7a-5-web-share-ui",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T15:40:00Z",
-      "status_changed_at": "2026-05-24T14:38:00Z",
+      "last_updated": "2026-05-24T15:45:00Z",
+      "status_changed_at": "2026-05-24T15:45:00Z",
       "pr_number": 467,
       "pr_url": "https://github.com/martin-janci/property-management/pull/467",
-      "merged_at": null,
+      "merged_at": "2026-05-24T15:45:00Z",
       "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail; useDocumentShares/useCreateDocumentShare/useRevokeDocumentShare hooks in api-client; typecheck+build clean; ci-fix=4e0fdee5 (biome import ordering in DocumentDetail.tsx, screen-map endpoint IDs removed); ci-fix=bfeec472 (revokeDocumentShare raw fetch → fetchApi for auth header)",
-      "reviewer_summary": "verdict=changes note=revokeDocumentShare used raw fetch bypassing fetchApi auth header (DELETE → 401 in production); FIXED in bfeec472; non-blocking: redundant refetch(), draft+conflict on assignments.json, window.confirm pattern; CI rerunning"
+      "reviewer_summary": "verdict=approve note=All 21 CI checks green; revokeDocumentShare raw fetch fixed (bfeec472); fetchApi pattern consistent; types sound; screen-map agent log present; LGTM"
     },
     {
       "task_id": "gap-7a-3-mobile-rls-ui",
