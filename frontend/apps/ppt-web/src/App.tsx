@@ -14,16 +14,23 @@ import type {
 } from '@ppt/api-client';
 import {
   setMfaChallengeHandler,
+  useAcknowledgeAnnouncement,
+  useAnnouncement,
   useAnnouncements,
+  useAnnouncementAcknowledgmentStats,
+  useAnnouncementComments,
   useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
+  useCreateAnnouncementComment,
   useCreateDispute,
   useCreateOutage,
   useDeleteAnnouncement,
+  useDeleteAnnouncementComment,
   useDispute,
   useDisputes,
   useFaults,
+  useMarkReadAnnouncement,
   useOutage,
   useOutages,
   usePauseSchedule,
@@ -1461,51 +1468,280 @@ function CreateAnnouncementPageRoute() {
   );
 }
 
-function ViewAnnouncementPageRoute() {
-  const { announcementId } = useParams<{ announcementId: string }>();
+/**
+ * Inner component for announcement detail — all hooks called unconditionally.
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useAnnouncement                    — TanStack Query detail (announcement + attachments)
+ *   useMarkReadAnnouncement            — POST /api/v1/announcements/:id/read
+ *   useAcknowledgeAnnouncement         — POST /api/v1/announcements/:id/acknowledge
+ *   useAnnouncementAcknowledgmentStats — GET  /api/v1/announcements/:id/acknowledgments
+ *   useAnnouncementComments            — GET  /api/v1/announcements/:id/comments (Story 6.3)
+ *   useCreateAnnouncementComment       — POST /api/v1/announcements/:id/comments (Story 6.3)
+ *   useDeleteAnnouncementComment       — DELETE /api/v1/announcements/:id/comments/:cid (Story 6.3)
+ *   usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement / useDeleteAnnouncement
+ */
+function ViewAnnouncementPageInner({ announcementId }: { announcementId: string }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const { user } = useAuth();
 
-  if (!announcementId) {
-    return <div>Announcement not found</div>;
-  }
+  const { data, isLoading, error } = useAnnouncement(announcementId);
+  const markRead = useMarkReadAnnouncement();
+  const acknowledge = useAcknowledgeAnnouncement();
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+  const deleteAnnouncement = useDeleteAnnouncement();
 
-  // Mock data - would use useAnnouncement hook
-  const mockAnnouncement: import('@ppt/api-client').AnnouncementWithDetails = {
+  // Fetch ack stats only when the announcement requires acknowledgment (manager view)
+  const { data: ackStatsData } = useAnnouncementAcknowledgmentStats(
+    announcementId,
+    !!data?.announcement?.acknowledgmentRequired
+  );
+
+  // Story 6.3: Comments — only fetch when commentsEnabled
+  const commentsEnabled = !!data?.announcement?.commentsEnabled;
+  const {
+    data: commentsData,
+    isLoading: commentsLoading,
+  } = useAnnouncementComments(announcementId, undefined, commentsEnabled);
+  const createComment = useCreateAnnouncementComment();
+  const deleteComment = useDeleteAnnouncementComment();
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcement = data?.announcement;
+  const attachments = data?.attachments ?? [];
+
+  const handleMarkRead = async () => {
+    try {
+      await markRead.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.markedRead', { defaultValue: 'Marked as read' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.markReadFailed', { defaultValue: 'Failed to mark as read' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    try {
+      await acknowledge.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.acknowledged', { defaultValue: 'Acknowledged' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.acknowledgeFailed', { defaultValue: 'Failed to acknowledge' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      await publishAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.published', { defaultValue: 'Published' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.publishFailed', { defaultValue: 'Publish failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await archiveAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'info',
+        title: t('announcements.archived', { defaultValue: 'Archived' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.archiveFailed', { defaultValue: 'Archive failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePin = async (pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id: announcementId, pinned });
+      showToast({
+        type: 'info',
+        title: pinned
+          ? t('announcements.pinned', { defaultValue: 'Pinned' })
+          : t('announcements.unpinned', { defaultValue: 'Unpinned' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.pinFailed', { defaultValue: 'Pin action failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.deleted', { defaultValue: 'Deleted' }),
+        message: '',
+      });
+      navigate('/announcements');
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.deleteFailed', { defaultValue: 'Delete failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  // Story 6.3: Comment handlers
+  const handleAddComment = async (content: string, parentId?: string) => {
+    try {
+      await createComment.mutateAsync({ announcementId, content, parentId });
+      showToast({
+        type: 'success',
+        title: t('announcements.commentPosted', { defaultValue: 'Comment posted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.commentFailed', { defaultValue: 'Failed to post comment' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, reason?: string) => {
+    try {
+      await deleteComment.mutateAsync({ announcementId, commentId, reason });
+      showToast({
+        type: 'info',
+        title: t('announcements.commentDeleted', { defaultValue: 'Comment deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.commentDeleteFailed', { defaultValue: 'Failed to delete comment' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const EMPTY_ANNOUNCEMENT: import('@ppt/api-client').AnnouncementWithDetails = {
     id: announcementId,
-    organizationId: 'org-1',
-    authorId: 'user-1',
-    authorName: 'Admin User',
-    title: 'Sample Announcement',
-    content: 'This is a sample announcement content.',
-    status: 'published',
+    organizationId: '',
+    authorId: '',
+    authorName: '',
+    title: '',
+    content: '',
+    status: 'draft',
     targetType: 'all',
     targetIds: [],
     pinned: false,
     acknowledgmentRequired: false,
-    commentsEnabled: true,
-    readCount: 10,
-    acknowledgedCount: 5,
-    commentCount: 2,
+    commentsEnabled: false,
+    readCount: 0,
+    acknowledgedCount: 0,
+    commentCount: 0,
     attachmentCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: '',
+    updatedAt: '',
   };
+
+  // Build commentsProps when comments are enabled (Story 6.3)
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin';
+  const commentsProps = commentsEnabled
+    ? {
+        comments: commentsData?.comments ?? [],
+        total: commentsData?.total ?? 0,
+        isLoading: commentsLoading,
+        currentUserId: user?.id,
+        isManager,
+        onAddComment: handleAddComment,
+        onDeleteComment: handleDeleteComment,
+      }
+    : undefined;
+
+  if (isLoading || !announcement) {
+    return (
+      <ViewAnnouncementPage
+        announcement={EMPTY_ANNOUNCEMENT}
+        attachments={[]}
+        isLoading
+        onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
+        onPublish={handlePublish}
+        onArchive={handleArchive}
+        onPin={handlePin}
+        onDelete={handleDelete}
+        onBack={() => navigate('/announcements')}
+      />
+    );
+  }
 
   return (
     <ViewAnnouncementPage
-      announcement={mockAnnouncement}
-      attachments={[]}
+      announcement={announcement}
+      attachments={attachments}
       onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
-      onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
-      onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
-      onPin={(pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })
-      }
-      onDelete={() => navigate('/announcements')}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onDelete={handleDelete}
       onBack={() => navigate('/announcements')}
+      onMarkRead={handleMarkRead}
+      onAcknowledge={announcement.acknowledgmentRequired ? handleAcknowledge : undefined}
+      acknowledgmentStats={ackStatsData?.stats}
+      commentsProps={commentsProps}
     />
   );
+}
+
+/** Route wrapper — guards for missing param before mounting inner component */
+function ViewAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+  return <ViewAnnouncementPageInner announcementId={announcementId} />;
 }
 
 function EditAnnouncementPageRoute() {

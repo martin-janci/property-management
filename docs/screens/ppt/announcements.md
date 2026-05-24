@@ -17,6 +17,10 @@ implementations:
     apiStatus: partial
 endpoints:
   - announcements_list
+  - announcement_get
+  - announcement_mark_read
+  - announcement_acknowledge
+  - announcement_get_acknowledgments
 epics:
   - Epic-6
 relatedScreens:
@@ -112,6 +116,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-24 — agent: gap-6-2-announcement-web-ui — Story 6.2: added useAnnouncement/useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats standalone hooks; replaced ViewAnnouncementPageRoute mock stub with real wiring (ViewAnnouncementPageInner); added acknowledgmentStats prop + AcknowledgmentStatsPanel; apiStatus stub→partial
 
 - 2026-05-24 — agent: gap-79-1 — wired AnnouncementsPage to useAnnouncements+useDeleteAnnouncement+usePublishAnnouncement+useArchiveAnnouncement+usePinAnnouncement hooks; ppt-web.apiStatus stub→partial; auth header fix applied (Authorization: Bearer from getToken())
 
