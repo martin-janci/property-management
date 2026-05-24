@@ -399,13 +399,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T18:20:00Z",
       "status_changed_at": "2026-05-24T17:15:00Z",
       "pr_number": 470,
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": null,
       "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=18 integration tests well-structured and correct: PKCE S256 flow, consent/revoke, refresh rotation with family_id reuse detection, audit trail covered; migration 00156 (5 missing AuditAction variants) idempotent; minor non-blocking: 2 is_client_error() calls instead of specific codes, 1 pre-existing RFC 6749 §5.2 deviation"
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
