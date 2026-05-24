@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T17:30:00Z",
+  "generated": "2026-05-24T17:45:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -298,14 +298,14 @@
     {
       "task_id": "pm-scrum-master-land-voice-device-idor",
       "branch": "auto-impl/pm-scrum-master-land-voice-device-idor",
-      "status": "review",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T17:45:00Z",
       "status_changed_at": "2026-05-24T12:30:00Z",
       "pr_number": 461,
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
-      "merged_at": null,
+      "merged_at": "2026-05-24T17:45:00Z",
       "implementer_summary": null,
       "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
     },
@@ -413,13 +413,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T17:00:00Z",
+      "last_updated": "2026-05-24T17:45:00Z",
       "status_changed_at": "2026-05-24T17:00:00Z",
       "pr_number": 469,
       "pr_url": "https://github.com/martin-janci/property-management/pull/469",
       "merged_at": null,
       "implementer_summary": "pr=469 status=done specialist=react-web note=OAuthClientsPage full CRUD UI (register/edit/revoke/regenerate); api-client OAuth types+hooks+api; capabilities+route+sidebar+i18n wired; Band A typecheck+biome clean, Band B vite build exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=three bugs: (1) handleRevoke missing try/catch \u2014 failed DELETE silent; (2) useRegenerateOAuthClientSecret no onSuccess cache invalidation; (3) OAuthClientSummary missing redirectUris field \u2014 PATCH always sends undefined (data-loss risk)"
     },
     {
       "task_id": "gap-10a-3-user-grants-ui",
