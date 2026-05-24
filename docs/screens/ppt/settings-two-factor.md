@@ -9,25 +9,36 @@ implementations:
     component: TwoFactorAuthPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
-endpoints: []
+    apiStatus: complete
+endpoints:
+  - POST /api/v1/auth/mfa/setup
+  - POST /api/v1/auth/mfa/verify
+  - POST /api/v1/auth/mfa/disable
+  - GET  /api/v1/auth/mfa/status
+  - POST /api/v1/auth/mfa/backup-codes/regenerate
 relatedScreens: []
 sharedComponents: []
 diagrams: []
-useCases: []
-epics: []
+useCases:
+  - UC-14.10
+epics:
+  - Epic-9-1
 designSources: []
-owner: pm-frontend
+owner: pm-security
 ---
 
 # Two-Factor Authentication
 
-Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, epics, and redesign notes when known.
+Wired to live backend MFA endpoints in Epic 9, Story 9.1. TwoFactorAuthPage now uses
+useMfaStatus, useMfaSetup, useMfaVerify, useMfaDisable, and useMfaRegenerateBackupCodes
+hooks from @ppt/api-client.
 
 ## Notes
 
 ### Specific (recent)
+- 2026-05-24 — agent: wired all five MFA hooks; removed local-state-only scaffold; apiStatus promoted to complete.
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:377`.
 
 ## Agent Log
+- 2026-05-24 — agent: gap-9-1-mfa-frontend-integration — wired TwoFactorAuthPage to /api/v1/auth/mfa/* via useMfa* hooks; added mfa module to @ppt/api-client; removed feature-not-exposed scaffold.
 - 2026-05-18 — agent: created stub for unmapped route.

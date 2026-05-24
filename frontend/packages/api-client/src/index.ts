@@ -22,6 +22,7 @@ export * from './facilities';
 export * from './faults';
 export * from './financial';
 export * from './forms';
+export * from './mfa';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';

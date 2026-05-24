@@ -30,11 +30,42 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   }
 
   if (error) {
+    // 403 = audience access denied — surface the permission-denied state
+    const isForbidden = error.message.includes('403') || error.message.toLowerCase().includes('forbidden');
+    if (isForbidden) {
+      return (
+        <div className="document-detail permission-denied">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+            className="permission-icon"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
+          <p className="permission-message">
+            Tento dokument nie je prístupný pre váš účet.
+          </p>
+          <p className="permission-hint">
+            Dokument mohol byť nastavený ako viditeľný iba pre správcov alebo konkrétnych
+            používateľov.
+          </p>
+
+          <style>{detailStyles}</style>
+        </div>
+      );
+    }
+
     return (
       <div className="document-detail error">
-        <p className="error-message">Failed to load document: {error.message}</p>
+        <p className="error-message">Detail dokumentu sa nepodarilo načítať.</p>
         <button type="button" onClick={() => refetch()} className="retry-btn">
-          Retry
+          Skúsiť znova
         </button>
 
         <style>{detailStyles}</style>
@@ -45,7 +76,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   if (!data?.document) {
     return (
       <div className="document-detail empty">
-        <p>Document not found</p>
+        <p>Dokument nebol nájdený.</p>
 
         <style>{detailStyles}</style>
       </div>
@@ -211,13 +242,36 @@ const detailStyles = `
 
   .document-detail.loading,
   .document-detail.error,
-  .document-detail.empty {
+  .document-detail.empty,
+  .document-detail.permission-denied {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 200px;
     color: var(--ppt-fg-muted);
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .permission-icon {
+    color: var(--ppt-fg-subtle);
+    margin-bottom: 1rem;
+  }
+
+  .permission-message {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--ppt-fg-primary);
+    margin: 0 0 0.5rem;
+  }
+
+  .permission-hint {
+    font-size: 0.8125rem;
+    color: var(--ppt-fg-muted);
+    max-width: 28rem;
+    line-height: 1.6;
+    margin: 0;
   }
 
   .loading-spinner {

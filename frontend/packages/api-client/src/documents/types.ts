@@ -48,6 +48,10 @@ export interface DocumentSummary {
   predicted_category?: string;
   classification_confidence?: number;
   summary?: string;
+  /** RLS-enforced audience scope returned from the server */
+  access_scope?: AccessScope;
+  /** Publication status; absent means published (backward compat) */
+  status?: DocumentStatus;
 }
 
 export interface DocumentFolder {
@@ -163,6 +167,12 @@ export interface DocumentIntelligenceStats {
   avg_classification_confidence: number;
 }
 
+// Document status (publication state)
+export type DocumentStatus = 'published' | 'draft' | 'archived';
+
+// Audience / access scope for RLS-aware filtering
+export type DocumentAudience = 'organization' | 'building' | 'unit' | 'role' | 'users' | 'public';
+
 // List query params
 export interface DocumentListQuery {
   folder_id?: string;
@@ -170,6 +180,11 @@ export interface DocumentListQuery {
   search?: string;
   limit?: number;
   offset?: number;
+  /** Filter by publication status (maps to document state machine on backend) */
+  status?: DocumentStatus;
+  /** Filter by access_scope audience; combined with RLS to show only accessible docs */
+  access_scope?: DocumentAudience;
+  created_by?: string;
 }
 
 // Responses
