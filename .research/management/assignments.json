@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T00:10:21Z",
+  "generated": "2026-05-24T01:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -58,46 +58,60 @@
       "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
     },
     {
+      "task_id": "pm-tech-lead-decide-2b-build-order",
+      "branch": "auto-impl/pm-tech-lead-decide-2b-build-order",
+      "status": "review",
+      "specialist": "generic",
+      "claimed_at": "2026-05-24T00:10:26Z",
+      "last_updated": "2026-05-24T00:35:00Z",
+      "status_changed_at": "2026-05-24T00:35:00Z",
+      "pr_number": 442,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/442",
+      "merged_at": null,
+      "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md — Epic 2B sequenced first, Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch formally deferred; action-list and risks updated; Band A clean",
+      "reviewer_summary": null
+    },
+    {
       "task_id": "gap-9-1-mfa-frontend-integration",
       "branch": "auto-impl/gap-9-1-mfa-frontend-integration",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:10:21Z",
-      "status_changed_at": "2026-05-24T00:10:21Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T01:30:00Z",
+      "status_changed_at": "2026-05-24T01:30:00Z",
+      "pr_number": 441,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/441",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=441 status=review specialist=frontend note=review blockers addressed: replaced Google Charts QR with canvas-based qrcode pkg (TOTP secret no longer sent externally); replaced mfaRequest/window.__API_BASE_URL__ with fetchApi pattern; unified mfa type names; DocumentAudience removed in favour of canonical AccessScope",
+      "reviewer_summary": "verdict=blocking note=BLOCKING: Google Charts QR leaks TOTP secret; mfaRequest bypasses shared fetch; fixed 2026-05-24"
     },
     {
       "task_id": "gap-7a-3-frontend-api-integration",
       "branch": "auto-impl/gap-7a-3-frontend-api-integration",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:10:21Z",
-      "status_changed_at": "2026-05-24T00:10:21Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T01:30:00Z",
+      "status_changed_at": "2026-05-24T01:30:00Z",
+      "pr_number": 443,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/443",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=443 status=review specialist=frontend note=review blockers addressed: duplicate access_scope param removed; DocumentAudience type removed; DocumentListQuery unified to AccessScope; mfa naming mismatch fixed in hooks.ts/index.ts; biome+tsc clean",
+      "reviewer_summary": "verdict=blocking note=BLOCKING: duplicate access_scope; DocumentAudience/AccessScope type mismatch; mfa name mismatch; CI lint+build failing; fixed 2026-05-24"
     },
     {
       "task_id": "gap-79-2-login-flow-wiring",
       "branch": "auto-impl/gap-79-2-login-flow-wiring",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:10:21Z",
-      "status_changed_at": "2026-05-24T00:10:21Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T01:30:00Z",
+      "status_changed_at": "2026-05-24T01:30:00Z",
+      "pr_number": 444,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/444",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=444 status=review specialist=frontend note=review blocker addressed: added Agent Log entries to login.md and session-expired.md documenting return-URL key refactor to @ppt/shared",
+      "reviewer_summary": "verdict=blocking note=BLOCKING: missing screen-map Agent Log entries for LoginPage and SessionExpiredPage changes; fixed 2026-05-24"
     }
   ]
 }
