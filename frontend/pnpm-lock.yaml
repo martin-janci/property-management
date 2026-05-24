@@ -119,6 +119,9 @@ importers:
       expo:
         specifier: ~55.0.25
         version: 55.0.25(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
+      expo-clipboard:
+        specifier: ^56.0.3
+        version: 56.0.3(expo@55.0.25)(react-native@0.85.3)(react@19.2.0)
       expo-constants:
         specifier: ~55.0.16
         version: 55.0.16(expo@55.0.25)(react-native@0.85.3)
@@ -5942,6 +5945,18 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  /expo-clipboard@56.0.3(expo@55.0.25)(react-native@0.85.3)(react@19.2.0):
+    resolution: {integrity: sha512-8mCdhmAomm0yBIonJFjAhKUXvSkc2avdNh4+rBwoe7DSWF2AC4w3uy+pa419rvVFbTyVxOBmh83UHAbUwD6qAg==}
+    peerDependencies:
+      expo: '*'
+      react: 19.2.0
+      react-native: '*'
+    dependencies:
+      expo: 55.0.25(@babel/core@7.29.0)(@expo/dom-webview@55.0.6)(react-native@0.85.3)(react@19.2.0)(typescript@5.9.3)
+      react: 19.2.0
+      react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3)(@types/react@19.2.14)(react@19.2.0)
+    dev: false
 
   /expo-constants@55.0.16(expo@55.0.25)(react-native@0.85.3):
     resolution: {integrity: sha512-Z15/No94UHoogD+pulxjudGAeOHTEIWZgb/vnX48Wx5D+apWTeCbnKxQZZtGQlosvduYL5kaic2/W8U+NHfBQQ==}
