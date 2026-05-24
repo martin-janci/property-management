@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
 import type {
   ClassificationFeedback,
+  CreateShareRequest,
   DocumentListQuery,
   DocumentSearchRequest,
   GenerateSummaryRequest,
@@ -27,6 +28,7 @@ export const documentKeys = {
   folders: () => [...documentKeys.all, 'folders'] as const,
   folderTree: (buildingId?: string) => [...documentKeys.folders(), 'tree', buildingId] as const,
   stats: () => [...documentKeys.all, 'stats'] as const,
+  shares: (documentId: string) => [...documentKeys.all, documentId, 'shares'] as const,
 };
 
 // List documents
@@ -230,6 +232,37 @@ export function useMoveDocument() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// --- Document Sharing hooks (Story 7A.5) ---
+
+export function useDocumentShares(documentId: string) {
+  return useQuery({
+    queryKey: documentKeys.shares(documentId),
+    queryFn: () => api.listDocumentShares(documentId),
+    enabled: !!documentId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateDocumentShare(documentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateShareRequest) => api.createDocumentShare(documentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
+    },
+  });
+}
+
+export function useRevokeDocumentShare(documentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shareId: string) => api.revokeDocumentShare(documentId, shareId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
     },
   });
 }

@@ -7,6 +7,8 @@ import type {
   ClassificationHistoryEntry,
   ClassificationResponse,
   CreateDocumentRequest,
+  CreateShareRequest,
+  CreateShareResponse,
   Document,
   DocumentIntelligenceStats,
   DocumentListQuery,
@@ -17,6 +19,7 @@ import type {
   FolderWithCount,
   GenerateSummaryRequest,
   OcrReprocessResponse,
+  ShareListResponse,
   SummarizationResponse,
   UpdateDocumentRequest,
 } from './types';
@@ -296,4 +299,24 @@ export async function uploadDocument(
 
     xhr.send(formData);
   });
+}
+
+// --- Document Sharing (Story 7A.5) ---
+
+export async function listDocumentShares(documentId: string): Promise<ShareListResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`);
+}
+
+export async function createDocumentShare(
+  documentId: string,
+  data: CreateShareRequest
+): Promise<CreateShareResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function revokeDocumentShare(documentId: string, shareId: string): Promise<void> {
+  await fetchApi(`${API_BASE}/${documentId}/shares/${shareId}`, { method: 'DELETE' });
 }
