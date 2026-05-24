@@ -14,8 +14,10 @@ endpoints:
   - list_user_grants
   - revoke_user_grant
 relatedScreens:
-  - ppt/settings-two-factor
-  - ppt/settings-profile
+  - id: ppt/settings-two-factor
+    rel: sibling
+  - id: ppt/settings-profile
+    rel: sibling
 sharedComponents: []
 diagrams: []
 useCases:
