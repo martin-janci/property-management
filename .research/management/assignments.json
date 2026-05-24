@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T00:38:00Z",
+  "generated": "2026-05-24T00:45:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -63,13 +63,13 @@
       "status": "review",
       "specialist": "generic",
       "claimed_at": "2026-05-24T00:10:26Z",
-      "last_updated": "2026-05-24T00:38:00Z",
+      "last_updated": "2026-05-24T00:45:00Z",
       "status_changed_at": "2026-05-24T00:35:00Z",
       "pr_number": 442,
       "pr_url": "https://github.com/martin-janci/property-management/pull/442",
       "merged_at": null,
       "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md \u2014 Epic 2B sequenced first, Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch formally deferred; action-list and risks updated; Band A clean; lint fixed",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=DEC-001 is sound and complete \u2014 all three artifacts internally consistent, rationale factually grounded, deferred slice list exact match; incidental sibling TS files noted, no regressions; all 12 CI checks green; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-9-1-mfa-frontend-integration",
