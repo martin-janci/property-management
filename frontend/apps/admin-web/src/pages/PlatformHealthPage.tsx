@@ -15,88 +15,25 @@
  */
 
 import { useCapability } from '@ppt/admin-ui';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type {
+  CurrentMetric,
+  MetricAlert,
+  MetricStatus,
+  MetricThreshold,
+  TimeRange,
+  UpdateThresholdRequest,
+} from '@ppt/api-client';
+import {
+  useAcknowledgeAlert,
+  useHealthAlerts,
+  useHealthDashboard,
+  useMetricHistory,
+  useUpdateHealthThreshold,
+} from '@ppt/api-client';
 import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
-
-// ---------------------------------------------------------------------------
-// API types (mirrors backend Rust structs)
-// ---------------------------------------------------------------------------
-
-type MetricStatus = 'normal' | 'warning' | 'critical';
-
-interface CurrentMetric {
-  metric_name: string;
-  metric_type: string;
-  value: number;
-  recorded_at: string;
-  status: MetricStatus;
-}
-
-interface MetricAlert {
-  id: string;
-  metric_name: string;
-  threshold_type: string;
-  value: number;
-  created_at: string;
-  acknowledged_at: string | null;
-  acknowledged_by: string | null;
-}
-
-interface MetricThreshold {
-  id: string;
-  metric_name: string;
-  warning_threshold: number;
-  critical_threshold: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface HealthDashboard {
-  metrics: CurrentMetric[];
-  alerts: MetricAlert[];
-  thresholds: MetricThreshold[];
-}
-
-interface MetricDataPoint {
-  value: number;
-  recorded_at: string;
-}
-
-interface MetricStats {
-  min: number;
-  max: number;
-  avg: number;
-  count: number;
-}
-
-interface MetricHistory {
-  metric_name: string;
-  data_points: MetricDataPoint[];
-  stats: MetricStats;
-}
-
-type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
-
-// ---------------------------------------------------------------------------
-// Fetch helpers
-// ---------------------------------------------------------------------------
-
-async function fetchJson<T>(url: string, token: string | null, options?: RequestInit): Promise<T> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-  const res = await fetch(url, { ...options, headers, credentials: 'include' });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${url}`);
-  }
-  return res.json() as Promise<T>;
-}
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -205,7 +142,6 @@ function MetricCard({ metric, onDrill }: MetricCardProps) {
 
 interface MetricHistoryPanelProps {
   metricName: string;
-  token: string | null;
   onClose: () => void;
 }
 
@@ -217,20 +153,9 @@ const RANGE_LABELS: Record<TimeRange, string> = {
   '30d': '30 days',
 };
 
-function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelProps) {
+function MetricHistoryPanel({ metricName, onClose }: MetricHistoryPanelProps) {
   const [range, setRange] = useState<TimeRange>('24h');
-
-  const { data, isLoading, isError } = useQuery<MetricHistory>({
-    queryKey: ['admin', 'health', 'history', metricName, range],
-    queryFn: () => {
-      const n = encodeURIComponent(metricName);
-      return fetchJson<MetricHistory>(
-        `/api/v1/platform-admin/health/metrics/${n}/history?range=${range}`,
-        token
-      );
-    },
-    staleTime: 30_000,
-  });
+  const { data, isLoading, isError } = useMetricHistory(metricName, range);
 
   return (
     <div
@@ -392,8 +317,6 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
                   </thead>
                   <tbody>
                     {data.data_points.map((dp, i) => (
-                      // Using index as key is safe here because data_points is
-                      // fetched fresh and may have no unique field besides recorded_at
                       <tr
                         key={`${dp.recorded_at}-${i}`}
                         style={{
@@ -533,7 +456,6 @@ function AlertsTable({ alerts, canAcknowledge, onAcknowledge, isAcknowledging }:
 interface ThresholdsTableProps {
   thresholds: MetricThreshold[];
   canEdit: boolean;
-  token: string | null;
 }
 
 interface EditingThreshold {
@@ -542,42 +464,38 @@ interface EditingThreshold {
   critical: string;
 }
 
-function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
+function ThresholdsTable({ thresholds, canEdit }: ThresholdsTableProps) {
   const { showToast } = useToast();
-  const qc = useQueryClient();
   const [editing, setEditing] = useState<EditingThreshold | null>(null);
-  const [savePending, setSavePending] = useState(false);
+  const updateThreshold = useUpdateHealthThreshold();
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!editing) return;
-    setSavePending(true);
-    try {
-      const body: Record<string, number | undefined> = {};
-      const w = Number.parseFloat(editing.warning);
-      const c = Number.parseFloat(editing.critical);
-      if (!Number.isNaN(w)) body.warning_threshold = w;
-      if (!Number.isNaN(c)) body.critical_threshold = c;
-
-      await fetchJson(
-        `/api/v1/platform-admin/health/thresholds/${encodeURIComponent(editing.name)}`,
-        token,
-        {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        }
-      );
-      showToast({
-        type: 'success',
-        title: 'Threshold updated',
-        message: `${editing.name} thresholds saved.`,
-      });
-      await qc.invalidateQueries({ queryKey: ['admin', 'health', 'dashboard'] });
-      setEditing(null);
-    } catch {
-      showToast({ type: 'error', title: 'Save failed', message: 'Could not update threshold.' });
-    } finally {
-      setSavePending(false);
-    }
+    const data: UpdateThresholdRequest = {};
+    const w = Number.parseFloat(editing.warning);
+    const c = Number.parseFloat(editing.critical);
+    if (!Number.isNaN(w)) data.warning_threshold = w;
+    if (!Number.isNaN(c)) data.critical_threshold = c;
+    updateThreshold.mutate(
+      { metricName: editing.name, data },
+      {
+        onSuccess: () => {
+          showToast({
+            type: 'success',
+            title: 'Threshold updated',
+            message: `${editing.name} thresholds saved.`,
+          });
+          setEditing(null);
+        },
+        onError: () => {
+          showToast({
+            type: 'error',
+            title: 'Save failed',
+            message: 'Could not update threshold.',
+          });
+        },
+      }
+    );
   };
 
   if (thresholds.length === 0) {
@@ -654,7 +572,7 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                disabled={savePending}
+                disabled={updateThreshold.isPending}
                 style={{
                   padding: '7px 14px',
                   borderRadius: 8,
@@ -669,23 +587,21 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  void handleSave();
-                }}
-                disabled={savePending}
+                onClick={handleSave}
+                disabled={updateThreshold.isPending}
                 style={{
                   padding: '7px 14px',
                   borderRadius: 8,
                   border: 'none',
                   background: 'var(--ppt-brand-600, #2563eb)',
                   color: '#fff',
-                  cursor: savePending ? 'not-allowed' : 'pointer',
+                  cursor: updateThreshold.isPending ? 'not-allowed' : 'pointer',
                   fontSize: 13,
                   fontWeight: 500,
-                  opacity: savePending ? 0.5 : 1,
+                  opacity: updateThreshold.isPending ? 0.5 : 1,
                 }}
               >
-                {savePending ? 'Saving…' : 'Save'}
+                {updateThreshold.isPending ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>
@@ -798,9 +714,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 const PlatformHealthPage: React.FC = () => {
   const { t } = useTranslation();
-  const { token } = useAdminAuth();
   const { showToast } = useToast();
-  const qc = useQueryClient();
 
   const canAcknowledge = useCapability('site_settings_write');
   const canEditThresholds = useCapability('site_settings_write');
@@ -808,55 +722,11 @@ const PlatformHealthPage: React.FC = () => {
   const [drilledMetric, setDrilledMetric] = useState<string | null>(null);
   const [activeOnly, setActiveOnly] = useState(true);
 
-  // Dashboard query (metrics + active alerts + thresholds snapshot)
-  const {
-    data: dashboard,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery<HealthDashboard>({
-    queryKey: ['admin', 'health', 'dashboard'],
-    queryFn: () => fetchJson<HealthDashboard>('/api/v1/platform-admin/health/dashboard', token),
-    staleTime: 30_000,
-    refetchInterval: 60_000, // auto-refresh every minute
-  });
+  const { data: dashboard, isLoading, isError, refetch } = useHealthDashboard();
 
-  // Standalone alerts query (supports all / active-only toggle)
-  const { data: allAlerts } = useQuery<MetricAlert[]>({
-    queryKey: ['admin', 'health', 'alerts', activeOnly],
-    queryFn: () =>
-      fetchJson<MetricAlert[]>(
-        `/api/v1/platform-admin/health/alerts?active_only=${activeOnly}`,
-        token
-      ),
-    staleTime: 30_000,
-  });
+  const { data: allAlerts } = useHealthAlerts(activeOnly);
 
-  // Acknowledge mutation
-  const { mutate: acknowledgeAlert, isPending: isAcknowledging } = useMutation({
-    mutationFn: (alertId: string) =>
-      fetchJson(
-        `/api/v1/platform-admin/health/alerts/${encodeURIComponent(alertId)}/acknowledge`,
-        token,
-        { method: 'POST' }
-      ),
-    onSuccess: () => {
-      showToast({
-        type: 'success',
-        title: 'Alert acknowledged',
-        message: 'The alert has been marked as acknowledged.',
-      });
-      void qc.invalidateQueries({ queryKey: ['admin', 'health', 'dashboard'] });
-      void qc.invalidateQueries({ queryKey: ['admin', 'health', 'alerts'] });
-    },
-    onError: () => {
-      showToast({
-        type: 'error',
-        title: 'Acknowledge failed',
-        message: 'Could not acknowledge the alert.',
-      });
-    },
-  });
+  const { mutate: acknowledgeAlert, isPending: isAcknowledging } = useAcknowledgeAlert();
 
   const displayedAlerts = allAlerts ?? dashboard?.alerts ?? [];
 
@@ -962,29 +832,36 @@ const PlatformHealthPage: React.FC = () => {
       <AlertsTable
         alerts={displayedAlerts}
         canAcknowledge={canAcknowledge}
-        onAcknowledge={(id) => acknowledgeAlert(id)}
+        onAcknowledge={(id) =>
+          acknowledgeAlert(id, {
+            onSuccess: () =>
+              showToast({
+                type: 'success',
+                title: 'Alert acknowledged',
+                message: 'The alert has been marked as acknowledged.',
+              }),
+            onError: () =>
+              showToast({
+                type: 'error',
+                title: 'Acknowledge failed',
+                message: 'Could not acknowledge the alert.',
+              }),
+          })
+        }
         isAcknowledging={isAcknowledging}
       />
 
       {/* Thresholds */}
       <SectionHeading>{t('admin.health.thresholdsTitle', 'Metric Thresholds')}</SectionHeading>
       {dashboard ? (
-        <ThresholdsTable
-          thresholds={dashboard.thresholds}
-          canEdit={canEditThresholds}
-          token={token}
-        />
+        <ThresholdsTable thresholds={dashboard.thresholds} canEdit={canEditThresholds} />
       ) : (
         !isLoading && <div style={{ color: 'var(--ppt-fg-muted, #6b7280)', fontSize: 13 }}>—</div>
       )}
 
       {/* Metric history drill-down panel */}
       {drilledMetric && (
-        <MetricHistoryPanel
-          metricName={drilledMetric}
-          token={token}
-          onClose={() => setDrilledMetric(null)}
-        />
+        <MetricHistoryPanel metricName={drilledMetric} onClose={() => setDrilledMetric(null)} />
       )}
     </section>
   );
