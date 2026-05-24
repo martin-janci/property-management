@@ -37,6 +37,7 @@
 
 use std::time::Duration;
 
+use api_core::extractors::validate_access_token;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -47,7 +48,6 @@ use axum::{
     routing::get,
     Router,
 };
-use api_core::extractors::validate_access_token;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
