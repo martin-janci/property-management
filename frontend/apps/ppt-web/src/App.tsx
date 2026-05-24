@@ -25,7 +25,7 @@ import {
   useUpdateOutage,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
