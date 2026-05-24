@@ -19,6 +19,7 @@ import ImpersonationListPage from './pages/ImpersonationListPage';
 import { LoginPage } from './pages/LoginPage';
 import MembershipsPage from './pages/MembershipsPage';
 import MobileConfigPage from './pages/MobileConfigPage';
+import OAuthClientsPage from './pages/OAuthClientsPage';
 import PlatformPage from './pages/platform';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
@@ -113,6 +114,14 @@ export function App() {
                       requiredCapability={['memberships_grant', 'memberships_revoke']}
                     >
                       <CapabilitiesAdminPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="identity/oauth-clients"
+                  element={
+                    <ProtectedRoute requiredCapability="oauth_client_write">
+                      <OAuthClientsPage />
                     </ProtectedRoute>
                   }
                 />

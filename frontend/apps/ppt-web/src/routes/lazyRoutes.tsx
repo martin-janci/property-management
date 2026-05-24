@@ -65,6 +65,11 @@ export const PrivacySettingsPage = lazy(() =>
   import('../features/privacy').then((m) => ({ default: m.PrivacySettingsPage }))
 );
 
+// OAuth Grants feature (Epic 10A, Story 10A-3)
+export const OAuthGrantsPage = lazy(() =>
+  import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
+);
+
 // Neighbors feature (Epic 6, Story 6.6)
 export const NeighborsPage = lazy(() =>
   import('../features/neighbors').then((m) => ({ default: m.NeighborsPage }))
