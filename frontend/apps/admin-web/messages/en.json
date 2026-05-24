@@ -140,6 +140,17 @@
         "secretRegeneratedTitle": "Secret regenerated"
       }
     },
+    "health": {
+      "activeOnly": "Active only",
+      "allAlerts": "All alerts",
+      "alertsTitle": "Alerts",
+      "loadError": "Failed to load health dashboard. Check your connection and try again.",
+      "metricsTitle": "Current Metrics",
+      "navLabel": "Health",
+      "noMetrics": "No metrics recorded yet.",
+      "thresholdsTitle": "Metric Thresholds",
+      "title": "Platform Health"
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Maintenance mode",
