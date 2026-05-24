@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T02:47:00Z",
+  "generated": "2026-05-24T02:52:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -144,17 +144,16 @@
     {
       "task_id": "gap-7a-4-pdf-preview",
       "branch": "auto-impl/gap-7a-4-pdf-preview",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:45:00Z",
-      "status_changed_at": "2026-05-24T02:45:00Z",
+      "last_updated": "2026-05-24T02:52:00Z",
+      "status_changed_at": "2026-05-24T02:52:00Z",
       "pr_number": 446,
       "pr_url": "https://github.com/martin-janci/property-management/pull/446",
-      "merged_at": null,
+      "merged_at": "2026-05-24T02:51:00Z",
       "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
-      "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client documents/hooks.ts re-exported through index chain; pdfjs worker uses new URL(import.meta.url) no CDN; IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime helper present; @tailwindcss/postcss moved to devDeps; all CI green; posted as COMMENT (self-PR restriction)",
-      "last_updated": "2026-05-24T10:00:00Z"
+      "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client; pdfjs worker uses import.meta.url (no CDN); IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime present; @tailwindcss/postcss in devDeps; all CI green"
     }
   ]
 }
