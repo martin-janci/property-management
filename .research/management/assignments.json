@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T16:00:00Z",
+  "generated": "2026-05-24T17:00:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -396,43 +396,43 @@
     {
       "task_id": "gap-10a-1-oauth-tests",
       "branch": "auto-impl/gap-10a-1-oauth-tests",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
-      "status_changed_at": "2026-05-24T16:00:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T17:00:00Z",
+      "status_changed_at": "2026-05-24T17:00:00Z",
+      "pr_number": 470,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
       "reviewer_summary": null
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
       "branch": "auto-impl/gap-10a-2-oauth-admin-ui",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
-      "status_changed_at": "2026-05-24T16:00:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T17:00:00Z",
+      "status_changed_at": "2026-05-24T17:00:00Z",
+      "pr_number": 469,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/469",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=469 status=done specialist=react-web note=OAuthClientsPage full CRUD UI (register/edit/revoke/regenerate); api-client OAuth types+hooks+api; capabilities+route+sidebar+i18n wired; Band A typecheck+biome clean, Band B vite build exit 0",
       "reviewer_summary": null
     },
     {
       "task_id": "gap-10a-3-user-grants-ui",
       "branch": "auto-impl/gap-10a-3-user-grants-ui",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
-      "status_changed_at": "2026-05-24T16:00:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T17:00:00Z",
+      "status_changed_at": "2026-05-24T17:00:00Z",
+      "pr_number": 468,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/468",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
       "reviewer_summary": null
     }
   ]
