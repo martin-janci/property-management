@@ -273,11 +273,10 @@ All OAuth operations are audit-logged using the standard `audit_log` table:
 |---|---|
 | User authorizes a client | `OAuthAuthorize` |
 | User revokes a client | `OAuthRevoke` |
-| Token refreshed | `OAuthTokenRefresh` |
 | Client registered | `OAuthClientCreate` |
 | Client revoked | `OAuthClientRevoke` |
-| Secret regenerated | `OAuthSecretRegenerate` |
-| Token denied (principal kind mismatch) | `oauth_token_denied_principal_kind` |
+| Secret regenerated | `OAuthClientSecretRegenerate` |
+| Token denied (principal kind mismatch) | `OAuthTokenDeniedPrincipalKind` |
 
 Tokens and secrets are **never** included in audit log payloads — only
 `client_id`, `user_id`, and scope lists.
@@ -343,6 +342,7 @@ The following rules must be preserved by any future change:
 | PKCE `state` parameter CSRF validation in frontend | Medium | The consent UI must round-trip `state` back to the client; not enforced server-side beyond returning it |
 | Refresh token absolute expiry vs sliding | Low | Current TTL is absolute from issuance; a sliding window could extend long-lived integrations |
 | Voice assistant device token (Epic 93) | Medium | Needs refresh TTL of ~1 year + device-specific revocation; must hook into this token infrastructure rather than create a parallel store |
+| Successful token refresh not audit-logged | Low | The `refresh_tokens()` path emits no audit event on success (only `OAuthTokenDeniedPrincipalKind` on rejection); add `OAuthTokenRefresh` variant + emit if refresh audit trail is needed |
 
 ---
 
