@@ -293,7 +293,14 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -308,6 +315,24 @@ function AppNavigation() {
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
+        {isAuthenticated && (
+          <button
+            type="button"
+            className="btn-outline-token px-3 py-1.5 rounded-lg text-sm font-medium"
+            onClick={handleLogout}
+            aria-label={t('auth.signOut', { defaultValue: 'Sign out' })}
+          >
+            {t('auth.signOut', { defaultValue: 'Sign out' })}
+          </button>
+        )}
+        {!isAuthenticated && (
+          <Link
+            to="/login"
+            className="btn-primary-token px-3 py-1.5 rounded-lg text-sm font-medium"
+          >
+            {t('auth.signIn')}
+          </Link>
+        )}
       </div>
     </nav>
   );
