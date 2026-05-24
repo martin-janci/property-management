@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T14:38:00Z",
+  "generated": "2026-05-24T15:10:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -357,13 +357,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T14:38:00Z",
+      "last_updated": "2026-05-24T15:10:00Z",
       "status_changed_at": "2026-05-24T14:38:00Z",
       "pr_number": 467,
       "pr_url": "https://github.com/martin-janci/property-management/pull/467",
       "merged_at": null,
-      "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail; useDocumentShares/useCreateDocumentShare/useRevokeDocumentShare hooks in api-client; typecheck+build clean",
-      "reviewer_summary": null
+      "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail; useDocumentShares/useCreateDocumentShare/useRevokeDocumentShare hooks in api-client; typecheck+build clean; ci-fix=4e0fdee5 (biome import ordering in DocumentDetail.tsx, screen-map endpoint IDs removed); ci-fix=bfeec472 (revokeDocumentShare raw fetch → fetchApi for auth header)",
+      "reviewer_summary": "verdict=changes note=revokeDocumentShare used raw fetch bypassing fetchApi auth header (DELETE → 401 in production); FIXED in bfeec472; non-blocking: redundant refetch(), draft+conflict on assignments.json, window.confirm pattern; CI rerunning"
     },
     {
       "task_id": "gap-7a-3-mobile-rls-ui",
@@ -385,13 +385,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T14:28:00Z",
+      "last_updated": "2026-05-24T15:10:00Z",
       "status_changed_at": "2026-05-24T14:28:00Z",
       "pr_number": 466,
       "pr_url": "https://github.com/martin-janci/property-management/pull/466",
       "merged_at": null,
-      "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage to useAnnouncements+mutations and FaultsPage to useFaults with snake->camelCase mapper; typecheck+biome+vite-build all clean",
-      "reviewer_summary": "verdict=changes note=BLOCKING: fetchJson in announcements/hooks.ts missing Authorization header (all 5 hooks get 401); useDeleteAnnouncement uses bare fetch bypassing fetchJson; MINOR: screen-maps for ppt/announcements and ppt/faults not updated; reverseStatusMap should be module-scope"
+      "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage to useAnnouncements+mutations and FaultsPage to useFaults with snake->camelCase mapper; typecheck+biome+vite-build all clean; ci-fix=c2d2e3b3 (getToken injected into fetchJson, useDeleteAnnouncement→fetchJson<void>, screen-maps announcements+faults apiStatus stub→partial)",
+      "reviewer_summary": "verdict=changes note=BLOCKING: fetchJson missing Authorization header (all 5 hooks get 401); useDeleteAnnouncement uses bare fetch bypassing fetchJson — FIXED in c2d2e3b3: getToken injected, fetchJson handles 204, delete uses fetchJson<void>; screen-maps ppt/announcements+ppt/faults-list updated apiStatus stub→partial"
     }
   ]
 }
