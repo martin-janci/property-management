@@ -28,7 +28,7 @@ type LoadedPdf = NonNullable<Parameters<NonNullable<DocumentProps['onLoadSuccess
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url,
+  import.meta.url
 ).toString();
 
 // --- Types ---
@@ -61,7 +61,7 @@ export function PdfPreview({ documentId, isPdf = true, className }: PdfPreviewPr
           observer.disconnect();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -99,11 +99,11 @@ function PdfRenderer({ documentId, isPdf }: { documentId: string; isPdf: boolean
   const goToNext = useCallback(() => setPageNumber((p) => Math.min(numPages, p + 1)), [numPages]);
   const zoomIn = useCallback(
     () => setScale((s) => Math.min(2.0, parseFloat((s + 0.1).toFixed(1)))),
-    [],
+    []
   );
   const zoomOut = useCallback(
     () => setScale((s) => Math.max(0.5, parseFloat((s - 0.1).toFixed(1)))),
-    [],
+    []
   );
   const zoomReset = useCallback(() => setScale(1.0), []);
 
