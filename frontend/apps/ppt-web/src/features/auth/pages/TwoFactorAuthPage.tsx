@@ -180,7 +180,10 @@ export function TwoFactorAuthPage() {
               <p className="auth-help">Two-factor authentication is not yet enabled.</p>
             )}
 
-            <div className="auth-actions" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+            <div
+              className="auth-actions"
+              style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}
+            >
               {!mfaEnabled && (
                 <button
                   type="button"
@@ -264,7 +267,12 @@ export function TwoFactorAuthPage() {
               </div>
             )}
 
-            <form className="auth-form" onSubmit={handleVerifySetup} noValidate style={{ marginTop: '1.5rem' }}>
+            <form
+              className="auth-form"
+              onSubmit={handleVerifySetup}
+              noValidate
+              style={{ marginTop: '1.5rem' }}
+            >
               <div className="auth-field">
                 <label htmlFor="setup-code" className="auth-label">
                   Verification code
