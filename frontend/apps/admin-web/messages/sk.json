@@ -140,6 +140,17 @@
         "secretRegeneratedTitle": "Tajomstvo obnovené"
       }
     },
+    "health": {
+      "activeOnly": "Iba aktívne",
+      "allAlerts": "Všetky upozornenia",
+      "alertsTitle": "Upozornenia",
+      "loadError": "Nepodarilo sa načítať prehľad zdravia platformy. Skontrolujte pripojenie a skúste znova.",
+      "metricsTitle": "Aktuálne metriky",
+      "navLabel": "Zdravie",
+      "noMetrics": "Zatiaľ neboli zaznamenané žiadne metriky.",
+      "thresholdsTitle": "Prahové hodnoty metrík",
+      "title": "Zdravie platformy"
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Režim údržby",

@@ -80,3 +80,68 @@ export interface RegenerateSecretResponse {
 /** Known OAuth scopes served by the PPT api-server. */
 export const KNOWN_OAUTH_SCOPES = ['profile', 'email', 'org:read', 'full'] as const;
 export type KnownOAuthScope = (typeof KNOWN_OAUTH_SCOPES)[number];
+
+// ============================================================
+// Platform Health Monitoring (Epic 10B.3)
+// ============================================================
+
+export type MetricStatus = 'normal' | 'warning' | 'critical';
+
+export interface CurrentMetric {
+  metric_name: string;
+  metric_type: string;
+  value: number;
+  recorded_at: string;
+  status: MetricStatus;
+}
+
+export interface MetricAlert {
+  id: string;
+  metric_name: string;
+  threshold_type: string;
+  value: number;
+  created_at: string;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+}
+
+export interface MetricThreshold {
+  id: string;
+  metric_name: string;
+  warning_threshold: number;
+  critical_threshold: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HealthDashboard {
+  metrics: CurrentMetric[];
+  alerts: MetricAlert[];
+  thresholds: MetricThreshold[];
+}
+
+export interface MetricDataPoint {
+  value: number;
+  recorded_at: string;
+}
+
+export interface MetricStats {
+  min: number;
+  max: number;
+  avg: number;
+  count: number;
+}
+
+export interface MetricHistory {
+  metric_name: string;
+  data_points: MetricDataPoint[];
+  stats: MetricStats;
+}
+
+export type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
+
+export interface UpdateThresholdRequest {
+  warning_threshold?: number;
+  critical_threshold?: number;
+}
