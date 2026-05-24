@@ -241,3 +241,51 @@ export const DOCUMENT_CATEGORIES = [
 ] as const;
 
 export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
+
+// --- Document Sharing types (Story 7A.5) ---
+
+export const SHARE_TYPE = {
+  USER: 'user',
+  ROLE: 'role',
+  BUILDING: 'building',
+  LINK: 'link',
+} as const;
+
+export type ShareType = (typeof SHARE_TYPE)[keyof typeof SHARE_TYPE];
+
+export interface DocumentShare {
+  id: string;
+  document_id: string;
+  share_type: ShareType;
+  target_id?: string | null;
+  target_role?: string | null;
+  shared_by: string;
+  share_token?: string | null;
+  expires_at?: string | null;
+  revoked_at?: string | null;
+  created_at: string;
+}
+
+export interface ShareWithDocument extends DocumentShare {
+  document_title: string;
+  shared_by_name: string;
+}
+
+export interface ShareListResponse {
+  shares: ShareWithDocument[];
+}
+
+export interface CreateShareRequest {
+  share_type: ShareType;
+  target_id?: string;
+  target_role?: string;
+  password?: string;
+  expires_at?: string;
+}
+
+export interface CreateShareResponse {
+  id: string;
+  share_token?: string | null;
+  share_url?: string | null;
+  message: string;
+}

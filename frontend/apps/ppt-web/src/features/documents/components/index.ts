@@ -5,6 +5,7 @@
 export { ClassificationBadge, ClassificationUI } from './ClassificationBadge';
 export { DocumentSearch } from './DocumentSearch';
 export { DocumentSearchResult } from './DocumentSearchResult';
+export { DocumentSharePanel } from './DocumentSharePanel';
 export { DocumentSummary } from './DocumentSummary';
 export { DocumentsBrowse } from './DocumentsBrowse';
 export { DocumentUpload } from './DocumentUpload';

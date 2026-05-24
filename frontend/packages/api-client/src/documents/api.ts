@@ -16,7 +16,10 @@ import type {
   FolderTreeNode,
   FolderWithCount,
   GenerateSummaryRequest,
+  CreateShareRequest,
+  CreateShareResponse,
   OcrReprocessResponse,
+  ShareListResponse,
   SummarizationResponse,
   UpdateDocumentRequest,
 } from './types';
@@ -296,4 +299,26 @@ export async function uploadDocument(
 
     xhr.send(formData);
   });
+}
+
+// --- Document Sharing (Story 7A.5) ---
+
+export async function listDocumentShares(documentId: string): Promise<ShareListResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`);
+}
+
+export async function createDocumentShare(
+  documentId: string,
+  data: CreateShareRequest,
+): Promise<CreateShareResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function revokeDocumentShare(documentId: string, shareId: string): Promise<void> {
+  const url = `${API_BASE}/${documentId}/shares/${shareId}`;
+  const response = await fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+  if (!response.ok && response.status !== 204) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message || `HTTP ${response.status}`);
+  }
 }
