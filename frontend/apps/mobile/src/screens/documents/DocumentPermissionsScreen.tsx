@@ -11,13 +11,7 @@
 
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
@@ -141,10 +135,7 @@ export interface DocumentPermissionsScreenProps {
   onBack?: () => void;
 }
 
-export function DocumentPermissionsScreen({
-  documentId,
-  onBack,
-}: DocumentPermissionsScreenProps) {
+export function DocumentPermissionsScreen({ documentId, onBack }: DocumentPermissionsScreenProps) {
   const { t } = useTranslation();
 
   const { data, isLoading, error, refetch } = useApiQuery<ApiDocumentDetailResponse>(
