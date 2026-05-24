@@ -60,7 +60,6 @@ export async function listDocuments(query?: DocumentListQuery): Promise<Document
   if (query?.limit) params.set('limit', query.limit.toString());
   if (query?.offset) params.set('offset', query.offset.toString());
   if (query?.status) params.set('status', query.status);
-  if (query?.access_scope) params.set('access_scope', query.access_scope);
   if (query?.created_by) params.set('created_by', query.created_by);
 
   const queryString = params.toString();
