@@ -4,7 +4,16 @@
  * Shows full document details with intelligence features.
  */
 
-import { useDocument, useDocumentClassification, useReprocessOcr } from '@ppt/api-client';
+import { type AccessScope, useDocument, useDocumentClassification, useReprocessOcr } from '@ppt/api-client';
+
+/** Human-readable labels for the access_scope values returned by the backend (7a-3). */
+const AUDIENCE_LABELS: Record<AccessScope, string> = {
+  organization: 'All members',
+  building: 'Building members',
+  unit: 'Unit members',
+  user: 'Specific users',
+  public: 'Public',
+};
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
@@ -118,6 +127,30 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           <span className="meta-item">{doc.file_name}</span>
           <span className="meta-separator">|</span>
           <span className="meta-item">{formatSize(doc.size_bytes)}</span>
+          {doc.access_scope && (
+            <>
+              <span className="meta-separator">|</span>
+              <span
+                className="meta-item audience-badge"
+                title={`Visible to: ${AUDIENCE_LABELS[doc.access_scope] ?? doc.access_scope}`}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                  style={{ marginRight: '4px', verticalAlign: 'middle' }}
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {AUDIENCE_LABELS[doc.access_scope] ?? doc.access_scope}
+              </span>
+            </>
+          )}
         </div>
 
         {doc.description && <p className="document-description">{doc.description}</p>}
@@ -333,6 +366,17 @@ const detailStyles = `
     background: var(--ppt-bg-app);
     border-radius: 0.25rem;
     font-weight: 500;
+  }
+
+  .meta-item.audience-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    background: var(--ppt-bg-app);
+    border: 1px solid var(--ppt-border-default);
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    color: var(--ppt-fg-muted);
   }
 
   .document-description {

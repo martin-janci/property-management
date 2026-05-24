@@ -6,6 +6,7 @@
 
 import {
   DOCUMENT_CATEGORIES,
+  type AccessScope,
   type DocumentSearchRequest,
   type DocumentSearchResult,
   type OcrStatus,
@@ -13,6 +14,15 @@ import {
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { DocumentSearchResult as SearchResultCard } from './DocumentSearchResult';
+
+/** Human-readable labels for the audience filter chips (7a-3). */
+const ACCESS_SCOPE_LABELS: Record<AccessScope, string> = {
+  organization: 'All members',
+  building: 'Building',
+  unit: 'Unit',
+  user: 'Private',
+  public: 'Public',
+};
 
 interface DocumentSearchProps {
   organizationId: string;
@@ -32,6 +42,8 @@ export function DocumentSearch({
   const [hasSummaryFilter, setHasSummaryFilter] = useState<boolean | undefined>();
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  // RLS-aware audience filter (7a-3): forwarded to backend; server enforces RLS on top.
+  const [accessScopeFilter, setAccessScopeFilter] = useState<AccessScope | undefined>();
 
   // Debounce search query
   const debounceTimeout = useMemo(() => {
@@ -62,6 +74,8 @@ export function DocumentSearch({
       has_summary: hasSummaryFilter,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      // Audience pre-filter: sent to backend; RLS is enforced server-side on top.
+      access_scope: accessScopeFilter,
       limit: 20,
     }),
     [
@@ -73,6 +87,7 @@ export function DocumentSearch({
       hasSummaryFilter,
       dateFrom,
       dateTo,
+      accessScopeFilter,
     ]
   );
 
@@ -155,6 +170,25 @@ export function DocumentSearch({
                 aria-pressed={ocrStatusFilter.includes(status)}
               >
                 {status}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Audience / Access Scope Filter (RLS-aware, 7a-3) */}
+        <fieldset className="filter-group">
+          <legend className="filter-label">Audience</legend>
+          <div className="filter-chips">
+            {(Object.keys(ACCESS_SCOPE_LABELS) as AccessScope[]).map((scope) => (
+              <button
+                key={scope}
+                type="button"
+                onClick={() => setAccessScopeFilter((prev) => (prev === scope ? undefined : scope))}
+                className={`filter-chip ${accessScopeFilter === scope ? 'active' : ''}`}
+                aria-pressed={accessScopeFilter === scope}
+                title={`Show only documents visible to: ${ACCESS_SCOPE_LABELS[scope]}`}
+              >
+                {ACCESS_SCOPE_LABELS[scope]}
               </button>
             ))}
           </div>
