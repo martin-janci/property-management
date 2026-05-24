@@ -9,7 +9,7 @@ implementations:
     component: FaultsListPage
     buildStatus: planned
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile:
     component: FaultsListScreen
     buildStatus: shipped
@@ -109,6 +109,8 @@ UC-03 faults list — the manager's working surface for the 8-state fault machin
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-24 — agent: gap-79-1 — wired FaultsPage to useFaults+useUpdateFaultStatus+useAssignFault hooks with snake→camelCase mapper; ppt-web.apiStatus stub→partial
 
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/faults-list.html + ui_kits/mobile/screens.jsx); flipped ppt-web from n/a → planned + redesignStatus in-progress (drift: route not in sitemap but design + state machine exist); flipped mobile redesignStatus → in-progress; attached 2 designSources; populated functionality checklist (5 sections + 8-state pill set), states, design-specific notes; declared 5 sharedComponents; added 2 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)

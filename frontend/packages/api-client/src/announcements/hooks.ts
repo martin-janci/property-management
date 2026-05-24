@@ -5,6 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getToken } from '../auth';
 import type { AnnouncementsApi } from './api';
 import type {
   AddAttachmentRequest,
@@ -29,15 +30,25 @@ import type {
 
 const ANNOUNCEMENTS_BASE = '/api/v1/announcements';
 
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
     ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+      ...init?.headers,
+    },
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({ message: 'Unknown error' }));
     throw new Error((err as { message?: string }).message || `HTTP ${response.status}`);
   }
+  if (response.status === 204) return undefined as unknown as T;
   return response.json() as Promise<T>;
 }
 
@@ -369,9 +380,7 @@ export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      fetch(`${ANNOUNCEMENTS_BASE}/${id}`, { method: 'DELETE' }).then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      }),
+      fetchJson<void>(`${ANNOUNCEMENTS_BASE}/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
       queryClient.invalidateQueries({ queryKey: announcementKeys.statistics() });
