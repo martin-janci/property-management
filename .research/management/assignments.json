@@ -54,7 +54,7 @@
       "pr_number": 440,
       "pr_url": "https://github.com/martin-janci/property-management/pull/440",
       "merged_at": null,
-      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial→done; cargo check -p api-server exit 0",
+      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial->done; cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
     },
     {
@@ -68,8 +68,8 @@
       "pr_number": 442,
       "pr_url": "https://github.com/martin-janci/property-management/pull/442",
       "merged_at": "2026-05-24T06:25:35Z",
-      "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md — Epic 2B sequenced first, Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch formally deferred; action-list and risks updated; Band A clean; lint fixed",
-      "reviewer_summary": "verdict=approve note=DEC-001 is sound and complete — all three artifacts internally consistent, rationale factually grounded, deferred slice list exact match; incidental sibling TS files noted, no regressions; all 12 CI checks green; posted as COMMENT (self-PR restriction)"
+      "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md",
+      "reviewer_summary": "verdict=approve note=DEC-001 is sound and complete; all 12 CI checks green"
     },
     {
       "task_id": "gap-9-1-mfa-frontend-integration",
@@ -82,8 +82,8 @@
       "pr_number": 441,
       "pr_url": "https://github.com/martin-janci/property-management/pull/441",
       "merged_at": "2026-05-24T06:26:10Z",
-      "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client; TwoFactorAuthPage rewritten; typecheck+biome+api-client build+ppt-web prod build all clean",
-      "reviewer_summary": "verdict=approve note=both blocking issues resolved: QR now client-side via qrcode canvas (no external API call), mfa/api.ts uses module-local fetch wrapper matching community/api.ts pattern; types sound, mutations invalidate mfaStatus cache, screen-map Agent Log updated 2026-05-24; CI all green"
+      "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks to @ppt/api-client; TwoFactorAuthPage rewritten; all builds clean",
+      "reviewer_summary": "verdict=approve note=both blocking issues resolved; CI all green"
     },
     {
       "task_id": "gap-7a-3-frontend-api-integration",
@@ -96,8 +96,8 @@
       "pr_number": 443,
       "pr_url": "https://github.com/martin-janci/property-management/pull/443",
       "merged_at": "2026-05-24T06:26:20Z",
-      "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET /api/v1/documents with audience+status filters; permission-denied state in DocumentDetail; screen apiStatus promoted partial→complete; typecheck+biome+vite-build clean",
-      "reviewer_summary": "verdict=approve note=all 3 original bugs resolved: access_scope appended once, DocumentListQuery.access_scope typed as AccessScope (not DocumentAudience), AUDIENCE_OPTIONS use canonical AccessScope values; MFA module names consistent; screen-maps have 2026-05-24 Agent Log entries; CI all green"
+      "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET; screen apiStatus promoted partial->complete",
+      "reviewer_summary": "verdict=approve note=all 3 original bugs resolved; CI all green"
     },
     {
       "task_id": "gap-79-2-login-flow-wiring",
@@ -110,8 +110,8 @@
       "pr_number": 444,
       "pr_url": "https://github.com/martin-janci/property-management/pull/444",
       "merged_at": "2026-05-24T06:26:30Z",
-      "implementer_summary": "pr=444 status=done specialist=react-web note=wired logout button to AuthContext, unified session return-URL key via @ppt/shared, typecheck+lint+build clean",
-      "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present for login.md and session-expired.md dated 2026-05-24; all three auth files use @ppt/shared imports consistently; logout calls AuthContext.logout() then navigates to /login; no logic bugs; CI clean"
+      "implementer_summary": "pr=444 status=done specialist=react-web note=wired logout button to AuthContext; typecheck+lint+build clean",
+      "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present; CI clean"
     },
     {
       "task_id": "gap-7a-1-mobile-document-upload",
@@ -124,8 +124,8 @@
       "pr_number": 447,
       "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": "2026-05-24T02:56:00Z",
-      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts; removed dead onProgress state; fixed sk.json typo nahrary→nahrate",
-      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; dead onProgress callback and Slovak typo fixed before merge; posted as COMMENT (self-PR restriction)"
+      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; multipart POST to /api/v1/documents/upload; typecheck+biome clean",
+      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct; CI green"
     },
     {
       "task_id": "gap-7a-5-mobile-share-ui",
@@ -138,8 +138,8 @@
       "pr_number": 445,
       "pr_url": "https://github.com/martin-janci/property-management/pull/445",
       "merged_at": "2026-05-24T02:59:00Z",
-      "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet (user/role/building/link types, Argon2 passwords server-side, revoke flow); 6 locales; fixed stray DocumentUploadScreen re-export that broke mobile CI",
-      "reviewer_summary": "verdict=approve note=useApi imports confirmed (apiRequest+useApiMutation+useApiQuery all present), clipboard is client-only expo-clipboard no external API, all 4 share types covered with exhaustive switch, revoke flow has finally cleanup, index.ts has no stray DocumentUploadScreen export, 34 documentShare keys consistent across all 6 locales; posted as COMMENT (self-PR restriction); CI all green"
+      "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet; 6 locales",
+      "reviewer_summary": "verdict=approve note=all 4 share types covered; CI all green"
     },
     {
       "task_id": "gap-7a-4-pdf-preview",
@@ -152,8 +152,8 @@
       "pr_number": 446,
       "pr_url": "https://github.com/martin-janci/property-management/pull/446",
       "merged_at": "2026-05-24T02:51:00Z",
-      "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
-      "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client; pdfjs worker uses import.meta.url (no CDN); IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime present; @tailwindcss/postcss in devDeps; all CI green"
+      "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); zoom 50-200%",
+      "reviewer_summary": "verdict=approve note=pdfjs worker uses import.meta.url; all CI green"
     },
     {
       "task_id": "pm-security-resolve-435-followups",
@@ -166,7 +166,7 @@
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": "pr=none status=partial specialist=pm-security note=agent aborted mid-run: disk full before PR could be opened; local commit may exist but not pushed; re-claim next cycle",
+      "implementer_summary": "pr=none status=partial specialist=pm-security note=agent aborted mid-run: disk full before PR could be opened",
       "reviewer_summary": null
     },
     {
@@ -180,7 +180,7 @@
       "pr_number": 450,
       "pr_url": "https://github.com/martin-janci/property-management/pull/450",
       "merged_at": "2026-05-24T06:52:00Z",
-      "implementer_summary": "pr=450 status=done specialist=rust-backend note=validate_external_url in common/url_validation.rs (19 tests); SSRF gate in integrations.rs webhook + signatures.rs presigned-URL; cargo check exit 0; cargo fmt fixed",
+      "implementer_summary": "pr=450 status=done specialist=rust-backend note=validate_external_url in common/url_validation.rs (19 tests)",
       "reviewer_summary": null
     },
     {
@@ -194,8 +194,8 @@
       "pr_number": 448,
       "pr_url": "https://github.com/martin-janci/property-management/pull/448",
       "merged_at": "2026-05-24T06:53:00Z",
-      "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints (pause/resume schedule, list/get/download/retry executions); stub repo compiles clean; Band A cargo check exit 0; CI fixes: removed premature pub mod ssrf, fixed rustfmt line-length on 2 route lines",
-      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated, zero unwrap in prod paths, extractor ordering correct; CI run 26352415102 all-green (check/test/build/security/rls/deny); follow-up notes: tenant isolation in real SQL, get_by_id unused, retry needs failed-state guard, download URL must be absolute presigned; PR still draft — safe to merge once follow-up migration tracked"
+      "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints",
+      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated; CI all-green"
     },
     {
       "task_id": "gap-6-5-direct-messaging-apistatus",
@@ -209,7 +209,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/449",
       "merged_at": "2026-05-24T10:14:11Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=messaging hooks use @ppt/api-client factory pattern correctly, no raw fetch, types sound, screen-maps updated stub→complete with agent log; incidental documents/ changes out-of-scope but harmless, assignments.json needs rebase before merge; posted as COMMENT (self-PR restriction)"
+      "reviewer_summary": "verdict=approve note=messaging hooks use @ppt/api-client factory pattern correctly"
     },
     {
       "task_id": "gap-7a-2-folder-tree-ui",
@@ -223,7 +223,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/451",
       "merged_at": "2026-05-24T10:13:04Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct; follow-ups: (1) documents.md relatedScreens cross-ref not committed — add ppt/document-folders entry; (2) mutation catch blocks discard errors silently — wire toast.error per react-web convention"
+      "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct"
     },
     {
       "task_id": "gap-10b-stub-handlers",
@@ -250,7 +250,7 @@
       "pr_number": 456,
       "pr_url": "https://github.com/martin-janci/property-management/pull/456",
       "merged_at": "2026-05-24T11:23:14Z",
-      "implementer_summary": "pr=456 status=done specialist=rust-backend note=split integrations.rs/organizations.rs/documents.rs into directory-based modules (12079+/11933- over 20 files); cargo check + clippy -p api-server exit 0 locally; CI fmt fix pushed (cargo fmt --all across workspace)",
+      "implementer_summary": "pr=456 status=done specialist=rust-backend note=split integrations.rs/organizations.rs/documents.rs into directory-based modules",
       "reviewer_summary": null
     },
     {
@@ -264,8 +264,8 @@
       "pr_number": 455,
       "pr_url": "https://github.com/martin-janci/property-management/pull/455",
       "merged_at": "2026-05-24T10:13:06Z",
-      "implementer_summary": "pr=455 status=done specialist=generic note=created docs/oauth-provider-design.md (360 lines) capturing 10A token format/hashing/lifetimes/rotation/principal-kind design; Band A clean; doc-only change",
-      "reviewer_summary": "verdict=approve note=design doc correct on all security-critical decisions (opaque tokens, SHA-256/Argon2id split, PKCE S256-only, family reuse detection, principal-kind re-check on refresh); one non-blocking nit on SysRng vs OsRng naming; CI green; doc-only change"
+      "implementer_summary": "pr=455 status=done specialist=generic note=created docs/oauth-provider-design.md (360 lines)",
+      "reviewer_summary": "verdict=approve note=design doc correct on all security-critical decisions; CI green"
     },
     {
       "task_id": "pm-frontend-protectedroute-failopen",
@@ -278,8 +278,8 @@
       "pr_number": 459,
       "pr_url": "https://github.com/martin-janci/property-management/pull/459",
       "merged_at": null,
-      "implementer_summary": "pr=459 status=done specialist=pm-frontend note=ProtectedRoute fail-open fixed (deny-on-missing-role); AuthContext.login() populates user.role from tenants[0].role; TenantRole/TenantMembership types added to api-client; all CI checks green (test/check/security/build/lint/typecheck/frontend-build)",
-      "reviewer_summary": "verdict=changes note=Core fail-closed logic correct and CI green; changes: (1) tenants/expiresIn should be required not optional in LoginResponse per OpenAPI spec; (2) initializeAuth() missing tenants[0].role fallback for existing sessions after deploy; (3) no tests for deny-on-missing-role paths in ProtectedRoute; lower-priority: requiredRoles should be TenantRole[] not string[], multi-tenant TODO needed"
+      "implementer_summary": "pr=459 status=done specialist=pm-frontend note=ProtectedRoute fail-open fixed (deny-on-missing-role); all CI checks green",
+      "reviewer_summary": "verdict=changes note=Core fail-closed logic correct and CI green; changes: (1) tenants/expiresIn should be required not optional; (2) initializeAuth() missing tenants[0].role fallback; (3) no tests for deny-on-missing-role paths"
     },
     {
       "task_id": "pm-scrum-master-sequence-epic-2b",
@@ -292,8 +292,8 @@
       "pr_number": 458,
       "pr_url": "https://github.com/martin-janci/property-management/pull/458",
       "merged_at": null,
-      "implementer_summary": "pr=458 status=done specialist=pm-scrum-master note=sprint-status.yaml sequenced (Epic 2B first, 6.2-6.5/8A.2/8A.3 blocked); decisions.md unblock-trigger table; voice IDOR backend fix (deactivate_voice_device/list_voice_commands now scoped by user_id); ProtectedRoute fail-open fix; cargo check passing; cargo test failing (investigating)",
-      "reviewer_summary": "verdict=approve note=all planning docs syntactically valid and internally consistent; Epic 2B correctly sequenced ahead of 6.2-6.5/8A.2/8A.3; bundled Rust IDOR fix and ProtectedRoute hardening correct; non-blocking: duplicate doc comment, pre-existing cargo test failure; PR draft+dirty needs rebase before merge"
+      "implementer_summary": "pr=458 status=done specialist=pm-scrum-master note=sprint-status.yaml sequenced (Epic 2B first)",
+      "reviewer_summary": "verdict=approve note=all planning docs syntactically valid and internally consistent; Epic 2B correctly sequenced; PR draft+dirty needs rebase before merge"
     },
     {
       "task_id": "pm-scrum-master-land-voice-device-idor",
@@ -307,7 +307,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=SQL repo fix correct (ownership scoped, parameterized, 404 disclosure posture sound); handler fix not pushed — both handlers still use _principal (IDOR unfixed) and call old 2/3-arg signatures, causing CI check to fail; merge blocked until handler pushed and CI green"
+      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 both handlers still use _principal (IDOR unfixed); merge blocked until handler pushed and CI green"
     },
     {
       "task_id": "gap-2b-notification-pipeline",
@@ -320,8 +320,8 @@
       "pr_number": 463,
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
       "merged_at": null,
-      "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp), DeliveryRecord+RoutingDecision+PipelineResult, NotificationPipelineService in api-server services; pipeline.rs 333 LOC + notification_pipeline.rs 695 LOC",
-      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass, correct error propagation across all 5 stories, unit tests cover all state transitions — ready to merge"
+      "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
+      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass, correct error propagation \u2014 ready to merge"
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
@@ -334,8 +334,8 @@
       "pr_number": 464,
       "pr_url": "https://github.com/martin-janci/property-management/pull/464",
       "merged_at": null,
-      "implementer_summary": "pr=464 status=done specialist=react-web note=useNeighbors hooks (list_neighbors+privacy_settings), NeighborsPage lazy route in ppt-web App.tsx, mobile NeighborsScreen.tsx API integration, sprint-status 6-6 → done",
-      "reviewer_summary": "verdict=approve note=All 12 CI checks green; TanStack Query patterns correct, privacy-aware filtering sound at both web and mobile layers, type mapping verified, route ordering safe in RR6; retired Neighbor type cleaned up; sprint status promoted to done; non-blocking: NeighborDetailRoute fetches full list to find one item — acceptable now"
+      "implementer_summary": "pr=464 status=done specialist=react-web note=useNeighbors hooks; NeighborsPage lazy route; mobile NeighborsScreen.tsx API integration",
+      "reviewer_summary": "verdict=approve note=All 12 CI checks green; TanStack Query patterns correct, privacy-aware filtering sound; sprint status promoted to done"
     },
     {
       "task_id": "gap-7a-4-mobile-preview",
@@ -348,8 +348,8 @@
       "pr_number": 462,
       "pr_url": "https://github.com/martin-janci/property-management/pull/462",
       "merged_at": "2026-05-24T15:20:00Z",
-      "implementer_summary": "pr=462 status=done specialist=react-native note=DocumentPreviewScreen added; presigned URL via /preview endpoint with /download fallback; Linking.openURL + expo-sharing; typecheck+biome clean",
-      "reviewer_summary": "verdict=approve note=Implementation correct and secure; all 10 CI checks green; i18n complete across all 6 locales; presigned URL fetch+fallback logic works; screen-map entry missing for DocumentPreviewScreen (non-blocking)"
+      "implementer_summary": "pr=462 status=done specialist=react-native note=DocumentPreviewScreen added",
+      "reviewer_summary": "verdict=approve note=Implementation correct and secure; all 10 CI checks green"
     },
     {
       "task_id": "gap-7a-5-web-share-ui",
@@ -362,8 +362,8 @@
       "pr_number": 467,
       "pr_url": "https://github.com/martin-janci/property-management/pull/467",
       "merged_at": null,
-      "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail; useDocumentShares/useCreateDocumentShare/useRevokeDocumentShare hooks in api-client; typecheck+build clean; ci-fix=4e0fdee5 (biome import ordering in DocumentDetail.tsx, screen-map endpoint IDs removed); ci-fix=bfeec472 (revokeDocumentShare raw fetch → fetchApi for auth header)",
-      "reviewer_summary": "verdict=approve note=revokeDocumentShare raw-fetch fix confirmed via fetchApi; all 21 CI checks green; shareTypeLabel exhaustive; navigator.clipboard correct; no auth bypasses; LGTM posted as COMMENT (self-PR restriction)"
+      "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail",
+      "reviewer_summary": "verdict=approve note=revokeDocumentShare raw-fetch fix confirmed via fetchApi; all 21 CI checks green; no auth bypasses"
     },
     {
       "task_id": "gap-7a-3-mobile-rls-ui",
@@ -372,12 +372,12 @@
       "specialist": "react-native",
       "claimed_at": "2026-05-24T14:07:53Z",
       "last_updated": "2026-05-24T15:40:00Z",
-      "status_changed_at": "2026-05-24T15.40.00Z",
+      "status_changed_at": "2026-05-24T15:40:00Z",
       "pr_number": 465,
       "pr_url": "https://github.com/martin-janci/property-management/pull/465",
       "merged_at": "2026-05-24T15:40:00Z",
-      "implementer_summary": "pr=465 status=done specialist=react-native note=DocumentPermissionsScreen + access_scope filter chips in DocumentsScreen; typecheck+biome clean; ci-fix=d8132aed (biome format fix); ci-fix=e635ed98 (removed duplicate icon block after rowActions, added missing downloadingIndicator+downloadingText styles — TS typecheck fix)",
-      "reviewer_summary": "verdict=approve note=All 5 CI checks green; cache key includes scope for correct isolation; navigation fully wired; RLS explanation accurate (server enforces, UI visualises only); all 6 locales present; two non-blocking: DocumentStatus type duplicated (dedup follow-up), cs/de/hu/pl filter keys are English fallbacks (translation chore pending)"
+      "implementer_summary": "pr=465 status=done specialist=react-native note=DocumentPermissionsScreen + access_scope filter chips",
+      "reviewer_summary": "verdict=approve note=All 5 CI checks green; cache key includes scope for correct isolation"
     },
     {
       "task_id": "gap-79-1-announcements-page-wiring",
@@ -390,8 +390,8 @@
       "pr_number": 466,
       "pr_url": "https://github.com/martin-janci/property-management/pull/466",
       "merged_at": "2026-05-24T15:35:00Z",
-      "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage to useAnnouncements+mutations and FaultsPage to useFaults with snake->camelCase mapper; typecheck+biome+vite-build all clean; ci-fix=c2d2e3b3 (getToken injected into fetchJson, useDeleteAnnouncement→fetchJson<void>, screen-maps announcements+faults apiStatus stub→partial)",
-      "reviewer_summary": "verdict=changes note=BLOCKING: fetchJson missing Authorization header (all 5 hooks get 401); useDeleteAnnouncement uses bare fetch bypassing fetchJson — FIXED in c2d2e3b3: getToken injected, fetchJson handles 204, delete uses fetchJson<void>; screen-maps ppt/announcements+ppt/faults-list updated apiStatus stub→partial"
+      "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage + FaultsPage to @ppt/api-client query hooks",
+      "reviewer_summary": "verdict=changes note=BLOCKING fetchJson fix APPLIED in c2d2e3b3; screen-maps updated apiStatus stub->partial"
     },
     {
       "task_id": "gap-10a-1-oauth-tests",
