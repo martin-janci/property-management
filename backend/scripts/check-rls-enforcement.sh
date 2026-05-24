@@ -142,7 +142,7 @@ scan_target() {
             --glob='!*_test.rs' \
             --glob='!*tests*' \
             --glob='!**/admin/**' \
-            --glob='!**admin_*.rs' \
+            --glob='!**/admin_*.rs' \
             2>/dev/null || true)
     done
 }
