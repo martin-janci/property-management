@@ -9,8 +9,8 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DocumentsBrowse } from '../components/DocumentsBrowse';
 import { DocumentSearch } from '../components/DocumentSearch';
+import { DocumentsBrowse } from '../components/DocumentsBrowse';
 import { DocumentDetail } from './DocumentDetail';
 
 interface DocumentsPageProps {
