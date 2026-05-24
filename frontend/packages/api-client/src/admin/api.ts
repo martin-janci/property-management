@@ -1,5 +1,5 @@
 /**
- * Admin API Client — Phase 5.
+ * Admin API Client — Phase 5 / Epic 10A-2.
  *
  * Functions for the Super-admin Control Plane endpoints exposed under
  * `/api/v1/admin/*`. Auth via the shared token provider, identical to the
@@ -17,10 +17,26 @@
 
 import { getToken } from '../auth';
 import { requestMfaChallenge } from './mfa-handler';
-import type { AdminPaginatedResponse, Agency, ListAgenciesParams } from './types';
+import type {
+  AdminPaginatedResponse,
+  Agency,
+  HealthDashboard,
+  ListAgenciesParams,
+  MetricAlert,
+  MetricHistory,
+  MetricThreshold,
+  OAuthClientSummary,
+  RegenerateSecretResponse,
+  RegisterOAuthClientRequest,
+  RegisterOAuthClientResponse,
+  TimeRange,
+  UpdateOAuthClientRequest,
+  UpdateThresholdRequest,
+} from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/admin`;
+const HEALTH_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin/health`;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
@@ -105,4 +121,128 @@ export async function suspendAgency(agencyId: string): Promise<void> {
   await apiRequest<void>(`${API_BASE}/agencies/${agencyId}/suspend`, {
     method: 'POST',
   });
+}
+
+// ============================================================
+// OAuth Client Management (Epic 10A-2)
+// ============================================================
+
+/**
+ * GET /api/v1/admin/oauth/clients — list all registered OAuth clients.
+ */
+export async function listOAuthClients(signal?: AbortSignal): Promise<OAuthClientSummary[]> {
+  return apiRequest<OAuthClientSummary[]>(`${API_BASE}/oauth/clients`, { signal });
+}
+
+/**
+ * GET /api/v1/admin/oauth/clients/{id} — get a single OAuth client.
+ */
+export async function getOAuthClient(
+  id: string,
+  signal?: AbortSignal
+): Promise<OAuthClientSummary> {
+  return apiRequest<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, { signal });
+}
+
+/**
+ * POST /api/v1/admin/oauth/clients — register a new OAuth client.
+ * Returns the plaintext client_secret (shown only once).
+ */
+export async function registerOAuthClient(
+  request: RegisterOAuthClientRequest
+): Promise<RegisterOAuthClientResponse> {
+  return apiRequest<RegisterOAuthClientResponse>(`${API_BASE}/oauth/clients`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: request.name,
+      description: request.description,
+      redirect_uris: request.redirectUris,
+      scopes: request.scopes,
+      is_confidential: request.isConfidential,
+      rotate_refresh_tokens: request.rotateRefreshTokens,
+    }),
+  });
+}
+
+/**
+ * PATCH /api/v1/admin/oauth/clients/{id} — update an OAuth client.
+ */
+export async function updateOAuthClient(
+  id: string,
+  data: UpdateOAuthClientRequest
+): Promise<OAuthClientSummary> {
+  return apiRequest<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      name: data.name,
+      description: data.description,
+      redirect_uris: data.redirectUris,
+      scopes: data.scopes,
+      is_active: data.isActive,
+      rotate_refresh_tokens: data.rotateRefreshTokens,
+    }),
+  });
+}
+
+/**
+ * DELETE /api/v1/admin/oauth/clients/{id} — revoke/deactivate an OAuth client.
+ */
+export async function revokeOAuthClient(id: string): Promise<void> {
+  await apiRequest<void>(`${API_BASE}/oauth/clients/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * POST /api/v1/admin/oauth/clients/{id}/regenerate-secret
+ * Regenerates the client secret. Returns plaintext (shown only once).
+ */
+export async function regenerateOAuthClientSecret(id: string): Promise<RegenerateSecretResponse> {
+  return apiRequest<RegenerateSecretResponse>(`${API_BASE}/oauth/clients/${id}/regenerate-secret`, {
+    method: 'POST',
+  });
+}
+
+// ============================================================
+// Platform Health Monitoring (Epic 10B.3)
+// All requests go through apiRequest, which carries the MFA
+// challenge-response interceptor.
+// ============================================================
+
+export async function fetchHealthDashboard(signal?: AbortSignal): Promise<HealthDashboard> {
+  return apiRequest<HealthDashboard>(`${HEALTH_BASE}/dashboard`, { signal });
+}
+
+export async function fetchHealthAlerts(
+  activeOnly: boolean,
+  signal?: AbortSignal
+): Promise<MetricAlert[]> {
+  return apiRequest<MetricAlert[]>(`${HEALTH_BASE}/alerts?active_only=${activeOnly}`, { signal });
+}
+
+export async function acknowledgeHealthAlert(alertId: string): Promise<void> {
+  await apiRequest<void>(`${HEALTH_BASE}/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
+    method: 'POST',
+  });
+}
+
+export async function fetchMetricHistory(
+  metricName: string,
+  range: TimeRange,
+  signal?: AbortSignal
+): Promise<MetricHistory> {
+  const n = encodeURIComponent(metricName);
+  return apiRequest<MetricHistory>(`${HEALTH_BASE}/metrics/${n}/history?range=${range}`, {
+    signal,
+  });
+}
+
+export async function updateHealthThreshold(
+  metricName: string,
+  data: UpdateThresholdRequest
+): Promise<MetricThreshold> {
+  return apiRequest<MetricThreshold>(
+    `${HEALTH_BASE}/thresholds/${encodeURIComponent(metricName)}`,
+    { method: 'PUT', body: JSON.stringify(data) }
+  );
 }

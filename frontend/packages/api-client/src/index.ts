@@ -33,6 +33,7 @@ export * from './migration';
 export * from './neighbors';
 export * from './news';
 export * from './notification-preferences';
+export * from './oauth-grants';
 export * from './outages';
 export * from './packages';
 export * from './registry';
