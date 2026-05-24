@@ -175,7 +175,7 @@
       "uploadingPct": "Nahrava sa {{pct}}%...",
       "submitButton": "Nahrat dokument",
       "successTitle": "Nahrate",
-      "successMessage": "Dokument bol uspesne nahrary.",
+      "successMessage": "Dokument bol uspesne nahrate.",
       "errorTitle": "Nahratie zlyhalo",
       "pickFailed": "Nepodarilo sa otvorit vyber suborov",
       "categories": {

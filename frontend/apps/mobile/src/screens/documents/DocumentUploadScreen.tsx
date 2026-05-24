@@ -112,7 +112,6 @@ async function uploadDocumentMultipart(params: {
   title: string;
   description: string;
   category: string;
-  onProgress?: (pct: number) => void;
 }): Promise<{ id: string; message: string }> {
   const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY).catch(() => null);
   const tenantId = token ? extractTenantId(token) : null;
@@ -169,7 +168,6 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<DocumentCategory | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<UploadFormErrors>({});
 
@@ -245,7 +243,6 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
   const handleSubmit = async () => {
     if (!validate() || !pickedFile || !category) return;
     setIsUploading(true);
-    setUploadProgress(0);
 
     try {
       await uploadDocumentMultipart({
@@ -253,7 +250,6 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
         title,
         description,
         category,
-        onProgress: setUploadProgress,
       });
 
       Alert.alert(t('documents.upload.successTitle'), t('documents.upload.successMessage'), [
@@ -264,7 +260,6 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
       Alert.alert(t('documents.upload.errorTitle'), message);
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -383,14 +378,7 @@ export function DocumentUploadScreen({ onSuccess, onCancel }: DocumentUploadScre
         {/* ── Upload progress ── */}
         {isUploading && (
           <View style={styles.progressContainer}>
-            <Text style={styles.progressLabel}>
-              {uploadProgress > 0
-                ? t('documents.upload.uploadingPct', { pct: uploadProgress })
-                : t('documents.upload.uploading')}
-            </Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressBar, { width: `${Math.max(uploadProgress, 5)}%` }]} />
-            </View>
+            <Text style={styles.progressLabel}>{t('documents.upload.uploading')}</Text>
           </View>
         )}
 
