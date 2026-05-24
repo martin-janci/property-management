@@ -452,15 +452,15 @@
     {
       "task_id": "gap-10b-3-admin-health-ui",
       "branch": "auto-impl/gap-10b-3-admin-health-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T18:25:00Z",
+      "status_changed_at": "2026-05-24T18:25:00Z",
+      "pr_number": 471,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/471",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped — node_modules not installed in environment",
       "reviewer_summary": null
     },
     {
