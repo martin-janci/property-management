@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T02:38:00Z",
+  "generated": "2026-05-24T02:47:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -116,15 +116,15 @@
     {
       "task_id": "gap-7a-1-mobile-document-upload",
       "branch": "auto-impl/gap-7a-1-mobile-document-upload",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T02:08:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T02:45:00Z",
+      "status_changed_at": "2026-05-24T02:45:00Z",
+      "pr_number": 447,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts",
       "reviewer_summary": null
     },
     {
@@ -144,15 +144,15 @@
     {
       "task_id": "gap-7a-4-pdf-preview",
       "branch": "auto-impl/gap-7a-4-pdf-preview",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T02:08:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T02:45:00Z",
+      "status_changed_at": "2026-05-24T02:45:00Z",
+      "pr_number": 446,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/446",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
       "reviewer_summary": null
     }
   ]
