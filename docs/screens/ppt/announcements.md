@@ -7,7 +7,7 @@ sitemapRefs:
 implementations:
   ppt-web:
     component: AnnouncementsPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: partial
   mobile:
