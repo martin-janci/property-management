@@ -311,12 +311,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.login(credentials);
 
+      // Derive role from tenant memberships when not embedded in user object.
+      const userWithRole =
+        response.user.role == null && response.tenants && response.tenants.length > 0
+          ? { ...response.user, role: response.tenants[0].role }
+          : response.user;
+
       // Store tokens and user
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
-      tokenStorage.setUser(response.user);
+      tokenStorage.setUser(userWithRole);
 
-      setUser(response.user);
+      setUser(userWithRole);
     } finally {
       setIsLoading(false);
     }

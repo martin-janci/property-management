@@ -4,13 +4,35 @@
  * Type definitions for the Authentication API (UC-14).
  */
 
+/** User role within a tenant (mirrors Shared.TenantRole in OpenAPI spec) */
+export type TenantRole =
+  | 'super_admin'
+  | 'org_admin'
+  | 'manager'
+  | 'technical_manager'
+  | 'owner'
+  | 'owner_delegate'
+  | 'tenant'
+  | 'resident'
+  | 'property_manager'
+  | 'real_estate_agent'
+  | 'guest';
+
+/** User's membership in a tenant (mirrors Auth.TenantMembership in OpenAPI spec) */
+export interface TenantMembership {
+  tenantId: string;
+  tenantName: string;
+  role: TenantRole;
+}
+
 /** User information returned from authentication */
 export interface AuthUser {
   id: string;
   email: string;
   firstName?: string;
   lastName?: string;
-  role?: string;
+  /** The user role in the active tenant. Populated from tenants[0].role when not embedded directly. */
+  role?: TenantRole;
   organizationId?: string;
   organizationName?: string;
 }
@@ -25,7 +47,11 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
+  /** Seconds until the access token expires */
+  expiresIn?: number;
   user: AuthUser;
+  /** Tenant memberships available to this user (used to derive user.role) */
+  tenants?: TenantMembership[];
 }
 
 /** Token refresh request */
