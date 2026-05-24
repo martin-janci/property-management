@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T10:08:00Z",
+  "generated": "2026-05-24T10:25:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -270,15 +270,15 @@
     {
       "task_id": "pm-frontend-protectedroute-failopen",
       "branch": "auto-impl/pm-frontend-protectedroute-failopen",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T10:06:00Z",
-      "status_changed_at": "2026-05-24T10:06:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T10:25:00Z",
+      "status_changed_at": "2026-05-24T10:25:00Z",
+      "pr_number": 459,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/459",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=459 status=done specialist=react-web note=ProtectedRoute deny-on-missing-role hardened; AuthUser.role populated from tenants[0]; TenantRole/TenantMembership added to api-client; typecheck+build+379 tests all green",
       "reviewer_summary": null
     },
     {
