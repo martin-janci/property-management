@@ -410,8 +410,8 @@ impl NotificationPipeline {
         let preference_router =
             PreferenceRouter::new(notification_pref_repo, granular_repo.clone());
 
-        let email_adapter = Arc::new(SmtpEmailAdapter::new(email_service))
-            as Arc<dyn EmailTransport>;
+        let email_adapter =
+            Arc::new(SmtpEmailAdapter::new(email_service)) as Arc<dyn EmailTransport>;
         let push_adapter = Arc::new(FcmPushAdapter::from_env()) as Arc<dyn PushTransport>;
         let in_app_adapter =
             Arc::new(DbInAppAdapter::new(granular_repo, pubsub)) as Arc<dyn InAppTransport>;
@@ -474,8 +474,8 @@ impl NotificationPipeline {
             )))?;
 
         // Determine requested channels
-        let requested: &[NotificationChannel] = channels
-            .unwrap_or_else(|| &self.config.default_channels);
+        let requested: &[NotificationChannel] =
+            channels.unwrap_or_else(|| &self.config.default_channels);
 
         // Apply preference routing (2b-2)
         let routing = self
@@ -488,9 +488,9 @@ impl NotificationPipeline {
         // Record skipped channels
         for ch in &routing.skipped_channels {
             result.skipped += 1;
-            result.records.push(
-                DeliveryRecord::pending(notification.id, user_id, *ch).into_skipped(),
-            );
+            result
+                .records
+                .push(DeliveryRecord::pending(notification.id, user_id, *ch).into_skipped());
         }
 
         // Deliver on each enabled channel (2b-4 adapters)
@@ -563,11 +563,9 @@ impl NotificationPipeline {
             .dispatch_to_users(user_ids, notification, entity_id, None)
             .await;
 
-        per_user
-            .iter()
-            .fold((0, 0, 0), |(s, sk, f), (_, r)| {
-                (s + r.sent, sk + r.skipped, f + r.failed)
-            })
+        per_user.iter().fold((0, 0, 0), |(s, sk, f), (_, r)| {
+            (s + r.sent, sk + r.skipped, f + r.failed)
+        })
     }
 
     // ------------------------------------------------------------------
@@ -594,9 +592,7 @@ impl NotificationPipeline {
             NotificationChannel::Push => {
                 // Device tokens would come from a device-token repo; stubbed as empty for now.
                 // A follow-up PR should add `DeviceTokenRepository` and wire it here.
-                self.push_adapter
-                    .send(user_id, &[], notification)
-                    .await
+                self.push_adapter.send(user_id, &[], notification).await
             }
             NotificationChannel::InApp => {
                 self.in_app_adapter

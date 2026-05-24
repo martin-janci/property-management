@@ -193,7 +193,12 @@ pub trait PushTransport: Send + Sync {
 pub trait InAppTransport: Send + Sync {
     /// Persist the notification for the user and emit a WebSocket event if
     /// a WebSocket channel is available.
-    async fn send(&self, user_id: Uuid, notification: &Notification, entity_id: Option<Uuid>) -> TransportResult;
+    async fn send(
+        &self,
+        user_id: Uuid,
+        notification: &Notification,
+        entity_id: Option<Uuid>,
+    ) -> TransportResult;
 }
 
 // ============================================================================
@@ -263,12 +268,7 @@ mod tests {
     use crate::notifications::{NotificationCategory, NotificationPriority};
 
     fn make_notification(user_id: Uuid) -> Notification {
-        Notification::new(
-            user_id,
-            NotificationCategory::Announcements,
-            "Test",
-            "Body",
-        )
+        Notification::new(user_id, NotificationCategory::Announcements, "Test", "Body")
     }
 
     #[test]
@@ -294,10 +294,8 @@ mod tests {
 
     #[test]
     fn routing_decision_helpers() {
-        let dec = RoutingDecision::all_enabled(&[
-            NotificationChannel::Email,
-            NotificationChannel::Push,
-        ]);
+        let dec =
+            RoutingDecision::all_enabled(&[NotificationChannel::Email, NotificationChannel::Push]);
         assert!(dec.has_delivery_work());
         assert_eq!(dec.enabled_channels.len(), 2);
         assert!(dec.skipped_channels.is_empty());
@@ -316,8 +314,12 @@ mod tests {
         let mut result = PipelineResult::default();
         result.sent += 1;
         result.skipped += 1;
-        result.records.push(DeliveryRecord::pending(nid, uid, NotificationChannel::Email).into_sent());
-        result.records.push(DeliveryRecord::pending(nid, uid, NotificationChannel::Push).into_skipped());
+        result
+            .records
+            .push(DeliveryRecord::pending(nid, uid, NotificationChannel::Email).into_sent());
+        result
+            .records
+            .push(DeliveryRecord::pending(nid, uid, NotificationChannel::Push).into_skipped());
 
         assert_eq!(result.total(), 2);
         assert!(!result.is_fully_skipped());
