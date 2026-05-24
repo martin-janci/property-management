@@ -25,11 +25,11 @@ use db::{
         PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
         PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
-        RentalRepository, ReserveFundRepository, RoleRepository, SensorRepository,
-        SentimentRepository, SessionRepository, SignatureRequestRepository, SubscriptionRepository,
-        SystemAnnouncementRepository, TwoFactorAuthRepository, UnitRepository,
-        UnitResidentRepository, UserRepository, VendorRepository, ViolationRepository,
-        VoteRepository, WorkOrderRepository, WorkflowRepository,
+        RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
+        SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
+        SubscriptionRepository, SystemAnnouncementRepository, TwoFactorAuthRepository,
+        UnitRepository, UnitResidentRepository, UserRepository, VendorRepository,
+        ViolationRepository, VoteRepository, WorkOrderRepository, WorkflowRepository,
     },
     DbPool,
 };
@@ -171,6 +171,8 @@ pub struct AppState {
     // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
     pub edd_repo: EddRepository,
     pub compliance_repo: ComplianceRepository,
+    // Epic 81: Report Schedule Management & Execution History
+    pub report_schedule_repo: ReportScheduleRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -334,6 +336,8 @@ impl AppState {
         // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
         let edd_repo = EddRepository::new(db.clone());
         let compliance_repo = ComplianceRepository::new(db.clone());
+        // Epic 81: Report Schedule Management & Execution History
+        let report_schedule_repo = ReportScheduleRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -428,6 +432,7 @@ impl AppState {
             api_ecosystem_repo,
             edd_repo,
             compliance_repo,
+            report_schedule_repo,
             llm_client,
             auth_service,
             email_service,
