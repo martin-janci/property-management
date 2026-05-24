@@ -70,6 +70,17 @@ export const OAuthGrantsPage = lazy(() =>
   import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
 );
 
+// Neighbors feature (Epic 6, Story 6.6)
+export const NeighborsPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.NeighborsPage }))
+);
+export const NeighborDetailPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.NeighborDetailPage }))
+);
+export const NeighborsPrivacySettingsPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.PrivacySettingsPage }))
+);
+
 // Error / empty / loading state surfaces
 export const NotFoundPage = lazy(() =>
   import('../features/errors').then((m) => ({ default: m.NotFoundPage }))
