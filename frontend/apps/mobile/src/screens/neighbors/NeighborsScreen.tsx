@@ -1,12 +1,17 @@
 /**
  * NeighborsScreen (UC-06).
  *
- * Lists fellow residents who have opted into the directory. Mock data is
- * used until `@ppt/api-client/neighbors` is wired in.
+ * Lists fellow residents who have opted into the directory.
+ * Wired to backend GET /api/v1/buildings/{building_id}/neighbors
+ * with privacy-aware filtering (Epic 6, Story 6.6).
+ *
+ * Building context: fetches the first building the user belongs to
+ * from GET /api/v1/buildings; consistent with other mobile screens.
  */
 
 import { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,75 +20,131 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useApiQuery } from '../../hooks/useApi';
 import { colors, screenStyles as s } from '../shared/screenStyles';
 
-export interface Neighbor {
-  id: string;
-  name: string;
-  apartment: string;
-  floor: number;
-  initials: string;
-  phone?: string;
-  email?: string;
+// ---------------------------------------------------------------------------
+// Types (mirrors backend NeighborView / PrivacySettings)
+// ---------------------------------------------------------------------------
+
+interface NeighborView {
+  user_id: string;
+  display_name: string;
+  unit_label: string;
+  is_visible: boolean;
+  email: string | null;
+  phone: string | null;
+  resident_type: string;
 }
 
-const MOCK_NEIGHBORS: Neighbor[] = [
-  {
-    id: 'n1',
-    name: 'Anna Novak',
-    apartment: '3B',
-    floor: 3,
-    initials: 'AN',
-    phone: '+421 905 123 456',
-  },
-  {
-    id: 'n2',
-    name: 'Peter Kovac',
-    apartment: '2A',
-    floor: 2,
-    initials: 'PK',
-    email: 'peter@example.com',
-  },
-  { id: 'n3', name: 'Eva Horvath', apartment: '5C', floor: 5, initials: 'EH' },
-  {
-    id: 'n4',
-    name: 'Martin Toth',
-    apartment: '1A',
-    floor: 1,
-    initials: 'MT',
-    phone: '+421 905 555 444',
-  },
-];
+interface NeighborsResponse {
+  neighbors: NeighborView[];
+  count: number;
+  total: number;
+}
+
+interface BuildingItem {
+  id: string;
+  name: string;
+}
+
+interface BuildingsPaginatedResponse {
+  items: BuildingItem[];
+  total: number;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface NeighborsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
 
 export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setRefreshing(false);
+  // Fetch the first building the user belongs to
+  const buildingsQuery = useApiQuery<BuildingsPaginatedResponse>(
+    ['buildings', 'list'],
+    '/api/v1/buildings'
+  );
+
+  const buildingId = buildingsQuery.data?.items?.[0]?.id;
+  const buildingName = buildingsQuery.data?.items?.[0]?.name;
+
+  // Fetch neighbors once we have a building id
+  const neighborsQuery = useApiQuery<NeighborsResponse>(
+    ['neighbors', 'list', buildingId ?? '', refreshKey],
+    `/api/v1/buildings/${buildingId}/neighbors`,
+    { enabled: !!buildingId }
+  );
+
+  const isLoading = buildingsQuery.isLoading || neighborsQuery.isLoading;
+  const error = buildingsQuery.error ?? neighborsQuery.error;
+
+  const onRefresh = useCallback(() => {
+    setRefreshKey((k) => k + 1);
   }, []);
+
+  // Only show visible neighbors (privacy-aware filtering)
+  const visibleNeighbors = useMemo(
+    () => (neighborsQuery.data?.neighbors ?? []).filter((n) => n.is_visible),
+    [neighborsQuery.data]
+  );
 
   const filtered = useMemo(
     () =>
-      MOCK_NEIGHBORS.filter((n) =>
+      visibleNeighbors.filter((n) =>
         search.trim() === ''
           ? true
-          : `${n.name} ${n.apartment}`.toLowerCase().includes(search.toLowerCase())
+          : `${n.display_name} ${n.unit_label}`.toLowerCase().includes(search.toLowerCase())
       ),
-    [search]
+    [visibleNeighbors, search]
   );
+
+  const initials = (name: string) =>
+    name
+      .split(' ')
+      .map((w) => w[0] ?? '')
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+  if (isLoading) {
+    return (
+      <View style={[s.container, styles.center]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[s.cardMeta, { marginTop: 12 }]}>Loading neighbours…</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[s.container, styles.center]}>
+        <Text style={s.emptyIcon}>⚠️</Text>
+        <Text style={s.emptyTitle}>Could not load neighbours</Text>
+        <Text style={s.emptyText}>
+          {error instanceof Error ? error.message : 'Unknown error'}
+        </Text>
+        <Pressable style={[s.primaryButton, { marginTop: 16 }]} onPress={onRefresh}>
+          <Text style={s.primaryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={s.container}>
       <View style={s.header}>
         <Text style={s.headerTitle}>Neighbours</Text>
-        <Text style={s.headerSubtitle}>{MOCK_NEIGHBORS.length} residents in your building</Text>
+        <Text style={s.headerSubtitle}>
+          {buildingName
+            ? `${visibleNeighbors.length} residents in ${buildingName}`
+            : `${visibleNeighbors.length} residents in your building`}
+        </Text>
       </View>
 
       <View style={s.searchContainer}>
@@ -97,31 +158,49 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
 
       <ScrollView
         style={s.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={neighborsQuery.isFetching && !isLoading}
+            onRefresh={onRefresh}
+          />
+        }
       >
         {filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏘️</Text>
-            <Text style={s.emptyTitle}>No matches</Text>
-            <Text style={s.emptyText}>Try a different name or apartment number.</Text>
+            <Text style={s.emptyTitle}>
+              {search.trim() ? 'No matches' : 'No neighbours yet'}
+            </Text>
+            <Text style={s.emptyText}>
+              {search.trim()
+                ? 'Try a different name or apartment number.'
+                : 'Residents who opt into the directory will appear here.'}
+            </Text>
           </View>
         ) : (
           filtered.map((neighbor) => (
             <Pressable
-              key={neighbor.id}
+              key={neighbor.user_id}
               style={[s.card, styles.row]}
-              onPress={() => onNavigate?.('NeighborDetail', { neighborId: neighbor.id })}
+              onPress={() =>
+                onNavigate?.('NeighborDetail', { neighborId: neighbor.user_id })
+              }
             >
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{neighbor.initials}</Text>
+                <Text style={styles.avatarText}>{initials(neighbor.display_name)}</Text>
               </View>
               <View style={styles.info}>
-                <Text style={s.cardTitle}>{neighbor.name}</Text>
+                <Text style={s.cardTitle}>{neighbor.display_name}</Text>
                 <Text style={s.cardMeta}>
-                  Apt {neighbor.apartment} · Floor {neighbor.floor}
+                  {neighbor.unit_label}
+                  {neighbor.resident_type === 'owner' ? ' · Owner' : ''}
                 </Text>
-                {neighbor.phone && <Text style={styles.contact}>📞 {neighbor.phone}</Text>}
-                {neighbor.email && <Text style={styles.contact}>✉️ {neighbor.email}</Text>}
+                {neighbor.phone && (
+                  <Text style={styles.contact}>📞 {neighbor.phone}</Text>
+                )}
+                {neighbor.email && (
+                  <Text style={styles.contact}>✉️ {neighbor.email}</Text>
+                )}
               </View>
             </Pressable>
           ))
@@ -138,6 +217,7 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  center: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   avatar: {
     width: 56,
