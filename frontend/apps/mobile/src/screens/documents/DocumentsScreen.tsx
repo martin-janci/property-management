@@ -384,11 +384,6 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                       <Text style={styles.downloadIcon}>⬇️</Text>
                     )}
                   </View>
-                  {doc.type === 'folder' ? (
-                    <Text style={styles.arrowIcon}>›</Text>
-                  ) : (
-                    <Text style={styles.downloadIcon}>👁️</Text>
-                  )}
                 </Pressable>
               ))}
           </>
@@ -590,5 +585,15 @@ const styles = StyleSheet.create({
   },
   permissionsIcon: {
     fontSize: 14,
+  },
+  downloadingIndicator: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  downloadingText: {
+    fontSize: 14,
+    color: colors.textMuted,
   },
 });
