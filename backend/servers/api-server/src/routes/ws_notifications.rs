@@ -47,8 +47,7 @@ use axum::{
     routing::get,
     Router,
 };
-use chrono::Utc;
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use api_core::extractors::validate_access_token;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -252,61 +251,11 @@ async fn handle_ws_session(
 /// Validate a JWT access token supplied as a query parameter and return the
 /// subject user ID.
 ///
-/// Uses the same `JWT_SECRET` env-var + `jsonwebtoken` verification path as
-/// the `AuthUser` extractor in `api_core::extractors::auth`, but operates on
-/// a plain `&str` rather than an HTTP header.
+/// Delegates to `api_core::extractors::validate_access_token` so the shared
+/// `JWT_VERIFIER` (with its `leeway`, algorithm, and future `iss`/`aud`
+/// hardening) applies uniformly to WebSocket auth and HTTP extractors alike.
 fn validate_ws_token(token: &str) -> Result<Uuid, &'static str> {
-    use std::sync::OnceLock;
-
-    #[derive(serde::Deserialize)]
-    struct WsClaims {
-        sub: Uuid,
-        exp: i64,
-        token_type: String,
-    }
-
-    struct WsVerifier {
-        key: DecodingKey,
-        validation: Validation,
-    }
-
-    static WS_VERIFIER: OnceLock<Result<WsVerifier, String>> = OnceLock::new();
-
-    let cell = WS_VERIFIER.get_or_init(|| {
-        let secret = std::env::var("JWT_SECRET").map_err(|_| "JWT_SECRET not set".to_string())?;
-        if secret.len() < 32 {
-            return Err("JWT_SECRET too short".to_string());
-        }
-        let mut validation = Validation::default();
-        validation.leeway = 30;
-        Ok(WsVerifier {
-            key: DecodingKey::from_secret(secret.as_bytes()),
-            validation,
-        })
-    });
-
-    let verifier = match cell {
-        Ok(v) => v,
-        Err(_) => return Err("Server configuration error"),
-    };
-
-    let token_data = decode::<WsClaims>(token, &verifier.key, &verifier.validation)
-        .map_err(|_| "Invalid or expired token")?;
-
-    let claims = token_data.claims;
-
-    // Reject refresh tokens — only access tokens are accepted here.
-    if claims.token_type != "access" {
-        return Err("Invalid token type for WebSocket auth");
-    }
-
-    // Validate exp (jsonwebtoken already checks this, but be explicit).
-    let now = Utc::now().timestamp();
-    if claims.exp < now {
-        return Err("Token has expired");
-    }
-
-    Ok(claims.sub)
+    validate_access_token(token)
 }
 
 // ============================================================================
