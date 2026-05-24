@@ -343,13 +343,13 @@
       "status": "review",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T12:30:00Z",
-      "last_updated": "2026-05-24T14:07:53Z",
+      "last_updated": "2026-05-24T14:16:54Z",
       "status_changed_at": "2026-05-24T13:00:00Z",
       "pr_number": 462,
       "pr_url": "https://github.com/martin-janci/property-management/pull/462",
       "merged_at": null,
       "implementer_summary": "pr=462 status=done specialist=react-native note=DocumentPreviewScreen added; presigned URL via /preview endpoint with /download fallback; Linking.openURL + expo-sharing; typecheck+biome clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=Implementation correct and secure; all 10 CI checks green; i18n complete across all 6 locales; presigned URL fetch+fallback logic works; screen-map entry missing for DocumentPreviewScreen (non-blocking)"
     },
     {
       "task_id": "gap-7a-5-web-share-ui",
