@@ -11,11 +11,11 @@ implementations:
     redesignStatus: not-started
     apiStatus: complete
 endpoints:
-  - POST /api/v1/auth/mfa/setup
-  - POST /api/v1/auth/mfa/verify
-  - POST /api/v1/auth/mfa/disable
-  - GET  /api/v1/auth/mfa/status
-  - POST /api/v1/auth/mfa/backup-codes/regenerate
+  - auth_mfa_setup
+  - auth_mfa_verify
+  - auth_mfa_disable
+  - auth_mfa_status
+  - auth_mfa_backup_codes_regenerate
 relatedScreens: []
 sharedComponents: []
 diagrams: []

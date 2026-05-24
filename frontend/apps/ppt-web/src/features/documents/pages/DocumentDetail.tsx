@@ -31,7 +31,8 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
   if (error) {
     // 403 = audience access denied — surface the permission-denied state
-    const isForbidden = error.message.includes('403') || error.message.toLowerCase().includes('forbidden');
+    const isForbidden =
+      error.message.includes('403') || error.message.toLowerCase().includes('forbidden');
     if (isForbidden) {
       return (
         <div className="document-detail permission-denied">
@@ -48,9 +49,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0110 0v4" />
           </svg>
-          <p className="permission-message">
-            Tento dokument nie je prístupný pre váš účet.
-          </p>
+          <p className="permission-message">Tento dokument nie je prístupný pre váš účet.</p>
           <p className="permission-hint">
             Dokument mohol byť nastavený ako viditeľný iba pre správcov alebo konkrétnych
             používateľov.
