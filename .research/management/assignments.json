@@ -287,13 +287,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T12:30:00Z",
+      "last_updated": "2026-05-24T13:00:00Z",
       "status_changed_at": "2026-05-24T11:00:00Z",
       "pr_number": 458,
       "pr_url": "https://github.com/martin-janci/property-management/pull/458",
       "merged_at": null,
       "implementer_summary": "pr=458 status=done specialist=pm-scrum-master note=sprint-status.yaml sequenced (Epic 2B first, 6.2-6.5/8A.2/8A.3 blocked); decisions.md unblock-trigger table; voice IDOR backend fix (deactivate_voice_device/list_voice_commands now scoped by user_id); ProtectedRoute fail-open fix; cargo check passing; cargo test failing (investigating)",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all planning docs syntactically valid and internally consistent; Epic 2B correctly sequenced ahead of 6.2-6.5/8A.2/8A.3; bundled Rust IDOR fix and ProtectedRoute hardening correct; non-blocking: duplicate doc comment, pre-existing cargo test failure; PR draft+dirty needs rebase before merge"
     },
     {
       "task_id": "pm-scrum-master-land-voice-device-idor",
@@ -340,15 +340,15 @@
     {
       "task_id": "gap-7a-4-mobile-preview",
       "branch": "auto-impl/gap-7a-4-mobile-preview",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-native",
       "claimed_at": "2026-05-24T12:30:00Z",
-      "last_updated": "2026-05-24T12:30:00Z",
-      "status_changed_at": "2026-05-24T12:30:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T13:00:00Z",
+      "status_changed_at": "2026-05-24T13:00:00Z",
+      "pr_number": 462,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/462",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=462 status=done specialist=react-native note=DocumentPreviewScreen added; presigned URL via /preview endpoint with /download fallback; Linking.openURL + expo-sharing; typecheck+biome clean",
       "reviewer_summary": null
     }
   ]
