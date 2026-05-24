@@ -8,18 +8,25 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  acknowledgeHealthAlert,
+  fetchHealthAlerts,
+  fetchHealthDashboard,
+  fetchMetricHistory,
   getOAuthClient,
   listAgencies,
   listOAuthClients,
   regenerateOAuthClientSecret,
   registerOAuthClient,
   revokeOAuthClient,
+  updateHealthThreshold,
   updateOAuthClient,
 } from './api';
 import type {
   ListAgenciesParams,
   RegisterOAuthClientRequest,
+  TimeRange,
   UpdateOAuthClientRequest,
+  UpdateThresholdRequest,
 } from './types';
 
 // ============================================
@@ -32,6 +39,11 @@ export const adminKeys = {
   agencyList: (params?: ListAgenciesParams) => [...adminKeys.agencies(), 'list', params] as const,
   oauthClients: () => [...adminKeys.all, 'oauth', 'clients'] as const,
   oauthClient: (id: string) => [...adminKeys.oauthClients(), id] as const,
+  health: () => [...adminKeys.all, 'health'] as const,
+  healthDashboard: () => [...adminKeys.health(), 'dashboard'] as const,
+  healthAlerts: (activeOnly: boolean) => [...adminKeys.health(), 'alerts', activeOnly] as const,
+  metricHistory: (name: string, range: TimeRange) =>
+    [...adminKeys.health(), 'history', name, range] as const,
 };
 
 // ============================================
@@ -107,6 +119,58 @@ export function useRegenerateOAuthClientSecret() {
     mutationFn: (id: string) => regenerateOAuthClientSecret(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.oauthClients() });
+    },
+  });
+}
+
+// ============================================================
+// Platform Health Monitoring hooks (Epic 10B.3)
+// ============================================================
+
+export function useHealthDashboard() {
+  return useQuery({
+    queryKey: adminKeys.healthDashboard(),
+    queryFn: ({ signal }) => fetchHealthDashboard(signal),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useHealthAlerts(activeOnly: boolean) {
+  return useQuery({
+    queryKey: adminKeys.healthAlerts(activeOnly),
+    queryFn: ({ signal }) => fetchHealthAlerts(activeOnly, signal),
+    staleTime: 30_000,
+  });
+}
+
+export function useAcknowledgeAlert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (alertId: string) => acknowledgeHealthAlert(alertId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.healthDashboard() });
+      void qc.invalidateQueries({ queryKey: adminKeys.health() });
+    },
+  });
+}
+
+export function useMetricHistory(metricName: string, range: TimeRange) {
+  return useQuery({
+    queryKey: adminKeys.metricHistory(metricName, range),
+    queryFn: ({ signal }) => fetchMetricHistory(metricName, range, signal),
+    staleTime: 30_000,
+    enabled: !!metricName,
+  });
+}
+
+export function useUpdateHealthThreshold() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ metricName, data }: { metricName: string; data: UpdateThresholdRequest }) =>
+      updateHealthThreshold(metricName, data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.healthDashboard() });
     },
   });
 }

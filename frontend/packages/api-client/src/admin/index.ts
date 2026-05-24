@@ -5,6 +5,10 @@
  */
 
 export {
+  acknowledgeHealthAlert,
+  fetchHealthAlerts,
+  fetchHealthDashboard,
+  fetchMetricHistory,
   getOAuthClient,
   listAgencies,
   listOAuthClients,
@@ -12,16 +16,22 @@ export {
   registerOAuthClient,
   revokeOAuthClient,
   suspendAgency,
+  updateHealthThreshold,
   updateOAuthClient,
 } from './api';
 export {
   adminKeys,
+  useAcknowledgeAlert,
   useAgencies,
+  useHealthAlerts,
+  useHealthDashboard,
+  useMetricHistory,
   useOAuthClient,
   useOAuthClients,
   useRegenerateOAuthClientSecret,
   useRegisterOAuthClient,
   useRevokeOAuthClient,
+  useUpdateHealthThreshold,
   useUpdateOAuthClient,
 } from './hooks';
 export {
@@ -33,12 +43,22 @@ export type {
   AdminPaginatedResponse,
   Agency,
   AgencyStatus,
+  CurrentMetric,
+  HealthDashboard,
   KnownOAuthScope,
   ListAgenciesParams,
+  MetricAlert,
+  MetricDataPoint,
+  MetricHistory,
+  MetricStats,
+  MetricStatus,
+  MetricThreshold,
   OAuthClientSummary,
   RegenerateSecretResponse,
   RegisterOAuthClientRequest,
   RegisterOAuthClientResponse,
+  TimeRange,
   UpdateOAuthClientRequest,
+  UpdateThresholdRequest,
 } from './types';
 export { KNOWN_OAUTH_SCOPES } from './types';

@@ -20,16 +20,23 @@ import { requestMfaChallenge } from './mfa-handler';
 import type {
   AdminPaginatedResponse,
   Agency,
+  HealthDashboard,
   ListAgenciesParams,
+  MetricAlert,
+  MetricHistory,
+  MetricThreshold,
   OAuthClientSummary,
   RegenerateSecretResponse,
   RegisterOAuthClientRequest,
   RegisterOAuthClientResponse,
+  TimeRange,
   UpdateOAuthClientRequest,
+  UpdateThresholdRequest,
 } from './types';
 
 const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/admin`;
+const HEALTH_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin/health`;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
@@ -194,4 +201,48 @@ export async function regenerateOAuthClientSecret(id: string): Promise<Regenerat
   return apiRequest<RegenerateSecretResponse>(`${API_BASE}/oauth/clients/${id}/regenerate-secret`, {
     method: 'POST',
   });
+}
+
+// ============================================================
+// Platform Health Monitoring (Epic 10B.3)
+// All requests go through apiRequest, which carries the MFA
+// challenge-response interceptor.
+// ============================================================
+
+export async function fetchHealthDashboard(signal?: AbortSignal): Promise<HealthDashboard> {
+  return apiRequest<HealthDashboard>(`${HEALTH_BASE}/dashboard`, { signal });
+}
+
+export async function fetchHealthAlerts(
+  activeOnly: boolean,
+  signal?: AbortSignal
+): Promise<MetricAlert[]> {
+  return apiRequest<MetricAlert[]>(`${HEALTH_BASE}/alerts?active_only=${activeOnly}`, { signal });
+}
+
+export async function acknowledgeHealthAlert(alertId: string): Promise<void> {
+  await apiRequest<void>(`${HEALTH_BASE}/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
+    method: 'POST',
+  });
+}
+
+export async function fetchMetricHistory(
+  metricName: string,
+  range: TimeRange,
+  signal?: AbortSignal
+): Promise<MetricHistory> {
+  const n = encodeURIComponent(metricName);
+  return apiRequest<MetricHistory>(`${HEALTH_BASE}/metrics/${n}/history?range=${range}`, {
+    signal,
+  });
+}
+
+export async function updateHealthThreshold(
+  metricName: string,
+  data: UpdateThresholdRequest
+): Promise<MetricThreshold> {
+  return apiRequest<MetricThreshold>(
+    `${HEALTH_BASE}/thresholds/${encodeURIComponent(metricName)}`,
+    { method: 'PUT', body: JSON.stringify(data) }
+  );
 }

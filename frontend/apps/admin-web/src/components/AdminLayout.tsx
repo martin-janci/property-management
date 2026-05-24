@@ -91,6 +91,7 @@ export function AdminLayout() {
   // PLATFORM
   const canSiteSettingsWrite = useCapability('site_settings_write');
   const canMobileConfigWrite = useCapability('mobile_config_write');
+  const canHealthRead = useCapability('audit_read');
 
   // DEVELOPER
   const canOauthClientWrite = useCapability('oauth_client_write');
@@ -154,6 +155,9 @@ export function AdminLayout() {
             ) : null}
             {canMobileConfigWrite ? (
               <NavItem to="/platform/mobile" label={t('admin.platform.mobile', 'Mobile config')} />
+            ) : null}
+            {canHealthRead ? (
+              <NavItem to="/platform/health" label={t('admin.health.navLabel', 'Health')} />
             ) : null}
           </SidebarGroup>
 

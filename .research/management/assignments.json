@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T18:15:00Z",
+  "generated": "2026-05-24T20:20:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -273,7 +273,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
       "status_changed_at": "2026-05-24T11:00:00Z",
       "pr_number": 459,
       "pr_url": "https://github.com/martin-janci/property-management/pull/459",
@@ -287,7 +287,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T10:06:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
       "status_changed_at": "2026-05-24T11:00:00Z",
       "pr_number": 458,
       "pr_url": "https://github.com/martin-janci/property-management/pull/458",
@@ -307,7 +307,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
       "merged_at": "2026-05-24T17:45:00Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
+      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed — IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
     },
     {
       "task_id": "gap-2b-notification-pipeline",
@@ -321,7 +321,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
-      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge"
+      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass — ready to merge"
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
@@ -399,13 +399,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
       "status_changed_at": "2026-05-24T17:15:00Z",
       "pr_number": 470,
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": null,
       "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=18 integration tests well-structured and correct: PKCE S256 flow, consent/revoke, refresh rotation with family_id reuse detection, audit trail covered; migration 00156 (5 missing AuditAction variants) idempotent; minor non-blocking: 2 is_client_error() calls instead of specific codes, 1 pre-existing RFC 6749 §5.2 deviation"
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
@@ -438,25 +438,53 @@
     {
       "task_id": "gap-8a-3-websocket-realtime-sync",
       "branch": "auto-impl/gap-8a-3-websocket-realtime-sync",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T20:15:00Z",
+      "status_changed_at": "2026-05-24T18:50:00Z",
+      "pr_number": 472,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db — user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER — fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
     },
     {
       "task_id": "gap-10b-3-admin-health-ui",
       "branch": "auto-impl/gap-10b-3-admin-health-ui",
-      "status": "in-progress",
+      "status": "review",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T20:10:00Z",
+      "status_changed_at": "2026-05-24T18:25:00Z",
+      "pr_number": 471,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/471",
+      "merged_at": null,
+      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped — node_modules not installed in environment",
+      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() — raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
+    },
+    {
+      "task_id": "gap-9-1-mfa-e2e-verify",
+      "branch": "auto-impl/gap-9-1-mfa-e2e-verify",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
+      "last_updated": "2026-05-24T20:20:00Z",
+      "status_changed_at": "2026-05-24T18:50:00Z",
+      "pr_number": 473,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/473",
+      "merged_at": null,
+      "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
+      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] — every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
+    },
+    {
+      "task_id": "gap-10b-4-system-announcements-impl",
+      "branch": "auto-impl/gap-10b-4-system-announcements-impl",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T20:05:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
+      "status_changed_at": "2026-05-24T20:05:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
@@ -464,13 +492,27 @@
       "reviewer_summary": null
     },
     {
-      "task_id": "gap-9-1-mfa-e2e-verify",
-      "branch": "auto-impl/gap-9-1-mfa-e2e-verify",
+      "task_id": "gap-10b-5-support-data-impl",
+      "branch": "auto-impl/gap-10b-5-support-data-impl",
       "status": "in-progress",
       "specialist": null,
-      "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
+      "claimed_at": "2026-05-24T20:05:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
+      "status_changed_at": "2026-05-24T20:05:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-6-onboarding-impl",
+      "branch": "auto-impl/gap-10b-6-onboarding-impl",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T20:05:00Z",
+      "last_updated": "2026-05-24T20:05:00Z",
+      "status_changed_at": "2026-05-24T20:05:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
