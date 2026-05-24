@@ -450,10 +450,12 @@ export function usePinAnnouncement() {
 
 /** Get a single announcement with its details and attachments (Story 6.2) */
 export function useAnnouncement(id: string, enabled = true) {
-  return useQuery<{ announcement: import('./types').AnnouncementWithDetails; attachments: import('./types').AnnouncementAttachment[] }>({
+  return useQuery<{
+    announcement: import('./types').AnnouncementWithDetails;
+    attachments: import('./types').AnnouncementAttachment[];
+  }>({
     queryKey: announcementKeys.detail(id),
-    queryFn: () =>
-      fetchJson(`${ANNOUNCEMENTS_BASE}/${id}`),
+    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}`),
     enabled: enabled && !!id,
   });
 }
@@ -488,8 +490,7 @@ export function useAcknowledgeAnnouncement() {
 export function useAnnouncementAcknowledgmentStats(id: string, enabled = true) {
   return useQuery<import('./types').AcknowledgmentStatsResponse>({
     queryKey: announcementKeys.acknowledgments(id),
-    queryFn: () =>
-      fetchJson(`${ANNOUNCEMENTS_BASE}/${id}/acknowledgments`),
+    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}/acknowledgments`),
     enabled: enabled && !!id,
   });
 }

@@ -1031,6 +1031,42 @@
         "feature": "Epic-6"
       },
       {
+        "operationId": "announcements_mark_read",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/announcements/:id/read",
+        "description": "Mark announcement as read by current user",
+        "tags": ["Announcements"],
+        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
+        "responses": [{"statusCode": 200, "description": "Marked as read"}],
+        "auth": {"required": true, "tenantContext": {"required": true}},
+        "feature": "Epic-6"
+      },
+      {
+        "operationId": "announcements_acknowledge",
+        "server": "api-server",
+        "method": "POST",
+        "path": "/api/v1/announcements/:id/acknowledge",
+        "description": "Acknowledge an announcement",
+        "tags": ["Announcements"],
+        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
+        "responses": [{"statusCode": 200, "description": "Acknowledged"}],
+        "auth": {"required": true, "tenantContext": {"required": true}},
+        "feature": "Epic-6"
+      },
+      {
+        "operationId": "announcements_get_acknowledgments",
+        "server": "api-server",
+        "method": "GET",
+        "path": "/api/v1/announcements/:id/acknowledgments",
+        "description": "Get acknowledgment stats for an announcement",
+        "tags": ["Announcements"],
+        "pathParams": [{"name": "id", "type": "uuid", "required": true}],
+        "responses": [{"statusCode": 200, "description": "Acknowledgment stats"}],
+        "auth": {"required": true, "tenantContext": {"required": true}},
+        "feature": "Epic-6"
+      },
+      {
         "operationId": "news_list",
         "server": "api-server",
         "method": "GET",

@@ -17,10 +17,10 @@ implementations:
     apiStatus: partial
 endpoints:
   - announcements_list
-  - announcement_get
-  - announcement_mark_read
-  - announcement_acknowledge
-  - announcement_get_acknowledgments
+  - announcements_get
+  - announcements_mark_read
+  - announcements_acknowledge
+  - announcements_get_acknowledgments
 epics:
   - Epic-6
 relatedScreens:

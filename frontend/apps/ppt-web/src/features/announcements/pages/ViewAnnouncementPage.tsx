@@ -5,8 +5,8 @@ import type {
   AnnouncementWithDetails,
 } from '@ppt/api-client';
 import { AcknowledgmentStats as AcknowledgmentStatsPanel } from '../components/AcknowledgmentStats';
-import { AnnouncementComments } from '../components/AnnouncementComments';
 import type { AnnouncementCommentsProps } from '../components/AnnouncementComments';
+import { AnnouncementComments } from '../components/AnnouncementComments';
 import './ViewAnnouncementPage.css';
 
 interface ViewAnnouncementPageProps {

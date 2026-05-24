@@ -16,9 +16,9 @@ import {
   setMfaChallengeHandler,
   useAcknowledgeAnnouncement,
   useAnnouncement,
-  useAnnouncements,
   useAnnouncementAcknowledgmentStats,
   useAnnouncementComments,
+  useAnnouncements,
   useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
@@ -1503,10 +1503,11 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
 
   // Story 6.3: Comments — only fetch when commentsEnabled
   const commentsEnabled = !!data?.announcement?.commentsEnabled;
-  const {
-    data: commentsData,
-    isLoading: commentsLoading,
-  } = useAnnouncementComments(announcementId, undefined, commentsEnabled);
+  const { data: commentsData, isLoading: commentsLoading } = useAnnouncementComments(
+    announcementId,
+    undefined,
+    commentsEnabled
+  );
   const createComment = useCreateAnnouncementComment();
   const deleteComment = useDeleteAnnouncementComment();
 
@@ -1686,9 +1687,7 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
 
   // Build commentsProps when comments are enabled (Story 6.3)
   const isManager =
-    user?.role === 'manager' ||
-    user?.role === 'org_admin' ||
-    user?.role === 'super_admin';
+    user?.role === 'manager' || user?.role === 'org_admin' || user?.role === 'super_admin';
   const commentsProps = commentsEnabled
     ? {
         comments: commentsData?.comments ?? [],
