@@ -9,7 +9,8 @@
       "mitigation": "Promote Epic 2B into the sprint or explicitly defer 6.2+/8A.2 until 2B lands",
       "owner_role": "pm-scrum-master",
       "trigger": null,
-      "status": "open"
+      "status": "mitigated",
+      "mitigated_by": "DEC-001 (2026-05-24): Epic 2B sequenced first; 6.2-6.5 and 8A.2/8A.3 formally deferred pending 2B merge"
     },
     {
       "id": "pm-scrum-master-review-backlog-stall",
@@ -39,7 +40,8 @@
       "mitigation": "Sequence 2B first or freeze dependent story slices behind feature flags",
       "owner_role": "pm-tech-lead",
       "trigger": null,
-      "status": "open"
+      "status": "mitigated",
+      "mitigated_by": "DEC-001 (2026-05-24): Epic 2B formally sequenced first; Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch slices formally deferred until 2B stories 1-5 land"
     },
     {
       "id": "pm-tech-lead-duplicate-auth-handler-divergence",
