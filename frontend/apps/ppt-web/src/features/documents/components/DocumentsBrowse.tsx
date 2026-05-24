@@ -173,7 +173,8 @@ export function DocumentsBrowse({
     setPage(0);
   }, []);
 
-  const hasActiveFilters = selectedStatus || selectedAudience || selectedCategory || search.length >= 2;
+  const hasActiveFilters =
+    selectedStatus || selectedAudience || selectedCategory || search.length >= 2;
 
   return (
     <div className="docs-browse">
@@ -186,7 +187,10 @@ export function DocumentsBrowse({
             role="tab"
             aria-selected={selectedStatus === tab.value}
             className={`docs-browse__tab${selectedStatus === tab.value ? ' docs-browse__tab--active' : ''}`}
-            onClick={() => { setSelectedStatus(tab.value); setPage(0); }}
+            onClick={() => {
+              setSelectedStatus(tab.value);
+              setPage(0);
+            }}
           >
             {tab.label}
           </button>
@@ -196,13 +200,25 @@ export function DocumentsBrowse({
       {/* Filter bar */}
       <div className="docs-browse__filters">
         <div className="docs-browse__search-wrap">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
           </svg>
           <input
             type="search"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
             placeholder="Hľadať podľa názvu…"
             className="docs-browse__search"
             aria-label="Hľadať dokumenty"
@@ -219,7 +235,10 @@ export function DocumentsBrowse({
                 type="button"
                 aria-pressed={selectedAudience === opt.value}
                 className={`docs-browse__chip${selectedAudience === opt.value ? ' docs-browse__chip--active' : ''}`}
-                onClick={() => { setSelectedAudience(selectedAudience === opt.value ? undefined : opt.value); setPage(0); }}
+                onClick={() => {
+                  setSelectedAudience(selectedAudience === opt.value ? undefined : opt.value);
+                  setPage(0);
+                }}
               >
                 {opt.label}
               </button>
@@ -237,7 +256,10 @@ export function DocumentsBrowse({
                 type="button"
                 aria-pressed={selectedCategory === cat}
                 className={`docs-browse__chip${selectedCategory === cat ? ' docs-browse__chip--active' : ''}`}
-                onClick={() => { setSelectedCategory(selectedCategory === cat ? undefined : cat); setPage(0); }}
+                onClick={() => {
+                  setSelectedCategory(selectedCategory === cat ? undefined : cat);
+                  setPage(0);
+                }}
               >
                 {cat}
               </button>
@@ -255,9 +277,12 @@ export function DocumentsBrowse({
       {/* Results */}
       <div className="docs-browse__results">
         {isLoading && (
-          <ul className="docs-browse__skeleton" aria-label="Načítavanie dokumentov" aria-busy="true">
+          <ul
+            className="docs-browse__skeleton"
+            aria-label="Načítavanie dokumentov"
+            aria-busy="true"
+          >
             {Array.from({ length: 6 }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: stable skeleton keys
               <li key={i} className="docs-browse__skel-row" />
             ))}
           </ul>
@@ -286,9 +311,10 @@ export function DocumentsBrowse({
         {!isLoading && !error && data && data.documents.length > 0 && (
           <>
             <div className="docs-browse__count" aria-live="polite">
-              {data.total} dokument{data.total !== 1 ? 'ov' : ''} · zobrazených {data.documents.length}
+              {data.total} dokument{data.total !== 1 ? 'ov' : ''} · zobrazených{' '}
+              {data.documents.length}
             </div>
-            <ul className="docs-browse__list" role="list">
+            <ul className="docs-browse__list">
               {data.documents.map((doc: DocumentSummary) => (
                 <li key={doc.id}>
                   <DocumentRow doc={doc} selected={selectedId === doc.id} onSelect={handleSelect} />

@@ -22,13 +22,13 @@ export * from './facilities';
 export * from './faults';
 export * from './financial';
 export * from './forms';
-export * from './mfa';
 // Export generated types and client
 // These will be populated after running `pnpm generate`
 export * from './generated';
 export * from './government-portal';
 export * from './integrations';
 export * from './messaging';
+export * from './mfa';
 export * from './migration';
 export * from './neighbors';
 export * from './news';
