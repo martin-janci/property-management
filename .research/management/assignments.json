@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T01:50:00Z",
+  "generated": "2026-05-24T06:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -54,22 +54,22 @@
       "pr_number": 440,
       "pr_url": "https://github.com/martin-janci/property-management/pull/440",
       "merged_at": null,
-      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial→done; cargo check -p api-server exit 0",
+      "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial\u2192done; cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
     },
     {
       "task_id": "pm-tech-lead-decide-2b-build-order",
       "branch": "auto-impl/pm-tech-lead-decide-2b-build-order",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-24T00:10:26Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T00:35:00Z",
+      "last_updated": "2026-05-24T06:25:35Z",
+      "status_changed_at": "2026-05-24T06:25:35Z",
       "pr_number": 442,
       "pr_url": "https://github.com/martin-janci/property-management/pull/442",
-      "merged_at": null,
-      "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md — Epic 2B sequenced first, Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch formally deferred; action-list and risks updated; Band A clean; lint fixed",
-      "reviewer_summary": "verdict=approve note=DEC-001 is sound and complete — all three artifacts internally consistent, rationale factually grounded, deferred slice list exact match; incidental sibling TS files noted, no regressions; all 12 CI checks green; posted as COMMENT (self-PR restriction)"
+      "merged_at": "2026-05-24T06:25:35Z",
+      "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md \u2014 Epic 2B sequenced first, Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch formally deferred; action-list and risks updated; Band A clean; lint fixed",
+      "reviewer_summary": "verdict=approve note=DEC-001 is sound and complete \u2014 all three artifacts internally consistent, rationale factually grounded, deferred slice list exact match; incidental sibling TS files noted, no regressions; all 12 CI checks green; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-9-1-mfa-frontend-integration",
@@ -77,11 +77,11 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T01:45:00Z",
-      "status_changed_at": "2026-05-24T01:45:00Z",
+      "last_updated": "2026-05-24T06:26:10Z",
+      "status_changed_at": "2026-05-24T06:26:10Z",
       "pr_number": 441,
       "pr_url": "https://github.com/martin-janci/property-management/pull/441",
-      "merged_at": "2026-05-24T01:45:00Z",
+      "merged_at": "2026-05-24T06:26:10Z",
       "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client; TwoFactorAuthPage rewritten; typecheck+biome+api-client build+ppt-web prod build all clean",
       "reviewer_summary": "verdict=approve note=both blocking issues resolved: QR now client-side via qrcode canvas (no external API call), mfa/api.ts uses module-local fetch wrapper matching community/api.ts pattern; types sound, mutations invalidate mfaStatus cache, screen-map Agent Log updated 2026-05-24; CI all green"
     },
@@ -91,12 +91,12 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T01:45:00Z",
-      "status_changed_at": "2026-05-24T01:45:00Z",
+      "last_updated": "2026-05-24T06:26:20Z",
+      "status_changed_at": "2026-05-24T06:26:20Z",
       "pr_number": 443,
       "pr_url": "https://github.com/martin-janci/property-management/pull/443",
-      "merged_at": "2026-05-24T01:45:00Z",
-      "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET /api/v1/documents with audience+status filters; permission-denied state in DocumentDetail; screen apiStatus promoted partial→complete; typecheck+biome+vite-build clean",
+      "merged_at": "2026-05-24T06:26:20Z",
+      "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET /api/v1/documents with audience+status filters; permission-denied state in DocumentDetail; screen apiStatus promoted partial\u2192complete; typecheck+biome+vite-build clean",
       "reviewer_summary": "verdict=approve note=all 3 original bugs resolved: access_scope appended once, DocumentListQuery.access_scope typed as AccessScope (not DocumentAudience), AUDIENCE_OPTIONS use canonical AccessScope values; MFA module names consistent; screen-maps have 2026-05-24 Agent Log entries; CI all green"
     },
     {
@@ -105,11 +105,11 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T01:45:00Z",
-      "status_changed_at": "2026-05-24T01:45:00Z",
+      "last_updated": "2026-05-24T06:26:30Z",
+      "status_changed_at": "2026-05-24T06:26:30Z",
       "pr_number": 444,
       "pr_url": "https://github.com/martin-janci/property-management/pull/444",
-      "merged_at": "2026-05-24T01:45:00Z",
+      "merged_at": "2026-05-24T06:26:30Z",
       "implementer_summary": "pr=444 status=done specialist=react-web note=wired logout button to AuthContext, unified session return-URL key via @ppt/shared, typecheck+lint+build clean",
       "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present for login.md and session-expired.md dated 2026-05-24; all three auth files use @ppt/shared imports consistently; logout calls AuthContext.logout() then navigates to /login; no logic bugs; CI clean"
     },
@@ -124,7 +124,7 @@
       "pr_number": 447,
       "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": "2026-05-24T02:56:00Z",
-      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts; removed dead onProgress state; fixed sk.json typo nahrary→nahrate",
+      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts; removed dead onProgress state; fixed sk.json typo nahrary\u2192nahrate",
       "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; dead onProgress callback and Slovak typo fixed before merge; posted as COMMENT (self-PR restriction)"
     },
     {
@@ -195,7 +195,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/448",
       "merged_at": null,
       "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints (pause/resume schedule, list/get/download/retry executions); stub repo compiles clean; Band A cargo check exit 0; CI fixes: removed premature pub mod ssrf, fixed rustfmt line-length on 2 route lines",
-      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated, zero unwrap in prod paths, extractor ordering correct; CI run 26352415102 all-green (check/test/build/security/rls/deny); follow-up notes: tenant isolation in real SQL, get_by_id unused, retry needs failed-state guard, download URL must be absolute presigned; PR still draft — safe to merge once follow-up migration tracked"
+      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated, zero unwrap in prod paths, extractor ordering correct; CI run 26352415102 all-green (check/test/build/security/rls/deny); follow-up notes: tenant isolation in real SQL, get_by_id unused, retry needs failed-state guard, download URL must be absolute presigned; PR still draft \u2014 safe to merge once follow-up migration tracked"
     },
     {
       "task_id": "gap-6-5-direct-messaging-apistatus",
