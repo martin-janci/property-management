@@ -9,11 +9,8 @@ implementations:
     component: ThreadDetailPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: integrated
-endpoints:
-  - GET /api/v1/messages/threads/:id
-  - POST /api/v1/messages/threads/:id/messages
-  - POST /api/v1/messages/threads/:id/read
+    apiStatus: complete
+endpoints: []
 relatedScreens:
   - id: ppt/messages
     rel: parent

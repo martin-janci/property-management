@@ -9,10 +9,8 @@ implementations:
     component: NewMessagePage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: integrated
-endpoints:
-  - GET /api/v1/buildings/:buildingId/neighbors
-  - POST /api/v1/messages/threads
+    apiStatus: complete
+endpoints: []
 relatedScreens:
   - id: ppt/messages
     rel: parent

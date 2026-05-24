@@ -9,10 +9,8 @@ implementations:
     component: MessagesPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: integrated
-endpoints:
-  - GET /api/v1/messages/threads
-  - GET /api/v1/messages/unread-count
+    apiStatus: complete
+endpoints: []
 relatedScreens: []
 sharedComponents: []
 diagrams: []
