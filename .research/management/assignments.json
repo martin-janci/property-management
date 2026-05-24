@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T00:45:00Z",
+  "generated": "2026-05-24T00:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -77,13 +77,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:27:30Z",
+      "last_updated": "2026-05-24T00:50:00Z",
       "status_changed_at": "2026-05-24T00:27:30Z",
       "pr_number": 441,
       "pr_url": "https://github.com/martin-janci/property-management/pull/441",
       "merged_at": null,
       "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client; TwoFactorAuthPage rewritten; typecheck+biome+api-client build+ppt-web prod build all clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=2 blocking issues: (1) TOTP secret sent to Google Charts external API \u2014 leaks MFA seed to third party; (2) mfa/api.ts uses raw fetch instead of shared fetchApi interceptor, bypassing token-refresh and error-parsing middleware"
     },
     {
       "task_id": "gap-7a-3-frontend-api-integration",
