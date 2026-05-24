@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T20:10:00Z",
+  "generated": "2026-05-24T20:15:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -441,13 +441,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T20:05:00Z",
+      "last_updated": "2026-05-24T20:15:00Z",
       "status_changed_at": "2026-05-24T18:50:00Z",
       "pr_number": 472,
       "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": null,
       "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db — user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER — fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
     },
     {
       "task_id": "gap-10b-3-admin-health-ui",
