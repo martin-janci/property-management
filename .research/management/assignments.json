@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T20:15:00Z",
+  "generated": "2026-05-24T20:20:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -469,13 +469,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T20:05:00Z",
+      "last_updated": "2026-05-24T20:20:00Z",
       "status_changed_at": "2026-05-24T18:50:00Z",
       "pr_number": 473,
       "pr_url": "https://github.com/martin-janci/property-management/pull/473",
       "merged_at": null,
       "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] — every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
     },
     {
       "task_id": "gap-10b-4-system-announcements-impl",
