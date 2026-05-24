@@ -16,28 +16,43 @@
 
 const WORKTREE_HOST_RE = /^wt-.+\.(dev|staging)\.rlt\.sk$/;
 
+function inferApiBaseFromHost(host: string): string | null {
+  if (host === 'rlt.sk' || host.endsWith('.rlt.sk')) {
+    if (host.endsWith('.staging.rlt.sk') || host === 'staging.rlt.sk') {
+      return 'https://api.staging.rlt.sk';
+    }
+    return 'https://api.rlt.sk';
+  }
+  return null;
+}
+
 function getRuntimeApiUrl(): string | undefined {
   if (typeof window === 'undefined') return undefined;
   const env = (window as { __ENV__?: Record<string, string> }).__ENV__;
   const envUrl = env?.NEXT_PUBLIC_API_URL;
-  const onWorktree = WORKTREE_HOST_RE.test(window.location.hostname);
+  const host = window.location.hostname;
+  const onWorktree = WORKTREE_HOST_RE.test(host);
 
-  // The deploy-server sets NEXT_PUBLIC_API_URL=https://api.rlt.sk on shared
-  // worktrees (correct for the build, wrong for the browser — prod's CORS
-  // allow-list rejects wt-* origins). When env points at a non-dedicated
-  // backend and we're on a worktree, prefer the relative-URL proxy so the
-  // next.config.js rewrite handles CORS server-side.
-  if (envUrl) {
-    try {
-      const envHost = new URL(envUrl).hostname;
-      if (envHost.startsWith('api.wt-')) return envUrl; // dedicated worktree
-      if (onWorktree) return ''; // shared worktree → proxy
-      return envUrl;
-    } catch {
-      // Malformed env value — fall through.
+  if (onWorktree) {
+    // Dedicated worktree backend is the one case where env wins over
+    // host inference — inference can't know about wt-* api hosts.
+    if (envUrl) {
+      try {
+        if (new URL(envUrl).hostname.startsWith('api.wt-')) return envUrl;
+      } catch {
+        // malformed env value — ignore
+      }
     }
+    return ''; // shared worktree → relative URL via next.config.js rewrite
   }
-  if (onWorktree) return '';
+
+  // For known *.rlt.sk hosts, host inference is authoritative. A
+  // misconfigured env (e.g. a baked-in `http://localhost:8081`) would
+  // otherwise leak to the browser and break every request.
+  const inferred = inferApiBaseFromHost(host);
+  if (inferred) return inferred;
+
+  if (envUrl) return envUrl;
   return undefined;
 }
 

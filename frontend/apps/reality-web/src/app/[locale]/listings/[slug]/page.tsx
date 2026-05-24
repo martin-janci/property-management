@@ -13,7 +13,29 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { ListingDetailContent, ListingNotFound } from '@/components/listings';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+function inferApiBaseFromHost(host: string): string | null {
+  const bareHost = host.split(':')[0]?.toLowerCase();
+  if (!bareHost) return null;
+  if (bareHost === 'rlt.sk' || bareHost.endsWith('.rlt.sk')) {
+    if (bareHost === 'staging.rlt.sk' || bareHost.endsWith('.staging.rlt.sk')) {
+      return 'https://api.staging.rlt.sk';
+    }
+    return 'https://api.rlt.sk';
+  }
+  return null;
+}
+
+function resolveApiBase(host: string): string {
+  // SSR path: prefer an internal URL (Docker network) when set, then host
+  // inference for known *.rlt.sk topology, then the public env, then a
+  // dev-only localhost fallback. Inference comes before NEXT_PUBLIC_API_URL
+  // so a baked-in/misconfigured `http://localhost:8081` can't take down
+  // SSR on staging or prod.
+  if (process.env.API_INTERNAL_URL) return process.env.API_INTERNAL_URL;
+  const inferred = inferApiBaseFromHost(host);
+  if (inferred) return inferred;
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -44,7 +66,8 @@ async function getListing(slug: string, host: string): Promise<ListingDetail | n
     const tags = host
       ? [`host:${host}:listings`, `host:${host}:listing:${slug}`]
       : ['listings', `listing:${slug}`];
-    const response = await fetch(`${API_BASE}/api/v1/listings/${slug}`, {
+    const apiBase = resolveApiBase(host);
+    const response = await fetch(`${apiBase}/api/v1/listings/${slug}`, {
       headers: host ? { Host: host } : {},
       next: { revalidate: 60, tags },
     });
