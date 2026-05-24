@@ -8,6 +8,7 @@
  * @see Story 79.2 - Authentication Flow Implementation
  */
 
+import { setReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -18,7 +19,6 @@ import './ProtectedRoute.css';
 // Constants
 // ============================================================================
 
-const RETURN_URL_KEY = 'ppt_return_url';
 const LOGIN_PATH = '/login';
 
 // ============================================================================
@@ -39,17 +39,13 @@ export interface ProtectedRouteProps {
 // ============================================================================
 
 /**
- * Stores the current location as the return URL in sessionStorage.
+ * Stores the current location as the return URL via @ppt/shared setReturnUrl.
  */
 function storeReturnUrl(pathname: string, search: string): void {
-  try {
-    const returnUrl = `${pathname}${search}`;
-    // Don't store the login page as return URL
-    if (returnUrl !== LOGIN_PATH && !returnUrl.startsWith(`${LOGIN_PATH}?`)) {
-      sessionStorage.setItem(RETURN_URL_KEY, returnUrl);
-    }
-  } catch {
-    // Session storage unavailable
+  const returnUrl = `${pathname}${search}`;
+  // Don't store the login page as return URL
+  if (returnUrl !== LOGIN_PATH && !returnUrl.startsWith(`${LOGIN_PATH}?`)) {
+    setReturnUrl(returnUrl);
   }
 }
 
