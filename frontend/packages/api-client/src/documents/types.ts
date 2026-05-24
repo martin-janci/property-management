@@ -48,7 +48,7 @@ export interface DocumentSummary {
   predicted_category?: string;
   classification_confidence?: number;
   summary?: string;
-  /** RLS-enforced audience scope returned from the server */
+  /** RLS-enforced audience scope returned from the server (7a-3). */
   access_scope?: AccessScope;
   /** Publication status; absent means published (backward compat) */
   status?: DocumentStatus;
@@ -86,6 +86,11 @@ export interface DocumentSearchRequest {
   date_to?: string;
   ocr_status?: OcrStatus[];
   has_summary?: boolean;
+  /**
+   * RLS-aware audience pre-filter (7a-3). The backend enforces row-level
+   * security on top — callers cannot escalate access by omitting this field.
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
 }
@@ -170,20 +175,20 @@ export interface DocumentIntelligenceStats {
 // Document status (publication state)
 export type DocumentStatus = 'published' | 'draft' | 'archived';
 
-// Audience / access scope for RLS-aware filtering
-export type DocumentAudience = 'organization' | 'building' | 'unit' | 'role' | 'users' | 'public';
-
 // List query params
 export interface DocumentListQuery {
   folder_id?: string;
   category?: string;
   search?: string;
+  /**
+   * RLS-aware audience pre-filter: the backend further restricts results to
+   * documents the caller is permitted to see regardless of this filter.
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
   /** Filter by publication status (maps to document state machine on backend) */
   status?: DocumentStatus;
-  /** Filter by access_scope audience; combined with RLS to show only accessible docs */
-  access_scope?: DocumentAudience;
   created_by?: string;
 }
 

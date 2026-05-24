@@ -35,6 +35,17 @@ export function useDocuments(query?: DocumentListQuery) {
   });
 }
 
+/**
+ * Permission-based document list (7a-3 RLS-aware audience filter).
+ *
+ * Alias for `useDocuments` that makes `access_scope` a first-class concern.
+ * The backend enforces RLS on top of this filter — callers cannot escalate
+ * access by omitting it.
+ */
+export function useDocumentList(query?: DocumentListQuery) {
+  return useDocuments(query);
+}
+
 // Get single document
 export function useDocument(id: string) {
   return useQuery({
