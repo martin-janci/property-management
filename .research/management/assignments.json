@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T02:52:00Z",
+  "generated": "2026-05-24T04:04:19Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -154,6 +154,48 @@
       "merged_at": "2026-05-24T02:51:00Z",
       "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
       "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client; pdfjs worker uses import.meta.url (no CDN); IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime present; @tailwindcss/postcss in devDeps; all CI green"
+    },
+    {
+      "task_id": "pm-security-resolve-435-followups",
+      "branch": "auto-impl/pm-security-resolve-435-followups",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-backend-fix-ssrf-outbound",
+      "branch": "auto-impl/pm-backend-fix-ssrf-outbound",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-backend-implement-81-schedule-endpoints",
+      "branch": "auto-impl/pm-backend-implement-81-schedule-endpoints",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
