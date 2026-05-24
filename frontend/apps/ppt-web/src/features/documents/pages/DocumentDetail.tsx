@@ -4,7 +4,12 @@
  * Shows full document details with intelligence features.
  */
 
-import { type AccessScope, useDocument, useDocumentClassification, useReprocessOcr } from '@ppt/api-client';
+import {
+  type AccessScope,
+  useDocument,
+  useDocumentClassification,
+  useReprocessOcr,
+} from '@ppt/api-client';
 
 /** Human-readable labels for the access_scope values returned by the backend (7a-3). */
 const AUDIENCE_LABELS: Record<AccessScope, string> = {
@@ -14,6 +19,7 @@ const AUDIENCE_LABELS: Record<AccessScope, string> = {
   user: 'Specific users',
   public: 'Public',
 };
+
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';

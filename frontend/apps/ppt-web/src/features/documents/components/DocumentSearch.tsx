@@ -5,8 +5,8 @@
  */
 
 import {
-  DOCUMENT_CATEGORIES,
   type AccessScope,
+  DOCUMENT_CATEGORIES,
   type DocumentSearchRequest,
   type DocumentSearchResult,
   type OcrStatus,

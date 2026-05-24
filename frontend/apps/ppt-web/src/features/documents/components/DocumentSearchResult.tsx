@@ -40,6 +40,7 @@ function AudienceBadge({ scope }: { scope: AccessScope }) {
     </span>
   );
 }
+
 import DOMPurify from 'dompurify';
 import { ClassificationBadge } from './ClassificationBadge';
 import { OcrStatusBadge } from './OcrStatusBadge';
