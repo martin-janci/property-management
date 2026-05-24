@@ -251,7 +251,9 @@ export function useCreateDocumentShare(documentId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateShareRequest) => api.createDocumentShare(documentId, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
+    },
   });
 }
 
@@ -259,6 +261,8 @@ export function useRevokeDocumentShare(documentId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (shareId: string) => api.revokeDocumentShare(documentId, shareId),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
+    },
   });
 }

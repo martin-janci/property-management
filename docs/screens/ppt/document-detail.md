@@ -18,9 +18,6 @@ implementations:
 endpoints:
   - documents_get
   - documents_get_versions
-  - documents_shares_list
-  - documents_shares_create
-  - documents_shares_revoke
 relatedScreens:
   - id: ppt/documents
     rel: parent

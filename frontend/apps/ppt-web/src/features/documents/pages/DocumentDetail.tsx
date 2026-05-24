@@ -11,6 +11,10 @@ import {
   useReprocessOcr,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { ClassificationUI } from '../components/ClassificationBadge';
+import { DocumentSharePanel } from '../components/DocumentSharePanel';
+import { DocumentSummary } from '../components/DocumentSummary';
+import { OcrProcessingStatus } from '../components/OcrStatusBadge';
 
 /** Human-readable labels for the access_scope values returned by the backend (7a-3). */
 const AUDIENCE_LABELS: Record<AccessScope, string> = {
@@ -20,11 +24,6 @@ const AUDIENCE_LABELS: Record<AccessScope, string> = {
   user: 'Specific users',
   public: 'Public',
 };
-
-import { ClassificationUI } from '../components/ClassificationBadge';
-import { DocumentSharePanel } from '../components/DocumentSharePanel';
-import { DocumentSummary } from '../components/DocumentSummary';
-import { OcrProcessingStatus } from '../components/OcrStatusBadge';
 
 interface DocumentDetailProps {
   documentId: string;
@@ -219,9 +218,20 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
             aria-expanded={showSharePanel}
             aria-controls="doc-share-panel"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
             Share
           </button>
