@@ -121,10 +121,8 @@ pub async fn ws_handler(
     // Clone the pubsub service before moving into the closure.
     let pubsub_service = state.pubsub_service.clone();
 
-    ws.on_upgrade(move |socket| {
-        handle_ws_session(socket, user_id, pubsub_service)
-    })
-    .into_response()
+    ws.on_upgrade(move |socket| handle_ws_session(socket, user_id, pubsub_service))
+        .into_response()
 }
 
 // ============================================================================
@@ -275,8 +273,7 @@ fn validate_ws_token(token: &str) -> Result<Uuid, &'static str> {
     static WS_VERIFIER: OnceLock<Result<WsVerifier, String>> = OnceLock::new();
 
     let cell = WS_VERIFIER.get_or_init(|| {
-        let secret = std::env::var("JWT_SECRET")
-            .map_err(|_| "JWT_SECRET not set".to_string())?;
+        let secret = std::env::var("JWT_SECRET").map_err(|_| "JWT_SECRET not set".to_string())?;
         if secret.len() < 32 {
             return Err("JWT_SECRET too short".to_string());
         }
