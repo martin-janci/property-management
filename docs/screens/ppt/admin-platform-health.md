@@ -17,8 +17,8 @@ endpoints:
   - get_metric_history
   - update_health_threshold
 relatedScreens:
-  - ppt/admin-agencies
-  - ppt/admin-oauth-clients
+  - id: ppt/admin-oauth-clients
+    rel: sibling
 sharedComponents: []
 diagrams: []
 useCases:
