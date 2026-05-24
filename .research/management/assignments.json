@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T18:15:00Z",
+  "generated": "2026-05-24T18:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -405,7 +405,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": null,
       "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
-      "reviewer_summary": "verdict=approve note=18 integration tests well-structured and correct: PKCE S256 flow, consent/revoke, refresh rotation with family_id reuse detection, audit trail covered; migration 00156 (5 missing AuditAction variants) idempotent; minor non-blocking: 2 is_client_error() calls instead of specific codes, 1 pre-existing RFC 6749 §5.2 deviation"
+      "reviewer_summary": "verdict=approve note=18 integration tests well-structured and correct: PKCE S256 flow, consent/revoke, refresh rotation with family_id reuse detection, audit trail covered; migration 00156 (5 missing AuditAction variants) idempotent; minor non-blocking: 2 is_client_error() calls instead of specific codes, 1 pre-existing RFC 6749 \u00a75.2 deviation"
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
@@ -433,20 +433,20 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/468",
       "merged_at": null,
       "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key — all green"
+      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key \u2014 all green"
     },
     {
       "task_id": "gap-8a-3-websocket-realtime-sync",
       "branch": "auto-impl/gap-8a-3-websocket-realtime-sync",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T18:50:00Z",
+      "status_changed_at": "2026-05-24T18:50:00Z",
+      "pr_number": 472,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
       "reviewer_summary": null
     },
     {
@@ -460,21 +460,21 @@
       "pr_number": 471,
       "pr_url": "https://github.com/martin-janci/property-management/pull/471",
       "merged_at": null,
-      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped — node_modules not installed in environment",
+      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped \u2014 node_modules not installed in environment",
       "reviewer_summary": null
     },
     {
       "task_id": "gap-9-1-mfa-e2e-verify",
       "branch": "auto-impl/gap-9-1-mfa-e2e-verify",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T18:15:00Z",
-      "last_updated": "2026-05-24T18:15:00Z",
-      "status_changed_at": "2026-05-24T18:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T18:50:00Z",
+      "status_changed_at": "2026-05-24T18:50:00Z",
+      "pr_number": 473,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/473",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
       "reviewer_summary": null
     }
   ]
