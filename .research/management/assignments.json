@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T00:50:00Z",
+  "generated": "2026-05-24T01:15:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -83,7 +83,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/441",
       "merged_at": null,
       "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks (setup/verify/disable/status/backup-codes) to @ppt/api-client; TwoFactorAuthPage rewritten; typecheck+biome+api-client build+ppt-web prod build all clean",
-      "reviewer_summary": "verdict=changes note=2 blocking issues: (1) TOTP secret sent to Google Charts external API \u2014 leaks MFA seed to third party; (2) mfa/api.ts uses raw fetch instead of shared fetchApi interceptor, bypassing token-refresh and error-parsing middleware"
+      "reviewer_summary": "verdict=approve note=both blocking issues resolved: QR now client-side via qrcode canvas (no external API call), mfa/api.ts uses module-local fetch wrapper matching community/api.ts pattern; types sound, mutations invalidate mfaStatus cache, screen-map Agent Log updated 2026-05-24; CI all green"
     },
     {
       "task_id": "gap-7a-3-frontend-api-integration",
@@ -91,13 +91,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:27:30Z",
+      "last_updated": "2026-05-24T01:15:00Z",
       "status_changed_at": "2026-05-24T00:27:30Z",
       "pr_number": 443,
       "pr_url": "https://github.com/martin-janci/property-management/pull/443",
       "merged_at": null,
       "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET /api/v1/documents with audience+status filters; permission-denied state in DocumentDetail; screen apiStatus promoted partial\u2192complete; typecheck+biome+vite-build clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 3 original bugs resolved: access_scope appended once, DocumentListQuery.access_scope typed as AccessScope (not DocumentAudience), AUDIENCE_OPTIONS use canonical AccessScope values; MFA module names consistent; screen-maps have 2026-05-24 Agent Log entries; CI all green"
     },
     {
       "task_id": "gap-79-2-login-flow-wiring",
@@ -105,13 +105,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T00:10:21Z",
-      "last_updated": "2026-05-24T00:27:30Z",
+      "last_updated": "2026-05-24T01:15:00Z",
       "status_changed_at": "2026-05-24T00:27:30Z",
       "pr_number": 444,
       "pr_url": "https://github.com/martin-janci/property-management/pull/444",
       "merged_at": null,
       "implementer_summary": "pr=444 status=done specialist=react-web note=wired logout button to AuthContext, unified session return-URL key via @ppt/shared, typecheck+lint+build clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present for login.md and session-expired.md dated 2026-05-24; all three auth files use @ppt/shared imports consistently; logout calls AuthContext.logout() then navigates to /login; no logic bugs; CI clean"
     }
   ]
 }
