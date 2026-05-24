@@ -1,6 +1,5 @@
 //! Multi-Factor Authentication routes (Epic 9, Story 9.1).
 
-use api_core::extractors::RlsConnection;
 use axum::{
     extract::State,
     http::StatusCode,
@@ -56,7 +55,6 @@ pub struct MfaSetupResponse {
 pub async fn setup_mfa(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    mut rls: RlsConnection,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
     let token = extract_bearer_token(&headers)?;
@@ -72,11 +70,10 @@ pub async fn setup_mfa(
     // Check if MFA is already enabled
     if let Ok(Some(existing)) = state
         .two_factor_repo
-        .get_by_user_id_rls(&mut **rls.conn(), user_id)
+        .get_by_user_id_rls(&state.db, user_id)
         .await
     {
         if existing.enabled {
-            rls.release().await;
             return Err((
                 StatusCode::CONFLICT,
                 Json(ErrorResponse::new(
@@ -129,7 +126,6 @@ pub async fn setup_mfa(
     // Encrypt secret before storage - encryption is REQUIRED for security
     if !state.totp_service.is_encryption_enabled() {
         tracing::error!("TOTP encryption key not configured - MFA setup blocked for security");
-        rls.release().await;
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
             Json(ErrorResponse::new(
@@ -159,7 +155,7 @@ pub async fn setup_mfa(
 
     state
         .two_factor_repo
-        .create_rls(&mut **rls.conn(), create_data)
+        .create_rls(&state.db, create_data)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to store MFA setup");
@@ -173,8 +169,6 @@ pub async fn setup_mfa(
         })?;
 
     tracing::info!(user_id = %user_id, "MFA setup initiated");
-
-    rls.release().await;
 
     Ok(Json(MfaSetupResponse {
         secret,
@@ -220,7 +214,6 @@ pub struct VerifyMfaResponse {
 pub async fn verify_mfa_setup(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    mut rls: RlsConnection,
     Json(req): Json<VerifyMfaRequest>,
 ) -> Result<Json<VerifyMfaResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
@@ -237,7 +230,7 @@ pub async fn verify_mfa_setup(
     // Get pending MFA setup
     let mfa_record = state
         .two_factor_repo
-        .get_by_user_id_rls(&mut **rls.conn(), user_id)
+        .get_by_user_id_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to fetch MFA record");
@@ -260,7 +253,6 @@ pub async fn verify_mfa_setup(
         })?;
 
     if mfa_record.enabled {
-        rls.release().await;
         return Ok(Json(VerifyMfaResponse {
             message: "Two-factor authentication is already enabled".to_string(),
             enabled: true,
@@ -298,7 +290,6 @@ pub async fn verify_mfa_setup(
         })?;
 
     if !is_valid {
-        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -311,7 +302,7 @@ pub async fn verify_mfa_setup(
     // Enable MFA
     state
         .two_factor_repo
-        .enable_rls(&mut **rls.conn(), user_id)
+        .enable_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to enable MFA");
@@ -342,8 +333,6 @@ pub async fn verify_mfa_setup(
     }
 
     tracing::info!(user_id = %user_id, "MFA enabled successfully");
-
-    rls.release().await;
 
     Ok(Json(VerifyMfaResponse {
         message: "Two-factor authentication has been enabled".to_string(),
@@ -386,7 +375,6 @@ pub struct DisableMfaResponse {
 pub async fn disable_mfa(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    mut rls: RlsConnection,
     Json(req): Json<DisableMfaRequest>,
 ) -> Result<Json<DisableMfaResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
@@ -403,7 +391,7 @@ pub async fn disable_mfa(
     // Get MFA record
     let mfa_record = state
         .two_factor_repo
-        .get_by_user_id_rls(&mut **rls.conn(), user_id)
+        .get_by_user_id_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to fetch MFA record");
@@ -426,7 +414,6 @@ pub async fn disable_mfa(
         })?;
 
     if !mfa_record.enabled {
-        rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new(
@@ -471,7 +458,6 @@ pub async fn disable_mfa(
     };
 
     if !is_valid {
-        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -484,7 +470,7 @@ pub async fn disable_mfa(
     // Disable MFA
     state
         .two_factor_repo
-        .disable_rls(&mut **rls.conn(), user_id)
+        .disable_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to disable MFA");
@@ -519,8 +505,6 @@ pub async fn disable_mfa(
 
     tracing::info!(user_id = %user_id, "MFA disabled");
 
-    rls.release().await;
-
     Ok(Json(DisableMfaResponse {
         message: "Two-factor authentication has been disabled".to_string(),
     }))
@@ -554,7 +538,6 @@ pub struct MfaStatusResponse {
 pub async fn mfa_status(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    mut rls: RlsConnection,
 ) -> Result<Json<MfaStatusResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
     let token = extract_bearer_token(&headers)?;
@@ -570,7 +553,7 @@ pub async fn mfa_status(
     // Get MFA record
     let mfa_record = state
         .two_factor_repo
-        .get_by_user_id_rls(&mut **rls.conn(), user_id)
+        .get_by_user_id_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to fetch MFA status");
@@ -582,8 +565,6 @@ pub async fn mfa_status(
                 )),
             )
         })?;
-
-    rls.release().await;
 
     match mfa_record {
         Some(record) if record.enabled => Ok(Json(MfaStatusResponse {
@@ -636,7 +617,6 @@ pub struct RegenerateBackupCodesResponse {
 pub async fn regenerate_backup_codes(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    mut rls: RlsConnection,
     Json(req): Json<RegenerateBackupCodesRequest>,
 ) -> Result<Json<RegenerateBackupCodesResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Extract and validate access token
@@ -653,7 +633,7 @@ pub async fn regenerate_backup_codes(
     // Get MFA record
     let mfa_record = state
         .two_factor_repo
-        .get_by_user_id_rls(&mut **rls.conn(), user_id)
+        .get_by_user_id_rls(&state.db, user_id)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to fetch MFA record");
@@ -676,7 +656,6 @@ pub async fn regenerate_backup_codes(
         })?;
 
     if !mfa_record.enabled {
-        rls.release().await;
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse::new(
@@ -717,7 +696,6 @@ pub async fn regenerate_backup_codes(
         })?;
 
     if !is_valid {
-        rls.release().await;
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -742,7 +720,7 @@ pub async fn regenerate_backup_codes(
     // Update the backup codes
     state
         .two_factor_repo
-        .regenerate_backup_codes_rls(&mut **rls.conn(), user_id, hashed_codes)
+        .regenerate_backup_codes_rls(&state.db, user_id, hashed_codes)
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to save new backup codes");
@@ -776,8 +754,6 @@ pub async fn regenerate_backup_codes(
     }
 
     tracing::info!(user_id = %user_id, "Backup codes regenerated");
-
-    rls.release().await;
 
     Ok(Json(RegenerateBackupCodesResponse {
         backup_codes: plain_codes,
