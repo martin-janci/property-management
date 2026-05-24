@@ -2,10 +2,13 @@
  * Document Search Interface (Story 39.1).
  *
  * Full-text search with highlighted snippets and filters.
+ * Now surfaces RLS-aware access_scope (audience) filter so the backend
+ * can pre-filter results before applying row-level security (7a-3).
  */
 
 import {
   DOCUMENT_CATEGORIES,
+  type AccessScope,
   type DocumentSearchRequest,
   type DocumentSearchResult,
   type OcrStatus,
@@ -13,6 +16,15 @@ import {
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { DocumentSearchResult as SearchResultCard } from './DocumentSearchResult';
+
+/** Human-readable labels for the audience filter chips. */
+const ACCESS_SCOPE_LABELS: Record<AccessScope, string> = {
+  organization: 'All members',
+  building: 'Building members',
+  unit: 'Unit members',
+  user: 'Specific users',
+  public: 'Public',
+};
 
 interface DocumentSearchProps {
   organizationId: string;
@@ -32,6 +44,9 @@ export function DocumentSearch({
   const [hasSummaryFilter, setHasSummaryFilter] = useState<boolean | undefined>();
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
+  // RLS-aware audience filter — sent to backend so it can pre-filter before
+  // applying row-level security. Undefined means "show all I can access".
+  const [accessScopeFilter, setAccessScopeFilter] = useState<AccessScope | undefined>();
 
   // Debounce search query
   const debounceTimeout = useMemo(() => {
@@ -62,6 +77,8 @@ export function DocumentSearch({
       has_summary: hasSummaryFilter,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      // RLS-aware audience filter: forwarded to backend; server enforces RLS on top.
+      access_scope: accessScopeFilter,
       limit: 20,
     }),
     [
@@ -73,6 +90,7 @@ export function DocumentSearch({
       hasSummaryFilter,
       dateFrom,
       dateTo,
+      accessScopeFilter,
     ]
   );
 
@@ -157,6 +175,29 @@ export function DocumentSearch({
                 {status}
               </button>
             ))}
+          </div>
+        </fieldset>
+
+        {/* Audience / Access Scope Filter (RLS-aware, 7a-3) */}
+        <fieldset className="filter-group">
+          <legend className="filter-label">Audience</legend>
+          <div className="filter-chips">
+            {(Object.entries(ACCESS_SCOPE_LABELS) as [AccessScope, string][]).map(
+              ([scope, label]) => (
+                <button
+                  key={scope}
+                  type="button"
+                  onClick={() =>
+                    setAccessScopeFilter((prev) => (prev === scope ? undefined : scope))
+                  }
+                  className={`filter-chip ${accessScopeFilter === scope ? 'active' : ''}`}
+                  aria-pressed={accessScopeFilter === scope}
+                  title={`Show only documents visible to: ${label}`}
+                >
+                  {label}
+                </button>
+              )
+            )}
           </div>
         </fieldset>
 
