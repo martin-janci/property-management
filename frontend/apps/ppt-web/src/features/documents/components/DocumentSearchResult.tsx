@@ -5,7 +5,11 @@
  * audience badge (access_scope) returned by the backend (7a-3).
  */
 
-import type { AccessScope, SearchHighlight, DocumentSearchResult as SearchResult } from '@ppt/api-client';
+import type {
+  AccessScope,
+  SearchHighlight,
+  DocumentSearchResult as SearchResult,
+} from '@ppt/api-client';
 import DOMPurify from 'dompurify';
 import { ClassificationBadge } from './ClassificationBadge';
 import { OcrStatusBadge } from './OcrStatusBadge';
@@ -24,7 +28,16 @@ function AudienceBadge({ scope }: { scope: AccessScope }) {
   return (
     <span className="badge badge-audience" title={`Visible to: ${SCOPE_LABEL[scope]}`}>
       {/* Eye icon */}
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ marginRight: '3px' }}>
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+        style={{ marginRight: '3px' }}
+      >
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
         <circle cx="12" cy="12" r="3" />
       </svg>
@@ -124,9 +137,7 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           />
         )}
         {document.summary && <span className="badge badge-summary">Has Summary</span>}
-        {document.access_scope && (
-          <AudienceBadge scope={document.access_scope} />
-        )}
+        {document.access_scope && <AudienceBadge scope={document.access_scope} />}
       </div>
 
       {/* Highlighted Snippets */}

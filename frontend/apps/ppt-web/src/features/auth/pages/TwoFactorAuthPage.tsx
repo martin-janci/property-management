@@ -6,16 +6,16 @@
  * and disable flows.
  */
 
-import type React from 'react';
-import { useCallback, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import {
+  type MfaSetupResponse,
   useMfaDisable,
   useMfaSetup,
   useMfaStatus,
   useMfaVerify,
-  type MfaSetupResponse,
 } from '@ppt/api-client';
+import type React from 'react';
+import { useCallback, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
 
@@ -107,8 +107,7 @@ export function TwoFactorAuthPage() {
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const isBusy =
-    setupMutation.isPending || verifyMutation.isPending || disableMutation.isPending;
+  const isBusy = setupMutation.isPending || verifyMutation.isPending || disableMutation.isPending;
 
   return (
     <div className="auth-page">
@@ -243,12 +242,7 @@ export function TwoFactorAuthPage() {
               <button type="submit" className="auth-submit" disabled={isBusy}>
                 {verifyMutation.isPending ? 'Verifying…' : 'Verify and enable'}
               </button>
-              <button
-                type="button"
-                className="auth-link"
-                onClick={handleCancel}
-                disabled={isBusy}
-              >
+              <button type="button" className="auth-link" onClick={handleCancel} disabled={isBusy}>
                 Cancel
               </button>
             </div>
@@ -285,19 +279,10 @@ export function TwoFactorAuthPage() {
               )}
             </div>
             <div className="auth-actions">
-              <button
-                type="submit"
-                className="auth-submit auth-submit--danger"
-                disabled={isBusy}
-              >
+              <button type="submit" className="auth-submit auth-submit--danger" disabled={isBusy}>
                 {disableMutation.isPending ? 'Disabling…' : 'Disable two-factor authentication'}
               </button>
-              <button
-                type="button"
-                className="auth-link"
-                onClick={handleCancel}
-                disabled={isBusy}
-              >
+              <button type="button" className="auth-link" onClick={handleCancel} disabled={isBusy}>
                 Cancel
               </button>
             </div>
