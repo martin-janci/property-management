@@ -379,3 +379,8 @@ pub use tenant_feature_flag::TenantFeatureFlagRepository;
 pub mod unified_portal_user;
 
 pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateProfile};
+
+// Epic 81: Report Schedule Management & Execution History
+pub mod report_schedule;
+
+pub use report_schedule::ReportScheduleRepository;

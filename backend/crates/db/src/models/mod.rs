@@ -534,6 +534,14 @@ pub use reports::{
     UtilityTypeConsumption, VoteParticipationDetail, VotingParticipationSummary, YearComparison,
 };
 
+// Epic 81: Report Schedule Management & Execution History
+pub mod report_schedule;
+
+pub use report_schedule::{
+    report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
+    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+};
+
 // Epic 58: Package & Visitor Management
 pub use package_visitor::{
     package_carrier, package_status, visitor_purpose, visitor_status, AccessCodeVerification,
