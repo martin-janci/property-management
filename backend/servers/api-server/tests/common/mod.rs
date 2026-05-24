@@ -97,8 +97,16 @@ impl TestApp {
             tenant_rate_limiters,
         );
 
-        // Build the router with all routes
-        let router = api_server::create_router(state);
+        // Build the router with all routes.
+        // MockConnectInfo injects a synthetic SocketAddr so handlers that
+        // use axum::extract::ConnectInfo don't return 500 when called via
+        // oneshot (which does not call into_make_service_with_connect_info).
+        let router = api_server::create_router(state).layer(
+            axum::extract::connect_info::MockConnectInfo(std::net::SocketAddr::from((
+                [127, 0, 0, 1],
+                0,
+            ))),
+        );
 
         Self {
             router,
