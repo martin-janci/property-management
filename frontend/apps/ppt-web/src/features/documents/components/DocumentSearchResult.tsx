@@ -1,13 +1,50 @@
 /**
  * Document Search Result Card (Story 39.1).
  *
- * Displays a search result with highlighted snippets.
+ * Displays a search result with highlighted snippets and the RLS-resolved
+ * audience badge (access_scope) returned by the backend (7a-3).
  */
 
-import type { SearchHighlight, DocumentSearchResult as SearchResult } from '@ppt/api-client';
+import type {
+  AccessScope,
+  SearchHighlight,
+  DocumentSearchResult as SearchResult,
+} from '@ppt/api-client';
 import DOMPurify from 'dompurify';
 import { ClassificationBadge } from './ClassificationBadge';
 import { OcrStatusBadge } from './OcrStatusBadge';
+
+/** Maps backend `access_scope` values to human-readable audience labels. */
+const SCOPE_LABEL: Record<AccessScope, string> = {
+  organization: 'All members',
+  building: 'Building',
+  unit: 'Unit',
+  user: 'Private',
+  public: 'Public',
+};
+
+/** Shows a small pill indicating who can see the document (RLS-resolved, 7a-3). */
+function AudienceBadge({ scope }: { scope: AccessScope }) {
+  return (
+    <span className="badge badge-audience" title={`Visible to: ${SCOPE_LABEL[scope]}`}>
+      {/* Eye icon */}
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+        style={{ marginRight: '3px' }}
+      >
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      {SCOPE_LABEL[scope]}
+    </span>
+  );
+}
 
 interface DocumentSearchResultProps {
   result: SearchResult;
@@ -100,6 +137,7 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
           />
         )}
         {document.summary && <span className="badge badge-summary">Has Summary</span>}
+        {document.access_scope && <AudienceBadge scope={document.access_scope} />}
       </div>
 
       {/* Highlighted Snippets */}
@@ -205,6 +243,14 @@ export function DocumentSearchResult({ result, onClick }: DocumentSearchResultPr
         .badge-summary {
           background: #ede9fe;
           color: #7c3aed;
+        }
+
+        .badge-audience {
+          background: var(--ppt-bg-app);
+          color: var(--ppt-fg-muted);
+          border: 1px solid var(--ppt-border-default);
+          display: inline-flex;
+          align-items: center;
         }
 
         .result-highlights {

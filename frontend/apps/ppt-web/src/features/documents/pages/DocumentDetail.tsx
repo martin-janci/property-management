@@ -1,13 +1,19 @@
 /**
  * Document Detail Page (Epic 39).
  *
- * Shows full document details with intelligence features.
+ * Shows full document details with PDF preview (UC-08 gap-7a-4) and AI intelligence.
  */
 
 import { useDocument, useDocumentClassification, useReprocessOcr } from '@ppt/api-client';
 import { ClassificationUI } from '../components/ClassificationBadge';
 import { DocumentSummary } from '../components/DocumentSummary';
 import { OcrProcessingStatus } from '../components/OcrStatusBadge';
+import { PdfPreview } from '../components/PdfPreview';
+
+/** Returns true for mime types that can be rendered client-side by PDF.js. */
+function isSupportedPdfMime(mimeType: string): boolean {
+  return mimeType === 'application/pdf';
+}
 
 interface DocumentDetailProps {
   documentId: string;
@@ -30,7 +36,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   }
 
   if (error) {
-    // 403 = audience access denied — surface the permission-denied state
     const isForbidden =
       error.message.includes('403') || error.message.toLowerCase().includes('forbidden');
     if (isForbidden) {
@@ -49,10 +54,10 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0110 0v4" />
           </svg>
-          <p className="permission-message">Tento dokument nie je prístupný pre váš účet.</p>
+          <p className="permission-message">Tento dokument nie je pristupny pre vas ucet.</p>
           <p className="permission-hint">
-            Dokument mohol byť nastavený ako viditeľný iba pre správcov alebo konkrétnych
-            používateľov.
+            Dokument mohol byt nastaveny ako viditelny iba pre spravnikov alebo konkretnych
+            pouzivatelov.
           </p>
 
           <style>{detailStyles}</style>
@@ -62,9 +67,9 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
     return (
       <div className="document-detail error">
-        <p className="error-message">Detail dokumentu sa nepodarilo načítať.</p>
+        <p className="error-message">Detail dokumentu sa nepodarilo nacitat.</p>
         <button type="button" onClick={() => refetch()} className="retry-btn">
-          Skúsiť znova
+          Skusit znova
         </button>
 
         <style>{detailStyles}</style>
@@ -75,7 +80,7 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
   if (!data?.document) {
     return (
       <div className="document-detail empty">
-        <p>Dokument nebol nájdený.</p>
+        <p>Dokument nebol najdeny.</p>
 
         <style>{detailStyles}</style>
       </div>
@@ -84,14 +89,12 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
 
   const doc = data.document;
 
-  // Format file size
   const formatSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Format date
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -103,7 +106,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
     });
   };
 
-  // Estimate word count from OCR text
   const wordCount = doc.ocr_text ? doc.ocr_text.split(/\s+/).filter((w) => w.length > 0).length : 0;
 
   return (
@@ -127,7 +129,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           <p>Updated: {formatDate(doc.updated_at)}</p>
         </div>
 
-        {/* Document Actions */}
         <div className="document-actions">
           <a
             href={`/api/v1/documents/${doc.id}/download`}
@@ -150,27 +151,31 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
             </svg>
             Download
           </a>
-          <a
-            href={`/api/v1/documents/${doc.id}/preview`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-btn"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            Preview
-          </a>
         </div>
+      </div>
+
+      {/* PDF Preview (UC-08 gap-7a-4) */}
+      <div className="preview-section">
+        <h3 className="section-title preview-section-title">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          Nahled dokumentu
+        </h3>
+        <PdfPreview
+          documentId={doc.id}
+          isPdf={isSupportedPdfMime(doc.mime_type)}
+          className="document-pdf-preview"
+        />
       </div>
 
       {/* Intelligence Section */}
@@ -180,7 +185,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           Document Intelligence
         </h3>
 
-        {/* Summary (Story 39.4) */}
         <div className="intelligence-card">
           <DocumentSummary
             documentId={doc.id}
@@ -191,7 +195,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           />
         </div>
 
-        {/* OCR Status (Story 39.2) */}
         {doc.ocr_status && doc.ocr_status !== 'not_applicable' && (
           <div className="intelligence-card">
             <OcrProcessingStatus
@@ -203,7 +206,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           </div>
         )}
 
-        {/* Classification (Story 39.3) */}
         {classification.data && (
           <div className="intelligence-card">
             <ClassificationUI
@@ -217,7 +219,6 @@ export function DocumentDetail({ documentId }: DocumentDetailProps) {
           </div>
         )}
 
-        {/* OCR Text Preview */}
         {doc.ocr_text && (
           <div className="ocr-preview">
             <h4 className="preview-title">Extracted Text</h4>
@@ -384,6 +385,20 @@ const detailStyles = `
 
   .action-btn.primary:hover {
     background: var(--ppt-color-primary);
+  }
+
+  .preview-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ppt-border-default);
+  }
+
+  .preview-section-title {
+    margin-bottom: 0.75rem;
+  }
+
+  .document-pdf-preview {
+    width: 100%;
   }
 
   .intelligence-section {

@@ -9,8 +9,8 @@
  */
 
 import {
-  type AccessScope,
   DOCUMENT_CATEGORIES,
+  type DocumentAudience,
   type DocumentListQuery,
   type DocumentStatus,
   type DocumentSummary,
@@ -43,7 +43,9 @@ function audienceLabel(scope: string | undefined): string {
       return 'Bytový dom';
     case 'unit':
       return 'Iba jednotka';
-    case 'user':
+    case 'role':
+      return 'Iba správcovia';
+    case 'users':
       return 'Konkrétni používatelia';
     case 'public':
       return 'Verejné';
@@ -59,7 +61,7 @@ function audienceMod(scope: string | undefined): string {
       return 'audience--org';
     case 'building':
       return 'audience--building';
-    case 'user':
+    case 'role':
       return 'audience--role';
     case 'public':
       return 'audience--public';
@@ -114,11 +116,10 @@ const STATUS_TABS: { label: string; value: DocumentStatus | undefined }[] = [
   { label: 'Archivované', value: 'archived' },
 ];
 
-const AUDIENCE_OPTIONS: { label: string; value: AccessScope }[] = [
+const AUDIENCE_OPTIONS: { label: string; value: DocumentAudience }[] = [
   { label: 'Všetci rezidenti', value: 'organization' },
   { label: 'Bytový dom', value: 'building' },
-  { label: 'Iba jednotka', value: 'unit' },
-  { label: 'Konkrétni používatelia', value: 'user' },
+  { label: 'Iba správcovia', value: 'role' },
   { label: 'Verejné', value: 'public' },
 ];
 
@@ -134,7 +135,7 @@ export function DocumentsBrowse({
   onSelectDocument,
 }: DocumentsBrowseProps) {
   const [selectedStatus, setSelectedStatus] = useState<DocumentStatus | undefined>(undefined);
-  const [selectedAudience, setSelectedAudience] = useState<AccessScope | undefined>(undefined);
+  const [selectedAudience, setSelectedAudience] = useState<DocumentAudience | undefined>(undefined);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);

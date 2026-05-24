@@ -183,17 +183,19 @@
       "title": "Dead/duplicate handler modules: AuthHandler & BuildingHandler unused, routes reimplement inline",
       "vector": "refactor",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
-        "code-review api-handlers 2026-05-23"
+        "code-review api-handlers 2026-05-23",
+        "PR #437"
       ],
       "evidence": [
         "backend/servers/api-server/src/handlers/auth/mod.rs:217 — `pub struct AuthHandler;` (login/refresh_token/register/reset_password/etc) is declared via `pub mod auth;` but has ZERO references anywhere outside its own file (verified: grep `AuthHandler` excluding handlers/auth/ = empty)",
         "backend/servers/api-server/src/handlers/buildings/mod.rs:326 — `pub struct BuildingHandler;` (create_building/get_building/assign_owner/etc) likewise has ZERO references outside its own file",
         "the live /api/v1/auth/* and /api/v1/buildings/* routes reimplement this logic inline in routes/auth.rs (login at routes/auth.rs:468) and routes/buildings.rs — two parallel implementations means a security/correctness fix to the route version won't propagate to the handler version, and reviewers can be misled about which path is live",
         "modules are still declared (`pub mod auth; pub mod buildings;` in handlers/mod.rs:9-10) so the dead code compiles and is discoverable — reachability gate not triggered (mod declarations exist); flagged as refactor, not phantom-TODO",
-        "found by rotating expert review (api-handlers segment, rust+security lenses); the handler code itself is clean (signature-verified refresh, token rotation, rate limiting, org-membership + RLS scoping) — the issue is the dead duplication, not a bug inside it"
+        "found by rotating expert review (api-handlers segment, rust+security lenses); the handler code itself is clean (signature-verified refresh, token rotation, rate limiting, org-membership + RLS scoping) — the issue is the dead duplication, not a bug inside it",
+        "resolved: code patterns no longer present in cited files — PR #437 (merged 2026-05-23) deleted handlers/auth/mod.rs, handlers/buildings/mod.rs and handlers/mod.rs (2495 net lines), removing `pub mod handlers` from lib.rs/main.rs; the handlers/ dir is gone"
       ],
       "files": [
         "backend/servers/api-server/src/handlers/auth/mod.rs",
@@ -201,7 +203,7 @@
         "backend/servers/api-server/src/handlers/mod.rs"
       ],
       "created_at": "2026-05-23",
-      "updated_at": "2026-05-23",
+      "updated_at": "2026-05-24",
       "plan": null
     },
     {
@@ -229,6 +231,107 @@
       "created_at": "2026-05-23",
       "updated_at": "2026-05-23",
       "plan": "plans/security-inquiry-read-idor.md"
+    },
+    {
+      "id": "security-ssrf-outbound-url-validation",
+      "title": "SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs",
+      "vector": "security",
+      "score": 3,
+      "status": "ready",
+      "confidence": "high",
+      "sources": [
+        "issue #439",
+        "signatures.rs:628",
+        "integrations.rs:2743"
+      ],
+      "evidence": [
+        "issue #439 (P1-05, severity high) — post-merge review of PR #435: the P1-05 fix hardened MIME/size/magic-bytes on the response body but did NOT validate signed_url itself; SSRF still open",
+        "backend/servers/api-server/src/routes/signatures.rs:628 — store_signed_document does `client.get(signed_url)` on a bare reqwest::Client::new() with no host validation and no redirect policy; the comment at lines 613-619 claims SSRF hardening but only covers the response",
+        "backend/servers/api-server/src/routes/integrations.rs:2743 — webhook-test handler does `client.post(&subscription.url)` with the stored URL; redirects are disabled (Policy::none()) but the host is never checked against private/loopback/link-local ranges",
+        "backend/servers/api-server/src/services/actions/api_call.rs:152 — a working validate_external_url guard (is_blocked_v4 at :212) already exists but is a private method applied only at :251; verified both other sinks unguarded",
+        "authenticated org member (or a poisoned e-signature provider) can target 169.254.169.254 / 127.0.0.1 / internal services and have the server fetch/POST to them"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/signatures.rs",
+        "backend/servers/api-server/src/routes/integrations.rs",
+        "backend/servers/api-server/src/services/actions/api_call.rs"
+      ],
+      "created_at": "2026-05-24",
+      "updated_at": "2026-05-24",
+      "plan": "plans/security-ssrf-outbound-url-validation.md"
+    },
+    {
+      "id": "security-role-gate-fail-open",
+      "title": "Latent fail-open: ProtectedRoute role check is skipped when user.role is falsy",
+      "vector": "security",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "code-review ppt-web-ui 2026-05-24",
+        "ProtectedRoute.tsx:117"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:117 — `if (requiredRoles && requiredRoles.length > 0 && user?.role)` short-circuits the role check when user.role is falsy, falling through to `return <>{children}</>` (fail-open)",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx — AuthContext does not populate a `role` field on the user, so user.role is undefined in practice",
+        "no route in the app currently passes `requiredRoles` (grep of frontend/apps/ppt-web/src shows only ProtectedRoute's own definition + JSDoc) — so the bypass is LATENT, not currently exploitable; client-side gating is UX, the real authz is server-side RLS",
+        "hardening item: when role-gating goes live (relevant to the 79-2 auth-flow wiring in draft PR #444), this guard must deny on missing role rather than skip — both Frontend and Completeness reviewers independently flagged the same fall-through"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
+      ],
+      "created_at": "2026-05-24",
+      "updated_at": "2026-05-24",
+      "plan": null
+    },
+    {
+      "id": "refactor-ppt-web-untranslated-strings",
+      "title": "ppt-web status/auth components hardcode English in an otherwise i18n'd app",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "code-review ppt-web-ui 2026-05-24"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 — status labels/descriptions ('Connected','Connecting...','Connection Error','Real-time updates are active','Click to reconnect') hardcoded; component never imports useTranslation",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — 'You are offline. Some features may be unavailable.' / 'Connection restored' (aria-live alert) hardcoded English",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 — 'Checking authentication','Loading...','Access Denied','You do not have permission to access this page.' hardcoded on auth/loading paths",
+        "peers (LoginPage, Toast, ErrorBoundary, AuthRequiredGate, PageLoading, LanguageSwitcher) route all user-facing text through react-i18next (sk/cs/de/en) — these three diverge; low severity (text renders, just in English)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+      ],
+      "created_at": "2026-05-24",
+      "updated_at": "2026-05-24",
+      "plan": null
+    },
+    {
+      "id": "bug-announcer-stale-message",
+      "title": "Announcer: untracked clear-then-set timeouts can resurrect a stale screen-reader message",
+      "vector": "bug",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "code-review ppt-web-ui 2026-05-24",
+        "Announcer.tsx:49"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Announcer.tsx:49,58 — the 'clear-then-set' announce timeouts (setTimeout(() => setPoliteMessage(message), 100) and the assertive equivalent) are not stored in politeTimeoutRef/assertiveTimeoutRef; only the 3000ms clear timeout is tracked",
+        "on a rapid second announce(), the prior pending set is never cancelled, so a stale message can be written after the new one; unmount cleanup clears only the 3000ms ref, not these pending sets",
+        "low-severity a11y bug — affects screen-reader announcements only; fix is to store and clear the set-timeouts alongside the existing clear-timeout refs"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/components/Announcer.tsx"
+      ],
+      "created_at": "2026-05-24",
+      "updated_at": "2026-05-24",
+      "plan": null
     }
   ]
 }

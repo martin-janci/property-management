@@ -30,6 +30,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^16.5.1",
+    "react-pdf": "^10.4.1",
     "react-router-dom": "^6.21.0"
   },
   "devDependencies": {
@@ -59,5 +60,5 @@
     "vitest": "^4.1.7",
     "vitest-axe": "^0.1.0"
   },
-  "version": "0.2.475"
+  "version": "0.2.499"
 }
