@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T02:08:38Z",
+  "generated": "2026-05-24T02:52:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -116,44 +116,44 @@
     {
       "task_id": "gap-7a-1-mobile-document-upload",
       "branch": "auto-impl/gap-7a-1-mobile-document-upload",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T02:08:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T02:50:00Z",
+      "status_changed_at": "2026-05-24T02:45:00Z",
+      "pr_number": 447,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts",
+      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; two non-blocking issues: onProgress callback is dead code (fetch has no upload progress events, bar stuck at 0%), typo in sk.json successMessage 'nahrary' should be 'nahraný'; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-7a-5-mobile-share-ui",
       "branch": "auto-impl/gap-7a-5-mobile-share-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T02:08:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T03:10:00Z",
+      "status_changed_at": "2026-05-24T02:38:00Z",
+      "pr_number": 445,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/445",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet (user/role/building/link types, Argon2 passwords server-side, revoke flow); 6 locales; fixed stray DocumentUploadScreen re-export that broke mobile CI",
+      "reviewer_summary": "verdict=approve note=useApi imports confirmed (apiRequest+useApiMutation+useApiQuery all present), clipboard is client-only expo-clipboard no external API, all 4 share types covered with exhaustive switch, revoke flow has finally cleanup, index.ts has no stray DocumentUploadScreen export, 34 documentShare keys consistent across all 6 locales; posted as COMMENT (self-PR restriction); CI all green"
     },
     {
       "task_id": "gap-7a-4-pdf-preview",
       "branch": "auto-impl/gap-7a-4-pdf-preview",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "merged",
+      "specialist": "react-web",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:08:38Z",
-      "status_changed_at": "2026-05-24T02:08:38Z",
-      "pr_number": null,
-      "pr_url": null,
-      "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "last_updated": "2026-05-24T02:52:00Z",
+      "status_changed_at": "2026-05-24T02:52:00Z",
+      "pr_number": 446,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/446",
+      "merged_at": "2026-05-24T02:51:00Z",
+      "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
+      "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client; pdfjs worker uses import.meta.url (no CDN); IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime present; @tailwindcss/postcss in devDeps; all CI green"
     }
   ]
 }
