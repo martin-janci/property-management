@@ -102,7 +102,11 @@ export function useRevokeOAuthClient() {
 }
 
 export function useRegenerateOAuthClientSecret() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => regenerateOAuthClientSecret(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.oauthClients() });
+    },
   });
 }

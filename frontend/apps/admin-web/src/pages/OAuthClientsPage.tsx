@@ -878,14 +878,22 @@ export default function OAuthClientsPage() {
 
   const handleRevoke = useCallback(async () => {
     if (!revokingClient) return;
-    await revokeMutation.mutateAsync(revokingClient.id);
-    showToast({
-      type: 'success',
-      title: t('admin.oauthClients.toast.revokeSuccess'),
-      message: revokingClient.name,
-      duration: 3000,
-    });
-    setRevokingClient(null);
+    try {
+      await revokeMutation.mutateAsync(revokingClient.id);
+      showToast({
+        type: 'success',
+        title: t('admin.oauthClients.toast.revokeSuccess'),
+        message: revokingClient.name,
+        duration: 3000,
+      });
+      setRevokingClient(null);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('admin.oauthClients.toast.revokeError'),
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
   }, [revokingClient, revokeMutation, showToast, t]);
 
   return (

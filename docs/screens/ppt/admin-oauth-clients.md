@@ -17,9 +17,7 @@ endpoints:
   - update_oauth_client
   - revoke_oauth_client
   - regenerate_oauth_client_secret
-relatedScreens:
-  - id: ppt/settings-oauth-grants
-    rel: sibling
+relatedScreens: []
 sharedComponents:
   - DestructiveConfirmDialog
   - ScopeSelector
