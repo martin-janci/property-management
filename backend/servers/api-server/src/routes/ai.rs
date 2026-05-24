@@ -3029,7 +3029,7 @@ async fn unlink_voice_device(
 
 async fn list_voice_commands(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(device_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -3037,6 +3037,7 @@ async fn list_voice_commands(
         .llm_document_repo
         .list_voice_commands(
             device_id,
+            principal.user_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )

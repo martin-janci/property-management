@@ -303,6 +303,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Log in with email and password using the API client.
+   *
+   * Populates `user.role` from the first TenantMembership in the login
+   * response so that ProtectedRoute role-gating works immediately after login.
+   * Without this, `user.role` would be undefined and role-gated routes would
+   * deny access for all authenticated users (fail-closed post-hardening).
    */
   const login = useCallback(async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
@@ -311,12 +316,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.login(credentials);
 
+      // Derive role from the first tenant membership when the server does not
+      // embed it directly in the user object (older API versions).
+      const userWithRole =
+        response.user.role == null && response.tenants && response.tenants.length > 0
+          ? { ...response.user, role: response.tenants[0].role }
+          : response.user;
+
       // Store tokens and user
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
-      tokenStorage.setUser(response.user);
+      tokenStorage.setUser(userWithRole);
 
-      setUser(response.user);
+      setUser(userWithRole);
     } finally {
       setIsLoading(false);
     }
