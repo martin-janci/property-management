@@ -251,7 +251,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/456",
       "merged_at": null,
       "implementer_summary": "pr=456 status=done specialist=rust-backend note=split integrations.rs/organizations.rs/documents.rs into directory-based modules (12079+/11933- over 20 files); cargo check + clippy -p api-server exit 0 locally; CI fmt fix pushed (cargo fmt --all across workspace)",
-      "reviewer_summary": "verdict=changes note=CI check job fails ~17s (rustfmt 1.94→1.95 import ordering diff in organizations/mod.rs); fix pushed (2213f390); code structurally correct, handler logic unchanged, RLS admin exclusion valid"
+      "reviewer_summary": "verdict=changes note=CI check job fails ~17s (rustfmt 1.94→1.95 import ordering diff in organizations/mod.rs); fix pushed (2213f390); glob pattern fix pushed (e112f7cb); code structurally correct, handler logic unchanged, RLS admin exclusion valid; CI re-running"
     },
     {
       "task_id": "pm-tech-lead-define-oauth-provider-design",
