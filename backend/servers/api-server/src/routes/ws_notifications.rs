@@ -301,7 +301,7 @@ fn validate_ws_token(token: &str) -> Result<Uuid, &'static str> {
     }
 
     // Validate exp (jsonwebtoken already checks this, but be explicit).
-    let now = chrono::Utc::now().timestamp();
+    let now = Utc::now().timestamp();
     if claims.exp < now {
         return Err("Token has expired");
     }
