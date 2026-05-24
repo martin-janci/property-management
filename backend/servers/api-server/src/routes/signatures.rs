@@ -618,6 +618,13 @@ async fn store_signed_document(
     // an HTML payload as a "signed PDF" which would then render
     // inline via the next presigned GET — stored XSS.
     //
+    // P1-05 (follow-up): validate the URL before fetching (SSRF).
+    // SSRF gate: validate the provider-supplied signed_url before fetching.
+    // This prevents a malicious/compromised e-signature provider from
+    // directing us at internal cloud-metadata endpoints or private networks.
+    common::url_validation::validate_external_url(signed_url)
+        .map_err(|e| format!("SSRF validation rejected signed_url: {}", e))?;
+
     // Constants are local because this is the only call site.
     const MAX_SIGNED_DOC_BYTES: u64 = 50 * 1024 * 1024; // 50 MiB
     const ALLOWED_MIME_TYPES: &[&str] = &["application/pdf"];

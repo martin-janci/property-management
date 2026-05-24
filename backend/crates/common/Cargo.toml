@@ -18,3 +18,4 @@ fluent-bundle = { workspace = true }
 unic-langid = { workspace = true }
 intl-memoizer = { workspace = true }
 sha2 = { workspace = true }
+url = { workspace = true }
