@@ -51,10 +51,7 @@ fn form_request(uri: &str, body: &str) -> Request<Body> {
     Request::builder()
         .method(Method::POST)
         .uri(uri)
-        .header(
-            header::CONTENT_TYPE,
-            "application/x-www-form-urlencoded",
-        )
+        .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
         .body(Body::from(body.to_string()))
         .unwrap()
 }
@@ -207,7 +204,10 @@ mod pkce_flow {
             consent_resp.text()
         );
         let auth_resp = consent_resp.json_value();
-        let code = auth_resp["code"].as_str().expect("missing code").to_string();
+        let code = auth_resp["code"]
+            .as_str()
+            .expect("missing code")
+            .to_string();
         assert_eq!(auth_resp["state"], state_param);
 
         // 3. POST /token — exchange code for tokens
@@ -329,10 +329,7 @@ mod pkce_flow {
         ]);
         let consent_req =
             form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
-        let code = app
-            .execute(consent_req)
-            .await
-            .json_value()["code"]
+        let code = app.execute(consent_req).await.json_value()["code"]
             .as_str()
             .expect("missing code")
             .to_string();
@@ -810,7 +807,9 @@ mod refresh_rotation {
             ("client_id", &client_id),
             // No refresh_token field
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::BAD_REQUEST,
@@ -839,7 +838,9 @@ mod refresh_rotation {
             ("client_id", &other_client_id),
             ("client_secret", &other_client_secret),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert!(
             resp.status.is_client_error(),
             "wrong client must be rejected with 4xx, got {}. body={}",
@@ -1105,7 +1106,9 @@ mod token_endpoint_validation {
             ("client_id", &client_id),
             ("client_secret", &client_secret),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::BAD_REQUEST,
@@ -1125,7 +1128,9 @@ mod token_endpoint_validation {
             ("code", "some-code"),
             ("redirect_uri", "https://example.com/cb"),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::BAD_REQUEST,
@@ -1146,7 +1151,9 @@ mod token_endpoint_validation {
             ("redirect_uri", "https://example.com/cb"),
             ("client_id", "totally-unknown-client"),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::UNAUTHORIZED,
@@ -1170,7 +1177,9 @@ mod token_endpoint_validation {
             ("client_id", &client_id),
             ("client_secret", "WRONG-SECRET"),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::UNAUTHORIZED,
@@ -1194,7 +1203,9 @@ mod token_endpoint_validation {
             ("redirect_uri", "https://app.example.com/callback"),
             ("client_id", &client_id),
         ]);
-        let resp = app.execute(form_request("/api/v1/oauth/token", &body)).await;
+        let resp = app
+            .execute(form_request("/api/v1/oauth/token", &body))
+            .await;
         assert_eq!(
             resp.status,
             StatusCode::UNAUTHORIZED,
