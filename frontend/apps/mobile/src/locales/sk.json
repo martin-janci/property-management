@@ -157,6 +157,21 @@
     "emptyTitle": "Ziadne dokumenty",
     "noMatches": "Ziadne dokumenty nezodpovedaju hladaniu",
     "folderEmpty": "Tento priecinok je prazdny",
+    "preview": {
+      "fetching": "Pripravujem nahled…",
+      "urlReady": "Dokument je pripraveny",
+      "expiresAt": "Odkaz expiruje o",
+      "updated": "Aktualizovany",
+      "openAction": "Otvorit dokument",
+      "downloadAction": "Stiahnut dokument",
+      "fallbackNotice": "Nahled nie je dostupny pre tento typ suboru. Mozete ho stiahnut.",
+      "errorTitle": "Dokument sa nepodarilo nacitat",
+      "cannotOpenTitle": "Nie je mozne otvorit",
+      "cannotOpenMessage": "Ziadna aplikacia na tomto zariadeni nevie otvorit tento typ suboru.",
+      "openFailed": "Dokument sa nepodarilo otvorit.",
+      "sharingUnavailableTitle": "Zdielanie nie je dostupne",
+      "shareFailed": "Dokument sa nepodarilo zdielat."
+    },
     "upload": {
       "title": "Nahrat dokument",
       "buttonLabel": "+ Nahrat",

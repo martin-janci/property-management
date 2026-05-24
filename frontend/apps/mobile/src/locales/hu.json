@@ -146,7 +146,23 @@
     "categories": "Kategoriak",
     "download": "Letoltes",
     "view": "Megtekintes",
-    "noDocuments": "Nincsenek elerheto dokumentumok"
+    "noDocuments": "Nincsenek elerheto dokumentumok",
+    "share": "Megosztás",
+    "preview": {
+      "fetching": "Elonézet elokészítése…",
+      "urlReady": "Dokumentum kész",
+      "expiresAt": "A hivatkozás lejár",
+      "updated": "Frissítve",
+      "openAction": "Dokumentum megnyitása",
+      "downloadAction": "Dokumentum letöltése",
+      "fallbackNotice": "Az elonézet nem érheto el ennél a fájltípusnál. Letöltheti helyette.",
+      "errorTitle": "A dokumentum nem tölthetö be",
+      "cannotOpenTitle": "Nem nyitható meg",
+      "cannotOpenMessage": "Az eszközön lévö alkalmazások egyike sem tudja megnyitni ezt a fájltípust.",
+      "openFailed": "A dokumentum megnyitása nem sikerült.",
+      "sharingUnavailableTitle": "A megosztás nem érheto el",
+      "shareFailed": "A dokumentum megosztása nem sikerült."
+    }
   },
   "settings": {
     "title": "Beallitasok",

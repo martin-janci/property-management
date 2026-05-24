@@ -157,6 +157,21 @@
     "emptyTitle": "No documents",
     "noMatches": "No documents match your search",
     "folderEmpty": "This folder is empty",
+    "preview": {
+      "fetching": "Preparing preview…",
+      "urlReady": "Document ready",
+      "expiresAt": "Link expires at",
+      "updated": "Updated",
+      "openAction": "Open document",
+      "downloadAction": "Download document",
+      "fallbackNotice": "Preview is not available for this file type. You can download it instead.",
+      "errorTitle": "Could not load document",
+      "cannotOpenTitle": "Cannot open",
+      "cannotOpenMessage": "No application on this device can open this file type.",
+      "openFailed": "Failed to open document.",
+      "sharingUnavailableTitle": "Sharing unavailable",
+      "shareFailed": "Failed to share document."
+    },
     "upload": {
       "title": "Upload Document",
       "buttonLabel": "+ Upload",

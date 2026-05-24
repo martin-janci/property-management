@@ -1,8 +1,6 @@
-import * as Sharing from 'expo-sharing';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -76,7 +74,6 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
   const { t } = useTranslation();
   const [currentPath, setCurrentPath] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [downloading, setDownloading] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiDocumentListResponse>(
     ['documents', 'list'],
@@ -138,35 +135,13 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
     setCurrentPath([]);
   };
 
-  const handleDocumentPress = async (doc: Document) => {
+  const handleDocumentPress = (doc: Document) => {
     if (doc.type === 'folder') {
       navigateToFolder(doc);
     } else {
-      // Download/View document
-      setDownloading(doc.id);
-      try {
-        // Simulate download
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        // In a real app, this would download from the actual URL
-        // and open with the appropriate viewer
-        Alert.alert(t('documents.readyTitle'), t('documents.readyMessage', { name: doc.name }), [
-          { text: t('common.close'), style: 'cancel' },
-          {
-            text: t('documents.share'),
-            onPress: async () => {
-              if (await Sharing.isAvailableAsync()) {
-                // Would share the actual downloaded file
-                Alert.alert(t('documents.sharing'), t('documents.sharingMessage'));
-              }
-            },
-          },
-        ]);
-      } catch (_error) {
-        Alert.alert(t('common.error'), t('documents.downloadFailed'));
-      } finally {
-        setDownloading(null);
-      }
+      // Navigate to DocumentPreviewScreen which fetches a real presigned URL
+      // (Story 7A.4 — replaces the earlier stub download simulation).
+      _onNavigate?.('DocumentPreview', { document: doc });
     }
   };
 
@@ -270,7 +245,7 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
               .map((doc) => (
                 <Pressable
                   key={doc.id}
-                  style={[styles.documentRow, downloading === doc.id && styles.documentDownloading]}
+                  style={styles.documentRow}
                   onPress={() => handleDocumentPress(doc)}
                 >
                   <Text style={styles.fileIcon}>{getFileIcon(doc.type)}</Text>
@@ -290,12 +265,8 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
                   </View>
                   {doc.type === 'folder' ? (
                     <Text style={styles.arrowIcon}>›</Text>
-                  ) : downloading === doc.id ? (
-                    <View style={styles.downloadingIndicator}>
-                      <Text style={styles.downloadingText}>...</Text>
-                    </View>
                   ) : (
-                    <Text style={styles.downloadIcon}>⬇️</Text>
+                    <Text style={styles.downloadIcon}>👁️</Text>
                   )}
                 </Pressable>
               ))}
@@ -419,9 +390,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.surfaceMuted,
   },
-  documentDownloading: {
-    backgroundColor: colors.surfaceMuted,
-  },
   fileIcon: {
     fontSize: 28,
     marginRight: 12,
@@ -448,14 +416,6 @@ const styles = StyleSheet.create({
   },
   downloadIcon: {
     fontSize: 18,
-  },
-  downloadingIndicator: {
-    width: 24,
-    alignItems: 'center',
-  },
-  downloadingText: {
-    fontSize: 14,
-    color: colors.textMuted,
   },
   bottomSpacer: {
     height: 100,
