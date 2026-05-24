@@ -10,7 +10,6 @@ pub mod jwt;
 pub mod notification;
 pub mod oauth;
 pub mod scheduler;
-pub mod ssrf;
 pub mod syndication;
 pub mod totp;
 pub mod voice_commands;
