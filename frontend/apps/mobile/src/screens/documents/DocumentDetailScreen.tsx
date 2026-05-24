@@ -1,12 +1,14 @@
 /**
- * DocumentDetailScreen (UC-08.4).
+ * DocumentDetailScreen (UC-08.4 + Story 7A.5).
  *
- * Single-document view with metadata and an "open" action that hands the
- * URL off to the platform viewer.
+ * Single-document view with metadata, an "open" action that hands the URL off
+ * to the platform viewer, and a "Share" button that opens DocumentShareSheet.
  */
 
+import { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, screenStyles as s } from '../shared/screenStyles';
+import { DocumentShareSheet } from './DocumentShareSheet';
 import type { Document } from './DocumentsScreen';
 
 const MOCK_DOCUMENT: Document = {
@@ -36,6 +38,8 @@ export function DocumentDetailScreen({
   document = MOCK_DOCUMENT,
   onBack,
 }: DocumentDetailScreenProps) {
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+
   const handleOpen = async () => {
     if (!document.downloadUrl) {
       Alert.alert('Unavailable', 'No file URL is associated with this document.');
@@ -90,8 +94,19 @@ export function DocumentDetailScreen({
           <Text style={s.primaryButtonText}>Open document</Text>
         </Pressable>
 
+        <Pressable style={styles.shareButton} onPress={() => setShareSheetVisible(true)}>
+          <Text style={styles.shareButtonText}>🔗 Share</Text>
+        </Pressable>
+
         <View style={s.bottomSpacer} />
       </ScrollView>
+
+      <DocumentShareSheet
+        documentId={document.id}
+        documentTitle={document.name}
+        visible={shareSheetVisible}
+        onClose={() => setShareSheetVisible(false)}
+      />
     </View>
   );
 }
@@ -108,4 +123,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   sectionValue: { fontSize: 16, color: colors.text, marginTop: 4 },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    marginTop: 12,
+  },
+  shareButtonText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
