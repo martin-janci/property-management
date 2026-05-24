@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T17:00:00Z",
+  "generated": "2026-05-24T17:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -312,28 +312,28 @@
     {
       "task_id": "gap-2b-notification-pipeline",
       "branch": "auto-impl/gap-2b-notification-pipeline",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T12:30:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T17:30:00Z",
       "status_changed_at": "2026-05-24T13:00:00Z",
       "pr_number": 463,
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
-      "merged_at": null,
+      "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
       "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge"
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
       "branch": "auto-impl/gap-6-6-neighbor-listing-verify",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T12:30:00Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T17:30:00Z",
       "status_changed_at": "2026-05-24T13:00:00Z",
       "pr_number": 464,
       "pr_url": "https://github.com/martin-janci/property-management/pull/464",
-      "merged_at": null,
+      "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=464 status=done specialist=react-web note=useNeighbors hooks; NeighborsPage lazy route; mobile integration; sprint-status 6-6 -> done",
       "reviewer_summary": "verdict=approve note=All 12 CI checks green; TanStack Query patterns correct, privacy-aware filtering sound; sprint status promoted to done"
     },
@@ -354,14 +354,14 @@
     {
       "task_id": "gap-7a-5-web-share-ui",
       "branch": "auto-impl/gap-7a-5-web-share-ui",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T16:00:00Z",
+      "last_updated": "2026-05-24T17:30:00Z",
       "status_changed_at": "2026-05-24T14:38:00Z",
       "pr_number": 467,
       "pr_url": "https://github.com/martin-janci/property-management/pull/467",
-      "merged_at": null,
+      "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail",
       "reviewer_summary": "verdict=approve note=revokeDocumentShare raw-fetch fix confirmed via fetchApi; all 21 CI checks green; no auth bypasses"
     },
