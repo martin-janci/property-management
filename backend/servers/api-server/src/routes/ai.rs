@@ -3001,10 +3001,17 @@ async fn exchange_voice_oauth_tokens(
 
 async fn unlink_voice_device(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.deactivate_voice_device(id).await {
+    // Scope the deactivation to the caller's own devices.  A non-owned or
+    // non-existent id both return false from the repository and are mapped to
+    // 404, giving an attacker no information about whether the target id exists.
+    match state
+        .llm_document_repo
+        .deactivate_voice_device(id, principal.user_id)
+        .await
+    {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,

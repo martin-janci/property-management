@@ -1136,11 +1136,22 @@ impl LlmDocumentRepository {
     }
 
     /// Deactivate a voice device.
-    pub async fn deactivate_voice_device(&self, id: Uuid) -> Result<bool, SqlxError> {
+    ///
+    /// The `user_id` parameter scopes the update to devices owned by the
+    /// caller, preventing cross-tenant IDOR writes.  Returns `Ok(false)` when
+    /// no row is updated — either the `id` does not exist or the device is not
+    /// owned by `user_id`.  The handler maps both cases to `404 Not Found`,
+    /// giving an attacker no information about whether the target id exists.
+    pub async fn deactivate_voice_device(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
         let result = sqlx::query(
-            "UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
+            "UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1 AND user_id = $2",
         )
         .bind(id)
+        .bind(user_id)
         .execute(&self.pool)
         .await?;
         Ok(result.rows_affected() > 0)
@@ -1188,21 +1199,31 @@ impl LlmDocumentRepository {
     }
 
     /// List voice command history for a device.
+    /// List voice command history for a device.
+    ///
+    /// `user_id` scopes the query to commands for devices owned by the caller,
+    /// preventing cross-tenant IDOR reads.  Returns an empty list (not 404) when
+    /// the device does not exist or is not owned by `user_id`, matching the same
+    /// conservative disclosure posture used by the deactivate path.
     pub async fn list_voice_commands(
         &self,
         device_id: Uuid,
+        user_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<VoiceCommandHistory>, SqlxError> {
         sqlx::query_as::<_, VoiceCommandHistory>(
             r#"
-            SELECT * FROM voice_command_history
-            WHERE device_id = $1
-            ORDER BY created_at DESC
-            LIMIT $2 OFFSET $3
+            SELECT vch.* FROM voice_command_history vch
+            JOIN voice_assistant_devices vad ON vad.id = vch.device_id
+            WHERE vch.device_id = $1
+              AND vad.user_id = $2
+            ORDER BY vch.created_at DESC
+            LIMIT $3 OFFSET $4
             "#,
         )
         .bind(device_id)
+        .bind(user_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(&self.pool)

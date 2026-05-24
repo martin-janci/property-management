@@ -4,6 +4,8 @@ _Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-24 — supersedes
 
 _Upkeep 2026-05-24: gap-7a-4 (PDF.js client-side preview) shipped in PR #446 — web slice done; 7a-4 stays `partial` pending the mobile preview slice. Rotating epic re-checked: epic-10a (status unchanged — backend done, admin UI/tests still gaps)._
 
+_Sequencing note 2026-05-24 (pm-scrum-master): DEC-001 (PR #442, merged) mandates **Epic 2B stories 2b-1 → 2b-2 → 2b-3 → 2b-4 → 2b-c1 are the next items to land**, before 6.2–6.5, 8A.2 dispatch, or 8A.3 WS sync are picked up. `sprint-status.yaml` updated accordingly._
+
 ## State of the project
 
 | Status | Count | Share |

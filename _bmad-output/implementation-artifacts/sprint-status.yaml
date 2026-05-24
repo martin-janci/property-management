@@ -1,5 +1,6 @@
 # Sprint Status Tracking
 # Generated: 2025-12-21
+# Last updated: 2026-05-24 (pm-scrum-master — DEC-001 sequencing, PR #442 merged)
 #
 # STATUS DEFINITIONS:
 #   - backlog: Not yet planned for development
@@ -9,27 +10,37 @@
 #   - done: Reviewed and merged
 #   - blocked: Cannot proceed due to dependency or issue
 
-sprint_name: "Epic 6, 7A, 8A & 10A - Announcements, Documents, Notifications & OAuth"
-sprint_goal: "Enable managers to broadcast announcements, manage documents, users to control notification preferences, and implement OAuth provider"
+sprint_name: "Epic 2B (infra), Epic 6, 7A, 8A & 10A - Notifications Infra, Announcements, Documents, Notifications & OAuth"
+sprint_goal: "Land Epic 2B notification infrastructure first to unblock Epic 6 publish + 8A.2/8A.3 dispatch; then enable managers to broadcast announcements, manage documents, users to control notification preferences, and implement OAuth provider"
 started_at: 2025-12-21
+# Sequencing decision: DEC-001 (2026-05-24) mandates Epic 2B lands before Epic 6 stories 6.2+ and 8A.2 dispatch / 8A.3 WS slices.
+# DEC-001 merged via PR #442 (pm-tech-lead, 2026-05-24). Sequencing update applied by pm-scrum-master 2026-05-24.
 
 # Epic tracking
 epics:
+  epic-2b:
+    name: "Notification Infrastructure (foundational)"
+    status: in-progress
+    stories_total: 5
+    stories_completed: 0
+    sequencing_note: "MUST land before Epic 6 stories 6.2+ and 8A.2 dispatch / 8A.3 WS sync — DEC-001"
   epic-6:
     name: "Announcements & Communication"
     status: in-progress
     stories_total: 6
     stories_completed: 1
+    sequencing_note: "Stories 6.2–6.5 blocked on Epic 2B (DEC-001). Story 6.1 done (PR #440)."
   epic-7a:
     name: "Basic Document Management"
     status: in-progress
     stories_total: 5
-    stories_completed: 0
+    stories_completed: 4
   epic-8a:
     name: "Basic Notification Preferences"
-    status: done
+    status: in-progress
     stories_total: 3
-    stories_completed: 3
+    stories_completed: 2
+    sequencing_note: "8a-1 (channel toggles) and 8a-2 (preference layer) done. 8a-2 dispatch half + 8a-3 WS half blocked on Epic 2B (DEC-001)."
   epic-10a:
     name: "OAuth Provider Foundation"
     status: in-progress
@@ -43,27 +54,42 @@ epics:
 
 # Story-level development status
 development_status:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Epic 2B: Notification Infrastructure — MUST complete before blocked stories
+  # Official build order (DEC-001): 2b-1 → 2b-2 → 2b-3 → 2b-4 → 2b-c1
+  # ─────────────────────────────────────────────────────────────────────────
+  2b-1-event-bus-foundation: ready-for-dev
+  2b-2-push-notification-service: ready-for-dev
+  2b-3-email-notification-service: ready-for-dev
+  2b-4-in-app-notification-center: ready-for-dev
+  2b-c1-websocket-realtime-sync: ready-for-dev
+
   # Epic 6: Announcements & Communication
-  6-1-announcement-creation-targeting: review
-  6-2-announcement-viewing-acknowledgment: ready-for-dev
-  6-3-announcement-comments-discussion: ready-for-dev
-  6-4-pinned-announcements: ready-for-dev
-  6-5-direct-messaging: ready-for-dev
-  6-6-neighbor-information: ready-for-dev
+  6-1-announcement-creation-targeting: done             # merged PR #440
+  # Stories 6.2–6.5 formally deferred until Epic 2B (stories 1–5 incl. WS) merges to dev — DEC-001
+  6-2-announcement-viewing-acknowledgment: blocked      # unblocked when 2b-1 through 2b-c1 merge
+  6-3-announcement-comments-discussion: blocked         # unblocked when 2b-1 through 2b-c1 merge
+  6-4-pinned-announcements: blocked                     # unblocked when 2b-1 through 2b-c1 merge
+  6-5-direct-messaging: blocked                         # requires WS (2b-c1); unblocked when 2b-c1 merges
+  6-6-neighbor-information: ready-for-dev               # no notification dependency; can proceed in parallel
+
   # Epic 7A: Basic Document Management
-  7a-1-document-upload-metadata: ready-for-dev
-  7a-2-folder-organization: ready-for-dev
-  7a-3-permission-based-access: ready-for-dev
-  7a-4-document-download-preview: ready-for-dev
-  7a-5-document-sharing: ready-for-dev
+  7a-1-document-upload-metadata: done
+  7a-2-folder-organization: done
+  7a-3-permission-based-access: in-progress
+  7a-4-document-download-preview: done                  # PDF.js shipped PR #446
+  7a-5-document-sharing: done
+
   # Epic 8A: Basic Notification Preferences
   8a-1-channel-level-notification-toggles: done
-  8a-2-critical-notification-override: done
-  8a-3-notification-preference-sync: done
+  8a-2-critical-notification-override: done             # preference-toggle done; dispatch half blocked on Epic 2B (DEC-001)
+  8a-3-notification-preference-sync: blocked            # WS half blocked on Epic 2B 2b-c1 (DEC-001)
+
   # Epic 10A: OAuth Provider Foundation
   10a-1-oauth-authorization-server: ready-for-dev
   10a-2-oauth-client-registration: ready-for-dev
   10a-3-oauth-token-management: ready-for-dev
+
   # Epic 10B: Platform Administration
   10b-1-organization-management-dashboard: done
   10b-2-feature-flag-management: done
@@ -75,12 +101,27 @@ development_status:
 
 # Notes and blockers
 notes:
-  - "Epic 6 depends on Epic 2B Notification Infrastructure for sending notifications on publish"
-  - "Story 6.1 is the foundation - other stories build on announcement infrastructure"
-  - "Story 6.1 completed 2025-12-21 - awaiting code review"
-  - "Epic 8A all stories completed 2025-12-21 - code review completed 2026-05-23 - marked done"
-  - "Story 8A.2 notification dispatch logic deferred - requires Epic 2B"
-  - "Story 8A.3 WebSocket sync deferred - requires WebSocket infrastructure"
-  - "Story 8A.3 mobile OS integration deferred - requires mobile app implementation"
+  - "DEC-001 (2026-05-24, PR #442): Epic 2B notification infrastructure MUST land before picking up stories 6.2–6.5, 8A.2 dispatch, and 8A.3 WS sync"
+  - "Official build order mandated by DEC-001: 2b-1 → 2b-2 → 2b-3 → 2b-4 → 2b-c1 (WS), then Epic 6 + 8A unblocked"
+  - "Epic 2B unblocks: 8a-3 (preference sync), 6-2/6-3/6-4 (announcement views/comments/pins), 6-5 (DM realtime)"
+  - "Story 6.1 completed and merged PR #440 (2026-05-24) - marked done"
+  - "Epic 8A: 8a-1 (channel toggles) and 8a-2 (critical override preference layer) are done; 8a-2 dispatch + 8a-3 WS deferred pending Epic 2B"
+  - "Epic 7A: 7a-1/7a-2/7a-4/7a-5 shipped; 7a-3 API integration in progress"
+  - "Story 8A.2 notification dispatch logic deferred — requires Epic 2B event bus (2b-1) per DEC-001"
+  - "Story 8A.3 WebSocket sync deferred — requires Epic 2B WS server (2b-c1) per DEC-001"
+  - "Story 8A.3 mobile OS integration deferred — requires mobile app implementation"
+  - "pm-scrum-master to re-sequence 6-2/6-3/6-4/6-5/8a-2-dispatch/8a-3 into sprint immediately after Epic 2B stories 1-5 merge to dev"
 
-blockers: []
+blockers:
+  - story: "6-2-announcement-viewing-acknowledgment"
+    reason: "Blocked on Epic 2B notification infra (DEC-001 — requires 2b-1 through 2b-c1 merged to dev)"
+  - story: "6-3-announcement-comments-discussion"
+    reason: "Blocked on Epic 2B notification infra (DEC-001)"
+  - story: "6-4-pinned-announcements"
+    reason: "Blocked on Epic 2B notification infra (DEC-001)"
+  - story: "6-5-direct-messaging"
+    reason: "Blocked on Epic 2B WebSocket server (2b-c1) — DEC-001"
+  - story: "8a-2-critical-notification-override (dispatch half)"
+    reason: "Dispatch logic blocked on Epic 2B event bus (2b-1) — DEC-001"
+  - story: "8a-3-notification-preference-sync (WS half)"
+    reason: "WebSocket sync blocked on Epic 2B WS server (2b-c1) — DEC-001"
