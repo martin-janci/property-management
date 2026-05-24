@@ -800,11 +800,12 @@ mod refresh_rotation {
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_missing_token_returns_invalid_request(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
-        let (client_id, _client_secret, _redirect_uri) = seed_confidential_client(&pool).await;
+        let (client_id, client_secret, _redirect_uri) = seed_confidential_client(&pool).await;
 
         let body = form_body(&[
             ("grant_type", "refresh_token"),
             ("client_id", &client_id),
+            ("client_secret", &client_secret),
             // No refresh_token field
         ]);
         let resp = app
