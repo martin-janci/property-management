@@ -170,9 +170,6 @@ export interface DocumentIntelligenceStats {
 // Document status (publication state)
 export type DocumentStatus = 'published' | 'draft' | 'archived';
 
-// Audience / access scope for RLS-aware filtering
-export type DocumentAudience = 'organization' | 'building' | 'unit' | 'role' | 'users' | 'public';
-
 // List query params
 export interface DocumentListQuery {
   folder_id?: string;
@@ -182,8 +179,8 @@ export interface DocumentListQuery {
   offset?: number;
   /** Filter by publication status (maps to document state machine on backend) */
   status?: DocumentStatus;
-  /** Filter by access_scope audience; combined with RLS to show only accessible docs */
-  access_scope?: DocumentAudience;
+  /** RLS-aware audience pre-filter; server further restricts to caller's permitted docs */
+  access_scope?: AccessScope;
   created_by?: string;
 }
 
