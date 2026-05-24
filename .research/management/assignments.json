@@ -242,15 +242,15 @@
     {
       "task_id": "pm-tech-lead-split-churn-hot-routes",
       "branch": "auto-impl/pm-tech-lead-split-churn-hot-routes",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-24T08:02:00Z",
-      "last_updated": "2026-05-24T08:02:00Z",
-      "status_changed_at": "2026-05-24T08:02:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T09:32:00Z",
+      "status_changed_at": "2026-05-24T09:32:00Z",
+      "pr_number": 456,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/456",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=456 status=done specialist=rust-backend note=split integrations.rs/organizations.rs/documents.rs into directory-based modules (12079+/11933- over 20 files); cargo check + clippy -p api-server exit 0 locally; CI fmt fix pushed (cargo fmt --all across workspace)",
       "reviewer_summary": null
     },
     {
