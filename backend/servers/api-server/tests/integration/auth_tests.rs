@@ -198,13 +198,13 @@ mod login {
         let response = app.execute(login_request).await;
 
         response.assert_status(StatusCode::OK);
-        response.assert_json_field("access_token");
-        response.assert_json_field("refresh_token");
-        response.assert_json_field("expires_in");
-        response.assert_json_field("token_type");
+        response.assert_json_field("accessToken");
+        response.assert_json_field("refreshToken");
+        response.assert_json_field("expiresIn");
+        response.assert_json_field("tokenType");
 
         let json = response.json_value();
-        assert_eq!(json["token_type"].as_str().unwrap(), "Bearer");
+        assert_eq!(json["tokenType"].as_str().unwrap(), "Bearer");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -307,15 +307,15 @@ mod token_refresh {
 
         // Refresh token
         let body = json!({
-            "refresh_token": refresh_token
+            "refreshToken": refresh_token
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/refresh", body);
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);
-        response.assert_json_field("access_token");
-        response.assert_json_field("expires_in");
+        response.assert_json_field("accessToken");
+        response.assert_json_field("expiresIn");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
@@ -326,7 +326,7 @@ mod token_refresh {
         let app = TestApp::new(pool).await;
 
         let body = json!({
-            "refresh_token": "invalid-refresh-token"
+            "refreshToken": "invalid-refresh-token"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/refresh", body);
@@ -367,7 +367,7 @@ mod logout {
 
         // Logout
         let body = json!({
-            "refresh_token": refresh_token
+            "refreshToken": refresh_token
         });
 
         let request = auth_json_request(Method::POST, "/api/v1/auth/logout", &access_token, body);
@@ -384,7 +384,7 @@ mod logout {
         let app = TestApp::new(pool).await;
 
         let body = json!({
-            "refresh_token": "some-token"
+            "refreshToken": "some-token"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/logout", body);
