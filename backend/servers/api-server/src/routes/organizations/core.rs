@@ -25,8 +25,6 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-
-
 /// Default page size for organization listing (admin only)
 pub const DEFAULT_ORG_LIST_LIMIT: i64 = 50;
 
@@ -874,7 +872,6 @@ pub async fn delete_organization(
     }))
 }
 
-
 // ==================== Helper Functions ====================
 
 /// Extract bearer token from Authorization header.
@@ -1008,4 +1005,3 @@ pub fn generate_slug(name: &str) -> String {
         .collect::<Vec<_>>()
         .join("-")
 }
-

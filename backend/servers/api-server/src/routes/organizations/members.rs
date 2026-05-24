@@ -12,10 +12,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::core::{extract_bearer_token, validate_access_token};
 use crate::state::AppState;
-use super::core::{
-    extract_bearer_token, validate_access_token,
-};
 
 /// Create organizations members router.
 pub fn router() -> Router<AppState> {
@@ -23,7 +21,10 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/members", get(list_organization_members))
         .route("/{id}/members", post(add_organization_member))
         .route("/{id}/members/{user_id}", put(update_organization_member))
-        .route("/{id}/members/{user_id}", delete(remove_organization_member))
+        .route(
+            "/{id}/members/{user_id}",
+            delete(remove_organization_member),
+        )
 }
 
 // ==================== Organization Members ====================
@@ -786,4 +787,3 @@ pub async fn remove_organization_member(
         message: "Member removed successfully".to_string(),
     }))
 }
-

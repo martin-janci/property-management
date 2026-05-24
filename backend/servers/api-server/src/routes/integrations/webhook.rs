@@ -679,8 +679,7 @@ pub async fn esignature_webhook(
 
     match provider {
         esignature_provider::DOCUSIGN => {
-            let secret =
-                std::env::var("DOCUSIGN_WEBHOOK_SECRET").unwrap_or_else(|_| String::new());
+            let secret = std::env::var("DOCUSIGN_WEBHOOK_SECRET").unwrap_or_else(|_| String::new());
             if secret.is_empty() {
                 tracing::warn!("DOCUSIGN_WEBHOOK_SECRET not configured");
                 return Err((

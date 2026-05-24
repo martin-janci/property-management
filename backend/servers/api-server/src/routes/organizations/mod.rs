@@ -15,32 +15,38 @@ pub mod settings;
 // Re-export all public types so `main.rs` (OpenApi derive) can reference them
 // via `routes::organizations::*` without change.
 pub use core::{
-    // handler fns (needed for utoipa __path_* re-export below)
-    __path_create_organization, __path_list_organizations, __path_list_my_organizations,
-    __path_get_organization, __path_update_organization, __path_delete_organization,
     // types
-    CreateOrganizationRequest, OrganizationResponse, ListOrganizationsResponse,
-    UpdateOrganizationRequest, DeleteOrganizationResponse,
+    CreateOrganizationRequest,
+    DeleteOrganizationResponse,
+    ListOrganizationsResponse,
+    OrganizationResponse,
+    UpdateOrganizationRequest,
+    // handler fns (needed for utoipa __path_* re-export below)
+    __path_create_organization,
+    __path_delete_organization,
+    __path_get_organization,
+    __path_list_my_organizations,
+    __path_list_organizations,
+    __path_update_organization,
 };
 pub use members::{
-    __path_list_organization_members, __path_add_organization_member,
-    __path_update_organization_member, __path_remove_organization_member,
-    MemberResponse, ListMembersResponse, AddMemberRequest, AddMemberResponse,
-    UpdateMemberRequest, UpdateMemberResponse, RemoveMemberResponse,
+    AddMemberRequest, AddMemberResponse, ListMembersResponse, MemberResponse, RemoveMemberResponse,
+    UpdateMemberRequest, UpdateMemberResponse, __path_add_organization_member,
+    __path_list_organization_members, __path_remove_organization_member,
+    __path_update_organization_member,
 };
 pub use roles::{
-    __path_list_organization_roles, __path_create_organization_role, __path_get_organization_role,
-    __path_update_organization_role, __path_delete_organization_role,
-    RoleResponse, ListRolesResponse, CreateRoleRequest, CreateRoleResponse,
-    GetRoleResponse, UpdateRoleRequest, UpdateRoleResponse, DeleteRoleResponse,
+    CreateRoleRequest, CreateRoleResponse, DeleteRoleResponse, GetRoleResponse, ListRolesResponse,
+    RoleResponse, UpdateRoleRequest, UpdateRoleResponse, __path_create_organization_role,
+    __path_delete_organization_role, __path_get_organization_role, __path_list_organization_roles,
+    __path_update_organization_role,
 };
 pub use settings::{
-    __path_get_organization_settings, __path_update_organization_settings,
-    __path_get_organization_branding, __path_update_organization_branding,
-    __path_export_organization_data,
-    OrganizationSettingsResponse, UpdateOrganizationSettingsRequest,
-    OrganizationBrandingResponse, UpdateOrganizationBrandingRequest,
-    ExportMember, ExportRole, ExportQuery, OrganizationExportResponse,
+    ExportMember, ExportQuery, ExportRole, OrganizationBrandingResponse,
+    OrganizationExportResponse, OrganizationSettingsResponse, UpdateOrganizationBrandingRequest,
+    UpdateOrganizationSettingsRequest, __path_export_organization_data,
+    __path_get_organization_branding, __path_get_organization_settings,
+    __path_update_organization_branding, __path_update_organization_settings,
 };
 
 use axum::Router;

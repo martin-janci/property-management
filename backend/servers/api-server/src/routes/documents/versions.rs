@@ -9,7 +9,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use db::models::{ALLOWED_MIME_TYPES, CreateDocumentVersion, MAX_FILE_SIZE};
+use db::models::{CreateDocumentVersion, ALLOWED_MIME_TYPES, MAX_FILE_SIZE};
 use uuid::Uuid;
 
 use super::core::*;

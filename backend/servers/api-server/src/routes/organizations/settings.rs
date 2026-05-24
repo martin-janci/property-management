@@ -14,10 +14,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::core::{extract_bearer_token, validate_access_token, OrganizationResponse};
 use crate::state::AppState;
-use super::core::{
-    extract_bearer_token, validate_access_token, OrganizationResponse,
-};
 
 /// Create organizations settings router.
 pub fn router() -> Router<AppState> {

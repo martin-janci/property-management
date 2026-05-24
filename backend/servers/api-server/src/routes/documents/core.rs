@@ -14,10 +14,9 @@ use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
     access_scope, document_category, CreateDocument, Document, DocumentClassificationHistory,
-    DocumentFolder, DocumentIntelligenceStats, DocumentListQuery, DocumentSummary, DocumentVersion, DocumentVersionHistory,
-    DocumentWithDetails, FolderTreeNode, FolderWithCount,
-    MoveDocument, ShareWithDocument, UpdateDocument, ALLOWED_MIME_TYPES,
-    MAX_FILE_SIZE,
+    DocumentFolder, DocumentIntelligenceStats, DocumentListQuery, DocumentSummary, DocumentVersion,
+    DocumentVersionHistory, DocumentWithDetails, FolderTreeNode, FolderWithCount, MoveDocument,
+    ShareWithDocument, UpdateDocument, ALLOWED_MIME_TYPES, MAX_FILE_SIZE,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

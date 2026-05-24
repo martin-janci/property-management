@@ -15,14 +15,13 @@ use axum::{
 use chrono::{Duration, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
-    accounting_system, calendar_provider, AccountingExport,
-    AccountingExportSettings, CalendarConnection, CalendarSyncResult, CreateAccountingExport,
-    CreateCalendarConnection, CreateESignatureWorkflow,
-    CreateIntegrationCalendarEvent as CreateCalendarEvent, CreateVideoConferenceConnection,
-    CreateVideoMeeting, ESignatureWorkflow, ESignatureWorkflowWithRecipients,
-    IntegrationCalendarEvent as CalendarEvent, IntegrationStatistics, SyncCalendarRequest,
-    UpdateAccountingExportSettings, UpdateCalendarConnection, UpdateVideoMeeting,
-    VideoConferenceConnection, VideoMeeting,
+    accounting_system, calendar_provider, AccountingExport, AccountingExportSettings,
+    CalendarConnection, CalendarSyncResult, CreateAccountingExport, CreateCalendarConnection,
+    CreateESignatureWorkflow, CreateIntegrationCalendarEvent as CreateCalendarEvent,
+    CreateVideoConferenceConnection, CreateVideoMeeting, ESignatureWorkflow,
+    ESignatureWorkflowWithRecipients, IntegrationCalendarEvent as CalendarEvent,
+    IntegrationStatistics, SyncCalendarRequest, UpdateAccountingExportSettings,
+    UpdateCalendarConnection, UpdateVideoMeeting, VideoConferenceConnection, VideoMeeting,
 };
 use hmac::{Hmac, KeyInit, Mac};
 use integrations::{
@@ -183,31 +182,70 @@ pub(super) fn verify_hellosign_signature(
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/organizations/{org_id}/stats", get(get_integration_stats))
-        .route("/organizations/{org_id}/calendars", get(list_calendar_connections))
-        .route("/organizations/{org_id}/calendars", post(create_calendar_connection))
+        .route(
+            "/organizations/{org_id}/calendars",
+            get(list_calendar_connections),
+        )
+        .route(
+            "/organizations/{org_id}/calendars",
+            post(create_calendar_connection),
+        )
         .route("/calendars/{id}", get(get_calendar_connection))
         .route("/calendars/{id}", put(update_calendar_connection))
         .route("/calendars/{id}", delete(delete_calendar_connection))
         .route("/calendars/{id}/sync", post(sync_calendar))
         .route("/calendars/{id}/events", get(list_calendar_events))
         .route("/calendars/{id}/events", post(create_calendar_event))
-        .route("/organizations/{org_id}/accounting/exports", get(list_accounting_exports))
-        .route("/organizations/{org_id}/accounting/exports", post(create_accounting_export))
+        .route(
+            "/organizations/{org_id}/accounting/exports",
+            get(list_accounting_exports),
+        )
+        .route(
+            "/organizations/{org_id}/accounting/exports",
+            post(create_accounting_export),
+        )
         .route("/accounting/exports/{id}", get(get_accounting_export))
-        .route("/accounting/exports/{id}/download", get(download_accounting_export))
-        .route("/organizations/{org_id}/accounting/settings/{system}", get(get_accounting_settings))
-        .route("/organizations/{org_id}/accounting/settings/{system}", put(update_accounting_settings))
-        .route("/organizations/{org_id}/esignatures", get(list_esignature_workflows))
-        .route("/organizations/{org_id}/esignatures", post(create_esignature_workflow))
+        .route(
+            "/accounting/exports/{id}/download",
+            get(download_accounting_export),
+        )
+        .route(
+            "/organizations/{org_id}/accounting/settings/{system}",
+            get(get_accounting_settings),
+        )
+        .route(
+            "/organizations/{org_id}/accounting/settings/{system}",
+            put(update_accounting_settings),
+        )
+        .route(
+            "/organizations/{org_id}/esignatures",
+            get(list_esignature_workflows),
+        )
+        .route(
+            "/organizations/{org_id}/esignatures",
+            post(create_esignature_workflow),
+        )
         .route("/esignatures/{id}", get(get_esignature_workflow))
         .route("/esignatures/{id}/send", post(send_esignature_workflow))
         .route("/esignatures/{id}/void", post(void_esignature_workflow))
         .route("/esignatures/{id}/remind", post(send_esignature_reminder))
-        .route("/organizations/{org_id}/video/connections", get(list_video_connections))
-        .route("/organizations/{org_id}/video/connections", post(create_video_connection))
+        .route(
+            "/organizations/{org_id}/video/connections",
+            get(list_video_connections),
+        )
+        .route(
+            "/organizations/{org_id}/video/connections",
+            post(create_video_connection),
+        )
         .route("/video/connections/{id}", delete(delete_video_connection))
-        .route("/organizations/{org_id}/video/meetings", get(list_video_meetings))
-        .route("/organizations/{org_id}/video/meetings", post(create_video_meeting))
+        .route(
+            "/organizations/{org_id}/video/meetings",
+            get(list_video_meetings),
+        )
+        .route(
+            "/organizations/{org_id}/video/meetings",
+            post(create_video_meeting),
+        )
         .route("/video/meetings/{id}", get(get_video_meeting))
         .route("/video/meetings/{id}", put(update_video_meeting))
         .route("/video/meetings/{id}", delete(delete_video_meeting))
@@ -2000,4 +2038,3 @@ pub async fn start_video_meeting(
 
     Ok(Json(meeting))
 }
-

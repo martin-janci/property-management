@@ -736,8 +736,7 @@ pub async fn sync_booking(
     let username = connection.access_token.clone().unwrap_or_default();
     let password = connection.refresh_token.clone().unwrap_or_default();
 
-    let credentials =
-        integrations::BookingCredentials::new(hotel_id.clone(), username, password);
+    let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
     let reservations = client.sync_reservations(&hotel_id).await.map_err(|e| {

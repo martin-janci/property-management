@@ -9,7 +9,7 @@ use axum::{
     Json, Router,
 };
 use common::errors::ErrorResponse;
-use db::models::{CreateShare, DocumentSummary, LogShareAccess, share_type};
+use db::models::{share_type, CreateShare, DocumentSummary, LogShareAccess};
 use uuid::Uuid;
 
 use super::core::*;

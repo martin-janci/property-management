@@ -9,13 +9,13 @@ use axum::{
     Json, Router,
 };
 use chrono::{NaiveDate, Utc};
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use common::errors::ErrorResponse;
 use db::models::{
-    ClassificationFeedback, DocumentSearchRequest, DocumentSearchResponse,
-    GenerateSummaryRequest, document_category,
+    document_category, ClassificationFeedback, DocumentSearchRequest, DocumentSearchResponse,
+    GenerateSummaryRequest,
 };
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::core::*;
@@ -26,8 +26,14 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/ocr/reprocess", post(reprocess_ocr))
         .route("/search", post(search_documents))
         .route("/{id}/classification", get(get_classification))
-        .route("/{id}/classification/feedback", post(submit_classification_feedback))
-        .route("/{id}/classification/history", get(get_classification_history))
+        .route(
+            "/{id}/classification/feedback",
+            post(submit_classification_feedback),
+        )
+        .route(
+            "/{id}/classification/history",
+            get(get_classification_history),
+        )
         .route("/{id}/summarize", post(request_summarization))
         .route("/{id}/ai-summarize", post(ai_summarize_document))
         .route("/intelligence/stats", get(get_intelligence_stats))

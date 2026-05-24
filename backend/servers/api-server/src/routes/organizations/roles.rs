@@ -11,10 +11,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::core::{extract_bearer_token, validate_access_token};
 use crate::state::AppState;
-use super::core::{
-    extract_bearer_token, validate_access_token,
-};
 
 /// Create organizations roles router.
 pub fn router() -> Router<AppState> {
@@ -866,4 +864,3 @@ pub async fn delete_organization_role(
         message: "Role deleted successfully".to_string(),
     }))
 }
-
