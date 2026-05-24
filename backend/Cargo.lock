@@ -19,7 +19,7 @@ checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
 name = "admin-core"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "api-core",
  "async-trait",
@@ -192,7 +192,7 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "api-core"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "async-trait",
  "axum",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "api-server"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "admin-core",
  "aes-gcm",
@@ -1410,7 +1410,7 @@ dependencies = [
 
 [[package]]
 name = "common"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "axum",
  "chrono",
@@ -1836,7 +1836,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "argon2",
  "async-trait",
@@ -1889,7 +1889,7 @@ dependencies = [
 
 [[package]]
 name = "deploy-server"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3402,7 +3402,7 @@ dependencies = [
 
 [[package]]
 name = "integrations"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -5139,7 +5139,7 @@ dependencies = [
 
 [[package]]
 name = "reality-server"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "anyhow",
  "api-core",
@@ -6695,7 +6695,7 @@ dependencies = [
 
 [[package]]
 name = "tenant-ops"
-version = "0.2.469"
+version = "0.2.476"
 dependencies = [
  "chrono",
  "common",

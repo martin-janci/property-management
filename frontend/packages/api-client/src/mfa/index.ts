@@ -4,7 +4,7 @@
  * API client, hooks, and types for Multi-Factor Authentication (UC-14, Epic 9, Story 9.1).
  */
 
-export { disableMfa, getMfaStatus, regenerateBackupCodes, setupMfa, verifyMfaSetup } from './api';
+export { mfaDisable, mfaRegenerateBackupCodes, mfaSetup, mfaStatus, mfaVerify } from './api';
 export {
   mfaKeys,
   useMfaDisable,
@@ -14,12 +14,12 @@ export {
   useMfaVerify,
 } from './hooks';
 export type {
-  DisableMfaRequest,
-  DisableMfaResponse,
+  MfaDisableRequest,
+  MfaDisableResponse,
+  MfaRegenerateBackupCodesRequest,
+  MfaRegenerateBackupCodesResponse,
   MfaSetupResponse,
   MfaStatusResponse,
-  RegenerateBackupCodesRequest,
-  RegenerateBackupCodesResponse,
-  VerifyMfaRequest,
-  VerifyMfaResponse,
+  MfaVerifyRequest,
+  MfaVerifyResponse,
 } from './types';

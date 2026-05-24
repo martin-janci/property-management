@@ -1,13 +1,15 @@
 # PPT Project Roadmap (Deep Scan)
 
-_Generated: 2026-05-23 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-24 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+
+_Upkeep 2026-05-24: gap-7a-4 (PDF.js client-side preview) shipped in PR #446 — web slice done; 7a-4 stays `partial` pending the mobile preview slice. Rotating epic re-checked: epic-10a (status unchanged — backend done, admin UI/tests still gaps)._
 
 ## State of the project
 
 | Status | Count | Share |
 |---|---:|---:|
-| done | 16 | 33% |
-| partial | 32 | 65% |
+| done | 17 | 35% |
+| partial | 31 | 63% |
 | not-started | 1 | 2% |
 | **total** | **49** | 100% |
 
