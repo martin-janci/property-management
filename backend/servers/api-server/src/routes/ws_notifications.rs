@@ -124,6 +124,7 @@ pub async fn ws_handler(
     ws.on_upgrade(move |socket| {
         handle_ws_session(socket, user_id, pubsub_service)
     })
+    .into_response()
 }
 
 // ============================================================================
