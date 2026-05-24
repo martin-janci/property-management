@@ -129,7 +129,7 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*) FROM audit_logs
-        WHERE user_id = $1 AND action = $2
+        WHERE user_id = $1 AND action::text = $2
         "#,
     )
     .bind(user_id)
