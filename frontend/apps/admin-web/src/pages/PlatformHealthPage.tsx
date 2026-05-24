@@ -224,7 +224,8 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
     queryKey: ['admin', 'health', 'history', metricName, range],
     queryFn: () =>
       fetchJson<MetricHistory>(
-        `/api/v1/platform-admin/health/metrics/${encodeURIComponent(metricName)}/history?range=${range}`,
+        `/api/v1/platform-admin/health/metrics/${encodeURIComponent(metricName)}/history` +
+          `?range=${range}`,
         token,
       ),
     staleTime: 30_000,
@@ -402,7 +403,9 @@ function MetricHistoryPanel({ metricName, token, onClose }: MetricHistoryPanelPr
                           borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)',
                         }}
                       >
-                        <td style={{ padding: '6px 12px', color: 'var(--ppt-fg-secondary, #374151)' }}>
+                        <td
+                          style={{ padding: '6px 12px', color: 'var(--ppt-fg-secondary, #374151)' }}
+                        >
                           {new Date(dp.recorded_at).toLocaleString()}
                         </td>
                         <td
@@ -568,7 +571,11 @@ function ThresholdsTable({ thresholds, canEdit, token }: ThresholdsTableProps) {
           body: JSON.stringify(body),
         },
       );
-      showToast({ type: 'success', title: 'Threshold updated', message: `${editing.name} thresholds saved.` });
+      showToast({
+        type: 'success',
+        title: 'Threshold updated',
+        message: `${editing.name} thresholds saved.`,
+      });
       await qc.invalidateQueries({ queryKey: ['admin', 'health', 'dashboard'] });
       setEditing(null);
     } catch {
@@ -838,12 +845,20 @@ const PlatformHealthPage: React.FC = () => {
         { method: 'POST' },
       ),
     onSuccess: () => {
-      showToast({ type: 'success', title: 'Alert acknowledged', message: 'The alert has been marked as acknowledged.' });
+      showToast({
+        type: 'success',
+        title: 'Alert acknowledged',
+        message: 'The alert has been marked as acknowledged.',
+      });
       void qc.invalidateQueries({ queryKey: ['admin', 'health', 'dashboard'] });
       void qc.invalidateQueries({ queryKey: ['admin', 'health', 'alerts'] });
     },
     onError: () => {
-      showToast({ type: 'error', title: 'Acknowledge failed', message: 'Could not acknowledge the alert.' });
+      showToast({
+        type: 'error',
+        title: 'Acknowledge failed',
+        message: 'Could not acknowledge the alert.',
+      });
     },
   });
 
@@ -885,7 +900,10 @@ const PlatformHealthPage: React.FC = () => {
             fontSize: 13,
           }}
         >
-          {t('admin.health.loadError', 'Failed to load health dashboard. Check your connection and try again.')}
+          {t(
+            'admin.health.loadError',
+            'Failed to load health dashboard. Check your connection and try again.',
+          )}
         </div>
       )}
 
