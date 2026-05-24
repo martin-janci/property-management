@@ -25,7 +25,7 @@ import {
   useUpdateOutage,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
@@ -293,7 +293,14 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  }, [logout, navigate]);
+
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -308,6 +315,16 @@ function AppNavigation() {
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="btn-outline-token px-3 py-1.5 rounded-lg text-sm font-medium"
+            aria-label={t('auth.signOut')}
+          >
+            {t('auth.signOut')}
+          </button>
+        )}
       </div>
     </nav>
   );

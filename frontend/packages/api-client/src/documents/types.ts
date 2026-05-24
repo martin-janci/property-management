@@ -48,6 +48,8 @@ export interface DocumentSummary {
   predicted_category?: string;
   classification_confidence?: number;
   summary?: string;
+  /** Audience scope returned by the backend after RLS filtering. */
+  access_scope?: AccessScope;
 }
 
 export interface DocumentFolder {
@@ -82,6 +84,13 @@ export interface DocumentSearchRequest {
   date_to?: string;
   ocr_status?: OcrStatus[];
   has_summary?: boolean;
+  /**
+   * RLS-aware audience pre-filter. The backend enforces row-level security on
+   * top of this — callers cannot escalate access by omitting this field.
+   * When set, the backend returns only documents matching this access scope
+   * before applying the caller's permission constraints.
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
 }
@@ -168,6 +177,12 @@ export interface DocumentListQuery {
   folder_id?: string;
   category?: string;
   search?: string;
+  /**
+   * Filter by access scope — RLS-aware: the backend further restricts results
+   * to documents the caller is permitted to see regardless of this filter.
+   * Use to surface audience segmentation in the UI (e.g. "Managers only").
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
 }

@@ -55,6 +55,9 @@ export async function listDocuments(query?: DocumentListQuery): Promise<Document
   if (query?.folder_id) params.set('folder_id', query.folder_id);
   if (query?.category) params.set('category', query.category);
   if (query?.search) params.set('search', query.search);
+  // RLS-aware audience pre-filter: the backend applies row-level security on top
+  // of this, so callers cannot escalate access by passing a wider scope.
+  if (query?.access_scope) params.set('access_scope', query.access_scope);
   if (query?.limit) params.set('limit', query.limit.toString());
   if (query?.offset) params.set('offset', query.offset.toString());
 
