@@ -371,7 +371,7 @@
       "status": "review",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T15:30:00Z",
+      "last_updated": "2026-05-24T15:35:00Z",
       "status_changed_at": "2026-05-24T14:24:00Z",
       "pr_number": 465,
       "pr_url": "https://github.com/martin-janci/property-management/pull/465",
@@ -382,14 +382,14 @@
     {
       "task_id": "gap-79-1-announcements-page-wiring",
       "branch": "auto-impl/gap-79-1-announcements-page-wiring",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-24T14:07:53Z",
-      "last_updated": "2026-05-24T15:30:00Z",
-      "status_changed_at": "2026-05-24T14:28:00Z",
+      "last_updated": "2026-05-24T15:35:00Z",
+      "status_changed_at": "2026-05-24T15:35:00Z",
       "pr_number": 466,
       "pr_url": "https://github.com/martin-janci/property-management/pull/466",
-      "merged_at": null,
+      "merged_at": "2026-05-24T15:35:00Z",
       "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage to useAnnouncements+mutations and FaultsPage to useFaults with snake->camelCase mapper; typecheck+biome+vite-build all clean; ci-fix=c2d2e3b3 (getToken injected into fetchJson, useDeleteAnnouncement→fetchJson<void>, screen-maps announcements+faults apiStatus stub→partial)",
       "reviewer_summary": "verdict=changes note=BLOCKING: fetchJson missing Authorization header (all 5 hooks get 401); useDeleteAnnouncement uses bare fetch bypassing fetchJson — FIXED in c2d2e3b3: getToken injected, fetchJson handles 204, delete uses fetchJson<void>; screen-maps ppt/announcements+ppt/faults-list updated apiStatus stub→partial"
     }
