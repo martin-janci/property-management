@@ -492,7 +492,11 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     path: '/api/v1/admin/oauth/clients',
     description: 'Register a new OAuth client',
     tags: ['OAuth'],
-    requestBody: { ref: 'OAuth.RegisterClientRequest', contentType: 'application/json', required: true },
+    requestBody: {
+      ref: 'OAuth.RegisterClientRequest',
+      contentType: 'application/json',
+      required: true,
+    },
     responses: [
       { statusCode: 201, description: 'Client registered' },
       { statusCode: 400, description: 'Invalid input' },
@@ -507,7 +511,11 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     path: '/api/v1/admin/oauth/clients/:clientId',
     description: 'Update OAuth client name, description, scopes, or status',
     tags: ['OAuth'],
-    requestBody: { ref: 'OAuth.UpdateClientRequest', contentType: 'application/json', required: true },
+    requestBody: {
+      ref: 'OAuth.UpdateClientRequest',
+      contentType: 'application/json',
+      required: true,
+    },
     responses: [
       { statusCode: 200, description: 'Client updated' },
       { statusCode: 404, description: 'Client not found' },
