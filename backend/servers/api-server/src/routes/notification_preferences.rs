@@ -1,4 +1,9 @@
-//! Notification Preferences routes (Epic 8A, Story 8A.1).
+//! Notification Preferences routes (Epic 8A, Story 8A.1 + 8A.3).
+//!
+//! Story 8A.3: after a preference update succeeds the handler publishes a
+//! `preference.updated` event on the user's Redis pub/sub channel
+//! (`notifications:{user_id}`) so connected WebSocket clients (Story 8A.3)
+//! can refresh their cached state without a full poll.
 
 use api_core::extractors::RlsConnection;
 use axum::{
@@ -17,6 +22,9 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 
 use crate::state::AppState;
+
+// Story 8A.3 — realtime sync via Redis pub/sub (used in update_preference).
+use integrations;
 
 /// Create notification preferences router.
 pub fn router() -> Router<AppState> {
@@ -257,6 +265,29 @@ pub async fn update_preference(
         enabled = req.enabled,
         "Notification preference updated"
     );
+
+    // Story 8A.3 — publish realtime sync event so connected WebSocket clients
+    // can update their cached preference state without polling.
+    if let Some(ref pubsub) = state.pubsub_service {
+        let ws_channel = format!("notifications:{user_id}");
+        let msg = integrations::PubSubMessage::new(
+            &ws_channel,
+            "preference.updated",
+            serde_json::json!({
+                "channel": channel.as_str(),
+                "enabled": req.enabled,
+            }),
+        );
+        if let Err(e) = pubsub.publish(&ws_channel, msg).await {
+            // Non-fatal: DB update already succeeded; WS sync is best-effort.
+            tracing::warn!(
+                user_id = %user_id,
+                ws_channel = %ws_channel,
+                error = %e,
+                "[8A.3] Failed to publish preference.updated to WebSocket channel (non-fatal)"
+            );
+        }
+    }
 
     Ok(Json(UpdatePreferenceResponse {
         preference: updated.into(),
