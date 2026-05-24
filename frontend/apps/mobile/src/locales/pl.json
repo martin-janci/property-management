@@ -146,7 +146,23 @@
     "categories": "Kategorie",
     "download": "Pobierz",
     "view": "Zobacz",
-    "noDocuments": "Brak dostepnych dokumentow"
+    "noDocuments": "Brak dostepnych dokumentow",
+    "share": "Udostepnij",
+    "preview": {
+      "fetching": "Przygotowywanie podgladu…",
+      "urlReady": "Dokument gotowy",
+      "expiresAt": "Link wygasa o",
+      "updated": "Zaktualizowano",
+      "openAction": "Otworz dokument",
+      "downloadAction": "Pobierz dokument",
+      "fallbackNotice": "Podglad nie jest dostepny dla tego typu pliku. Mozesz go pobrac.",
+      "errorTitle": "Nie mozna zaladowac dokumentu",
+      "cannotOpenTitle": "Nie mozna otworzyc",
+      "cannotOpenMessage": "Zadna aplikacja na tym urzadzeniu nie moze otworzyc tego typu pliku.",
+      "openFailed": "Nie udalo sie otworzyc dokumentu.",
+      "sharingUnavailableTitle": "Udostepnianie niedostepne",
+      "shareFailed": "Nie udalo sie udostepnic dokumentu."
+    }
   },
   "settings": {
     "title": "Ustawienia",

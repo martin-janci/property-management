@@ -15,6 +15,7 @@ import {
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
+  DocumentPreviewScreen,
   DocumentsScreen,
   DocumentUploadScreen,
   FaultsListScreen,
@@ -59,6 +60,7 @@ type Screen =
   | 'VoteDetail'
   | 'Documents'
   | 'DocumentDetail'
+  | 'DocumentPreview'
   | 'DocumentUpload'
   | 'Messages'
   | 'ThreadDetail'
@@ -141,6 +143,17 @@ function MainApp() {
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
         return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
+      case 'DocumentPreview':
+        return screenParams?.document ? (
+          <DocumentPreviewScreen
+            document={
+              screenParams.document as Parameters<typeof DocumentPreviewScreen>[0]['document']
+            }
+            onBack={() => handleNavigate('Documents')}
+          />
+        ) : (
+          <DocumentsScreen onNavigate={handleNavigate} />
+        );
       case 'DocumentUpload':
         return (
           <DocumentUploadScreen
@@ -242,7 +255,11 @@ function MainApp() {
         <NavButton
           icon="📄"
           label={t('tabs.docs')}
-          isActive={currentScreen === 'Documents' || currentScreen === 'DocumentDetail'}
+          isActive={
+            currentScreen === 'Documents' ||
+            currentScreen === 'DocumentDetail' ||
+            currentScreen === 'DocumentPreview'
+          }
           onPress={() => handleNavigate('Documents')}
         />
         <NavButton

@@ -146,7 +146,23 @@
     "categories": "Kategorien",
     "download": "Herunterladen",
     "view": "Anzeigen",
-    "noDocuments": "Keine Dokumente verfugbar"
+    "noDocuments": "Keine Dokumente verfugbar",
+    "share": "Teilen",
+    "preview": {
+      "fetching": "Vorschau wird vorbereitet…",
+      "urlReady": "Dokument bereit",
+      "expiresAt": "Link lauft ab um",
+      "updated": "Aktualisiert",
+      "openAction": "Dokument offnen",
+      "downloadAction": "Dokument herunterladen",
+      "fallbackNotice": "Vorschau ist fur diesen Dateityp nicht verfugbar. Sie konnen es herunterladen.",
+      "errorTitle": "Dokument konnte nicht geladen werden",
+      "cannotOpenTitle": "Kann nicht geoffnet werden",
+      "cannotOpenMessage": "Keine Anwendung auf diesem Gerat kann diesen Dateityp offnen.",
+      "openFailed": "Dokument konnte nicht geoffnet werden.",
+      "sharingUnavailableTitle": "Teilen nicht verfugbar",
+      "shareFailed": "Dokument konnte nicht geteilt werden."
+    }
   },
   "settings": {
     "title": "Einstellungen",
