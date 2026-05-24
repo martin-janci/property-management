@@ -47,6 +47,10 @@ VIOLATION_PATTERNS=(
 # Directories to check (request-handling code that should use RLS).
 # reality-server's raw pool also lives on AppState in state.rs, and its request
 # guards live in extractors/ — both are scanned.
+#
+# routes/admin/ is intentionally excluded: platform-admin handlers operate
+# across tenants and bypass per-tenant RLS by design (admin-level credentials
+# + role gate + audit logging handle security there). See ADR for admin arch.
 CHECK_DIRS=(
     "servers/api-server/src/handlers"
     "servers/api-server/src/routes"
@@ -137,6 +141,8 @@ scan_target() {
             --glob='!*mod.rs' \
             --glob='!*_test.rs' \
             --glob='!*tests*' \
+            --glob='!**/admin/**' \
+            --glob='!**/admin_*.rs' \
             2>/dev/null || true)
     done
 }

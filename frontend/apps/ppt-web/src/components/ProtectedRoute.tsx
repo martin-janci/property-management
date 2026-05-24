@@ -115,8 +115,7 @@ export function ProtectedRoute({
 
   // Check role requirements if specified.
   // Deny-on-missing-role: if requiredRoles is set we MUST have a role to compare
-  // against. Skipping the check when user.role is absent would be fail-open —
-  // an authenticated user without a role would slip through unguarded routes.
+  // against. Skipping when user.role is absent would be fail-open.
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRequiredRole = user?.role != null && requiredRoles.includes(user.role);
     if (!hasRequiredRole) {

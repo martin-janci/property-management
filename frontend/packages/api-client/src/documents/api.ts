@@ -7,6 +7,8 @@ import type {
   ClassificationHistoryEntry,
   ClassificationResponse,
   CreateDocumentRequest,
+  CreateShareRequest,
+  CreateShareResponse,
   Document,
   DocumentIntelligenceStats,
   DocumentListQuery,
@@ -17,6 +19,7 @@ import type {
   FolderWithCount,
   GenerateSummaryRequest,
   OcrReprocessResponse,
+  ShareListResponse,
   SummarizationResponse,
   UpdateDocumentRequest,
 } from './types';
@@ -102,6 +105,54 @@ export async function listFolders(buildingId?: string): Promise<{ folders: Folde
 export async function getFolderTree(buildingId?: string): Promise<{ tree: FolderTreeNode[] }> {
   const params = buildingId ? `?building_id=${buildingId}` : '';
   return fetchApi(`${API_BASE}/folders/tree${params}`);
+}
+
+export interface CreateFolderRequest {
+  name: string;
+  description?: string;
+  parent_id?: string;
+  building_id?: string;
+}
+
+export interface UpdateFolderRequest {
+  name?: string;
+  description?: string;
+  parent_id?: string | null;
+}
+
+export async function createFolder(
+  data: CreateFolderRequest
+): Promise<{ id: string; message: string; folder: import('./types').DocumentFolder }> {
+  return fetchApi(`${API_BASE}/folders`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateFolder(
+  id: string,
+  data: UpdateFolderRequest
+): Promise<{ message: string; folder: import('./types').DocumentFolder }> {
+  return fetchApi(`${API_BASE}/folders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteFolder(id: string, cascade = false): Promise<{ message: string }> {
+  return fetchApi(`${API_BASE}/folders/${id}?cascade=${cascade}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function moveDocument(
+  documentId: string,
+  folderId: string | null
+): Promise<{ message: string }> {
+  return fetchApi(`${API_BASE}/${documentId}/move`, {
+    method: 'POST',
+    body: JSON.stringify({ folder_id: folderId }),
+  });
 }
 
 // Document Intelligence (Epic 28)
@@ -248,4 +299,24 @@ export async function uploadDocument(
 
     xhr.send(formData);
   });
+}
+
+// --- Document Sharing (Story 7A.5) ---
+
+export async function listDocumentShares(documentId: string): Promise<ShareListResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`);
+}
+
+export async function createDocumentShare(
+  documentId: string,
+  data: CreateShareRequest
+): Promise<CreateShareResponse> {
+  return fetchApi(`${API_BASE}/${documentId}/shares`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function revokeDocumentShare(documentId: string, shareId: string): Promise<void> {
+  await fetchApi(`${API_BASE}/${documentId}/shares/${shareId}`, { method: 'DELETE' });
 }

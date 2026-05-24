@@ -146,7 +146,42 @@
     "categories": "Kategoriak",
     "download": "Letoltes",
     "view": "Megtekintes",
-    "noDocuments": "Nincsenek elerheto dokumentumok"
+    "noDocuments": "Nincsenek elerheto dokumentumok",
+    "share": "Megosztás",
+    "searchPlaceholder": "Search documents…",
+    "filter": {
+      "all": "All",
+      "audience": "Audience"
+    },
+    "permissions": {
+      "title": "Document Permissions",
+      "audience": "Audience",
+      "status": "Status",
+      "metadata": "Details",
+      "category": "Category",
+      "created": "Created",
+      "updated": "Last updated",
+      "loadError": "Could not load document details",
+      "draftNote": "This document is a draft and is only visible to the author and managers.",
+      "archivedNote": "This document has been archived and is no longer actively shared.",
+      "rlsTitle": "Row-Level Security",
+      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it."
+    },
+    "preview": {
+      "fetching": "Elonézet elokészítése…",
+      "urlReady": "Dokumentum kész",
+      "expiresAt": "A hivatkozás lejár",
+      "updated": "Frissítve",
+      "openAction": "Dokumentum megnyitása",
+      "downloadAction": "Dokumentum letöltése",
+      "fallbackNotice": "Az elonézet nem érheto el ennél a fájltípusnál. Letöltheti helyette.",
+      "errorTitle": "A dokumentum nem tölthetö be",
+      "cannotOpenTitle": "Nem nyitható meg",
+      "cannotOpenMessage": "Az eszközön lévö alkalmazások egyike sem tudja megnyitni ezt a fájltípust.",
+      "openFailed": "A dokumentum megnyitása nem sikerült.",
+      "sharingUnavailableTitle": "A megosztás nem érheto el",
+      "shareFailed": "A dokumentum megosztása nem sikerült."
+    }
   },
   "settings": {
     "title": "Beallitasok",

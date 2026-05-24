@@ -23,6 +23,8 @@ relatedScreens:
     rel: child
   - id: ppt/upload-document
     rel: child
+  - id: ppt/document-folders
+    rel: child
 epics:
   - Epic-39
   - Epic-7
@@ -126,6 +128,7 @@ UC-08 central document repository. Manager-side CRUD; resident-side filtered rea
 
 <!-- newest entries on top -->
 
+- 2026-05-24 — agent: gap-7a-2 follow-up — added ppt/document-folders as child relatedScreen (FolderTreePage ships on /documents/folders; omitted from PR #451 commit)
 - 2026-05-24 — agent: gap-7a-3 — added DocumentsBrowse component wired to RLS-aware GET /api/v1/documents; surfaces audience (access_scope) filter chips and status segmented control (Publikované/Návrhy/Archivované); promoted ppt-web.apiStatus partial→complete; DocumentsPage browse tab now uses real data, not placeholder
 - 2026-05-09 — agent: design analyzed (pages/ppt-documents.html — 4 artboards: loaded-12-3-selected / empty / loading / error); flipped ppt-web redesignStatus → in-progress (drift note: was shipped, now redesign in flight); attached designSource; populated functionality checklist (8 sections), 4 states, design-specific notes (filter-AND-OR semantics + ZIP server-side + audience RLS); declared 7 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

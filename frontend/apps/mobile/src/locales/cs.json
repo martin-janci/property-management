@@ -157,6 +157,21 @@
     "emptyTitle": "Zadne dokumenty",
     "noMatches": "Zadne dokumenty neodpovidaji hledani",
     "folderEmpty": "Tato slozka je prazdna",
+    "preview": {
+      "fetching": "Pripravuji nahled…",
+      "urlReady": "Dokument je pripraven",
+      "expiresAt": "Odkaz expiruje v",
+      "updated": "Aktualizovano",
+      "openAction": "Otevrit dokument",
+      "downloadAction": "Stahnout dokument",
+      "fallbackNotice": "Nahled neni dostupny pro tento typ souboru. Muzete ho stahnout.",
+      "errorTitle": "Dokument se nepodarilo nacist",
+      "cannotOpenTitle": "Nelze otevrit",
+      "cannotOpenMessage": "Zadna aplikace v tomto zarizeni neumi otevrit tento typ souboru.",
+      "openFailed": "Dokument se nepodarilo otevrit.",
+      "sharingUnavailableTitle": "Sdileni neni dostupne",
+      "shareFailed": "Dokument se nepodarilo sdilet."
+    },
     "upload": {
       "title": "Nahrat dokument",
       "buttonLabel": "+ Nahrat",
@@ -193,6 +208,25 @@
         "correspondence": "Korespondence",
         "other": "Jine"
       }
+    },
+    "searchPlaceholder": "Search documents…",
+    "filter": {
+      "all": "All",
+      "audience": "Audience"
+    },
+    "permissions": {
+      "title": "Document Permissions",
+      "audience": "Audience",
+      "status": "Status",
+      "metadata": "Details",
+      "category": "Category",
+      "created": "Created",
+      "updated": "Last updated",
+      "loadError": "Could not load document details",
+      "draftNote": "This document is a draft and is only visible to the author and managers.",
+      "archivedNote": "This document has been archived and is no longer actively shared.",
+      "rlsTitle": "Row-Level Security",
+      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it."
     }
   },
   "settings": {

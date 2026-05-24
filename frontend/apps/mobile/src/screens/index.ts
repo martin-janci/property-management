@@ -13,8 +13,14 @@ export type { Building } from './buildings';
 export { BuildingsScreen } from './buildings';
 // Main screens
 export { DashboardScreen } from './dashboard';
-export type { Document, DocumentType } from './documents';
-export { DocumentDetailScreen, DocumentsScreen, DocumentUploadScreen } from './documents';
+export type { Document, DocumentStatus, DocumentType } from './documents';
+export {
+  DocumentDetailScreen,
+  DocumentPermissionsScreen,
+  DocumentPreviewScreen,
+  DocumentsScreen,
+  DocumentUploadScreen,
+} from './documents';
 // Types
 export type { Fault, FaultCategory, FaultPriority, FaultStatus } from './faults';
 export { FaultsListScreen, ReportFaultScreen } from './faults';
@@ -26,7 +32,6 @@ export { LeaseDetailScreen, LeasesScreen } from './leases';
 export { MessagesScreen, ThreadDetailScreen } from './messages';
 export type { Meter, MeterCommodity } from './meters';
 export { MeterDetailScreen, MeterReadingScreen, MetersScreen } from './meters';
-export type { Neighbor } from './neighbors';
 export { NeighborsScreen } from './neighbors';
 export type { NewsArticle } from './news';
 export { NewsScreen } from './news';

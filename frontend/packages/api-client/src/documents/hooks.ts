@@ -6,10 +6,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
 import type {
   ClassificationFeedback,
+  CreateShareRequest,
   DocumentListQuery,
   DocumentSearchRequest,
   GenerateSummaryRequest,
 } from './types';
+
+export type { CreateFolderRequest, UpdateFolderRequest } from './api';
 
 // Query keys
 export const documentKeys = {
@@ -25,6 +28,7 @@ export const documentKeys = {
   folders: () => [...documentKeys.all, 'folders'] as const,
   folderTree: (buildingId?: string) => [...documentKeys.folders(), 'tree', buildingId] as const,
   stats: () => [...documentKeys.all, 'stats'] as const,
+  shares: (documentId: string) => [...documentKeys.all, documentId, 'shares'] as const,
 };
 
 // List documents
@@ -175,6 +179,90 @@ export function useUploadDocument() {
     onSuccess: () => {
       // Invalidate document lists to show the new document
       queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+    },
+  });
+}
+
+// Create folder (gap-7a-2)
+export function useCreateFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: api.CreateFolderRequest) => api.createFolder(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// Update folder (gap-7a-2)
+export function useUpdateFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: api.UpdateFolderRequest }) =>
+      api.updateFolder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// Delete folder (gap-7a-2)
+export function useDeleteFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, cascade = false }: { id: string; cascade?: boolean }) =>
+      api.deleteFolder(id, cascade),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+      queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+    },
+  });
+}
+
+// Move document to folder (gap-7a-2)
+export function useMoveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ documentId, folderId }: { documentId: string; folderId: string | null }) =>
+      api.moveDocument(documentId, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: documentKeys.folders() });
+    },
+  });
+}
+
+// --- Document Sharing hooks (Story 7A.5) ---
+
+export function useDocumentShares(documentId: string) {
+  return useQuery({
+    queryKey: documentKeys.shares(documentId),
+    queryFn: () => api.listDocumentShares(documentId),
+    enabled: !!documentId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateDocumentShare(documentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateShareRequest) => api.createDocumentShare(documentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
+    },
+  });
+}
+
+export function useRevokeDocumentShare(documentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shareId: string) => api.revokeDocumentShare(documentId, shareId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: documentKeys.shares(documentId) });
     },
   });
 }

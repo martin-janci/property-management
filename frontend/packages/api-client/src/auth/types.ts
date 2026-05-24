@@ -31,11 +31,7 @@ export interface AuthUser {
   email: string;
   firstName?: string;
   lastName?: string;
-  /**
-   * The user's role in the active tenant.
-   * Populated from the first TenantMembership returned by the login response.
-   * Required for role-gating in ProtectedRoute — always set after login.
-   */
+  /** The user role in the active tenant. Populated from tenants[0].role when not embedded directly. */
   role?: TenantRole;
   organizationId?: string;
   organizationName?: string;

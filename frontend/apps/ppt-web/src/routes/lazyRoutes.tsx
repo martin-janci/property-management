@@ -18,6 +18,9 @@ export const DocumentUploadPage = lazy(() =>
 export const DocumentDetailPage = lazy(() =>
   import('../features/documents').then((m) => ({ default: m.DocumentDetailPage }))
 );
+export const FolderTreePage = lazy(() =>
+  import('../features/documents').then((m) => ({ default: m.FolderTreePage }))
+);
 
 // News feature (Epic 59)
 export const NewsListPage = lazy(() =>
@@ -60,6 +63,22 @@ export const AccessibilitySettingsPage = lazy(() =>
 );
 export const PrivacySettingsPage = lazy(() =>
   import('../features/privacy').then((m) => ({ default: m.PrivacySettingsPage }))
+);
+
+// OAuth Grants feature (Epic 10A, Story 10A-3)
+export const OAuthGrantsPage = lazy(() =>
+  import('../features/oauth-grants').then((m) => ({ default: m.OAuthGrantsPage }))
+);
+
+// Neighbors feature (Epic 6, Story 6.6)
+export const NeighborsPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.NeighborsPage }))
+);
+export const NeighborDetailPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.NeighborDetailPage }))
+);
+export const NeighborsPrivacySettingsPage = lazy(() =>
+  import('../features/neighbors').then((m) => ({ default: m.PrivacySettingsPage }))
 );
 
 // Error / empty / loading state surfaces

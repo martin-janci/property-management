@@ -19,3 +19,4 @@ unic-langid = { workspace = true }
 intl-memoizer = { workspace = true }
 sha2 = { workspace = true }
 url = { workspace = true }
+async-trait = { workspace = true }

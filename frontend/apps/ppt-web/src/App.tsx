@@ -4,22 +4,30 @@ import type {
   Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
+  FaultSummary as ApiFaultSummary,
   OutageCommodity as ApiOutageCommodity,
   OutageSeverity as ApiOutageSeverity,
   OutageStatus as ApiOutageStatus,
   OutageSummary as ApiOutageSummary,
+  FaultListQuery,
   OutageListQuery,
 } from '@ppt/api-client';
 import {
   setMfaChallengeHandler,
+  useAnnouncements,
+  useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
   useCreateDispute,
   useCreateOutage,
+  useDeleteAnnouncement,
   useDispute,
   useDisputes,
+  useFaults,
   useOutage,
   useOutages,
+  usePinAnnouncement,
+  usePublishAnnouncement,
   useResolveOutage,
   useStartOutage,
   useUpdateOutage,
@@ -46,6 +54,17 @@ import {
   ToastProvider,
   useToast,
 } from './components';
+import {
+  toApiSendMessageRequest,
+  toStartThreadRequest,
+  useMarkThreadRead,
+  useMessageRecipients,
+  useSendMessage,
+  useStartThread,
+  useThread,
+  useThreads,
+  useUnreadCount,
+} from './features/messaging/hooks/useMessaging';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
@@ -61,6 +80,7 @@ import type {
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from './features/disputes/components/DisputeCard';
+import { useNeighbors, usePrivacySettings } from './features/neighbors';
 import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
@@ -87,6 +107,7 @@ import {
   FeedPage,
   FileDisputePage,
   FinancialDashboardPage,
+  FolderTreePage,
   ForbiddenPage,
   ForgotPasswordPage,
   GroupDetailPage,
@@ -95,9 +116,13 @@ import {
   LoginPage,
   MarketplacePage,
   MessagesPage,
+  NeighborDetailPage,
+  NeighborsPage,
+  NeighborsPrivacySettingsPage,
   NewMessagePage,
   NewsListPage,
   NotFoundPage,
+  OAuthGrantsPage,
   OutagesPage,
   PaymentManagementPage,
   PrivacySettingsPage,
@@ -431,6 +456,14 @@ function App() {
                                   }
                                 />
                                 <Route
+                                  path="/documents/folders"
+                                  element={
+                                    <ProtectedRoute>
+                                      <FolderTreePageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
                                   path="/documents/upload"
                                   element={
                                     <ProtectedRoute>
@@ -479,6 +512,15 @@ function App() {
                                 />
                                 {/* Privacy settings route (Epic 63) */}
                                 <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                                {/* OAuth Grants management route (Epic 10A, Story 10A-3) */}
+                                <Route
+                                  path="/settings/oauth-grants"
+                                  element={
+                                    <ProtectedRoute>
+                                      <OAuthGrantsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
                                 {/* Dispute Resolution routes (Epic 77) */}
                                 <Route path="/disputes" element={<DisputesPageRoute />} />
                                 <Route path="/disputes/new" element={<FileDisputePageRoute />} />
@@ -517,6 +559,16 @@ function App() {
                                 <Route
                                   path="/messages/:threadId"
                                   element={<ThreadDetailPageRoute />}
+                                />
+                                {/* Neighbors routes (Epic 6, Story 6.6) */}
+                                <Route path="/neighbors" element={<NeighborsPageRoute />} />
+                                <Route
+                                  path="/neighbors/:neighborId"
+                                  element={<NeighborDetailRoute />}
+                                />
+                                <Route
+                                  path="/neighbors/privacy"
+                                  element={<NeighborsPrivacySettingsRoute />}
                                 />
                                 {/* Faults routes (UC-03) */}
                                 <Route path="/faults" element={<FaultsPageRoute />} />
@@ -590,6 +642,13 @@ function DocumentsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? 'default-org';
   return <DocumentsPage organizationId={organizationId} />;
+}
+
+/** Route wrapper for folder-tree page (gap-7a-2) */
+function FolderTreePageRoute() {
+  const { user } = useAuth();
+  const organizationId = user?.organizationId ?? 'default-org';
+  return <FolderTreePage organizationId={organizationId} />;
 }
 
 /** Route wrapper for document detail page to extract params */
@@ -1252,31 +1311,127 @@ function EditOutagePageRoute() {
 // Announcements Route Wrappers (UC-06)
 // ============================================
 
+/**
+ * Route wrapper for announcements list page (UC-06, gap-79-1).
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useAnnouncements — TanStack Query list with filter params
+ *   useDeleteAnnouncement / usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement
+ *
+ * AnnouncementSummary from @ppt/api-client matches the page's prop type
+ * directly — no type mapping required.
+ */
 function AnnouncementsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [listParams, setListParams] = useState<import('@ppt/api-client').ListAnnouncementsParams>({
+    page: 1,
+    pageSize: 10,
+  });
 
-  // Mock data for now - would use useAnnouncements hook with real API
-  const announcements: import('@ppt/api-client').AnnouncementSummary[] = [];
-  const isLoading = false;
+  const { data, isLoading, error } = useAnnouncements(listParams);
+  const deleteAnnouncement = useDeleteAnnouncement();
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcements' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcements = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.deleted', { defaultValue: 'Deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.deleteFailed', { defaultValue: 'Delete failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePublish = async (id: string) => {
+    try {
+      await publishAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.published', { defaultValue: 'Published' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.publishFailed', { defaultValue: 'Publish failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleArchive = async (id: string) => {
+    try {
+      await archiveAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'info',
+        title: t('announcements.archived', { defaultValue: 'Archived' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.archiveFailed', { defaultValue: 'Archive failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePin = async (id: string, pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id, pinned });
+      showToast({
+        type: 'info',
+        title: pinned
+          ? t('announcements.pinned', { defaultValue: 'Pinned' })
+          : t('announcements.unpinned', { defaultValue: 'Unpinned' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.pinFailed', { defaultValue: 'Pin action failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
 
   return (
     <AnnouncementsPage
       announcements={announcements}
-      total={0}
+      total={total}
       isLoading={isLoading}
       onNavigateToCreate={() => navigate('/announcements/new')}
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
       onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
-      onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
-      onPublish={(id) =>
-        showToast({ type: 'success', title: 'Published', message: `Published ${id}` })
-      }
-      onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
-      onPin={(id, pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })
-      }
-      onFilterChange={() => {}}
+      onDelete={handleDelete}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onFilterChange={(params) => setListParams({ ...listParams, ...params })}
     />
   );
 }
@@ -1393,15 +1548,39 @@ function EditAnnouncementPageRoute() {
 
 function MessagesPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const [msgQueryParams, setMsgQueryParams] = useState<{ limit: number; offset: number }>({
+    limit: 20,
+    offset: 0,
+  });
+
+  const { threads, total, isLoading: threadsLoading } = useThreads(msgQueryParams);
+  const { data: unreadData } = useUnreadCount();
+  const unreadCount = unreadData?.unreadCount ?? 0;
 
   return (
     <MessagesPage
-      threads={[]}
-      total={0}
-      unreadCount={0}
+      threads={threads}
+      total={total}
+      unreadCount={unreadCount}
+      isLoading={threadsLoading}
       onNavigateToThread={(threadId) => navigate(`/messages/${threadId}`)}
       onNavigateToCreate={() => navigate('/messages/new')}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setMsgQueryParams({
+          limit: params.pageSize ?? 20,
+          offset: ((params.page ?? 1) - 1) * (params.pageSize ?? 20),
+        });
+      }}
+      onDeleteThreads={() => {
+        // Thread deletion is not yet supported by the API
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('messaging.deleteNotSupported', 'Deleting threads is not yet supported'),
+        });
+      }}
     />
   );
 }
@@ -1409,14 +1588,38 @@ function MessagesPageRoute() {
 function NewMessagePageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  // Fetch potential recipients from neighbors.
+  // buildingId is not part of the auth token; the hook handles undefined gracefully.
+  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(undefined);
+  const startThread = useStartThread();
+
+  const handleNewMsgSubmit = async (data: import('./features/messaging').CreateThreadRequest) => {
+    if (!data.recipientIds[0]) return;
+    try {
+      const result = await startThread.mutateAsync(toStartThreadRequest(data));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('messaging.messageSent', 'Message sent'),
+      });
+      navigate(`/messages/${result.thread.id}`);
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
+  };
 
   return (
     <NewMessagePage
-      recipients={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Sent', message: 'Message sent' });
-        navigate('/messages');
-      }}
+      recipients={recipients}
+      isLoadingRecipients={isLoadingRecipients}
+      isSubmitting={startThread.isPending}
+      onSubmit={handleNewMsgSubmit}
       onCancel={() => navigate('/messages')}
     />
   );
@@ -1426,31 +1629,52 @@ function ThreadDetailPageRoute() {
   const { threadId } = useParams<{ threadId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const { thread, isLoading: threadLoading } = useThread(threadId ?? '', !!threadId);
+  const sendMessage = useSendMessage();
+  const markRead = useMarkThreadRead();
 
   if (!threadId) {
     return <div>Thread not found</div>;
   }
 
-  // Mock thread data
-  const mockThread: import('./features/messaging').ThreadWithMessages = {
-    id: threadId,
-    subject: 'Sample Thread',
-    participants: [],
-    participantCount: 2,
-    messageCount: 0,
-    messages: [],
-    unreadCount: 0,
-    lastMessageAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+  const handleThreadSendMessage = async (
+    data: import('./features/messaging').SendMessageRequest
+  ) => {
+    try {
+      await sendMessage.mutateAsync({ threadId, data: toApiSendMessageRequest(data) });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
   };
+
+  const handleThreadMarkAsRead = () => {
+    markRead.mutate(threadId);
+  };
+
+  // Show loading skeleton until thread data arrives
+  if (threadLoading || !thread) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <ThreadDetailPage
-      thread={mockThread}
+      thread={thread}
       currentUserId={user?.id ?? ''}
-      onSendMessage={() => {}}
-      onMarkAsRead={() => {}}
+      isLoading={false}
+      isSending={sendMessage.isPending}
+      onSendMessage={handleThreadSendMessage}
+      onMarkAsRead={handleThreadMarkAsRead}
       onBack={() => navigate('/messages')}
     />
   );
@@ -1460,18 +1684,111 @@ function ThreadDetailPageRoute() {
 // Faults Route Wrappers (UC-03)
 // ============================================
 
+/**
+ * Map API FaultStatus (snake_case values) → UI FaultStatus.
+ *
+ * API: 'reported' | 'triaged' | 'in_progress' | 'scheduled' | 'on_hold' | 'resolved' | 'closed' | 'reopened'
+ * UI:  'new'      | 'triaged' | 'in_progress' | 'scheduled' | 'waiting_parts' | 'resolved' | 'closed' | 'reopened'
+ */
+function mapApiFaultStatusToUi(
+  status: ApiFaultSummary['status']
+): import('./features/faults/components/FaultCard').FaultStatus {
+  const mapping: Record<
+    ApiFaultSummary['status'],
+    import('./features/faults/components/FaultCard').FaultStatus
+  > = {
+    reported: 'new',
+    triaged: 'triaged',
+    in_progress: 'in_progress',
+    scheduled: 'scheduled',
+    on_hold: 'waiting_parts',
+    resolved: 'resolved',
+    closed: 'closed',
+    reopened: 'reopened',
+  };
+  return mapping[status] ?? 'new';
+}
+
+/** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
+function transformApiFaultToUi(
+  fault: ApiFaultSummary
+): import('./features/faults/components/FaultCard').FaultSummary {
+  return {
+    id: fault.id,
+    buildingId: fault.building_id,
+    unitId: fault.unit_id,
+    title: fault.title,
+    category: fault.category,
+    priority: fault.priority ?? 'medium',
+    status: mapApiFaultStatusToUi(fault.status),
+    createdAt: fault.created_at,
+  };
+}
+
+/**
+ * Route wrapper for faults list page (UC-03, gap-79-1).
+ *
+ * Wired to useFaults from @ppt/api-client (TanStack Query).
+ * API FaultSummary uses snake_case and a slightly different status enum;
+ * transformApiFaultToUi() bridges the gap to the UI FaultCard type.
+ */
 function FaultsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
+
+  const { data, isLoading, error } = useFaults(faultQuery);
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('faults.failedToLoad', { defaultValue: 'Failed to load faults' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const faults = (data?.faults ?? []).map(transformApiFaultToUi);
+  const total = data?.count ?? 0;
 
   return (
     <FaultsPage
-      faults={[]}
-      total={0}
+      faults={faults}
+      total={total}
+      isLoading={isLoading}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setFaultQuery({
+          status: params.status
+            ? (() => {
+                const statusMap: Record<
+                  import('./features/faults/components/FaultCard').FaultStatus,
+                  ApiFaultSummary['status'] | undefined
+                > = {
+                  new: 'reported',
+                  triaged: 'triaged',
+                  in_progress: 'in_progress',
+                  waiting_parts: 'on_hold',
+                  scheduled: 'scheduled',
+                  resolved: 'resolved',
+                  closed: 'closed',
+                  reopened: 'reopened',
+                };
+                return statusMap[params.status];
+              })()
+            : undefined,
+          category: params.category,
+          priority: params.priority,
+          search: params.search,
+          page: params.page,
+          limit: params.pageSize,
+        });
+      }}
     />
   );
 }
@@ -1857,5 +2174,129 @@ function Home() {
 }
 
 // Login component removed - now using LoginPage from ./pages/LoginPage
+
+// ---------------------------------------------------------------------------
+// Neighbor Route Wrappers (Epic 6, Story 6.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Neighbors listing page — wired to backend GET /api/v1/buildings/{id}/neighbors.
+ *
+ * Building context: The route uses the first building from `useBuildings()`.
+ * Once a building-selector is added to the app-shell, swap for the selected ID.
+ */
+function NeighborsPageRoute() {
+  const navigate = useNavigate();
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
+  // Pick the first building the user has access to; URL-param selection deferred.
+  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const buildingName = buildingsData?.items?.[0]?.name;
+
+  const { neighbors, isLoading, error } = useNeighbors(buildingId, !isLoadingBuildings);
+
+  return (
+    <NeighborsPage
+      neighbors={neighbors}
+      buildingName={buildingName}
+      isLoading={isLoading || isLoadingBuildings}
+      error={error}
+      onViewProfile={(n) => navigate(`/neighbors/${n.id}`)}
+      onContact={(n) => navigate(`/messages/new?recipientId=${n.id}`)}
+      onManagePrivacy={() => navigate('/neighbors/privacy')}
+    />
+  );
+}
+
+/**
+ * Neighbor detail page — extracts :neighborId from the URL.
+ * Fetches the neighbor from the building list and finds by id.
+ */
+function NeighborDetailRoute() {
+  const { neighborId } = useParams<{ neighborId: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { data: buildingsData } = useBuildings();
+
+  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const { neighbors, isLoading } = useNeighbors(buildingId, !!buildingId);
+  const neighbor = neighbors.find((n) => n.id === neighborId);
+
+  if (!neighborId) {
+    return (
+      <div className="error-page">
+        <h1>{t('errors.notFound')}</h1>
+        <p>{t('errors.neighborNotFound', 'Neighbor not found.')}</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-page">
+        <p>{t('common.loading')}</p>
+      </div>
+    );
+  }
+
+  if (!neighbor) {
+    return (
+      <div className="error-page">
+        <h1>{t('errors.notFound')}</h1>
+        <p>{t('errors.neighborNotFound', 'Neighbor not found.')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <NeighborDetailPage
+      neighbor={neighbor}
+      onBack={() => navigate('/neighbors')}
+      onMessage={(n) => navigate(`/messages/new?recipientId=${n.id}`)}
+    />
+  );
+}
+
+/**
+ * Neighbor privacy settings page — wired to GET/PUT /api/v1/users/me/privacy.
+ */
+function NeighborsPrivacySettingsRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const { settings, isLoading, isSubmitting, error, updateSettings } = usePrivacySettings();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleSubmit = async (newSettings: import('./features/neighbors').PrivacySettings) => {
+    try {
+      await updateSettings(newSettings);
+      setSuccessMessage(t('neighbors.privacy.saved', 'Privacy settings saved.'));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('neighbors.privacy.saved', 'Privacy settings saved.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('neighbors.privacy.saveFailed', 'Failed to save privacy settings.'),
+      });
+    }
+  };
+
+  return (
+    <NeighborsPrivacySettingsPage
+      settings={settings}
+      isLoading={isLoading}
+      error={error}
+      isSubmitting={isSubmitting}
+      successMessage={successMessage}
+      onSubmit={handleSubmit}
+      onBack={() => navigate('/neighbors')}
+    />
+  );
+}
 
 export default App;
