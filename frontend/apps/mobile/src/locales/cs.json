@@ -208,6 +208,25 @@
         "correspondence": "Korespondence",
         "other": "Jine"
       }
+    },
+    "searchPlaceholder": "Search documents…",
+    "filter": {
+      "all": "All",
+      "audience": "Audience"
+    },
+    "permissions": {
+      "title": "Document Permissions",
+      "audience": "Audience",
+      "status": "Status",
+      "metadata": "Details",
+      "category": "Category",
+      "created": "Created",
+      "updated": "Last updated",
+      "loadError": "Could not load document details",
+      "draftNote": "This document is a draft and is only visible to the author and managers.",
+      "archivedNote": "This document has been archived and is no longer actively shared.",
+      "rlsTitle": "Row-Level Security",
+      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it."
     }
   },
   "settings": {

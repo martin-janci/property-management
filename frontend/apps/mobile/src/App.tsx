@@ -15,6 +15,7 @@ import {
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
+  DocumentPermissionsScreen,
   DocumentPreviewScreen,
   DocumentsScreen,
   DocumentUploadScreen,
@@ -62,6 +63,7 @@ type Screen =
   | 'DocumentDetail'
   | 'DocumentPreview'
   | 'DocumentUpload'
+  | 'DocumentPermissions'
   | 'Messages'
   | 'ThreadDetail'
   | 'Settings'
@@ -161,6 +163,13 @@ function MainApp() {
             onCancel={() => handleNavigate('Documents')}
           />
         );
+      case 'DocumentPermissions':
+        return (
+          <DocumentPermissionsScreen
+            documentId={(screenParams?.documentId as string | undefined) ?? ''}
+            onBack={() => handleNavigate('Documents')}
+          />
+        );
       case 'MeterReading':
         return (
           <MeterReadingScreen
@@ -258,7 +267,8 @@ function MainApp() {
           isActive={
             currentScreen === 'Documents' ||
             currentScreen === 'DocumentDetail' ||
-            currentScreen === 'DocumentPreview'
+            currentScreen === 'DocumentPreview' ||
+            currentScreen === 'DocumentPermissions'
           }
           onPress={() => handleNavigate('Documents')}
         />
