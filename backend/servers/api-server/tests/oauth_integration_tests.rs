@@ -13,6 +13,7 @@
 #[allow(dead_code)]
 mod common;
 
+use api_server::services::AuthService;
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
@@ -78,13 +79,8 @@ async fn seed_confidential_client(pool: &PgPool) -> (String, String, String) {
     // Use a known plaintext secret so tests can authenticate.
     let plaintext_secret = "test-client-secret-very-secure-12345678";
     // Hash with argon2id (the same algorithm auth_service uses in production).
-    let hash = argon2::password_hash::PasswordHasher::hash_password(
-        &argon2::Argon2::default(),
-        plaintext_secret.as_bytes(),
-        &argon2::password_hash::SaltString::generate(&mut argon2::password_hash::rand_core::OsRng),
-    )
-    .expect("hash secret")
-    .to_string();
+    let auth = AuthService::new();
+    let hash = auth.hash_password(plaintext_secret).expect("hash secret");
 
     sqlx::query(
         r#"
@@ -201,7 +197,8 @@ mod pkce_flow {
             ("code_challenge_method", "S256"),
             ("consent", "approve"),
         ]);
-        let consent_req = form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
+        let consent_req =
+            form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
         let consent_resp = app.execute(consent_req).await;
         assert_eq!(
             consent_resp.status,
@@ -230,12 +227,18 @@ mod pkce_flow {
             token_resp.text()
         );
         let tokens = token_resp.json_value();
-        assert!(tokens["access_token"].is_string(), "access_token must be present");
+        assert!(
+            tokens["access_token"].is_string(),
+            "access_token must be present"
+        );
         assert_eq!(tokens["token_type"], "Bearer");
         assert!(tokens["expires_in"].is_number());
         // Public clients must NOT receive a refresh token
         assert!(
-            tokens.get("refresh_token").map(|v| v.is_null()).unwrap_or(true),
+            tokens
+                .get("refresh_token")
+                .map(|v| v.is_null())
+                .unwrap_or(true),
             "public client must not receive refresh_token, got: {}",
             tokens
         );
@@ -261,7 +264,8 @@ mod pkce_flow {
             ("code_challenge_method", "S256"),
             ("consent", "approve"),
         ]);
-        let consent_req = form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
+        let consent_req =
+            form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
         let consent_resp = app.execute(consent_req).await;
         assert_eq!(consent_resp.status, StatusCode::OK);
         let code = consent_resp.json_value()["code"]
@@ -300,7 +304,10 @@ mod pkce_flow {
             .get(header::CACHE_CONTROL)
             .and_then(|v| v.to_str().ok())
             .unwrap_or_default();
-        assert_eq!(cc, "no-store", "token response must set Cache-Control: no-store");
+        assert_eq!(
+            cc, "no-store",
+            "token response must set Cache-Control: no-store"
+        );
     }
 
     /// Wrong PKCE verifier must be rejected (InvalidCodeVerifier).
@@ -320,7 +327,8 @@ mod pkce_flow {
             ("code_challenge_method", "S256"),
             ("consent", "approve"),
         ]);
-        let consent_req = form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
+        let consent_req =
+            form_request_with_auth("/api/v1/oauth/authorize", &consent_form, &access_token);
         let code = app
             .execute(consent_req)
             .await
@@ -606,7 +614,6 @@ mod refresh_rotation {
     /// initial access_token + refresh_token.
     async fn auth_flow(
         app: &TestApp,
-        pool: &PgPool,
         access_token: &str,
         client_id: &str,
         client_secret: &str,
@@ -633,8 +640,6 @@ mod refresh_rotation {
             .expect("missing code")
             .to_string();
 
-        let _ = pool; // suppress unused warning
-
         let token_body = form_body(&[
             ("grant_type", "authorization_code"),
             ("code", &code),
@@ -648,8 +653,14 @@ mod refresh_rotation {
             .await
             .json_value();
 
-        let at = tokens["access_token"].as_str().expect("access_token").to_string();
-        let rt = tokens["refresh_token"].as_str().expect("refresh_token").to_string();
+        let at = tokens["access_token"]
+            .as_str()
+            .expect("access_token")
+            .to_string();
+        let rt = tokens["refresh_token"]
+            .as_str()
+            .expect("refresh_token")
+            .to_string();
         (at, rt)
     }
 
@@ -663,7 +674,7 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (_at1, rt1) =
-            auth_flow(&app, &pool, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Use rt1 to get a new token set
         let refresh_body = form_body(&[
@@ -721,7 +732,7 @@ mod refresh_rotation {
 
         // Issue initial tokens
         let (_at1, rt1) =
-            auth_flow(&app, &pool, &user_at, &client_id, &client_secret, &redirect_uri).await;
+            auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Rotate once: rt1 → rt2
         let rotate1_body = form_body(&[
@@ -819,8 +830,7 @@ mod refresh_rotation {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
         let (other_client_id, other_client_secret, _) = seed_confidential_client(&pool).await;
 
-        let (_at, rt) =
-            auth_flow(&app, &pool, &user_at, &client_id, &client_secret, &redirect_uri).await;
+        let (_at, rt) = auth_flow(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Try to use rt with a different client
         let body = form_body(&[
