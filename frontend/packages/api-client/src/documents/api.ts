@@ -104,6 +104,57 @@ export async function getFolderTree(buildingId?: string): Promise<{ tree: Folder
   return fetchApi(`${API_BASE}/folders/tree${params}`);
 }
 
+export interface CreateFolderRequest {
+  name: string;
+  description?: string;
+  parent_id?: string;
+  building_id?: string;
+}
+
+export interface UpdateFolderRequest {
+  name?: string;
+  description?: string;
+  parent_id?: string | null;
+}
+
+export async function createFolder(
+  data: CreateFolderRequest
+): Promise<{ id: string; message: string; folder: import('./types').DocumentFolder }> {
+  return fetchApi(`${API_BASE}/folders`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateFolder(
+  id: string,
+  data: UpdateFolderRequest
+): Promise<{ message: string; folder: import('./types').DocumentFolder }> {
+  return fetchApi(`${API_BASE}/folders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteFolder(
+  id: string,
+  cascade = false
+): Promise<{ message: string }> {
+  return fetchApi(`${API_BASE}/folders/${id}?cascade=${cascade}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function moveDocument(
+  documentId: string,
+  folderId: string | null
+): Promise<{ message: string }> {
+  return fetchApi(`${API_BASE}/${documentId}/move`, {
+    method: 'POST',
+    body: JSON.stringify({ folder_id: folderId }),
+  });
+}
+
 // Document Intelligence (Epic 28)
 
 // Story 28.1: OCR
