@@ -203,13 +203,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T06:11:00Z",
-      "last_updated": "2026-05-24T08:02:00Z",
+      "last_updated": "2026-05-24T08:04:00Z",
       "status_changed_at": "2026-05-24T08:02:00Z",
       "pr_number": 449,
       "pr_url": "https://github.com/martin-janci/property-management/pull/449",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=messaging hooks use @ppt/api-client factory pattern correctly, no raw fetch, types sound, screen-maps updated stub→complete with agent log; incidental documents/ changes out-of-scope but harmless, assignments.json needs rebase before merge; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-7a-2-folder-tree-ui",
