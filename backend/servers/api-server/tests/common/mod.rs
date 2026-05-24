@@ -350,7 +350,7 @@ pub async fn cleanup_test_user(pool: &PgPool, email: &str) {
 
 /// Test helper to verify user directly in database.
 pub async fn verify_user_email(pool: &PgPool, email: &str) {
-    sqlx::query("UPDATE users SET email_verified = true WHERE email = $1")
+    sqlx::query("UPDATE users SET email_verified_at = NOW(), status = 'active' WHERE email = $1")
         .bind(email)
         .execute(pool)
         .await
