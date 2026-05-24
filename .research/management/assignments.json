@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T00:00:00Z",
+  "generated": "2026-05-24T00:10:21Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -8,8 +8,10 @@
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
       "last_updated": "2026-05-23T22:27:00Z",
+      "status_changed_at": "2026-05-23T21:43:59Z",
       "pr_number": 435,
       "pr_url": "https://github.com/martin-janci/property-management/pull/435",
+      "merged_at": null,
       "implementer_summary": "pr=435 status=done specialist=generic note=PR #435 reviewed (LGTM already posted), resolved merge conflicts on Review branch, merged to dev at bddcbf46",
       "reviewer_summary": null
     },
@@ -20,8 +22,10 @@
       "specialist": "generic",
       "claimed_at": "2026-05-23T21:43:59Z",
       "last_updated": "2026-05-23T23:50:00Z",
+      "status_changed_at": "2026-05-23T21:43:59Z",
       "pr_number": 436,
       "pr_url": "https://github.com/martin-janci/property-management/pull/436",
+      "merged_at": null,
       "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories); action-list updated",
       "reviewer_summary": "verdict=approve note=epic-8a marked done (3/3), handler mod refs fully cleaned, check+security+deny CI pass"
     },
@@ -32,8 +36,10 @@
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T21:43:59Z",
       "last_updated": "2026-05-23T23:00:00Z",
+      "status_changed_at": "2026-05-23T21:43:59Z",
       "pr_number": 437,
       "pr_url": "https://github.com/martin-janci/property-management/pull/437",
+      "merged_at": null,
       "implementer_summary": "pr=437 status=done specialist=rust-backend note=deleted dead AuthHandler/BuildingHandler modules (2495 lines); cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=dead handler modules and all mod declarations removed cleanly; no remaining callers; cargo-deny green"
     },
@@ -44,10 +50,54 @@
       "specialist": "rust-backend",
       "claimed_at": "2026-05-23T23:00:00Z",
       "last_updated": "2026-05-24T00:00:00Z",
+      "status_changed_at": "2026-05-23T23:00:00Z",
       "pr_number": 440,
       "pr_url": "https://github.com/martin-janci/property-management/pull/440",
+      "merged_at": null,
       "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b); full backend+frontend verified; coverage.json promoted partial→done; cargo check -p api-server exit 0",
       "reviewer_summary": "verdict=approve note=tracking-file PR clean; implementation verified (manager-auth, org-scoping, ammonia XSS, all 4 targets, scheduling); LGTM"
+    },
+    {
+      "task_id": "gap-9-1-mfa-frontend-integration",
+      "branch": "auto-impl/gap-9-1-mfa-frontend-integration",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T00:10:21Z",
+      "last_updated": "2026-05-24T00:10:21Z",
+      "status_changed_at": "2026-05-24T00:10:21Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-7a-3-frontend-api-integration",
+      "branch": "auto-impl/gap-7a-3-frontend-api-integration",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T00:10:21Z",
+      "last_updated": "2026-05-24T00:10:21Z",
+      "status_changed_at": "2026-05-24T00:10:21Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-79-2-login-flow-wiring",
+      "branch": "auto-impl/gap-79-2-login-flow-wiring",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T00:10:21Z",
+      "last_updated": "2026-05-24T00:10:21Z",
+      "status_changed_at": "2026-05-24T00:10:21Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
