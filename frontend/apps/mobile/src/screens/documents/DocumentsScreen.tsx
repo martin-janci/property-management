@@ -189,7 +189,15 @@ export function DocumentsScreen({ onNavigate: _onNavigate }: DocumentsScreenProp
               </Text>
             </>
           ) : (
-            <Text style={styles.headerTitle}>{t('documents.title')}</Text>
+            <>
+              <Text style={styles.headerTitle}>{t('documents.title')}</Text>
+              <Pressable
+                style={styles.uploadButton}
+                onPress={() => _onNavigate?.('DocumentUpload')}
+              >
+                <Text style={styles.uploadButtonText}>{t('documents.upload.buttonLabel')}</Text>
+              </Pressable>
+            </>
           )}
         </View>
       </View>
@@ -315,6 +323,18 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  uploadButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  uploadButtonText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600',
   },
   backButton: {
     padding: 4,

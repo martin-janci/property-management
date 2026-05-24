@@ -15,6 +15,7 @@ import {
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
+  DocumentUploadScreen,
   DocumentsScreen,
   FaultsListScreen,
   FormsScreen,
@@ -58,6 +59,7 @@ type Screen =
   | 'VoteDetail'
   | 'Documents'
   | 'DocumentDetail'
+  | 'DocumentUpload'
   | 'Messages'
   | 'ThreadDetail'
   | 'Settings'
@@ -139,6 +141,13 @@ function MainApp() {
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
         return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
+      case 'DocumentUpload':
+        return (
+          <DocumentUploadScreen
+            onSuccess={() => handleNavigate('Documents')}
+            onCancel={() => handleNavigate('Documents')}
+          />
+        );
       case 'MeterReading':
         return (
           <MeterReadingScreen

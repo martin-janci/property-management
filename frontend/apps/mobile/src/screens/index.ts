@@ -14,7 +14,7 @@ export { BuildingsScreen } from './buildings';
 // Main screens
 export { DashboardScreen } from './dashboard';
 export type { Document, DocumentType } from './documents';
-export { DocumentDetailScreen, DocumentsScreen } from './documents';
+export { DocumentDetailScreen, DocumentUploadScreen, DocumentsScreen } from './documents';
 // Types
 export type { Fault, FaultCategory, FaultPriority, FaultStatus } from './faults';
 export { FaultsListScreen, ReportFaultScreen } from './faults';
