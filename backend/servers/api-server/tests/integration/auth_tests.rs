@@ -504,8 +504,9 @@ mod mfa {
 
         response.assert_status(StatusCode::OK);
         response.assert_json_field("secret");
-        response.assert_json_field("qr_code_uri");
-        response.assert_json_field("backup_codes");
+        // Backend uses serde rename_all = "camelCase" → qrUri (not qr_code_uri)
+        response.assert_json_field("qrUri");
+        response.assert_json_field("backupCodes");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
