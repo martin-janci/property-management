@@ -77,6 +77,7 @@ import {
   DocumentDetailPage,
   DocumentsPage,
   DocumentUploadPage,
+  FolderTreePage,
   EditAnnouncementPage,
   EditFaultPage,
   EditOutagePage,
@@ -431,6 +432,14 @@ function App() {
                                   }
                                 />
                                 <Route
+                                  path="/documents/folders"
+                                  element={
+                                    <ProtectedRoute>
+                                      <FolderTreePageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
                                   path="/documents/upload"
                                   element={
                                     <ProtectedRoute>
@@ -590,6 +599,13 @@ function DocumentsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? 'default-org';
   return <DocumentsPage organizationId={organizationId} />;
+}
+
+/** Route wrapper for folder-tree page (gap-7a-2) */
+function FolderTreePageRoute() {
+  const { user } = useAuth();
+  const organizationId = user?.organizationId ?? 'default-org';
+  return <FolderTreePage organizationId={organizationId} />;
 }
 
 /** Route wrapper for document detail page to extract params */
