@@ -117,6 +117,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 
 <!-- newest entries on top -->
 
+- 2026-05-24 — agent: gap-6-3-comments-web-ui — Story 6.3: added AnnouncementComments component + CSS; added useAnnouncementComments/useCreateAnnouncementComment/useDeleteAnnouncementComment standalone hooks to @ppt/api-client; wired comment hooks in ViewAnnouncementPageInner with manager-role delete affordance; ppt-web buildStatus planned→in-progress
+
 - 2026-05-24 — agent: gap-6-2-announcement-web-ui — Story 6.2: added useAnnouncement/useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats standalone hooks; replaced ViewAnnouncementPageRoute mock stub with real wiring (ViewAnnouncementPageInner); added acknowledgmentStats prop + AcknowledgmentStatsPanel; apiStatus stub→partial
 
 - 2026-05-24 — agent: gap-79-1 — wired AnnouncementsPage to useAnnouncements+useDeleteAnnouncement+usePublishAnnouncement+useArchiveAnnouncement+usePinAnnouncement hooks; ppt-web.apiStatus stub→partial; auth header fix applied (Authorization: Bearer from getToken())
