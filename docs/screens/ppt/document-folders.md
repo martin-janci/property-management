@@ -2,20 +2,15 @@
 id: ppt/document-folders
 name: Document Folders
 product: ppt
-sitemapRefs:
-  ppt-web: ppt-document-folders
+sitemapRefs: {}
 implementations:
   ppt-web:
+    route: "/documents/folders"
     component: FolderTreePage
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
-endpoints:
-  - documents_folders_tree
-  - documents_folders_create
-  - documents_folders_update
-  - documents_folders_delete
-  - documents_move
+endpoints: []
 relatedScreens:
   - id: ppt/documents
     rel: parent
