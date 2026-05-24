@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-23T17:47:00Z",
+  "last_run_iso": "2026-05-24T03:20:00Z",
   "last_run_ms": 300000,
-  "last_pr_seen": 435,
-  "last_issue_seen": 375,
-  "last_commit_sha": "4714c7f219849ab4f319be8a5caadd972f9299c2",
+  "last_pr_seen": 440,
+  "last_issue_seen": 439,
+  "last_commit_sha": "a85586d13290c66ba4a9f33a16a9f40847ba86a2",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -38,23 +38,27 @@
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
     "code-review-api-core-voice-device-idor",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
-    "code-review-reality-server-inquiry-read-idor"
+    "code-review-reality-server-inquiry-read-idor",
+    "code-review-ppt-web-ui-role-gate-fail-open",
+    "code-review-ppt-web-ui-untranslated-strings",
+    "code-review-ppt-web-ui-announcer-stale-msg",
+    "code-review-api-core-ssrf-outbound-fetch"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-05-23",
     "api-core": "2026-05-23",
     "reality-server": "2026-05-23",
-    "ppt-web-ui": null,
+    "ppt-web-ui": "2026-05-24",
     "ppt-web-core": null,
     "reality-web": null,
     "mobile-rn": null,
     "mobile-native-kmp": null
   },
   "stats": {
-    "runs": 4,
-    "vectors_created": 9,
-    "plans_created": 2,
+    "runs": 5,
+    "vectors_created": 13,
+    "plans_created": 3,
     "quiet_days": 0,
     "auto_fix_count": 0
   },
@@ -69,10 +73,10 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 1,
+    "next_index": 2,
     "role_last_run": {
       "pm-tech-lead": "2026-05-23",
-      "pm-backend": null,
+      "pm-backend": "2026-05-24",
       "pm-frontend": null,
       "pm-qa": null,
       "pm-devops": null,
@@ -82,6 +86,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 0
+    "next_index": 1
   }
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T02:52:00Z",
+  "generated": "2026-05-24T04:04:19Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -116,16 +116,16 @@
     {
       "task_id": "gap-7a-1-mobile-document-upload",
       "branch": "auto-impl/gap-7a-1-mobile-document-upload",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-native",
       "claimed_at": "2026-05-24T02:08:38Z",
-      "last_updated": "2026-05-24T02:50:00Z",
-      "status_changed_at": "2026-05-24T02:45:00Z",
+      "last_updated": "2026-05-24T02:57:00Z",
+      "status_changed_at": "2026-05-24T02:57:00Z",
       "pr_number": 447,
       "pr_url": "https://github.com/martin-janci/property-management/pull/447",
-      "merged_at": null,
-      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts",
-      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; two non-blocking issues: onProgress callback is dead code (fetch has no upload progress events, bar stuck at 0%), typo in sk.json successMessage 'nahrary' should be 'nahraný'; posted as COMMENT (self-PR restriction)"
+      "merged_at": "2026-05-24T02:56:00Z",
+      "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; file picker (expo-document-picker+expo-image-picker), metadata form, multipart POST to /api/v1/documents/upload; typecheck+biome clean; fixed stray DocumentShareSheet re-exports in index.ts; removed dead onProgress state; fixed sk.json typo nahrary→nahrate",
+      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct, JWT base64url decode safe, exports clean (no DocumentShareSheet), i18n keys consistent across en/sk/cs; dead onProgress callback and Slovak typo fixed before merge; posted as COMMENT (self-PR restriction)"
     },
     {
       "task_id": "gap-7a-5-mobile-share-ui",
@@ -154,6 +154,48 @@
       "merged_at": "2026-05-24T02:51:00Z",
       "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load, page navigator, zoom 50-200%; wired into DocumentDetail; fixed Biome trailing-comma formatting",
       "reviewer_summary": "verdict=approve note=usePreviewUrl confirmed in api-client; pdfjs worker uses import.meta.url (no CDN); IntersectionObserver lazy-load correct; zoom clamped 0.5-2.0; old preview link removed; isSupportedPdfMime present; @tailwindcss/postcss in devDeps; all CI green"
+    },
+    {
+      "task_id": "pm-security-resolve-435-followups",
+      "branch": "auto-impl/pm-security-resolve-435-followups",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-backend-fix-ssrf-outbound",
+      "branch": "auto-impl/pm-backend-fix-ssrf-outbound",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-backend-implement-81-schedule-endpoints",
+      "branch": "auto-impl/pm-backend-implement-81-schedule-endpoints",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-24T04:04:19Z",
+      "last_updated": "2026-05-24T04:04:19Z",
+      "status_changed_at": "2026-05-24T04:04:19Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }

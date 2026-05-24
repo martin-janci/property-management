@@ -163,7 +163,7 @@
       "fileLabel": "Subor",
       "pickFile": "Vybrat subor",
       "pickPhoto": "Vybrat fotografiu",
-      "fileRequired": "Vyberte subor na nahratje",
+      "fileRequired": "Vyberte subor na nahratie",
       "titleLabel": "Nazov",
       "titlePlaceholder": "Nazov dokumentu",
       "titleRequired": "Zadajte nazov",
@@ -175,7 +175,7 @@
       "uploadingPct": "Nahrava sa {{pct}}%...",
       "submitButton": "Nahrat dokument",
       "successTitle": "Nahrate",
-      "successMessage": "Dokument bol uspesne nahrary.",
+      "successMessage": "Dokument bol uspesne nahrate.",
       "errorTitle": "Nahratie zlyhalo",
       "pickFailed": "Nepodarilo sa otvorit vyber suborov",
       "categories": {
