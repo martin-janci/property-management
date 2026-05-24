@@ -379,13 +379,13 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     assert_eq!(login_resp.status, StatusCode::OK);
 
     let json = login_resp.json_value();
-    let access_token = json["access_token"]
+    let access_token = json["accessToken"]
         .as_str()
-        .expect("Missing access_token")
+        .expect("Missing accessToken")
         .to_string();
-    let refresh_token = json["refresh_token"]
+    let refresh_token = json["refreshToken"]
         .as_str()
-        .expect("Missing refresh_token")
+        .expect("Missing refreshToken")
         .to_string();
 
     (access_token, refresh_token)
