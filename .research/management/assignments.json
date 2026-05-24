@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T17:45:00Z",
+  "generated": "2026-05-24T17:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -413,13 +413,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-24T17:45:00Z",
+      "last_updated": "2026-05-24T17:50:00Z",
       "status_changed_at": "2026-05-24T17:00:00Z",
       "pr_number": 469,
       "pr_url": "https://github.com/martin-janci/property-management/pull/469",
       "merged_at": null,
       "implementer_summary": "pr=469 status=done specialist=react-web note=OAuthClientsPage full CRUD UI (register/edit/revoke/regenerate); api-client OAuth types+hooks+api; capabilities+route+sidebar+i18n wired; Band A typecheck+biome clean, Band B vite build exit 0",
-      "reviewer_summary": "verdict=changes note=three bugs: (1) handleRevoke missing try/catch \u2014 failed DELETE silent; (2) useRegenerateOAuthClientSecret no onSuccess cache invalidation; (3) OAuthClientSummary missing redirectUris field \u2014 PATCH always sends undefined (data-loss risk)"
+      "reviewer_summary": "verdict=changes note=three bugs: (1) handleRevoke missing try/catch \u2014 failed DELETE silent; (2) useRegenerateOAuthClientSecret no onSuccess cache invalidation; (3) OAuthClientSummary missing redirectUris field \u2014 PATCH always sends undefined (data-loss risk); fixer=80401aca pushed all 3 fixes; CI re-running"
     },
     {
       "task_id": "gap-10a-3-user-grants-ui",
