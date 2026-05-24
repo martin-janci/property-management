@@ -66,16 +66,13 @@ import {
   useNavigationCommands,
 } from './features/command-palette';
 import { ManagerDashboardPage, ResidentDashboardPage } from './features/dashboard';
-import {
-  useNeighbors,
-  usePrivacySettings,
-} from './features/neighbors';
 import type {
   DisputeCategory,
   DisputePriority,
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from './features/disputes/components/DisputeCard';
+import { useNeighbors, usePrivacySettings } from './features/neighbors';
 import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
@@ -546,10 +543,7 @@ function App() {
                                   element={<ThreadDetailPageRoute />}
                                 />
                                 {/* Neighbors routes (Epic 6, Story 6.6) */}
-                                <Route
-                                  path="/neighbors"
-                                  element={<NeighborsPageRoute />}
-                                />
+                                <Route path="/neighbors" element={<NeighborsPageRoute />} />
                                 <Route
                                   path="/neighbors/:neighborId"
                                   element={<NeighborDetailRoute />}
@@ -2031,7 +2025,11 @@ function NeighborDetailRoute() {
   }
 
   if (isLoading) {
-    return <div className="loading-page"><p>{t('common.loading')}</p></div>;
+    return (
+      <div className="loading-page">
+        <p>{t('common.loading')}</p>
+      </div>
+    );
   }
 
   if (!neighbor) {
@@ -2067,9 +2065,17 @@ function NeighborsPrivacySettingsRoute() {
     try {
       await updateSettings(newSettings);
       setSuccessMessage(t('neighbors.privacy.saved', 'Privacy settings saved.'));
-      showToast({ type: 'success', title: t('common.success'), message: t('neighbors.privacy.saved', 'Privacy settings saved.') });
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('neighbors.privacy.saved', 'Privacy settings saved.'),
+      });
     } catch {
-      showToast({ type: 'error', title: t('common.error'), message: t('neighbors.privacy.saveFailed', 'Failed to save privacy settings.') });
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('neighbors.privacy.saveFailed', 'Failed to save privacy settings.'),
+      });
     }
   };
 

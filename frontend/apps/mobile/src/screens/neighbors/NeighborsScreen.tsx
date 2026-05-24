@@ -126,9 +126,7 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
       <View style={[s.container, styles.center]}>
         <Text style={s.emptyIcon}>⚠️</Text>
         <Text style={s.emptyTitle}>Could not load neighbours</Text>
-        <Text style={s.emptyText}>
-          {error instanceof Error ? error.message : 'Unknown error'}
-        </Text>
+        <Text style={s.emptyText}>{error instanceof Error ? error.message : 'Unknown error'}</Text>
         <Pressable style={[s.primaryButton, { marginTop: 16 }]} onPress={onRefresh}>
           <Text style={s.primaryButtonText}>Retry</Text>
         </Pressable>
@@ -168,9 +166,7 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
         {filtered.length === 0 ? (
           <View style={s.emptyState}>
             <Text style={s.emptyIcon}>🏘️</Text>
-            <Text style={s.emptyTitle}>
-              {search.trim() ? 'No matches' : 'No neighbours yet'}
-            </Text>
+            <Text style={s.emptyTitle}>{search.trim() ? 'No matches' : 'No neighbours yet'}</Text>
             <Text style={s.emptyText}>
               {search.trim()
                 ? 'Try a different name or apartment number.'
@@ -182,9 +178,7 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
             <Pressable
               key={neighbor.user_id}
               style={[s.card, styles.row]}
-              onPress={() =>
-                onNavigate?.('NeighborDetail', { neighborId: neighbor.user_id })
-              }
+              onPress={() => onNavigate?.('NeighborDetail', { neighborId: neighbor.user_id })}
             >
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{initials(neighbor.display_name)}</Text>
@@ -195,12 +189,8 @@ export function NeighborsScreen({ onNavigate }: NeighborsScreenProps) {
                   {neighbor.unit_label}
                   {neighbor.resident_type === 'owner' ? ' · Owner' : ''}
                 </Text>
-                {neighbor.phone && (
-                  <Text style={styles.contact}>📞 {neighbor.phone}</Text>
-                )}
-                {neighbor.email && (
-                  <Text style={styles.contact}>✉️ {neighbor.email}</Text>
-                )}
+                {neighbor.phone && <Text style={styles.contact}>📞 {neighbor.phone}</Text>}
+                {neighbor.email && <Text style={styles.contact}>✉️ {neighbor.email}</Text>}
               </View>
             </Pressable>
           ))

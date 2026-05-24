@@ -15,16 +15,12 @@
  *   residentType → isOwner (owner → true)
  */
 
-import {
-  createNeighborHooks,
-  createNeighborsApi,
-  getToken,
-} from '@ppt/api-client';
 import type {
   NeighborView as ApiNeighborView,
   PrivacySettings as ApiPrivacySettings,
   UpdatePrivacySettingsRequest as ApiUpdatePrivacySettingsRequest,
 } from '@ppt/api-client';
+import { createNeighborHooks, createNeighborsApi, getToken } from '@ppt/api-client';
 import { useMemo } from 'react';
 import type { NeighborView, PrivacySettings } from '../types';
 
@@ -91,9 +87,7 @@ export function mapApiPrivacyToFeature(api: ApiPrivacySettings): PrivacySettings
  * Map feature-layer PrivacySettings to the API UpdatePrivacySettingsRequest.
  * We collapse the granular visibility flags back to the three-value API enum.
  */
-export function mapFeaturePrivacyToApi(
-  settings: PrivacySettings
-): ApiUpdatePrivacySettingsRequest {
+export function mapFeaturePrivacyToApi(settings: PrivacySettings): ApiUpdatePrivacySettingsRequest {
   let profileVisibility: ApiUpdatePrivacySettingsRequest['profileVisibility'];
   if (!settings.listedInDirectory || settings.showName === 'private') {
     profileVisibility = 'hidden';
@@ -125,10 +119,7 @@ export function useNeighbors(buildingId: string, enabled = true) {
   const query = hooks.useNeighbors(buildingId, enabled && !!buildingId);
 
   const neighbors: NeighborView[] = useMemo(
-    () =>
-      (query.data?.neighbors ?? [])
-        .filter((n) => n.isVisible)
-        .map(mapApiNeighborToFeature),
+    () => (query.data?.neighbors ?? []).filter((n) => n.isVisible).map(mapApiNeighborToFeature),
     [query.data]
   );
 
