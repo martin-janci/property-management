@@ -1,14 +1,17 @@
 /**
- * Two-Factor Authentication Setup Page (UC-14.10, Story 9.1).
+ * Two-Factor Authentication Setup Page (UC-14.10, Epic 9, Story 9.1).
  *
- * Wires TOTP-based MFA to /api/v1/auth/mfa/* via useMfa* hooks
- * from @ppt/api-client. Supports: status display, setup (QR + verify),
- * and disable flows.
+ * Wires to the backend MFA endpoints via @ppt/api-client useMfa* hooks:
+ *   POST /api/v1/auth/mfa/setup              — initiate TOTP setup
+ *   POST /api/v1/auth/mfa/verify             — confirm TOTP code, enables 2FA
+ *   POST /api/v1/auth/mfa/disable            — disable 2FA (requires code)
+ *   GET  /api/v1/auth/mfa/status             — current enabled/disabled state
+ *   POST /api/v1/auth/mfa/backup-codes/regenerate — refresh backup codes
  */
 
 import {
-  type MfaSetupResponse,
   useMfaDisable,
+  useMfaRegenerateBackupCodes,
   useMfaSetup,
   useMfaStatus,
   useMfaVerify,
@@ -16,98 +19,135 @@ import {
 import type React from 'react';
 import { useCallback, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useToast } from '../../../components/Toast';
 import { useAuth } from '../../../contexts/AuthContext';
 import '../styles/AuthPage.css';
 
-type View = 'idle' | 'setup-qr' | 'setup-verify' | 'disable';
+// ─── Step state ──────────────────────────────────────────────────────────────
+
+type Step = 'idle' | 'setup-pending' | 'verify-setup' | 'disable' | 'regen-codes';
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function TwoFactorAuthPage() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { showToast } = useToast();
 
-  const { data: mfaStatus, isLoading: statusLoading } = useMfaStatus();
+  // Server state
+  const statusQuery = useMfaStatus();
   const setupMutation = useMfaSetup();
   const verifyMutation = useMfaVerify();
   const disableMutation = useMfaDisable();
+  const regenMutation = useMfaRegenerateBackupCodes();
 
-  const [view, setView] = useState<View>('idle');
-  const [setupData, setSetupData] = useState<MfaSetupResponse | null>(null);
+  // Local UI state
+  const [step, setStep] = useState<Step>('idle');
   const [code, setCode] = useState('');
-  const [localError, setLocalError] = useState<string | undefined>();
+  const [formError, setFormError] = useState<string>();
+  const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
+
+  // ── Handlers ──
 
   const handleStartSetup = useCallback(async () => {
-    setLocalError(undefined);
+    setFormError(undefined);
     setCode('');
     try {
-      const data = await setupMutation.mutateAsync();
-      setSetupData(data);
-      setView('setup-qr');
+      await setupMutation.mutateAsync();
+      setStep('setup-pending');
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Failed to initiate MFA setup.');
+      showToast({ type: 'error', title: 'Could not start MFA setup', message: String(err) });
     }
-  }, [setupMutation]);
+  }, [setupMutation, showToast]);
 
-  const handleProceedToVerify = useCallback(() => {
-    setCode('');
-    setLocalError(undefined);
-    setView('setup-verify');
-  }, []);
-
-  const handleVerify = useCallback(
+  const handleVerifySetup = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      setLocalError(undefined);
+      setFormError(undefined);
       if (!/^\d{6}$/.test(code.trim())) {
-        setLocalError('Enter the 6-digit code from your authenticator app.');
+        setFormError('Enter the 6-digit code from your authenticator app.');
         return;
       }
       try {
         await verifyMutation.mutateAsync({ code: code.trim() });
-        setView('idle');
-        setSetupData(null);
-        setCode('');
+        setStep('idle');
+        showToast({ type: 'success', title: 'Two-factor authentication enabled' });
       } catch (err) {
-        setLocalError(err instanceof Error ? err.message : 'Verification failed. Try again.');
+        setFormError(String(err) || 'The code was not accepted. Please try again.');
       }
     },
-    [code, verifyMutation]
+    [code, verifyMutation, showToast]
   );
 
   const handleStartDisable = useCallback(() => {
+    setFormError(undefined);
     setCode('');
-    setLocalError(undefined);
-    setView('disable');
+    setStep('disable');
   }, []);
 
   const handleDisable = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      setLocalError(undefined);
+      setFormError(undefined);
       if (!code.trim()) {
-        setLocalError('Enter your authenticator code or a backup code.');
+        setFormError('Enter your authenticator code or a backup code to confirm.');
         return;
       }
       try {
         await disableMutation.mutateAsync({ code: code.trim() });
-        setView('idle');
-        setCode('');
+        setStep('idle');
+        showToast({ type: 'success', title: 'Two-factor authentication disabled' });
       } catch (err) {
-        setLocalError(err instanceof Error ? err.message : 'Failed to disable MFA. Try again.');
+        setFormError(String(err) || 'The code was not accepted. Please try again.');
       }
     },
-    [code, disableMutation]
+    [code, disableMutation, showToast]
+  );
+
+  const handleStartRegen = useCallback(() => {
+    setFormError(undefined);
+    setCode('');
+    setNewBackupCodes([]);
+    setStep('regen-codes');
+  }, []);
+
+  const handleRegen = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setFormError(undefined);
+      if (!/^\d{6}$/.test(code.trim())) {
+        setFormError('Enter the 6-digit code from your authenticator app.');
+        return;
+      }
+      try {
+        const result = await regenMutation.mutateAsync({ code: code.trim() });
+        setNewBackupCodes(result.backupCodes);
+        showToast({ type: 'success', title: 'Backup codes regenerated — save them now!' });
+      } catch (err) {
+        setFormError(String(err) || 'The code was not accepted. Please try again.');
+      }
+    },
+    [code, regenMutation, showToast]
   );
 
   const handleCancel = useCallback(() => {
-    setView('idle');
+    setStep('idle');
+    setFormError(undefined);
     setCode('');
-    setSetupData(null);
-    setLocalError(undefined);
+    setNewBackupCodes([]);
   }, []);
 
-  if (authLoading) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // ── Auth guard ──
 
-  const isBusy = setupMutation.isPending || verifyMutation.isPending || disableMutation.isPending;
+  if (isLoading) return null;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const mfaEnabled = statusQuery.data?.enabled ?? false;
+  const backupCodesRemaining = statusQuery.data?.backupCodesRemaining ?? 0;
+  const setupData = setupMutation.data;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="auth-page">
@@ -119,174 +159,249 @@ export function TwoFactorAuthPage() {
           </p>
         </div>
 
-        {view === 'idle' && (
-          <>
-            {statusLoading && (
-              <p className="auth-help" aria-live="polite">
-                Checking MFA status…
-              </p>
-            )}
+        {/* Loading status */}
+        {statusQuery.isLoading && (
+          <p className="auth-help" aria-live="polite">
+            Loading MFA status…
+          </p>
+        )}
 
-            {!statusLoading && mfaStatus?.enabled && (
+        {/* ── Idle: show current status + actions ── */}
+        {step === 'idle' && !statusQuery.isLoading && (
+          <>
+            {mfaEnabled ? (
               <div className="auth-success-banner" role="status">
                 Two-factor authentication is <strong>enabled</strong>.{' '}
-                {mfaStatus.backupCodesRemaining > 0
-                  ? `${mfaStatus.backupCodesRemaining} backup codes remaining.`
-                  : 'No backup codes remaining — consider regenerating.'}
+                {backupCodesRemaining > 0 && (
+                  <span>Backup codes remaining: {backupCodesRemaining}.</span>
+                )}
               </div>
-            )}
-
-            {localError && (
-              <span className="auth-field-error" role="alert">
-                {localError}
-              </span>
-            )}
-
-            {!statusLoading && mfaStatus?.enabled ? (
-              <button
-                type="button"
-                className="auth-submit auth-submit--danger"
-                onClick={handleStartDisable}
-                disabled={isBusy}
-              >
-                Disable two-factor authentication
-              </button>
             ) : (
-              <button
-                type="button"
-                className="auth-submit"
-                onClick={handleStartSetup}
-                disabled={isBusy || statusLoading}
-              >
-                {setupMutation.isPending ? 'Setting up…' : 'Set up two-factor authentication'}
-              </button>
+              <p className="auth-help">Two-factor authentication is not yet enabled.</p>
             )}
+
+            <div
+              className="auth-actions"
+              style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}
+            >
+              {!mfaEnabled && (
+                <button
+                  type="button"
+                  className="auth-submit"
+                  onClick={handleStartSetup}
+                  disabled={setupMutation.isPending}
+                >
+                  {setupMutation.isPending ? 'Starting setup…' : 'Set up two-factor authentication'}
+                </button>
+              )}
+
+              {mfaEnabled && (
+                <>
+                  <button
+                    type="button"
+                    className="auth-submit"
+                    onClick={handleStartDisable}
+                    style={{ background: 'var(--color-danger, #c0392b)' }}
+                  >
+                    Disable two-factor authentication
+                  </button>
+                  <button
+                    type="button"
+                    className="auth-submit"
+                    onClick={handleStartRegen}
+                    style={{ background: 'var(--color-secondary, #6c757d)' }}
+                  >
+                    Regenerate backup codes
+                  </button>
+                </>
+              )}
+            </div>
           </>
         )}
 
-        {view === 'setup-qr' && setupData && (
-          <div>
+        {/* ── Setup pending: show secret/QR + verify form ── */}
+        {step === 'setup-pending' && setupData && (
+          <>
             <p className="auth-help">
-              Scan the QR code below with your authenticator app, then click{' '}
-              <strong>Continue</strong>.
+              Scan the QR code below with your authenticator app (Google Authenticator, Authy,
+              etc.), or enter the secret manually.
             </p>
-            <div className="auth-qr-wrapper" aria-label="QR code for authenticator app">
+
+            {/* QR code: rendered via a browser-native img using Google Charts API as a zero-dep fallback */}
+            <div style={{ textAlign: 'center', margin: '1rem 0' }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(setupData.qrUri)}&size=200x200`}
+                src={`https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=${encodeURIComponent(setupData.qrUri)}`}
                 alt="Scan this QR code with your authenticator app"
                 width={200}
                 height={200}
+                style={{ border: '1px solid #ddd', borderRadius: 4 }}
               />
             </div>
+
+            <div className="auth-field">
+              <p className="auth-label">Manual entry secret</p>
+              <code
+                style={{
+                  display: 'block',
+                  padding: '0.5rem',
+                  background: '#f5f5f5',
+                  borderRadius: 4,
+                  wordBreak: 'break-all',
+                  fontSize: '0.875rem',
+                }}
+              >
+                {setupData.secret}
+              </code>
+            </div>
+
+            {setupData.backupCodes.length > 0 && (
+              <div className="auth-field" style={{ marginTop: '1rem' }}>
+                <p className="auth-label" style={{ fontWeight: 700 }}>
+                  Save these backup codes now — they will not be shown again.
+                </p>
+                <ul style={{ fontFamily: 'monospace', fontSize: '0.9rem', paddingLeft: '1.25rem' }}>
+                  {setupData.backupCodes.map((bc) => (
+                    <li key={bc}>{bc}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <form
+              className="auth-form"
+              onSubmit={handleVerifySetup}
+              noValidate
+              style={{ marginTop: '1.5rem' }}
+            >
+              <div className="auth-field">
+                <label htmlFor="setup-code" className="auth-label">
+                  Verification code
+                </label>
+                <input
+                  id="setup-code"
+                  name="code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  className={`auth-input ${formError ? 'auth-input--error' : ''}`}
+                  aria-invalid={formError ? 'true' : 'false'}
+                />
+                {formError && <span className="auth-field-error">{formError}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="submit" className="auth-submit" disabled={verifyMutation.isPending}>
+                  {verifyMutation.isPending ? 'Verifying…' : 'Verify and enable'}
+                </button>
+                <button type="button" className="auth-link" onClick={handleCancel}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {/* ── Disable: confirm code ── */}
+        {step === 'disable' && (
+          <form className="auth-form" onSubmit={handleDisable} noValidate>
             <p className="auth-help">
-              Can&apos;t scan? Manual entry key:{' '}
-              <span className="auth-mono">
-                <strong>{setupData.secret}</strong>
-              </span>
+              Enter your authenticator code or a backup code to confirm disabling 2FA.
             </p>
-            <details className="auth-backup-codes">
-              <summary>Show one-time backup codes (save these now)</summary>
-              <ul className="auth-backup-codes__list" aria-label="Backup codes">
-                {setupData.backupCodes.map((bc) => (
-                  <li key={bc} className="auth-mono">
-                    {bc}
-                  </li>
-                ))}
-              </ul>
-              <p className="auth-help auth-help--warning">
-                These codes are shown only once. Store them securely.
-              </p>
-            </details>
-            <div className="auth-actions">
-              <button type="button" className="auth-submit" onClick={handleProceedToVerify}>
-                Continue
+            <div className="auth-field">
+              <label htmlFor="disable-code" className="auth-label">
+                Authentication code
+              </label>
+              <input
+                id="disable-code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={20}
+                value={code}
+                onChange={(e) => setCode(e.target.value.trim())}
+                className={`auth-input ${formError ? 'auth-input--error' : ''}`}
+                aria-invalid={formError ? 'true' : 'false'}
+              />
+              {formError && <span className="auth-field-error">{formError}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="submit"
+                className="auth-submit"
+                style={{ background: 'var(--color-danger, #c0392b)' }}
+                disabled={disableMutation.isPending}
+              >
+                {disableMutation.isPending ? 'Disabling…' : 'Disable two-factor authentication'}
               </button>
               <button type="button" className="auth-link" onClick={handleCancel}>
                 Cancel
               </button>
             </div>
-          </div>
-        )}
-
-        {view === 'setup-verify' && (
-          <form className="auth-form" onSubmit={handleVerify} noValidate>
-            <p className="auth-help">
-              Enter the 6-digit code currently shown in your authenticator app.
-            </p>
-            <div className="auth-field">
-              <label htmlFor="code" className="auth-label">
-                Verification code
-              </label>
-              <input
-                id="code"
-                name="code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                className={`auth-input ${localError ? 'auth-input--error' : ''}`}
-                aria-invalid={localError ? 'true' : 'false'}
-                aria-describedby={localError ? 'code-error' : undefined}
-                disabled={isBusy}
-              />
-              {localError && (
-                <span id="code-error" className="auth-field-error" role="alert">
-                  {localError}
-                </span>
-              )}
-            </div>
-            <div className="auth-actions">
-              <button type="submit" className="auth-submit" disabled={isBusy}>
-                {verifyMutation.isPending ? 'Verifying…' : 'Verify and enable'}
-              </button>
-              <button type="button" className="auth-link" onClick={handleCancel} disabled={isBusy}>
-                Cancel
-              </button>
-            </div>
           </form>
         )}
 
-        {view === 'disable' && (
-          <form className="auth-form" onSubmit={handleDisable} noValidate>
-            <p className="auth-help">
-              Enter your current authenticator code (or a backup code) to confirm disabling
-              two-factor authentication.
-            </p>
-            <div className="auth-field">
-              <label htmlFor="disable-code" className="auth-label">
-                Authenticator code
-              </label>
-              <input
-                id="disable-code"
-                name="disable-code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                value={code}
-                onChange={(e) => setCode(e.target.value.trim())}
-                className={`auth-input ${localError ? 'auth-input--error' : ''}`}
-                aria-invalid={localError ? 'true' : 'false'}
-                aria-describedby={localError ? 'disable-code-error' : undefined}
-                disabled={isBusy}
-              />
-              {localError && (
-                <span id="disable-code-error" className="auth-field-error" role="alert">
-                  {localError}
-                </span>
-              )}
-            </div>
-            <div className="auth-actions">
-              <button type="submit" className="auth-submit auth-submit--danger" disabled={isBusy}>
-                {disableMutation.isPending ? 'Disabling…' : 'Disable two-factor authentication'}
-              </button>
-              <button type="button" className="auth-link" onClick={handleCancel} disabled={isBusy}>
-                Cancel
-              </button>
-            </div>
-          </form>
+        {/* ── Regenerate backup codes ── */}
+        {step === 'regen-codes' && (
+          <>
+            {newBackupCodes.length === 0 ? (
+              <form className="auth-form" onSubmit={handleRegen} noValidate>
+                <p className="auth-help">
+                  Enter your authenticator code to regenerate backup codes. All existing backup
+                  codes will be invalidated.
+                </p>
+                <div className="auth-field">
+                  <label htmlFor="regen-code" className="auth-label">
+                    Authenticator code
+                  </label>
+                  <input
+                    id="regen-code"
+                    name="code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                    className={`auth-input ${formError ? 'auth-input--error' : ''}`}
+                    aria-invalid={formError ? 'true' : 'false'}
+                  />
+                  {formError && <span className="auth-field-error">{formError}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button type="submit" className="auth-submit" disabled={regenMutation.isPending}>
+                    {regenMutation.isPending ? 'Regenerating…' : 'Regenerate backup codes'}
+                  </button>
+                  <button type="button" className="auth-link" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div>
+                <p className="auth-help" style={{ fontWeight: 700 }}>
+                  Save these new backup codes — they will not be shown again.
+                </p>
+                <ul style={{ fontFamily: 'monospace', fontSize: '0.9rem', paddingLeft: '1.25rem' }}>
+                  {newBackupCodes.map((bc) => (
+                    <li key={bc}>{bc}</li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="auth-submit"
+                  onClick={handleCancel}
+                  style={{ marginTop: '1rem' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,118 +1,101 @@
 /**
  * MFA API Client
  *
- * API functions for Multi-Factor Authentication (UC-14.10, Epic 9 Story 9.1).
- * Wires to /api/v1/auth/mfa/* on api-server.
+ * Direct API functions for the Multi-Factor Authentication endpoints (UC-14, Epic 9, Story 9.1).
+ * Routes: /api/v1/auth/mfa/*
  */
 
 import { getToken } from '../auth';
 import type {
-  DisableMfaRequest,
-  DisableMfaResponse,
+  MfaDisableRequest,
+  MfaDisableResponse,
+  MfaRegenerateBackupCodesRequest,
+  MfaRegenerateBackupCodesResponse,
   MfaSetupResponse,
   MfaStatusResponse,
-  RegenerateBackupCodesRequest,
-  RegenerateBackupCodesResponse,
-  VerifyMfaRequest,
-  VerifyMfaResponse,
+  MfaVerifyRequest,
+  MfaVerifyResponse,
 } from './types';
 
-const API_BASE = '/api/v1/auth/mfa';
+const _win = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : {};
+const MFA_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/auth/mfa`;
 
-/**
- * Build Authorization header from the configured token provider.
- */
-function getAuthHeaders(): HeadersInit {
+function getAuthHeaders(): Record<string, string> {
   const token = getToken();
-  if (!token) {
-    throw new Error('MFA API requires authentication');
-  }
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
 }
 
-/**
- * Parse an API response, throwing on non-2xx status.
- */
-async function parseResponse<T>(response: Response): Promise<T> {
+async function mfaRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ message: response.statusText }));
-    const err = new Error(body.message || 'MFA API request failed') as Error & {
-      status: number;
-      code: string;
-    };
-    err.status = response.status;
-    err.code = body.error ?? body.code ?? 'UNKNOWN_ERROR';
-    throw err;
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `HTTP error ${response.status}`);
   }
-  return response.json() as Promise<T>;
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json();
 }
 
 /**
  * Initiate MFA setup.
- * Returns the TOTP secret, QR URI, and one-time backup codes.
+ * Returns a TOTP secret, QR code URI, and one-time backup codes.
  * POST /api/v1/auth/mfa/setup
  */
-export async function setupMfa(): Promise<MfaSetupResponse> {
-  const response = await fetch(`${API_BASE}/setup`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-  });
-  return parseResponse<MfaSetupResponse>(response);
+export async function mfaSetup(): Promise<MfaSetupResponse> {
+  return mfaRequest<MfaSetupResponse>(`${MFA_BASE}/setup`, { method: 'POST' });
 }
 
 /**
- * Verify a TOTP code and activate MFA.
+ * Verify the TOTP code to complete MFA setup.
  * POST /api/v1/auth/mfa/verify
  */
-export async function verifyMfaSetup(request: VerifyMfaRequest): Promise<VerifyMfaResponse> {
-  const response = await fetch(`${API_BASE}/verify`, {
+export async function mfaVerify(data: MfaVerifyRequest): Promise<MfaVerifyResponse> {
+  return mfaRequest<MfaVerifyResponse>(`${MFA_BASE}/verify`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(request),
+    body: JSON.stringify(data),
   });
-  return parseResponse<VerifyMfaResponse>(response);
 }
 
 /**
- * Disable MFA (requires a current TOTP code or backup code).
+ * Disable MFA (requires current TOTP or backup code).
  * POST /api/v1/auth/mfa/disable
  */
-export async function disableMfa(request: DisableMfaRequest): Promise<DisableMfaResponse> {
-  const response = await fetch(`${API_BASE}/disable`, {
+export async function mfaDisable(data: MfaDisableRequest): Promise<MfaDisableResponse> {
+  return mfaRequest<MfaDisableResponse>(`${MFA_BASE}/disable`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(request),
+    body: JSON.stringify(data),
   });
-  return parseResponse<DisableMfaResponse>(response);
 }
 
 /**
- * Get the current user's MFA status.
+ * Get current MFA status for the authenticated user.
  * GET /api/v1/auth/mfa/status
  */
-export async function getMfaStatus(): Promise<MfaStatusResponse> {
-  const response = await fetch(`${API_BASE}/status`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
-  return parseResponse<MfaStatusResponse>(response);
+export async function mfaStatus(signal?: AbortSignal): Promise<MfaStatusResponse> {
+  return mfaRequest<MfaStatusResponse>(`${MFA_BASE}/status`, { method: 'GET', signal });
 }
 
 /**
- * Regenerate backup codes (invalidates all existing codes).
- * Requires a current TOTP code to authorise.
+ * Regenerate backup codes (requires current TOTP code).
  * POST /api/v1/auth/mfa/backup-codes/regenerate
  */
-export async function regenerateBackupCodes(
-  request: RegenerateBackupCodesRequest
-): Promise<RegenerateBackupCodesResponse> {
-  const response = await fetch(`${API_BASE}/backup-codes/regenerate`, {
+export async function mfaRegenerateBackupCodes(
+  data: MfaRegenerateBackupCodesRequest
+): Promise<MfaRegenerateBackupCodesResponse> {
+  return mfaRequest<MfaRegenerateBackupCodesResponse>(`${MFA_BASE}/backup-codes/regenerate`, {
     method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(request),
+    body: JSON.stringify(data),
   });
-  return parseResponse<RegenerateBackupCodesResponse>(response);
 }

@@ -1,12 +1,16 @@
 /**
- * Documents Page (Epic 39).
+ * Documents Page (Epic 39, gap-7a-3).
  *
  * Main page for document management with intelligence features.
+ * Browse tab uses the RLS-aware list endpoint; audience and status filters
+ * are surfaced in the UI so the server's row-level security is visible to the
+ * manager (not bypassed in the UI).
  */
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DocumentSearch } from '../components/DocumentSearch';
+import { DocumentsBrowse } from '../components/DocumentsBrowse';
 import { DocumentDetail } from './DocumentDetail';
 
 interface DocumentsPageProps {
@@ -73,9 +77,14 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
                 strokeWidth="2"
                 aria-hidden="true"
               >
-                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
-              Browse
+              Zoznam
             </button>
           </div>
         </div>
@@ -90,9 +99,11 @@ export function DocumentsPage({ organizationId, buildingId }: DocumentsPageProps
               onSelectDocument={setSelectedDocumentId}
             />
           ) : (
-            <div className="browse-placeholder">
-              <p>Browse mode - Folder tree coming soon</p>
-            </div>
+            <DocumentsBrowse
+              organizationId={organizationId}
+              buildingId={buildingId}
+              onSelectDocument={setSelectedDocumentId}
+            />
           )}
         </div>
 

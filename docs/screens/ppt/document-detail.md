@@ -9,7 +9,7 @@ implementations:
     component: DocumentDetailPage
     buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     component: DocumentDetailScreen
     buildStatus: planned
@@ -105,5 +105,7 @@ UC-08 single-document detail. Manager-side full editing; resident-side filtered 
 
 <!-- newest entries on top -->
 
+- 2026-05-24 — agent: gap-7a-4 — implemented PdfPreview component (react-pdf/pdfjs-dist v5); IntersectionObserver lazy-load on viewport entry, page navigator, zoom controls (50-200%); integrated into DocumentDetail below header; pdf-preview shared component now shipped
+- 2026-05-24 — agent: gap-7a-3 — added RLS-aware permission-denied state to DocumentDetail (403 → lock icon + Slovak message); promoted ppt-web.apiStatus partial→complete
 - 2026-05-09 — agent: design analyzed (pages/ppt-document-detail.html — single artboard: loaded-v3-published with PDF preview + metadata + 5 actions + 4-version timeline); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (5 sections), 5 states (recommended where not depicted), design-specific notes (PDF.js lazy-load + version-immutability + cross-screen attach + archive flow); declared 6 sharedComponents; added 1 relatedScreen (upload-document sibling)
 - 2026-05-08 — init: created from scan (source: sitemap)

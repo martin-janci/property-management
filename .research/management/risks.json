@@ -1,43 +1,83 @@
 {
-  "generated": "2026-05-23T17:45:00Z",
+  "generated": "2026-05-24T03:20:00Z",
   "items": [
     {
       "id": "pm-scrum-master-epic-2b-foundation-missing",
       "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
       "probability": "high",
       "impact": "high",
-      "mitigation": "Promote Epic 2B into the sprint or explicitly defer 6.2+/8A.2 until 2B lands",
+      "mitigation": "Promote Epic 2B into the sprint or explicitly defer 6.2+/8A.2 until 2B lands (DEC-001 / PR #442)",
       "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "mitigated",
       "mitigated_by": "DEC-001 (2026-05-24): Epic 2B sequenced first; 6.2-6.5 and 8A.2/8A.3 formally deferred pending 2B merge"
     },
     {
-      "id": "pm-scrum-master-review-backlog-stall",
-      "risk": "8A fully in review with 0 merged — review backlog stalling the sprint",
-      "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Prioritize 8A review this run; one reviewer-owner",
-      "owner_role": "pm-scrum-master",
-      "trigger": null,
-      "status": "open"
-    },
-    {
-      "id": "pm-scrum-master-pr-435-unreviewed",
-      "risk": "PR #435 (security fixes) lingering open un-reviewed",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Assign review owner; treat as P0 given auth scope",
-      "owner_role": "pm-scrum-master",
-      "trigger": null,
-      "status": "open"
-    },
-    {
-      "id": "pm-tech-lead-notification-ws-foundation-rework",
-      "risk": "Epics 6 & 8A built against a notification/WS foundation (Epic 2B, ADR-008) that does not yet exist — rework when it lands",
+      "id": "pm-scrum-master-pr-435-deferred-security",
+      "risk": "PR #435 merged with deferred security findings (#438/#439): P1-05 SSRF unfixed, P0-12 cookie scope, P1-04 Debug-format audit-hash domain — auth-layer issues that compound if deferred another sprint",
       "probability": "high",
       "impact": "high",
-      "mitigation": "Sequence 2B first or freeze dependent story slices behind feature flags",
+      "mitigation": "Assign pm-security sole owner of #438/#439; treat P0/P1 as pre-feature-work; SSRF fix tracked by plan security-ssrf-outbound-url-validation",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-backend-webhook-signature-ssrf",
+      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issue requests to unvalidated user/provider URLs — SSRF to 169.254.169.254 / internal services; a validate_external_url guard exists but is applied at only one of three sinks",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Extract validate_external_url to a shared module and apply at all three sinks before the request; consider re-resolving DNS at connect time (rebind defense)",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-protectedroute-fail-open",
+      "risk": "ProtectedRoute.tsx:117 role gate is fail-open: when user.role is falsy the role check is skipped and access is granted. Latent today (no route passes requiredRoles, AuthContext does not populate role) but will silently no-op the first role-gated route",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Deny on missing role; populate user.role in AuthContext; fix before role-gating goes live (fold into 79-2 / PR #444)",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-backend-81-missing-endpoints",
+      "risk": "Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist — 404 in production",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Implement the missing endpoints or feature-flag the frontend calls until they exist",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-backend-10b-silent-stub-handlers",
+      "risk": "10B handler stubs (10b-4/5/6/7) are mounted routes returning success with no business logic — callers get 200/204 for operations that never happened (silent data loss / incorrect UI state)",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Return 501 Not Implemented with a documented timeline until real handlers ship, so callers fail loudly",
+      "owner_role": "pm-backend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-oauth-10a-no-token-design",
+      "risk": "OAuth provider (10A) backend complete but no agreed token/rotation/storage design and no admin-web client-management UI — divergent implementation + functional gap before any SSO consumer goes live",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Lock ADR for 10A consent/grant + token design before pickup; schedule admin-web OAuth client management",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-churn-hot-route-files",
+      "risk": "Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk (a raw pool connection silently bypasses RLS)",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Module split; grep/clippy CI check that flags sqlx queries in these files not flowing through RlsConnection",
       "owner_role": "pm-tech-lead",
       "trigger": null,
       "status": "mitigated",
@@ -51,27 +91,7 @@
       "mitigation": "Delete dead modules; enforce single implementation per auth/building op",
       "owner_role": "pm-tech-lead",
       "trigger": null,
-      "status": "open"
-    },
-    {
-      "id": "pm-tech-lead-oauth-10a-no-token-design",
-      "risk": "OAuth provider (10A) started with no agreed token/rotation/storage design — divergent implementation across 3 stories",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Lock ADR for 10A before pickup",
-      "owner_role": "pm-tech-lead",
-      "trigger": null,
-      "status": "open"
-    },
-    {
-      "id": "pm-tech-lead-churn-hot-route-files",
-      "risk": "Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk",
-      "probability": "medium",
-      "impact": "medium",
-      "mitigation": "Module split; RLS-predicate checklist on these files",
-      "owner_role": "pm-tech-lead",
-      "trigger": null,
-      "status": "open"
+      "status": "resolved"
     }
   ]
 }
