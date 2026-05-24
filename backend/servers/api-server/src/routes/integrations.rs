@@ -2739,6 +2739,26 @@ pub async fn test_webhook(
             )
         })?;
 
+    // SSRF gate: validate the stored webhook URL before issuing the outbound
+    // POST. Although the URL was validated when the subscription was created,
+    // we re-check here as defence-in-depth: the URL could have been updated
+    // via a direct DB write or a future migration that skipped the gate.
+    if let Err(e) = common::url_validation::validate_external_url(&subscription.url) {
+        tracing::warn!(
+            subscription_id = %path.id,
+            url = %subscription.url,
+            error = %e,
+            "SSRF validation rejected webhook subscription URL"
+        );
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_WEBHOOK_URL",
+                format!("Webhook URL rejected: {}", e),
+            )),
+        ));
+    }
+
     // Build the request
     let mut request = client.post(&subscription.url).json(&test_payload);
 
