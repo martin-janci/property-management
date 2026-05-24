@@ -256,15 +256,15 @@
     {
       "task_id": "pm-tech-lead-define-oauth-provider-design",
       "branch": "auto-impl/pm-tech-lead-define-oauth-provider-design",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "generic",
       "claimed_at": "2026-05-24T08:02:00Z",
-      "last_updated": "2026-05-24T08:02:00Z",
-      "status_changed_at": "2026-05-24T08:02:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-24T08:12:00Z",
+      "status_changed_at": "2026-05-24T08:12:00Z",
+      "pr_number": 455,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/455",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=455 status=done specialist=generic note=created docs/oauth-provider-design.md (360 lines) capturing 10A token format/hashing/lifetimes/rotation/principal-kind design; Band A clean; doc-only change",
       "reviewer_summary": null
     }
   ]
