@@ -8,14 +8,53 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AnnouncementsApi } from './api';
 import type {
   AddAttachmentRequest,
+  Announcement,
+  AnnouncementSummary,
   CreateAnnouncementRequest,
   CreateCommentRequest,
   ListAnnouncementsParams,
   ListCommentsParams,
+  PaginatedResponse,
   PinAnnouncementRequest,
   ScheduleAnnouncementRequest,
   UpdateAnnouncementRequest,
 } from './types';
+
+// ============================================================================
+// Standalone fetch helpers (mirrors announcements/api.ts but avoids needing
+// an injected ApiConfig — auth tokens are handled by the axios interceptors
+// configured in ppt-web/src/lib/api.ts which patches window.fetch via the
+// same base path /api/v1).
+// ============================================================================
+
+const ANNOUNCEMENTS_BASE = '/api/v1/announcements';
+
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    ...init,
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error((err as { message?: string }).message || `HTTP ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+function buildAnnouncementQuery(params?: ListAnnouncementsParams): string {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  if (params.page) sp.set('page', params.page.toString());
+  if (params.pageSize) sp.set('pageSize', params.pageSize.toString());
+  if (params.status) sp.set('status', params.status);
+  if (params.targetType) sp.set('targetType', params.targetType);
+  if (params.authorId) sp.set('authorId', params.authorId);
+  if (params.pinned !== undefined) sp.set('pinned', params.pinned.toString());
+  if (params.fromDate) sp.set('fromDate', params.fromDate);
+  if (params.toDate) sp.set('toDate', params.toDate);
+  const q = sp.toString();
+  return q ? `?${q}` : '';
+}
 
 // Query keys factory for cache management
 export const announcementKeys = {
@@ -308,3 +347,94 @@ export const createAnnouncementHooks = (api: AnnouncementsApi) => ({
 });
 
 export type AnnouncementHooks = ReturnType<typeof createAnnouncementHooks>;
+
+// ============================================================================
+// Standalone hooks — wire directly into App.tsx route wrappers without
+// needing an instantiated AnnouncementsApi config object.
+// ============================================================================
+
+/** List announcements with optional filters */
+export function useAnnouncements(params?: ListAnnouncementsParams) {
+  return useQuery<PaginatedResponse<AnnouncementSummary>>({
+    queryKey: announcementKeys.list(params),
+    queryFn: () =>
+      fetchJson<PaginatedResponse<AnnouncementSummary>>(
+        `${ANNOUNCEMENTS_BASE}${buildAnnouncementQuery(params)}`
+      ),
+  });
+}
+
+/** Delete an announcement (draft only) */
+export function useDeleteAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`${ANNOUNCEMENTS_BASE}/${id}`, { method: 'DELETE' }).then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.statistics() });
+    },
+  });
+}
+
+/** Publish an announcement immediately */
+export function usePublishAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<{ message: string; announcement: Announcement }>(
+        `${ANNOUNCEMENTS_BASE}/${id}/publish`,
+        {
+          method: 'POST',
+        }
+      ),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.published() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.statistics() });
+    },
+  });
+}
+
+/** Archive an announcement */
+export function useArchiveAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<{ message: string; announcement: Announcement }>(
+        `${ANNOUNCEMENTS_BASE}/${id}/archive`,
+        {
+          method: 'POST',
+        }
+      ),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.published() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.statistics() });
+    },
+  });
+}
+
+/** Pin or unpin an announcement */
+export function usePinAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
+      fetchJson<{ message: string; announcement: Announcement }>(
+        `${ANNOUNCEMENTS_BASE}/${id}/pin`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ pinned }),
+        }
+      ),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.published() });
+    },
+  });
+}
