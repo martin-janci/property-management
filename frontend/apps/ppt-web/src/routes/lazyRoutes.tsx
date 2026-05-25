@@ -191,6 +191,11 @@ export const BudgetManagementPage = lazy(() =>
   import('../features/financial').then((m) => ({ default: m.BudgetManagementPage }))
 );
 
+// Reports feature (Epic 81)
+export const ReportsPage = lazy(() =>
+  import('../features/reports').then((m) => ({ default: m.ReportsPage }))
+);
+
 // Command Palette (Epic 129) - loaded eagerly since it's used globally
 // CommandPaletteDialog and CommandPaletteProvider are NOT lazy loaded
 // because they need to be available immediately for keyboard shortcuts

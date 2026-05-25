@@ -26,11 +26,14 @@ import {
   useFaults,
   useOutage,
   useOutages,
+  usePauseSchedule,
   usePinAnnouncement,
   usePublishAnnouncement,
   useResolveOutage,
+  useResumeSchedule,
   useStartOutage,
   useUpdateOutage,
+  useUpdateSchedule,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useEffect, useState } from 'react';
@@ -128,6 +131,7 @@ import {
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
+  ReportsPage,
   ResetPasswordPage,
   ServerErrorPage,
   SessionExpiredPage,
@@ -611,6 +615,9 @@ function App() {
                                   path="/financial/budgets"
                                   element={<BudgetManagementPageRoute />}
                                 />
+
+                                {/* Reports routes (Epic 81) */}
+                                <Route path="/reports" element={<ReportsPageRoute />} />
 
                                 {/* Phase 5 admin is at admin.rlt.sk now;
                                   see frontend/apps/admin-web. */}
@@ -2253,6 +2260,113 @@ function NeighborDetailRoute() {
       neighbor={neighbor}
       onBack={() => navigate('/neighbors')}
       onMessage={(n) => navigate(`/messages/new?recipientId=${n.id}`)}
+    />
+  );
+}
+
+// Reports Route Wrappers (Epic 81)
+
+/**
+ * Reports page route — wires pause/resume/update schedule hooks (Story 81.1).
+ *
+ * The EditScheduleModal pause/resume buttons call these handlers which in
+ * turn invoke the live backend endpoints PUT /api/v1/reports/schedules/{id}/pause
+ * and PUT /api/v1/reports/schedules/{id}/resume (from PR #448).
+ */
+function ReportsPageRoute() {
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const pauseSchedule = usePauseSchedule();
+  const resumeSchedule = useResumeSchedule();
+  const updateSchedule = useUpdateSchedule();
+
+  const handlePauseSchedule = async (id: string) => {
+    try {
+      await pauseSchedule.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.paused', 'Schedule paused successfully.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.pauseFailed', 'Failed to pause schedule.'),
+      });
+      throw new Error('pause failed');
+    }
+  };
+
+  const handleResumeSchedule = async (id: string) => {
+    try {
+      await resumeSchedule.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.resumed', 'Schedule resumed successfully.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.resumeFailed', 'Failed to resume schedule.'),
+      });
+      throw new Error('resume failed');
+    }
+  };
+
+  const handleUpdateSchedule = async (
+    id: string,
+    data: Partial<import('@ppt/api-client').CreateReportSchedule>
+  ) => {
+    try {
+      await updateSchedule.mutateAsync({ id, data });
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.updated', 'Schedule updated successfully.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.updateFailed', 'Failed to update schedule.'),
+      });
+      throw new Error('update failed');
+    }
+  };
+
+  return (
+    <ReportsPage
+      organizationId=""
+      dataSources={[]}
+      reports={[]}
+      schedules={[]}
+      kpis={[]}
+      buildings={[]}
+      trendAnalysis={
+        {
+          metric: '',
+          period: 'monthly',
+          data_points: [],
+          direction: 'stable',
+          change_percentage: 0,
+          start_date: '',
+          end_date: '',
+        } as import('@ppt/api-client').TrendAnalysis
+      }
+      trendLines={[]}
+      periodComparison={
+        {
+          metric: '',
+          periods: [],
+        } as import('@ppt/api-client').PeriodComparison
+      }
+      onPauseSchedule={handlePauseSchedule}
+      onResumeSchedule={handleResumeSchedule}
+      onUpdateSchedule={handleUpdateSchedule}
     />
   );
 }
