@@ -1208,15 +1208,15 @@
     {
       "task_id": "gap-8a-3-push-fanout-delivery",
       "branch": "auto-impl/gap-8a-3-push-fanout-delivery",
-      "status": "in-progress",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T19:20:00Z",
-      "status_changed_at": "2026-05-25T19:20:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T19:30:00Z",
+      "status_changed_at": "2026-05-25T19:30:00Z",
+      "pr_number": 515,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/515",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=515 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=implemented FcmHttpAdapter (real PushTransport with FCM HTTP v1 + legacy API, stale token eviction) + PushFanoutWorker background task; wired into NotificationPipeline replacing stub FcmPushAdapter; added delete_stale_token to DevicePushTokenRepository; cargo check+clippy clean",
       "reviewer_summary": null
     },
     {
