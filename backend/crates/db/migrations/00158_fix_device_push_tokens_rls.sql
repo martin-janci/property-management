@@ -16,3 +16,13 @@ CREATE POLICY device_push_tokens_user_policy
         user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID
         OR is_super_admin()
     );
+
+-- Service-role connections (no app.current_user_id set) may SELECT for push delivery fan-out.
+CREATE POLICY device_push_tokens_service_policy
+    ON device_push_tokens
+    FOR SELECT
+    USING (NULLIF(current_setting('app.current_user_id', TRUE), '') IS NULL);
+
+-- Token length guard: FCM ~152 chars, APNs 128 hex chars; 512 is a safe ceiling.
+ALTER TABLE device_push_tokens
+    ADD CONSTRAINT device_push_tokens_token_length CHECK (length(token) <= 512);
