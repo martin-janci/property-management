@@ -936,7 +936,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/505",
       "merged_at": null,
       "implementer_summary": "pr=505 status=done specialist=rust-backend note=6 comment CRUD endpoints + sanitize_markdown (ammonia) + 9 unit tests; cargo fmt+clippy clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=IDOR blocker resolved via RLS-scoped get_comments_rls/get_comment_replies_rls; realtors.rs Option<InquiryMessage> handling fixed (1a4c9301); all CI green"
     },
     {
       "task_id": "gap-6-4-pinned-announcements-api",
@@ -963,7 +963,7 @@
       "pr_number": 506,
       "pr_url": "https://github.com/martin-janci/property-management/pull/506",
       "merged_at": "2026-05-25T18:01:00Z",
-      "implementer_summary": "pr=506 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=state machine enforced in update_status (BadRequest→422); endpoint+migration already existed; cargo check+clippy clean",
+      "implementer_summary": "pr=506 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=state machine enforced in update_status (BadRequest\u2192422); endpoint+migration already existed; cargo check+clippy clean",
       "reviewer_summary": "verdict=approve note=CI 21/21 green; squash-merged sha=549bb2e96b72647445d0505b814e8c7855da4818"
     },
     {
@@ -977,7 +977,7 @@
       "pr_number": 507,
       "pr_url": "https://github.com/martin-janci/property-management/pull/507",
       "merged_at": null,
-      "implementer_summary": "pr=507 status=closed specialist=rust-backend note=inquiry IDOR regression tests (C1/C2/C3); closed without merging — check failed on respond_to_inquiry Option type mismatch (pre-existing dev bug, now fixed by PR #508)",
+      "implementer_summary": "pr=507 status=closed specialist=rust-backend note=inquiry IDOR regression tests (C1/C2/C3); closed without merging \u2014 check failed on respond_to_inquiry Option type mismatch (pre-existing dev bug, now fixed by PR #508)",
       "reviewer_summary": null
     },
     {
