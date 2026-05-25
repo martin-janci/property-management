@@ -640,14 +640,14 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T10:30:00Z",
-      "status_changed_at": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T14:10:00Z",
+      "status_changed_at": "2026-05-25T14:10:00Z",
       "pr_number": 490,
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
-      "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
-      "reviewer_summary": "verdict=changes note=both blockers unresolved: (1) migration 00158 drops service-role SELECT policy without replacement \u2014 get_tokens_for_user/delete_all_for_user return 0 rows under FORCE RLS; (2) Cargo.lock at 0.2.588 vs dev 0.2.627",
-      "reviewer_verdict": "changes"
+      "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; both blockers resolved: service policy restored in 00158, Cargo.lock synced; 15/15 CI green",
+      "reviewer_summary": "verdict=approve note=Both blockers resolved: 00158 recreates device_push_tokens_service_policy (FOR SELECT, NULLIF IS NULL) + FORCE RLS applied; all workspace crates uniformly at 0.2.638. Runtime sqlx/no RequireCapability/dual-edit acceptable. 15/15 CI green.",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "pm-backend-fix-ai-equipment-idor",
