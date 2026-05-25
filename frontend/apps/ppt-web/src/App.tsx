@@ -2298,13 +2298,13 @@ function ReportsPageRoute() {
         title: t('common.success'),
         message: t('reports.schedule.paused', 'Schedule paused successfully.'),
       });
-    } catch {
+    } catch (e) {
       showToast({
         type: 'error',
         title: t('common.error'),
         message: t('reports.schedule.pauseFailed', 'Failed to pause schedule.'),
       });
-      throw new Error('pause failed');
+      throw e;
     }
   };
 
@@ -2316,13 +2316,13 @@ function ReportsPageRoute() {
         title: t('common.success'),
         message: t('reports.schedule.resumed', 'Schedule resumed successfully.'),
       });
-    } catch {
+    } catch (e) {
       showToast({
         type: 'error',
         title: t('common.error'),
         message: t('reports.schedule.resumeFailed', 'Failed to resume schedule.'),
       });
-      throw new Error('resume failed');
+      throw e;
     }
   };
 
@@ -2337,13 +2337,13 @@ function ReportsPageRoute() {
         title: t('common.success'),
         message: t('reports.schedule.updated', 'Schedule updated successfully.'),
       });
-    } catch {
+    } catch (e) {
       showToast({
         type: 'error',
         title: t('common.error'),
         message: t('reports.schedule.updateFailed', 'Failed to update schedule.'),
       });
-      throw new Error('update failed');
+      throw e;
     }
   };
 
