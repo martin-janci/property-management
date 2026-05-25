@@ -1211,13 +1211,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T20:10:00Z",
+      "last_updated": "2026-05-25T20:13:00Z",
       "status_changed_at": "2026-05-25T19:30:00Z",
       "pr_number": 515,
       "pr_url": "https://github.com/martin-janci/property-management/pull/515",
       "merged_at": null,
       "implementer_summary": "pr=515 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=implemented FcmHttpAdapter (real PushTransport with FCM HTTP v1 + legacy API, stale token eviction) + PushFanoutWorker background task; wired into NotificationPipeline replacing stub FcmPushAdapter; added delete_stale_token to DevicePushTokenRepository; cargo check+clippy clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) service-role DELETE silently fails RLS - device_push_tokens_service_policy grants FOR SELECT only, stale-token eviction always 0 rows; (2) FCM_OAUTH_TOKEN read via std::env::var on every send instead of FcmConfig capture. Non-blocking: worker process_pending_jobs no-op, APNs sets any_sent=true masking failures. CI red on test/security-tests/rls-smoke-test"
     },
     {
       "task_id": "gap-80-3-mediation-api",
