@@ -21,6 +21,7 @@ import MembershipsPage from './pages/MembershipsPage';
 import MobileConfigPage from './pages/MobileConfigPage';
 import OAuthClientsPage from './pages/OAuthClientsPage';
 import PlatformHealthPage from './pages/PlatformHealthPage';
+import SystemAnnouncementsPage from './pages/SystemAnnouncementsPage';
 import PlatformPage from './pages/platform';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
@@ -175,6 +176,14 @@ export function App() {
                   element={
                     <ProtectedRoute requiredCapability="audit_read">
                       <PlatformHealthPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/announcements"
+                  element={
+                    <ProtectedRoute requiredCapability="site_settings_write">
+                      <SystemAnnouncementsPage />
                     </ProtectedRoute>
                   }
                 />

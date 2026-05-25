@@ -20,8 +20,11 @@ import { requestMfaChallenge } from './mfa-handler';
 import type {
   AdminPaginatedResponse,
   Agency,
+  CreateSystemAnnouncementRequest,
+  CreateSystemAnnouncementResponse,
   HealthDashboard,
   ListAgenciesParams,
+  ListSystemAnnouncementsParams,
   MetricAlert,
   MetricHistory,
   MetricThreshold,
@@ -29,8 +32,10 @@ import type {
   RegenerateSecretResponse,
   RegisterOAuthClientRequest,
   RegisterOAuthClientResponse,
+  SystemAnnouncement,
   TimeRange,
   UpdateOAuthClientRequest,
+  UpdateSystemAnnouncementRequest,
   UpdateThresholdRequest,
 } from './types';
 
@@ -245,4 +250,48 @@ export async function updateHealthThreshold(
     `${HEALTH_BASE}/thresholds/${encodeURIComponent(metricName)}`,
     { method: 'PUT', body: JSON.stringify(data) }
   );
+}
+
+// ============================================================
+// System Announcements (Epic 10B.4)
+// ============================================================
+
+const SYSANN_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin/announcements`;
+
+export async function listSystemAnnouncements(
+  params?: ListSystemAnnouncementsParams,
+  signal?: AbortSignal
+): Promise<SystemAnnouncement[]> {
+  const qs = buildQueryString(params || {});
+  return apiRequest<SystemAnnouncement[]>(`${SYSANN_BASE}${qs}`, { signal });
+}
+
+export async function getSystemAnnouncement(
+  id: string,
+  signal?: AbortSignal
+): Promise<SystemAnnouncement> {
+  return apiRequest<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, { signal });
+}
+
+export async function createSystemAnnouncement(
+  data: CreateSystemAnnouncementRequest
+): Promise<CreateSystemAnnouncementResponse> {
+  return apiRequest<CreateSystemAnnouncementResponse>(SYSANN_BASE, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSystemAnnouncement(
+  id: string,
+  data: UpdateSystemAnnouncementRequest
+): Promise<SystemAnnouncement> {
+  return apiRequest<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSystemAnnouncement(id: string): Promise<void> {
+  await apiRequest<void>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
