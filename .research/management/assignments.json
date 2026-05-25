@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T07:09:04Z",
+  "generated": "2026-05-25T07:11:25Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -652,14 +652,14 @@
     {
       "task_id": "pm-backend-fix-ai-equipment-idor",
       "branch": "auto-impl/pm-backend-fix-ai-equipment-idor",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T07:09:04Z",
-      "status_changed_at": "2026-05-25T04:25:00Z",
+      "last_updated": "2026-05-25T07:11:25Z",
+      "status_changed_at": "2026-05-25T07:11:25Z",
       "pr_number": 493,
       "pr_url": "https://github.com/martin-janci/property-management/pull/493",
-      "merged_at": null,
+      "merged_at": "2026-05-25T07:11:25Z",
       "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added; fmt fix pushed (cargo fmt gate was failing)",
       "reviewer_summary": "martin-janci (owner) approved via comment (self-PR GitHub restriction). All 6 IDOR handlers fixed with tenant-scoped WHERE clauses. Tests H1-H6 pass. Non-blocking follow-up: find_maintenance_by_id and acknowledge_prediction lack tenant scope.",
       "reviewer_verdict": "approve"
