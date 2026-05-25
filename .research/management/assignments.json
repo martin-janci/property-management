@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:32:00Z",
+  "generated": "2026-05-25T00:35:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -581,13 +581,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:20:00Z",
+      "last_updated": "2026-05-25T00:35:00Z",
       "status_changed_at": "2026-05-25T00:20:00Z",
       "pr_number": 477,
       "pr_url": "https://github.com/martin-janci/property-management/pull/477",
       "merged_at": null,
       "implementer_summary": "pr=477 status=partial specialist=react-web note=EvidenceUploader.tsx and useDraftStorage.ts missing; AC-2 and AC-4 not met; story 80-2 stays pending",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=All gap assessments confirmed: EvidenceUploader.tsx/useDraftStorage.ts genuinely missing; AC-2/AC-4 MISSING; AC-1/AC-3/AC-5 correctly partial; story 80-2 stays partial"
     },
     {
       "task_id": "gap-80-3-mediation-verify",
@@ -595,13 +595,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:32:00Z",
+      "last_updated": "2026-05-25T00:35:00Z",
       "status_changed_at": "2026-05-25T00:32:00Z",
       "pr_number": 478,
       "pr_url": "https://github.com/martin-janci/property-management/pull/478",
       "merged_at": null,
       "implementer_summary": "pr=478 status=partial specialist=react-web note=DisputeDetailRoute is inline stub; MediationPage unrouted in App.tsx; 4 blocking wiring gaps; story 80-3 stays partial",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=All gaps confirmed: DisputeDetailRoute inline stub; MediationPage unrouted; 4 mediation hooks present but unwired; story 80-3 stays partial; documentation accurate"
     }
   ]
 }
