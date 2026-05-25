@@ -48,13 +48,20 @@ pub enum AuditAction {
     ResourceUpdated,
     ResourceDeleted,
     ResourceAccessed,
-    // OAuth actions (Epic 10A)
+    // OAuth actions (Epic 10A) — explicit rename: `OAuth` snake_cases to
+    // `o_auth`, but the Postgres enum values were defined as `oauth_*`.
+    #[sqlx(rename = "oauth_authorize")]
     OAuthAuthorize,
+    #[sqlx(rename = "oauth_revoke")]
     OAuthRevoke,
+    #[sqlx(rename = "oauth_client_create")]
     OAuthClientCreate,
+    #[sqlx(rename = "oauth_client_revoke")]
     OAuthClientRevoke,
+    #[sqlx(rename = "oauth_client_secret_regenerate")]
     OAuthClientSecretRegenerate,
     // Phase 6 C17: principal_kind enforcement at token issuance
+    #[sqlx(rename = "oauth_token_denied_principal_kind")]
     OAuthTokenDeniedPrincipalKind,
     // Dev-team review P1-01: RFC 9700 refresh-token replay detection.
     // Emitted when a refresh token whose hash matches an already-revoked

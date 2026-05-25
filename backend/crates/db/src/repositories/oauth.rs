@@ -407,7 +407,7 @@ impl OAuthRepository {
         let token = sqlx::query_as::<_, OAuthRefreshToken>(
             r#"
             SELECT * FROM oauth_refresh_tokens
-            WHERE token_hash = $1 AND revoked_at IS NULL
+            WHERE token_hash = $1
             "#,
         )
         .bind(token_hash)

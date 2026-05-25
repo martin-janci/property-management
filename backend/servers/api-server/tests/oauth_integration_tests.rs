@@ -129,7 +129,7 @@ async fn count_audit_rows(pool: &PgPool, user_id: Uuid, action: &str) -> i64 {
     sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*) FROM audit_logs
-        WHERE user_id = $1 AND action = $2
+        WHERE user_id = $1 AND action::text = $2
         "#,
     )
     .bind(user_id)
@@ -800,11 +800,12 @@ mod refresh_rotation {
     #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_missing_token_returns_invalid_request(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
-        let (client_id, _client_secret, _redirect_uri) = seed_confidential_client(&pool).await;
+        let (client_id, client_secret, _redirect_uri) = seed_confidential_client(&pool).await;
 
         let body = form_body(&[
             ("grant_type", "refresh_token"),
             ("client_id", &client_id),
+            ("client_secret", &client_secret),
             // No refresh_token field
         ]);
         let resp = app
