@@ -12,7 +12,6 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
-use common::TenantRole;
 use db::models::{
     ActionItem, AddEvidence, CompleteActionItem, CreateActionItem, CreateEscalation, Dispute,
     DisputeActivity, DisputeEvidence, DisputeParty, DisputeQuery, DisputeResolution,
@@ -376,7 +375,7 @@ async fn update_dispute_status(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateStatusRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    if !user.role.as_ref().map_or(false, |r| r.is_manager()) {
+    if !user.role.as_ref().is_some_and(|r| r.is_manager()) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
