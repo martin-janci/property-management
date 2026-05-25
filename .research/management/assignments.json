@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T12:35:00Z",
+  "generated": "2026-05-25T13:10:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -839,6 +839,90 @@
       "implementer_summary": "Fixed mirror desync: added restoreStack(_:for:) to NavigationCoordinator for atomic NavigationPath+mirror-array update; updated restore(into:isAuthenticated:) to call restoreStack() instead of direct path assignment; made .login/.register ephemeral in encodeRoute() (return nil); added testRoundTripPersistenceSurvivesDoubleRestoreCycle and testLoginAndRegisterAreNotPersisted to RealityPortalTests.swift. Pushed to PR#500 for re-review.",
       "reviewer_summary": "verdict=changes note=bug: NavigationStateRestorationService.restore() sets NavigationPath but never updates mirror arrays \u2014 second save silently discards restored stack; fix: add restoreStack(_:for:) coordinator method; also: encode nil for .login/.register routes",
       "reviewer_verdict": "changes"
+    },
+    {
+      "task_id": "gap-10b-4-sysannounce-admin-impl",
+      "branch": "auto-impl/gap-10b-4-sysannounce-admin-impl",
+      "status": "review",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-25T12:47:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T13:10:00Z",
+      "pr_number": 503,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/503",
+      "merged_at": null,
+      "implementer_summary": "pr=503 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=SystemAnnouncementsPage in admin-web with full CRUD, banner preview, severity badges; api-client hooks wired; admin-web typecheck + biome clean + full Vite build pass",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-6-2-announcement-read-receipt",
+      "branch": "auto-impl/gap-6-2-announcement-read-receipt",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T12:47:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T12:47:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-79-1-api-client-core-wiring",
+      "branch": "auto-impl/gap-79-1-api-client-core-wiring",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T12:47:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T12:47:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-79-2-auth-sso-completion",
+      "branch": "auto-impl/gap-79-2-auth-sso-completion",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T13:10:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T13:10:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-7a-1-backend-multipart-upload",
+      "branch": "auto-impl/gap-7a-1-backend-multipart-upload",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T13:10:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T13:10:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-5-support-data-api",
+      "branch": "auto-impl/gap-10b-5-support-data-api",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T13:10:00Z",
+      "last_updated": "2026-05-25T13:10:00Z",
+      "status_changed_at": "2026-05-25T13:10:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
