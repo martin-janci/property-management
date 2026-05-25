@@ -1211,13 +1211,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T22:10:38Z",
+      "last_updated": "2026-05-25T22:32:00Z",
       "status_changed_at": "2026-05-25T22:10:38Z",
       "pr_number": 515,
       "pr_url": "https://github.com/martin-janci/property-management/pull/515",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=2 blocking issues: APNs-only users get spurious PushFailed error (wrong any_sent logic), migration numbered 00161 skipping 00160 with contradicting internal comment; 1 minor: delete_stale_token uses runtime sqlx::query instead of compile-time macro. cargo check + clippy both exit 0."
     },
     {
       "task_id": "gap-80-3-mediation-api",
