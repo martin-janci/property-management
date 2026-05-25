@@ -81,6 +81,20 @@ parallel.** Subagent prompt (verbatim, substitute placeholders):
 > - **Tests** — coverage of the change; was a failing-on-main test added (IG3)? Are there integration tests for cross-boundary changes?
 > - **Regressions** — adjacent files that should have been updated (callers, types, screen-map frontmatter, generated clients).
 > - **Conventions** — does the diff match the specialist's agents/*.md? (Naming, error types, RLS pattern, etc.)
+> - **JSON-key-case sanity** — when the diff touches Rust integration tests, run:
+>
+>   ```bash
+>   # Find DTOs in the diff that declare rename_all = camelCase:
+>   rg -nP '#\[serde\(.*rename_all\s*=\s*"camelCase"' backend/ --type rust | head -20
+>   # Find snake_case JSON accessors added to test code:
+>   gh pr diff <n> | rg -nP '^\+.*json\[\s*"[a-z]+_[a-z_]+"\s*\]' | head -20
+>   ```
+>
+>   If both lists overlap on the same DTO type → file a follow-up issue
+>   under **category: correctness** (this is the bug class that bit
+>   PR #473 on 2026-05-24 — `auth_tests.rs` read `json["access_token"]`
+>   against a `#[serde(rename_all="camelCase")]` `LoginResponse` and every
+>   test that called `create_authenticated_user` would have panicked).
 >
 > Findings: zero-or-many. Each finding has `category` (one of the above),
 > `severity` ∈ {high, medium, low}, `description` (1-3 sentences), and a

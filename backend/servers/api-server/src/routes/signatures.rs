@@ -1,13 +1,15 @@
-//! E-Signature API routes (Story 7B.3).
+//! E-Signature API routes (Story 7B.3 / Epic 84.2).
 //!
 //! Provides endpoints for managing electronic signature workflows on documents.
+//! Integrates with the `LightweightProvider` (self-hosted HMAC signing links) with
+//! optional DocuSign support via the `integrations::esignature` module.
 
 use std::sync::LazyLock;
 
 use api_core::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{get, post},
     Json, Router,
 };
@@ -18,7 +20,7 @@ use db::models::{
     SendReminderRequest, SendReminderResponse, SignatureRequestResponse, SignatureWebhookEvent,
     WebhookResponse,
 };
-use integrations::generate_storage_key;
+use integrations::{generate_storage_key, LightweightProvider};
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -30,6 +32,9 @@ const DEFAULT_BASE_URL: &str = "http://localhost:3000";
 /// Base URL for signature links, read from environment once.
 static BASE_URL: LazyLock<String> =
     LazyLock::new(|| std::env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string()));
+
+/// Lightweight e-signature provider, initialised once from env.
+static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(LightweightProvider::from_env);
 
 /// Create router for signature endpoints.
 pub fn router() -> Router<AppState> {
@@ -146,32 +151,39 @@ pub async fn create_signature_request(
         "Created signature request"
     );
 
-    // Send invitation emails to signers
-    let subject = signature_request
-        .subject
-        .clone()
-        .unwrap_or_else(|| "You have been requested to sign a document".to_string());
+    // Send invitation emails to signers using the lightweight provider
+    // to generate HMAC-signed signing URLs (Story 84.2).
+    let expires_str = signature_request
+        .expires_at
+        .map(|e| e.format("%Y-%m-%d").to_string());
+    let doc_title = document.title.clone();
+    let requester_display = if auth.name.is_empty() {
+        auth.email.clone()
+    } else {
+        auth.name.clone()
+    };
 
     for signer in &signature_request.signers {
-        let sign_url = format!(
-            "{}/sign?request_id={}&email={}",
-            *BASE_URL, signature_request.id, signer.email
-        );
-        let email_body = format!(
-            "Hello {},\n\nYou have been requested to electronically sign a document.\n\n{}\n\nPlease click the link below to review and sign the document:\n\n{}\n\nIf you have any questions, please contact the person who sent this request.\n\nBest regards,\nProperty Management System",
-            signer.name,
-            signature_request.message.as_deref().unwrap_or(""),
-            sign_url
-        );
+        // Build a HMAC-secured signing URL via the lightweight provider.
+        let sign_url = ESIGN_PROVIDER
+            .build_signing_url(&signer.email, &signature_request.id.to_string())
+            .unwrap_or_else(|_| {
+                format!(
+                    "{}/sign?request_id={}&email={}",
+                    *BASE_URL, signature_request.id, signer.email
+                )
+            });
 
         if let Err(e) = state
             .email_service
-            .send_notification_email(
+            .send_signature_request_email(
                 &signer.email,
                 &signer.name,
-                &subject,
-                &email_body,
-                &Locale::English,
+                &doc_title,
+                &requester_display,
+                &sign_url,
+                signature_request.message.as_deref(),
+                expires_str.as_deref(),
             )
             .await
         {
@@ -181,7 +193,6 @@ pub async fn create_signature_request(
                 signature_request_id = %signature_request.id,
                 "Failed to send signature request email to signer"
             );
-            // Continue sending to other signers even if one fails
         }
     }
 
@@ -250,11 +261,12 @@ pub async fn list_signature_requests(
 /// Get a signature request by ID.
 pub async fn get_signature_request(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
     let request = state
         .signature_request_repo
-        .find_by_id(id)
+        .find_by_id_rls(&mut **rls.conn(), id)
         .await
         .map_err(|e| {
             (
@@ -271,6 +283,8 @@ pub async fn get_signature_request(
                 )),
             )
         })?;
+
+    rls.release().await;
 
     let signer_counts = request.signer_counts();
 
@@ -283,12 +297,13 @@ pub async fn get_signature_request(
 /// Send reminder to pending signers.
 pub async fn send_reminder(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(request): Json<SendReminderRequest>,
 ) -> Result<Json<SendReminderResponse>, (StatusCode, Json<ErrorResponse>)> {
     let signature_request = state
         .signature_request_repo
-        .find_by_id(id)
+        .find_by_id_rls(&mut **rls.conn(), id)
         .await
         .map_err(|e| {
             (
@@ -305,6 +320,7 @@ pub async fn send_reminder(
                 )),
             )
         })?;
+    rls.release().await;
 
     // Check if request is still active
     if !signature_request.can_cancel() {
@@ -341,34 +357,34 @@ pub async fn send_reminder(
         ));
     }
 
-    // Send reminder emails to pending signers
-    let subject = format!(
-        "Reminder: {}",
-        signature_request
-            .subject
-            .as_deref()
-            .unwrap_or("Signature request pending")
-    );
+    // Send reminder emails using the dedicated signature reminder template (Story 84.2).
     let mut reminders_sent = 0i32;
+    let expires_str = signature_request
+        .expires_at
+        .map(|e| e.format("%Y-%m-%d").to_string());
+    let doc_label = signature_request
+        .subject
+        .clone()
+        .unwrap_or_else(|| "Document".to_string());
 
     for signer in pending_signers {
-        let sign_url = format!(
-            "{}/sign?request_id={}&email={}",
-            *BASE_URL, signature_request.id, signer.email
-        );
-        let email_body = format!(
-            "Hello {},\n\nThis is a reminder that you have a pending signature request.\n\nPlease click the link below to review and sign the document:\n\n{}\n\nIf you have any questions, please contact the person who sent this request.\n\nBest regards,\nProperty Management System",
-            signer.name, sign_url
-        );
+        let sign_url = ESIGN_PROVIDER
+            .build_signing_url(&signer.email, &signature_request.id.to_string())
+            .unwrap_or_else(|_| {
+                format!(
+                    "{}/sign?request_id={}&email={}",
+                    *BASE_URL, signature_request.id, signer.email
+                )
+            });
 
         if let Err(e) = state
             .email_service
-            .send_notification_email(
+            .send_signature_reminder_email(
                 &signer.email,
                 &signer.name,
-                &subject,
-                &email_body,
-                &Locale::English,
+                &doc_label,
+                &sign_url,
+                expires_str.as_deref(),
             )
             .await
         {
@@ -378,7 +394,6 @@ pub async fn send_reminder(
                 signature_request_id = %id,
                 "Failed to send reminder email to signer"
             );
-            // Continue sending to other signers even if one fails
         } else {
             reminders_sent += 1;
         }
@@ -399,9 +414,33 @@ pub async fn send_reminder(
 /// Cancel a signature request.
 pub async fn cancel_signature_request(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(request): Json<CancelSignatureRequestRequest>,
 ) -> Result<Json<CancelSignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the request exists and belongs to this org (RLS-enforced).
+    let exists = state
+        .signature_request_repo
+        .find_by_id_rls(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    rls.release().await;
+
+    if exists.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Signature request not found",
+            )),
+        ));
+    }
+
     let signature_request = state
         .signature_request_repo
         .cancel(id, request.reason.as_deref())
@@ -482,9 +521,26 @@ pub async fn cancel_signature_request(
 /// Handle webhook from e-signature provider.
 pub async fn handle_webhook(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(provider): Path<String>,
     Json(event): Json<SignatureWebhookEvent>,
 ) -> Result<Json<WebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the webhook secret header to prevent forged events.
+    let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
+    if !expected_secret.is_empty() {
+        let provided = headers
+            .get("x-webhook-secret")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        if provided != expected_secret {
+            warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
+            ));
+        }
+    }
+
     info!(
         provider = %provider,
         event_type = %event.event_type,
@@ -518,9 +574,11 @@ pub async fn handle_webhook(
             )
         })?;
 
-    // Process signer-specific events
-    if let (Some(signer_email), Some(signer_status)) = (&event.signer_email, &event.signer_status) {
-        state
+    // Process signer-specific events and send appropriate email notifications (Story 84.2).
+    let updated_request = if let (Some(signer_email), Some(signer_status)) =
+        (&event.signer_email, &event.signer_status)
+    {
+        let updated = state
             .signature_request_repo
             .update_signer_status(
                 signature_request.id,
@@ -542,9 +600,73 @@ pub async fn handle_webhook(
             new_status = ?signer_status,
             "Updated signer status from webhook"
         );
-    }
 
-    // Handle completion event with signed document (Story 88.2)
+        // Send decline notification to the requester when a signer declines (Story 84.2).
+        if matches!(signer_status, db::models::SignerStatus::Declined) {
+            let manage_url = format!(
+                "{}/documents/{}/signatures/{}",
+                *BASE_URL, signature_request.document_id, signature_request.id
+            );
+            let signer_name = signature_request
+                .signers
+                .iter()
+                .find(|s| s.email.eq_ignore_ascii_case(signer_email))
+                .map(|s| s.name.as_str())
+                .unwrap_or("Signer");
+            match state
+                .user_repo
+                .find_by_id(signature_request.created_by)
+                .await
+            {
+                Ok(Some(requester)) => {
+                    if let Err(e) = state
+                        .email_service
+                        .send_signature_declined_email(
+                            &requester.email,
+                            &requester.name,
+                            signature_request.subject.as_deref().unwrap_or("Document"),
+                            signer_name,
+                            signer_email,
+                            event.decline_reason.as_deref(),
+                            &manage_url,
+                        )
+                        .await
+                    {
+                        warn!(
+                            error = %e,
+                            signature_request_id = %signature_request.id,
+                            "Failed to send decline notification to requester"
+                        );
+                    } else {
+                        info!(
+                            signature_request_id = %signature_request.id,
+                            requester_email = %requester.email,
+                            "Sent decline notification to requester"
+                        );
+                    }
+                }
+                Ok(None) => {
+                    warn!(
+                        signature_request_id = %signature_request.id,
+                        "Requester not found, skipping decline notification"
+                    );
+                }
+                Err(e) => {
+                    warn!(
+                        error = %e,
+                        signature_request_id = %signature_request.id,
+                        "Failed to look up requester for decline notification"
+                    );
+                }
+            }
+        }
+
+        updated
+    } else {
+        signature_request.clone()
+    };
+
+    // Handle completion event: store signed document and notify requester (Stories 84.2, 88.2).
     if event.event_type == "completed" {
         if let Some(signed_url) = &event.signed_document_url {
             match store_signed_document(&state, &signature_request, signed_url).await {
@@ -556,13 +678,63 @@ pub async fn handle_webhook(
                     );
                 }
                 Err(e) => {
-                    // Log error but don't fail the webhook - document can be retrieved later
                     error!(
                         signature_request_id = %signature_request.id,
                         error = %e,
                         "Failed to store signed document"
                     );
                 }
+            }
+        }
+
+        // Notify requester that all signatures have been collected.
+        let manage_url = format!(
+            "{}/documents/{}/signatures/{}",
+            *BASE_URL, signature_request.document_id, signature_request.id
+        );
+        match state
+            .user_repo
+            .find_by_id(signature_request.created_by)
+            .await
+        {
+            Ok(Some(requester)) => {
+                let signers_count = updated_request.signers.len();
+                if let Err(e) = state
+                    .email_service
+                    .send_signature_completed_email(
+                        &requester.email,
+                        &requester.name,
+                        signature_request.subject.as_deref().unwrap_or("Document"),
+                        signers_count,
+                        &manage_url,
+                    )
+                    .await
+                {
+                    warn!(
+                        error = %e,
+                        signature_request_id = %signature_request.id,
+                        "Failed to send completion notification to requester"
+                    );
+                } else {
+                    info!(
+                        signature_request_id = %signature_request.id,
+                        requester_email = %requester.email,
+                        "Sent completion notification to requester"
+                    );
+                }
+            }
+            Ok(None) => {
+                warn!(
+                    signature_request_id = %signature_request.id,
+                    "Requester not found, skipping completion notification"
+                );
+            }
+            Err(e) => {
+                warn!(
+                    error = %e,
+                    signature_request_id = %signature_request.id,
+                    "Failed to look up requester for completion notification"
+                );
             }
         }
     }

@@ -35,6 +35,7 @@ the loop by getting a green, approved PR actually merged.
 | `strategy`     | `squash`                           | `squash` / `rebase` / `merge`                      |
 | `delete_branch`| `true`                             | Pass `--delete-branch` to `gh pr merge`            |
 | `dry_run`      | `false`                            | Run preconditions + conflict resolve, skip the merge call |
+| `mode`         | `merge`                            | `merge` (default — full flow) or `rebase-only` (run Step 2 conflict-resolver + push, then return without merging — used by dispatcher Phase 5.6 to unstick stale-approved PRs) |
 
 ## Step 1 — Preconditions (HARD GATES — abort if any fail)
 
@@ -124,6 +125,23 @@ If auto-resolve succeeded:
    done
    ```
    If still not `MERGEABLE` after 25s → return `merged=false note=mergeable-recompute-timeout`.
+
+### `mode=rebase-only` short-circuit
+
+If invoked with `mode=rebase-only`, complete Step 2 (auto-resolve and push)
+then **return without invoking `gh pr merge`**. Return contract is the same
+shape, but the value semantics shift:
+
+```
+merged=<true|false> pr=<n> note=rebase-only:<rebased|conflict-in:<paths>|already-clean>
+```
+
+- `merged=true note=rebase-only:rebased` — base merged, mechanical conflicts auto-resolved, push succeeded.
+- `merged=true note=rebase-only:already-clean` — branch was already MERGEABLE; no push needed.
+- `merged=false note=rebase-only:conflict-in:<paths>` — real code conflict; manual rebase required.
+
+The dispatcher's Phase 5.6 uses this mode. Phase 5.5 (next cycle) will pick
+the now-clean PR up and run the full merge flow.
 
 ## Step 3 — Merge
 
