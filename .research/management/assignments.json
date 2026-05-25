@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T05:16:36Z",
+  "generated": "2026-05-25T05:19:48Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -553,13 +553,14 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T05:19:48Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 475,
       "pr_url": "https://github.com/martin-janci/property-management/pull/475",
       "merged_at": null,
       "implementer_summary": "pr=475 status=done specialist=react-web note=AnnouncementComments component + 3 hooks wired; depth-3 reply cap; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=changes note=i18n gaps (AnnouncementComments fully untranslated, ~12 toast keys missing from en.json), isManager missing technical_manager/property_manager roles, and Story 6.3 comment endpoints absent from sitemap/screen-map endpoints list; hook patterns, TanStack Query keys, cache invalidation, commentsEnabled guard, and depth-3 nesting cap are all correct"
+      "reviewer_summary": "verdict=approve note=all three issues fixed: i18n complete (12 comment keys + toast keys), isManager includes technical_manager+property_manager, sitemap+screen-map updated with all 6 comment endpoints; no new issues",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "gap-6-4-pin-web-ui",
@@ -623,13 +624,14 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T05:19:48Z",
       "status_changed_at": "2026-05-25T02:44:00Z",
       "pr_number": 489,
       "pr_url": "https://github.com/martin-janci/property-management/pull/489",
       "merged_at": null,
       "implementer_summary": "pr=489 status=done specialist=react-web note=wired useReportExecutionHistory/useDownloadReport/useRetryReportExecution into ReportsPageRoute; added ReportsPage lazy route; fixed pre-existing TrendAnalysis+PeriodComparison TS stubs; typecheck+biome lint clean; Vite build exit 0",
-      "reviewer_summary": "verdict=changes note=two blocking issues: offset missing from queryKey (pagination broken) and /reports route not behind ProtectedRoute; plus missing screen-map update"
+      "reviewer_summary": "verdict=approve note=all three issues fixed: offset in queryKey (pagination cache correct), ProtectedRoute on /reports (on dev), screen-map created; execution hooks wired correctly with 10s polling; no blocking issues",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "gap-8a-3-mobile-push",
