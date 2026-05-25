@@ -714,9 +714,16 @@ export default function SystemAnnouncementsPage() {
           >
             <thead>
               <tr style={{ borderBottom: '1px solid var(--ppt-border-default, #e5e7eb)' }}>
-                {['Title', 'Severity', 'Status', 'Publish at', 'Expire at', 'Actions'].map((h) => (
+                {[
+                  { key: 'title', label: t('admin.announcements.col.title', 'Title') },
+                  { key: 'severity', label: t('admin.announcements.col.severity', 'Severity') },
+                  { key: 'status', label: t('admin.announcements.col.status', 'Status') },
+                  { key: 'publishAt', label: t('admin.announcements.col.publishAt', 'Publish at') },
+                  { key: 'expireAt', label: t('admin.announcements.col.expireAt', 'Expire at') },
+                  { key: 'actions', label: t('admin.announcements.col.actions', 'Actions') },
+                ].map(({ key, label }) => (
                   <th
-                    key={h}
+                    key={key}
                     style={{
                       padding: '8px 12px',
                       textAlign: 'left',
@@ -727,7 +734,7 @@ export default function SystemAnnouncementsPage() {
                       letterSpacing: '0.04em',
                     }}
                   >
-                    {h}
+                    {label}
                   </th>
                 ))}
               </tr>
