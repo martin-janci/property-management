@@ -140,6 +140,17 @@
         "secretRegeneratedTitle": "Tajemství obnoveno"
       }
     },
+    "health": {
+      "activeOnly": "Pouze aktivní",
+      "allAlerts": "Všechna upozornění",
+      "alertsTitle": "Upozornění",
+      "loadError": "Nepodařilo se načíst přehled zdraví platformy. Zkontrolujte připojení a zkuste znovu.",
+      "metricsTitle": "Aktuální metriky",
+      "navLabel": "Zdraví",
+      "noMetrics": "Zatím nebyly zaznamenány žádné metriky.",
+      "thresholdsTitle": "Prahové hodnoty metrik",
+      "title": "Zdraví platformy"
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Režim údržby",
