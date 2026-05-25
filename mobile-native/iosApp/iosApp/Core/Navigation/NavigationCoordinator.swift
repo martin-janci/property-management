@@ -2,6 +2,8 @@ import Foundation
 import Observation
 import SwiftUI
 
+// MARK: - Tab
+
 /// Tab enumeration for the main tab bar.
 ///
 /// Epic 82 - Story 82.2: Navigation and Routing
@@ -49,6 +51,10 @@ enum Tab: String, CaseIterable, Hashable {
 ///
 /// Manages tab selection and navigation paths for each tab.
 ///
+/// Also maintains per-tab ``routeMirror`` arrays that shadow the opaque
+/// ``NavigationPath`` values so ``NavigationStateRestorationService`` can
+/// serialise the stacks without having to decode the path internals.
+///
 /// Epic 82 - Story 82.2: Navigation and Routing
 @Observable
 final class NavigationCoordinator {
@@ -78,6 +84,28 @@ final class NavigationCoordinator {
     /// Intended destination after login (for auth-protected routes).
     var pendingDestination: Route?
 
+    // MARK: - Route Mirrors (for state restoration serialisation)
+
+    /// Mirrors of each tab's navigation stack as plain `Route` arrays.
+    /// These shadow the opaque `NavigationPath` values so the restoration
+    /// service can encode/decode them without relying on path internals.
+    private(set) var homeRoutes: [Route] = []
+    private(set) var searchRoutes: [Route] = []
+    private(set) var favoritesRoutes: [Route] = []
+    private(set) var inquiriesRoutes: [Route] = []
+    private(set) var accountRoutes: [Route] = []
+
+    /// Returns the route mirror for the given tab.
+    func routeMirror(for tab: Tab) -> [Route] {
+        switch tab {
+        case .home:      return homeRoutes
+        case .search:    return searchRoutes
+        case .favorites: return favoritesRoutes
+        case .inquiries: return inquiriesRoutes
+        case .account:   return accountRoutes
+        }
+    }
+
     // MARK: - Navigation Methods
 
     /// Navigate to a specific route.
@@ -88,18 +116,20 @@ final class NavigationCoordinator {
             selectedTab = .home
             if case .featuredListings = route {
                 homePath.append(route)
+                homeRoutes.append(route)
             }
 
         case .search, .searchResults:
             selectedTab = .search
             if case .searchResults = route {
                 searchPath.append(route)
+                searchRoutes.append(route)
             }
 
         case .listingDetail, .listingGallery, .listingMap:
             // Listings can be accessed from multiple tabs
             // Append to current tab's path
-            currentPath.append(route)
+            appendToCurrent(route)
 
         case .favorites:
             selectedTab = .favorites
@@ -108,20 +138,25 @@ final class NavigationCoordinator {
             selectedTab = .inquiries
             if case .inquiryDetail = route {
                 inquiriesPath.append(route)
+                inquiriesRoutes.append(route)
             } else if case .newInquiry = route {
                 inquiriesPath.append(route)
+                inquiriesRoutes.append(route)
             }
 
         case .account, .profile, .settings:
             selectedTab = .account
             if case .profile = route {
                 accountPath.append(route)
+                accountRoutes.append(route)
             } else if case .settings = route {
                 accountPath.append(route)
+                accountRoutes.append(route)
             }
 
         case .login, .register:
             accountPath.append(route)
+            accountRoutes.append(route)
 
         case .savedSearches:
             // Saved searches are personal — show inside the account tab
@@ -129,12 +164,13 @@ final class NavigationCoordinator {
             // saved data (favorites is its own tab; inquiries too).
             selectedTab = .account
             accountPath.append(route)
+            accountRoutes.append(route)
 
         case .compareListings:
             // Comparison is a cross-tab feature — opening it from
             // favorites/search/listing-detail should preserve the
             // user's current tab and stack onto it.
-            currentPath.append(route)
+            appendToCurrent(route)
 
         case .realtors, .agencies:
             // Directory browsers belong to the search tab so the user
@@ -142,6 +178,7 @@ final class NavigationCoordinator {
             // realtor/agency" without leaving the tab.
             selectedTab = .search
             searchPath.append(route)
+            searchRoutes.append(route)
         }
     }
 
@@ -149,15 +186,15 @@ final class NavigationCoordinator {
     func pop() {
         switch selectedTab {
         case .home:
-            if !homePath.isEmpty { homePath.removeLast() }
+            if !homePath.isEmpty { homePath.removeLast(); if !homeRoutes.isEmpty { homeRoutes.removeLast() } }
         case .search:
-            if !searchPath.isEmpty { searchPath.removeLast() }
+            if !searchPath.isEmpty { searchPath.removeLast(); if !searchRoutes.isEmpty { searchRoutes.removeLast() } }
         case .favorites:
-            if !favoritesPath.isEmpty { favoritesPath.removeLast() }
+            if !favoritesPath.isEmpty { favoritesPath.removeLast(); if !favoritesRoutes.isEmpty { favoritesRoutes.removeLast() } }
         case .inquiries:
-            if !inquiriesPath.isEmpty { inquiriesPath.removeLast() }
+            if !inquiriesPath.isEmpty { inquiriesPath.removeLast(); if !inquiriesRoutes.isEmpty { inquiriesRoutes.removeLast() } }
         case .account:
-            if !accountPath.isEmpty { accountPath.removeLast() }
+            if !accountPath.isEmpty { accountPath.removeLast(); if !accountRoutes.isEmpty { accountRoutes.removeLast() } }
         }
     }
 
@@ -165,26 +202,26 @@ final class NavigationCoordinator {
     func popToRoot() {
         switch selectedTab {
         case .home:
-            homePath = NavigationPath()
+            homePath = NavigationPath(); homeRoutes = []
         case .search:
-            searchPath = NavigationPath()
+            searchPath = NavigationPath(); searchRoutes = []
         case .favorites:
-            favoritesPath = NavigationPath()
+            favoritesPath = NavigationPath(); favoritesRoutes = []
         case .inquiries:
-            inquiriesPath = NavigationPath()
+            inquiriesPath = NavigationPath(); inquiriesRoutes = []
         case .account:
-            accountPath = NavigationPath()
+            accountPath = NavigationPath(); accountRoutes = []
         }
     }
 
     /// Reset all navigation state.
     func reset() {
         selectedTab = .home
-        homePath = NavigationPath()
-        searchPath = NavigationPath()
-        favoritesPath = NavigationPath()
-        inquiriesPath = NavigationPath()
-        accountPath = NavigationPath()
+        homePath = NavigationPath();      homeRoutes = []
+        searchPath = NavigationPath();    searchRoutes = []
+        favoritesPath = NavigationPath(); favoritesRoutes = []
+        inquiriesPath = NavigationPath(); inquiriesRoutes = []
+        accountPath = NavigationPath();   accountRoutes = []
         pendingDestination = nil
     }
 
@@ -201,17 +238,14 @@ final class NavigationCoordinator {
         }
     }
 
-    /// Current navigation path based on selected tab.
-    private var currentPath: NavigationPath {
-        get { path(for: selectedTab) }
-        set {
-            switch selectedTab {
-            case .home: homePath = newValue
-            case .search: searchPath = newValue
-            case .favorites: favoritesPath = newValue
-            case .inquiries: inquiriesPath = newValue
-            case .account: accountPath = newValue
-            }
+    /// Append a route to the current tab's path and its mirror array.
+    private func appendToCurrent(_ route: Route) {
+        switch selectedTab {
+        case .home:      homePath.append(route);      homeRoutes.append(route)
+        case .search:    searchPath.append(route);    searchRoutes.append(route)
+        case .favorites: favoritesPath.append(route); favoritesRoutes.append(route)
+        case .inquiries: inquiriesPath.append(route); inquiriesRoutes.append(route)
+        case .account:   accountPath.append(route);   accountRoutes.append(route)
         }
     }
 }
@@ -220,63 +254,27 @@ final class NavigationCoordinator {
 
 extension NavigationCoordinator {
     /// Handle a deep link URL.
+    ///
+    /// SSO callbacks are **not** processed here — the app-level handler
+    /// (``RealityPortalApp``) intercepts those first and calls
+    /// ``AuthManager.loginWithSsoToken(_:)`` before optionally navigating
+    /// to a ``pendingDestination``.
+    ///
     /// - Parameter url: The incoming URL.
-    /// - Returns: Whether the URL was handled.
+    /// - Returns: Whether the URL was handled and a navigation was triggered.
     @discardableResult
     func handleDeepLink(_ url: URL) -> Bool {
-        guard let route = parseDeepLink(url) else {
+        let result = DeepLinkHandler().parse(url)
+        switch result {
+        case .route(let route):
+            navigate(to: route)
+            return true
+        case .ssoCallback:
+            // SSO is handled at the app level — signal "handled" so the
+            // system doesn't log it as unrecognised, but don't navigate.
+            return true
+        case .unrecognized:
             return false
         }
-
-        navigate(to: route)
-        return true
-    }
-
-    /// Parse a deep link URL into a route.
-    /// - Parameter url: The URL to parse.
-    /// - Returns: The corresponding route, or nil if invalid.
-    private func parseDeepLink(_ url: URL) -> Route? {
-        // Handle custom URL scheme: realityportal://listing/123
-        // Handle universal link: https://reality.example.com/listing/123
-
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
-            return nil
-        }
-
-        let pathComponents = components.path.split(separator: "/").map(String.init)
-
-        // Check for SSO callback
-        if components.host == "sso",
-           let token = components.queryItems?.first(where: { $0.name == "token" })?.value {
-            // Handle SSO token - this should be processed by AuthManager
-            _ = token
-            return .account
-        }
-
-        // Handle listing deep link
-        if let firstComponent = pathComponents.first {
-            switch firstComponent {
-            case "listing":
-                if let id = pathComponents.dropFirst().first {
-                    return .listingDetail(id: id)
-                }
-            case "search":
-                let query = components.queryItems?.first(where: { $0.name == "q" })?.value ?? ""
-                return .searchResults(query: query, filters: nil)
-            case "favorites":
-                return .favorites
-            case "inquiries":
-                if let id = pathComponents.dropFirst().first {
-                    return .inquiryDetail(id: id)
-                }
-                return .inquiries
-            case "account":
-                return .account
-            default:
-                break
-            }
-        }
-
-        return nil
     }
 }
