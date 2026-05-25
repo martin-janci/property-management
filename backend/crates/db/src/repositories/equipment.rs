@@ -157,12 +157,11 @@ impl EquipmentRepository {
     /// equipment belonging to org A (returns `false` / not-found rather than
     /// deleting the row).
     pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
-        let result =
-            sqlx::query("DELETE FROM equipment WHERE id = $1 AND organization_id = $2")
-                .bind(id)
-                .bind(org_id)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query("DELETE FROM equipment WHERE id = $1 AND organization_id = $2")
+            .bind(id)
+            .bind(org_id)
+            .execute(&self.pool)
+            .await?;
         Ok(result.rows_affected() > 0)
     }
 

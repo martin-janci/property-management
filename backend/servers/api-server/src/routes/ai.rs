@@ -1205,11 +1205,18 @@ async fn update_maintenance(
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
     // SECURITY: derive the tenant from the verified JWT — never trust client input.
     let tenant_id = require_tenant_id(&principal)?;
-    match state.equipment_repo.update_maintenance(id, tenant_id, req).await {
+    match state
+        .equipment_repo
+        .update_maintenance(id, tenant_id, req)
+        .await
+    {
         Ok(record) => Ok(Json(serde_json::json!(record))),
         Err(sqlx::Error::RowNotFound) => Err((
             StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", "Maintenance record not found")),
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Maintenance record not found",
+            )),
         )),
         Err(e) => {
             tracing::error!("Failed to update maintenance: {}", e);

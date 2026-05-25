@@ -201,9 +201,7 @@ async fn delete_equipment_from_other_org_is_rejected(pool: PgPool) {
     let ctx_b = tenant_context_header(org_b, user_b);
     let uri = format!("/api/v1/ai/equipment/{}", equipment_in_a);
 
-    let response = app
-        .execute(req(Method::DELETE, &uri, &ctx_b, None))
-        .await;
+    let response = app.execute(req(Method::DELETE, &uri, &ctx_b, None)).await;
 
     assert_rejected(response.status, "delete_equipment cross-tenant");
 
@@ -212,10 +210,7 @@ async fn delete_equipment_from_other_org_is_rejected(pool: PgPool) {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!(
-        count, 1,
-        "equipment row must survive cross-tenant DELETE"
-    );
+    assert_eq!(count, 1, "equipment row must survive cross-tenant DELETE");
 }
 
 // ---------------------------------------------------------------------------
