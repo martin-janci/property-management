@@ -661,7 +661,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/493",
       "merged_at": null,
       "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added; fmt fix pushed (cargo fmt gate was failing)",
-      "reviewer_summary": "verdict=approve note=all 6 handlers correctly tenant-scoped via require_tenant_id+WHERE org_id; UPDATE/DELETE/EXISTS guards verified; 6-case regression test confirmed; CI green (check/test/security-tests/rls-smoke pass); 2 pre-existing gaps noted (find_maintenance_by_id, acknowledge_prediction) as follow-up"
+      "reviewer_summary": "martin-janci (owner) approved via comment (self-PR GitHub restriction). All 6 IDOR handlers fixed with tenant-scoped WHERE clauses. Tests H1-H6 pass. Non-blocking follow-up: find_maintenance_by_id and acknowledge_prediction lack tenant scope.",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "pm-frontend-sequence-epic6-announcement-drafts",
