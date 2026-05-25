@@ -733,7 +733,7 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     description: 'List all platform-wide system announcements',
     tags: ['SystemAnnouncements'],
     queryParams: [
-      { name: 'include_deleted', type: 'boolean', required: false, defaultValue: false },
+      { name: 'include_deleted', type: 'string', required: false, defaultValue: 'false' },
     ],
     responses: [{ statusCode: 200, description: 'List of system announcements' }],
     auth: { required: true },
