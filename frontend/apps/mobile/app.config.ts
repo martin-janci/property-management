@@ -19,9 +19,9 @@
  *   APP_ENV=production expo build   # build with production config
  */
 
+import * as path from 'node:path';
 import * as dotenv from 'dotenv';
-import * as path from 'path';
-import type { ExpoConfig, ConfigContext } from 'expo/config';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 /** Supported environments */
 type AppEnvironment = 'development' | 'staging' | 'production';
@@ -51,17 +51,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   // Resolved values (env file takes priority, then process.env fallback)
   const apiBaseUrl =
-    envVars.API_BASE_URL ??
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    'https://api.ppt.example.com';
+    envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
 
   const wsBaseUrl =
-    envVars.WS_BASE_URL ??
-    process.env.EXPO_PUBLIC_WS_BASE_URL ??
-    apiBaseUrl.replace(/^http/, 'ws');
+    envVars.WS_BASE_URL ?? process.env.EXPO_PUBLIC_WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
 
-  const environment: AppEnvironment =
-    (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
+  const environment: AppEnvironment = (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
 
   const debugMode =
     envVars.DEBUG_MODE === 'true' || envVars.DEBUG_MODE === '1' || appEnv === 'development';
@@ -106,10 +101,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: 'three.two.bit.ppt.management',
     },
 
-    plugins: [
-      'expo-localization',
-      'expo-secure-store',
-    ],
+    plugins: ['expo-localization', 'expo-secure-store'],
 
     /**
      * `extra` block — accessible anywhere in JS via:
