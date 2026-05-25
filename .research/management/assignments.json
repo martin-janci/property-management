@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T02:44:00Z",
+  "generated": "2026-05-25T04:07:30Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -307,7 +307,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
       "merged_at": "2026-05-24T17:45:00Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
+      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed — IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
     },
     {
       "task_id": "gap-2b-notification-pipeline",
@@ -321,7 +321,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
-      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge"
+      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass — ready to merge"
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
@@ -433,7 +433,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/468",
       "merged_at": null,
       "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key \u2014 all green"
+      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key — all green"
     },
     {
       "task_id": "gap-8a-3-websocket-realtime-sync",
@@ -447,7 +447,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": "2026-05-25T01:35:09Z",
       "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
-      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db \u2014 user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER \u2014 fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db — user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER — fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
     },
     {
       "task_id": "gap-10b-3-admin-health-ui",
@@ -460,8 +460,8 @@
       "pr_number": 471,
       "pr_url": "https://github.com/martin-janci/property-management/pull/471",
       "merged_at": "2026-05-24T20:51:57Z",
-      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped \u2014 node_modules not installed in environment",
-      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() \u2014 raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
+      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped — node_modules not installed in environment",
+      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() — raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
     },
     {
       "task_id": "gap-9-1-mfa-e2e-verify",
@@ -475,7 +475,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/473",
       "merged_at": "2026-05-25T01:35:17Z",
       "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
-      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] \u2014 every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
+      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] — every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
     },
     {
       "task_id": "gap-10b-4-system-announcements-impl",
@@ -539,7 +539,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T02:12:20Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 474,
       "pr_url": "https://github.com/martin-janci/property-management/pull/474",
@@ -553,7 +553,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T02:12:20Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 475,
       "pr_url": "https://github.com/martin-janci/property-management/pull/475",
@@ -567,7 +567,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T02:12:20Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T00:42:00Z",
       "pr_number": 479,
       "pr_url": "https://github.com/martin-janci/property-management/pull/479",
@@ -581,7 +581,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T02:12:20Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T00:20:00Z",
       "pr_number": 477,
       "pr_url": "https://github.com/martin-janci/property-management/pull/477",
@@ -595,7 +595,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T02:12:20Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T00:32:00Z",
       "pr_number": 478,
       "pr_url": "https://github.com/martin-janci/property-management/pull/478",
@@ -609,12 +609,12 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T02:31:00Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T02:31:00Z",
       "pr_number": 488,
       "pr_url": "https://github.com/martin-janci/property-management/pull/488",
       "merged_at": null,
-      "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped \u2014 no node_modules in env",
+      "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped — no node_modules in env",
       "reviewer_summary": null
     },
     {
@@ -623,7 +623,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T02:44:00Z",
+      "last_updated": "2026-05-25T04:07:30Z",
       "status_changed_at": "2026-05-25T02:44:00Z",
       "pr_number": 489,
       "pr_url": "https://github.com/martin-janci/property-management/pull/489",
@@ -637,12 +637,54 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T04:00:00Z",
-      "status_changed_at": "2026-05-25T03:46:14Z",
+      "last_updated": "2026-05-25T04:07:30Z",
+      "status_changed_at": "2026-05-25T04:07:30Z",
       "pr_number": 490,
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
       "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-backend-fix-ai-equipment-idor",
+      "branch": "auto-impl/pm-backend-fix-ai-equipment-idor",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T04:07:30Z",
+      "status_changed_at": "2026-05-25T04:07:30Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-frontend-sequence-epic6-announcement-drafts",
+      "branch": "auto-impl/pm-frontend-sequence-epic6-announcement-",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T04:07:30Z",
+      "status_changed_at": "2026-05-25T04:07:30Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-frontend-schedule-followup-test-batch",
+      "branch": "auto-impl/pm-frontend-schedule-followup-test-batch",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T04:07:30Z",
+      "status_changed_at": "2026-05-25T04:07:30Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
       "reviewer_summary": null
     }
   ]
