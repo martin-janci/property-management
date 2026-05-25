@@ -56,6 +56,17 @@ jobs:
         working-directory: backend
         run: ./scripts/check-ws-tenant-enforcement.sh --strict
 
+      # Discarded-principal lint: flags mutating handlers (POST/PUT/PATCH/DELETE
+      # by fn-name heuristic) that bind `_principal: RequestPrincipal` but never
+      # use it for authz or tenant-scoping.  This is the pattern behind the
+      # ai.rs IDOR cluster (voice-device IDOR fixed PR #461; equipment IDOR in
+      # backlog as security-equipment-idor).  Run without --strict so existing
+      # violations produce informational output rather than blocking CI -- add
+      # --strict once the backlog items are resolved.
+      - name: Discarded Principal Lint
+        working-directory: backend
+        run: ./scripts/lints/check-discarded-principal.sh
+
       # RLS policy-coverage gate (Phase 0): boots an ephemeral Postgres via
       # Docker (available on GitHub-hosted runners), applies all migrations,
       # and fails if any tenant-scoped table lacks a CREATE POLICY.
