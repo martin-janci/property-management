@@ -1,0 +1,29 @@
+{
+  "generated": "2026-05-25T19:58:24Z",
+  "window": "14d",
+  "base": "dev",
+  "scope": null,
+  "runs": [
+    {
+      "run_at": "2026-05-25T19:58:24Z",
+      "prs_scanned": 15,
+      "clean": [502],
+      "with_issues": [
+        {"pr": 511, "issue": 516, "findings": 7, "specialist": "react-web", "note": "scope creep (Story 80-3 bundled), unused hook, silent no-op dispute handlers, non-null cast, useless queries on empty id, no tests, mobile response-shape fallback hides drift"},
+        {"pr": 510, "issue": 517, "findings": 6, "specialist": "generic", "note": "script-injection via inlined ${{ }}, redundant checkout, misleading case-glob comment, missed top-level __tests__/, required-check skipped-job pitfall, no self-test for gate"},
+        {"pr": 508, "issue": 519, "findings": 5, "specialist": "rust-backend", "note": "mark_inquiry_read in realtors.rs still IDOR-able + dead-code handler; legacy repo method should be retired; IG3 tests are #[ignore]d"},
+        {"pr": 506, "issue": 520, "findings": 5, "specialist": "rust-backend", "note": "tests claimed but never merged; cross-tenant authz gap (no org_id scope, no RequireCapability); stringly-typed FSM; minor perf and error-contract nits"},
+        {"pr": 504, "issue": 518, "findings": 5, "specialist": "rust-backend", "note": "TOCTOU on max-3 cap; index misses list_rls COALESCE ORDER BY; no tests; missing CONCURRENTLY; sort_index scope unclear"},
+        {"pr": 503, "issue": 521, "findings": 7, "specialist": "react-web", "note": "867 LoC single-file should split; missing react-hook-form+zod; no tests; hard-coded en strings; window.confirm; empty sitemapRefs; raw hex tokens"},
+        {"pr": 501, "issue": 524, "findings": 6, "specialist": "generic", "note": "invalid sitemapRefs (5 of 11), dangling reality-mobile related-screen IDs, /screens validate not run pre-merge"},
+        {"pr": 500, "issue": 522, "findings": 8, "specialist": "ios-swiftui", "note": "deep-link entry lacks auth gating + SSO state unvalidated; logout doesn't clear persisted nav state; universal-link host not allow-listed; listing trailing-garbage silently coerced; tests miss malicious URLs and post-crash restore"},
+        {"pr": 499, "issue": 523, "findings": 3, "specialist": "react-native", "note": "placeholder prod URL in .env.production; dual EXPO_PUBLIC_+extra env paths kept in sync by hand; android/ios scripts silently flipped from expo start to expo run"},
+        {"pr": 498, "issue": 525, "findings": 6, "specialist": "ios-swiftui", "note": "Info.plist hardcodes CFBundleIdentifier + version literals — per-env bundle suffix and VERSION-file sync silently broken; self-referential DEVELOPMENT_TEAM; no macOS CI smoke"},
+        {"pr": 497, "issue": 519, "findings": 1, "specialist": "rust-backend", "note": "sister handler routes/realtors.rs::mark_inquiry_read still IDOR-able on dev; #497 shape correct but migration incomplete — commented on existing #519 instead of duplicate"},
+        {"pr": 496, "issue": 526, "findings": 5, "specialist": "generic", "note": "massive scope creep — 22 files / 1088 LOC shipped for 15-LOC ADR doc task; stop-hook auto-commit bundled gap-85-1 (PR #499) + gap-85-2 (PR #498) WIP from parallel agents"},
+        {"pr": 495, "issue": 527, "findings": 11, "specialist": "rust-backend", "note": "hardcoded HMAC fallback secret; webhook secret fail-open + non-constant-time compare; no replay protection/key rotation; scheduler uses dev email service + non-RLS raw query + no per-signer idempotency; English-only templates; thin negative-path tests"},
+        {"pr": 494, "issue": 528, "findings": 5, "specialist": "rust-backend", "note": "lint coverage gaps (no-underscore/let-_ discards); no self-tests; allowlist UX; #[must_use] alternative; minor shebang/regex hygiene"}
+      ]
+    }
+  ]
+}
