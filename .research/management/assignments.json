@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:50:00Z",
+  "generated": "2026-05-25T00:46:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -564,15 +564,15 @@
     {
       "task_id": "gap-6-4-pin-web-ui",
       "branch": "auto-impl/gap-6-4-pin-web-ui",
-      "status": "failed",
+      "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:50:00Z",
-      "status_changed_at": "2026-05-25T00:50:00Z",
+      "last_updated": "2026-05-25T04:07:30Z",
+      "status_changed_at": "2026-05-25T00:42:00Z",
       "pr_number": 479,
       "pr_url": "https://github.com/martin-janci/property-management/pull/479",
       "merged_at": null,
-      "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean [PR closed without merge]",
+      "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean",
       "reviewer_summary": "verdict=approve note=pin/unpin wiring correct ({id,pinned}), fetchJson auth, hooks unconditional, loading/error handled, screen-map updated; non-blocking: useAcknowledgeAnnouncement omits acknowledgments(id) invalidation"
     },
     {
@@ -581,11 +581,11 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:48:00Z",
-      "status_changed_at": "2026-05-25T00:48:00Z",
+      "last_updated": "2026-05-25T04:51:00Z",
+      "status_changed_at": "2026-05-25T04:51:00Z",
       "pr_number": 477,
       "pr_url": "https://github.com/martin-janci/property-management/pull/477",
-      "merged_at": "2026-05-25T00:48:00Z",
+      "merged_at": "2026-05-25T04:51:00Z",
       "implementer_summary": "pr=477 status=partial specialist=react-web note=EvidenceUploader.tsx and useDraftStorage.ts missing; AC-2 and AC-4 not met; story 80-2 stays pending",
       "reviewer_summary": "verdict=approve note=All gap assessments confirmed: EvidenceUploader.tsx/useDraftStorage.ts genuinely missing; AC-2/AC-4 MISSING; AC-1/AC-3/AC-5 correctly partial; story 80-2 stays partial"
     },
@@ -595,11 +595,11 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:46:00Z",
-      "status_changed_at": "2026-05-25T00:46:00Z",
+      "last_updated": "2026-05-25T04:51:00Z",
+      "status_changed_at": "2026-05-25T04:51:00Z",
       "pr_number": 478,
       "pr_url": "https://github.com/martin-janci/property-management/pull/478",
-      "merged_at": "2026-05-25T00:46:00Z",
+      "merged_at": "2026-05-25T04:51:00Z",
       "implementer_summary": "pr=478 status=partial specialist=react-web note=DisputeDetailRoute is inline stub; MediationPage unrouted in App.tsx; 4 blocking wiring gaps; story 80-3 stays partial",
       "reviewer_summary": "verdict=approve note=All gaps confirmed: DisputeDetailRoute inline stub; MediationPage unrouted; 4 mediation hooks present but unwired; story 80-3 stays partial; documentation accurate"
     },
@@ -662,28 +662,28 @@
     {
       "task_id": "pm-frontend-sequence-epic6-announcement-drafts",
       "branch": "auto-impl/pm-frontend-sequence-epic6-announcement-",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:46:00Z",
-      "status_changed_at": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T04:53:00Z",
+      "status_changed_at": "2026-05-25T04:53:00Z",
       "pr_number": 492,
       "pr_url": "https://github.com/martin-janci/property-management/pull/492",
-      "merged_at": null,
+      "merged_at": "2026-05-25T04:53:00Z",
       "implementer_summary": "pr=492 status=done specialist=generic note=PR #474 promoted from draft (verdict=approve, CI green); #479 conflicts on 3 files post-#474; #475 superseded; sequencing plan at .research/management/epic6-announcement-sequencing.md",
       "reviewer_summary": "verdict=approve note=conflict analysis correct on all 3 shared files; #475 supersession sound; follow-up items correctly scoped as issues; draft promotion confirmed; sprint-status plan internally consistent"
     },
     {
       "task_id": "pm-frontend-schedule-followup-test-batch",
       "branch": "auto-impl/pm-frontend-schedule-followup-test-batch",
-      "status": "review",
+      "status": "merged",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:45:00Z",
-      "status_changed_at": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T04:53:00Z",
+      "status_changed_at": "2026-05-25T04:53:00Z",
       "pr_number": 491,
       "pr_url": "https://github.com/martin-janci/property-management/pull/491",
-      "merged_at": null,
+      "merged_at": "2026-05-25T04:53:00Z",
       "implementer_summary": "pr=491 status=done specialist=pm-frontend note=slotted issues #480-#487 as test-hardening batch thb-2026-05-25 in sprint-status.yaml; story gates documented for 7 sprint stories",
       "reviewer_summary": "verdict=approve note=all 8 issues present with correct source_pr/severity/gates; YAML valid; high severity correct for #480/#481; gate rule clearly enforced; ready to merge"
     }
