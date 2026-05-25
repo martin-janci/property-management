@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "types": ["jest", "@testing-library/react-native"],
+    "types": ["jest", "@testing-library/react-native", "node"],
     "paths": {
       "@ppt/api-client": ["../../packages/api-client/src"],
       "@ppt/shared": ["../../packages/shared/src"]

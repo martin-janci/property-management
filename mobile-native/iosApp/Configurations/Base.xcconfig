@@ -1,0 +1,24 @@
+// Base.xcconfig
+// Reality Portal - Base configuration shared across all environments.
+// Epic 85 - Story 85.2: Build Configuration by Environment
+//
+// All environment-specific xcconfig files include this one first.
+// Override any key below in the per-environment xcconfig.
+
+// Product
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.reality
+PRODUCT_NAME = Reality Portal
+MARKETING_VERSION = $(inherited)
+CURRENT_PROJECT_VERSION = $(inherited)
+
+// Swift / Compiler
+SWIFT_VERSION = 5.9
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+
+// Architectures
+ARCHS = arm64
+VALID_ARCHS = arm64
+
+// Code Signing (override per environment or via Xcode GUI)
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM = $(DEVELOPMENT_TEAM)
