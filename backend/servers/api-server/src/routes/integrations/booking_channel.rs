@@ -379,6 +379,7 @@ pub async fn get_booking_conflicts(
         status: None,
         from_date: None,
         to_date: None,
+        guest_name: None,
         page: Some(1),
         limit: Some(500),
     };
@@ -410,6 +411,7 @@ pub async fn get_booking_conflicts(
             status: None,
             from_date: Some(bk.check_in),
             to_date: Some(bk.check_out),
+            guest_name: None,
             page: Some(1),
             limit: Some(100),
         };
@@ -443,10 +445,7 @@ pub async fn get_booking_conflicts(
 
                 conflicts.push(BookingConflict {
                     unit_id: bk.unit_id,
-                    booking_reservation_id: bk
-                        .external_booking_id
-                        .clone()
-                        .unwrap_or_else(|| bk.id.to_string()),
+                    booking_reservation_id: bk.id.to_string(),
                     conflicting_platform: other.platform.clone(),
                     conflicting_booking_id: other.id,
                     overlap_start,
