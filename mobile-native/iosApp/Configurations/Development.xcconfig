@@ -1,0 +1,28 @@
+// Development.xcconfig
+// Reality Portal - Development (Debug) build configuration.
+// Epic 85 - Story 85.2: Build Configuration by Environment
+//
+// Used by scheme: RealityPortal-Dev
+// Bundle suffix:  .dev   -> three.two.bit.ppt.reality.dev
+// Display name:   Reality (Dev)  -- DEV badge overlaid on app icon
+
+#include "Base.xcconfig"
+
+// Environment overrides
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.reality.dev
+BUNDLE_DISPLAY_NAME = Reality (Dev)
+
+// Build settings
+CONFIGURATION = Debug
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG DEVELOPMENT
+GCC_PREPROCESSOR_DEFINITIONS = DEBUG=1 DEVELOPMENT=1 $(inherited)
+ENABLE_TESTABILITY = YES
+
+// API endpoints (development reality-server on localhost)
+API_BASE_URL = http://localhost:8081
+ENVIRONMENT = development
+ENABLE_LOGGING = true
+
+// Code signing (automatic for dev machines)
+CODE_SIGN_STYLE = Automatic
