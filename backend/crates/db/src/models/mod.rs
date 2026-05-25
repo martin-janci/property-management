@@ -799,8 +799,9 @@ pub mod feature_package;
 pub mod feature_analytics;
 
 pub use disputes::{
-    action_status, activity_type, dispute_category, dispute_priority, dispute_status,
-    escalation_severity, party_role, resolution_status, session_status, session_type, ActionItem,
+    action_status, activity_type, dispute_category, dispute_priority, dispute_state_machine,
+    dispute_status, escalation_severity, party_role, resolution_status, session_status,
+    session_type, ActionItem,
     AddEvidence, CategoryCount as DisputeCategoryCount, CompleteActionItem, CreateActionItem,
     CreateEscalation, Dispute, DisputeActivity, DisputeEvidence, DisputeParty,
     DisputePartyWithUser, DisputeQuery, DisputeResolution, DisputeStatistics, DisputeSummary,
