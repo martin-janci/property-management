@@ -2041,32 +2041,65 @@ async fn list_comments(
         }
     };
 
-    // Release RLS connection before calling get_threaded_comments
-    // (it uses pool directly for multiple queries)
-    rls.release().await;
-
-    // Get threaded comments
-    match state
+    // Fetch top-level comments through the RLS-scoped connection so the DB
+    // policy blocks cross-tenant access. get_threaded_comments uses self.pool
+    // (no RLS) and is intentionally not used here.
+    let top_level = match state
         .announcement_repo
-        .get_threaded_comments(id, query.limit, query.offset)
+        .get_comments_rls(&mut **rls.conn(), id, query.limit, query.offset)
         .await
     {
-        Ok(comments) => Ok(Json(CommentsResponse {
-            count: comments.len(),
-            comments,
-            total,
-        })),
+        Ok(rows) => rows,
         Err(e) => {
+            rls.release().await;
             tracing::error!("Failed to list comments: {}", e);
-            Err((
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "INTERNAL_ERROR",
                     "Failed to list comments",
                 )),
-            ))
+            ));
         }
+    };
+
+    // Fetch replies for each top-level comment through the same RLS connection.
+    let mut comments = Vec::with_capacity(top_level.len());
+    for row in top_level {
+        let replies = match state
+            .announcement_repo
+            .get_comment_replies_rls(&mut **rls.conn(), row.id)
+            .await
+        {
+            Ok(reply_rows) if !reply_rows.is_empty() => Some(
+                reply_rows
+                    .into_iter()
+                    .map(|r| r.into_comment_with_author(None))
+                    .collect(),
+            ),
+            Ok(_) => None,
+            Err(e) => {
+                rls.release().await;
+                tracing::error!("Failed to get comment replies: {}", e);
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to get comment replies",
+                    )),
+                ));
+            }
+        };
+        comments.push(row.into_comment_with_author(replies));
     }
+
+    rls.release().await;
+
+    Ok(Json(CommentsResponse {
+        count: comments.len(),
+        comments,
+        total,
+    }))
 }
 
 /// Create a comment on an announcement.
