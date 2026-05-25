@@ -784,14 +784,14 @@
     {
       "task_id": "security-inquiry-read-idor",
       "branch": "bugfix/security-inquiry-read-idor",
-      "status": "review",
+      "status": "merged",
       "specialist": "pm-security",
       "claimed_at": "2026-05-25T08:22:00Z",
-      "last_updated": "2026-05-25T10:30:00Z",
-      "status_changed_at": "2026-05-25T08:28:00Z",
+      "last_updated": "2026-05-25T11:46:00Z",
+      "status_changed_at": "2026-05-25T11:46:00Z",
       "pr_number": 497,
       "pr_url": "https://github.com/martin-janci/property-management/pull/497",
-      "merged_at": null,
+      "merged_at": "2026-05-25T11:46:00Z",
       "reviewer_verdict": "approve",
       "reviewer_summary": "verdict=approve note=Ownership gate correct (SELECT EXISTS + realtor_id scope), 404 anti-enumeration correct, idempotent UPDATE correct, get_inquiry path updated without regression",
       "implementer_summary": "Fixed IDOR in PUT /api/v1/inquiries/{id}/read by adding mark_inquiry_read_for_realtor(id, realtor_id). Returns 404 when not owned."
