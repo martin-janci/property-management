@@ -24,6 +24,6 @@ API_BASE_URL = https://reality.ppt.example.com
 ENVIRONMENT = production
 ENABLE_LOGGING = false
 
-// Code signing (App Store distribution profile)
+// Code signing (manual, App Store profile)
 CODE_SIGN_STYLE = Manual
 PROVISIONING_PROFILE_SPECIFIER = $(PROD_PROVISIONING_PROFILE)

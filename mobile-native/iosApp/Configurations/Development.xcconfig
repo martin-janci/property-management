@@ -3,8 +3,8 @@
 // Epic 85 - Story 85.2: Build Configuration by Environment
 //
 // Used by scheme: RealityPortal-Dev
-// Bundle suffix:  .dev   → three.two.bit.ppt.reality.dev
-// Display name:   Reality Portal (Dev)  — DEV badge overlaid on app icon
+// Bundle suffix:  .dev   -> three.two.bit.ppt.reality.dev
+// Display name:   Reality (Dev)  -- DEV badge overlaid on app icon
 
 #include "Base.xcconfig"
 
@@ -19,11 +19,10 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG DEVELOPMENT
 GCC_PREPROCESSOR_DEFINITIONS = DEBUG=1 DEVELOPMENT=1 $(inherited)
 ENABLE_TESTABILITY = YES
 
-// App Transport Security - allow plain HTTP to localhost
-// (kept in Info.plist via NSAppTransportSecurity; xcconfig just signals env)
+// API endpoints (development reality-server on localhost)
 API_BASE_URL = http://localhost:8081
 ENVIRONMENT = development
 ENABLE_LOGGING = true
 
-// Code signing (Ad-Hoc / personal team for dev machines)
+// Code signing (automatic for dev machines)
 CODE_SIGN_STYLE = Automatic

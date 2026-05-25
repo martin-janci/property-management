@@ -3,8 +3,8 @@
 // Epic 85 - Story 85.2: Build Configuration by Environment
 //
 // Used by scheme: RealityPortal-Staging
-// Bundle suffix:  .staging  → three.two.bit.ppt.reality.staging
-// Display name:   Reality Portal (Stg) — STG badge overlaid on app icon
+// Bundle suffix:  .staging  -> three.two.bit.ppt.reality.staging
+// Display name:   Reality (Stg) -- STG badge overlaid on app icon
 
 #include "Base.xcconfig"
 
@@ -24,6 +24,6 @@ API_BASE_URL = https://staging-reality.ppt.example.com
 ENVIRONMENT = staging
 ENABLE_LOGGING = true
 
-// Code signing (Ad-Hoc distribution profile for TestFlight staging)
+// Code signing (manual, Ad-Hoc for TestFlight)
 CODE_SIGN_STYLE = Manual
 PROVISIONING_PROFILE_SPECIFIER = $(STAGING_PROVISIONING_PROFILE)

@@ -24,6 +24,9 @@ pub mod voice_oauth;
 // Epic 84: S3 Storage Integration
 pub mod storage;
 
+// Epic 84.2: E-Signature Email Integration
+pub mod esignature;
+
 // Epic 103: Redis Integration (Cache, Sessions, Pub/Sub)
 pub mod redis;
 
@@ -100,6 +103,12 @@ pub use llm::{
     ContextChunk, EmbeddingResult, EnhancedChatResult, LeaseGenerationInput, LeaseGenerationResult,
     ListingDescriptionInput, ListingDescriptionResult, LlmClient, LlmConfig, LlmError,
     SentimentResult, TenantAiConfig, TokenUsage,
+};
+
+// Story 84.2: E-Signature Email Integration
+pub use esignature::{
+    DocusignClient, DocusignConfig, ESignatureError, ESignatureProvider, LightweightConfig,
+    LightweightProvider, SigningToken,
 };
 
 // Story 84.1: S3 Presigned URLs
