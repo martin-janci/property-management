@@ -77,6 +77,8 @@ development_status:
   10b-5-support-data-access: ready-for-dev
   10b-6-user-onboarding-tour: ready-for-dev
   10b-7-contextual-help-documentation: ready-for-dev
+  # Epic 80: Dispute Resolution (verified 2026-05-25)
+  80-2-dispute-filing-flow: partial  # EvidenceUploader.tsx + useDraftStorage.ts missing; AC-2, AC-4 not met
 
   # Epic 80: Dispute Resolution (verified 2026-05-25)
   80-1-disputes-api-integration: done
