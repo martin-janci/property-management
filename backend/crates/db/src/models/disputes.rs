@@ -73,7 +73,10 @@ pub mod dispute_state_machine {
         match from {
             "filed" => matches!(to, "under_review" | "awaiting_response" | "withdrawn"),
             "under_review" => {
-                matches!(to, "mediation" | "awaiting_response" | "resolved" | "escalated")
+                matches!(
+                    to,
+                    "mediation" | "awaiting_response" | "resolved" | "escalated"
+                )
             }
             "awaiting_response" => {
                 matches!(to, "under_review" | "mediation" | "resolved" | "withdrawn")

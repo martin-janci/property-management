@@ -277,9 +277,8 @@ impl DisputeRepository {
                 .await
                 .map_err(|e| AppError::Database(e.to_string()))?;
 
-        let current_status = current_status.ok_or_else(|| {
-            AppError::NotFound(format!("Dispute {} not found", req.dispute_id))
-        })?;
+        let current_status = current_status
+            .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
 
         // Enforce state machine — reject illegal transitions.
         if !dispute_state_machine::is_valid_transition(&current_status, &req.status) {
@@ -315,7 +314,10 @@ impl DisputeRepository {
                 "Status changed from '{}' to '{}': {}",
                 current_status, req.status, reason
             ),
-            None => format!("Status changed from '{}' to '{}'", current_status, req.status),
+            None => format!(
+                "Status changed from '{}' to '{}'",
+                current_status, req.status
+            ),
         };
         self.record_activity(
             req.dispute_id,
