@@ -447,3 +447,132 @@ export function usePinAnnouncement() {
     },
   });
 }
+
+/** Get a single announcement with its details and attachments (Story 6.2) */
+export function useAnnouncement(id: string, enabled = true) {
+  return useQuery<{
+    announcement: import('./types').AnnouncementWithDetails;
+    attachments: import('./types').AnnouncementAttachment[];
+  }>({
+    queryKey: announcementKeys.detail(id),
+    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}`),
+    enabled: enabled && !!id,
+  });
+}
+
+/** Mark an announcement as read by the current user (Story 6.2) */
+export function useMarkReadAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<void>(`${ANNOUNCEMENTS_BASE}/${id}/read`, { method: 'POST' }),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.unreadCount() });
+    },
+  });
+}
+
+/** Acknowledge an announcement (Story 6.2) */
+export function useAcknowledgeAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<void>(`${ANNOUNCEMENTS_BASE}/${id}/acknowledge`, { method: 'POST' }),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.acknowledgments(id) });
+    },
+  });
+}
+
+/** Fetch acknowledgment stats for a given announcement (Story 6.2 — manager view) */
+export function useAnnouncementAcknowledgmentStats(id: string, enabled = true) {
+  return useQuery<import('./types').AcknowledgmentStatsResponse>({
+    queryKey: announcementKeys.acknowledgments(id),
+    queryFn: () => fetchJson(`${ANNOUNCEMENTS_BASE}/${id}/acknowledgments`),
+    enabled: enabled && !!id,
+  });
+}
+
+// ============================================================================
+// Standalone comment hooks — Story 6.3: Announcement Comments & Discussion
+// ============================================================================
+
+/** List comments for an announcement */
+export function useAnnouncementComments(
+  announcementId: string,
+  params?: import('./types').ListCommentsParams,
+  enabled = true
+) {
+  return useQuery<import('./types').CommentsResponse>({
+    queryKey: announcementKeys.comments(announcementId, params),
+    queryFn: () => {
+      const sp = new URLSearchParams();
+      if (params?.limit) sp.set('limit', params.limit.toString());
+      if (params?.offset) sp.set('offset', params.offset.toString());
+      const qs = sp.toString();
+      const url = qs
+        ? `${ANNOUNCEMENTS_BASE}/${announcementId}/comments?${qs}`
+        : `${ANNOUNCEMENTS_BASE}/${announcementId}/comments`;
+      return fetchJson<import('./types').CommentsResponse>(url);
+    },
+    enabled: enabled && !!announcementId,
+  });
+}
+
+/** Create a comment on an announcement */
+export function useCreateAnnouncementComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      announcementId,
+      content,
+      parentId,
+      aiTrainingConsent,
+    }: {
+      announcementId: string;
+      content: string;
+      parentId?: string;
+      aiTrainingConsent?: boolean;
+    }) =>
+      fetchJson<import('./types').AnnouncementComment>(
+        `${ANNOUNCEMENTS_BASE}/${announcementId}/comments`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ content, parentId, aiTrainingConsent }),
+        }
+      ),
+    onSuccess: (_, { announcementId }) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.comments(announcementId) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(announcementId) });
+    },
+  });
+}
+
+/** Delete (soft-delete) a comment on an announcement */
+export function useDeleteAnnouncementComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      announcementId,
+      commentId,
+      reason,
+    }: {
+      announcementId: string;
+      commentId: string;
+      reason?: string;
+    }) =>
+      fetchJson<import('./types').AnnouncementComment>(
+        `${ANNOUNCEMENTS_BASE}/${announcementId}/comments/${commentId}`,
+        {
+          method: 'DELETE',
+          ...(reason ? { body: JSON.stringify({ reason }) } : {}),
+        }
+      ),
+    onSuccess: (_, { announcementId }) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.comments(announcementId) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(announcementId) });
+    },
+  });
+}

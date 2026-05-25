@@ -1,5 +1,7 @@
 export { AcknowledgmentStats } from './AcknowledgmentStats';
 export { AnnouncementCard } from './AnnouncementCard';
+export type { AnnouncementCommentsProps } from './AnnouncementComments';
+export { AnnouncementComments } from './AnnouncementComments';
 export { AnnouncementForm } from './AnnouncementForm';
 export { AnnouncementList } from './AnnouncementList';
 export { SchedulePicker } from './SchedulePicker';
