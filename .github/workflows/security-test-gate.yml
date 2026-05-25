@@ -1,0 +1,174 @@
+name: Security-label test-file gate
+
+# Why this exists
+# ---------------
+# PR #497 (inquiry IDOR fix) shipped to dev without a regression test.
+# PR #493 (equipment IDOR fix) set the right precedent: every security-
+# labelled fix must land with at least one new or modified test file.
+#
+# This workflow enforces that contract at merge time:
+#   - Triggered whenever a PR is opened, updated, re-labelled, or un-labelled.
+#   - If the PR carries the 'security' label, it scans the changed files
+#     for test-file patterns (Rust integration tests, Rust unit test mods,
+#     TypeScript __tests__/ files, etc.).
+#   - If no test file is present it fails with an actionable error message
+#     so the author knows exactly what is missing before merge.
+#
+# The check is advisory (non-blocking) on draft PRs — a draft is a work
+# in progress and we don't want to gate review iteration.  It becomes
+# blocking the moment the PR is marked "ready for review".
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+      - ready_for_review
+
+jobs:
+  security-test-gate:
+    name: Security label — test-file required
+    runs-on: ubuntu-latest
+
+    # Only apply to PRs that carry the 'security' label.
+    # If the label is not present this job finishes immediately as a no-op
+    # (exit 0) so it never blocks non-security PRs, and clears any stale
+    # failure when the 'security' label is removed.
+    if: contains(github.event.pull_request.labels.*.name, 'security')
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Fetch the full diff between the base and head commits so
+          # `git diff --name-only` works without a shallow-clone issue.
+          fetch-depth: 0
+
+      - name: Collect changed files
+        id: files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          echo "Base: $BASE_SHA"
+          echo "Head: $HEAD_SHA"
+
+          # List files changed between the merge-base and the PR head so
+          # rebased PRs (where base.sha != merge-base) are handled correctly.
+          MERGE_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA" 2>/dev/null || echo "$BASE_SHA")
+          echo "Merge-base: $MERGE_BASE"
+
+          CHANGED=$(git diff --name-only "$MERGE_BASE" "$HEAD_SHA")
+          echo "Changed files:"
+          echo "$CHANGED"
+          # Store as newline-delimited output
+          {
+            echo "list<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check for test file
+        id: gate
+        run: |
+          CHANGED="${{ steps.files.outputs.list }}"
+
+          # -------------------------------------------------------------------
+          # Test-file patterns
+          # A file counts as a "test file" when its path matches any of:
+          #
+          #   Rust integration tests  backend/*/tests/*.rs   (one dir level)
+          #   Rust unit test modules  any *.rs file with _test/_tests/test_ name
+          #   TypeScript tests        **/__tests__/**  or  *.test.ts / *.spec.ts
+          #   Frontend e2e            e2e/**
+          # -------------------------------------------------------------------
+
+          HAS_TEST=false
+
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+
+            case "$f" in
+              # Rust integration test files (backend/<crate>/tests/*.rs)
+              # Note: bash `case` globs are single-level only; one wildcard
+              # is sufficient for the current repo layout.
+              backend/*/tests/*.rs)
+                echo "  [TEST] $f  (Rust integration test)"
+                HAS_TEST=true
+                ;;
+
+              # Rust files with _test / _tests / test_ naming conventions
+              *_test.rs | *_tests.rs | */test_*.rs | */tests.rs)
+                echo "  [TEST] $f  (Rust test module)"
+                HAS_TEST=true
+                ;;
+
+              # TypeScript __tests__ directories
+              */__tests__/*)
+                echo "  [TEST] $f  (TypeScript __tests__)"
+                HAS_TEST=true
+                ;;
+
+              # TypeScript test / spec files
+              *.test.ts | *.spec.ts | *.test.tsx | *.spec.tsx)
+                echo "  [TEST] $f  (TypeScript test/spec)"
+                HAS_TEST=true
+                ;;
+
+              # End-to-end tests
+              e2e/*)
+                echo "  [TEST] $f  (e2e)"
+                HAS_TEST=true
+                ;;
+            esac
+          done <<< "$CHANGED"
+
+          echo "has_test=$HAS_TEST" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce policy
+        run: |
+          IS_DRAFT="${{ github.event.pull_request.draft }}"
+          HAS_TEST="${{ steps.gate.outputs.has_test }}"
+
+          if [ "$HAS_TEST" = "true" ]; then
+            echo "PASS: at least one test file is present in this security PR."
+            exit 0
+          fi
+
+          # Draft PRs: warn but don't block (work in progress).
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "WARN: No test file found in this security-labelled draft PR."
+            echo "      A test file will be required before this PR can merge."
+            echo "      (This check is advisory on draft PRs.)"
+            exit 0
+          fi
+
+          # Ready-for-review / open PRs: hard fail.
+          echo ""
+          echo "FAIL: This PR is labelled 'security' but contains no test file."
+          echo ""
+          echo "  Every security fix must ship with at least one regression test."
+          echo "  This policy was established after PR #497 (inquiry IDOR fix)"
+          echo "  merged without a test, and mirrors the pattern set by PR #493"
+          echo "  (equipment IDOR fix) which included:"
+          echo "    backend/servers/api-server/tests/equipment_cross_tenant_idor_tests.rs"
+          echo ""
+          echo "  Add a test file that covers the security contract introduced"
+          echo "  by this PR (e.g. a cross-tenant isolation assertion, an auth"
+          echo "  boundary check, or an input-validation edge case)."
+          echo ""
+          echo "  Test-file patterns recognised by this gate:"
+          echo "    Rust integration : backend/*/tests/*.rs"
+          echo "    Rust test module : *_test.rs, *_tests.rs, test_*.rs, tests.rs"
+          echo "    TypeScript       : **/__tests__/**, *.test.ts, *.spec.ts"
+          echo "    End-to-end       : e2e/**"
+          echo ""
+          exit 1
