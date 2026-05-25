@@ -365,14 +365,23 @@ async fn get_dispute(
         })
 }
 
-/// Update dispute status.
+/// Update dispute status — enforces the state machine.
+///
+/// Returns 422 Unprocessable Entity when the requested transition is not
+/// permitted from the current status (`filed` → `under_review` → `resolved`).
 async fn update_dispute_status(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateStatusRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    if !user.role.as_ref().is_some_and(|r| r.is_manager()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
+        ));
+    }
+    let result = state
         .dispute_repo
         .update_status(UpdateDisputeStatus {
             dispute_id: id,
@@ -380,18 +389,34 @@ async fn update_dispute_status(
             reason: data.reason,
             updated_by: user.user_id,
         })
-        .await
-        .map(Json)
-        .map_err(|e| {
+        .await;
+    match result {
+        Ok(d) => Ok(Json(d)),
+        Err(common::errors::AppError::BadRequest(msg)) => {
+            tracing::warn!("Invalid dispute status transition: {}", msg);
+            Err((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(ErrorResponse::new(
+                    "INVALID_TRANSITION",
+                    "Invalid status transition",
+                )),
+            ))
+        }
+        Err(common::errors::AppError::NotFound(msg)) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", msg.as_str())),
+        )),
+        Err(e) => {
             tracing::error!("Failed to update dispute status: {:?}", e);
-            (
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "DB_ERROR",
                     "Failed to update dispute status",
                 )),
-            )
-        })
+            ))
+        }
+    }
 }
 
 /// Withdraw a dispute.
