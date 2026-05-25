@@ -704,7 +704,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/494",
       "merged_at": null,
       "implementer_summary": "pr=494 status=done specialist=pm-tech-lead note=3 module-split backlog entries added (ai.rs 3134L, platform_admin.rs 2762L, announcements.rs 2722L); check-discarded-principal.sh lint created and wired into backend.yml check job; 7 violations detected informational",
-      "reviewer_summary": "verdict=approve note=all 6 handlers correctly tenant-scoped via require_tenant_id; cross-tenant tests added; CI check+test+rls-smoke-test all green"
+      "reviewer_summary": "verdict=approve note=3 backlog items well-formed (ai.rs/platform_admin.rs/announcements.rs); check-discarded-principal.sh lint pattern sound; informational-only approach correct given 7 existing violations all mapped to known backlog items; advisory: automation.rs GET handlers (list_templates/get_template) intentionally discard _principal (global read-only data) — should be added to allowlist to avoid inflating violation count; CI check+test+rls-smoke-test all green on run 26386715653",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "pm-frontend-verify-epic81-schedule-execution",
@@ -732,7 +733,8 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/495",
       "merged_at": null,
       "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; cargo check exit 0 both crates, 6/6 unit tests pass",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve-pending-ci note=LightweightProvider HMAC+esignature.rs fully implemented; HTML email templates (4 methods) correct with ammonia XSS sanitization; signing URLs use LightweightProvider.build_signing_url() with HMAC token; scheduler expire+reminder tasks wired correctly; CI check=SUCCESS (run 26389100222) after clippy fixes (too_many_arguments + empty_line_after_doc_comments); test+security-tests in_progress; webhook has no HMAC signature verification (non-blocking: tracked as security backlog)",
+      "reviewer_verdict": "approve"
     }
   ]
 }
