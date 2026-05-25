@@ -875,6 +875,7 @@ impl EmailService {
     // ==================== E-Signature Emails (Story 84.2) ====================
 
     /// Send signature request invitation email to a signer.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_request_email(
         &self,
         to: &str,
@@ -1063,7 +1064,6 @@ impl EmailService {
     }
 
     /// Send voting reminder email.
-
     pub async fn send_voting_reminder_email(
         &self,
         email: &str,
