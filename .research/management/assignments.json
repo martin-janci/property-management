@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T05:42:03Z",
+  "generated": "2026-05-25T06:09:06Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -554,7 +554,7 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T05:19:48Z",
+      "last_updated": "2026-05-25T06:09:06Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 475,
       "pr_url": "https://github.com/martin-janci/property-management/pull/475",
@@ -625,7 +625,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T05:19:48Z",
+      "last_updated": "2026-05-25T06:09:06Z",
       "status_changed_at": "2026-05-25T02:44:00Z",
       "pr_number": 489,
       "pr_url": "https://github.com/martin-janci/property-management/pull/489",
@@ -640,7 +640,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T05:32:16Z",
+      "last_updated": "2026-05-25T06:09:06Z",
       "status_changed_at": "2026-05-25T04:07:30Z",
       "pr_number": 490,
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
@@ -655,7 +655,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:38:00Z",
+      "last_updated": "2026-05-25T06:09:06Z",
       "status_changed_at": "2026-05-25T04:25:00Z",
       "pr_number": 493,
       "pr_url": "https://github.com/martin-janci/property-management/pull/493",
@@ -690,6 +690,48 @@
       "merged_at": "2026-05-25T04:53:00Z",
       "implementer_summary": "pr=491 status=done specialist=pm-frontend note=slotted issues #480-#487 as test-hardening batch thb-2026-05-25 in sprint-status.yaml; story gates documented for 7 sprint stories",
       "reviewer_summary": "verdict=approve note=all 8 issues present with correct source_pr/severity/gates; YAML valid; high severity correct for #480/#481; gate rule clearly enforced; ready to merge"
+    },
+    {
+      "task_id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
+      "branch": "auto-impl/pm-tech-lead-split-ai-platform-announcem",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T06:09:06Z",
+      "status_changed_at": "2026-05-25T06:09:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-frontend-verify-epic81-schedule-execution",
+      "branch": "auto-impl/pm-frontend-verify-epic81-schedule-execu",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T06:09:06Z",
+      "status_changed_at": "2026-05-25T06:09:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-84-2-esignature-impl",
+      "branch": "auto-impl/gap-84-2-esignature-impl",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T06:09:06Z",
+      "status_changed_at": "2026-05-25T06:09:06Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
