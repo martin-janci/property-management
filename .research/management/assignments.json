@@ -754,14 +754,14 @@
     {
       "task_id": "gap-85-1-rn-env-config",
       "branch": "auto-impl/gap-85-1-rn-env-config",
-      "status": "review",
+      "status": "merged",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
       "last_updated": "2026-05-25T16:10:00Z",
-      "status_changed_at": "2026-05-25T09:00:00Z",
+      "status_changed_at": "2026-05-25T10:22:00Z",
       "pr_number": 499,
       "pr_url": "https://github.com/martin-janci/property-management/pull/499",
-      "merged_at": null,
+      "merged_at": "2026-05-25T10:22:00Z",
       "implementer_summary": "pr=499 status=done specialist=pm-frontend note=app.config.ts (Expo dynamic config), metro.config.js (workspace monorepo support), .env.{dev,staging,prod} EXPO_PUBLIC_* vars, @expo/metro-config+dotenv devDeps; biome import order fixed, pnpm-lock.yaml updated for CI frozen-lockfile; tsconfig.json excludes app.config.ts; CI all-green; draft promoted",
       "reviewer_summary": "verdict=approve note=All checklist items pass; app.config.ts dotenv/Metro monorepo correct; EXPO_PUBLIC_* vars present; no real secrets; CI 20/20 green | merge-attempt: merged=false pr=499 note=unresolved-threads=4",
       "reviewer_verdict": "approve"
