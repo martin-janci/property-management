@@ -958,13 +958,13 @@
       "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T14:03:10Z",
-      "last_updated": "2026-05-25T18:01:00Z",
-      "status_changed_at": "2026-05-25T18:01:00Z",
+      "last_updated": "2026-05-25T18:05:00Z",
+      "status_changed_at": "2026-05-25T18:05:00Z",
       "pr_number": 506,
       "pr_url": "https://github.com/martin-janci/property-management/pull/506",
       "merged_at": "2026-05-25T18:01:00Z",
-      "implementer_summary": "pr=506 status=merged specialist=rust-backend scope_drift=false code_reuse_warn=none note=state machine enforced in update_status (BadRequest→422); endpoint+migration already existed; cargo check+clippy clean; all CI green; squash-merged to dev",
-      "reviewer_summary": null
+      "implementer_summary": "pr=506 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=state machine enforced in update_status (BadRequest→422); endpoint+migration already existed; cargo check+clippy clean",
+      "reviewer_summary": "verdict=approve note=CI 21/21 green; squash-merged sha=549bb2e96b72647445d0505b814e8c7855da4818"
     },
     {
       "task_id": "pm-qa-create-backend-servers-reality-server",
@@ -983,16 +983,16 @@
     {
       "task_id": "pm-qa-verify-respond-to-inquiry-post-api-v1",
       "branch": "auto-impl/pm-qa-verify-respond-to-inquiry-post-api",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T16:10:00Z",
-      "last_updated": "2026-05-25T18:02:00Z",
-      "status_changed_at": "2026-05-25T18:02:00Z",
+      "last_updated": "2026-05-25T18:11:00Z",
+      "status_changed_at": "2026-05-25T18:11:00Z",
       "pr_number": 508,
       "pr_url": "https://github.com/martin-janci/property-management/pull/508",
-      "merged_at": null,
-      "implementer_summary": "pr=508 status=review specialist=rust-backend note=IDOR fix: respond_to_inquiry now checks realtor ownership (SQL EXISTS guard), returns Option<InquiryMessage>; realtors.rs handler updated to use .ok_or_else pattern; build jobs in_progress",
-      "reviewer_summary": null
+      "merged_at": "2026-05-25T18:11:00Z",
+      "implementer_summary": "pr=508 status=done specialist=rust-backend note=IDOR fix on respond_to_inquiry: repo returns Option<InquiryMessage>; handler now chains .ok_or_else(NOT_FOUND); CI 21/21 green",
+      "reviewer_summary": "verdict=approve note=squash-merged sha=957551305afa349ee405c16aa3d256e3177b1448"
     },
     {
       "task_id": "pm-scrum-master-implement-post-api-v1-documents-upload",
@@ -1000,12 +1000,12 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T16:10:00Z",
-      "last_updated": "2026-05-25T18:02:00Z",
-      "status_changed_at": "2026-05-25T18:02:00Z",
+      "last_updated": "2026-05-25T18:11:00Z",
+      "status_changed_at": "2026-05-25T18:11:00Z",
       "pr_number": 509,
       "pr_url": "https://github.com/martin-janci/property-management/pull/509",
       "merged_at": null,
-      "implementer_summary": "pr=509 status=review specialist=rust-backend note=implemented POST /api/v1/documents/upload multipart handler; cargo check + clippy clean; check CI green; test in_progress",
+      "implementer_summary": "pr=509 status=done specialist=rust-backend note=implemented POST /api/v1/documents/upload multipart handler; cargo check+clippy clean",
       "reviewer_summary": null
     }
   ]
