@@ -70,6 +70,13 @@ CHECK_FILES=(
 # line that simply calls it.
 SANCTIONED_HELPER="acquire_public_conn"
 
+# Additional sanctioned functions that legitimately acquire raw pool connections
+# and manually set RLS context (e.g. webhook handlers with no user auth).
+# Each entry is a Rust function name. The line must be inside the fn body.
+SANCTIONED_WEBHOOK_FNS=(
+    "store_signed_document"  # signatures.rs: webhook handler sets RLS context explicitly
+)
+
 VIOLATIONS=0
 WARNINGS=0
 
@@ -77,6 +84,7 @@ WARNINGS=0
 # Returns 0 (true) when the matched line is an allow-listed raw-pool access:
 #   - the line itself calls the sanctioned helper (acquire_public_conn), or
 #   - the line lives inside the sanctioned helper's own fn body, or
+#   - the line lives inside a SANCTIONED_WEBHOOK_FNS fn body, or
 #   - the file is an RlsConnection/RlsPool implementation.
 # This is line-context aware: it does NOT blanket-allow an entire file just
 # because the sanctioned helper happens to be defined somewhere in it.
@@ -95,15 +103,23 @@ is_sanctioned() {
         return 0
     fi
 
-    # Inside the sanctioned helper's fn body: find the nearest preceding
-    # `fn <name>` and check whether it is the sanctioned helper.
+    # Find the nearest preceding fn declaration to determine function context.
     local fn_decl
     fn_decl=$(sed -n "1,${line}p" "$file" 2>/dev/null \
         | grep -nE '^[[:space:]]*(pub )?(async )?fn [a-zA-Z_]' \
         | tail -1 || true)
+
+    # Inside the sanctioned helper's fn body.
     if [[ "$fn_decl" == *"fn ${SANCTIONED_HELPER}"* ]]; then
         return 0
     fi
+
+    # Inside a webhook/manual-RLS fn body that explicitly sets tenant context.
+    for webhook_fn in "${SANCTIONED_WEBHOOK_FNS[@]}"; do
+        if [[ "$fn_decl" == *"fn ${webhook_fn}"* ]]; then
+            return 0
+        fi
+    done
 
     return 1
 }
