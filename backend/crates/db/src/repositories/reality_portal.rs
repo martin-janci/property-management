@@ -772,6 +772,37 @@ impl RealityPortalRepository {
         Ok(())
     }
 
+    /// Mark an inquiry as read, scoped to the calling realtor.
+    ///
+    /// Returns `true` when the inquiry belongs to `realtor_id` (idempotent 204);
+    /// `false` when not found or owned by another realtor (caller returns 404).
+    pub async fn mark_inquiry_read_for_realtor(
+        &self,
+        id: Uuid,
+        realtor_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let owned: bool = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM listing_inquiries WHERE id = $1 AND realtor_id = $2)",
+        )
+        .bind(id)
+        .bind(realtor_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        if !owned {
+            return Ok(false);
+        }
+
+        sqlx::query(
+            "UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL",
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(true)
+    }
+
     /// Respond to inquiry.
     pub async fn respond_to_inquiry(
         &self,
