@@ -530,8 +530,11 @@ pub async fn get_inquiry(
             )
         })?;
 
-    // Mark as read if not already
-    let _ = state.reality_portal_repo.mark_inquiry_read(id).await;
+    // Mark as read if not already (ownership already verified above)
+    let _ = state
+        .reality_portal_repo
+        .mark_inquiry_read_for_realtor(id, principal.user_id)
+        .await;
 
     Ok(Json(InquiryDetailResponse {
         inquiry,
@@ -553,16 +556,23 @@ pub async fn get_inquiry(
 )]
 pub async fn mark_as_read(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    state
+    let owned = state
         .reality_portal_repo
-        .mark_inquiry_read(id)
+        .mark_inquiry_read_for_realtor(id, principal.user_id)
         .await
         .map_err(|e| crate::util::errors::db_error("mark inquiry read", e))?;
 
-    Ok(axum::http::StatusCode::NO_CONTENT)
+    if owned {
+        Ok(axum::http::StatusCode::NO_CONTENT)
+    } else {
+        Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Inquiry not found".to_string(),
+        ))
+    }
 }
 
 /// Respond to an inquiry.
