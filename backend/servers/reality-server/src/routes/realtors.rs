@@ -289,18 +289,16 @@ pub async fn respond_to_inquiry(
         .respond_to_inquiry(id, principal.user_id, &data.message)
         .await
         .map_err(|e| {
-            let error_str = e.to_string();
-            if error_str.contains("not found") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    "Inquiry not found".to_string(),
-                )
-            } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Failed to respond to inquiry: {}", e),
-                )
-            }
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to respond to inquiry: {}", e),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Inquiry not found".to_string(),
+            )
         })?;
 
     Ok(Json(message))
