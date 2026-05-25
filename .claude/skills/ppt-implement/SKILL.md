@@ -65,6 +65,48 @@ backend task instead of merging a half-PR.
 3. Commit message format (CLAUDE.md convention):
    `<type>(<scope>): <one-line>` where type ∈ {feat, fix, docs, style, refactor, test, chore}.
 
+## Step 2.5 — Scope-drift check (deterministic, MANDATORY)
+
+The dispatcher saw on 2026-05-24 that implementers can quietly touch code
+outside their owner_role's area (PR #472 dropped `RlsConnection` on 5 MFA
+handlers while the task was about WebSocket sync). The check below is
+deterministic — file globs map directly to `owner_role` from
+`scripts/owner-areas.json`.
+
+```bash
+bash .claude/skills/ppt-implement/scripts/scope-check.sh \
+  --owner "<owner_role>" --base dev --head HEAD
+```
+
+Exit codes:
+- `0` — diff stays inside the owner's expected areas. `scope_drift=false`.
+- `2` — diff touches files outside the owner's areas. The script prints the
+  drifting paths. **Do not abort.** Set `scope_drift=true` and include the
+  offending paths in the PR body under `## Scope drift`. The reviewer
+  decides whether the drift is justified.
+- `1` — unrecognised owner_role (script does not know how to map it).
+  `scope_drift=false` (we can't judge) — log the unknown owner and continue.
+
+## Step 2.6 — Code-reuse pre-flight (deterministic, advisory)
+
+The same PR #472 also re-implemented `JWT_VERIFIER` as a private `OnceLock`
+duplicating `api_core::extractors::auth::JWT_VERIFIER`. Before adding any
+new helper in security/auth/crypto/http-client code paths, grep for an
+existing one:
+
+```bash
+bash .claude/skills/ppt-implement/scripts/reuse-grep.sh \
+  --specialist "<specialist>" --base dev --head HEAD
+```
+
+Output: a list of `WARN: <added-symbol> looks like an existing helper at <path>`
+lines, or empty.
+
+This is **advisory** — the implementer decides. If the script emits warnings,
+set `code_reuse_warn=<short-comma-list>` (max 80 chars; truncate) and include
+the full list in the PR body under `## Code-reuse review`. If empty,
+`code_reuse_warn=none`.
+
 ## Step 3 — Verify gate (MANDATORY before PR)
 
 Three escalating bands. **Band A is mandatory** — never skip. Run Band B when
@@ -175,16 +217,18 @@ EOF
 ## Return contract (ONE LINE — dispatcher parses this)
 
 ```
-pr=<number|none> status=<done|partial|blocked> specialist=<name> note=<short text>
+pr=<number|none> status=<done|partial|blocked> specialist=<name> scope_drift=<true|false> code_reuse_warn=<short|none> note=<short text>
 ```
 
 Examples:
-- `pr=512 status=done specialist=react-web note=wired useMfa hooks; ppt-web typecheck clean`
-- `pr=none status=partial specialist=rust-backend note=cargo check failed on websocket route stub`
-- `pr=none status=blocked specialist=react-web note=needs backend /api/v1/auth/mfa/* first`
+- `pr=512 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=wired useMfa hooks; ppt-web typecheck clean`
+- `pr=513 status=done specialist=rust-backend scope_drift=true code_reuse_warn=JWT_VERIFIER@api_core note=ws sync (drift: handlers/mfa.rs touched; verifier may duplicate)`
+- `pr=none status=partial specialist=rust-backend scope_drift=false code_reuse_warn=none note=cargo check failed on websocket route stub`
+- `pr=none status=blocked specialist=react-web scope_drift=false code_reuse_warn=none note=needs backend /api/v1/auth/mfa/* first`
 
 The dispatcher writes this verbatim into `.research/management/assignments.json`
-under `implementer_summary`, and sets `pr_number` / `pr_url` if `pr=<n>`.
+under `implementer_summary`, parses the `scope_drift` and `code_reuse_warn`
+fields into their own columns, and sets `pr_number` / `pr_url` if `pr=<n>`.
 
 ## Install (local user)
 
