@@ -5,11 +5,12 @@
 use crate::state::AppState;
 use api_core::{extractors::RlsConnection, AuthUser, TenantExtractor};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{DefaultBodyLimit, Path, Query, State},
     http::StatusCode,
     routing::{delete, get, post, put},
     Json, Router,
 };
+use axum_extra::extract::Multipart;
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
 use db::models::{
@@ -316,6 +317,14 @@ pub struct UploadVersionRequest {
     pub size_bytes: i64,
 }
 
+/// Response for the multipart upload endpoint (Story 7A.1).
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct UploadDocumentResponse {
+    pub id: Uuid,
+    pub file_key: String,
+    pub message: String,
+}
+
 /// Query for listing documents.
 #[derive(Debug, Serialize, Deserialize, ToSchema, Default, utoipa::IntoParams)]
 pub struct ListDocumentsQuery {
@@ -367,6 +376,14 @@ pub struct IntelligenceStatsQuery {
 
 /// Create documents core router.
 pub fn router() -> Router<AppState> {
+    // The /upload route needs a raised body limit (50 MiB) to accept real
+    // files.  The global cap in main.rs is 16 MiB so we override it here
+    // via a per-route sub-router, matching the pattern used for the
+    // admin restore and migration import endpoints.
+    let upload_router = Router::new()
+        .route("/upload", post(upload_document))
+        .layer(DefaultBodyLimit::max(52_428_800)); // 50 MiB + headroom
+
     Router::new()
         // Document CRUD
         .route("/", post(create_document))
@@ -380,6 +397,8 @@ pub fn router() -> Router<AppState> {
         // Download/Preview (Story 7A.4)
         .route("/{id}/download", get(get_download_url))
         .route("/{id}/preview", get(get_preview_url))
+        // Multipart upload (Story 7A.1)
+        .merge(upload_router)
 }
 
 // ============================================================================
