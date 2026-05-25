@@ -89,12 +89,6 @@
     </dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
-    <!-- API Configuration (Epic 85 - Story 85.1) -->
-    <!-- These values are set by xcconfig files per build scheme -->
-    <!-- This is Reality Portal (mobile-native) which uses reality-server (port 8081) -->
-    <!-- Development: http://localhost:8081 (reality-server local) -->
-    <!-- Staging: https://staging-reality.ppt.example.com (reality-server staging) -->
-    <!-- Production: https://reality.ppt.example.com (reality-server production) -->
     <key>API_BASE_URL</key>
     <string>$(API_BASE_URL)</string>
     <key>ENVIRONMENT</key>

@@ -1,29 +1,20 @@
 // Production.xcconfig
 // Reality Portal - Production (Release) build configuration.
 // Epic 85 - Story 85.2: Build Configuration by Environment
-//
-// Used by scheme: RealityPortal-Prod
-// Bundle ID:      three.two.bit.ppt.reality (no suffix)
-// Display name:   Reality Portal (no badge)
+// Scheme: RealityPortal-Prod
+// Bundle: three.two.bit.ppt.reality
 
 #include "Base.xcconfig"
 
-// Environment overrides (no suffix - clean App Store bundle ID)
 PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.reality
 BUNDLE_DISPLAY_NAME = Reality Portal
-
-// Build settings
 CONFIGURATION = Release
 DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
 SWIFT_ACTIVE_COMPILATION_CONDITIONS =
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited)
 ENABLE_TESTABILITY = NO
-
-// API endpoints (production reality-server)
 API_BASE_URL = https://reality.ppt.example.com
 ENVIRONMENT = production
 ENABLE_LOGGING = false
-
-// Code signing (manual, App Store profile)
 CODE_SIGN_STYLE = Manual
 PROVISIONING_PROFILE_SPECIFIER = $(PROD_PROVISIONING_PROFILE)
