@@ -48,17 +48,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const envVars = loadEnvFile(appEnv);
 
   const apiBaseUrl =
-    envVars.API_BASE_URL ??
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    'https://api.ppt.example.com';
+    envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
 
   const wsBaseUrl =
-    envVars.WS_BASE_URL ??
-    process.env.EXPO_PUBLIC_WS_BASE_URL ??
-    apiBaseUrl.replace(/^http/, 'ws');
+    envVars.WS_BASE_URL ?? process.env.EXPO_PUBLIC_WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
 
-  const environment: AppEnvironment =
-    (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
+  const environment: AppEnvironment = (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
 
   const debugMode =
     envVars.DEBUG_MODE === 'true' || envVars.DEBUG_MODE === '1' || appEnv === 'development';
