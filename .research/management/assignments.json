@@ -955,15 +955,15 @@
     {
       "task_id": "gap-80-2-dispute-filing-api",
       "branch": "auto-impl/gap-80-2-dispute-filing-api",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T14:03:10Z",
-      "last_updated": "2026-05-25T14:20:00Z",
-      "status_changed_at": "2026-05-25T14:03:10Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T16:00:00Z",
+      "status_changed_at": "2026-05-25T16:00:00Z",
+      "pr_number": 506,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/506",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=506 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=state machine enforced in update_status (BadRequest→422); endpoint+migration already existed; cargo check+clippy clean",
       "reviewer_summary": null
     }
   ]
