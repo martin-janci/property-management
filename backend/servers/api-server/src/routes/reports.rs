@@ -210,6 +210,8 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
+        // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
+        .route("/schedules/{id}", axum::routing::put(update_schedule))
         // Epic 81: Story 81.1 — Schedule pause/resume
         .route("/schedules/{id}/pause", axum::routing::put(pause_schedule))
         .route(
@@ -1658,4 +1660,167 @@ pub async fn retry_execution(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to retry execution")),
             )
         })
+}
+
+// ============================================================================
+// gap-81-1: Update report schedule (cron_expression, recipients, enabled)
+// ============================================================================
+
+/// Request body for `PUT /api/v1/reports/schedules/{id}`.
+///
+/// All fields are optional — omit a field to leave the current value unchanged.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateScheduleRequest {
+    /// Cron expression (5-field UNIX syntax, e.g. `"0 8 * * 1"` = every Monday at 08:00).
+    pub cron_expression: Option<String>,
+    /// Recipient email addresses (max 50). Replaces the existing list.
+    pub recipients: Option<Vec<String>>,
+    /// `true` activates the schedule; `false` pauses it.
+    pub enabled: Option<bool>,
+}
+
+/// Validate a 5-field UNIX cron expression (minute hour dom month dow).
+fn validate_cron_expression(expr: &str) -> bool {
+    let fields: Vec<&str> = expr.split_whitespace().collect();
+    if fields.len() != 5 {
+        return false;
+    }
+    fn valid_field(field: &str, min: u32, max: u32) -> bool {
+        for part in field.split(',') {
+            let (base, step) = if let Some((b, s)) = part.split_once('/') {
+                (b, Some(s))
+            } else {
+                (part, None)
+            };
+            if let Some(s) = step {
+                if s.parse::<u32>().map_or(true, |v| v == 0) {
+                    return false;
+                }
+            }
+            if base != "*" {
+                if let Some((lo, hi)) = base.split_once('-') {
+                    match (lo.parse::<u32>(), hi.parse::<u32>()) {
+                        (Ok(l), Ok(h)) if l >= min && h <= max && l <= h => {}
+                        _ => return false,
+                    }
+                } else {
+                    match base.parse::<u32>() {
+                        Ok(v) if v >= min && v <= max => {}
+                        _ => return false,
+                    }
+                }
+            }
+        }
+        true
+    }
+    // minute(0-59) hour(0-23) dom(1-31) month(1-12) dow(0-7)
+    valid_field(fields[0], 0, 59)
+        && valid_field(fields[1], 0, 23)
+        && valid_field(fields[2], 1, 31)
+        && valid_field(fields[3], 1, 12)
+        && valid_field(fields[4], 0, 7)
+}
+
+/// Update a report schedule (gap-81-1).
+///
+/// Partial-update semantics: any field omitted from the request body is left unchanged.
+#[utoipa::path(
+    put,
+    path = "/api/v1/reports/schedules/{id}",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    request_body = UpdateScheduleRequest,
+    responses(
+        (status = 200, description = "Updated schedule", body = ReportSchedule),
+        (status = 400, description = "Validation error", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
+    )
+)]
+pub async fn update_schedule(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateScheduleRequest>,
+) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    // At least one field must be supplied.
+    if req.cron_expression.is_none() && req.recipients.is_none() && req.enabled.is_none() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "EMPTY_UPDATE",
+                "At least one of cron_expression, recipients, or enabled must be provided",
+            )),
+        ));
+    }
+    // Validate cron expression when present.
+    if let Some(ref cron) = req.cron_expression {
+        if !validate_cron_expression(cron) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_CRON_EXPRESSION",
+                    "cron_expression must be a valid 5-field UNIX cron expression \
+                     (e.g. \"0 8 * * 1\")",
+                )),
+            ));
+        }
+    }
+    // Validate recipient email addresses when present.
+    if let Some(ref recipients) = req.recipients {
+        if recipients.len() > 50 {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "TOO_MANY_RECIPIENTS",
+                    "A schedule may have at most 50 recipients",
+                )),
+            ));
+        }
+        for email in recipients {
+            if !crate::services::auth::AuthService::validate_email(email) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "INVALID_RECIPIENT_EMAIL",
+                        &format!("Invalid recipient email address: {email}"),
+                    )),
+                ));
+            }
+        }
+    }
+    // Load current schedule (returns 404 when absent).
+    let mut schedule = state
+        .report_schedule_repo
+        .get_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to fetch schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to fetch schedule")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "SCHEDULE_NOT_FOUND",
+                    "Report schedule not found",
+                )),
+            )
+        })?;
+    // Apply updates and persist.
+    let updated = state
+        .report_schedule_repo
+        .update_schedule(id, req.cron_expression, req.recipients, req.enabled, &mut schedule)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to update schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update schedule")),
+            )
+        })?;
+    Ok(Json(updated))
 }
