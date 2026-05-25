@@ -742,12 +742,12 @@
       "status": "review",
       "specialist": "generic",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T08:17:00Z",
+      "last_updated": "2026-05-25T09:20:00Z",
       "status_changed_at": "2026-05-25T08:17:00Z",
       "pr_number": 496,
       "pr_url": "https://github.com/martin-janci/property-management/pull/496",
       "merged_at": null,
-      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted\u2192Implemented with owner/delivery ref; action-list item marked done; git diff --check exit 0",
+      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted\u2192Implemented with owner/delivery ref; action-list item marked done; tsconfig.json node type removed; CI all-green; draft promoted",
       "reviewer_summary": null
     },
     {
@@ -756,12 +756,12 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T09:00:00Z",
+      "last_updated": "2026-05-25T09:20:00Z",
       "status_changed_at": "2026-05-25T09:00:00Z",
       "pr_number": 499,
       "pr_url": "https://github.com/martin-janci/property-management/pull/499",
       "merged_at": null,
-      "implementer_summary": "pr=499 status=done specialist=pm-frontend note=app.config.ts (Expo dynamic config), metro.config.js (workspace monorepo support), .env.{dev,staging,prod} EXPO_PUBLIC_* vars, @expo/metro-config+dotenv devDeps; biome import order fixed, pnpm-lock.yaml updated for CI frozen-lockfile; tsconfig.json excludes app.config.ts",
+      "implementer_summary": "pr=499 status=done specialist=pm-frontend note=app.config.ts (Expo dynamic config), metro.config.js (workspace monorepo support), .env.{dev,staging,prod} EXPO_PUBLIC_* vars, @expo/metro-config+dotenv devDeps; biome import order fixed, pnpm-lock.yaml updated for CI frozen-lockfile; tsconfig.json excludes app.config.ts; CI all-green; draft promoted",
       "reviewer_summary": null
     },
     {
@@ -770,12 +770,12 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T09:00:00Z",
+      "last_updated": "2026-05-25T09:20:00Z",
       "status_changed_at": "2026-05-25T09:00:00Z",
       "pr_number": 498,
       "pr_url": "https://github.com/martin-janci/property-management/pull/498",
       "merged_at": null,
-      "implementer_summary": "pr=498 status=done specialist=pm-frontend note=iOS xcconfig (Base/Dev/Staging/Prod), xcscheme XML, app icon sets with DEV/STG badges, Configuration.swift runtime xcconfig reader, Info.plist BUNDLE_DISPLAY_NAME substitution, build scripts build-mobile|android|ios.sh; biome import order fixed in app.config.ts",
+      "implementer_summary": "pr=498 status=done specialist=pm-frontend note=iOS xcconfig (Base/Dev/Staging/Prod), xcscheme XML, app icon sets with DEV/STG badges, Configuration.swift runtime xcconfig reader, Info.plist BUNDLE_DISPLAY_NAME substitution, build scripts build-mobile|android|ios.sh; biome import order+format fixed, pnpm-lock.yaml updated for CI frozen-lockfile; CI all-green; draft promoted",
       "reviewer_summary": null
     },
     {
