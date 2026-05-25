@@ -167,7 +167,7 @@ pub async fn create_signature_request(
     for signer in &signature_request.signers {
         // Build a HMAC-secured signing URL via the lightweight provider.
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(signature_request.id, &signer.email)
+            .build_signing_url(&signer.email, &signature_request.id.to_string())
             .unwrap_or_else(|_| {
                 format!(
                     "{}/sign?request_id={}&email={}",
@@ -365,7 +365,7 @@ pub async fn send_reminder(
 
     for signer in pending_signers {
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(signature_request.id, &signer.email)
+            .build_signing_url(&signer.email, &signature_request.id.to_string())
             .unwrap_or_else(|_| {
                 format!(
                     "{}/sign?request_id={}&email={}",
