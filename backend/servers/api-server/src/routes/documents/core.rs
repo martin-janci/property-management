@@ -1562,13 +1562,21 @@ pub async fn upload_document(
         } else {
             tracing::warn!(
                 file_key = %file_key,
+<<<<<<< HEAD
                 "Storage service present but S3 client not initialised — skipping S3 upload"
+=======
+                "Storage service present but S3 client not initialised - skipping S3 upload"
+>>>>>>> 5851036f (feat(api-server): implement POST /api/v1/documents/upload (Story 7A.1))
             );
         }
     } else {
         tracing::warn!(
             file_key = %file_key,
+<<<<<<< HEAD
             "No storage service configured — document bytes not persisted to S3"
+=======
+            "No storage service configured - document bytes not persisted to S3"
+>>>>>>> 5851036f (feat(api-server): implement POST /api/v1/documents/upload (Story 7A.1))
         );
     }
 
