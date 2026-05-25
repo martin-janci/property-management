@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T18:25:00Z",
+  "generated": "2026-05-25T18:37:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1166,15 +1166,15 @@
     {
       "task_id": "pm-scrum-master-wire-app-tsx-dispute-routes-replace-in",
       "branch": "auto-impl/pm-scrum-master-wire-app-tsx-dispute-rou",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T18:25:00Z",
-      "last_updated": "2026-05-25T18:25:00Z",
-      "status_changed_at": "2026-05-25T18:25:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T18:37:00Z",
+      "status_changed_at": "2026-05-25T18:37:00Z",
+      "pr_number": 512,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/512",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=512 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired DisputeDetailPage+DisputeMediationRoute+mediation route; typecheck+build clean; scope_drift from dev merge (announcements/push-tokens commits); sessions/submissions empty pending backend",
       "reviewer_summary": null
     },
     {
@@ -1183,26 +1183,26 @@
       "status": "review",
       "specialist": "generic",
       "claimed_at": "2026-05-25T18:25:00Z",
-      "last_updated": "2026-05-25T18:25:00Z",
+      "last_updated": "2026-05-25T18:37:00Z",
       "status_changed_at": "2026-05-25T18:25:00Z",
       "pr_number": 510,
       "pr_url": "https://github.com/martin-janci/property-management/pull/510",
       "merged_at": null,
       "implementer_summary": "pr=510 status=done specialist=generic note=security-test-gate workflow added",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes/fixed note=martin-janci review addressed: checkout@v6→@v4 (blocker), ** glob→*/tests/*.rs (non-recursive bash fix), unlabeled event added; all three concerns resolved; awaiting CI re-run on fixed version"
     },
     {
       "task_id": "gap-6-4-pinned-announcements-ui",
       "branch": "auto-impl/gap-6-4-pinned-announcements-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T18:25:00Z",
-      "last_updated": "2026-05-25T18:25:00Z",
-      "status_changed_at": "2026-05-25T18:25:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T18:37:00Z",
+      "status_changed_at": "2026-05-25T18:37:00Z",
+      "pr_number": 511,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/511",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=511 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=pinned band in ppt-web (PinnedAnnouncementsBand+CSS wired) and mobile sticky chip row; useAnnouncements(pinned:true) in AnnouncementsPageRoute; typecheck+biome clean both stacks",
       "reviewer_summary": null
     }
   ]
