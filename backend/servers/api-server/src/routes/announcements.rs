@@ -270,8 +270,8 @@ pub fn router() -> Router<AppState> {
         .route("/{id}/publish", post(publish_announcement))
         .route("/{id}/schedule", post(schedule_announcement))
         .route("/{id}/archive", post(archive_announcement))
-        // Pinning
-        .route("/{id}/pin", post(pin_announcement))
+        // Pinning — PATCH is the canonical verb; POST kept for back-compat
+        .route("/{id}/pin", post(pin_announcement).patch(pin_announcement))
         // Attachments
         .route("/{id}/attachments", get(list_attachments))
         .route("/{id}/attachments", post(add_attachment))
@@ -1171,8 +1171,12 @@ async fn archive_announcement(
 /// Pin/unpin an announcement (Story 6.4).
 ///
 /// Requires manager-level role. Maximum 3 pinned announcements per organization.
+/// Pinned announcements are returned first in all list endpoints
+/// (`ORDER BY pinned DESC, published_at DESC`).
+///
+/// Accepts both PATCH (preferred) and POST (backward-compat).
 #[utoipa::path(
-    post,
+    patch,
     path = "/api/v1/announcements/{id}/pin",
     params(
         ("id" = Uuid, Path, description = "Announcement ID")
