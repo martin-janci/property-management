@@ -54,11 +54,3 @@ export function useCreateSignatureRequest(documentId: string) {
     },
   });
 }
-
-/**
- * Convenience alias used from the lease detail page.
- * Sends a signature request for the document attached to a lease.
- */
-export function useRequestESignature(documentId: string) {
-  return useCreateSignatureRequest(documentId);
-}
