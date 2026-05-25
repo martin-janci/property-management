@@ -1091,10 +1091,12 @@ async fn list_equipment(
 
 async fn get_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.find_by_id(id).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.find_by_id(id, tenant_id).await {
         Ok(Some(equipment)) => Ok(Json(serde_json::json!(equipment))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -1159,13 +1161,20 @@ async fn delete_equipment(
 
 async fn list_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
     match state
         .equipment_repo
-        .list_maintenance(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
+        .list_maintenance(
+            id,
+            tenant_id,
+            query.limit.unwrap_or(50),
+            query.offset.unwrap_or(0),
+        )
         .await
     {
         Ok(records) => Ok(Json(serde_json::json!({ "maintenance": records }))),
@@ -1181,12 +1190,24 @@ async fn list_maintenance(
 
 async fn create_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.create_maintenance(req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    // The repository INSERT is guarded by a sub-select that ensures req.equipment_id
+    // belongs to this tenant; a foreign equipment_id yields RowNotFound → 404.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state
+        .equipment_repo
+        .create_maintenance(tenant_id, req)
+        .await
+    {
         Ok(record) => Ok((StatusCode::CREATED, Json(serde_json::json!(record)))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to create maintenance: {}", e);
             Err((

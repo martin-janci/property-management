@@ -59,9 +59,18 @@ impl EquipmentRepository {
     }
 
     /// Get equipment by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Equipment>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM equipment WHERE id = $1")
+    /// Fetch a single equipment row scoped to `org_id`.
+    ///
+    /// Returns `None` for both "not found" and "belongs to another tenant" so
+    /// callers cannot enumerate foreign-tenant IDs by status code.
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Equipment>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM equipment WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(&self.pool)
             .await
     }
@@ -166,8 +175,15 @@ impl EquipmentRepository {
     }
 
     /// Create maintenance record.
+    /// Create a maintenance record — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The INSERT is guarded by a sub-select that ensures `data.equipment_id`
+    /// belongs to `org_id`; if the equipment does not exist in that org the
+    /// INSERT produces no row and `sqlx` returns `RowNotFound`.
     pub async fn create_maintenance(
         &self,
+        org_id: Uuid,
         data: CreateMaintenance,
     ) -> Result<EquipmentMaintenance, sqlx::Error> {
         sqlx::query_as(
@@ -175,7 +191,9 @@ impl EquipmentRepository {
             INSERT INTO equipment_maintenance
                 (equipment_id, maintenance_type, description, performed_by, external_vendor,
                  cost, parts_replaced, fault_id, scheduled_date, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+            FROM equipment
+            WHERE id = $1 AND organization_id = $11
             RETURNING *
             "#,
         )
@@ -189,6 +207,7 @@ impl EquipmentRepository {
         .bind(data.fault_id)
         .bind(data.scheduled_date)
         .bind(data.notes)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
     }
@@ -204,22 +223,29 @@ impl EquipmentRepository {
             .await
     }
 
-    /// List maintenance records for equipment.
+    /// List maintenance records for equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The JOIN ensures only maintenance records whose parent equipment
+    /// belongs to `org_id` are returned.
     pub async fn list_maintenance(
         &self,
         equipment_id: Uuid,
+        org_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<EquipmentMaintenance>, sqlx::Error> {
         sqlx::query_as(
             r#"
-            SELECT * FROM equipment_maintenance
-            WHERE equipment_id = $1
-            ORDER BY COALESCE(completed_date, scheduled_date) DESC NULLS LAST
-            LIMIT $2 OFFSET $3
+            SELECT em.* FROM equipment_maintenance em
+            JOIN equipment e ON e.id = em.equipment_id
+            WHERE em.equipment_id = $1 AND e.organization_id = $2
+            ORDER BY COALESCE(em.completed_date, em.scheduled_date) DESC NULLS LAST
+            LIMIT $3 OFFSET $4
             "#,
         )
         .bind(equipment_id)
+        .bind(org_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(&self.pool)

@@ -271,3 +271,98 @@ async fn update_maintenance_from_other_org_is_rejected(pool: PgPool) {
         "maintenance description must not be changed by cross-tenant PUT"
     );
 }
+
+// ---------------------------------------------------------------------------
+// H4 — cross-tenant IDOR: get_equipment (information disclosure)
+// ---------------------------------------------------------------------------
+
+/// GET /equipment/{id} from Org B targeting Org A's equipment → rejected (4xx).
+/// Org A's equipment must NOT be readable by Org B.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn get_equipment_from_other_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "get-eq-a").await;
+    let org_b = seed_org(&pool, "get-eq-b").await;
+    let _user_a = seed_user(&pool, "get-eq-a@idor.test").await;
+    let user_b = seed_user(&pool, "get-eq-b@idor.test").await;
+    let building_a = seed_building(&pool, org_a, "get-eq-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
+
+    let ctx_b = tenant_context_header(org_b, user_b);
+    let uri = format!("/api/v1/ai/equipment/{}", equipment_in_a);
+
+    let response = app.execute(req(Method::GET, &uri, &ctx_b, None)).await;
+
+    assert_rejected(response.status, "get_equipment cross-tenant");
+}
+
+// ---------------------------------------------------------------------------
+// H5 — cross-tenant IDOR: list_maintenance (cross-tenant enumeration)
+// ---------------------------------------------------------------------------
+
+/// GET /equipment/{id}/maintenance from Org B targeting Org A's equipment →
+/// rejected (4xx), no maintenance records leaked.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn list_maintenance_from_other_org_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "lst-maint-a").await;
+    let org_b = seed_org(&pool, "lst-maint-b").await;
+    let _user_a = seed_user(&pool, "lst-maint-a@idor.test").await;
+    let user_b = seed_user(&pool, "lst-maint-b@idor.test").await;
+    let building_a = seed_building(&pool, org_a, "lst-maint-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
+    let _maint_id = seed_maintenance(&pool, equipment_in_a).await;
+
+    let ctx_b = tenant_context_header(org_b, user_b);
+    let uri = format!("/api/v1/ai/equipment/{}/maintenance", equipment_in_a);
+
+    let response = app.execute(req(Method::GET, &uri, &ctx_b, None)).await;
+
+    assert_rejected(response.status, "list_maintenance cross-tenant");
+}
+
+// ---------------------------------------------------------------------------
+// H6 — cross-tenant IDOR: create_maintenance (cross-tenant write)
+// ---------------------------------------------------------------------------
+
+/// POST /equipment/{id}/maintenance from Org B targeting Org A's equipment →
+/// rejected (4xx), and no maintenance record is inserted.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn create_maintenance_on_other_org_equipment_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let org_a = seed_org(&pool, "crt-maint-a").await;
+    let org_b = seed_org(&pool, "crt-maint-b").await;
+    let _user_a = seed_user(&pool, "crt-maint-a@idor.test").await;
+    let user_b = seed_user(&pool, "crt-maint-b@idor.test").await;
+    let building_a = seed_building(&pool, org_a, "crt-maint-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
+
+    let ctx_b = tenant_context_header(org_b, user_b);
+    let uri = format!("/api/v1/ai/equipment/{}/maintenance", equipment_in_a);
+    let body = serde_json::json!({
+        "equipment_id": equipment_in_a,
+        "maintenance_type": "preventive",
+        "description": "cross-tenant inject",
+    });
+
+    let response = app
+        .execute(req(Method::POST, &uri, &ctx_b, Some(body)))
+        .await;
+
+    assert_rejected(response.status, "create_maintenance cross-tenant");
+
+    // Verify no maintenance record was inserted for this equipment.
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM equipment_maintenance WHERE equipment_id = $1")
+            .bind(equipment_in_a)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        count, 0,
+        "no maintenance record must be created via cross-tenant POST"
+    );
+}
