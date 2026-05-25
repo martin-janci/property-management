@@ -444,7 +444,7 @@
       "title": "Screen-map drift: PR #464 wired a neighbors route in ppt-web without a docs/screens/ppt entry",
       "vector": "test-gap",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "PR #464"
@@ -466,7 +466,7 @@
       "title": "Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update",
       "vector": "test-gap",
       "score": 2,
-      "status": "open",
+      "status": "closed",
       "confidence": "medium",
       "sources": [
         "PR #460"
@@ -481,7 +481,8 @@
       ],
       "created_at": "2026-05-25",
       "updated_at": "2026-05-25",
-      "plan": null
+      "plan": null,
+      "resolution": "false-positive: PR #460 was an API-base host-inference bugfix inside an existing listing-detail page, not a screen change"
     },
     {
       "id": "refactor-ai-rs-module-split",
