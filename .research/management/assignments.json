@@ -1156,7 +1156,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/509",
       "merged_at": null,
       "implementer_summary": "pr=509 status=done specialist=rust-backend note=implemented POST /api/v1/documents/upload multipart handler; cargo check+clippy clean",
-      "reviewer_summary": "verdict=changes note=CSV allowed in error message but ALLOWED_MIME_TYPES omits text/csv; handler is pub async fn, siblings are private. DefaultBodyLimit/RLS/auth/S3+DB all correct.",
+      "reviewer_summary": "verdict=changes/fixed note=text/csv added to ALLOWED_MIME_TYPES and pub async fn→async fn (both fixed in pre-rebase commits 8f8793f2); branch rebased onto dev at 0c9a5a91; CI re-running — needs re-review once test+security-tests complete",
       "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
