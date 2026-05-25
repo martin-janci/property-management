@@ -369,7 +369,8 @@ impl DisputeRepository {
             UPDATE disputes
             SET status = 'resolved',
                 resolved_at = $1,
-                resolution_notes = $2
+                resolution_notes = $2,
+                updated_at = NOW()
             WHERE id = $3 AND status = $4 AND organization_id = $5
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
@@ -432,7 +433,7 @@ impl DisputeRepository {
         self.record_activity(
             req.dispute_id,
             req.updated_by,
-            activity_type::STATUS_CHANGED,
+            activity_type::COMMENT_ADDED,
             "Mediation notes updated".to_string(),
             None,
         )

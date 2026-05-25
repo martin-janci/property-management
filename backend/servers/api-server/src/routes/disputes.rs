@@ -445,8 +445,10 @@ async fn resolve_dispute(
     Path(id): Path<Uuid>,
     Json(data): Json<ResolveDisputeRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    // Fix: admit both managers AND admins (is_manager already includes admin-tier
-    // roles but we spell it out explicitly per the API contract).
+    // RequireCapability is not used here: the mediator path in update_mediation_notes
+    // already requires a DB lookup that cannot be expressed as a static capability,
+    // and keeping both handlers consistent avoids a mixed RBAC pattern in the same
+    // router.  The manual check below enforces the same policy.
     if !user
         .role
         .as_ref()
@@ -523,8 +525,21 @@ async fn update_mediation_notes(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateMediationNotesRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    // Allow managers/admins or the assigned mediator (i.e. any authenticated user
-    // who is a party with role "mediator" — checked by the presence of the party record).
+    // Guard: mediation notes must not be blank.
+    if data.notes.trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "notes must not be empty",
+            )),
+        ));
+    }
+
+    // RequireCapability is not used here because access involves two distinct
+    // paths: static role check (manager/admin) AND a dynamic DB lookup to
+    // verify mediator-party membership.  Neither path can be expressed as a
+    // single static capability constant, so the check is performed inline.
     let is_manager = user
         .role
         .as_ref()
