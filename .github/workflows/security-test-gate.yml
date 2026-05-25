@@ -7,7 +7,7 @@ name: Security-label test-file gate
 # labelled fix must land with at least one new or modified test file.
 #
 # This workflow enforces that contract at merge time:
-#   - Triggered whenever a PR is opened, updated, or re-labelled.
+#   - Triggered whenever a PR is opened, updated, re-labelled, or un-labelled.
 #   - If the PR carries the 'security' label, it scans the changed files
 #     for test-file patterns (Rust integration tests, Rust unit test mods,
 #     TypeScript __tests__/ files, etc.).
@@ -25,6 +25,7 @@ on:
       - synchronize
       - reopened
       - labeled
+      - unlabeled
       - ready_for_review
 
 jobs:
@@ -34,7 +35,8 @@ jobs:
 
     # Only apply to PRs that carry the 'security' label.
     # If the label is not present this job finishes immediately as a no-op
-    # (exit 0) so it never blocks non-security PRs.
+    # (exit 0) so it never blocks non-security PRs, and clears any stale
+    # failure when the 'security' label is removed.
     if: contains(github.event.pull_request.labels.*.name, 'security')
 
     permissions:
@@ -42,7 +44,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           # Fetch the full diff between the base and head commits so
           # `git diff --name-only` works without a shallow-clone issue.
@@ -83,10 +85,8 @@ jobs:
           # Test-file patterns
           # A file counts as a "test file" when its path matches any of:
           #
-          #   Rust integration tests  backend/*/tests/*.rs
-          #   Rust unit test modules  any *.rs file that contains #[cfg(test)]
-          #                           (detected by path heuristic: *_test.rs,
-          #                            *_tests.rs, tests.rs, test_*.rs)
+          #   Rust integration tests  backend/*/tests/*.rs   (one dir level)
+          #   Rust unit test modules  any *.rs file with _test/_tests/test_ name
           #   TypeScript tests        **/__tests__/**  or  *.test.ts / *.spec.ts
           #   Frontend e2e            e2e/**
           # -------------------------------------------------------------------
@@ -97,8 +97,10 @@ jobs:
             [ -z "$f" ] && continue
 
             case "$f" in
-              # Rust integration test files (backend/.../tests/*.rs)
-              backend/*/tests/*.rs | backend/**/tests/*.rs)
+              # Rust integration test files (backend/<crate>/tests/*.rs)
+              # Note: bash `case` globs are single-level only; one wildcard
+              # is sufficient for the current repo layout.
+              backend/*/tests/*.rs)
                 echo "  [TEST] $f  (Rust integration test)"
                 HAS_TEST=true
                 ;;
@@ -164,7 +166,7 @@ jobs:
           echo "  boundary check, or an input-validation edge case)."
           echo ""
           echo "  Test-file patterns recognised by this gate:"
-          echo "    Rust integration : backend/**/tests/*.rs"
+          echo "    Rust integration : backend/*/tests/*.rs"
           echo "    Rust test module : *_test.rs, *_tests.rs, test_*.rs, tests.rs"
           echo "    TypeScript       : **/__tests__/**, *.test.ts, *.spec.ts"
           echo "    End-to-end       : e2e/**"
