@@ -1199,6 +1199,7 @@ impl LlmDocumentRepository {
     }
 
     /// List voice command history for a device.
+    /// List voice command history for a device.
     ///
     /// `user_id` scopes the query to commands for devices owned by the caller,
     /// preventing cross-tenant IDOR reads.  Returns an empty list (not 404) when

@@ -43,9 +43,27 @@ Stories 2B.5 (Privacy-Aware Design), 2B.6 (Offline Sync Queue), 2B.7 (Idempotenc
 **Formally deferred (not deleted from backlog):**
 The stories listed in "deferred slices" above remain in the backlog at their current priority. They are unblocked the moment Epic 2B stories 1–5 (including WS) are merged to dev. pm-scrum-master should re-sequence them into the sprint immediately after 2B lands.
 
+**Unblock trigger table (pm-scrum-master, 2026-05-24):**
+
+| Epic 2B story merged | Unblocks |
+|---|---|
+| `2b-1-event-bus-foundation` | 8a-2 dispatch half (can begin wiring event emission) |
+| `2b-2-push-notification-service` | push leg of 6-2/6-3/6-4 notification dispatch |
+| `2b-3-email-notification-service` | email leg of 6-2/6-3/6-4 notification dispatch |
+| `2b-4-in-app-notification-center` | in-app notification display on 6-2/6-3/6-4 views |
+| `2b-c1-websocket-realtime-sync` | 8a-3 WS half, 6-5 direct messaging realtime, future DM slice |
+| All five (2b-1 → 2b-c1) merged | Full re-sequencing: 6-2/6-3/6-4/6-5/8a-2-dispatch/8a-3 move to ready-for-dev |
+
+**Sprint sequencing note (pm-scrum-master, 2026-05-24):**
+DEC-001 is the authoritative sequencing record. `sprint-status.yaml` updated to reflect:
+Epic 2B stories (`2b-1 → 2b-2 → 2b-3 → 2b-4 → 2b-c1`) are sequenced first;
+stories 6.2–6.5, 8A.2 dispatch, and 8A.3 WS sync are formally marked `blocked`
+until those five stories merge to `dev`. pm-scrum-master will re-sequence them
+into the sprint immediately after 2B lands, using the unblock trigger table above.
+
 ---
 
 ## Decisions needed
-- Whether to pull Epic 2B notification infrastructure into the current sprint to unblock Epic 6 publish + 8A.2 dispatch — owner: pm-scrum-master _(raised 2026-05-23)_ **unblocked by DEC-001**
+- ~~Whether to pull Epic 2B notification infrastructure into the current sprint to unblock Epic 6 publish + 8A.2 dispatch — owner: pm-scrum-master _(raised 2026-05-23)_~~ **RESOLVED by DEC-001 (PR #442) + sprint-status sequencing update (2026-05-24)**
 - Merge target/priority for security PR #435 vs. feature review backlog — owner: pm-tech-lead _(raised 2026-05-23)_
-- Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead _(raised 2026-05-23)_
+- Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead _(raised 2026-05-23)_ _(note: PR #437 deleted these modules — effectively resolved, pending tech-lead confirmation to close)_

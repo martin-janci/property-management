@@ -24,13 +24,13 @@ _Generated: 2026-05-24 — daily PM rotation (Scrum Master + pm-backend). Covera
 2. **[high · pm-backend]** Fix the P1-05 SSRF — extract `validate_external_url` to a shared module and apply at the two unguarded outbound sinks. _Why:_ authenticated SSRF to cloud-metadata / internal services; plan ready (`security-ssrf-outbound-url-validation`).
 3. **[high · pm-scrum-master]** Triage the six open PRs (#441–#447); promote #447/#445 (mobile 7A, non-draft) to review first. _Why:_ clears the 7A mobile slice and prevents review-queue stall.
 4. **[high · pm-backend]** Implement the missing Epic 81 report-schedule endpoints (pause/resume/executions). _Why:_ frontend already calls them — 404 in production.
-5. **[medium · pm-tech-lead]** Land DEC-001 (PR #442) to formally sequence Epic 2B before the dependent Epic 6/8A slices. _Why:_ unblocks 8a-3 + 6-5 planning and prevents rework.
+5. ~~**[medium · pm-tech-lead]** Land DEC-001 (PR #442) to formally sequence Epic 2B before the dependent Epic 6/8A slices.~~ **DONE — PR #442 merged; sprint-status.yaml sequenced by pm-scrum-master 2026-05-24.**
 
 See `roadmap.md` for the full ranked plan and `action-list.json`/`action-list.md` for the tracker view.
 
 ## Blockers
 
-- **Epic 2B WebSocket/notification infrastructure** — gates 8a-3 (preference sync) and 6-5 (DM realtime). Not started; DEC-001 (PR #442) would formalize the sequencing decision.
+- **Epic 2B WebSocket/notification infrastructure** — gates 8a-3 (preference sync) and 6-5 (DM realtime). Not started; DEC-001 (PR #442) merged 2026-05-24 — sequencing is now formal. Stories 2b-1 through 2b-c1 are `ready-for-dev` and must be picked up next.
 - **Epic 81 backend endpoints missing** — frontend calls `/schedules/{id}/pause|resume` and `/executions`, which don't exist (404).
 - **PR #435 deferred security findings (#438/#439)** — unowned; P0/P1 items should land before further auth-surface feature work.
 
