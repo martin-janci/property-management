@@ -18,9 +18,9 @@
  *   APP_ENV=production pnpm -F mobile start     # loads .env.production
  */
 
+import * as path from 'node:path';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import * as dotenv from 'dotenv';
-import * as path from 'node:path';
 
 type AppEnvironment = 'development' | 'staging' | 'production';
 
