@@ -969,16 +969,16 @@
     {
       "task_id": "pm-qa-create-backend-servers-reality-server",
       "branch": "auto-impl/pm-qa-create-backend-servers-reality-ser",
-      "status": "review",
+      "status": "failed",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T16:10:00Z",
-      "last_updated": "2026-05-25T16:55:00Z",
-      "status_changed_at": "2026-05-25T16:55:00Z",
+      "last_updated": "2026-05-25T17:10:00Z",
+      "status_changed_at": "2026-05-25T17:10:00Z",
       "pr_number": 507,
       "pr_url": "https://github.com/martin-janci/property-management/pull/507",
       "merged_at": null,
       "implementer_summary": "pr=507 status=done specialist=rust-backend scope_drift=true code_reuse_warn=none note=inquiry IDOR tests C1/C2/C3 compile clean (Band A exit 0); drift from prior subagent commit in reality_portal.rs/Cargo.lock",
-      "reviewer_summary": null
+      "reviewer_summary": "PR #507 closed without merging — inquiry_idor_tests.rs content already landed on dev via WIP commit ea75c0a4d; scope drift (documents/core.rs) made branch identical to dev after rebase, PR auto-closed"
     },
     {
       "task_id": "pm-qa-verify-respond-to-inquiry-post-api-v1",
