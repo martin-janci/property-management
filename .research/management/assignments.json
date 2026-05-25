@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T05:33:46Z",
+  "generated": "2026-05-25T05:42:03Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -536,10 +536,10 @@
     {
       "task_id": "gap-6-2-announcement-web-ui",
       "branch": "auto-impl/gap-6-2-announcement-web-ui",
-      "status": "review",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T05:33:46Z",
+      "last_updated": "2026-05-25T05:42:03Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 474,
       "pr_url": "https://github.com/martin-janci/property-management/pull/474",
