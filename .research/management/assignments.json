@@ -739,14 +739,14 @@
     {
       "task_id": "pm-tech-lead-confirm-websocket-infra-ownership",
       "branch": "auto-impl/pm-tech-lead-confirm-websocket-infra-own",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T10:08:44Z",
-      "status_changed_at": "2026-05-25T08:17:00Z",
+      "last_updated": "2026-05-25T10:20:00Z",
+      "status_changed_at": "2026-05-25T10:20:00Z",
       "pr_number": 496,
       "pr_url": "https://github.com/martin-janci/property-management/pull/496",
-      "merged_at": null,
+      "merged_at": "2026-05-25T10:20:00Z",
       "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted\u2192Implemented with owner/delivery ref; action-list item marked done; tsconfig.json node type removed; CI all-green; draft promoted",
       "reviewer_summary": "verdict=approve note=ADR-008 status/owner/delivery/DEC-001/remaining-work all verified; action-list item consistently done; internal consistency confirmed; CI 5/5 green",
       "reviewer_verdict": "approve"
