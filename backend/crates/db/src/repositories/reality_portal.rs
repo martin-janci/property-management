@@ -804,13 +804,37 @@ impl RealityPortalRepository {
     }
 
     /// Respond to inquiry.
+    ///
+    /// Enforces realtor ownership: the calling realtor (`realtor_id`) MUST own
+    /// the inquiry (`listing_inquiries.realtor_id = realtor_id`). Returns
+    /// `Ok(None)` when the inquiry does not exist or belongs to a different
+    /// realtor so the route layer can return 404 (indistinguishable from
+    /// "not found" to the caller — no information leakage).
     pub async fn respond_to_inquiry(
         &self,
         id: Uuid,
         realtor_id: Uuid,
         message: &str,
-    ) -> Result<InquiryMessage, SqlxError> {
+    ) -> Result<Option<InquiryMessage>, SqlxError> {
         let mut tx = self.pool.begin().await?;
+
+        // Ownership check: only the realtor who owns the inquiry may respond.
+        // This mirrors the pattern used by `get_inquiry_for_realtor` and
+        // `mark_inquiry_read_for_realtor`. Without this guard, realtor B could
+        // insert a message on realtor A's inquiry (IDOR).
+        let owned: bool = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM listing_inquiries WHERE id = $1 AND realtor_id = $2)",
+        )
+        .bind(id)
+        .bind(realtor_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if !owned {
+            // Rollback (nothing written yet) and signal caller to 404.
+            tx.rollback().await?;
+            return Ok(None);
+        }
 
         // Create message
         let msg = sqlx::query_as::<_, InquiryMessage>(
@@ -826,16 +850,17 @@ impl RealityPortalRepository {
         .fetch_one(&mut *tx)
         .await?;
 
-        // Update inquiry status
+        // Update inquiry status (ownership already verified above)
         sqlx::query(
-            "UPDATE listing_inquiries SET status = 'responded', responded_at = NOW() WHERE id = $1",
+            "UPDATE listing_inquiries SET status = 'responded', responded_at = NOW() WHERE id = $1 AND realtor_id = $2",
         )
         .bind(id)
+        .bind(realtor_id)
         .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
-        Ok(msg)
+        Ok(Some(msg))
     }
 
     // ========================================================================
