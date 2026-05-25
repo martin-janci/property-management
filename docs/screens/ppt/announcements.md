@@ -21,6 +21,9 @@ endpoints:
   - announcements_mark_read
   - announcements_acknowledge
   - announcements_get_acknowledgments
+  - announcements_comments_list
+  - announcements_comments_create
+  - announcements_comments_delete
 epics:
   - Epic-6
 relatedScreens:
@@ -116,6 +119,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-25 — agent: gap-6-3 review fixes — added i18n to AnnouncementComments.tsx (useTranslation + 12 keys); registered 18 toast keys + comments sub-object in en.json; fixed isManager to include technical_manager + property_manager; added announcements_comments_list/create/delete to sitemap + screen-map
 
 - 2026-05-24 — agent: gap-6-3-comments-web-ui — Story 6.3: added AnnouncementComments component + CSS; added useAnnouncementComments/useCreateAnnouncementComment/useDeleteAnnouncementComment standalone hooks to @ppt/api-client; wired comment hooks in ViewAnnouncementPageInner with manager-role delete affordance; ppt-web buildStatus planned→in-progress
 
