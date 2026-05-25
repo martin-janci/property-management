@@ -166,6 +166,11 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/users/me/notification-preferences",
             routes::notification_preferences::router(),
         )
+        // Mobile OS push token registration (Epic 8A-3)
+        .nest(
+            "/api/v1/users/me/push-tokens",
+            routes::push_tokens::router(),
+        )
         // WebSocket realtime notification sync (Epic 8A, Story 8A.3)
         .nest(
             "/api/v1/users/me/notifications",

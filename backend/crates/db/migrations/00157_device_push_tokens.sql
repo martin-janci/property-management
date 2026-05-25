@@ -27,15 +27,18 @@ CREATE INDEX device_push_tokens_user_id_idx ON device_push_tokens (user_id);
 
 -- RLS: users can only see / manage their own tokens.
 ALTER TABLE device_push_tokens ENABLE ROW LEVEL SECURITY;
+-- Force RLS even for table owner (consistent with other tenant-scoped tables).
+ALTER TABLE device_push_tokens FORCE ROW LEVEL SECURITY;
 
+-- Policy: each user can only access their own push tokens.
 CREATE POLICY device_push_tokens_user_policy
     ON device_push_tokens
     FOR ALL
-    USING (user_id = current_setting('rls.user_id', TRUE)::UUID);
+    USING (user_id = NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID);
 
--- Allow service-role / background tasks to bypass RLS (for push delivery).
+-- Service-role bypass: allow SELECT when no user session is active
+-- (background push-delivery task looks up tokens for all users).
 CREATE POLICY device_push_tokens_service_policy
     ON device_push_tokens
     FOR SELECT
-    USING (current_setting('rls.user_id', TRUE) IS NULL
-        OR current_setting('rls.user_id', TRUE) = '');
+    USING (NULLIF(current_setting('app.current_user_id', TRUE), '') IS NULL);

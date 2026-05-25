@@ -37,6 +37,7 @@ pub mod meters;
 pub mod mfa;
 pub mod neighbors;
 pub mod notification_preferences;
+pub mod push_tokens;
 // Epic 8A, Story 8A.3 — WebSocket realtime notification sync
 pub mod oauth;
 pub mod onboarding;

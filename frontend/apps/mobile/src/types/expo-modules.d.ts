@@ -216,6 +216,12 @@ declare module 'expo-notifications' {
   export function cancelAllScheduledNotificationsAsync(): Promise<void>;
   export function getBadgeCountAsync(): Promise<number>;
   export function setBadgeCountAsync(count: number): Promise<void>;
+
+  export interface DevicePushToken {
+    type: 'ios' | 'android' | 'web';
+    data: string;
+  }
+  export function getDevicePushTokenAsync(): Promise<DevicePushToken>;
 }
 
 declare module '@react-native-async-storage/async-storage' {

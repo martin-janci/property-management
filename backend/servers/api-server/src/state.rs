@@ -10,11 +10,11 @@ use db::{
         AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
         BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
-        DelegationRepository, DisputeRepository, DocumentRepository, DocumentTemplateRepository,
-        EddRepository, EmergencyRepository, EnergyRepository, EnhancedTenantScreeningRepository,
-        EquipmentRepository, EsgReportingRepository, FacilityRepository, FaultRepository,
-        FeatureAnalyticsRepository, FeatureFlagRepository, FeaturePackageRepository,
-        FinancialRepository, FormRepository, GovernmentPortalRepository,
+        DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
+        DocumentTemplateRepository, EddRepository, EmergencyRepository, EnergyRepository,
+        EnhancedTenantScreeningRepository, EquipmentRepository, EsgReportingRepository,
+        FacilityRepository, FaultRepository, FeatureAnalyticsRepository, FeatureFlagRepository,
+        FeaturePackageRepository, FinancialRepository, FormRepository, GovernmentPortalRepository,
         GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
         InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
@@ -59,6 +59,7 @@ pub struct AppState {
     pub document_repo: DocumentRepository,
     pub document_template_repo: DocumentTemplateRepository,
     pub notification_pref_repo: NotificationPreferenceRepository,
+    pub device_push_token_repo: DevicePushTokenRepository,
     pub critical_notification_repo: CriticalNotificationRepository,
     pub two_factor_repo: TwoFactorAuthRepository,
     pub audit_log_repo: AuditLogRepository,
@@ -224,6 +225,7 @@ impl AppState {
         let document_repo = DocumentRepository::new(db.clone());
         let document_template_repo = DocumentTemplateRepository::new(db.clone());
         let notification_pref_repo = NotificationPreferenceRepository::new(db.clone());
+        let device_push_token_repo = DevicePushTokenRepository::new(db.clone());
         let critical_notification_repo = CriticalNotificationRepository::new(db.clone());
         let two_factor_repo = TwoFactorAuthRepository::new(db.clone());
         let audit_log_repo = AuditLogRepository::new(db.clone());
@@ -366,6 +368,7 @@ impl AppState {
             document_repo,
             document_template_repo,
             notification_pref_repo,
+            device_push_token_repo,
             critical_notification_repo,
             two_factor_repo,
             audit_log_repo,

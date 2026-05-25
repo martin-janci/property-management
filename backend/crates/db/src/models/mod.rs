@@ -14,6 +14,7 @@ pub mod facility;
 pub mod fault;
 pub mod financial;
 
+pub mod device_push_token;
 pub mod granular_notification;
 pub mod membership;
 pub mod messaging;
@@ -128,6 +129,9 @@ pub use delegation::{
     delegation_scope, delegation_status, AcceptDelegation, CreateDelegation, DeclineDelegation,
     Delegation, DelegationAuditLog, DelegationSummary, DelegationWithUsers, RevokeDelegation,
     UpdateDelegation,
+};
+pub use device_push_token::{
+    DevicePushToken, PushPlatform, PushTokenResponse, RegisterPushTokenRequest,
 };
 pub use document::{
     access_scope, document_category, ocr_status, share_type, ClassificationFeedback,
