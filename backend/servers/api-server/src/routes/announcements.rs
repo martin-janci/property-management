@@ -1933,7 +1933,7 @@ fn sanitize_markdown(content: &str) -> String {
     let mut tag_attributes = std::collections::HashMap::new();
     tag_attributes.insert(
         "a",
-        ["href", "title", "rel", "target"]
+        ["href", "title", "target"]
             .into_iter()
             .collect::<HashSet<_>>(),
     );
