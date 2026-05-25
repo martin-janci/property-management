@@ -1,29 +1,20 @@
 // Staging.xcconfig
 // Reality Portal - Staging build configuration.
 // Epic 85 - Story 85.2: Build Configuration by Environment
-//
-// Used by scheme: RealityPortal-Staging
-// Bundle suffix:  .staging  -> three.two.bit.ppt.reality.staging
-// Display name:   Reality (Stg) -- STG badge overlaid on app icon
+// Scheme: RealityPortal-Staging
+// Bundle: three.two.bit.ppt.reality.staging
 
 #include "Base.xcconfig"
 
-// Environment overrides
 PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.reality.staging
 BUNDLE_DISPLAY_NAME = Reality (Stg)
-
-// Build settings
 CONFIGURATION = Release
 DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
 SWIFT_ACTIVE_COMPILATION_CONDITIONS = STAGING
 GCC_PREPROCESSOR_DEFINITIONS = STAGING=1 $(inherited)
 ENABLE_TESTABILITY = NO
-
-// API endpoints (staging reality-server)
 API_BASE_URL = https://staging-reality.ppt.example.com
 ENVIRONMENT = staging
 ENABLE_LOGGING = true
-
-// Code signing (manual, Ad-Hoc for TestFlight)
 CODE_SIGN_STYLE = Manual
 PROVISIONING_PROFILE_SPECIFIER = $(STAGING_PROVISIONING_PROFILE)

@@ -613,7 +613,13 @@ pub async fn respond_to_inquiry(
         .reality_portal_repo
         .respond_to_inquiry(id, principal.user_id, &req.message)
         .await
-        .map_err(|e| crate::util::errors::db_error("respond to inquiry", e))?;
+        .map_err(|e| crate::util::errors::db_error("respond to inquiry", e))?
+        .ok_or_else(|| {
+            (
+                axum::http::StatusCode::NOT_FOUND,
+                "Inquiry not found".to_string(),
+            )
+        })?;
 
     Ok(Json(InquiryMessageResponse {
         id: message.id,

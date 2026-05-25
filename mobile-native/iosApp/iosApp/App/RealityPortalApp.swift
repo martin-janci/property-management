@@ -3,7 +3,16 @@ import shared
 
 /// Main entry point for Reality Portal iOS app.
 ///
+/// Owns the three long-lived app-wide objects (`navigationCoordinator`,
+/// `authManager`, `restorationService`) and wires them together:
+///
+/// 1. On launch (`onAppear`) — restore auth session, then restore nav state.
+/// 2. On background (`scenePhase == .background`) — save nav state.
+/// 3. On `onOpenURL` — parse SSO callbacks vs. navigation deep links and
+///    delegate accordingly.
+///
 /// Epic 82 - Story 82.1: SwiftUI Project Setup
+/// Epic 82 - Story 82.2: Navigation and Routing (deep link + state restoration)
 @main
 struct RealityPortalApp: App {
     // MARK: - State Objects
@@ -11,6 +20,9 @@ struct RealityPortalApp: App {
     @State private var navigationCoordinator = NavigationCoordinator()
     @State private var authManager = AuthManager()
     @Environment(\.scenePhase) private var scenePhase
+
+    private let restorationService = NavigationStateRestorationService()
+    private let deepLinkHandler = DeepLinkHandler()
 
     // MARK: - App Body
 
@@ -20,7 +32,7 @@ struct RealityPortalApp: App {
                 .environment(navigationCoordinator)
                 .environment(authManager)
                 .onOpenURL { url in
-                    handleDeepLink(url)
+                    handleIncomingURL(url)
                 }
                 .onAppear {
                     configureApp()
@@ -41,8 +53,15 @@ struct RealityPortalApp: App {
         print("API Base URL: \(Configuration.shared.apiBaseUrl)")
         #endif
 
-        // Restore user session if available
+        // Restore user session first so we know auth state before restoring
+        // navigation (protected tabs are skipped when not authenticated).
         authManager.restoreSession()
+
+        // Restore navigation state from the previous launch.
+        restorationService.restore(
+            into: navigationCoordinator,
+            isAuthenticated: authManager.isAuthenticated
+        )
     }
 
     // MARK: - Scene Phase Handling
@@ -50,9 +69,10 @@ struct RealityPortalApp: App {
     private func handleScenePhaseChange(_ phase: ScenePhase) {
         switch phase {
         case .background:
-            // Clean up resources when app goes to background
+            // Persist navigation state so the user returns to the same screen.
+            restorationService.save(coordinator: navigationCoordinator)
             #if DEBUG
-            print("App moved to background")
+            print("App moved to background — navigation state saved")
             #endif
         case .inactive:
             break
@@ -65,28 +85,24 @@ struct RealityPortalApp: App {
         }
     }
 
-    // MARK: - Deep Link Handling
+    // MARK: - Incoming URL Handling
 
-    private func handleDeepLink(_ url: URL) {
-        // Handle SSO callback separately
-        if url.host == "sso" {
-            handleSsoCallback(url)
-            return
+    /// Routes an incoming URL to either SSO authentication or navigation.
+    private func handleIncomingURL(_ url: URL) {
+        let result = deepLinkHandler.parse(url)
+        switch result {
+        case .ssoCallback(let token, _):
+            handleSsoCallback(token: token)
+        case .route(let route):
+            navigationCoordinator.navigate(to: route)
+        case .unrecognized:
+            #if DEBUG
+            print("Unrecognised deep link: \(url)")
+            #endif
         }
-
-        // Handle navigation deep links
-        navigationCoordinator.handleDeepLink(url)
     }
 
-    private func handleSsoCallback(_ url: URL) {
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
-              let token = components.queryItems?.first(where: { $0.name == "token" })?.value else {
-            #if DEBUG
-            print("SSO callback missing token parameter")
-            #endif
-            return
-        }
-
+    private func handleSsoCallback(token: String) {
         Task { @MainActor in
             do {
                 try await authManager.loginWithSsoToken(token)
