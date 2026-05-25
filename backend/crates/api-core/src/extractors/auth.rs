@@ -85,6 +85,26 @@ fn jwt_verifier() -> Result<&'static JwtVerifier, &'static str> {
     }
 }
 
+/// Validate a raw JWT access token and return the subject (user ID).
+///
+/// Reuses the shared `JWT_VERIFIER` so the HMAC key is loaded and cached once,
+/// shared across all callers (HTTP extractors, WebSocket upgrade, etc.).
+/// Any future algorithm rotation or `iss`/`aud` hardening in `jwt_verifier()`
+/// automatically applies here.
+///
+/// Returns an error string if the token is invalid/expired, the JWT_SECRET is
+/// misconfigured, or the `token_type` claim is not `"access"`.
+pub fn validate_access_token(token: &str) -> Result<Uuid, &'static str> {
+    let verifier = jwt_verifier()?;
+    let token_data = decode::<Claims>(token, &verifier.key, &verifier.validation)
+        .map_err(|_| "Invalid or expired token")?;
+    let claims = token_data.claims;
+    if claims.token_type != "access" {
+        return Err("Invalid token type for this endpoint");
+    }
+    Ok(claims.sub)
+}
+
 /// Authenticated user extractor.
 #[derive(Debug, Clone)]
 pub struct AuthUser {
