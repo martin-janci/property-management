@@ -1270,3 +1270,339 @@ async fn get_preview_url(
 }
 
 // ============================================================================
+// Upload Handler (Story 7A.1)
+// ============================================================================
+
+/// Upload a document via multipart/form-data (Story 7A.1).
+///
+/// Accepts a `multipart/form-data` body with the following fields:
+/// - `file` (required) — the binary file data
+/// - `title` (required) — human-readable document title
+/// - `category` (required) — document category
+/// - `description` (optional)
+/// - `folder_id` (optional) — target folder UUID
+///
+/// The handler:
+/// 1. Validates MIME type and file size against repository limits.
+/// 2. Uploads the file bytes to S3-compatible storage (if configured) using
+///    `integrations::generate_storage_key` for a stable, tenant-scoped key.
+/// 3. Inserts a document record via `document_repo.create_rls` (RLS-aware).
+/// 4. Returns `{ id, file_key, message }` on success.
+#[utoipa::path(
+    post,
+    path = "/api/v1/documents/upload",
+    request_body(content_type = "multipart/form-data"),
+    security(("bearer_auth" = [])),
+    responses(
+        (status = 201, description = "Document uploaded", body = UploadDocumentResponse),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 413, description = "File too large", body = ErrorResponse),
+        (status = 503, description = "Storage unavailable", body = ErrorResponse),
+    ),
+    tag = "Documents"
+)]
+pub async fn upload_document(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    tenant: TenantExtractor,
+    mut rls: RlsConnection,
+    mut multipart: Multipart,
+) -> Result<(StatusCode, Json<UploadDocumentResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let user_id = auth.user_id;
+    let org_id = tenant.tenant_id;
+
+    // --- Parse multipart fields ---
+    let mut file_bytes: Option<Vec<u8>> = None;
+    let mut file_name: Option<String> = None;
+    let mut mime_type: Option<String> = None;
+    let mut title: Option<String> = None;
+    let mut description: Option<String> = None;
+    let mut category: Option<String> = None;
+    let mut folder_id: Option<Uuid> = None;
+
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        tracing::warn!(error = %e, "Failed to read multipart field");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                format!("Failed to read multipart field: {e}"),
+            )),
+        )
+    })? {
+        let field_name = field.name().unwrap_or("").to_string();
+
+        match field_name.as_str() {
+            "file" => {
+                // Capture filename and content-type from part headers before
+                // consuming the field via `.bytes()`.
+                file_name = field
+                    .file_name()
+                    .map(|s| s.to_string())
+                    .or(Some("upload".to_string()));
+                mime_type = field.content_type().map(|ct| ct.to_string());
+
+                let data = field.bytes().await.map_err(|e| {
+                    tracing::warn!(error = %e, "Failed to read file bytes");
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "BAD_REQUEST",
+                            format!("Failed to read file data: {e}"),
+                        )),
+                    )
+                })?;
+                file_bytes = Some(data.to_vec());
+            }
+            "title" => {
+                title = Some(field.text().await.map_err(|e| {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "BAD_REQUEST",
+                            format!("Failed to read title field: {e}"),
+                        )),
+                    )
+                })?);
+            }
+            "description" => {
+                let text = field.text().await.map_err(|e| {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "BAD_REQUEST",
+                            format!("Failed to read description field: {e}"),
+                        )),
+                    )
+                })?;
+                if !text.is_empty() {
+                    description = Some(text);
+                }
+            }
+            "category" => {
+                category = Some(field.text().await.map_err(|e| {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "BAD_REQUEST",
+                            format!("Failed to read category field: {e}"),
+                        )),
+                    )
+                })?);
+            }
+            "folder_id" => {
+                let text = field.text().await.map_err(|e| {
+                    (
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse::new(
+                            "BAD_REQUEST",
+                            format!("Failed to read folder_id field: {e}"),
+                        )),
+                    )
+                })?;
+                if !text.is_empty() {
+                    folder_id = text.parse::<Uuid>().ok();
+                }
+            }
+            // Unknown fields (e.g. building_id sent by frontend) are drained
+            // and ignored so the multipart parser can advance safely.
+            _ => {
+                let _ = field.bytes().await;
+            }
+        }
+    }
+
+    // --- Require file part ---
+    let bytes = file_bytes.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "Missing 'file' field in multipart body",
+            )),
+        )
+    })?;
+
+    // --- Require title ---
+    let title = title.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("BAD_REQUEST", "Missing 'title' field")),
+        )
+    })?;
+
+    // --- Require category ---
+    let category = category.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "Missing 'category' field",
+            )),
+        )
+    })?;
+
+    let file_name = file_name.unwrap_or_else(|| "upload".to_string());
+
+    // Resolve MIME type: prefer Content-Type from the part header,
+    // fall back to extension-based detection.
+    let resolved_mime =
+        mime_type.unwrap_or_else(|| integrations::get_content_type(&file_name).to_string());
+
+    // --- Validate title length ---
+    if title.len() > MAX_TITLE_LENGTH {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                format!("Title exceeds maximum length of {MAX_TITLE_LENGTH} characters"),
+            )),
+        ));
+    }
+
+    // --- Validate description length ---
+    if let Some(ref desc) = description {
+        if desc.len() > MAX_DESCRIPTION_LENGTH {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "BAD_REQUEST",
+                    format!(
+                        "Description exceeds maximum length of {MAX_DESCRIPTION_LENGTH} characters"
+                    ),
+                )),
+            ));
+        }
+    }
+
+    // --- Validate file size ---
+    let size_bytes = bytes.len() as i64;
+    if size_bytes > MAX_FILE_SIZE {
+        return Err((
+            StatusCode::PAYLOAD_TOO_LARGE,
+            Json(ErrorResponse::new(
+                "FILE_TOO_LARGE",
+                format!("File exceeds maximum size of {MAX_FILE_SIZE} bytes (50 MiB)"),
+            )),
+        ));
+    }
+
+    // --- Validate MIME type ---
+    if !ALLOWED_MIME_TYPES.contains(&resolved_mime.as_str()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "UNSUPPORTED_FILE_TYPE",
+                format!(
+                    "File type '{resolved_mime}' is not supported. \
+                    Allowed: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, GIF, WEBP, TXT, CSV"
+                ),
+            )),
+        ));
+    }
+
+    // --- Validate category ---
+    if !document_category::ALL.contains(&category.as_str()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("BAD_REQUEST", "Invalid category")),
+        ));
+    }
+
+    // --- Generate S3-compatible storage key ---
+    let file_key = integrations::generate_storage_key(org_id, &file_name);
+
+    // --- Upload bytes to S3 (when the storage service is ready) ---
+    if let Some(ref storage_service) = state.storage_service {
+        if storage_service.has_s3_client() {
+            storage_service
+                .upload(&file_key, bytes, &resolved_mime)
+                .await
+                .map_err(|e| {
+                    tracing::error!(
+                        error = %e,
+                        file_key = %file_key,
+                        "Failed to upload document bytes to S3"
+                    );
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "STORAGE_ERROR",
+                            "Failed to upload file to storage. Please try again.",
+                        )),
+                    )
+                })?;
+
+            tracing::info!(
+                file_key = %file_key,
+                size_bytes,
+                mime_type = %resolved_mime,
+                "Uploaded document bytes to S3"
+            );
+        } else {
+            tracing::warn!(
+                file_key = %file_key,
+                "Storage service present but S3 client not initialised — skipping S3 upload"
+            );
+        }
+    } else {
+        tracing::warn!(
+            file_key = %file_key,
+            "No storage service configured — document bytes not persisted to S3"
+        );
+    }
+
+    // --- Create document record (RLS-aware) ---
+    let data = db::models::CreateDocument {
+        organization_id: org_id,
+        folder_id,
+        title,
+        description,
+        category,
+        file_key: file_key.clone(),
+        file_name,
+        mime_type: resolved_mime,
+        size_bytes,
+        // Default to organization-wide access; callers may update via PUT /{id}/access
+        access_scope: None,
+        access_target_ids: None,
+        access_roles: None,
+        created_by: user_id,
+    };
+
+    match state
+        .document_repo
+        .create_rls(&mut **rls.conn(), data)
+        .await
+    {
+        Ok(document) => {
+            rls.release().await;
+            tracing::info!(
+                document_id = %document.id,
+                file_key = %file_key,
+                org_id = %org_id,
+                user_id = %user_id,
+                "Document upload complete"
+            );
+            Ok((
+                StatusCode::CREATED,
+                Json(UploadDocumentResponse {
+                    id: document.id,
+                    file_key,
+                    message: "Document uploaded successfully".to_string(),
+                }),
+            ))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to create document record after upload");
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "INTERNAL_ERROR",
+                    "Failed to create document record",
+                )),
+            ))
+        }
+    }
+}
