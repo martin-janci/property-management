@@ -941,14 +941,14 @@
     {
       "task_id": "gap-6-4-pinned-announcements-api",
       "branch": "auto-impl/gap-6-4-pinned-announcements-api",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T14:03:10Z",
-      "last_updated": "2026-05-25T16:12:00Z",
-      "status_changed_at": "2026-05-25T14:30:00Z",
+      "last_updated": "2026-05-25T17:10:00Z",
+      "status_changed_at": "2026-05-25T17:10:00Z",
       "pr_number": 504,
       "pr_url": "https://github.com/martin-janci/property-management/pull/504",
-      "merged_at": null,
+      "merged_at": "2026-05-25T17:10:00Z",
       "implementer_summary": "pr=504 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=PATCH added via MethodRouter chaining (no new import); migration 00158 adds composite pinned-first index; pinned-sort already implemented in list_rls/list_published_rls",
       "reviewer_summary": "verdict=approve note=Auth gated correctly (manager role check + RLS connection throughout), migration 00158 is next-in-sequence with no naming conflicts, MethodRouter chaining follows established project pattern (auth.rs precedent), utoipa annotation correctly set to patch as canonical verb — all checks pass, PR is clean."
     },
