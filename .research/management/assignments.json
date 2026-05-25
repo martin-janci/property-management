@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T06:27:18Z",
+  "generated": "2026-05-25T07:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -615,21 +615,21 @@
       "status_changed_at": "2026-05-25T02:31:00Z",
       "pr_number": 488,
       "pr_url": "https://github.com/martin-janci/property-management/pull/488",
-      "merged_at": null,
+      "merged_at": "2026-05-25T04:00:00Z",
       "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped \u2014 no node_modules in env",
       "reviewer_summary": "verdict=changes note=PR branch contains wrong commit (unrelated migration); frontend changes already on dev have missing ProtectedRoute on /reports, hardcoded organizationId='', and no screen-map update; changes (orgId + throw e + ProtectedRoute) cherry-picked onto dev; PR superseded"
     },
     {
       "task_id": "gap-81-2-execution-history-verify",
       "branch": "auto-impl/gap-81-2-execution-history-verify",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
       "last_updated": "2026-05-25T06:09:06Z",
       "status_changed_at": "2026-05-25T02:44:00Z",
       "pr_number": 489,
       "pr_url": "https://github.com/martin-janci/property-management/pull/489",
-      "merged_at": null,
+      "merged_at": "2026-05-25T07:00:00Z",
       "implementer_summary": "pr=489 status=done specialist=react-web note=wired useReportExecutionHistory/useDownloadReport/useRetryReportExecution into ReportsPageRoute; added ReportsPage lazy route; fixed pre-existing TrendAnalysis+PeriodComparison TS stubs; typecheck+biome lint clean; Vite build exit 0",
       "reviewer_summary": "verdict=approve note=all three issues fixed: offset in queryKey (pagination cache correct), ProtectedRoute on /reports (on dev), screen-map created; execution hooks wired correctly with 10s polling; no blocking issues",
       "reviewer_verdict": "approve"
@@ -709,16 +709,16 @@
     {
       "task_id": "pm-frontend-verify-epic81-schedule-execution",
       "branch": "auto-impl/pm-frontend-verify-epic81-schedule-execu",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "done",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T06:09:06Z",
-      "status_changed_at": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T07:30:00Z",
+      "status_changed_at": "2026-05-25T07:30:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=none status=done specialist=react-web note=verified: PR #489 merged to dev (d1e3714c); 81-1 pause/resume on dev since cherry-pick; 81-2 execution-history wired + reports.md screen-map created; 0 new TS errors in added code; frontend calls no longer 404; promoted from partial",
+      "reviewer_summary": "verified in-session: git log confirms d1e3714c feat(reports): story 81.2 merged; all 6 backend endpoints from PR #448 present; execution hooks (useReportExecutionHistory/useDownloadReport/useRetryReportExecution) imported and wired in App.tsx; 10s polling configured"
     },
     {
       "task_id": "gap-84-2-esignature-impl",
