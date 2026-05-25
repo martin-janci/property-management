@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:35:00Z",
+  "generated": "2026-05-25T00:42:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -564,15 +564,15 @@
     {
       "task_id": "gap-6-4-pin-web-ui",
       "branch": "auto-impl/gap-6-4-pin-web-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:10:00Z",
-      "status_changed_at": "2026-05-25T00:10:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T00:42:00Z",
+      "status_changed_at": "2026-05-25T00:42:00Z",
+      "pr_number": 479,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/479",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean",
       "reviewer_summary": null
     },
     {
