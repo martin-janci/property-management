@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T02:31:00Z",
+  "generated": "2026-05-25T02:44:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -620,15 +620,15 @@
     {
       "task_id": "gap-81-2-execution-history-verify",
       "branch": "auto-impl/gap-81-2-execution-history-verify",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T02:12:20Z",
-      "status_changed_at": "2026-05-25T02:12:20Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T02:44:00Z",
+      "status_changed_at": "2026-05-25T02:44:00Z",
+      "pr_number": 489,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/489",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=489 status=done specialist=react-web note=wired useReportExecutionHistory/useDownloadReport/useRetryReportExecution into ReportsPageRoute; added ReportsPage lazy route; fixed pre-existing TrendAnalysis+PeriodComparison TS stubs; typecheck+biome lint clean; Vite build exit 0",
       "reviewer_summary": null
     },
     {
