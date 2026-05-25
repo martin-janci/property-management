@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T10:08:44Z",
+  "generated": "2026-05-25T10:25:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -307,7 +307,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
       "merged_at": "2026-05-24T17:45:00Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
+      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed — IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
     },
     {
       "task_id": "gap-2b-notification-pipeline",
@@ -321,7 +321,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
-      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge"
+      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass — ready to merge"
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
@@ -433,7 +433,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/468",
       "merged_at": null,
       "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key \u2014 all green"
+      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key — all green"
     },
     {
       "task_id": "gap-8a-3-websocket-realtime-sync",
@@ -447,7 +447,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": "2026-05-25T01:35:09Z",
       "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
-      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db \u2014 user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER \u2014 fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db — user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER — fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
     },
     {
       "task_id": "gap-10b-3-admin-health-ui",
@@ -460,8 +460,8 @@
       "pr_number": 471,
       "pr_url": "https://github.com/martin-janci/property-management/pull/471",
       "merged_at": "2026-05-24T20:51:57Z",
-      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped \u2014 node_modules not installed in environment",
-      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() \u2014 raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
+      "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped — node_modules not installed in environment",
+      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() — raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
     },
     {
       "task_id": "gap-9-1-mfa-e2e-verify",
@@ -475,7 +475,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/473",
       "merged_at": "2026-05-25T01:35:17Z",
       "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
-      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] \u2014 every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
+      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] — every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
     },
     {
       "task_id": "gap-10b-4-system-announcements-impl",
@@ -616,7 +616,7 @@
       "pr_number": 488,
       "pr_url": "https://github.com/martin-janci/property-management/pull/488",
       "merged_at": null,
-      "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped \u2014 no node_modules in env",
+      "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped — no node_modules in env",
       "reviewer_summary": "verdict=changes note=PR branch contains wrong commit (unrelated migration); frontend changes already on dev have missing ProtectedRoute on /reports, hardcoded organizationId='', and no screen-map update; changes (orgId + throw e + ProtectedRoute) cherry-picked onto dev; PR superseded"
     },
     {
@@ -640,13 +640,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T10:08:44Z",
+      "last_updated": "2026-05-25T10:25:00Z",
       "status_changed_at": "2026-05-25T04:07:30Z",
       "pr_number": 490,
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
       "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
-      "reviewer_summary": "verdict=changes note=Blocker 1: migration 00158 drops the service-role SELECT policy without replacing it \u2014 get_tokens_for_user/delete_all_for_user will silently return empty results under FORCE RLS, breaking the Epic 2B delivery pipeline. Blocker 2: Cargo.lock downgrades all crate versions from 0.2.591\u21920.2.588 (branch needs rebase onto dev; repo is at 0.2.627). Minor: no token length CHECK constraint on the TEXT column. Auth pattern, RLS convention, idempotent upsert, security logging hygiene, and test structure are all correct.",
+      "reviewer_summary": "verdict=changes note=both blockers unresolved: (1) migration 00158 still drops service-role SELECT policy without replacement — get_tokens_for_user/delete_all_for_user return 0 rows under FORCE RLS; (2) Cargo.lock still at 0.2.588 vs dev 0.2.627 — rebase required",
       "reviewer_verdict": "changes"
     },
     {
@@ -704,7 +704,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/494",
       "merged_at": "2026-05-25T07:55:00Z",
       "implementer_summary": "pr=494 status=done specialist=pm-tech-lead note=3 module-split backlog entries added (ai.rs 3134L, platform_admin.rs 2762L, announcements.rs 2722L); check-discarded-principal.sh lint created and wired into backend.yml check job; 7 violations detected informational",
-      "reviewer_summary": "verdict=approve note=3 backlog items well-formed (ai.rs/platform_admin.rs/announcements.rs); check-discarded-principal.sh lint pattern sound; informational-only approach correct given 7 existing violations all mapped to known backlog items; advisory: automation.rs GET handlers (list_templates/get_template) intentionally discard _principal (global read-only data) \u2014 should be added to allowlist to avoid inflating violation count; CI check+test+rls-smoke-test all green on run 26386715653",
+      "reviewer_summary": "verdict=approve note=3 backlog items well-formed (ai.rs/platform_admin.rs/announcements.rs); check-discarded-principal.sh lint pattern sound; informational-only approach correct given 7 existing violations all mapped to known backlog items; advisory: automation.rs GET handlers (list_templates/get_template) intentionally discard _principal (global read-only data) — should be added to allowlist to avoid inflating violation count; CI check+test+rls-smoke-test all green on run 26386715653",
       "reviewer_verdict": "approve"
     },
     {
@@ -724,14 +724,14 @@
     {
       "task_id": "gap-84-2-esignature-impl",
       "branch": "auto-impl/gap-84-2-esignature-impl",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T10:08:44Z",
-      "status_changed_at": "2026-05-25T06:46:17Z",
+      "last_updated": "2026-05-25T10:25:00Z",
+      "status_changed_at": "2026-05-25T10:25:00Z",
       "pr_number": 495,
       "pr_url": "https://github.com/martin-janci/property-management/pull/495",
-      "merged_at": null,
+      "merged_at": "2026-05-25T10:14:25Z",
       "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; security fixes: RLS on 3 handlers, webhook secret gate, XSS html_escape in all email templates; cargo check+fmt+clippy clean",
       "reviewer_summary": "verdict=changes-addressed note=3 HIGH blockers found and fixed: (1) RlsConnection added to get_signature_request/send_reminder/cancel_signature_request; find_by_id_rls uses executor-based RLS query; (2) handle_webhook verifies X-Webhook-Secret against ESIGN_WEBHOOK_SECRET env var; (3) html_escape() applied to signer_name/requester_name/document_name/signing_url/signer_email/manage_url/expires_at across all 4 email templates. All fixes compiled+fmt+rls-enforcement clean. New CI run triggered (commit eafd3a01).",
       "reviewer_verdict": "approve"
@@ -739,15 +739,15 @@
     {
       "task_id": "pm-tech-lead-confirm-websocket-infra-ownership",
       "branch": "auto-impl/pm-tech-lead-confirm-websocket-infra-own",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T10:08:44Z",
-      "status_changed_at": "2026-05-25T08:17:00Z",
+      "last_updated": "2026-05-25T10:25:00Z",
+      "status_changed_at": "2026-05-25T10:25:00Z",
       "pr_number": 496,
       "pr_url": "https://github.com/martin-janci/property-management/pull/496",
-      "merged_at": null,
-      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted\u2192Implemented with owner/delivery ref; action-list item marked done; tsconfig.json node type removed; CI all-green; draft promoted",
+      "merged_at": "2026-05-25T10:20:00Z",
+      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted→Implemented with owner/delivery ref; action-list item marked done; tsconfig.json node type removed; CI all-green; draft promoted",
       "reviewer_summary": null
     },
     {
@@ -756,13 +756,13 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T10:08:44Z",
+      "last_updated": "2026-05-25T10:25:00Z",
       "status_changed_at": "2026-05-25T09:00:00Z",
       "pr_number": 499,
       "pr_url": "https://github.com/martin-janci/property-management/pull/499",
       "merged_at": null,
       "implementer_summary": "pr=499 status=done specialist=pm-frontend note=app.config.ts (Expo dynamic config), metro.config.js (workspace monorepo support), .env.{dev,staging,prod} EXPO_PUBLIC_* vars, @expo/metro-config+dotenv devDeps; biome import order fixed, pnpm-lock.yaml updated for CI frozen-lockfile; tsconfig.json excludes app.config.ts; CI all-green; draft promoted",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=All checklist items pass; app.config.ts dotenv/Metro monorepo correct; EXPO_PUBLIC_* vars present; no real secrets; CI 20/20 green"
     },
     {
       "task_id": "gap-85-2-ios-build-config",
@@ -770,13 +770,13 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T10:08:44Z",
+      "last_updated": "2026-05-25T10:25:00Z",
       "status_changed_at": "2026-05-25T09:00:00Z",
       "pr_number": 498,
       "pr_url": "https://github.com/martin-janci/property-management/pull/498",
       "merged_at": null,
       "implementer_summary": "pr=498 status=done specialist=pm-frontend note=iOS xcconfig (Base/Dev/Staging/Prod), xcscheme XML, app icon sets with DEV/STG badges, Configuration.swift runtime xcconfig reader, Info.plist BUNDLE_DISPLAY_NAME substitution, build scripts build-mobile|android|ios.sh; biome import order+format fixed, pnpm-lock.yaml updated for CI frozen-lockfile; CI all-green; draft promoted",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=xcconfig/xcscheme/Configuration.swift/build scripts all correct; CI 14/14 green; non-blocking: MARKETING_VERSION removed from Base.xcconfig — needs re-adding before App Store archiving"
     },
     {
       "task_id": "security-inquiry-read-idor",
@@ -784,13 +784,13 @@
       "status": "review",
       "specialist": "pm-security",
       "claimed_at": "2026-05-25T08:22:00Z",
-      "last_updated": "2026-05-25T10:08:44Z",
+      "last_updated": "2026-05-25T10:25:00Z",
       "status_changed_at": "2026-05-25T08:28:00Z",
       "pr_number": 497,
       "pr_url": "https://github.com/martin-janci/property-management/pull/497",
       "merged_at": null,
       "reviewer_verdict": "approve",
-      "reviewer_summary": "Single-commit fix; adds realtor-scoped ownership check before UPDATE. Two-step SELECT EXISTS + UPDATE is atomic enough for this workload (inquiry rows not deleted in normal ops). cargo check + clippy -D warnings exit 0.",
+      "reviewer_summary": "verdict=approve note=Ownership gate correct (SELECT EXISTS + realtor_id scope), 404 anti-enumeration correct, idempotent UPDATE correct, get_inquiry path updated without regression; CI checks green",
       "implementer_summary": "Fixed IDOR in PUT /api/v1/inquiries/{id}/read by adding mark_inquiry_read_for_realtor(id, realtor_id). Returns 404 when not owned."
     },
     {
@@ -810,29 +810,29 @@
     {
       "task_id": "gap-82-1-swiftui-audit",
       "branch": "auto-impl/gap-82-1-swiftui-audit",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T10:08:44Z",
-      "status_changed_at": "2026-05-25T10:08:44Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T10:25:00Z",
+      "status_changed_at": "2026-05-25T10:25:00Z",
+      "pr_number": 501,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/501",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=501 status=done specialist=ios-swiftui note=audit complete; 11 reality-mobile screen maps created; 9 stub routes + 6 arch gaps documented; Gradle Band-A blocked by AGP cloud-sandbox network limitation",
       "reviewer_summary": null
     },
     {
       "task_id": "gap-82-2-deep-linking",
       "branch": "auto-impl/gap-82-2-deep-linking",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T10:08:44Z",
-      "status_changed_at": "2026-05-25T10:08:44Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T10:25:00Z",
+      "status_changed_at": "2026-05-25T10:25:00Z",
+      "pr_number": 500,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/500",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=500 status=done specialist=ios-swiftui note=DeepLinkHandler (15 routes + SSO), NavigationStateRestorationService, routeMirror arrays; 34 new tests; Band A blocked by sandbox AGP plugin network issue (known limitation for iOS tasks)",
       "reviewer_summary": null
     }
   ]
