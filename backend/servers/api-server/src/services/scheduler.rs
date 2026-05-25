@@ -848,7 +848,7 @@ impl Scheduler {
 
             for signer in pending_signers {
                 let sign_url = provider
-                    .build_signing_url(sig_req.id, &signer.email)
+                    .build_signing_url(&signer.email, &sig_req.id.to_string())
                     .unwrap_or_else(|_| {
                         format!(
                             "{}/sign?request_id={}&email={}",
