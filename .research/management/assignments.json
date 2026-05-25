@@ -1222,15 +1222,15 @@
     {
       "task_id": "gap-80-3-mediation-api",
       "branch": "auto-impl/gap-80-3-mediation-api",
-      "status": "in-progress",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T19:20:00Z",
-      "status_changed_at": "2026-05-25T19:20:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T20:30:00Z",
+      "status_changed_at": "2026-05-25T20:30:00Z",
+      "pr_number": 514,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/514",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=514 status=done specialist=rust-backend note=PATCH /disputes/{id}/resolve (manager-only, state-machine enforced, 422 on bad transition) + PATCH /disputes/{id}/mediation-notes (manager or assigned mediator party); migration 00159 adds resolved_at/resolution_notes/mediation_notes cols; Dispute model updated; cargo fmt+check+clippy -D warnings all clean",
       "reviewer_summary": null
     },
     {
