@@ -9,7 +9,7 @@ implementations:
     component: FileDisputeWizard
     buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     buildStatus: n/a
     redesignStatus: n/a
@@ -100,6 +100,7 @@ UC-38 dispute creation flow. 5-step wizard balances thoroughness (legal record) 
 
 <!-- newest entries on top -->
 
+- 2026-05-25 — agent: gap-80-2-dispute-filing-ui: added EvidenceUploader.tsx (drag-drop + click, JPG/PNG/WebP/MP3/MP4/PDF, 50 MB/file, 10 files, per-file description + status); rewrote FileDisputePage.tsx with radio-card type selector + inline validation (touched/submitted flags) + evidence upload section (AC-1,2,3 met); App.tsx FileDisputePageRoute wires useCreateDispute then raw apiUploadEvidence sequentially post-creation; navigates to /disputes/:id on success; typecheck+biome+vite-build all clean; apiStatus partial → complete.
 - 2026-05-25 — agent: verified story 80-2 AC coverage. FileDisputePage exists at /disputes/new with useCreateDispute mutation (AC-1/3/5 partial). EvidenceUploader.tsx MISSING (AC-2 not met). useDraftStorage.ts MISSING (AC-4 not met). Post-submit nav goes to list not detail. Story 80-2 stays partial; apiStatus stays partial.
 - 2026-05-09 — agent: integrated Batch C (pages/ppt-file-dispute.html — 5 artboards: step 1 / step 3 uploading / step 5 review / submitted / step 3 validation errors); flipped redesignStatus → in-progress; attached designSource; populated 6 sections + 5 states + 3 notes; declared 7 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)
