@@ -1,5 +1,6 @@
 # Sprint Status Tracking
 # Generated: 2025-12-21
+# Updated: 2026-05-25 — added test-hardening batch (issues #480-#487)
 #
 # STATUS DEFINITIONS:
 #   - backlog: Not yet planned for development
@@ -85,6 +86,110 @@ development_status:
   80-2-dispute-filing-flow: partial
   80-3-mediation-resolution: partial
 
+# ─────────────────────────────────────────────────────────────────────────────
+# TEST-HARDENING BATCH — post-merge follow-ups (issues #480-#487)
+# Slotted: 2026-05-25 | Priority: medium
+# Rule: dependent stories MUST NOT be promoted to `done` until each follow-up
+#       issue in this batch is either CLOSED or explicitly DEFERRED.
+# ─────────────────────────────────────────────────────────────────────────────
+test_hardening_batch:
+  batch_id: thb-2026-05-25
+  slotted_at: 2026-05-25
+  priority: medium
+  status: in-progress   # update to done when all items closed or deferred
+
+  items:
+    - issue: 480
+      title: "WebSocket auth token in query param logged + session not re-validated after JWT expiry"
+      source_pr: 472
+      area: messaging-realtime
+      specialist: rust-backend
+      severity: high          # JWT token in access logs (security)
+      story_gate:             # stories blocked from 'done' until this is closed/deferred
+        - 8a-3-notification-preference-sync
+      status: open
+
+    - issue: 481
+      title: "OAuth refresh-token revocation bypassed — revoked_at IS NULL removed from query"
+      source_pr: 470
+      area: oauth-security
+      specialist: rust-backend
+      severity: high          # revoked tokens reusable — breaks RFC 9700
+      story_gate:
+        - 10a-1-oauth-authorization-server
+        - 10a-3-oauth-token-management
+      status: open
+
+    - issue: 482
+      title: "ProtectedRoute role fallback uses tenants[0] — wrong for multi-tenant users; no tests"
+      source_pr: 459
+      area: oauth-ui
+      specialist: react-web
+      severity: medium        # auth UX + missing ProtectedRoute unit tests
+      story_gate:
+        - 10a-2-oauth-client-registration
+      status: open
+
+    - issue: 483
+      title: "Voice device IDOR fix has no tests; list-commands leaks existence via empty vs 403"
+      source_pr: 461
+      area: security-idor
+      specialist: rust-backend
+      severity: medium        # missing IDOR integration tests
+      story_gate: []          # no current sprint story directly depends on voice device
+      status: open
+
+    - issue: 484
+      title: "Notification pipeline dispatch_to_users is serial; FCM stub silently swallows failures"
+      source_pr: 463
+      area: messaging-realtime
+      specialist: rust-backend
+      severity: medium        # perf + correctness (false sent count)
+      story_gate:
+        - 8a-2-critical-notification-override
+        - 8a-3-notification-preference-sync
+      status: open
+
+    - issue: 485
+      title: "Document share panel uses window.confirm + no UUID validation on user-ID input"
+      source_pr: 467
+      area: document-share-flow
+      specialist: react-web
+      severity: medium        # UX regression + missing input validation
+      story_gate:
+        - 7a-5-document-sharing
+      status: open
+
+    - issue: 486
+      title: "Announcements/Faults wiring uses direct getToken() bypassing axios interceptor"
+      source_pr: 466
+      area: messaging-realtime
+      specialist: react-web
+      severity: medium        # dual-path auth bypasses token refresh interceptor
+      story_gate:
+        - 6-2-announcement-viewing-acknowledgment
+        - 6-5-direct-messaging
+      status: open
+
+    - issue: 487
+      title: "MFA e2e tests missing rate-limit coverage; mod common inside nested module may not compile"
+      source_pr: 473
+      area: mfa
+      specialist: rust-backend
+      severity: medium        # missing MFA brute-force/rate-limit test coverage
+      story_gate:
+        - 10a-1-oauth-authorization-server   # MFA is part of auth foundation
+      status: open
+
+# Stories that MUST NOT move to `done` until their batch item is resolved:
+#   8a-3-notification-preference-sync  → #480, #484
+#   10a-1-oauth-authorization-server   → #481, #487
+#   10a-2-oauth-client-registration    → #482
+#   10a-3-oauth-token-management       → #481
+#   7a-5-document-sharing              → #485
+#   6-2-announcement-viewing-acknowledgment → #486
+#   6-5-direct-messaging               → #486
+
 # Notes and blockers
 notes:
   - "Story 80-3 verified 2026-05-25: DisputeDetailPage.tsx+MediationPage.tsx+all hooks confirmed implemented; DisputeDetailRoute in App.tsx is inline JSX stub not using DisputeDetailPage; no /disputes/:id/mediation route; useEscalateDispute/useResolveDispute/useAssignMediator not wired from App.tsx — story stays partial, follow-up wiring task needed"
@@ -95,5 +200,6 @@ notes:
   - "Story 8A.2 notification dispatch logic deferred - requires Epic 2B"
   - "Story 8A.3 WebSocket sync deferred - requires WebSocket infrastructure"
   - "Story 8A.3 mobile OS integration deferred - requires mobile app implementation"
+  - "2026-05-25: test-hardening batch thb-2026-05-25 slotted — issues #480-#487 must be closed or deferred before dependent stories can be promoted to done"
 
 blockers: []
