@@ -6,26 +6,28 @@
       "title": "IDOR: unlink_voice_device deactivates any device by ID with no owner/org scoping",
       "vector": "security",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "confidence": "high",
       "sources": [
         "code-review api-core 2026-05-23",
-        "ai.rs:3002"
+        "ai.rs:3002",
+        "PR #461"
       ],
       "evidence": [
         "backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
         "wired at ai.rs:2059 — DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
         "backend/crates/db/src/repositories/llm_document.rs:1141 — `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
         "any authenticated principal can deactivate another tenant's voice device by guessing/enumerating the UUID (IDOR / cross-tenant write)",
-        "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE"
+        "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE",
+        "resolved: PR #461 merged 2026-05-24 — fix(security): IDOR on voice device delete/list-commands; unlink_voice_device now passes principal.user_id and llm_document.rs:1151 query is `WHERE id = $1 AND user_id = $2`. Equipment endpoints in the same file remain unscoped — tracked as security-equipment-idor"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs",
         "backend/crates/db/src/repositories/llm_document.rs"
       ],
       "created_at": "2026-05-23",
-      "updated_at": "2026-05-23",
-      "plan": "plans/security-voice-device-idor.md"
+      "updated_at": "2026-05-25",
+      "plan": "plans/_archive/security-voice-device-idor.md"
     },
     {
       "id": "security-rls-migration-residual",
@@ -112,23 +114,25 @@
       "title": "integrations.rs churn-hot — 12,977 lines over 14d, candidate for module split",
       "vector": "refactor",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "git log origin/main since 2026-05-06",
-        "git log origin/dev since 2026-05-20"
+        "git log origin/dev since 2026-05-20",
+        "PR #456"
       ],
       "evidence": [
         "Top-1 code-churn file in window: 12,977 lines (additions+deletions)",
         "Currently 4,327 lines — single-file route module covering install/OAuth/sync/webhook surfaces",
         "Drove most of the multitenancy + admin work in 2026-05-13..2026-05-19",
-        "repeated-churn 2026-05-23: 4,327 lines this run, runs_seen=2 — still a top-3 churn file"
+        "repeated-churn 2026-05-23: 4,327 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — pm-tech-lead-split-churn-hot-routes split the monolith into routes/integrations/{install,oauth,sync,webhook,mod}.rs by surface; the single integrations.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-23",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -136,23 +140,25 @@
       "title": "organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin)",
       "vector": "refactor",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "git log origin/main since 2026-05-06",
-        "git log origin/dev since 2026-05-20"
+        "git log origin/dev since 2026-05-20",
+        "PR #456"
       ],
       "evidence": [
         "Top-2 code-churn file in window: 12,060 lines",
         "Currently 4,018 lines",
         "Touched by Multitenancy Phases 2-5.5 (#260), Phase 6 P0 fixes (#265), tenant-context bypass fix (#335), audit forgery fix (#308)",
-        "repeated-churn 2026-05-23: 4,018 lines this run, runs_seen=2 — still a top-3 churn file"
+        "repeated-churn 2026-05-23: 4,018 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — split into routes/organizations/{core,members,roles,settings,mod}.rs; the single organizations.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/organizations.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-23",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -160,22 +166,24 @@
       "title": "documents.rs churn-hot — 10,659 lines over 14d",
       "vector": "refactor",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "git log origin/main since 2026-05-06",
-        "git log origin/dev since 2026-05-20"
+        "git log origin/dev since 2026-05-20",
+        "PR #456"
       ],
       "evidence": [
         "Top-3 code-churn file in window: 10,659 lines",
         "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)",
-        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file"
+        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — split into routes/documents/{core,folders,intelligence,shares,versions,mod}.rs; the single documents.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/documents.rs"
       ],
       "created_at": "2026-05-20",
-      "updated_at": "2026-05-23",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -237,19 +245,21 @@
       "title": "SSRF: signed-document fetch + webhook-test POST issue outbound requests to unvalidated user-controlled URLs",
       "vector": "security",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "confidence": "high",
       "sources": [
         "issue #439",
         "signatures.rs:628",
-        "integrations.rs:2743"
+        "integrations.rs:2743",
+        "PR #450"
       ],
       "evidence": [
         "issue #439 (P1-05, severity high) — post-merge review of PR #435: the P1-05 fix hardened MIME/size/magic-bytes on the response body but did NOT validate signed_url itself; SSRF still open",
         "backend/servers/api-server/src/routes/signatures.rs:628 — store_signed_document does `client.get(signed_url)` on a bare reqwest::Client::new() with no host validation and no redirect policy; the comment at lines 613-619 claims SSRF hardening but only covers the response",
         "backend/servers/api-server/src/routes/integrations.rs:2743 — webhook-test handler does `client.post(&subscription.url)` with the stored URL; redirects are disabled (Policy::none()) but the host is never checked against private/loopback/link-local ranges",
         "backend/servers/api-server/src/services/actions/api_call.rs:152 — a working validate_external_url guard (is_blocked_v4 at :212) already exists but is a private method applied only at :251; verified both other sinks unguarded",
-        "authenticated org member (or a poisoned e-signature provider) can target 169.254.169.254 / 127.0.0.1 / internal services and have the server fetch/POST to them"
+        "authenticated org member (or a poisoned e-signature provider) can target 169.254.169.254 / 127.0.0.1 / internal services and have the server fetch/POST to them",
+        "resolved: PR #450 merged 2026-05-24 — pm-backend-fix-ssrf-outbound: validate_external_url added to common crate (backend/crates/common/src/url_validation.rs); now gates signatures.rs:625 (store_signed_document) and routes/integrations/webhook.rs:442 (webhook-test). Both sinks reject private/loopback/link-local hosts before the outbound request"
       ],
       "files": [
         "backend/servers/api-server/src/routes/signatures.rs",
@@ -257,32 +267,34 @@
         "backend/servers/api-server/src/services/actions/api_call.rs"
       ],
       "created_at": "2026-05-24",
-      "updated_at": "2026-05-24",
-      "plan": "plans/security-ssrf-outbound-url-validation.md"
+      "updated_at": "2026-05-25",
+      "plan": "plans/_archive/security-ssrf-outbound-url-validation.md"
     },
     {
       "id": "security-role-gate-fail-open",
       "title": "Latent fail-open: ProtectedRoute role check is skipped when user.role is falsy",
       "vector": "security",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "code-review ppt-web-ui 2026-05-24",
-        "ProtectedRoute.tsx:117"
+        "ProtectedRoute.tsx:117",
+        "PR #459"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:117 — `if (requiredRoles && requiredRoles.length > 0 && user?.role)` short-circuits the role check when user.role is falsy, falling through to `return <>{children}</>` (fail-open)",
         "frontend/apps/ppt-web/src/contexts/AuthContext.tsx — AuthContext does not populate a `role` field on the user, so user.role is undefined in practice",
         "no route in the app currently passes `requiredRoles` (grep of frontend/apps/ppt-web/src shows only ProtectedRoute's own definition + JSDoc) — so the bypass is LATENT, not currently exploitable; client-side gating is UX, the real authz is server-side RLS",
-        "hardening item: when role-gating goes live (relevant to the 79-2 auth-flow wiring in draft PR #444), this guard must deny on missing role rather than skip — both Frontend and Completeness reviewers independently flagged the same fall-through"
+        "hardening item: when role-gating goes live (relevant to the 79-2 auth-flow wiring in draft PR #444), this guard must deny on missing role rather than skip — both Frontend and Completeness reviewers independently flagged the same fall-through",
+        "resolved: PR #459 merged 2026-05-24 — pm-frontend-protectedroute-failopen: ProtectedRoute.tsx:119 now `if (requiredRoles && requiredRoles.length > 0)` with deny-on-missing-role; user.role populated via api-client auth. Follow-up #482 notes the role fallback uses tenants[0] (multi-tenant edge) — tracked separately as a GitHub issue"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
         "frontend/apps/ppt-web/src/contexts/AuthContext.tsx"
       ],
       "created_at": "2026-05-24",
-      "updated_at": "2026-05-24",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -331,6 +343,144 @@
       ],
       "created_at": "2026-05-24",
       "updated_at": "2026-05-24",
+      "plan": null
+    },
+    {
+      "id": "security-equipment-idor",
+      "title": "IDOR: equipment delete/update + maintenance update mutate any tenant's equipment by ID with no org scoping",
+      "vector": "security",
+      "score": 3,
+      "status": "ready",
+      "confidence": "high",
+      "sources": [
+        "code-review api-core 2026-05-25",
+        "ai.rs:1133",
+        "equipment.rs:144"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs:1133 — delete_equipment binds `_principal: RequestPrincipal` but discards it, calling state.equipment_repo.delete(id) with only the path id",
+        "wired at ai.rs:1042 — DELETE /{id} -> delete_equipment (reachable production route under the AI equipment router)",
+        "backend/crates/db/src/repositories/equipment.rs:144 — `DELETE FROM equipment WHERE id = $1` has no org/owner/tenant predicate",
+        "update_equipment (equipment_repo.update(id, req); equipment.rs:104 `UPDATE equipment SET ... WHERE id`) and update_maintenance (equipment_repo.update_maintenance(id, req); equipment.rs:213) share the same discard pattern",
+        "contrast: update_workflow/delete_workflow in the same file scope via workflow_repo.update(id, org_id) / delete(id, org_id); acknowledge_alert passes principal.user_id — the equipment cluster is the lone unscoped group",
+        "any authenticated user can delete/modify another tenant's equipment by enumerating the UUID (cross-tenant write IDOR); same class as the voice-device IDOR fixed in PR #461, found by rotating expert review (Rust, api-core), full call path traced"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs",
+        "backend/crates/db/src/repositories/equipment.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": "plans/security-equipment-idor.md"
+    },
+    {
+      "id": "refactor-ai-rs-hot",
+      "title": "ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24"
+      ],
+      "evidence": [
+        "Top code-churn source file this run: 3,142 lines (additions+deletions)",
+        "3,142-line single-file route module covering AI sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices and photo enhancement — same monolith class as the integrations/organizations/documents files just split in PR #456",
+        "harbored the voice-device IDOR (fixed #461) and the equipment IDOR found this run — surface count makes cross-tenant-scoping bugs easy to miss; splitting by surface (sessions/equipment/workflows/voice/...) would shrink review blast radius"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-platform-admin-rs-hot",
+      "title": "platform_admin.rs churn-hot — 2,762 lines this run (admin/OAuth-provider feature work)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24"
+      ],
+      "evidence": [
+        "Top-2 code-churn source file this run: 2,762 lines (additions+deletions)",
+        "2,762-line route module; churned from the OAuth-provider admin + platform-health UI backend work (gap-10a/gap-10b PRs #469/#471) — active feature development, not yet repeated-churn (runs_seen=1)",
+        "watch candidate: if it stays a top-3 hotspot next run it warrants a module-split like PR #456"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-announcements-rs-hot",
+      "title": "announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work)",
+      "vector": "refactor",
+      "score": 1,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "git log origin/dev since 2026-05-24"
+      ],
+      "evidence": [
+        "Top-3 code-churn source file this run: 2,722 lines (additions+deletions)",
+        "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development, runs_seen=1",
+        "watch candidate: re-evaluate for a split if it persists as a hotspot"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/announcements.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-ppt-neighbors",
+      "title": "Screen-map drift: PR #464 wired a neighbors route in ppt-web without a docs/screens/ppt entry",
+      "vector": "test-gap",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "PR #464"
+      ],
+      "evidence": [
+        "PR #464 (gap-6-6-neighbor-listing-verify) touched frontend/apps/ppt-web/src/App.tsx and src/routes/lazyRoutes.tsx (new neighbors feature wired in) with no matching docs/screens/ppt/*.md update",
+        "added frontend/apps/ppt-web/src/features/neighbors/{hooks,index} + mobile NeighborsScreen — a real new screen surface",
+        "review candidate (heuristic): screen-map should gain a neighbors entry; not auto-promotable — a human should confirm whether an existing screen doc covers this"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-reality-listing",
+      "title": "Screen-map drift: PR #460 touched reality-web listing page without a docs/screens/reality update",
+      "vector": "test-gap",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "PR #460"
+      ],
+      "evidence": [
+        "PR #460 (fix(reality-web): host inference wins over env for the production api base) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx with no docs/screens/reality/*.md update",
+        "likely false-positive: the change was an API-base host-inference bugfix inside an existing listing-detail page, not a route/screen change — the screen doc does not need updating",
+        "kept as a low review candidate per the drift heuristic's known false-positive caveat; de-prioritise unless a human marks it real"
+      ],
+      "files": [
+        "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
       "plan": null
     }
   ]

@@ -1,28 +1,30 @@
 # PPT Project Roadmap (Deep Scan)
 
-_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-24 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-25 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
 
-_Upkeep 2026-05-24: gap-7a-4 (PDF.js client-side preview) shipped in PR #446 — web slice done; 7a-4 stays `partial` pending the mobile preview slice. Rotating epic re-checked: epic-10a (status unchanged — backend done, admin UI/tests still gaps)._
+_Upkeep 2026-05-25: 30 PRs merged (#441–#473). Epic 2B notification pipeline (#463) + WebSocket realtime sync (#472) cleared the DEC-001 blockers. Stories advanced to **done**: 9-1 (MFA frontend #441 + e2e #473). Already-done stories enriched with UI evidence: 7a-3/7a-5 (web+mobile doc UI), 6-5 (messaging+WS), 6-6 (neighbor listing #464), 10a-2/10a-3 (OAuth admin + user-grants UI #468/#469/#471). 8a-3 WS half cleared by #472 (mobile-push leg remains). Epic 6 announcement web UI (6-2/6-3/6-4) unblocked, now in draft PRs #474/#475/#479. Rotating epic re-checked: epic-7a (7a-1 mobile merged #447; 7a-2 folder UI + 7a-4 mobile preview still partial)._
 
-_Sequencing note 2026-05-24 (pm-scrum-master): DEC-001 (PR #442, merged) mandates **Epic 2B stories 2b-1 → 2b-2 → 2b-3 → 2b-4 → 2b-c1 are the next items to land**, before 6.2–6.5, 8A.2 dispatch, or 8A.3 WS sync are picked up. `sprint-status.yaml` updated accordingly._
+_Code-review finding 2026-05-25: cross-tenant IDOR cluster in `ai.rs` equipment endpoints (update/delete equipment + update_maintenance discard the principal → unscoped mutations). Tracked as `pm-backend-fix-ai-equipment-idor` (high)._
+
+_Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 6-2/6-3/6-4/6-5, 8A.2 dispatch, and 8A.3 WS sync are no longer blocked. The Epic 6 announcement web UI is the active frontend cluster (drafts #474/#475/#479)._
 
 ## State of the project
 
 | Status | Count | Share |
 |---|---:|---:|
-| done | 17 | 35% |
-| partial | 31 | 63% |
+| done | 22 | 45% |
+| partial | 26 | 53% |
 | not-started | 1 | 2% |
 | **total** | **49** | 100% |
 
-**Phase breakdown:** MVP 31 stories (8 done, 23 partial), Phase 2 3 stories (0 done, 2 partial, 1 not-started), Phase 3 1 story (done), Phase 4 11 stories (3 done, 8 partial).
+**Phase breakdown:** MVP 36 stories (19 done, 17 partial), Phase 2 3 stories (0 done, 2 partial, 1 not-started), Phase 3 1 story (done), Phase 4 9 stories (2 done, 7 partial).
 
 **Platform breakdown (a story may span multiple):** backend ~35 stories touched, frontend (web) ~30, mobile (RN + iOS) ~12. Mobile is the most-behind platform — Epic 7A mobile slices, Epic 82 (iOS), and Epic 85 (build/env config) are all `partial` with low/medium confidence.
 
 **Top 3 gap clusters**
-1. **Frontend API integration debt.** Many ppt-web screens are `buildStatus: shipped` but `apiStatus: stub` (Epics 6 + 7A — ~11 stories). UIs render but don't fully invoke real backend endpoints. Highest blast radius for a "looks done, isn't" failure mode.
-2. **Foundational infra not delivered.** WebSocket realtime sync (needed by 8a-3, 6-5, plus broader notification flows) is deferred, blocking story closure across communications/notifications. 2FA endpoints exist but `TwoFactorAuthPage` is a UI scaffold — feature is silently disabled end-to-end.
-3. **Backend handler stubs masquerading as routes.** Epic 10B stories 4–7 (system announcements, support data access, onboarding tours, contextual help) have routes mounted in `main.rs` but handler bodies are stubs. Similar pattern in 81-1/81-2 where the frontend calls pause/resume + execution-history endpoints that don't exist in `reports.rs`.
+1. **Cross-tenant scoping bugs in route monoliths.** `ai.rs` (3142 LOC) has a confirmed IDOR cluster — `update_equipment`/`delete_equipment`/`update_maintenance` discard the principal and issue unscoped mutations. The 3k-line files (ai.rs, platform_admin.rs 2762, announcements.rs 2722) are exactly where a missing tenant scope slips past review. Highest blast radius this run.
+2. **Backend handler stubs masquerading as routes.** Epic 10B stories 4–7 (system announcements, support data access, onboarding tours, contextual help) have routes mounted in `main.rs` but handler bodies are stubs. Same pattern in 81-1/81-2 where the frontend calls pause/resume + execution-history endpoints that don't exist in `reports.rs` (verify PRs #488/#489 in flight).
+3. **Test-coverage debt on the heavy frontend delivery.** 30 PRs landed messaging realtime, document share-flow, OAuth UI, and MFA; follow-up issues #480–#487 track the gaps. Risk: the done-count outruns regression coverage on auth/sharing surfaces. (The prior "frontend API integration debt" cluster has largely closed — Epic 7A web+mobile UI and Epic 6 messaging/neighbor stories shipped.)
 
 ## Ranked plan
 
@@ -65,4 +67,6 @@ _Sequencing note 2026-05-24 (pm-scrum-master): DEC-001 (PR #442, merged) mandate
 
 - Stories 81-1/81-2 are technically Phase 2 but contain a production bug (frontend → missing backend endpoint). Treat as high priority despite phase weight.
 - Epic 82 iOS stories scored "partial" with low confidence — the implementation files exist but story-to-code mapping is uncertain (epic numbering conflict with `epics-007.md`). Worth a 30-minute alignment pass before further planning.
-- 7a-* sprint-status shows `ready-for-dev` despite merged PR #6 (`5cf52608`). Sprint-status is stale here — update once apiStatus is verified.
+- 7a-* sprint-status shows `ready-for-dev` despite merged PRs. Sprint-status is stale here — update once apiStatus is verified.
+
+Buffer: 36/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run)

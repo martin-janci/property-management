@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-24T03:20:00Z",
+  "generated": "2026-05-25T04:10:00Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -44,11 +44,11 @@
         "API types AcknowledgmentStats/UserAcknowledgmentStatus"
       ],
       "gaps": [
-        "web frontend buildStatus planned (not shipped)",
-        "apiStatus stub",
-        "acknowledgment UI in progress"
+        "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged",
+        "apiStatus stub until web PRs land"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "Epic 2B notification pipeline merged (PR #463) AND WebSocket realtime sync merged (PR #472) — both dependencies cleared; web viewing/ack UI now in flight (draft PRs #474/#475/#479)",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-6",
@@ -68,11 +68,11 @@
         "frontend integration in announcements screen"
       ],
       "gaps": [
-        "frontend buildStatus planned",
-        "apiStatus stub",
+        "comments web UI in draft PRs #474/#475/#479 — not yet merged",
         "comment threading/reply unclear"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; comments web UI in flight (draft #474/#475/#479)",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-6",
@@ -92,18 +92,17 @@
         "frontend pin status integrated in screens"
       ],
       "gaps": [
-        "frontend buildStatus planned",
-        "apiStatus stub",
-        "pin/unpin UI not shipped"
+        "pin/unpin web UI in draft PRs #474/#475/#479 — not yet merged"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; pin/unpin web UI in flight (draft #474/#475/#479)",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-6",
       "id": "6-5-direct-messaging",
       "title": "Direct Messaging",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -113,21 +112,22 @@
       "evidence": [
         "backend threads/messages/blocking routes complete",
         "frontend messages/message-thread/messages-new shipped",
-        "API types MessageThread/ThreadWithPreview/MessageWithSender"
+        "API types MessageThread/ThreadWithPreview/MessageWithSender",
+        "messaging screens wired to API (PR #449, merged 2026-05-25)",
+        "WebSocket realtime sync shipped (PR #472, merged 2026-05-25) — live thread updates no longer deferred"
       ],
       "gaps": [
-        "frontend apiStatus stub",
-        "WebSocket realtime sync deferred",
-        "test coverage unclear"
+        "test coverage for realtime sync tracked in follow-up issue (#480-#487 cluster)"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "advanced partial->done pending test-gap follow-up",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-6",
       "id": "6-6-neighbor-information",
       "title": "Neighbor Information (Privacy-Aware)",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "backend",
@@ -139,14 +139,13 @@
         "backend list_neighbors + privacy_settings routes",
         "privacy-settings screen shipped",
         "mobile NeighborsScreen.tsx present",
-        "merged commit 661d3336"
+        "merged commit 661d3336",
+        "neighbor listing UI with privacy-aware filtering shipped (PR #464, merged 2026-05-25)"
       ],
       "gaps": [
-        "frontend neighbor listing buildStatus unconfirmed",
-        "privacy-aware filtering depth unverified",
-        "mobile integration not formally documented"
+        "mobile NeighborsScreen integration depth tracked in follow-up issue (#480-#487 cluster)"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-7a",
@@ -164,14 +163,14 @@
         "merged PR 5cf52608 (Epic 7A) document CRUD + metadata",
         "backend documents.rs ~3553 LOC",
         "DocumentUploadPage.tsx + API handler",
-        "screen buildStatus shipped, apiStatus partial"
+        "screen buildStatus shipped, apiStatus partial",
+        "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev (not done)",
-        "API integration incomplete per screen-map",
-        "mobile implementation pending"
+        "sprint-status ready-for-dev — promote to done after verify",
+        "upload test coverage tracked in follow-up issue (#480-#487 cluster)"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-7a",
@@ -202,7 +201,7 @@
       "id": "7a-3-permission-based-access",
       "title": "Permission-Based Document Access",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -213,14 +212,15 @@
         "access scopes (org/building/unit/role/users)",
         "RLS row-level access enforcement",
         "update_document_access handler",
-        "list_accessible_simple helper"
+        "list_accessible_simple helper",
+        "web access-scope/permission UI shipped (PR #443, merged 2026-05-25)",
+        "mobile document permission/RLS UI shipped (gap-7a-3 PRs #462/#465, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev",
-        "API integration incomplete per screen-map",
-        "mobile RLS UI pending"
+        "sprint-status ready-for-dev — promote to done after verify"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "advanced partial->done (web+mobile permission UI both shipped)",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-7a",
@@ -243,16 +243,17 @@
       ],
       "gaps": [
         "sprint-status ready-for-dev",
-        "screen-map apiStatus partial"
+        "screen-map apiStatus partial",
+        "mobile preview slice still pending"
       ],
-      "last_checked": "2026-05-24"
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-7a",
       "id": "7a-5-document-sharing",
       "title": "Document Sharing",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -263,14 +264,15 @@
         "share with user/role/building/public link",
         "password-protected shares Argon2",
         "handlers create_share/revoke_share/access_shared_document",
-        "share access logging with IP"
+        "share access logging with IP",
+        "mobile DocumentShareSheet shipped (PR #445, merged 2026-05-25)",
+        "web document sharing UI (user/role/building/public link) shipped (gap-7a-5 PRs #451/#467, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev",
-        "mobile sharing UI not implemented",
-        "user/role sharing UI in documents page pending"
+        "sprint-status ready-for-dev — promote to done after verify",
+        "share-flow test coverage tracked in follow-up issue (#480-#487 cluster)"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-8a",
@@ -331,21 +333,23 @@
         "sprint-status review",
         "server-side DB persistence in #7",
         "sync.ts module + React Query handles refresh sync",
-        "browser push utilities prepared"
+        "browser push utilities prepared",
+        "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) — WS half of preference sync now delivered",
+        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available"
       ],
       "gaps": [
-        "WebSocket real-time sync deferred (infra not available)",
-        "mobile OS integration deferred",
-        "backend tests deferred"
+        "mobile OS push integration (FCM/APNs) still deferred",
+        "backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "WS half cleared by PR #472; only mobile-push leg remains before promotion to done",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-9",
       "id": "9-1-totp-2fa-setup",
       "title": "TOTP Two-Factor Authentication Setup",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend",
@@ -357,15 +361,13 @@
         "user_2fa model + RLS migration",
         "MFA routes /setup /verify /disable /status /backup-codes",
         "2FA integrated into POST /auth/login",
-        "TwoFactorAuthPage routed at /settings/two-factor"
+        "TwoFactorAuthPage routed at /settings/two-factor",
+        "MFA frontend integration shipped (PR #441, merged 2026-05-25) — useMfa hooks wired to /api/v1/auth/mfa/*, scaffold removed, feature exposed end-to-end",
+        "MFA e2e test coverage shipped (PR #473, merged 2026-05-25) — QR scan → verify → login 2FA prompt → disable → backup-codes flows"
       ],
-      "gaps": [
-        "frontend API client hooks missing (@ppt/api-client useMfa)",
-        "TwoFactorAuthPage is UI scaffold only - no backend calls",
-        "no integration with /api/v1/auth/mfa/* endpoints",
-        "auth flow disabled per page comment - feature not exposed end-to-end"
-      ],
-      "last_checked": "2026-05-23"
+      "gaps": [],
+      "status_note": "advanced partial->done (frontend integration PR #441 + e2e PR #473 both merged)",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-10a",
@@ -406,14 +408,14 @@
         "merged PR #9 client registration service + admin endpoints",
         "oauth.rs: register/list/update/revoke/regenerate_client_secret",
         "routes /api/v1/admin/oauth/clients (CRUD) gated by OauthClientWrite",
-        "Argon2id secret hashing + redirect URI validation"
+        "Argon2id secret hashing + redirect URI validation",
+        "OAuth client management admin UI shipped (gap-10a-2 PRs #468/#469/#471, merged 2026-05-25) — register/list/update/revoke/regenerate-secret + scope-management console in admin-web"
       ],
       "gaps": [
-        "no admin-web UI for OAuth client management",
-        "integration tests for client management missing",
-        "scope-management console missing"
+        "integration tests for client management missing (tracked in follow-up issue #480-#487 cluster)"
       ],
-      "last_checked": "2026-05-24"
+      "status_note": "admin-web client-management UI now shipped; only test gap remains",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-10a",
@@ -430,14 +432,15 @@
         "merged PR #9 refresh flow + introspection + user grants",
         "migrations oauth_refresh_tokens + user_oauth_grants",
         "oauth.rs: refresh_tokens/introspect_token/list_user_grants/revoke_user_grant",
-        "token rotation with family_id + reuse detection"
+        "token rotation with family_id + reuse detection",
+        "user OAuth grants management page shipped (gap-10a-3 PRs #468/#469/#471, merged 2026-05-25) — users can list + revoke third-party app access in ppt-web"
       ],
       "gaps": [
-        "user grant management UI (revoke apps) not in admin-web or ppt-web",
-        "no introspection integration tests",
+        "no introspection integration tests (tracked in follow-up issue #480-#487 cluster)",
         "refresh-rotation security test coverage missing"
       ],
-      "last_checked": "2026-05-24"
+      "status_note": "user-grants revoke UI now shipped; only test gaps remain",
+      "last_checked": "2026-05-25"
     },
     {
       "epic": "epic-10b",

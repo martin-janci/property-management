@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-24T03:20:00Z",
+  "last_run_iso": "2026-05-25T03:14:42Z",
   "last_run_ms": 300000,
-  "last_pr_seen": 440,
-  "last_issue_seen": 439,
-  "last_commit_sha": "a85586d13290c66ba4a9f33a16a9f40847ba86a2",
+  "last_pr_seen": 473,
+  "last_issue_seen": 487,
+  "last_commit_sha": "0daaeec858687deaddbf16d7299055aac4d74aa3",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -21,6 +21,21 @@
       "runs_seen": 2,
       "last_seen": "2026-05-23",
       "recent_churn": 3553
+    },
+    "backend/servers/api-server/src/routes/ai.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-25",
+      "recent_churn": 3142
+    },
+    "backend/servers/api-server/src/routes/platform_admin.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-25",
+      "recent_churn": 2762
+    },
+    "backend/servers/api-server/src/routes/announcements.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-25",
+      "recent_churn": 2722
     }
   },
   "seen_signals": [
@@ -42,12 +57,18 @@
     "code-review-ppt-web-ui-role-gate-fail-open",
     "code-review-ppt-web-ui-untranslated-strings",
     "code-review-ppt-web-ui-announcer-stale-msg",
-    "code-review-api-core-ssrf-outbound-fetch"
+    "code-review-api-core-ssrf-outbound-fetch",
+    "code-review-api-core-equipment-idor",
+    "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
+    "screen-map-drift-pr-464-ppt",
+    "screen-map-drift-pr-460-reality"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-05-23",
-    "api-core": "2026-05-23",
+    "api-core": "2026-05-25",
     "reality-server": "2026-05-23",
     "ppt-web-ui": "2026-05-24",
     "ppt-web-core": null,
@@ -56,9 +77,9 @@
     "mobile-native-kmp": null
   },
   "stats": {
-    "runs": 5,
-    "vectors_created": 13,
-    "plans_created": 3,
+    "runs": 6,
+    "vectors_created": 19,
+    "plans_created": 4,
     "quiet_days": 0,
     "auto_fix_count": 0
   },
@@ -73,11 +94,11 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 2,
+    "next_index": 3,
     "role_last_run": {
       "pm-tech-lead": "2026-05-23",
       "pm-backend": "2026-05-24",
-      "pm-frontend": null,
+      "pm-frontend": "2026-05-25",
       "pm-qa": null,
       "pm-devops": null,
       "pm-security": null,
@@ -86,6 +107,6 @@
     }
   },
   "coverage_cursor": {
-    "next_index": 1
+    "next_index": 2
   }
 }

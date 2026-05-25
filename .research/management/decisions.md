@@ -61,9 +61,13 @@ stories 6.2–6.5, 8A.2 dispatch, and 8A.3 WS sync are formally marked `blocked`
 until those five stories merge to `dev`. pm-scrum-master will re-sequence them
 into the sprint immediately after 2B lands, using the unblock trigger table above.
 
+**DEC-001 unblock-trigger status (2026-05-25, pm-scrum-master):**
+All five sequenced Epic 2B stories have effectively landed — **PR #463 (notification pipeline: event bus + push/email/in-app transports) and PR #472 (WebSocket realtime sync) merged 2026-05-25**. The unblock triggers in the table above have **fired**: 6-2/6-3/6-4/6-5, 8A.2 dispatch half, and 8A.3 WS half are unblocked. 6-5 (direct messaging) and the WS leg of 8a-3 are now delivered; the Epic 6 announcement web UI (6-2/6-3/6-4) moved to ready-for-dev and is in flight as draft PRs #474/#475/#479. Remaining: 8a-3 mobile-push leg (FCM/APNs).
+
 ---
 
 ## Decisions needed
-- ~~Whether to pull Epic 2B notification infrastructure into the current sprint to unblock Epic 6 publish + 8A.2 dispatch — owner: pm-scrum-master _(raised 2026-05-23)_~~ **RESOLVED by DEC-001 (PR #442) + sprint-status sequencing update (2026-05-24)**
-- Merge target/priority for security PR #435 vs. feature review backlog — owner: pm-tech-lead _(raised 2026-05-23)_
-- Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead _(raised 2026-05-23)_ _(note: PR #437 deleted these modules — effectively resolved, pending tech-lead confirmation to close)_
+- ~~Whether to pull Epic 2B notification infrastructure into the current sprint to unblock Epic 6 publish + 8A.2 dispatch — owner: pm-scrum-master _(raised 2026-05-23)_~~ **RESOLVED by DEC-001 (PR #442) + sprint-status sequencing (2026-05-24); unblock triggers FIRED 2026-05-25 (PRs #463/#472)**
+- ~~Merge target/priority for security PR #435 vs. feature review backlog — owner: pm-tech-lead _(raised 2026-05-23)_~~ **RESOLVED — #435 merged; residual findings (#438/#439) reduced (SSRF #450 + ProtectedRoute #459 landed); remaining items owned by pm-security**
+- ~~Whether to delete the dead AuthHandler/BuildingHandler modules now vs. wire them as the canonical path — owner: pm-tech-lead _(raised 2026-05-23)_~~ **RESOLVED — PR #437 deleted these modules**
+- **NEW (2026-05-25, pm-frontend):** Should the Epic 6 announcement web UI ship as one squashed PR or land incrementally via #474 → #475 → #479? The three drafts share `AnnouncementsPage` and risk merge conflicts if landed out of order — owner: pm-frontend / pm-scrum-master.

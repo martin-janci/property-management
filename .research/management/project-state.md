@@ -1,40 +1,42 @@
 # PPT Project State
 
-_Generated: 2026-05-24 — daily PM rotation (Scrum Master + pm-backend). Coverage map last rebuilt by `/ppt-project-management scan` on 2026-05-23._
+_Generated: 2026-05-25 — daily PM rotation (Scrum Master + pm-frontend). Coverage map last rebuilt by `/ppt-project-management scan` on 2026-05-23; upkeep-refreshed 2026-05-25._
 
 ## Executive summary
 
-- Four PRs merged since the last run (2026-05-23T17:47Z): **#437** deleted the dead AuthHandler/BuildingHandler modules (2495 lines; resolves the duplicate-handler divergence risk), **#436** formally closed Epic 8A (3/3 stories), **#440** completed the story 6.1 review pass, and **#446** shipped gap-7a-4 PDF.js client-side document preview.
-- **PR #435** (the P0/P1 security batch) merged 2026-05-23T22:26Z but left deferred findings, now tracked in issues **#438** and **#439**. The most concrete is **P1-05 SSRF** — verified still open at `signatures.rs:628` and a second sink at `integrations.rs:2743`; promoted to plan `security-ssrf-outbound-url-validation`.
-- Six PRs (#441–#447) opened 2026-05-24 are in flight (4 draft) — the mobile slice of Epic 7A, login-flow wiring, MFA frontend, document-access API, and the DEC-001 build-order decision. Review queue depth is the near-term delivery risk.
+- **30 PRs merged since the last run (#441–#473)** — the biggest delivery burst of the sprint, almost entirely frontend/feature work. Highlights: **OAuth provider UI** (client-management admin + user-grants revoke, PRs #468/#469/#471), **document sharing & permission UI** across web and mobile (gap-7a-* cluster: #443/#445/#447/#451/#462/#465/#467), **MFA frontend + e2e** (#441/#473), **Epic 2B notification pipeline** (#463), and **WebSocket realtime sync** (#472).
+- **Two long-standing blockers cleared.** Epic 2B notification pipeline (#463) plus WebSocket realtime sync (#472) fired the DEC-001 unblock triggers — 6-2/6-3/6-4 announcement web UI, 6-5 direct messaging, and the WS half of 8a-3 are all unblocked. 6-5 and 9-1 (MFA) advanced to **done**; the Epic 6 announcement web UI is now in-flight across draft PRs #474/#475/#479.
+- **Three security fixes landed** — voice-device IDOR (#461), SSRF outbound-URL validation (#450), and the ProtectedRoute fail-open role guard (#459) — clearing three previously-open risks.
+- **New code-review finding (high):** a cross-tenant IDOR cluster in `ai.rs` equipment endpoints — `update_equipment`/`delete_equipment`/`update_maintenance` bind `_principal` and discard it, issuing unscoped `DELETE/UPDATE ... WHERE id=$1`. This is exactly the failure mode predicted for the 3k-line route monoliths (ai.rs 3142 LOC).
+- **Follow-up issues #480–#487** track test gaps + minor security/UX follow-ups on the merged PRs — scheduled as a hardening batch so the done-count doesn't outrun test coverage.
 
 ## Sprint progress (`_bmad-output/implementation-artifacts/sprint-status.yaml`)
 
-| Epic | Tracked status | Real status (from last scan) |
+| Epic | Tracked status | Real status (from coverage upkeep) |
 |---|---|---|
-| 6 — Announcements & Communication | in-progress (1/6 done) | 6 partial — backend done, frontend apiStatus stub |
-| 7A — Basic Document Management | in-progress (0/5 done) | 5 partial — 7a-4 preview now shipped (#446); mobile (7a-1/7a-5) + API integration (7a-3) in flight |
-| 8A — Basic Notification Preferences | done (3/3) | 2 done, 8a-3 awaits Epic 2B WebSocket infra |
-| 10A — OAuth Provider Foundation | in-progress (0/3 done) | 3 done backend; no admin UI / tests |
-| 10B — Platform Administration | in-progress (3/7 done) | 3 done, 4 partial (handler stubs 10b-4/5/6/7) |
+| 6 — Announcements & Communication | in-progress | 6-1/6-5/6-6 done; 6-2/6-3/6-4 web UI in draft (#474/#475/#479), backend+infra ready |
+| 7A — Basic Document Management | in-progress | 7a-3/7a-5 done (web+mobile UI merged); 7a-1 mobile merged; 7a-2/7a-4-mobile still partial |
+| 8A — Basic Notification Preferences | in-progress | 8a-1/8a-2 done; 8a-3 WS half done (#472), mobile-push leg remains |
+| 9 — Account Security (MFA) | in-progress | 9-1 done — frontend integration (#441) + e2e (#473) merged |
+| 10A — OAuth Provider Foundation | in-progress | 3 backend done + admin/user-grants UI merged (#468/#469/#471); only integration tests remain |
+| 10B — Platform Administration | in-progress | 3 done, 4 partial (handler stubs 10b-4/5/6/7); admin health UI still missing |
 
 ## What's next (top 5)
 
-1. **[high · pm-security]** Resolve PR #435 post-merge findings (#438/#439): P1-05 SSRF, P1-04 Debug-format audit hash, P0-12 cookie scope, P1-01 ordering, IG3 test gap. _Why:_ auth-layer holes left open after a security PR compound fast.
-2. **[high · pm-backend]** Fix the P1-05 SSRF — extract `validate_external_url` to a shared module and apply at the two unguarded outbound sinks. _Why:_ authenticated SSRF to cloud-metadata / internal services; plan ready (`security-ssrf-outbound-url-validation`).
-3. **[high · pm-scrum-master]** Triage the six open PRs (#441–#447); promote #447/#445 (mobile 7A, non-draft) to review first. _Why:_ clears the 7A mobile slice and prevents review-queue stall.
-4. **[high · pm-backend]** Implement the missing Epic 81 report-schedule endpoints (pause/resume/executions). _Why:_ frontend already calls them — 404 in production.
-5. ~~**[medium · pm-tech-lead]** Land DEC-001 (PR #442) to formally sequence Epic 2B before the dependent Epic 6/8A slices.~~ **DONE — PR #442 merged; sprint-status.yaml sequenced by pm-scrum-master 2026-05-24.**
+1. **[high · pm-backend]** Fix the cross-tenant IDOR cluster in `ai.rs` — scope `update_equipment`/`delete_equipment`/`update_maintenance` by tenant (or route through RLS connection) + add a cross-tenant regression test. _Why:_ an authenticated user in any org can delete/mutate another org's equipment rows today.
+2. **[high · pm-frontend]** Sequence and land the Epic 6 announcement web UI drafts in dependency order #474 (viewing/ack) → #475 (comments) → #479 (pin). _Why:_ backend + notification pipeline are live; the only thing gating 6-2/6-3/6-4 closure is this three-PR cluster — a stall risks a review-queue jam.
+3. **[high · pm-backend]** Implement the missing Epic 81 report-schedule endpoints (pause/resume/executions). _Why:_ frontend already calls them — 404 in production; verify PRs #488/#489 in flight.
+4. **[high · pm-backend]** Build the mobile push leg (FCM/APNs) for 8a-3 — the WS half is now delivered (#472). _Why:_ last slice before 8a-3 promotes to done.
+5. **[medium · pm-frontend]** Slot follow-up issues #480–#487 into a single test-hardening batch; gate done-promotion of the merged frontend features on their follow-up closing. _Why:_ heavy delivery shipped without full regression coverage on auth/sharing surfaces.
 
 See `roadmap.md` for the full ranked plan and `action-list.json`/`action-list.md` for the tracker view.
 
 ## Blockers
 
-- **Epic 2B WebSocket/notification infrastructure** — gates 8a-3 (preference sync) and 6-5 (DM realtime). Not started; DEC-001 (PR #442) merged 2026-05-24 — sequencing is now formal. Stories 2b-1 through 2b-c1 are `ready-for-dev` and must be picked up next.
-- **Epic 81 backend endpoints missing** — frontend calls `/schedules/{id}/pause|resume` and `/executions`, which don't exist (404).
-- **PR #435 deferred security findings (#438/#439)** — unowned; P0/P1 items should land before further auth-surface feature work.
+- **None hard-blocking this run.** Epic 2B WebSocket/notification infrastructure — the prior sprint's top blocker — is cleared (#463/#472). Remaining gating items are now ordinary work, not blockers.
+- **Watch:** the Epic 6 announcement web UI is split across three unmerged drafts (#474/#475/#479) sharing AnnouncementsPage — a soft review-queue risk, not a hard block.
 
 ## Role focus today
 
-- **pm-scrum-master** (always-on): synthesized the 4-PR delivery picture; flagged the #435 deferred-security backlog and the in-flight PR queue.
-- **pm-backend** (rotation index 1): traced and confirmed the P1-05 SSRF at `integrations.rs:2743` and `signatures.rs:628`; flagged 10B silent-stub handlers and the missing Epic 81 endpoints.
+- **pm-scrum-master** (always-on): synthesized the 30-PR delivery burst; confirmed DEC-001 unblock triggers fired (2B pipeline #463 + WS sync #472); flagged the #480–#487 follow-up test debt and the three-draft Epic 6 web-UI cluster.
+- **pm-frontend** (rotation index 2): confirmed the document sharing/permission UI (web+mobile), OAuth admin/user-grants UI, MFA frontend+e2e, neighbor listing, and messaging screens all landed; surfaced the Epic 6 announcement-web-UI draft-sequencing risk and the #480–#487 test-gap follow-ups as the near-term frontend priorities; noted the ai.rs IDOR cluster for pm-backend ownership.

@@ -1,53 +1,106 @@
 {
-  "generated": "2026-05-24T03:20:00Z",
+  "generated": "2026-05-25T04:10:00Z",
   "items": [
     {
-      "id": "pm-scrum-master-epic-2b-foundation-missing",
-      "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
+      "id": "pm-backend-ai-equipment-cross-tenant-idor",
+      "risk": "Cross-tenant IDOR cluster in ai.rs equipment endpoints: update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), and update_maintenance (ai.rs:1192) all bind `_principal: RequestPrincipal` and discard it, then call equipment_repo.update/delete/update_maintenance with only the Path id — no tenant scoping. An authenticated user in any org can DELETE FROM equipment WHERE id=$1 / mutate any other org's equipment + maintenance rows. List/predictions siblings DO call require_tenant_id, confirming the omission is a bug not a design choice.",
       "probability": "high",
       "impact": "high",
-      "mitigation": "Promote Epic 2B into the sprint or explicitly defer 6.2+/8A.2 until 2B lands (DEC-001 / PR #442)",
-      "owner_role": "pm-scrum-master",
+      "mitigation": "Thread the principal's tenant_id into equipment_repo.update/delete/update_maintenance and add `AND tenant_id = $tenant` to the WHERE clauses (or use the RLS connection so the policy enforces scope). Add a cross-tenant regression test asserting 404/forbidden for foreign ids.",
+      "owner_role": "pm-backend",
       "trigger": null,
-      "status": "mitigated",
-      "mitigated_by": "DEC-001 (2026-05-24): Epic 2B sequenced first; 6.2-6.5 and 8A.2/8A.3 formally deferred pending 2B merge"
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-epic6-announcement-web-ui-in-draft",
+      "risk": "Epic 6 announcement web UI (viewing/ack 6-2, comments 6-3, pin 6-4) is split across three draft PRs (#474/#475/#479) that have not merged. Backend + notification pipeline (PR #463) and WebSocket sync (PR #472) are now live, so the only thing gating story closure is the web UI landing — but a stalled three-PR draft cluster is a review-queue risk that can leave 6-2/6-3/6-4 stuck at partial.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Sequence the three drafts (#474 viewing → #475 comments → #479 pin) so they merge in dependency order without conflicting on the shared AnnouncementsPage; promote out of draft once apiStatus wiring is verified.",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-frontend-followup-test-gaps-480-487",
+      "risk": "Post-merge review opened follow-up issues #480-#487 covering test gaps + minor security/UX follow-ups on the heavy frontend delivery (messaging realtime, document share-flow, OAuth UI, MFA). If these are not scheduled, the merged features ship 'done' without regression coverage, inflating the apparent done-count while real test debt accrues on auth/sharing surfaces.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "pm-scrum-master to slot #480-#487 into the sprint as a single test-hardening batch; do not promote dependent stories to done until their follow-up issue is closed or explicitly deferred.",
+      "owner_role": "pm-frontend",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-tech-lead-ai-platform-announcements-route-monoliths",
+      "risk": "Three route monoliths on hot paths this run: ai.rs (3142 lines), platform_admin.rs (2762), announcements.rs (2722). ai.rs already harbors the cross-tenant IDOR cluster above — exactly the failure mode predicted for oversized route files (a handler silently skips the tenant scope and reviewers miss it in a 3k-line file). Same risk surface as the integrations/organizations/documents.rs split already actioned.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add ai.rs/platform_admin.rs/announcements.rs to the module-split backlog; add a CI grep/clippy lint that flags handlers binding `_principal` (discarded principal) on mutating routes.",
+      "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
     },
     {
       "id": "pm-scrum-master-pr-435-deferred-security",
-      "risk": "PR #435 merged with deferred security findings (#438/#439): P1-05 SSRF unfixed, P0-12 cookie scope, P1-04 Debug-format audit-hash domain — auth-layer issues that compound if deferred another sprint",
-      "probability": "high",
+      "risk": "PR #435 merged with deferred security findings (#438/#439): P1-05 SSRF, P0-12 cookie scope, P1-04 Debug-format audit-hash domain. SSRF (#450) and ProtectedRoute fail-open (#459) have since landed; remaining #438/#439 items (cookie scope, Debug-format hash, ordering, IG3 test gap) still need a single owner.",
+      "probability": "medium",
       "impact": "high",
-      "mitigation": "Assign pm-security sole owner of #438/#439; treat P0/P1 as pre-feature-work; SSRF fix tracked by plan security-ssrf-outbound-url-validation",
+      "mitigation": "Assign pm-security sole owner of the residual #438/#439 items; treat remaining P0/P1 as pre-feature-work. SSRF and ProtectedRoute legs now resolved.",
       "owner_role": "pm-security",
       "trigger": null,
       "status": "open"
     },
     {
       "id": "pm-backend-webhook-signature-ssrf",
-      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issue requests to unvalidated user/provider URLs — SSRF to 169.254.169.254 / internal services; a validate_external_url guard exists but is applied at only one of three sinks",
-      "probability": "medium",
+      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issued requests to unvalidated user/provider URLs — SSRF to 169.254.169.254 / internal services.",
+      "probability": "low",
       "impact": "high",
-      "mitigation": "Extract validate_external_url to a shared module and apply at all three sinks before the request; consider re-resolving DNS at connect time (rebind defense)",
+      "mitigation": "validate_external_url extracted to shared module and applied at the outbound sinks (PR #450).",
       "owner_role": "pm-backend",
       "trigger": null,
-      "status": "open"
+      "status": "resolved",
+      "mitigated_by": "PR #450 (SSRF outbound URL validation) merged 2026-05-25"
     },
     {
       "id": "pm-frontend-protectedroute-fail-open",
-      "risk": "ProtectedRoute.tsx:117 role gate is fail-open: when user.role is falsy the role check is skipped and access is granted. Latent today (no route passes requiredRoles, AuthContext does not populate role) but will silently no-op the first role-gated route",
-      "probability": "medium",
+      "risk": "ProtectedRoute.tsx:117 role gate was fail-open: when user.role was falsy the role check was skipped and access granted — would silently no-op the first role-gated route.",
+      "probability": "low",
       "impact": "medium",
-      "mitigation": "Deny on missing role; populate user.role in AuthContext; fix before role-gating goes live (fold into 79-2 / PR #444)",
+      "mitigation": "Now denies on missing role; user.role populated in AuthContext (PR #459).",
       "owner_role": "pm-frontend",
       "trigger": null,
-      "status": "open"
+      "status": "resolved",
+      "mitigated_by": "PR #459 (ProtectedRoute fail-open fix) merged 2026-05-25"
+    },
+    {
+      "id": "pm-security-voice-device-idor",
+      "risk": "Voice device endpoints permitted cross-tenant device access (IDOR) — a principal could address another org's voice device by id.",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Tenant scoping added to voice device lookups (PR #461).",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #461 (voice device IDOR fix) merged 2026-05-25"
+    },
+    {
+      "id": "pm-scrum-master-epic-2b-foundation-missing",
+      "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "Epic 2B notification pipeline (PR #463) + WebSocket realtime sync (PR #472) merged — the blocking infra is now live; 6-2/6-3/6-4 web UI and 8a-3 WS half are unblocked.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "resolved",
+      "mitigated_by": "PR #463 (Epic 2B notification pipeline) + PR #472 (WebSocket realtime sync) merged 2026-05-25 — DEC-001 unblock triggers fired"
     },
     {
       "id": "pm-backend-81-missing-endpoints",
       "risk": "Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist — 404 in production",
       "probability": "medium",
       "impact": "medium",
-      "mitigation": "Implement the missing endpoints or feature-flag the frontend calls until they exist",
+      "mitigation": "Implement the missing endpoints or feature-flag the frontend calls until they exist; Epic 81 schedule/execution verify PRs (#488/#489) in flight.",
       "owner_role": "pm-backend",
       "trigger": null,
       "status": "open"
@@ -64,34 +117,13 @@
     },
     {
       "id": "pm-tech-lead-oauth-10a-no-token-design",
-      "risk": "OAuth provider (10A) backend complete but no agreed token/rotation/storage design and no admin-web client-management UI — divergent implementation + functional gap before any SSO consumer goes live",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Lock ADR for 10A consent/grant + token design before pickup; schedule admin-web OAuth client management",
+      "risk": "OAuth provider (10A) backend complete; admin client-management UI + user-grants UI now shipped (PRs #468/#469/#471). Residual gap is end-to-end integration/security test coverage (PKCE flow, refresh rotation reuse detection).",
+      "probability": "low",
+      "impact": "medium",
+      "mitigation": "Add OAuth integration test suite (gap-10a-1-oauth-tests); UI delivery risk now closed.",
       "owner_role": "pm-tech-lead",
       "trigger": null,
       "status": "open"
-    },
-    {
-      "id": "pm-tech-lead-churn-hot-route-files",
-      "risk": "Three ~4k-line route files (integrations/organizations/documents.rs) on hot multitenancy paths — review fatigue, RLS-predicate omission risk (a raw pool connection silently bypasses RLS)",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Module split; grep/clippy CI check that flags sqlx queries in these files not flowing through RlsConnection",
-      "owner_role": "pm-tech-lead",
-      "trigger": null,
-      "status": "mitigated",
-      "mitigated_by": "DEC-001 (2026-05-24): Epic 2B formally sequenced first; Epic 6.2-6.5 and 8A.2/8A.3 WS+dispatch slices formally deferred until 2B stories 1-5 land"
-    },
-    {
-      "id": "pm-tech-lead-duplicate-auth-handler-divergence",
-      "risk": "Duplicate AuthHandler/BuildingHandler modules: a security/correctness fix to the live route copy won't propagate to the dead handler copy, misleading reviewers",
-      "probability": "medium",
-      "impact": "high",
-      "mitigation": "Delete dead modules; enforce single implementation per auth/building op",
-      "owner_role": "pm-tech-lead",
-      "trigger": null,
-      "status": "resolved"
     }
   ]
 }

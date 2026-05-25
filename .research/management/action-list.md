@@ -1,37 +1,45 @@
 # Action list
 
-_Generated 2026-05-24 from `action-list.json` (merged: pm-analysis rotation + gap-scan)._
+_Generated 2026-05-25 from `action-list.json` (merged: pm-analysis rotation + gap-scan + code-review-finding). 36 open · 4 in-progress · 23 done._
 
-## From pm-analysis rotation
+## New this run (2026-05-25 — pm-frontend rotation + code review)
 
-| Priority | Action | Owner | Dependency | Status |
-|---|---|---|---|---|
-| high | Get a review decision on PR #435 (security auth/security fixes) and merge to dev | pm-scrum-master | none | done |
-| high | Complete code review of Epic 8A (8a-1/8a-2/8a-3) and move to done | pm-scrum-master | none | done |
-| high | Remove dead duplicate AuthHandler/BuildingHandler modules | pm-tech-lead | none | done |
-| high | Resolve post-merge security findings #438/#439 (SSRF, Debug-hash, cookie scope, ordering, IG3) | pm-security | none | open |
-| high | Fix P1-05 SSRF — shared validate_external_url at signatures.rs:628 + integrations.rs:2743 | pm-backend | none | open |
-| high | Implement Epic 81 report-schedule endpoints frontend already calls (pause/resume/executions) | pm-backend | none | open |
-| high | Decide build order: Epic 2B infra before Epic 6 publish + 8A dispatch, or defer | pm-tech-lead | pm-scrum-master | done |
-| medium | Review and merge story 6.1 (announcement creation/targeting) | pm-scrum-master | none | done |
-| medium | Sequence Epic 2B notification infrastructure ahead of Epic 6 publish + 8A.2 dispatch | pm-scrum-master | pm-tech-lead | done |
-| medium | Split churn-hot route modules (integrations.rs, organizations.rs, documents.rs) by surface | pm-tech-lead | none | open |
-| medium | Define OAuth provider (10A) token/storage/rotation design before 10a-1 pickup | pm-tech-lead | none | open |
-| medium | Harden ProtectedRoute.tsx:117 fail-open role guard + populate user.role (fold into 79-2) | pm-frontend | none | open |
-| low | Land the security-voice-device-idor plan (ready in .research/plans/) | pm-scrum-master | none | open |
-| low | Confirm WebSocket infra ownership for 8A.3 sync (ADR-008) is scheduled | pm-tech-lead | pm-scrum-master | open |
+| Priority | Action | Owner | Status |
+|---|---|---|---|
+| high | Fix cross-tenant IDOR cluster in ai.rs equipment endpoints (update/delete equipment + update_maintenance discard `_principal`) — scope by tenant + regression test | pm-backend | open |
+| high | Sequence + land Epic 6 announcement web UI draft PRs in order #474 → #475 → #479 | pm-frontend | open |
+| medium | Slot follow-up issues #480-#487 (test/security/UX gaps on merged PRs) into a single hardening batch | pm-frontend | open |
+| medium | Add ai.rs/platform_admin.rs/announcements.rs to module-split backlog + CI lint for discarded `_principal` on mutating handlers | pm-tech-lead | open |
+| medium | Verify Epic 81 schedule/execution e2e as PRs #488/#489 land; promote 81-1/81-2 from partial | pm-frontend | open |
 
-## From gap-scan
+## Resolved this run (merged PRs #441–#473)
 
-| Priority | Action | Owner | Dependency | Status |
-|---|---|---|---|---|
-| high | Wire `TwoFactorAuthPage` to `/api/v1/auth/mfa/*` — add `useMfa` hooks (9-1 TOTP) | pm-security | — | in-progress |
-| high | Build WebSocket realtime sync infra for notification preferences (8a-3) | pm-backend | Epic 2B WebSocket infra | open |
-| high | Complete frontend API integration for documents permission-based access (7a-3) | pm-backend | — | in-progress |
-| high | Wire login form/logout/session cleanup to `AuthContext` (79-2) | pm-frontend | — | in-progress |
-| high | Implement mobile (RN) document upload UI with metadata (7a-1) | pm-frontend | — | in-progress |
-| high | Implement mobile document sharing UI (7a-5) | pm-frontend | — | in-progress |
-| high | Implement PDF.js client-side preview for documents (7a-4) | pm-frontend | — | done |
-| high | Promote direct messaging screens from `apiStatus: stub` to integrated (6-5) | pm-frontend | — | open |
-| high | Build dedicated folder-tree UI page for document organization (7a-2) | pm-frontend | — | open |
-| high | Implement handler bodies for 10b-4/5/6/7 (route stubs only; return 501 until real) | pm-backend | — | open |
+| Action | Owner | Resolved by |
+|---|---|---|
+| MFA frontend integration + e2e (9-1) | pm-security | PR #441, #473 |
+| Mobile document upload (7a-1), share sheet (7a-5), permission UI (7a-3) | pm-frontend | PRs #447 / #445 / #462,#465 |
+| Web document sharing UI (7a-5) | pm-frontend | PRs #451, #467 |
+| Direct messaging apiStatus → integrated (6-5) | pm-frontend | PRs #449, #472 |
+| Neighbor listing privacy-aware UI (6-6) | pm-frontend | PR #464 |
+| OAuth client admin UI (10a-2) + user-grants UI (10a-3) | pm-frontend | PRs #468/#469/#471 |
+| Epic 2B notification pipeline + WebSocket realtime sync | pm-backend | PRs #463, #472 |
+| P1-05 SSRF outbound URL validation | pm-backend | PR #450 |
+| ProtectedRoute fail-open role guard | pm-frontend | PR #459 |
+| Voice device IDOR | pm-security | PR #461 |
+
+## Still open — top carryovers
+
+| Priority | Action | Owner | Status |
+|---|---|---|---|
+| high | Resolve residual #438/#439 security findings (cookie scope, Debug-hash, ordering, IG3) | pm-security | open |
+| high | Implement Epic 81 report-schedule backend endpoints (pause/resume/executions) | pm-backend | open |
+| high | Mobile push leg (FCM/APNs) for 8a-3 — WS half now done | pm-backend | open |
+| high | Folder-tree UI page (7a-2) | pm-frontend | open |
+| high | Wire AnnouncementsPage/FaultsPage to API hooks (79-1) | pm-frontend | open |
+| high | OAuth integration test suite (10a-1) | pm-backend | open |
+| high | Admin health monitoring UI (10b-3) | pm-frontend | open |
+| medium | 10b-4/5/6/7 handler bodies (return 501 until real) | pm-backend | open |
+| medium | Dispute filing + mediation AC sweep (80-2/80-3) | pm-frontend | open |
+| medium | Split churn-hot route modules (integrations/organizations/documents.rs) | pm-tech-lead | open |
+
+_See `action-list.json` for the full 63-item tracker (36 open)._

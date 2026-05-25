@@ -1,0 +1,98 @@
+{
+  "generated": "2026-05-25T03:14:42Z",
+  "since": "2026-05-24T03:20:00Z",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "code-review-api-core-equipment-idor",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "expert": "rust",
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs:1133 — delete_equipment discards `_principal`, calls equipment_repo.delete(id); equipment.rs:144 `DELETE FROM equipment WHERE id = $1` has no org/owner predicate (cross-tenant delete IDOR)",
+        "update_equipment (equipment_repo.update(id,req), equipment.rs:104) and update_maintenance (equipment.rs:213) share the discard pattern; sibling workflow handlers scope via org_id, proving intent",
+        "full call path traced from wired route ai.rs:1042 to unscoped query; same IDOR class as voice-device fix in PR #461"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-24T03:20:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "3,142 lines (additions+deletions) this run — top code-churn source file; 3,142-line route monolith (AI sessions/equipment/workflows/voice/lease/photo); harbored two IDORs (#461 + equipment this run)"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-24T03:20:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2,762 lines this run — top-2 code-churn source file; churned from OAuth-provider admin + platform-health backend work (gap-10a/10b PRs #469/#471); runs_seen=1"
+      ]
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
+      "type": "churn-hotspot",
+      "source": "git log origin/dev since 2026-05-24T03:20:00Z",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "2,722 lines this run — top-3 code-churn source file; churned from Epic 2B notification pipeline (#463) + in-flight Epic 6 announcement web UI (drafts #474/#475/#479); runs_seen=1"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-464-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #464",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #464 touched frontend/apps/ppt-web/src/App.tsx + src/routes/lazyRoutes.tsx (new neighbors feature wired) with no docs/screens/ppt/*.md update; added features/neighbors — a real new screen surface"
+      ]
+    },
+    {
+      "id": "screen-map-drift-pr-460-reality",
+      "type": "screen-map-drift",
+      "source": "PR #460",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": [
+        "PR #460 touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx with no docs/screens/reality update; likely false-positive — change was an API-base host-inference bugfix in an existing page, not a screen/route change"
+      ]
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate met confidence=high + score>=3 + allowlist (the 2 screen-map-drift signals are confidence=medium / score 2)",
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 == '# <today>'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq state advance vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique backlog ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq non-cumulative re-emit with score_delta!=0", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq score cap <=8; decay vacuous (no open item >14d)", "observed": "max=3, no items older than 14d", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "new plan slug + 'adversarial pass:' on same brief line", "observed": "security-equipment-idor.md annotated 'adversarial pass: passed'", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "new-plan count + metadata/headings/files-exist", "observed": "1 new plan; 4 meta + 11 headings + capability + Mode + 2 files resolve", "expected": "<=2, all sections" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "grep secrets/hostnames in staged diff (exempt baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regen backlog.md and diff", "observed": "byte-identical (rows match; only the test template dropped ' by routine')", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "no failed phases this run", "observed": "no phase failures", "expected": "n/a" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs present in plans/ or _archive/", "observed": "all 4 present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count now >= HEAD", "observed": "now=3 >= head=1", "expected": "exit 0" },
+    { "goal": "G14", "passed": true, "command": "regen IDEAS_TRIAGE.md and diff", "observed": "byte-identical (0 triage rows)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions caps + idempotency", "observed": "0 actions (no candidate); kill switch unset", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "mgmt artifacts parse + pm_cursor.next_index in 0..7", "observed": "action-list/risks .items OK, project-state non-empty, next_index=3", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "no literal Telegram token in staged added lines", "observed": "0", "expected": "0" }
+  ]
+}
