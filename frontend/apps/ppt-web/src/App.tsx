@@ -617,7 +617,14 @@ function App() {
                                 />
 
                                 {/* Reports routes (Epic 81) */}
-                                <Route path="/reports" element={<ReportsPageRoute />} />
+                                <Route
+                                  path="/reports"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ReportsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
 
                                 {/* Phase 5 admin is at admin.rlt.sk now;
                                   see frontend/apps/admin-web. */}
@@ -2276,6 +2283,8 @@ function NeighborDetailRoute() {
 function ReportsPageRoute() {
   const { showToast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const organizationId = user?.organizationId ?? '';
 
   const pauseSchedule = usePauseSchedule();
   const resumeSchedule = useResumeSchedule();
@@ -2340,7 +2349,7 @@ function ReportsPageRoute() {
 
   return (
     <ReportsPage
-      organizationId=""
+      organizationId={organizationId}
       dataSources={[]}
       reports={[]}
       schedules={[]}
