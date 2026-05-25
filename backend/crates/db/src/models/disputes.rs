@@ -437,6 +437,8 @@ pub struct ResolveDispute {
     pub dispute_id: Uuid,
     pub resolution_notes: String,
     pub resolved_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
 }
 
 /// Request to update mediation notes on a dispute.
@@ -444,6 +446,10 @@ pub struct ResolveDispute {
 pub struct UpdateMediationNotes {
     pub dispute_id: Uuid,
     pub notes: String,
+    /// User performing the update — recorded in the audit trail.
+    pub updated_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
 }
 
 // =============================================================================

@@ -337,9 +337,9 @@ impl DisputeRepository {
     }
 
     /// Resolve a dispute — transitions status to `resolved`, sets `resolved_at` and
-    /// `resolution_notes`. Only permitted from `filed`, `under_review`, `mediation`,
+    /// `resolution_notes`. Only permitted from `under_review`, `mediation`,
     /// `awaiting_response`, or `escalated` states (anything that can reach `resolved`
-    /// in the state machine).
+    /// in the state machine). Note: `filed` cannot transition directly to `resolved`.
     pub async fn resolve_dispute(&self, req: ResolveDispute) -> Result<Dispute, AppError> {
         let now = Utc::now();
 
@@ -370,7 +370,7 @@ impl DisputeRepository {
             SET status = 'resolved',
                 resolved_at = $1,
                 resolution_notes = $2
-            WHERE id = $3 AND status = $4
+            WHERE id = $3 AND status = $4 AND organization_id = $5
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
                       assigned_to, resolved_at, resolution_notes, mediation_notes,
@@ -381,6 +381,7 @@ impl DisputeRepository {
         .bind(&req.resolution_notes)
         .bind(req.dispute_id)
         .bind(&current_status)
+        .bind(req.organization_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?
@@ -406,26 +407,36 @@ impl DisputeRepository {
     /// Update mediation notes on a dispute (does not change status).
     pub async fn update_mediation_notes(
         &self,
-        dispute_id: Uuid,
-        notes: String,
+        req: UpdateMediationNotes,
     ) -> Result<Dispute, AppError> {
         let dispute = sqlx::query_as::<_, Dispute>(
             r#"
             UPDATE disputes
-            SET mediation_notes = $1
-            WHERE id = $2
+            SET mediation_notes = $1,
+                updated_at = NOW()
+            WHERE id = $2 AND organization_id = $3
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
                       assigned_to, resolved_at, resolution_notes, mediation_notes,
                       created_at, updated_at
             "#,
         )
-        .bind(&notes)
-        .bind(dispute_id)
+        .bind(&req.notes)
+        .bind(req.dispute_id)
+        .bind(req.organization_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?
-        .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", dispute_id)))?;
+        .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
+
+        self.record_activity(
+            req.dispute_id,
+            req.updated_by,
+            activity_type::STATUS_CHANGED,
+            "Mediation notes updated".to_string(),
+            None,
+        )
+        .await?;
 
         Ok(dispute)
     }

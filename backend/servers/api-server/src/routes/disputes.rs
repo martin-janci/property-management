@@ -18,7 +18,8 @@ use db::models::{
     DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
     MediationSession, PartyActionsDashboard, PartySubmission, ProposeResolution,
     RecordSessionNotes, ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation,
-    ScheduleSession, SessionAttendance, SubmitResponse, UpdateDisputeStatus, VoteOnResolution,
+    ScheduleSession, SessionAttendance, SubmitResponse, UpdateDisputeStatus, UpdateMediationNotes,
+    VoteOnResolution,
 };
 use db::repositories::{UpdateAttendanceData, UpdateSessionData};
 use serde::Deserialize;
@@ -437,19 +438,44 @@ async fn update_dispute_status(
 ///
 /// Only managers or admins may call this endpoint.
 /// Returns 422 Unprocessable Entity when the current dispute status does not permit a transition
-/// to `resolved` (e.g. already `resolved`, `withdrawn`, or `closed`).
+/// to `resolved` (e.g. `filed`, already `resolved`, `withdrawn`, or `closed`).
 async fn resolve_dispute(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<ResolveDisputeRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    if !user.role.as_ref().is_some_and(|r| r.is_manager()) {
+    // Fix: admit both managers AND admins (is_manager already includes admin-tier
+    // roles but we spell it out explicitly per the API contract).
+    if !user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin())
+    {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
         ));
     }
+
+    // Guard: resolution_notes must not be blank.
+    if data.resolution_notes.trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "resolution_notes must not be empty",
+            )),
+        ));
+    }
+
+    // Require an organization context from the JWT so we can scope the UPDATE.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
 
     let result = state
         .dispute_repo
@@ -457,6 +483,7 @@ async fn resolve_dispute(
             dispute_id: id,
             resolution_notes: data.resolution_notes,
             resolved_by: user.user_id,
+            organization_id,
         })
         .await;
 
@@ -498,9 +525,7 @@ async fn update_mediation_notes(
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
     // Allow managers/admins or the assigned mediator (i.e. any authenticated user
     // who is a party with role "mediator" — checked by the presence of the party record).
-    // For simplicity we allow any authenticated user that is either a manager/admin
-    // or the assigned mediator (party with mediator role).
-    let is_manager = user.role.as_ref().is_some_and(|r| r.is_manager());
+    let is_manager = user.role.as_ref().is_some_and(|r| r.is_manager() || r.is_admin());
 
     if !is_manager {
         // Check whether the caller is the assigned mediator for this dispute.
@@ -531,9 +556,22 @@ async fn update_mediation_notes(
         }
     }
 
+    // Require an organization context from the JWT so we can scope the UPDATE.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
     let result = state
         .dispute_repo
-        .update_mediation_notes(id, data.notes)
+        .update_mediation_notes(UpdateMediationNotes {
+            dispute_id: id,
+            notes: data.notes,
+            updated_by: user.user_id,
+            organization_id,
+        })
         .await;
 
     match result {
