@@ -73,16 +73,31 @@ async fn seed_user(pool: &PgPool, email: &str) -> Uuid {
     .expect("seed user")
 }
 
-async fn seed_equipment(pool: &PgPool, org_id: Uuid) -> Uuid {
+async fn seed_building(pool: &PgPool, org_id: Uuid, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO buildings (organization_id, street, city, postal_code, country)
+        VALUES ($1, $2, 'Bratislava', '81101', 'Slovakia') RETURNING id
+        "#,
+    )
+    .bind(org_id)
+    .bind(format!("{slug} Street 1"))
+    .fetch_one(pool)
+    .await
+    .expect("seed building")
+}
+
+async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
         INSERT INTO equipment
-            (organization_id, name, category, status)
-        VALUES ($1, 'Cross-tenant Equipment', 'hvac', 'operational')
+            (organization_id, building_id, name, category, status)
+        VALUES ($1, $2, 'Cross-tenant Equipment', 'hvac', 'operational')
         RETURNING id
         "#,
     )
     .bind(org_id)
+    .bind(building_id)
     .fetch_one(pool)
     .await
     .expect("seed equipment")
@@ -158,7 +173,8 @@ async fn update_equipment_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "upd-eq-b").await;
     let _user_a = seed_user(&pool, "upd-eq-a@idor.test").await;
     let user_b = seed_user(&pool, "upd-eq-b@idor.test").await;
-    let equipment_in_a = seed_equipment(&pool, org_a).await;
+    let building_a = seed_building(&pool, org_a, "upd-eq-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
 
     let ctx_b = tenant_context_header(org_b, user_b);
     let uri = format!("/api/v1/ai/equipment/{}", equipment_in_a);
@@ -196,7 +212,8 @@ async fn delete_equipment_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "del-eq-b").await;
     let _user_a = seed_user(&pool, "del-eq-a@idor.test").await;
     let user_b = seed_user(&pool, "del-eq-b@idor.test").await;
-    let equipment_in_a = seed_equipment(&pool, org_a).await;
+    let building_a = seed_building(&pool, org_a, "del-eq-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
 
     let ctx_b = tenant_context_header(org_b, user_b);
     let uri = format!("/api/v1/ai/equipment/{}", equipment_in_a);
@@ -228,7 +245,8 @@ async fn update_maintenance_from_other_org_is_rejected(pool: PgPool) {
     let org_b = seed_org(&pool, "upd-maint-b").await;
     let _user_a = seed_user(&pool, "upd-maint-a@idor.test").await;
     let user_b = seed_user(&pool, "upd-maint-b@idor.test").await;
-    let equipment_in_a = seed_equipment(&pool, org_a).await;
+    let building_a = seed_building(&pool, org_a, "upd-maint-a").await;
+    let equipment_in_a = seed_equipment(&pool, org_a, building_a).await;
     let maint_id = seed_maintenance(&pool, equipment_in_a).await;
 
     let ctx_b = tenant_context_header(org_b, user_b);
