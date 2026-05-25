@@ -1477,7 +1477,7 @@ pub async fn list_schedule_executions(
     }
 
     // Validate limit bounds
-    if params.limit < 1 || params.limit > 100 {
+    if !(1_i64..=100).contains(&params.limit) {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
@@ -1705,7 +1705,7 @@ fn validate_cron_expression(expr: &str) -> bool {
                     }
                 } else {
                     match base.parse::<u32>() {
-                        Ok(v) if v >= min && v <= max => {}
+                        Ok(v) if (min..=max).contains(&v) => {}
                         _ => return false,
                     }
                 }
