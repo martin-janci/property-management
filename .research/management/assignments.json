@@ -1236,15 +1236,15 @@
     {
       "task_id": "gap-84-2-esignature-email-ui",
       "branch": "auto-impl/gap-84-2-esignature-email-ui",
-      "status": "in-progress",
+      "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T19:20:00Z",
-      "status_changed_at": "2026-05-25T19:20:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T19:45:00Z",
+      "status_changed_at": "2026-05-25T19:45:00Z",
+      "pr_number": 513,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/513",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=513 status=done specialist=react-web note=@ppt/api-client esignature module (types+api+hooks); SignatureStatusBadge (amber/green/red/gray); RequestSignatureModal (signer selection+subject+message+loading+error); LeaseDetailPage Request Signature button + badge in header; LeaseCard badge in status row; LeaseSignatureStatus+documentId types added; typecheck exit 0; biome exit 0; vite build exit 0",
       "reviewer_summary": null
     }
   ]
