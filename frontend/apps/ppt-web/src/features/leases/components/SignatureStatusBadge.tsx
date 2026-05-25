@@ -10,10 +10,7 @@ interface SignatureStatusBadgeProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<
-  SignatureRequestStatus,
-  { label: string; classes: string }
-> = {
+const STATUS_CONFIG: Record<SignatureRequestStatus, { label: string; classes: string }> = {
   pending: {
     label: 'Pending Signature',
     classes: 'bg-amber-100 text-amber-800',

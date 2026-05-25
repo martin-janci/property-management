@@ -5,6 +5,7 @@
  *           GET  /api/v1/documents/{documentId}/signature-requests
  */
 
+import { getToken } from '../auth';
 import type {
   CreateSignatureRequestBody,
   CreateSignatureRequestResponse,
@@ -15,21 +16,27 @@ import type {
 const DOCUMENTS_BASE = '/api/v1/documents';
 const SIGNATURE_REQUESTS_BASE = '/api/v1/signature-requests';
 
-async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error((error as { message?: string }).message || `HTTP ${response.status}`);
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<T>;
+  return response.json();
 }
 
 /**
@@ -40,7 +47,7 @@ export async function createSignatureRequest(
   documentId: string,
   body: CreateSignatureRequestBody
 ): Promise<CreateSignatureRequestResponse> {
-  return fetchApi<CreateSignatureRequestResponse>(
+  return apiRequest<CreateSignatureRequestResponse>(
     `${DOCUMENTS_BASE}/${documentId}/signature-requests`,
     {
       method: 'POST',
@@ -56,7 +63,7 @@ export async function createSignatureRequest(
 export async function listSignatureRequests(
   documentId: string
 ): Promise<ListSignatureRequestsResponse> {
-  return fetchApi<ListSignatureRequestsResponse>(
+  return apiRequest<ListSignatureRequestsResponse>(
     `${DOCUMENTS_BASE}/${documentId}/signature-requests`
   );
 }
@@ -66,5 +73,5 @@ export async function listSignatureRequests(
  * GET /api/v1/signature-requests/{id}
  */
 export async function getSignatureRequest(id: string): Promise<SignatureRequestResponse> {
-  return fetchApi<SignatureRequestResponse>(`${SIGNATURE_REQUESTS_BASE}/${id}`);
+  return apiRequest<SignatureRequestResponse>(`${SIGNATURE_REQUESTS_BASE}/${id}`);
 }

@@ -8,7 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { PaymentHistoryTable } from '../components/PaymentHistoryTable';
 import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { SignatureStatusBadge } from '../components/SignatureStatusBadge';
-import type { LeaseSignatureStatus, LeaseStatus, LeaseWithDetails, ViolationSummary } from '../types';
+import type {
+  LeaseSignatureStatus,
+  LeaseStatus,
+  LeaseWithDetails,
+  ViolationSummary,
+} from '../types';
 
 interface LeaseDetailPageProps {
   lease: LeaseWithDetails;
