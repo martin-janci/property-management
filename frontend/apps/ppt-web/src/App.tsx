@@ -23,14 +23,17 @@ import {
   useDeleteAnnouncement,
   useDispute,
   useDisputes,
+  useDownloadReport,
   useFaults,
   useOutage,
   useOutages,
   usePauseSchedule,
   usePinAnnouncement,
   usePublishAnnouncement,
+  useReportExecutionHistory,
   useResolveOutage,
   useResumeSchedule,
+  useRetryReportExecution,
   useStartOutage,
   useUpdateOutage,
   useUpdateSchedule,
@@ -2347,6 +2350,66 @@ function ReportsPageRoute() {
     }
   };
 
+  // --- Story 81.2: Execution history state and hooks ---
+  const [activeScheduleId, setActiveScheduleId] = useState<string>('');
+  const [executionOffset, setExecutionOffset] = useState(0);
+  const EXECUTION_PAGE_SIZE = 20;
+
+  const { data: executionHistoryData, isLoading: executionsLoading } = useReportExecutionHistory(
+    { scheduleId: activeScheduleId },
+    {
+      limit: EXECUTION_PAGE_SIZE,
+      offset: executionOffset,
+      enabled: !!activeScheduleId,
+      refetchInterval: activeScheduleId ? 10_000 : false,
+    }
+  );
+
+  const downloadReport = useDownloadReport();
+  const retryExecution = useRetryReportExecution();
+
+  const executions = executionHistoryData?.executions ?? [];
+  const hasMore = executionHistoryData?.hasMore ?? false;
+
+  const handleFetchExecutions = (scheduleId: string) => {
+    setActiveScheduleId(scheduleId);
+    setExecutionOffset(0);
+  };
+
+  const handleLoadMoreExecutions = () => {
+    setExecutionOffset((prev) => prev + EXECUTION_PAGE_SIZE);
+  };
+
+  const handleDownloadReport = (executionId: string) => {
+    downloadReport.mutate(executionId, {
+      onError: () => {
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('reports.execution.downloadFailed', 'Failed to download report.'),
+        });
+      },
+    });
+  };
+
+  const handleRetryExecution = async (executionId: string) => {
+    try {
+      await retryExecution.mutateAsync(executionId);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.execution.retryQueued', 'Execution queued for retry.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.execution.retryFailed', 'Failed to retry execution.'),
+      });
+      throw new Error('retry failed');
+    }
+  };
+
   return (
     <ReportsPage
       organizationId={organizationId}
@@ -2363,7 +2426,7 @@ function ReportsPageRoute() {
           previous_value: 0,
           change: 0,
           change_percentage: 0,
-          trend: 'stable',
+          trend: 'stable' as const,
           anomalies: [],
         } as import('@ppt/api-client').TrendAnalysis
       }
@@ -2379,6 +2442,13 @@ function ReportsPageRoute() {
       onPauseSchedule={handlePauseSchedule}
       onResumeSchedule={handleResumeSchedule}
       onUpdateSchedule={handleUpdateSchedule}
+      executions={executions}
+      executionsLoading={executionsLoading}
+      executionsHasMore={hasMore}
+      onFetchExecutions={handleFetchExecutions}
+      onLoadMoreExecutions={handleLoadMoreExecutions}
+      onDownloadReport={handleDownloadReport}
+      onRetryExecution={handleRetryExecution}
     />
   );
 }
