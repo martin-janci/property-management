@@ -375,6 +375,25 @@ export function useAnnouncements(params?: ListAnnouncementsParams) {
   });
 }
 
+/**
+ * Fetch only pinned published announcements (Story 6.4).
+ *
+ * Uses a fixed `pinned: true` filter so the query key is stable and won't
+ * collide with the main list cache. Refreshes every 5 minutes — pinned items
+ * change infrequently and do not need a tight polling loop.
+ */
+export function usePinnedAnnouncements() {
+  const params: ListAnnouncementsParams = { pinned: true, status: 'published', pageSize: 20 };
+  return useQuery<PaginatedResponse<AnnouncementSummary>>({
+    queryKey: announcementKeys.list(params),
+    queryFn: () =>
+      fetchJson<PaginatedResponse<AnnouncementSummary>>(
+        `${ANNOUNCEMENTS_BASE}${buildAnnouncementQuery(params)}`
+      ),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 /** Delete an announcement (draft only) */
 export function useDeleteAnnouncement() {
   const queryClient = useQueryClient();

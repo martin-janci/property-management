@@ -39,7 +39,6 @@ export function PinnedAnnouncementsBand({ announcements, onView }: PinnedAnnounc
           <button
             key={ann.id}
             type="button"
-            role="listitem"
             className="pinned-band__chip"
             onClick={() => onView(ann.id)}
           >

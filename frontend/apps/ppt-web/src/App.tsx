@@ -28,7 +28,9 @@ import {
   useDeleteAnnouncement,
   useDeleteAnnouncementComment,
   useDispute,
+  useDisputeEvidence,
   useDisputes,
+  useDisputeTimeline,
   useDownloadReport,
   useFaults,
   useMarkReadAnnouncement,
@@ -42,6 +44,7 @@ import {
   useResumeSchedule,
   useRetryReportExecution,
   useStartOutage,
+  useUpdateDisputeStatus,
   useUpdateOutage,
   useUpdateSchedule,
 } from '@ppt/api-client';
@@ -93,6 +96,8 @@ import type {
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from './features/disputes/components/DisputeCard';
+import type { ActivityType } from './features/disputes/components/DisputeTimeline';
+import type { DisputeDetail as UiDisputeDetail } from './features/disputes/pages/DisputeDetailPage';
 import { useNeighbors, usePrivacySettings } from './features/neighbors';
 import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
@@ -106,6 +111,7 @@ import {
   CreateFaultPage,
   CreateGroupPage,
   CreateOutagePage,
+  DisputeDetailPage,
   DisputesPage,
   DocumentDetailPage,
   DocumentsPage,
@@ -128,6 +134,7 @@ import {
   InvoiceManagementPage,
   LoginPage,
   MarketplacePage,
+  MediationPage,
   MessagesPage,
   NeighborDetailPage,
   NeighborsPage,
@@ -212,6 +219,28 @@ function mapUiStatusToApiStatus(status: UiDisputeStatus): ApiDisputeStatus | und
     closed: 'closed',
   };
   return mapping[status];
+}
+
+/**
+ * Map API TimelineEventType to UI ActivityType (story 80-3).
+ * Most event names overlap; the few that differ are approximated.
+ */
+function mapTimelineEventType(
+  eventType: import('@ppt/api-client').TimelineEventType
+): ActivityType {
+  const mapping: Record<import('@ppt/api-client').TimelineEventType, ActivityType> = {
+    dispute_filed: 'dispute_filed',
+    status_changed: 'status_changed',
+    mediator_assigned: 'party_added',
+    evidence_added: 'evidence_added',
+    note_added: 'comment_added',
+    meeting_scheduled: 'session_scheduled',
+    resolution_proposed: 'resolution_proposed',
+    resolution_accepted: 'resolution_accepted',
+    escalated: 'escalated',
+    closed: 'closed',
+  };
+  return mapping[eventType] ?? 'status_changed';
 }
 
 /** Format API Building address to string for UI components */
@@ -541,6 +570,10 @@ function App() {
                                 <Route
                                   path="/disputes/:disputeId"
                                   element={<DisputeDetailRoute />}
+                                />
+                                <Route
+                                  path="/disputes/:disputeId/mediation"
+                                  element={<DisputeMediationRoute />}
                                 />
                                 {/* Outages routes (UC-12) */}
                                 <Route path="/outages" element={<OutagesPageRoute />} />
@@ -887,20 +920,33 @@ function FileDisputePageRoute() {
 }
 
 /**
- * Route wrapper for dispute detail page (Epic 77, Story 80.1).
+ * Route wrapper for dispute detail page (Epic 77, Story 80-3).
  *
- * Uses useDispute hook from @ppt/api-client for data fetching.
- * Implements real API integration with loading/error states.
- * Maps API DisputeWithDetails to UI-friendly display format.
+ * Replaces the inline JSX stub with the full DisputeDetailPage component.
+ * Wires useDispute, useDisputeTimeline, useDisputeEvidence, and
+ * useUpdateDisputeStatus from @ppt/api-client.
+ *
+ * API DisputeWithDetails → UI DisputeDetail mapping:
+ *   - subject           → title
+ *   - type              → category (via mapTypeToCategory)
+ *   - status            → status (via mapApiStatusToUiStatus)
+ *   - filedBy           → filedBy + filedByName
+ *   - assignedMediator  → assignedToName
+ *   - referenceNumber   synthesised as DSP-{id.toUpperCase()}
+ *   - priority          UI-only, hardcoded 'medium' until API exposes it
  */
 function DisputeDetailRoute() {
   const { t } = useTranslation();
   const { disputeId } = useParams<{ disputeId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
-  const { data: dispute, isLoading, error, refetch } = useDispute(disputeId ?? '');
+  const { data: dispute, isLoading, error } = useDispute(disputeId ?? '');
+  const { data: timelineData, isLoading: timelineLoading } = useDisputeTimeline(disputeId ?? '');
+  const { data: evidenceData, isLoading: evidenceLoading } = useDisputeEvidence(disputeId ?? '');
+  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
 
-  // Use useEffect for error toast to prevent spam on re-renders
   useEffect(() => {
     if (error) {
       showToast({
@@ -921,83 +967,217 @@ function DisputeDetailRoute() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="loading-page">
-        <h1>{t('common.loadingDispute')}</h1>
-        <p>{t('common.pleaseWait')}</p>
-      </div>
-    );
-  }
-
-  // Add retry button for error states
-  if (error) {
+  if (!dispute && !isLoading && error) {
     return (
       <div className="error-page">
         <h1>{t('errors.errorLoadingDispute')}</h1>
         <p>{t('errors.disputeLoadError')}</p>
-        <div className="error-actions">
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-2"
-          >
-            {t('common.tryAgain')}
-          </button>
-          <Link to="/disputes" className="px-4 py-2 border border-gray-300 rounded-lg">
-            {t('common.backToDisputes')}
-          </Link>
-        </div>
+        <Link to="/disputes" className="px-4 py-2 border border-gray-300 rounded-lg">
+          {t('common.backToDisputes')}
+        </Link>
       </div>
     );
   }
 
-  if (!dispute) {
+  // Map API DisputeWithDetails → UI DisputeDetail
+  const uiDispute: UiDisputeDetail | undefined = dispute
+    ? {
+        id: dispute.id,
+        organizationId: dispute.organizationId,
+        unitId: dispute.unitId,
+        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
+        category: mapTypeToCategory(dispute.type),
+        title: dispute.subject,
+        description: dispute.description,
+        status: mapApiStatusToUiStatus(dispute.status),
+        // priority is UI-only; API does not expose it yet
+        priority: 'medium' as DisputePriority,
+        filedBy: dispute.filedBy,
+        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
+        assignedTo: dispute.assignedMediatorId,
+        assignedToName: dispute.assignedMediator,
+        createdAt: dispute.createdAt,
+        updatedAt: dispute.updatedAt,
+      }
+    : undefined;
+
+  // Map API TimelineEvent[] → UI TimelineEntry[]
+  const timeline = (timelineData ?? []).map((ev) => ({
+    id: ev.id,
+    actorId: ev.actorId,
+    actorName: ev.actorName,
+    activityType: mapTimelineEventType(ev.eventType),
+    description: ev.description,
+    metadata: ev.metadata,
+    createdAt: ev.createdAt,
+  }));
+
+  // Map API DisputeEvidence[] → UI DisputeEvidence[]
+  const evidence = (evidenceData ?? []).map((ev) => ({
+    id: ev.id,
+    uploadedBy: ev.uploadedBy,
+    uploaderName: ev.uploadedBy,
+    filename: ev.fileName,
+    originalFilename: ev.fileName,
+    contentType: ev.fileType,
+    sizeBytes: ev.fileSize,
+    storageUrl: ev.fileUrl,
+    description: ev.description,
+    createdAt: ev.createdAt,
+  }));
+
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
+
+  const handleUpdateStatus = async (status: UiDisputeStatus, reason?: string) => {
+    const apiStatus = mapUiStatusToApiStatus(status);
+    if (!apiStatus || !disputeId) return;
+    try {
+      await updateStatus.mutateAsync({ disputeId, data: { status: apiStatus, reason } });
+      showToast({
+        type: 'success',
+        title: t('disputes.statusUpdated', 'Status updated'),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('disputes.statusUpdateFailed', 'Failed to update status'),
+        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
+  return (
+    <DisputeDetailPage
+      dispute={uiDispute!}
+      parties={[]}
+      evidence={evidence}
+      timeline={timeline}
+      resolutions={[]}
+      actionItems={[]}
+      isManager={isManager}
+      isLoading={isLoading || timelineLoading || evidenceLoading}
+      currentUserId={user?.id}
+      onBack={() => navigate('/disputes')}
+      onUpdateStatus={handleUpdateStatus}
+      onAddEvidence={() => {}}
+      onDeleteEvidence={() => {}}
+      onProposeResolution={() => {}}
+      onVoteResolution={() => {}}
+      onAcceptResolution={() => {}}
+      onImplementResolution={() => {}}
+      onCompleteResolutionTerm={() => {}}
+      onCreateAction={() => {}}
+      onCompleteAction={() => {}}
+      onSendReminder={() => {}}
+      onEscalate={() => {}}
+      onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
+    />
+  );
+}
+
+/**
+ * Route wrapper for dispute mediation page (Epic 77, Story 80-3).
+ *
+ * New route: /disputes/:disputeId/mediation
+ * Renders MediationPage for the given dispute.
+ * Sessions/submissions data is deferred until the mediation backend sessions
+ * API is wired; the page renders with empty lists and shows the schedule UI.
+ */
+function DisputeMediationRoute() {
+  const { t } = useTranslation();
+  const { disputeId } = useParams<{ disputeId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+
+  const { data: dispute, isLoading } = useDispute(disputeId ?? '');
+  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
+
+  if (!disputeId) {
     return (
       <div className="error-page">
         <h1>{t('errors.disputeNotFound')}</h1>
-        <p>{t('errors.disputeNotExist')}</p>
+        <p>{t('errors.disputeNotFoundDesc')}</p>
         <Link to="/disputes">{t('common.backToDisputes')}</Link>
       </div>
     );
   }
 
-  // Map API type to UI category for display
-  const category = mapTypeToCategory(dispute.type);
-  const status = mapApiStatusToUiStatus(dispute.status);
+  // Map API dispute → UI DisputeDetail for MediationPage
+  const uiDispute: UiDisputeDetail | undefined = dispute
+    ? {
+        id: dispute.id,
+        organizationId: dispute.organizationId,
+        unitId: dispute.unitId,
+        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
+        category: mapTypeToCategory(dispute.type),
+        title: dispute.subject,
+        description: dispute.description,
+        status: mapApiStatusToUiStatus(dispute.status),
+        priority: 'medium' as DisputePriority,
+        filedBy: dispute.filedBy,
+        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
+        assignedTo: dispute.assignedMediatorId,
+        assignedToName: dispute.assignedMediator,
+        createdAt: dispute.createdAt,
+        updatedAt: dispute.updatedAt,
+      }
+    : undefined;
+
+  const isMediator = !!dispute && dispute.assignedMediatorId === user?.id;
+  const isParty = !!dispute && (dispute.filedBy === user?.id || dispute.respondentId === user?.id);
+
+  const handleCompleteSession = async (_sessionId: string, notes: string) => {
+    if (!disputeId) return;
+    try {
+      await updateStatus.mutateAsync({ disputeId, data: { status: 'resolved', reason: notes } });
+      showToast({
+        type: 'success',
+        title: t('disputes.sessionCompleted', 'Session completed'),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('disputes.sessionCompleteFailed', 'Failed to complete session'),
+        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
+      });
+    }
+  };
 
   return (
-    <div className="dispute-detail-page">
-      <h1>Dispute: {dispute.subject}</h1>
-      <div className="dispute-meta">
-        <span className={`status status--${status}`}>{status.split('_').join(' ')}</span>
-        <span className="type">{category.split('_').join(' ')}</span>
-      </div>
-      <div className="dispute-description">
-        <h2>Description</h2>
-        <p>{dispute.description}</p>
-      </div>
-      <div className="dispute-timeline">
-        <h2>Timeline</h2>
-        {dispute.timeline && dispute.timeline.length > 0 ? (
-          <ul>
-            {dispute.timeline.map((event) => (
-              <li key={event.id}>
-                <strong>{event.eventType.split('_').join(' ')}</strong>: {event.description}
-                <span className="text-gray-500 ml-2">
-                  ({new Date(event.createdAt).toLocaleDateString()})
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>
-            <em>No timeline events yet.</em>
-          </p>
-        )}
-      </div>
-      <Link to="/disputes">{t('common.backToDisputes')}</Link>
-    </div>
+    <MediationPage
+      dispute={uiDispute!}
+      parties={[]}
+      sessions={[]}
+      submissions={[]}
+      isMediator={isMediator}
+      isParty={isParty}
+      currentUserId={user?.id}
+      isLoading={isLoading}
+      onBack={() => navigate(`/disputes/${disputeId}`)}
+      onScheduleSession={() => {
+        showToast({
+          type: 'info',
+          title: t('disputes.mediationSessionScheduled', 'Session scheduling'),
+          message: t(
+            'disputes.mediationSessionScheduledMsg',
+            'Session scheduling will be available once the mediation backend is wired.'
+          ),
+        });
+      }}
+      onCancelSession={() => {}}
+      onCompleteSession={handleCompleteSession}
+      onConfirmAttendance={() => {}}
+      onRecordAttendance={() => {}}
+      onSubmitResponse={() => {}}
+    />
   );
 }
 
@@ -1355,6 +1535,12 @@ function AnnouncementsPageRoute() {
   });
 
   const { data, isLoading, error } = useAnnouncements(listParams);
+  // Story 6.4 — separate query for the sticky pinned band; immune to list filters
+  const { data: pinnedData } = useAnnouncements({
+    pinned: true,
+    status: 'published',
+    pageSize: 20,
+  });
   const deleteAnnouncement = useDeleteAnnouncement();
   const publishAnnouncement = usePublishAnnouncement();
   const archiveAnnouncement = useArchiveAnnouncement();
@@ -1372,6 +1558,7 @@ function AnnouncementsPageRoute() {
 
   const announcements = data?.items ?? [];
   const total = data?.total ?? 0;
+  const pinnedAnnouncements = pinnedData?.items ?? [];
 
   const handleDelete = async (id: string) => {
     try {
@@ -1448,6 +1635,7 @@ function AnnouncementsPageRoute() {
       announcements={announcements}
       total={total}
       isLoading={isLoading}
+      pinnedAnnouncements={pinnedAnnouncements}
       onNavigateToCreate={() => navigate('/announcements/new')}
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
       onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}

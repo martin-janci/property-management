@@ -120,6 +120,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 
 <!-- newest entries on top -->
 
+- 2026-05-25 — agent: gap-6-4-pinned-announcements-ui — Story 6.4: added PinnedAnnouncementsBand component + CSS; wired usePinnedAnnouncements (pinned=true) query in AnnouncementsPageRoute (App.tsx); propagated pinnedAnnouncements prop through AnnouncementsPage → AnnouncementList; mobile AnnouncementsScreen adds pinned-band with separate /api/v1/announcements?pinned=true query
+
 - 2026-05-25 — agent: gap-6-3 review fixes — added i18n to AnnouncementComments.tsx (useTranslation + 12 keys); registered 18 toast keys + comments sub-object in en.json; fixed isManager to include technical_manager + property_manager; added announcements_comments_list/create/delete to sitemap + screen-map
 
 - 2026-05-24 — agent: gap-6-3-comments-web-ui — Story 6.3: added AnnouncementComments component + CSS; added useAnnouncementComments/useCreateAnnouncementComment/useDeleteAnnouncementComment standalone hooks to @ppt/api-client; wired comment hooks in ViewAnnouncementPageInner with manager-role delete affordance; ppt-web buildStatus planned→in-progress
