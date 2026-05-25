@@ -3,11 +3,28 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "types": ["jest", "@testing-library/react-native"],
+    "types": [
+      "jest",
+      "@testing-library/react-native"
+    ],
     "paths": {
-      "@ppt/api-client": ["../../packages/api-client/src"],
-      "@ppt/shared": ["../../packages/shared/src"]
+      "@ppt/api-client": [
+        "../../packages/api-client/src"
+      ],
+      "@ppt/shared": [
+        "../../packages/shared/src"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "src/types/**/*.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "app.config.ts"
+  ]
 }
