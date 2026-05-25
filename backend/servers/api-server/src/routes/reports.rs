@@ -1813,7 +1813,13 @@ pub async fn update_schedule(
     // Apply updates and persist.
     let updated = state
         .report_schedule_repo
-        .update_schedule(id, req.cron_expression, req.recipients, req.enabled, &mut schedule)
+        .update_schedule(
+            id,
+            req.cron_expression,
+            req.recipients,
+            req.enabled,
+            &mut schedule,
+        )
         .await
         .map_err(|e| {
             tracing::error!(error = %e, schedule_id = %id, "Failed to update schedule");
