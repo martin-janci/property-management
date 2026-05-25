@@ -2350,11 +2350,12 @@ function ReportsPageRoute() {
         {
           metric: '',
           period: 'monthly',
-          data_points: [],
-          direction: 'stable',
+          current_value: 0,
+          previous_value: 0,
+          change: 0,
           change_percentage: 0,
-          start_date: '',
-          end_date: '',
+          trend: 'stable',
+          anomalies: [],
         } as import('@ppt/api-client').TrendAnalysis
       }
       trendLines={[]}
@@ -2362,6 +2363,8 @@ function ReportsPageRoute() {
         {
           metric: '',
           periods: [],
+          difference: 0,
+          difference_percentage: 0,
         } as import('@ppt/api-client').PeriodComparison
       }
       onPauseSchedule={handlePauseSchedule}
