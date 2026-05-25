@@ -1180,17 +1180,16 @@
     {
       "task_id": "pm-qa-establish-pr-merge-policy-requiring-a",
       "branch": "auto-impl/pm-qa-establish-pr-merge-policy-requirin",
-      "status": "review",
+      "status": "merged",
       "specialist": "generic",
       "claimed_at": "2026-05-25T18:25:00Z",
-      "last_updated": "2026-05-25T18:37:00Z",
+      "last_updated": "2026-05-25T19:10:00Z",
       "status_changed_at": "2026-05-25T18:25:00Z",
       "pr_number": 510,
       "pr_url": "https://github.com/martin-janci/property-management/pull/510",
-      "merged_at": null,
+      "merged_at": "2026-05-25T19:10:00Z",
       "implementer_summary": "pr=510 status=done specialist=generic note=security-test-gate workflow added",
-      "reviewer_summary": "verdict=approve note=all 3 items verified: checkout@v6 present, */tests/*.rs single-level glob correct, unlabeled trigger present; logic sound: job-level if skips non-security PRs cleanly, draft=advisory exit 0, non-draft hard-fail exit 1; test patterns cover Rust integration/unit, TS __tests__/spec/test, e2e; CI conclusion=skipped as expected (PR has no security label); no issues",
-      "last_updated": "2026-05-25T19:00:00Z"
+      "reviewer_summary": "verdict=approve note=all 3 items verified: checkout@v6 present, */tests/*.rs single-level glob correct, unlabeled trigger present; logic sound: job-level if skips non-security PRs cleanly, draft=advisory exit 0, non-draft hard-fail exit 1; test patterns cover Rust integration/unit, TS __tests__/spec/test, e2e; CI conclusion=skipped as expected (PR has no security label); no issues"
     },
     {
       "task_id": "gap-6-4-pinned-announcements-ui",
