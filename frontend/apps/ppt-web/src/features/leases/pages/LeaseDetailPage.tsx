@@ -5,8 +5,8 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { PaymentHistoryTable } from '../components/PaymentHistoryTable';
+import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { SignatureStatusBadge } from '../components/SignatureStatusBadge';
 import type { LeaseSignatureStatus, LeaseStatus, LeaseWithDetails, ViolationSummary } from '../types';
 
@@ -62,9 +62,12 @@ export function LeaseDetailPage({
     !!lease.documentId &&
     (!signatureStatus || signatureStatus === 'expired' || signatureStatus === 'cancelled');
 
-  // Build parties list from lease data for the signer selection modal
   const signerParties = [
-    { name: lease.tenant.name, email: lease.tenant.email, role: t('leases.esign.role.tenant', 'Tenant') },
+    {
+      name: lease.tenant.name,
+      email: lease.tenant.email,
+      role: t('leases.esign.role.tenant', 'Tenant'),
+    },
   ];
 
   const formatDate = (dateString?: string) => {

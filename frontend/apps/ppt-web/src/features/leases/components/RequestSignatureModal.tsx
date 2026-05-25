@@ -3,10 +3,10 @@
  * Epic 84, Story 84.2.
  */
 
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { CreateSigner, SignatureRequestStatus } from '@ppt/api-client';
 import { useCreateSignatureRequest } from '@ppt/api-client';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Party {
   name: string;
@@ -143,7 +143,10 @@ export function RequestSignatureModal({
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder={t('leases.esign.modal.subjectPlaceholder', 'e.g. Lease Agreement Signing')}
+              placeholder={t(
+                'leases.esign.modal.subjectPlaceholder',
+                'e.g. Lease Agreement Signing',
+              )}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -160,7 +163,7 @@ export function RequestSignatureModal({
               rows={3}
               placeholder={t(
                 'leases.esign.modal.messagePlaceholder',
-                'Please review and sign the attached lease agreement.'
+                'Please review and sign the attached lease agreement.',
               )}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
