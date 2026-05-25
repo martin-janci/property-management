@@ -772,13 +772,13 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T08:16:00Z",
-      "last_updated": "2026-05-25T16:10:00Z",
+      "last_updated": "2026-05-25T16:27:00Z",
       "status_changed_at": "2026-05-25T09:00:00Z",
       "pr_number": 498,
       "pr_url": "https://github.com/martin-janci/property-management/pull/498",
       "merged_at": null,
       "implementer_summary": "pr=498 status=done specialist=pm-frontend note=iOS xcconfig (Base/Dev/Staging/Prod), xcscheme XML, app icon sets with DEV/STG badges, Configuration.swift runtime xcconfig reader, Info.plist BUNDLE_DISPLAY_NAME substitution, build scripts build-mobile|android|ios.sh; biome import order+format fixed, pnpm-lock.yaml updated for CI frozen-lockfile; CI all-green; draft promoted",
-      "reviewer_summary": "verdict=approve note=xcconfig/xcscheme/Configuration.swift/build scripts all correct; CI 14/14 green; non-blocking: MARKETING_VERSION removed from Base.xcconfig | merge-attempt: merged=false pr=498 note=unresolved-threads=14",
+      "reviewer_summary": "verdict=approve note=xcconfig/xcscheme/Configuration.swift/build scripts all correct; CI 14/14 green; non-blocking: MARKETING_VERSION removed from Base.xcconfig | merge-attempt: merged=false pr=498 note=add/add conflict in xcschemes+app.config.ts+Configuration.swift+build scripts vs dev (14 copilot threads resolved); needs rebase before merge",
       "reviewer_verdict": "approve"
     },
     {
