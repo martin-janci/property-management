@@ -382,7 +382,7 @@ pub fn router() -> Router<AppState> {
     // admin restore and migration import endpoints.
     let upload_router = Router::new()
         .route("/upload", post(upload_document))
-        .layer(DefaultBodyLimit::max(52_428_800)); // 50 MiB + headroom
+        .layer(DefaultBodyLimit::max(52_428_800)); // exactly 50 MiB
 
     Router::new()
         // Document CRUD
@@ -479,7 +479,7 @@ async fn create_document(
             Json(ErrorResponse::new(
                 "UNSUPPORTED_FILE_TYPE",
                 format!(
-                    "File type '{}' is not supported. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, GIF, WEBP, TXT",
+                    "File type '{}' is not supported. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, GIF, WEBP, TXT, CSV",
                     req.mime_type
                 ),
             )),
@@ -1321,7 +1321,7 @@ async fn get_preview_url(
     ),
     tag = "Documents"
 )]
-pub async fn upload_document(
+async fn upload_document(
     State(state): State<AppState>,
     auth: AuthUser,
     tenant: TenantExtractor,

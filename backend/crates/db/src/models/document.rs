@@ -22,6 +22,7 @@ pub const ALLOWED_MIME_TYPES: &[&str] = &[
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "text/plain",
+    "text/csv",
     // Images
     "image/png",
     "image/jpeg",
