@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T06:15:53Z",
+  "generated": "2026-05-25T06:27:18Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -695,15 +695,15 @@
     {
       "task_id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
       "branch": "auto-impl/pm-tech-lead-split-ai-platform-announcem",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "pm-tech-lead",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T06:09:06Z",
-      "status_changed_at": "2026-05-25T06:09:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T06:27:18Z",
+      "status_changed_at": "2026-05-25T06:27:18Z",
+      "pr_number": 494,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/494",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=494 status=done specialist=pm-tech-lead note=3 module-split backlog entries added (ai.rs 3134L, platform_admin.rs 2762L, announcements.rs 2722L); check-discarded-principal.sh lint created and wired into backend.yml check job; 7 violations detected informational",
       "reviewer_summary": null
     },
     {
