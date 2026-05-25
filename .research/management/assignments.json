@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T08:15:00Z",
+  "generated": "2026-05-25T08:16:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -640,14 +640,14 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T08:16:00Z",
       "status_changed_at": "2026-05-25T04:07:30Z",
       "pr_number": 490,
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
       "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
-      "reviewer_summary": "verdict=approve note=both critical issues fixed: RLS uses app.current_user_id + FORCE RLS + is_super_admin(); 6 tests added covering auth gate, empty/whitespace rejection, cross-user isolation; non-blocking: service policy not recreated in 00158 (service methods unused for now, follow-up needed before fan-out)",
-      "reviewer_verdict": "approve"
+      "reviewer_summary": "verdict=changes note=Blocker 1: migration 00158 drops the service-role SELECT policy without replacing it — get_tokens_for_user/delete_all_for_user will silently return empty results under FORCE RLS, breaking the Epic 2B delivery pipeline. Blocker 2: Cargo.lock downgrades all crate versions from 0.2.591→0.2.588 (branch needs rebase onto dev; repo is at 0.2.627). Minor: no token length CHECK constraint on the TEXT column. Auth pattern, RLS convention, idempotent upsert, security logging hygiene, and test structure are all correct.",
+      "reviewer_verdict": "changes"
     },
     {
       "task_id": "pm-backend-fix-ai-equipment-idor",
@@ -727,7 +727,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T08:15:00Z",
+      "last_updated": "2026-05-25T08:16:00Z",
       "status_changed_at": "2026-05-25T06:46:17Z",
       "pr_number": 495,
       "pr_url": "https://github.com/martin-janci/property-management/pull/495",
@@ -735,6 +735,48 @@
       "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; security fixes: RLS on 3 handlers, webhook secret gate, XSS html_escape in all email templates; cargo check+fmt+clippy clean",
       "reviewer_summary": "verdict=changes-addressed note=3 HIGH blockers found and fixed: (1) RlsConnection added to get_signature_request/send_reminder/cancel_signature_request; find_by_id_rls uses executor-based RLS query; (2) handle_webhook verifies X-Webhook-Secret against ESIGN_WEBHOOK_SECRET env var; (3) html_escape() applied to signer_name/requester_name/document_name/signing_url/signer_email/manage_url/expires_at across all 4 email templates. All fixes compiled+fmt+rls-enforcement clean. New CI run triggered (commit eafd3a01).",
       "reviewer_verdict": "approve"
+    },
+    {
+      "task_id": "pm-tech-lead-confirm-websocket-infra-ownership",
+      "branch": "auto-impl/pm-tech-lead-confirm-websocket-infra-own",
+      "status": "review",
+      "specialist": "generic",
+      "claimed_at": "2026-05-25T08:16:00Z",
+      "last_updated": "2026-05-25T08:17:00Z",
+      "status_changed_at": "2026-05-25T08:17:00Z",
+      "pr_number": 496,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/496",
+      "merged_at": null,
+      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted→Implemented with owner/delivery ref; action-list item marked done; git diff --check exit 0",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-85-1-rn-env-config",
+      "branch": "auto-impl/gap-85-1-rn-env-config",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T08:16:00Z",
+      "last_updated": "2026-05-25T08:16:00Z",
+      "status_changed_at": "2026-05-25T08:16:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-85-2-ios-build-config",
+      "branch": "auto-impl/gap-85-2-ios-build-config",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-25T08:16:00Z",
+      "last_updated": "2026-05-25T08:16:00Z",
+      "status_changed_at": "2026-05-25T08:16:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ]
 }
