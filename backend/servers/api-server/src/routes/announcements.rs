@@ -2738,7 +2738,10 @@ mod tests {
     #[test]
     fn empty_comment_content_is_invalid() {
         let content = "";
-        assert!(content.is_empty(), "Empty content should be caught by handler guard");
+        assert!(
+            content.is_empty(),
+            "Empty content should be caught by handler guard"
+        );
     }
 
     #[test]
@@ -2774,7 +2777,10 @@ mod tests {
     fn sanitize_markdown_strips_javascript_href() {
         let input = r#"<a href="javascript:alert(1)">click</a>"#;
         let output = sanitize_markdown(input);
-        assert!(!output.contains("javascript:"), "javascript: URLs must be stripped");
+        assert!(
+            !output.contains("javascript:"),
+            "javascript: URLs must be stripped"
+        );
     }
 
     // --- CreateCommentRequest deserialization ---
@@ -2783,7 +2789,10 @@ mod tests {
     fn create_comment_request_defaults_ai_consent_to_false() {
         let json = r#"{"content":"Hello world"}"#;
         let req: CreateCommentRequest = serde_json::from_str(json).unwrap();
-        assert!(!req.ai_training_consent, "ai_training_consent should default to false");
+        assert!(
+            !req.ai_training_consent,
+            "ai_training_consent should default to false"
+        );
         assert_eq!(req.content, "Hello world");
         assert!(req.parent_id.is_none());
     }
