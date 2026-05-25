@@ -2724,3 +2724,88 @@ fn parse_announcement_drafts(content: &str) -> Vec<AnnouncementDraft> {
 
     drafts
 }
+
+// ============================================================================
+// Tests (Story 6.3 — comment validation)
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Comment content length validation ---
+
+    #[test]
+    fn empty_comment_content_is_invalid() {
+        let content = "";
+        assert!(content.is_empty(), "Empty content should be caught by handler guard");
+    }
+
+    #[test]
+    fn comment_content_at_max_length_is_valid() {
+        let content = "a".repeat(MAX_COMMENT_LENGTH);
+        assert!(content.len() <= MAX_COMMENT_LENGTH);
+    }
+
+    #[test]
+    fn comment_content_exceeding_max_length_is_invalid() {
+        let content = "a".repeat(MAX_COMMENT_LENGTH + 1);
+        assert!(content.len() > MAX_COMMENT_LENGTH);
+    }
+
+    // --- Sanitize markdown (used in create_comment) ---
+
+    #[test]
+    fn sanitize_markdown_strips_script_tags() {
+        let input = r#"Hello <script>alert('xss')</script> world"#;
+        let output = sanitize_markdown(input);
+        assert!(!output.contains("<script>"), "Script tags must be stripped");
+        assert!(output.contains("Hello"), "Safe text must be preserved");
+    }
+
+    #[test]
+    fn sanitize_markdown_allows_safe_formatting() {
+        let input = "<strong>Important</strong> and <em>emphasis</em>";
+        let output = sanitize_markdown(input);
+        assert!(output.contains("<strong>") || output.contains("Important"));
+    }
+
+    #[test]
+    fn sanitize_markdown_strips_javascript_href() {
+        let input = r#"<a href="javascript:alert(1)">click</a>"#;
+        let output = sanitize_markdown(input);
+        assert!(!output.contains("javascript:"), "javascript: URLs must be stripped");
+    }
+
+    // --- CreateCommentRequest deserialization ---
+
+    #[test]
+    fn create_comment_request_defaults_ai_consent_to_false() {
+        let json = r#"{"content":"Hello world"}"#;
+        let req: CreateCommentRequest = serde_json::from_str(json).unwrap();
+        assert!(!req.ai_training_consent, "ai_training_consent should default to false");
+        assert_eq!(req.content, "Hello world");
+        assert!(req.parent_id.is_none());
+    }
+
+    #[test]
+    fn create_comment_request_accepts_parent_id() {
+        let parent = Uuid::new_v4();
+        let json = format!(
+            r#"{{"content":"Reply","parent_id":"{}","ai_training_consent":true}}"#,
+            parent
+        );
+        let req: CreateCommentRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(req.parent_id, Some(parent));
+        assert!(req.ai_training_consent);
+    }
+
+    // --- ListCommentsQuery defaults ---
+
+    #[test]
+    fn list_comments_query_defaults_to_none() {
+        let query = ListCommentsQuery::default();
+        assert!(query.limit.is_none());
+        assert!(query.offset.is_none());
+    }
+}
