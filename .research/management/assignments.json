@@ -634,15 +634,15 @@
     {
       "task_id": "gap-8a-3-mobile-push",
       "branch": "auto-impl/gap-8a-3-mobile-push",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T02:12:20Z",
-      "status_changed_at": "2026-05-25T02:12:20Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T04:00:00Z",
+      "status_changed_at": "2026-05-25T03:46:14Z",
+      "pr_number": 490,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
       "reviewer_summary": null
     }
   ]
