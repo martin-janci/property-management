@@ -248,6 +248,27 @@ final class NavigationCoordinator {
         case .account:   accountPath.append(route);   accountRoutes.append(route)
         }
     }
+
+    /// Atomically restore a route stack for a given tab.
+    ///
+    /// Sets both the `NavigationPath` and the corresponding mirror array so
+    /// that a subsequent `save()` call reads the correct stack instead of the
+    /// empty default. Called exclusively by ``NavigationStateRestorationService``.
+    ///
+    /// - Parameters:
+    ///   - routes: The decoded route array to restore.
+    ///   - tab: The tab whose stack should be replaced.
+    func restoreStack(_ routes: [Route], for tab: Tab) {
+        var path = NavigationPath()
+        for route in routes { path.append(route) }
+        switch tab {
+        case .home:      homePath = path;      homeRoutes = routes
+        case .search:    searchPath = path;    searchRoutes = routes
+        case .favorites: favoritesPath = path; favoritesRoutes = routes
+        case .inquiries: inquiriesPath = path; inquiriesRoutes = routes
+        case .account:   accountPath = path;   accountRoutes = routes
+        }
+    }
 }
 
 // MARK: - Deep Link Handling

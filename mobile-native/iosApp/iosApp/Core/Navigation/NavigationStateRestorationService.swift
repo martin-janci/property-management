@@ -98,14 +98,7 @@ final class NavigationStateRestorationService {
             // Skip protected stacks when not authenticated.
             let effectiveEncoded = (tab.requiresAuth && !isAuthenticated) ? [] : encoded
             let routes = effectiveEncoded.compactMap { decodeRoute($0) }
-            let path = makePath(from: routes)
-            switch tab {
-            case .home:      coordinator.homePath = path
-            case .search:    coordinator.searchPath = path
-            case .favorites: coordinator.favoritesPath = path
-            case .inquiries: coordinator.inquiriesPath = path
-            case .account:   coordinator.accountPath = path
-            }
+            coordinator.restoreStack(routes, for: tab)
         }
     }
 
@@ -137,8 +130,8 @@ final class NavigationStateRestorationService {
         case .account:                    return "account"
         case .profile:                    return "profile"
         case .settings:                   return "settings"
-        case .login:                      return "login"
-        case .register:                   return "register"
+        case .login:                      return nil   // ephemeral — not persisted
+        case .register:                   return nil   // ephemeral — not persisted
         case .savedSearches:              return "savedSearches"
         case .compareListings:            return nil   // ephemeral — not persisted
         case .realtors:                   return "realtors"

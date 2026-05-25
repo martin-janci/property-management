@@ -471,6 +471,51 @@ final class NavigationStateRestorationServiceTests: XCTestCase {
         // selectedTab should remain unchanged
         XCTAssertEqual(coordinator.selectedTab, .inquiries)
     }
+
+    /// Regression test for the mirror-array desync bug.
+    ///
+    /// Before the fix, `restore()` set only the `NavigationPath` values but
+    /// left the `*Routes` mirror arrays empty. On the next `save()` call the
+    /// mirrors were read — returning `[]` — so the persisted stacks were
+    /// silently discarded. This test catches that by doing a full
+    /// save → restore → save → restore cycle and asserting that the stack
+    /// depth survives unchanged.
+    func testRoundTripPersistenceSurvivesDoubleRestoreCycle() throws {
+        // Build an initial coordinator with a non-empty home stack.
+        let coordinator1 = NavigationCoordinator()
+        coordinator1.selectedTab = .home
+        coordinator1.navigate(to: .listingDetail(id: "lst-A"))
+        coordinator1.navigate(to: .listingGallery(id: "lst-A"))
+
+        // First save.
+        service.save(coordinator: coordinator1)
+
+        // First restore.
+        let coordinator2 = NavigationCoordinator()
+        service.restore(into: coordinator2, isAuthenticated: true)
+        XCTAssertEqual(coordinator2.routeMirror(for: .home).count, 2,
+                       "First restore: home stack should have 2 routes")
+
+        // Save AGAIN immediately after restore — this is where the bug bit.
+        // If mirrors were empty, this would persist `[]` for the home stack.
+        service.save(coordinator: coordinator2)
+
+        // Second restore — into a third coordinator.
+        let coordinator3 = NavigationCoordinator()
+        service.restore(into: coordinator3, isAuthenticated: true)
+
+        // The stack depth must survive the full cycle.
+        XCTAssertEqual(coordinator3.routeMirror(for: .home).count, 2,
+                       "Second restore: home stack depth must match original")
+        XCTAssertEqual(coordinator3.selectedTab, .home)
+    }
+
+    func testLoginAndRegisterAreNotPersisted() throws {
+        // .login and .register are ephemeral session routes that should never
+        // be written to disk (stale auth routes across launches are misleading).
+        XCTAssertNil(service.encodeRoute(.login),    ".login should not be encoded")
+        XCTAssertNil(service.encodeRoute(.register), ".register should not be encoded")
+    }
 }
 
 // MARK: - Performance Tests
