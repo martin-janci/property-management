@@ -525,7 +525,10 @@ async fn update_mediation_notes(
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
     // Allow managers/admins or the assigned mediator (i.e. any authenticated user
     // who is a party with role "mediator" — checked by the presence of the party record).
-    let is_manager = user.role.as_ref().is_some_and(|r| r.is_manager() || r.is_admin());
+    let is_manager = user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin());
 
     if !is_manager {
         // Check whether the caller is the assigned mediator for this dispute.
