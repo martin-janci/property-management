@@ -385,6 +385,52 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     auth: { required: true, tenantContext: { required: true } },
     feature: 'Epic-6',
   },
+  {
+    operationId: 'announcements_comments_list',
+    server: 'api-server',
+    method: 'GET',
+    path: '/api/v1/announcements/:id/comments',
+    description: 'List comments for an announcement',
+    tags: ['Announcements'],
+    pathParams: [{ name: 'id', type: 'uuid', required: true }],
+    responses: [{ statusCode: 200, description: 'Comment list' }],
+    auth: { required: true, tenantContext: { required: true } },
+    feature: 'Epic-6',
+  },
+  {
+    operationId: 'announcements_comments_create',
+    server: 'api-server',
+    method: 'POST',
+    path: '/api/v1/announcements/:id/comments',
+    description: 'Post a comment on an announcement',
+    tags: ['Announcements'],
+    pathParams: [{ name: 'id', type: 'uuid', required: true }],
+    responses: [
+      { statusCode: 201, description: 'Comment created' },
+      { statusCode: 400, description: 'Invalid input' },
+    ],
+    auth: { required: true, tenantContext: { required: true } },
+    feature: 'Epic-6',
+  },
+  {
+    operationId: 'announcements_comments_delete',
+    server: 'api-server',
+    method: 'DELETE',
+    path: '/api/v1/announcements/:id/comments/:commentId',
+    description: 'Delete a comment on an announcement',
+    tags: ['Announcements'],
+    pathParams: [
+      { name: 'id', type: 'uuid', required: true },
+      { name: 'commentId', type: 'uuid', required: true },
+    ],
+    responses: [
+      { statusCode: 200, description: 'Comment deleted' },
+      { statusCode: 403, description: 'Forbidden' },
+      { statusCode: 404, description: 'Not found' },
+    ],
+    auth: { required: true, tenantContext: { required: true } },
+    feature: 'Epic-6',
+  },
 
   // News
   {

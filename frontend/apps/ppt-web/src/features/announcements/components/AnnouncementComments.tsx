@@ -10,6 +10,7 @@
 
 import type { CommentWithAuthor } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './AnnouncementComments.css';
 
 // ---------------------------------------------------------------------------
@@ -58,6 +59,7 @@ function CommentItem({
   onReply,
   onDelete,
 }: CommentItemProps) {
+  const { t } = useTranslation();
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
@@ -74,7 +76,7 @@ function CommentItem({
           marginLeft: depth > 0 ? `${Math.min(depth, 3) * 24}px` : undefined,
         }}
       >
-        <span className="ann-comment__deleted-text">[This comment has been deleted]</span>
+        <span className="ann-comment__deleted-text">{t('announcements.comments.deletedText')}</span>
       </div>
     );
   }
@@ -135,7 +137,7 @@ function CommentItem({
                 className="ann-comment__action-btn"
                 onClick={() => setIsReplying((v) => !v)}
               >
-                Reply
+                {t('announcements.comments.reply')}
               </button>
             )}
             {canDelete && (
@@ -146,7 +148,9 @@ function CommentItem({
                 disabled={isDeleting}
                 aria-busy={isDeleting}
               >
-                {isDeleting ? 'Deleting…' : 'Delete'}
+                {isDeleting
+                  ? t('announcements.comments.deleting')
+                  : t('announcements.comments.delete')}
               </button>
             )}
           </div>
@@ -157,7 +161,7 @@ function CommentItem({
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Write a reply…"
+              placeholder={t('announcements.comments.replyPlaceholder')}
               className="ann-comment__textarea"
               rows={2}
               maxLength={2000}
@@ -171,7 +175,9 @@ function CommentItem({
                 disabled={!replyContent.trim() || isSubmittingReply}
                 aria-busy={isSubmittingReply}
               >
-                {isSubmittingReply ? 'Posting…' : 'Post reply'}
+                {isSubmittingReply
+                  ? t('announcements.comments.posting')
+                  : t('announcements.comments.postReply')}
               </button>
               <button
                 type="button"
@@ -181,7 +187,7 @@ function CommentItem({
                   setIsReplying(false);
                 }}
               >
-                Cancel
+                {t('announcements.comments.cancel')}
               </button>
             </div>
           </div>
@@ -222,6 +228,7 @@ export function AnnouncementComments({
   onDeleteComment,
   isLoading,
 }: AnnouncementCommentsProps) {
+  const { t } = useTranslation();
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -246,7 +253,7 @@ export function AnnouncementComments({
   return (
     <section className="ann-comments" aria-label="Discussion">
       <h3 className="ann-comments__heading">
-        Discussion
+        {t('announcements.comments.discussion')}
         {total > 0 && <span className="ann-comments__count">{total}</span>}
       </h3>
 
@@ -256,7 +263,7 @@ export function AnnouncementComments({
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Add a comment… (Ctrl+Enter to submit)"
+            placeholder={t('announcements.comments.newCommentPlaceholder')}
             className="ann-comment__textarea"
             rows={3}
             maxLength={2000}
@@ -272,7 +279,9 @@ export function AnnouncementComments({
               disabled={!newComment.trim() || isSubmitting}
               aria-busy={isSubmitting}
             >
-              {isSubmitting ? 'Posting…' : 'Post comment'}
+              {isSubmitting
+                ? t('announcements.comments.posting')
+                : t('announcements.comments.postComment')}
             </button>
           </div>
         </div>
@@ -285,9 +294,7 @@ export function AnnouncementComments({
       )}
 
       {!isLoading && comments.length === 0 && (
-        <p className="ann-comments__empty">
-          No comments yet. Be the first to start the discussion!
-        </p>
+        <p className="ann-comments__empty">{t('announcements.comments.empty')}</p>
       )}
 
       {!isLoading && comments.length > 0 && (

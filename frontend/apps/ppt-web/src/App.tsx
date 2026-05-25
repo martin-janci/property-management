@@ -1697,7 +1697,11 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
 
   // Build commentsProps when comments are enabled (Story 6.3)
   const isManager =
-    user?.role === 'manager' || user?.role === 'org_admin' || user?.role === 'super_admin';
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
   const commentsProps = commentsEnabled
     ? {
         comments: commentsData?.comments ?? [],
