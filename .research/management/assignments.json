@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T04:20:00Z",
+  "generated": "2026-05-25T04:25:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -648,15 +648,15 @@
     {
       "task_id": "pm-backend-fix-ai-equipment-idor",
       "branch": "auto-impl/pm-backend-fix-ai-equipment-idor",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:07:30Z",
-      "status_changed_at": "2026-05-25T04:07:30Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T04:25:00Z",
+      "status_changed_at": "2026-05-25T04:25:00Z",
+      "pr_number": 493,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/493",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added",
       "reviewer_summary": null
     },
     {
