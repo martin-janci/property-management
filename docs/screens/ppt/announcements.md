@@ -7,9 +7,9 @@ sitemapRefs:
 implementations:
   ppt-web:
     component: AnnouncementsPage
-    buildStatus: planned
+    buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     component: AnnouncementsScreen
     buildStatus: shipped
@@ -112,6 +112,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-25 — agent: gap-6-4-pin-web-ui — wired ViewAnnouncementPageRoute to real backend via useGetAnnouncement (replaces mock data); added useMarkReadAnnouncement+useAcknowledgeAnnouncement standalone hooks to @ppt/api-client; pin/unpin fully connected to POST /api/v1/announcements/{id}/pin; ppt-web.buildStatus planned→shipped, apiStatus partial→complete
 
 - 2026-05-24 — agent: gap-79-1 — wired AnnouncementsPage to useAnnouncements+useDeleteAnnouncement+usePublishAnnouncement+useArchiveAnnouncement+usePinAnnouncement hooks; ppt-web.apiStatus stub→partial; auth header fix applied (Authorization: Bearer from getToken())
 

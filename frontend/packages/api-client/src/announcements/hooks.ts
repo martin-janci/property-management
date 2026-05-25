@@ -447,3 +447,44 @@ export function usePinAnnouncement() {
     },
   });
 }
+
+/** Get a single announcement with full details and attachments (Story 6.4) */
+export function useGetAnnouncement(id: string, enabled = true) {
+  return useQuery<{
+    announcement: import('./types').AnnouncementWithDetails;
+    attachments: import('./types').AnnouncementAttachment[];
+  }>({
+    queryKey: announcementKeys.detail(id),
+    queryFn: () =>
+      fetchJson<{
+        announcement: import('./types').AnnouncementWithDetails;
+        attachments: import('./types').AnnouncementAttachment[];
+      }>(`${ANNOUNCEMENTS_BASE}/${id}`),
+    enabled: enabled && !!id,
+  });
+}
+
+/** Mark an announcement as read */
+export function useMarkReadAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<void>(`${ANNOUNCEMENTS_BASE}/${id}/read`, { method: 'POST' }),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: announcementKeys.unreadCount() });
+    },
+  });
+}
+
+/** Acknowledge an announcement */
+export function useAcknowledgeAnnouncement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetchJson<void>(`${ANNOUNCEMENTS_BASE}/${id}/acknowledge`, { method: 'POST' }),
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
+    },
+  });
+}

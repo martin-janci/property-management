@@ -14,6 +14,7 @@ import type {
 } from '@ppt/api-client';
 import {
   setMfaChallengeHandler,
+  useAcknowledgeAnnouncement,
   useAnnouncements,
   useArchiveAnnouncement,
   useBuildings,
@@ -24,6 +25,8 @@ import {
   useDispute,
   useDisputes,
   useFaults,
+  useGetAnnouncement,
+  useMarkReadAnnouncement,
   useOutage,
   useOutages,
   usePinAnnouncement,
@@ -1454,49 +1457,134 @@ function CreateAnnouncementPageRoute() {
   );
 }
 
+/**
+ * Route wrapper for announcement detail / view page (UC-06, gap-6-4).
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useGetAnnouncement         — fetches full details + attachments
+ *   usePublishAnnouncement     — publishes a draft announcement
+ *   useArchiveAnnouncement     — archives a published announcement
+ *   usePinAnnouncement         — pins / unpins (Story 6.4)
+ *   useDeleteAnnouncement      — deletes a draft announcement
+ *   useMarkReadAnnouncement    — marks announcement as read
+ *   useAcknowledgeAnnouncement — acknowledges announcement
+ */
 function ViewAnnouncementPageRoute() {
   const { announcementId } = useParams<{ announcementId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  // All hooks called unconditionally (Rules of Hooks).
+  // announcementId absence is handled via the enabled flag.
+  const { data, isLoading, error } = useGetAnnouncement(announcementId ?? '', !!announcementId);
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+  const deleteAnnouncement = useDeleteAnnouncement();
+  const markRead = useMarkReadAnnouncement();
+  const acknowledge = useAcknowledgeAnnouncement();
+
   if (!announcementId) {
     return <div>Announcement not found</div>;
   }
 
-  // Mock data - would use useAnnouncement hook
-  const mockAnnouncement: import('@ppt/api-client').AnnouncementWithDetails = {
-    id: announcementId,
-    organizationId: 'org-1',
-    authorId: 'user-1',
-    authorName: 'Admin User',
-    title: 'Sample Announcement',
-    content: 'This is a sample announcement content.',
-    status: 'published',
-    targetType: 'all',
-    targetIds: [],
-    pinned: false,
-    acknowledgmentRequired: false,
-    commentsEnabled: true,
-    readCount: 10,
-    acknowledgedCount: 5,
-    commentCount: 2,
-    attachmentCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <p className="text-red-600">Failed to load announcement.</p>
+        <button
+          type="button"
+          onClick={() => navigate('/announcements')}
+          className="mt-4 text-blue-600"
+        >
+          Back to Announcements
+        </button>
+      </div>
+    );
+  }
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  const handlePublish = async () => {
+    try {
+      await publishAnnouncement.mutateAsync(announcementId);
+      showToast({ type: 'success', title: 'Published', message: 'Announcement published.' });
+    } catch {
+      showToast({ type: 'error', title: 'Publish failed', message: 'Could not publish.' });
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await archiveAnnouncement.mutateAsync(announcementId);
+      showToast({ type: 'info', title: 'Archived', message: 'Announcement archived.' });
+    } catch {
+      showToast({ type: 'error', title: 'Archive failed', message: 'Could not archive.' });
+    }
+  };
+
+  const handlePin = async (pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id: announcementId, pinned });
+      showToast({
+        type: 'success',
+        title: pinned ? 'Pinned' : 'Unpinned',
+        message: pinned ? 'Announcement pinned.' : 'Announcement unpinned.',
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: 'Pin action failed',
+        message: 'Could not update pin status.',
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteAnnouncement.mutateAsync(announcementId);
+      showToast({ type: 'success', title: 'Deleted', message: 'Announcement deleted.' });
+      navigate('/announcements');
+    } catch {
+      showToast({ type: 'error', title: 'Delete failed', message: 'Could not delete.' });
+    }
+  };
+
+  const handleMarkRead = async () => {
+    try {
+      await markRead.mutateAsync(announcementId);
+    } catch {
+      // silently ignore — non-critical read tracking
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    try {
+      await acknowledge.mutateAsync(announcementId);
+      showToast({ type: 'success', title: 'Acknowledged', message: 'Announcement acknowledged.' });
+    } catch {
+      showToast({ type: 'error', title: 'Acknowledge failed', message: 'Could not acknowledge.' });
+    }
   };
 
   return (
     <ViewAnnouncementPage
-      announcement={mockAnnouncement}
-      attachments={[]}
+      announcement={data.announcement}
+      attachments={data.attachments}
       onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
-      onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
-      onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
-      onPin={(pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })
-      }
-      onDelete={() => navigate('/announcements')}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onDelete={handleDelete}
       onBack={() => navigate('/announcements')}
+      onMarkRead={handleMarkRead}
+      onAcknowledge={handleAcknowledge}
     />
   );
 }
