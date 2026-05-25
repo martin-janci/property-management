@@ -651,12 +651,12 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:25:00Z",
+      "last_updated": "2026-05-25T04:38:00Z",
       "status_changed_at": "2026-05-25T04:25:00Z",
       "pr_number": 493,
       "pr_url": "https://github.com/martin-janci/property-management/pull/493",
       "merged_at": null,
-      "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added",
+      "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added; fmt fix pushed (cargo fmt gate was failing)",
       "reviewer_summary": null
     },
     {
