@@ -5,7 +5,7 @@
 
 import type { CreateSigner, SignatureRequestStatus } from '@ppt/api-client';
 import { useCreateSignatureRequest } from '@ppt/api-client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface Party {
@@ -31,6 +31,14 @@ export function RequestSignatureModal({
 }: RequestSignatureModalProps) {
   const { t } = useTranslation();
   const createRequest = useCreateSignatureRequest(documentId);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    focusable?.[0]?.focus();
+  }, []);
 
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(
     new Set(parties.map((p) => p.email))
@@ -64,12 +72,12 @@ export function RequestSignatureModal({
     }
 
     try {
-      await createRequest.mutateAsync({
+      const result = await createRequest.mutateAsync({
         signers,
         subject: subject.trim() || undefined,
         message: message.trim() || undefined,
       });
-      onSuccess('pending');
+      onSuccess(result.signature_request.status);
     } catch {
       // error displayed via createRequest.error
     }
@@ -77,6 +85,7 @@ export function RequestSignatureModal({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       role="dialog"
       aria-modal="true"
@@ -171,7 +180,7 @@ export function RequestSignatureModal({
 
           {/* Error */}
           {createRequest.isError && (
-            <div className="rounded-md bg-red-50 p-3">
+            <div role="alert" className="rounded-md bg-red-50 p-3">
               <p className="text-sm text-red-700">
                 {createRequest.error instanceof Error
                   ? createRequest.error.message

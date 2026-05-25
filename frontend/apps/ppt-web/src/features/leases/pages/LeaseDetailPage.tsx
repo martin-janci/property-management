@@ -3,17 +3,13 @@
  * Epic 19: Lease Management & Tenant Screening
  */
 
+import type { SignatureRequestStatus } from '@ppt/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PaymentHistoryTable } from '../components/PaymentHistoryTable';
 import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { SignatureStatusBadge } from '../components/SignatureStatusBadge';
-import type {
-  LeaseSignatureStatus,
-  LeaseStatus,
-  LeaseWithDetails,
-  ViolationSummary,
-} from '../types';
+import type { LeaseStatus, LeaseWithDetails, ViolationSummary } from '../types';
 
 interface LeaseDetailPageProps {
   lease: LeaseWithDetails;
@@ -58,7 +54,7 @@ export function LeaseDetailPage({
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [localSignatureStatus, setLocalSignatureStatus] = useState<
-    LeaseSignatureStatus | undefined
+    SignatureRequestStatus | undefined
   >(lease.signatureStatus);
 
   // Derived signature state: prefer local override (set after a successful request)
@@ -73,6 +69,7 @@ export function LeaseDetailPage({
       email: lease.tenant.email,
       role: t('leases.esign.role.tenant', 'Tenant'),
     },
+    // TODO: add landlord/manager as signer once lease.manager is available from the API
   ];
 
   const formatDate = (dateString?: string) => {

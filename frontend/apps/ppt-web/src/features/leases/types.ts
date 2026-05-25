@@ -3,6 +3,8 @@
  * Epic 19: Lease Management & Tenant Screening
  */
 
+import type { SignatureRequestStatus } from '@ppt/api-client';
+
 // Lease status options
 export type LeaseStatus =
   | 'draft'
@@ -46,15 +48,6 @@ export type PaymentMethod =
   | 'check'
   | 'other';
 
-// E-signature status on a lease (mirrors backend SignatureRequestStatus)
-export type LeaseSignatureStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'declined'
-  | 'expired'
-  | 'cancelled';
-
 // Lease interface
 export interface Lease {
   id: string;
@@ -80,7 +73,7 @@ export interface Lease {
   /** ID of the primary document attached to this lease, used for e-signatures */
   documentId?: string;
   /** Current e-signature request status, if any */
-  signatureStatus?: LeaseSignatureStatus;
+  signatureStatus?: SignatureRequestStatus;
 }
 
 // Lease summary for list views
@@ -99,7 +92,7 @@ export interface LeaseSummary {
   currency: string;
   daysUntilExpiry?: number;
   /** Current e-signature request status, if any */
-  signatureStatus?: LeaseSignatureStatus;
+  signatureStatus?: SignatureRequestStatus;
   /** ID of the primary document attached to this lease */
   documentId?: string;
 }
