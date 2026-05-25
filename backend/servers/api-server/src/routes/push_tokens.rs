@@ -60,7 +60,10 @@ pub async fn register_push_token(
     if req.token.len() > MAX_TOKEN_LEN {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ErrorResponse::new("BAD_REQUEST", "token exceeds maximum length")),
+            Json(ErrorResponse::new(
+                "BAD_REQUEST",
+                "token exceeds maximum length",
+            )),
         ));
     }
 
