@@ -679,13 +679,13 @@
       "status": "review",
       "specialist": "pm-frontend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T04:45:00Z",
       "status_changed_at": "2026-05-25T04:20:00Z",
       "pr_number": 491,
       "pr_url": "https://github.com/martin-janci/property-management/pull/491",
       "merged_at": null,
       "implementer_summary": "pr=491 status=done specialist=pm-frontend note=slotted issues #480-#487 as test-hardening batch thb-2026-05-25 in sprint-status.yaml; story gates documented for 7 sprint stories",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 8 issues present with correct source_pr/severity/gates; YAML valid; high severity correct for #480/#481; gate rule clearly enforced; ready to merge"
     }
   ]
 }
