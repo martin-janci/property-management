@@ -482,6 +482,80 @@
       "created_at": "2026-05-25",
       "updated_at": "2026-05-25",
       "plan": null
+    },
+    {
+      "id": "refactor-ai-rs-module-split",
+      "title": "ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25",
+        "security-voice-device-idor (PR #461)",
+        "security-equipment-idor"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/ai.rs — 3,134 lines; single-file route module covering AI chat sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices, and photo-enhancement surfaces",
+        "19 handlers bind `_principal: RequestPrincipal` and discard it — the IDOR pattern that produced the voice-device IDOR (PR #461) and the equipment IDOR cluster still in backlog",
+        "proposed split: routes/ai/sessions.rs, routes/ai/equipment.rs, routes/ai/workflows.rs, routes/ai/voice.rs, routes/ai/llm.rs, routes/ai/mod.rs — each file target <700 LOC",
+        "split enables per-surface scoping review; sibling pattern established by PR #456 (integrations/organizations/documents split)",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) flags any _principal discards that survive the split"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/ai.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-platform-admin-rs-module-split",
+      "title": "platform_admin.rs (2,762 LOC) — explicit module-split into routes/platform_admin/{tenants,features,billing,audit,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/platform_admin.rs — 2,762 lines; highest-privilege route module covering platform-level tenant management, feature-flag control, billing overrides, audit log, and OAuth-provider admin surfaces",
+        "highest-privilege surface in the system — large single file increases review blast radius; admin-core gate coverage cannot be scanned per-surface",
+        "proposed split: routes/platform_admin/tenants.rs, features.rs, billing.rs, audit.rs, mod.rs — each file target <700 LOC",
+        "split enables per-surface admin-gate coverage; sibling pattern established by PR #456",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards introduced during or after the split"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/platform_admin.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "refactor-announcements-rs-module-split",
+      "title": "announcements.rs (2,722 LOC) — explicit module-split into routes/announcements/{crud,targeting,delivery,reactions,mod}.rs",
+      "vector": "refactor",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "pm-tech-lead analysis 2026-05-25"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/announcements.rs — 2,722 lines; single-file route module covering announcement CRUD, audience targeting, push/email delivery triggers, and resident reaction surfaces",
+        "churned in Epic 2B notification pipeline (PR #463) and Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development increasing merge-conflict and review risk",
+        "proposed split: routes/announcements/crud.rs, targeting.rs, delivery.rs, reactions.rs, mod.rs — each file target <700 LOC",
+        "split aligns ownership with frontend feature slices (ppt-web announcements feature); sibling pattern established by PR #456",
+        "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards on announcement mutation handlers"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/announcements.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
     }
   ]
 }
