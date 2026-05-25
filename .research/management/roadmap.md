@@ -69,4 +69,4 @@ _Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 
 - Epic 82 iOS stories scored "partial" with low confidence — the implementation files exist but story-to-code mapping is uncertain (epic numbering conflict with `epics-007.md`). Worth a 30-minute alignment pass before further planning.
 - 7a-* sprint-status shows `ready-for-dev` despite merged PRs. Sprint-status is stale here — update once apiStatus is verified.
 
-Buffer: 36/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run)
+Buffer: 64/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep refreshed epic-6 evidence + 5 pm-analysis actions added)

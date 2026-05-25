@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T04:10:00Z",
+  "generated": "2026-05-25T13:57:14Z",
   "items": [
     {
       "id": "pm-backend-ai-equipment-cross-tenant-idor",
@@ -122,6 +122,56 @@
       "impact": "medium",
       "mitigation": "Add OAuth integration test suite (gap-10a-1-oauth-tests); UI delivery risk now closed.",
       "owner_role": "pm-tech-lead",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-inquiry-idor-no-regression-test",
+      "risk": "PR #497 inquiry IDOR fix shipped with zero regression tests; mark_inquiry_read_for_realtor does an ownership EXISTS check then a separate UPDATE — a future refactor could silently reintroduce the IDOR with no CI signal.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add reality-server/tests/inquiry_idor_tests.rs immediately; require a test file on security-fix PRs.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-oauth-revoked-token-bypass-open",
+      "risk": "Issue #481 (OAuth refresh-token revocation bypass) is high-severity and open, yet stories 10a-1/10a-3 target this sprint; merging OAuth stories ships a broken security contract.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Block 10a-1/10a-3 promotion until #481 closed; escalate to tech lead.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-qa-jwt-token-in-ws-logs-open",
+      "risk": "Issue #480 (JWT access token in WebSocket query-param access logs) is high-severity and open; story 8a-3 has a WS dependency — shipping it leaks tokens via logs.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Block 8a-3 promotion; strip token from log line and re-validate JWT on session before any WS story ships.",
+      "owner_role": "pm-qa",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-app-tsx-router-merge-conflict",
+      "risk": "App.tsx is the top churn hotspot; concurrent edits across #503, #500, and 80-3 mediation wiring risk triple-conflict rebases.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Sequence App.tsx PRs: merge 80-3 wiring first, then #503; pm-frontend coordinates.",
+      "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-scrum-master-documents-upload-endpoint-missing",
+      "risk": "Story 7a-1 not promotable: POST /api/v1/documents/upload backend handler absent; mobile upload UI (PR #447) calls a missing route in production.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Immediate backend task; critical-path blocker for Epic 7A completion.",
+      "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "open"
     }
