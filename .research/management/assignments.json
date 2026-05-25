@@ -1225,13 +1225,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T19:20:00Z",
-      "last_updated": "2026-05-25T20:10:00Z",
+      "last_updated": "2026-05-25T20:11:00Z",
       "status_changed_at": "2026-05-25T20:30:00Z",
       "pr_number": 514,
       "pr_url": "https://github.com/martin-janci/property-management/pull/514",
       "merged_at": null,
       "implementer_summary": "pr=514 status=done specialist=rust-backend note=PATCH /disputes/{id}/resolve (manager-only, state-machine enforced, 422 on bad transition) + PATCH /disputes/{id}/mediation-notes (manager or assigned mediator party); migration 00159 adds resolved_at/resolution_notes/mediation_notes cols; Dispute model updated; cargo fmt+check+clippy -D warnings all clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=CI red (security-tests+rls-smoke-test+test failed), missing org_id scoping on both UPDATEs enabling cross-tenant writes, admin role excluded from resolve auth check, no audit trail on mediation-notes update, updated_at not refreshed"
     },
     {
       "task_id": "gap-84-2-esignature-email-ui",
