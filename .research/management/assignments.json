@@ -695,14 +695,14 @@
     {
       "task_id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
       "branch": "auto-impl/pm-tech-lead-split-ai-platform-announcem",
-      "status": "review",
+      "status": "merged",
       "specialist": "pm-tech-lead",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T07:09:04Z",
-      "status_changed_at": "2026-05-25T06:27:18Z",
+      "last_updated": "2026-05-25T07:55:00Z",
+      "status_changed_at": "2026-05-25T07:55:00Z",
       "pr_number": 494,
       "pr_url": "https://github.com/martin-janci/property-management/pull/494",
-      "merged_at": null,
+      "merged_at": "2026-05-25T07:55:00Z",
       "implementer_summary": "pr=494 status=done specialist=pm-tech-lead note=3 module-split backlog entries added (ai.rs 3134L, platform_admin.rs 2762L, announcements.rs 2722L); check-discarded-principal.sh lint created and wired into backend.yml check job; 7 violations detected informational",
       "reviewer_summary": "verdict=approve note=3 backlog items well-formed (ai.rs/platform_admin.rs/announcements.rs); check-discarded-principal.sh lint pattern sound; informational-only approach correct given 7 existing violations all mapped to known backlog items; advisory: automation.rs GET handlers (list_templates/get_template) intentionally discard _principal (global read-only data) — should be added to allowlist to avoid inflating violation count; CI check+test+rls-smoke-test all green on run 26386715653",
       "reviewer_verdict": "approve"
