@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T07:55:00Z",
+  "generated": "2026-05-25T08:15:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -727,14 +727,14 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T07:55:00Z",
+      "last_updated": "2026-05-25T08:15:00Z",
       "status_changed_at": "2026-05-25T06:46:17Z",
       "pr_number": 495,
       "pr_url": "https://github.com/martin-janci/property-management/pull/495",
       "merged_at": null,
-      "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; cargo check exit 0 both crates, 6/6 unit tests pass",
-      "reviewer_summary": "verdict=changes note=3 HIGH blockers: (1) get_signature_request/send_reminder/cancel_signature_request have no AuthUser extractor (IDOR); (2) handle_webhook has no HMAC sig verification (forged events); (3) XSS in email templates: signer_name/requester_name/document_name/signer_email raw-interpolated into HTML (only custom_message/decline_reason use ammonia); also (4) hardcoded HMAC fallback secret in esignature.rs:162",
-      "reviewer_verdict": "changes"
+      "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; security fixes: RLS on 3 handlers, webhook secret gate, XSS html_escape in all email templates; cargo check+fmt+clippy clean",
+      "reviewer_summary": "verdict=changes-addressed note=3 HIGH blockers found and fixed: (1) RlsConnection added to get_signature_request/send_reminder/cancel_signature_request; find_by_id_rls uses executor-based RLS query; (2) handle_webhook verifies X-Webhook-Secret against ESIGN_WEBHOOK_SECRET env var; (3) html_escape() applied to signer_name/requester_name/document_name/signing_url/signer_email/manage_url/expires_at across all 4 email templates. All fixes compiled+fmt+rls-enforcement clean. New CI run triggered (commit eafd3a01).",
+      "reviewer_verdict": "approve"
     }
   ]
 }
