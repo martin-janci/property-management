@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T12:42:00Z",
+  "generated": "2026-05-25T12:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -828,14 +828,14 @@
     {
       "task_id": "gap-82-2-deep-linking",
       "branch": "auto-impl/gap-82-2-deep-linking",
-      "status": "review",
+      "status": "merged",
       "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T12:42:00Z",
-      "status_changed_at": "2026-05-25T10:30:00Z",
+      "last_updated": "2026-05-25T12:50:00Z",
+      "status_changed_at": "2026-05-25T12:50:00Z",
       "pr_number": 500,
       "pr_url": "https://github.com/martin-janci/property-management/pull/500",
-      "merged_at": null,
+      "merged_at": "2026-05-25T12:50:00Z",
       "implementer_summary": "Fixed mirror desync: added restoreStack(_:for:) to NavigationCoordinator for atomic NavigationPath+mirror-array update; updated restore(into:isAuthenticated:) to call restoreStack() instead of direct path assignment; made .login/.register ephemeral in encodeRoute() (return nil); added testRoundTripPersistenceSurvivesDoubleRestoreCycle and testLoginAndRegisterAreNotPersisted to RealityPortalTests.swift. Pushed to PR#500 for re-review.",
       "reviewer_summary": "verdict=approve \u2014 mirror desync bug correctly fixed: restoreStack() atomically sets NavigationPath+mirror array; all mutation paths (navigate/pop/popToRoot/reset/appendToCurrent) maintain sync; .login/.register ephemeral (encodeRoute returns nil), testLoginAndRegisterAreNotPersisted pins this; testRoundTripPersistenceSurvivesDoubleRestoreCycle covers exact failure scenario. Non-blocking: dead decode branches for login/register in decodeRoute, unused makePath helper in Service.",
       "reviewer_verdict": "verdict=approve"
