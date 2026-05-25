@@ -19,8 +19,8 @@
  */
 
 import * as path from 'node:path';
-import type { ConfigContext, ExpoConfig } from 'expo/config';
 import * as dotenv from 'dotenv';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 type AppEnvironment = 'development' | 'staging' | 'production';
 
