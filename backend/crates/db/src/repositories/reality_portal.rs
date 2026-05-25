@@ -1320,13 +1320,12 @@ mod tests {
         );
 
         // Verify no message was inserted.
-        let msg_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = $1",
-        )
-        .bind(inquiry_id)
-        .fetch_one(&pool)
-        .await
-        .expect("count query failed");
+        let msg_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = $1")
+                .bind(inquiry_id)
+                .fetch_one(&pool)
+                .await
+                .expect("count query failed");
 
         assert_eq!(
             msg_count, 0,

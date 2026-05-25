@@ -119,10 +119,7 @@ async fn seed_inquiry(pool: &PgPool, listing_id: Uuid, realtor_id: Uuid) -> Uuid
 }
 
 /// Read the current `read_at` value for an inquiry (returns `None` when unset).
-async fn get_read_at(
-    pool: &PgPool,
-    inquiry_id: Uuid,
-) -> Option<chrono::DateTime<chrono::Utc>> {
+async fn get_read_at(pool: &PgPool, inquiry_id: Uuid) -> Option<chrono::DateTime<chrono::Utc>> {
     sqlx::query_scalar::<_, Option<chrono::DateTime<chrono::Utc>>>(
         "SELECT read_at FROM listing_inquiries WHERE id = $1",
     )
