@@ -88,6 +88,12 @@ impl DevicePushTokenRepository {
 
     /// Fetch all registered push tokens for a user.  Called by the notification
     /// delivery pipeline to fan-out to every device owned by the user.
+    ///
+    /// # Caller contract
+    /// Uses the raw pool — must be called from a service-role context where
+    /// `app.current_user_id` is **not** set.  The `device_push_tokens_service_policy`
+    /// RLS policy allows SELECT for such connections.  Do not call from a
+    /// request handler; use the `_rls` variants there.
     pub async fn get_tokens_for_user(
         &self,
         user_id: Uuid,
@@ -106,6 +112,10 @@ impl DevicePushTokenRepository {
     }
 
     /// Remove all push tokens for a user (e.g. on account deletion or logout-all).
+    ///
+    /// # Caller contract
+    /// Same as `get_tokens_for_user` — service-role pool only; `app.current_user_id`
+    /// must not be set on the connection.
     pub async fn delete_all_for_user(&self, user_id: Uuid) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM device_push_tokens WHERE user_id = $1")
             .bind(user_id)

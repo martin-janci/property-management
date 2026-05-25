@@ -54,7 +54,10 @@ pub struct DevicePushToken {
 impl DevicePushToken {
     /// Parse the stored platform string into the typed enum.
     pub fn push_platform(&self) -> PushPlatform {
-        PushPlatform::try_from(self.platform.as_str()).unwrap_or(PushPlatform::Fcm)
+        PushPlatform::try_from(self.platform.as_str()).unwrap_or_else(|e| {
+            tracing::warn!("unknown push platform stored in DB ({e}); falling back to Fcm");
+            PushPlatform::Fcm
+        })
     }
 }
 

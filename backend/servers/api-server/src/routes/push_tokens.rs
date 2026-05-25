@@ -46,10 +46,21 @@ pub async fn register_push_token(
     mut rls: RlsConnection,
     Json(req): Json<RegisterPushTokenRequest>,
 ) -> Result<Json<PushTokenResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // FCM tokens are ~152 chars; APNs device tokens are 64 hex bytes (128 chars).
+    // 512 matches the DB CHECK constraint and is a safe ceiling for both platforms.
+    const MAX_TOKEN_LEN: usize = 512;
+
     if req.token.trim().is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new("BAD_REQUEST", "token must not be empty")),
+        ));
+    }
+
+    if req.token.len() > MAX_TOKEN_LEN {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("BAD_REQUEST", "token exceeds maximum length")),
         ));
     }
 
