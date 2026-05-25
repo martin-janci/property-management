@@ -523,6 +523,7 @@ export default function SystemAnnouncementsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    // biome-ignore lint/suspicious/noAlert: admin confirmation dialog
     if (
       !window.confirm(
         t(
