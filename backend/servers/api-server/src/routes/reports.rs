@@ -1554,7 +1554,8 @@ pub async fn list_schedule_executions(
 
     // Populate download_url for each execution that produced a file.
     for exec in &mut response.executions {
-        exec.download_url = execution_download_url(exec);
+        let url = execution_download_url(exec);
+        exec.download_url = url;
     }
 
     Ok(Json(response))
