@@ -23,6 +23,7 @@ _Generated 2026-05-25 from `action-list.json` (merged: pm-analysis rotation + ga
 | Neighbor listing privacy-aware UI (6-6) | pm-frontend | PR #464 |
 | OAuth client admin UI (10a-2) + user-grants UI (10a-3) | pm-frontend | PRs #468/#469/#471 |
 | Epic 2B notification pipeline + WebSocket realtime sync | pm-backend | PRs #463, #472 |
+| Confirm WS infra ownership for 8A.3 (ADR-008) scheduled, not assumed | pm-tech-lead | ADR-008 updated; owner pm-backend / 2B-C.1 / PR #472 |
 | P1-05 SSRF outbound URL validation | pm-backend | PR #450 |
 | ProtectedRoute fail-open role guard | pm-frontend | PR #459 |
 | Voice device IDOR | pm-security | PR #461 |
