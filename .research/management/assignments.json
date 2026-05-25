@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T07:12:40Z",
+  "generated": "2026-05-25T07:21:12Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -551,14 +551,14 @@
     {
       "task_id": "gap-6-3-comments-web-ui",
       "branch": "auto-impl/gap-6-3-comments-web-ui",
-      "status": "review",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T06:09:06Z",
-      "status_changed_at": "2026-05-25T00:10:00Z",
+      "last_updated": "2026-05-25T07:21:12Z",
+      "status_changed_at": "2026-05-25T07:21:12Z",
       "pr_number": 475,
       "pr_url": "https://github.com/martin-janci/property-management/pull/475",
-      "merged_at": null,
+      "merged_at": "2026-05-25T07:21:12Z",
       "implementer_summary": "pr=475 status=done specialist=react-web note=AnnouncementComments component + 3 hooks wired; depth-3 reply cap; typecheck+biome+build clean",
       "reviewer_summary": "verdict=approve note=all three issues fixed: i18n complete (12 comment keys + toast keys), isManager includes technical_manager+property_manager, sitemap+screen-map updated with all 6 comment endpoints; no new issues",
       "reviewer_verdict": "approve"
