@@ -144,9 +144,7 @@ export function LeaseDetailPage({
               >
                 {t(`leases.status.${lease.status}`)}
               </span>
-              {signatureStatus && (
-                <SignatureStatusBadge status={signatureStatus} />
-              )}
+              {signatureStatus && <SignatureStatusBadge status={signatureStatus} />}
             </div>
             <p className="text-gray-600 mt-1">{lease.tenant.name}</p>
             <p className="text-sm text-gray-500">{lease.tenant.email}</p>

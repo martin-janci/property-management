@@ -46,8 +46,7 @@ export function useCreateSignatureRequest(documentId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: CreateSignatureRequestBody) =>
-      api.createSignatureRequest(documentId, body),
+    mutationFn: (body: CreateSignatureRequestBody) => api.createSignatureRequest(documentId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: esignatureKeys.requestsForDocument(documentId),

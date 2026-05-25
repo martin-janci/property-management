@@ -77,9 +77,7 @@ export function LeaseCard({ lease, onView, onRenew, onTerminate }: LeaseCardProp
               {formatCurrency(lease.rentAmount, lease.currency)}
               {t('leases.perMonth')}
             </span>
-            {lease.signatureStatus && (
-              <SignatureStatusBadge status={lease.signatureStatus} />
-            )}
+            {lease.signatureStatus && <SignatureStatusBadge status={lease.signatureStatus} />}
           </div>
           <div className="mt-2 text-xs text-gray-500">
             <span>{formatDate(lease.startDate)}</span>
