@@ -1393,9 +1393,16 @@ pub async fn resume_schedule(
 /// Query parameters for listing execution history (Story 81.2).
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListExecutionsParams {
+    /// Filter by execution status (pending, running, completed, failed, cancelled, skipped).
     pub status: Option<String>,
+    /// Filter executions started on or after this timestamp (RFC 3339).
+    pub date_from: Option<chrono::DateTime<chrono::Utc>>,
+    /// Filter executions started on or before this timestamp (RFC 3339).
+    pub date_to: Option<chrono::DateTime<chrono::Utc>>,
+    /// Maximum number of executions to return (1–100, default 20).
     #[serde(default = "default_execution_limit")]
     pub limit: i64,
+    /// Zero-based offset for pagination.
     #[serde(default)]
     pub offset: i64,
 }
@@ -1404,7 +1411,33 @@ fn default_execution_limit() -> i64 {
     20
 }
 
+/// Valid execution status values for query filtering.
+const VALID_EXECUTION_STATUSES: &[&str] = &[
+    "pending", "running", "completed", "failed", "cancelled", "skipped",
+];
+
+/// Build a per-execution download URL when the execution has a file ready.
+///
+/// The URL points to `GET /api/v1/reports/executions/{id}/download` which
+/// generates a presigned S3 URL. We only populate the field when `file_key`
+/// is set (i.e. the execution actually produced a file).
+fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -> Option<String> {
+    if exec.file_key.is_some() {
+        Some(format!(
+            "/api/v1/reports/executions/{}/download",
+            exec.id
+        ))
+    } else {
+        None
+    }
+}
+
 /// List execution history for a report schedule (Story 81.2).
+///
+/// Returns a paginated log of all past and current executions for the given
+/// schedule, ordered by `started_at` descending (most recent first). Each
+/// completed execution that produced a file includes a `download_url` pointing
+/// to the presigned file-download endpoint.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/schedules/{id}/executions",
@@ -1414,8 +1447,10 @@ fn default_execution_limit() -> i64 {
         ListExecutionsParams,
     ),
     responses(
-        (status = 200, description = "Execution history", body = ExecutionHistoryResponse),
-        (status = 401, description = "Unauthorized"),
+        (status = 200, description = "Paginated execution history", body = ExecutionHistoryResponse),
+        (status = 400, description = "Invalid query parameters", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
     )
 )]
 pub async fn list_schedule_executions(
@@ -1424,25 +1459,105 @@ pub async fn list_schedule_executions(
     Path(id): Path<Uuid>,
     Query(params): Query<ListExecutionsParams>,
 ) -> Result<Json<ExecutionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Validate status filter
+    if let Some(ref s) = params.status {
+        if !VALID_EXECUTION_STATUSES.contains(&s.to_lowercase().as_str()) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_STATUS",
+                    "status must be one of: pending, running, completed, failed, cancelled, skipped",
+                )),
+            ));
+        }
+    }
+
+    // Validate limit bounds
+    if params.limit < 1 || params.limit > 100 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_LIMIT",
+                "limit must be between 1 and 100",
+            )),
+        ));
+    }
+
+    // Validate offset
+    if params.offset < 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_OFFSET",
+                "offset must be non-negative",
+            )),
+        ));
+    }
+
+    // Validate date range when both are provided
+    if let (Some(from), Some(to)) = (params.date_from, params.date_to) {
+        if from > to {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_DATE_RANGE",
+                    "date_from must be before or equal to date_to",
+                )),
+            ));
+        }
+    }
+
+    // Verify the schedule exists before querying executions.
+    // This prevents misleading "empty list" responses for non-existent schedules.
+    let schedule = state
+        .report_schedule_repo
+        .get_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to look up report schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to look up schedule")),
+            )
+        })?;
+
+    if schedule.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "SCHEDULE_NOT_FOUND",
+                "Report schedule not found",
+            )),
+        ));
+    }
+
     let query = ExecutionHistoryQuery {
         schedule_id: id,
-        status: params.status,
-        date_from: None,
-        date_to: None,
+        status: params.status.map(|s| s.to_lowercase()),
+        date_from: params.date_from,
+        date_to: params.date_to,
         limit: params.limit,
         offset: params.offset,
     };
-    state
+
+    let mut response = state
         .report_schedule_repo
         .list_executions(query)
         .await
-        .map(Json)
-        .map_err(|_| {
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to list execution history");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to list executions")),
             )
-        })
+        })?;
+
+    // Populate download_url for each execution that produced a file.
+    for exec in &mut response.executions {
+        exec.download_url = execution_download_url(exec);
+    }
+
+    Ok(Json(response))
 }
 
 /// Get a single report execution by ID (Story 81.2).

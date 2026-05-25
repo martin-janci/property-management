@@ -70,6 +70,7 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now - Duration::minutes(2),
+            download_url: None, // populated by the handler layer
         }
     }
 
@@ -150,6 +151,7 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now - Duration::minutes(2),
+            download_url: None, // populated by the handler layer
         };
         Ok(Some(exec))
     }
@@ -192,6 +194,7 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now,
+            download_url: None,
         };
         Ok(exec)
     }
