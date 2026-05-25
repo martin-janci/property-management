@@ -1112,12 +1112,18 @@ async fn get_equipment(
 
 async fn update_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.update(id, req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.update(id, tenant_id, req).await {
         Ok(equipment) => Ok(Json(serde_json::json!(equipment))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to update equipment: {}", e);
             Err((
@@ -1130,10 +1136,12 @@ async fn update_equipment(
 
 async fn delete_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.delete(id).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.delete(id, tenant_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -1191,12 +1199,18 @@ async fn create_maintenance(
 
 async fn update_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.update_maintenance(id, req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.update_maintenance(id, tenant_id, req).await {
         Ok(record) => Ok(Json(serde_json::json!(record))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Maintenance record not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to update maintenance: {}", e);
             Err((

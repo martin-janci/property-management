@@ -100,8 +100,18 @@ impl EquipmentRepository {
         .await
     }
 
-    /// Update equipment.
-    pub async fn update(&self, id: Uuid, data: UpdateEquipment) -> Result<Equipment, sqlx::Error> {
+    /// Update equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal so that a
+    /// caller in org B cannot modify equipment belonging to org A.  The WHERE
+    /// clause `AND organization_id = $14` makes the update a no-op (returns
+    /// `RowNotFound`) when the row exists but belongs to a different tenant.
+    pub async fn update(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+        data: UpdateEquipment,
+    ) -> Result<Equipment, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE equipment SET
@@ -118,7 +128,7 @@ impl EquipmentRepository {
                 notes = COALESCE($12, notes),
                 metadata = COALESCE($13, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $14
             RETURNING *
             "#,
         )
@@ -135,16 +145,24 @@ impl EquipmentRepository {
         .bind(data.status)
         .bind(data.notes)
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
     }
 
-    /// Delete equipment.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM equipment WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+    /// Delete equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.  The WHERE
+    /// clause `AND organization_id = $2` ensures a caller in org B cannot delete
+    /// equipment belonging to org A (returns `false` / not-found rather than
+    /// deleting the row).
+    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result =
+            sqlx::query("DELETE FROM equipment WHERE id = $1 AND organization_id = $2")
+                .bind(id)
+                .bind(org_id)
+                .execute(&self.pool)
+                .await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -209,10 +227,17 @@ impl EquipmentRepository {
         .await
     }
 
-    /// Update maintenance record.
+    /// Update maintenance record — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// `equipment_maintenance` has no direct `organization_id` column; the
+    /// tenant boundary is enforced via the parent `equipment` row using an
+    /// `EXISTS` sub-select so a caller in org B cannot mutate a maintenance
+    /// record whose parent equipment belongs to org A.
     pub async fn update_maintenance(
         &self,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateMaintenance,
     ) -> Result<EquipmentMaintenance, sqlx::Error> {
         let result: EquipmentMaintenance = sqlx::query_as(
@@ -229,6 +254,11 @@ impl EquipmentRepository {
                 notes = COALESCE($10, notes),
                 updated_at = NOW()
             WHERE id = $1
+              AND EXISTS (
+                  SELECT 1 FROM equipment e
+                  WHERE e.id = equipment_maintenance.equipment_id
+                    AND e.organization_id = $11
+              )
             RETURNING *
             "#,
         )
@@ -242,6 +272,7 @@ impl EquipmentRepository {
         .bind(data.completed_date)
         .bind(data.status)
         .bind(data.notes)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 
