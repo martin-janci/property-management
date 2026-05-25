@@ -296,7 +296,7 @@ impl DisputeRepository {
             r#"
             UPDATE disputes
             SET status = $1
-            WHERE id = $2
+            WHERE id = $2 AND status = $3
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
                       assigned_to, created_at, updated_at
@@ -304,9 +304,11 @@ impl DisputeRepository {
         )
         .bind(&req.status)
         .bind(req.dispute_id)
-        .fetch_one(&self.pool)
+        .bind(&current_status)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::BadRequest("Invalid status transition".to_string()))?;
 
         // Record activity.
         let description = match &req.reason {

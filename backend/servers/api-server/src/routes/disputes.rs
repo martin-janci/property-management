@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     ActionItem, AddEvidence, CompleteActionItem, CreateActionItem, CreateEscalation, Dispute,
     DisputeActivity, DisputeEvidence, DisputeParty, DisputeQuery, DisputeResolution,
@@ -375,6 +376,12 @@ async fn update_dispute_status(
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateStatusRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
+    if !user.role.as_ref().map_or(false, |r| r.is_manager()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
+        ));
+    }
     let result = state
         .dispute_repo
         .update_status(UpdateDisputeStatus {
@@ -390,7 +397,10 @@ async fn update_dispute_status(
             tracing::warn!("Invalid dispute status transition: {}", msg);
             Err((
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(ErrorResponse::new("INVALID_TRANSITION", msg.as_str())),
+                Json(ErrorResponse::new(
+                    "INVALID_TRANSITION",
+                    "Invalid status transition",
+                )),
             ))
         }
         Err(common::errors::AppError::NotFound(msg)) => Err((
