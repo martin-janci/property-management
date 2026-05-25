@@ -1198,13 +1198,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T18:25:00Z",
-      "last_updated": "2026-05-25T18:37:00Z",
+      "last_updated": "2026-05-25T19:10:00Z",
       "status_changed_at": "2026-05-25T18:37:00Z",
       "pr_number": 511,
       "pr_url": "https://github.com/martin-janci/property-management/pull/511",
       "merged_at": null,
       "implementer_summary": "pr=511 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=pinned band in ppt-web (PinnedAnnouncementsBand+CSS wired) and mobile sticky chip row; useAnnouncements(pinned:true) in AnnouncementsPageRoute; typecheck+biome clean both stacks",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=CI run 26415080299 all-green (lint+screen-map+test+build-web+build-mobile+build-reality); PinnedAnnouncementsBand correct (role=region+aria-label, focus-visible ring, chips keyboard-accessible); useAnnouncements(pinned:true) called unconditionally; mobile correctly filters pinned from main list via !a.isPinned; all API calls via useApiQuery/@ppt/api-client fetchJson (no raw fetch); dispute routes DisputeDetailPage+MediationPage lazy-imported correctly, ProtectedRoute context inherited from parent routes; both screen-maps (announcements+dispute-detail) updated with Agent Log; non-blocking: role=listitem removed from chip buttons inside role=list container (a11y SHOULD), mobile Pinned label not i18n-wrapped, usePinnedAnnouncements hook exported but unused in App.tsx (redundant with inline useAnnouncements call)"
     }
   ]
 }
