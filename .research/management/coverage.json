@@ -239,7 +239,7 @@
         "handlers get_download_url/get_preview_url",
         "screen document-detail with PDF preview spec",
         "SigV4 presigned URLs via aws-sdk-s3",
-        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf — web preview done; mobile slice still pending"
+        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf \u2014 web preview done; mobile slice still pending"
       ],
       "gaps": [
         "sprint-status ready-for-dev",
@@ -743,24 +743,30 @@
       "title": "Mediation and Resolution",
       "phase": "mvp",
       "status": "partial",
-      "confidence": "medium",
+      "confidence": "high",
       "platform": [
         "frontend"
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "MediationPage.tsx large impl",
-        "DisputeDetailPage.tsx mediation UI",
-        "useAssignMediator/useResolveDispute/useEscalateDispute/useAddMediationNote",
-        "backend mediation routes implemented",
-        "dispute-detail screen shipped"
+        "MediationPage.tsx fully implemented: sessions (scheduled/past), submissions, parties sidebar, schedule/complete/submit dialogs, mediator-only gate",
+        "DisputeDetailPage.tsx fully implemented: evidence upload/delete, resolutions with voting/accept/implement/terms, action items with escalation, timeline, status flow",
+        "useAssignMediator/useResolveDispute/useEscalateDispute/useAddMediationNote hooks in api-client/disputes/hooks.ts",
+        "api.ts: assignMediator, resolveDispute, escalateDispute, addMediationNote, listMediationNotes, getTimeline",
+        "types.ts: ResolveDisputeRequest, AssignMediatorRequest, EscalateDisputeRequest, AddMediationNoteRequest, MediationNote, TimelineEvent",
+        "ResolutionCard: voting, accept, implement, term-completion flows",
+        "ActionItemCard: onEscalate callback present",
+        "backend mediation routes assumed implemented (prior scan)"
       ],
       "gaps": [
-        "story Status: pending despite shipped UI",
-        "task checklist unchecked",
-        "escalation paths/notifications unverified"
+        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub \u2014 does not render DisputeDetailPage.tsx",
+        "CRITICAL: No /disputes/:disputeId/mediation route \u2014 MediationPage never rendered",
+        "CRITICAL: useEscalateDispute, useResolveDispute, useAssignMediator, useAddMediationNote not called from any App.tsx route handler",
+        "CRITICAL: onNavigateToMediation prop in DisputeDetailPage but no route target exists",
+        "No mediation screen-map entry under docs/screens/ppt/"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-25",
+      "verification_note": "Verified 2026-05-25 by gap-80-3-mediation-verify. Pages and hooks are complete; only App.tsx route wiring is missing. Cannot promote to done \u2014 needs dedicated wiring task."
     },
     {
       "epic": "epic-81",

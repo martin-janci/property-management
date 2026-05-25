@@ -40,6 +40,11 @@ epics:
     status: in-progress
     stories_total: 7
     stories_completed: 3
+  epic-80:
+    name: "Dispute Resolution"
+    status: partial
+    stories_total: 3
+    stories_completed: 1
 
 # Story-level development status
 development_status:
@@ -73,8 +78,14 @@ development_status:
   10b-6-user-onboarding-tour: ready-for-dev
   10b-7-contextual-help-documentation: ready-for-dev
 
+  # Epic 80: Dispute Resolution (verified 2026-05-25)
+  80-1-disputes-api-integration: done
+  80-2-dispute-filing-flow: partial
+  80-3-mediation-resolution: partial
+
 # Notes and blockers
 notes:
+  - "Story 80-3 verified 2026-05-25: DisputeDetailPage.tsx+MediationPage.tsx+all hooks confirmed implemented; DisputeDetailRoute in App.tsx is inline JSX stub not using DisputeDetailPage; no /disputes/:id/mediation route; useEscalateDispute/useResolveDispute/useAssignMediator not wired from App.tsx — story stays partial, follow-up wiring task needed"
   - "Epic 6 depends on Epic 2B Notification Infrastructure for sending notifications on publish"
   - "Story 6.1 is the foundation - other stories build on announcement infrastructure"
   - "Story 6.1 completed 2025-12-21 - awaiting code review"
