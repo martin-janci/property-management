@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:20:00Z",
+  "generated": "2026-05-25T00:32:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -592,15 +592,15 @@
     {
       "task_id": "gap-80-3-mediation-verify",
       "branch": "auto-impl/gap-80-3-mediation-verify",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:10:00Z",
-      "status_changed_at": "2026-05-25T00:10:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T00:32:00Z",
+      "status_changed_at": "2026-05-25T00:32:00Z",
+      "pr_number": 478,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/478",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=478 status=partial specialist=react-web note=DisputeDetailRoute is inline stub; MediationPage unrouted in App.tsx; 4 blocking wiring gaps; story 80-3 stays partial",
       "reviewer_summary": null
     }
   ]
