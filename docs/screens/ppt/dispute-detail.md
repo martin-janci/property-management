@@ -89,6 +89,7 @@ UC-38 single-dispute deep view. Combines patterns from `ppt/announcements` (chro
 
 <!-- newest entries on top -->
 
+- 2026-05-25 — agent: story 80-3 wired — replaced inline DisputeDetailRoute stub in App.tsx with full DisputeDetailPage integration (all props, hooks, type mapping); added DisputeMediationRoute function; added /disputes/:disputeId/mediation route element; added DisputeDetailPage + MediationPage lazy exports to lazyRoutes.tsx; Band A typecheck + Band B build clean; apiStatus remains partial (sessions/submissions endpoints pending).
 - 2026-05-25 — agent: verified story 80-3 AC coverage; DisputeDetailPage.tsx fully implemented (evidence, resolutions with voting/accept/implement, action items with escalation, timeline). MediationPage.tsx fully implemented (sessions, submissions, schedule/complete/submit dialogs). All hooks present (useAssignMediator/useResolveDispute/useEscalateDispute/useAddMediationNote). CRITICAL GAP: DisputeDetailRoute in App.tsx is inline JSX stub not using DisputeDetailPage.tsx; no /disputes/:id/mediation route exists; none of the mediation mutation hooks are wired. Story 80-3 stays partial; apiStatus remains partial. Follow-up wiring task required.
 - 2026-05-09 — agent: integrated Batch C (pages/ppt-dispute-detail.html — 3 artboards: V mediácii / Vyriešený read-only / Loading); flipped redesignStatus → in-progress; attached designSource; populated 4 sections + 3 states + 3 notes; declared 6 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

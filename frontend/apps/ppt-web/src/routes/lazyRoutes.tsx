@@ -42,6 +42,12 @@ export const DisputesPage = lazy(() =>
 export const FileDisputePage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.FileDisputePage }))
 );
+export const DisputeDetailPage = lazy(() =>
+  import('../features/disputes').then((m) => ({ default: m.DisputeDetailPage }))
+);
+export const MediationPage = lazy(() =>
+  import('../features/disputes').then((m) => ({ default: m.MediationPage }))
+);
 
 // Outages feature (UC-12)
 export const OutagesPage = lazy(() =>
