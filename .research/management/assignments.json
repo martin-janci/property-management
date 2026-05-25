@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:42:00Z",
+  "generated": "2026-05-25T00:45:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -567,13 +567,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T00:42:00Z",
+      "last_updated": "2026-05-25T00:45:00Z",
       "status_changed_at": "2026-05-25T00:42:00Z",
       "pr_number": 479,
       "pr_url": "https://github.com/martin-janci/property-management/pull/479",
       "merged_at": null,
       "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=pin/unpin wiring correct ({id,pinned}), fetchJson auth, hooks unconditional, loading/error handled, screen-map updated; non-blocking: useAcknowledgeAnnouncement omits acknowledgments(id) invalidation"
     },
     {
       "task_id": "gap-80-2-dispute-verify",
