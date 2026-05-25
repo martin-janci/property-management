@@ -44,7 +44,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Fetch the full diff between the base and head commits so
           # `git diff --name-only` works without a shallow-clone issue.
