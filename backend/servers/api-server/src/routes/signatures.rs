@@ -21,6 +21,7 @@ use db::models::{
     WebhookResponse,
 };
 use integrations::{generate_storage_key, LightweightProvider};
+use subtle::ConstantTimeEq;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -34,7 +35,14 @@ static BASE_URL: LazyLock<String> =
     LazyLock::new(|| std::env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string()));
 
 /// Lightweight e-signature provider, initialised once from env.
-static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(LightweightProvider::from_env);
+///
+/// The `.expect` is safe because `api-server::main` runs the same
+/// `LightweightProvider::from_env` check at startup and refuses to boot if it
+/// fails — this static is only touched on the request path, after that gate.
+static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(|| {
+    LightweightProvider::from_env()
+        .expect("ESIGN_TOKEN_SECRET must be configured (validated at startup)")
+});
 
 /// Create router for signature endpoints.
 pub fn router() -> Router<AppState> {
@@ -526,19 +534,38 @@ pub async fn handle_webhook(
     Json(event): Json<SignatureWebhookEvent>,
 ) -> Result<Json<WebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Verify the webhook secret header to prevent forged events.
+    //
+    // Fail-closed: if `ESIGN_WEBHOOK_SECRET` is unset or empty the handler
+    // returns 503 rather than waving the request through. `api-server::main`
+    // validates the env var at startup and panics outside of development, so
+    // hitting this branch in production indicates the env was cleared
+    // post-start — still better to refuse than to forge-complete signature
+    // requests.
     let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
-    if !expected_secret.is_empty() {
-        let provided = headers
-            .get("x-webhook-secret")
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
-        if provided != expected_secret {
-            warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
-            ));
-        }
+    if expected_secret.is_empty() {
+        error!(
+            provider = %provider,
+            "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
+        );
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "WEBHOOK_NOT_CONFIGURED",
+                "Webhook receiver is not configured",
+            )),
+        ));
+    }
+    let provided = headers
+        .get("x-webhook-secret")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    // Constant-time compare to avoid leaking the secret via timing.
+    if !bool::from(provided.as_bytes().ct_eq(expected_secret.as_bytes())) {
+        warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
+        ));
     }
 
     info!(
