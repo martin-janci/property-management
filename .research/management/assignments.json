@@ -1307,15 +1307,15 @@
     {
       "task_id": "gap-82-3-swiftui-home-search",
       "branch": "auto-impl/gap-82-3-swiftui-home-search",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-25T22:10:38Z",
-      "status_changed_at": "2026-05-25T22:10:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T22:28:00Z",
+      "status_changed_at": "2026-05-25T22:28:00Z",
+      "pr_number": 533,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/533",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=533 status=done specialist=ios-swiftui note=wired HomeView category chips to pendingSearchFilters; added SortOption enum + toolbar in SearchView; fixed buildKMPFilters type mapping; Band A Gradle failed (Android SDK missing in sandbox), macOS reviewer needed",
       "reviewer_summary": null
     },
     {
