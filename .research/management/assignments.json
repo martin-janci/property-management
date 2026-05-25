@@ -1189,7 +1189,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/510",
       "merged_at": null,
       "implementer_summary": "pr=510 status=done specialist=generic note=security-test-gate workflow added",
-      "reviewer_summary": "verdict=changes/fixed note=martin-janci review addressed: checkout@v6→@v4 (blocker), ** glob→*/tests/*.rs (non-recursive bash fix), unlabeled event added; all three concerns resolved; awaiting CI re-run on fixed version"
+      "reviewer_summary": "verdict=changes/open note=checkout@v6 restored (user confirmed v6 is valid; @v4 downgrade was incorrect); other 2 fixes kept: */tests/*.rs glob correct, unlabeled event present; new HEAD ba66475e; awaiting CI re-run + fresh review"
     },
     {
       "task_id": "gap-6-4-pinned-announcements-ui",
