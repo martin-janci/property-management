@@ -134,7 +134,7 @@ async fn cleanup_test_data(pool: &PgPool, org_id: Uuid) {
 mod org_admin_access {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_admin_sees_all_org_documents(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -183,7 +183,7 @@ mod org_admin_access {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_admin_can_create_documents(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -241,7 +241,7 @@ mod org_admin_access {
 mod non_member_access {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_non_member_cannot_access_org_documents(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let owner = TestUser::new();
@@ -290,7 +290,7 @@ mod non_member_access {
         cleanup_test_user(&pool, &stranger.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_unauthenticated_cannot_access_documents(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -337,7 +337,7 @@ mod non_member_access {
 mod access_levels {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_public_documents_visible_to_members(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let admin = TestUser::new();
