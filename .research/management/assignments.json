@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T06:09:06Z",
+  "generated": "2026-05-25T06:15:53Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -655,13 +655,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T06:15:53Z",
       "status_changed_at": "2026-05-25T04:25:00Z",
       "pr_number": 493,
       "pr_url": "https://github.com/martin-janci/property-management/pull/493",
       "merged_at": null,
       "implementer_summary": "pr=493 status=done specialist=rust-backend note=thread tenant_id into equipment update/delete/maintenance handlers; WHERE tenant_id=$N added; cross-tenant regression tests added; fmt fix pushed (cargo fmt gate was failing)",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 6 handlers correctly tenant-scoped via require_tenant_id+WHERE org_id; UPDATE/DELETE/EXISTS guards verified; 6-case regression test confirmed; CI green (check/test/security-tests/rls-smoke pass); 2 pre-existing gaps noted (find_maintenance_by_id, acknowledge_prediction) as follow-up"
     },
     {
       "task_id": "pm-frontend-sequence-epic6-announcement-drafts",
