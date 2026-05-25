@@ -929,7 +929,8 @@ impl EmailService {
             "Hello {},\n\n{} has requested your electronic signature on \"{}\".\n{}\nPlease review and sign at:\n{}\n{}\nIf you were not expecting this, you may ignore this email.\n\nBest regards,\nProperty Management System",
             signer_name, requester_name, document_name, custom_message_plain, signing_url, expiry_plain,
         );
-        self.send_html_email(to, &subject, &html_body, &text_body).await
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
     }
 
     /// Send a signature reminder email to a pending signer.
@@ -941,7 +942,10 @@ impl EmailService {
         signing_url: &str,
         expires_at: Option<&str>,
     ) -> Result<(), EmailError> {
-        let subject = format!("Reminder: Your signature is still needed on \"{}\"", document_name);
+        let subject = format!(
+            "Reminder: Your signature is still needed on \"{}\"",
+            document_name
+        );
         let expiry_text = expires_at
             .map(|e| format!("<p><strong>Important:</strong> This request expires on <strong>{}</strong>.</p>", e))
             .unwrap_or_default();
@@ -969,7 +973,8 @@ impl EmailService {
             "Hello {},\n\nThis is a friendly reminder that your signature is still needed on \"{}\".\n{}\nSign at:\n{}\n\nBest regards,\nProperty Management System",
             signer_name, document_name, expiry_plain, signing_url,
         );
-        self.send_html_email(to, &subject, &html_body, &text_body).await
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
     }
 
     /// Send a decline notification to the document requester.
@@ -987,7 +992,12 @@ impl EmailService {
         let subject = format!("Signature declined for \"{}\"", document_name);
         let reason_html = decline_reason
             .filter(|r| !r.is_empty())
-            .map(|r| format!("<p><strong>Reason provided:</strong> {}</p>", ammonia::clean(r)))
+            .map(|r| {
+                format!(
+                    "<p><strong>Reason provided:</strong> {}</p>",
+                    ammonia::clean(r)
+                )
+            })
             .unwrap_or_else(|| "<p>No reason was provided.</p>".to_string());
         let reason_plain = decline_reason
             .filter(|r| !r.is_empty())
@@ -1015,7 +1025,8 @@ impl EmailService {
             "Hello {},\n\n{} ({}) has declined to sign \"{}\".\n\n{}\n\nManage the request at:\n{}\n\nBest regards,\nProperty Management System",
             requester_name, signer_name, signer_email, document_name, reason_plain, manage_url,
         );
-        self.send_html_email(to, &subject, &html_body, &text_body).await
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
     }
 
     /// Send a completion notification when all signers have signed.
@@ -1047,7 +1058,8 @@ impl EmailService {
             "Hello {},\n\nAll {} signer(s) have successfully signed \"{}\".\n\nView the signed document at:\n{}\n\nBest regards,\nProperty Management System",
             requester_name, signers_count, document_name, manage_url,
         );
-        self.send_html_email(to, &subject, &html_body, &text_body).await
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
     }
 
     /// Send voting reminder email.

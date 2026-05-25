@@ -85,7 +85,10 @@ impl SigningToken {
             return Err(ESignatureError::TokenExpired);
         }
 
-        let message = format!("{}|{}|{}", self.signer_email, self.request_id, self.expires_at);
+        let message = format!(
+            "{}|{}|{}",
+            self.signer_email, self.request_id, self.expires_at
+        );
         let mut mac = HmacSha256::new_from_slice(secret)
             .map_err(|e| ESignatureError::HmacError(e.to_string()))?;
         mac.update(message.as_bytes());
@@ -122,8 +125,7 @@ impl SigningToken {
         let expires_at = parts[2]
             .parse::<u64>()
             .map_err(|_| ESignatureError::InvalidToken)?;
-        let mac_bytes =
-            hex::decode(parts[3]).map_err(|_| ESignatureError::InvalidToken)?;
+        let mac_bytes = hex::decode(parts[3]).map_err(|_| ESignatureError::InvalidToken)?;
 
         Ok(Self {
             signer_email,
@@ -158,8 +160,8 @@ impl LightweightConfig {
         let token_secret = std::env::var("ESIGN_TOKEN_SECRET")
             .map(|s| s.into_bytes())
             .unwrap_or_else(|_| b"dev-esign-secret-key-32bytes-pad!".to_vec());
-        let base_url = std::env::var("BASE_URL")
-            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url =
+            std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
         let webhook_url = std::env::var("ESIGN_WEBHOOK_URL").ok();
         let token_ttl_secs = std::env::var("ESIGN_TOKEN_TTL")
             .ok()
@@ -212,10 +214,7 @@ impl LightweightProvider {
     }
 
     /// Decode and verify an inbound signing token from a URL query parameter.
-    pub fn verify_token(
-        &self,
-        encoded: &str,
-    ) -> Result<SigningToken, ESignatureError> {
+    pub fn verify_token(&self, encoded: &str) -> Result<SigningToken, ESignatureError> {
         let token = SigningToken::decode(encoded)?;
         token.verify(&self.config.token_secret)?;
         Ok(token)
@@ -244,8 +243,9 @@ pub struct DocusignConfig {
 impl DocusignConfig {
     pub fn from_env() -> Result<Self, ESignatureError> {
         Ok(Self {
-            integration_key: std::env::var("DOCUSIGN_INTEGRATION_KEY")
-                .map_err(|_| ESignatureError::ConfigError("DOCUSIGN_INTEGRATION_KEY missing".into()))?,
+            integration_key: std::env::var("DOCUSIGN_INTEGRATION_KEY").map_err(|_| {
+                ESignatureError::ConfigError("DOCUSIGN_INTEGRATION_KEY missing".into())
+            })?,
             account_id: std::env::var("DOCUSIGN_ACCOUNT_ID")
                 .map_err(|_| ESignatureError::ConfigError("DOCUSIGN_ACCOUNT_ID missing".into()))?,
             base_uri: std::env::var("DOCUSIGN_BASE_URI")

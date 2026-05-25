@@ -788,7 +788,10 @@ impl Scheduler {
     async fn expire_signature_requests(&self) -> Result<(), sqlx::Error> {
         let expired_count = self.signature_request_repo.expire_old_requests().await?;
         if expired_count > 0 {
-            tracing::info!(expired_count = expired_count, "Expired overdue signature requests");
+            tracing::info!(
+                expired_count = expired_count,
+                "Expired overdue signature requests"
+            );
             let mut metrics = self.metrics.lock().unwrap();
             metrics.signature_requests_expired += expired_count as u64;
         }
@@ -797,8 +800,8 @@ impl Scheduler {
 
     /// Send reminder emails for pending signature requests approaching expiry.
     async fn send_signature_reminders(&self) -> Result<(), sqlx::Error> {
-        let cutoff = chrono::Utc::now()
-            + chrono::Duration::days(self.config.signature_reminder_days_before);
+        let cutoff =
+            chrono::Utc::now() + chrono::Duration::days(self.config.signature_reminder_days_before);
 
         let expiring_requests: Vec<db::models::SignatureRequest> = sqlx::query_as(
             r#"
@@ -824,8 +827,8 @@ impl Scheduler {
         );
 
         let provider = LightweightProvider::from_env();
-        let base_url = std::env::var("BASE_URL")
-            .unwrap_or_else(|_| "http://localhost:3000".to_string());
+        let base_url =
+            std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
         let mut total_reminders = 0u64;
 

@@ -34,8 +34,7 @@ static BASE_URL: LazyLock<String> =
     LazyLock::new(|| std::env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string()));
 
 /// Lightweight e-signature provider, initialised once from env.
-static ESIGN_PROVIDER: LazyLock<LightweightProvider> =
-    LazyLock::new(LightweightProvider::from_env);
+static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(LightweightProvider::from_env);
 
 /// Create router for signature endpoints.
 pub fn router() -> Router<AppState> {
@@ -530,93 +529,96 @@ pub async fn handle_webhook(
         })?;
 
     // Process signer-specific events and send appropriate email notifications (Story 84.2).
-    let updated_request =
-        if let (Some(signer_email), Some(signer_status)) =
-            (&event.signer_email, &event.signer_status)
-        {
-            let updated = state
-                .signature_request_repo
-                .update_signer_status(
-                    signature_request.id,
-                    signer_email,
-                    *signer_status,
-                    event.decline_reason.as_deref(),
+    let updated_request = if let (Some(signer_email), Some(signer_status)) =
+        (&event.signer_email, &event.signer_status)
+    {
+        let updated = state
+            .signature_request_repo
+            .update_signer_status(
+                signature_request.id,
+                signer_email,
+                *signer_status,
+                event.decline_reason.as_deref(),
+            )
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
                 )
-                .await
-                .map_err(|e| {
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
-                    )
-                })?;
+            })?;
 
-            info!(
-                signature_request_id = %signature_request.id,
-                signer_email = %signer_email,
-                new_status = ?signer_status,
-                "Updated signer status from webhook"
+        info!(
+            signature_request_id = %signature_request.id,
+            signer_email = %signer_email,
+            new_status = ?signer_status,
+            "Updated signer status from webhook"
+        );
+
+        // Send decline notification to the requester when a signer declines (Story 84.2).
+        if matches!(signer_status, db::models::SignerStatus::Declined) {
+            let manage_url = format!(
+                "{}/documents/{}/signatures/{}",
+                *BASE_URL, signature_request.document_id, signature_request.id
             );
-
-            // Send decline notification to the requester when a signer declines (Story 84.2).
-            if matches!(signer_status, db::models::SignerStatus::Declined) {
-                let manage_url = format!(
-                    "{}/documents/{}/signatures/{}",
-                    *BASE_URL, signature_request.document_id, signature_request.id
-                );
-                let signer_name = signature_request
-                    .signers
-                    .iter()
-                    .find(|s| s.email.eq_ignore_ascii_case(signer_email))
-                    .map(|s| s.name.as_str())
-                    .unwrap_or("Signer");
-                match state.user_repo.find_by_id(signature_request.created_by).await {
-                    Ok(Some(requester)) => {
-                        if let Err(e) = state
-                            .email_service
-                            .send_signature_declined_email(
-                                &requester.email,
-                                &requester.name,
-                                signature_request.subject.as_deref().unwrap_or("Document"),
-                                signer_name,
-                                signer_email,
-                                event.decline_reason.as_deref(),
-                                &manage_url,
-                            )
-                            .await
-                        {
-                            warn!(
-                                error = %e,
-                                signature_request_id = %signature_request.id,
-                                "Failed to send decline notification to requester"
-                            );
-                        } else {
-                            info!(
-                                signature_request_id = %signature_request.id,
-                                requester_email = %requester.email,
-                                "Sent decline notification to requester"
-                            );
-                        }
-                    }
-                    Ok(None) => {
-                        warn!(
-                            signature_request_id = %signature_request.id,
-                            "Requester not found, skipping decline notification"
-                        );
-                    }
-                    Err(e) => {
+            let signer_name = signature_request
+                .signers
+                .iter()
+                .find(|s| s.email.eq_ignore_ascii_case(signer_email))
+                .map(|s| s.name.as_str())
+                .unwrap_or("Signer");
+            match state
+                .user_repo
+                .find_by_id(signature_request.created_by)
+                .await
+            {
+                Ok(Some(requester)) => {
+                    if let Err(e) = state
+                        .email_service
+                        .send_signature_declined_email(
+                            &requester.email,
+                            &requester.name,
+                            signature_request.subject.as_deref().unwrap_or("Document"),
+                            signer_name,
+                            signer_email,
+                            event.decline_reason.as_deref(),
+                            &manage_url,
+                        )
+                        .await
+                    {
                         warn!(
                             error = %e,
                             signature_request_id = %signature_request.id,
-                            "Failed to look up requester for decline notification"
+                            "Failed to send decline notification to requester"
+                        );
+                    } else {
+                        info!(
+                            signature_request_id = %signature_request.id,
+                            requester_email = %requester.email,
+                            "Sent decline notification to requester"
                         );
                     }
                 }
+                Ok(None) => {
+                    warn!(
+                        signature_request_id = %signature_request.id,
+                        "Requester not found, skipping decline notification"
+                    );
+                }
+                Err(e) => {
+                    warn!(
+                        error = %e,
+                        signature_request_id = %signature_request.id,
+                        "Failed to look up requester for decline notification"
+                    );
+                }
             }
+        }
 
-            updated
-        } else {
-            signature_request.clone()
-        };
+        updated
+    } else {
+        signature_request.clone()
+    };
 
     // Handle completion event: store signed document and notify requester (Stories 84.2, 88.2).
     if event.event_type == "completed" {
@@ -644,7 +646,11 @@ pub async fn handle_webhook(
             "{}/documents/{}/signatures/{}",
             *BASE_URL, signature_request.document_id, signature_request.id
         );
-        match state.user_repo.find_by_id(signature_request.created_by).await {
+        match state
+            .user_repo
+            .find_by_id(signature_request.created_by)
+            .await
+        {
             Ok(Some(requester)) => {
                 let signers_count = updated_request.signers.len();
                 if let Err(e) = state
