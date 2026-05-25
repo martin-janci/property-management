@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T08:16:00Z",
+  "generated": "2026-05-25T08:28:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -646,7 +646,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/490",
       "merged_at": null,
       "implementer_summary": "pr=490 status=done specialist=rust-backend note=FCM/APNs token upsert endpoint + RN hook wiring; cargo fmt + clippy -D warnings pass; rebased on dev HEAD (migration 00157 already in c7791220)",
-      "reviewer_summary": "verdict=changes note=Blocker 1: migration 00158 drops the service-role SELECT policy without replacing it — get_tokens_for_user/delete_all_for_user will silently return empty results under FORCE RLS, breaking the Epic 2B delivery pipeline. Blocker 2: Cargo.lock downgrades all crate versions from 0.2.591→0.2.588 (branch needs rebase onto dev; repo is at 0.2.627). Minor: no token length CHECK constraint on the TEXT column. Auth pattern, RLS convention, idempotent upsert, security logging hygiene, and test structure are all correct.",
+      "reviewer_summary": "verdict=changes note=Blocker 1: migration 00158 drops the service-role SELECT policy without replacing it \u2014 get_tokens_for_user/delete_all_for_user will silently return empty results under FORCE RLS, breaking the Epic 2B delivery pipeline. Blocker 2: Cargo.lock downgrades all crate versions from 0.2.591\u21920.2.588 (branch needs rebase onto dev; repo is at 0.2.627). Minor: no token length CHECK constraint on the TEXT column. Auth pattern, RLS convention, idempotent upsert, security logging hygiene, and test structure are all correct.",
       "reviewer_verdict": "changes"
     },
     {
@@ -747,7 +747,7 @@
       "pr_number": 496,
       "pr_url": "https://github.com/martin-janci/property-management/pull/496",
       "merged_at": null,
-      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted→Implemented with owner/delivery ref; action-list item marked done; git diff --check exit 0",
+      "implementer_summary": "pr=496 status=done specialist=generic note=ADR-008 updated Accepted\u2192Implemented with owner/delivery ref; action-list item marked done; git diff --check exit 0",
       "reviewer_summary": null
     },
     {
@@ -777,6 +777,21 @@
       "merged_at": null,
       "implementer_summary": null,
       "reviewer_summary": null
+    },
+    {
+      "task_id": "security-inquiry-read-idor",
+      "branch": "bugfix/security-inquiry-read-idor",
+      "status": "review",
+      "specialist": "pm-security",
+      "claimed_at": "2026-05-25T08:22:00Z",
+      "last_updated": "2026-05-25T08:28:00Z",
+      "status_changed_at": "2026-05-25T08:28:00Z",
+      "pr_number": 497,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/497",
+      "merged_at": null,
+      "reviewer_verdict": "approve",
+      "reviewer_summary": "Single-commit fix; adds realtor-scoped ownership check before UPDATE. Two-step SELECT EXISTS + UPDATE is atomic enough for this workload (inquiry rows not deleted in normal ops). cargo check + clippy -D warnings exit 0.",
+      "implementer_summary": "Fixed IDOR in PUT /api/v1/inquiries/{id}/read by adding mark_inquiry_read_for_realtor(id, realtor_id). Returns 404 when not owned."
     }
   ]
 }
