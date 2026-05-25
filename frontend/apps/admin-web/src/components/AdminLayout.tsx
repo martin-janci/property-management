@@ -159,6 +159,12 @@ export function AdminLayout() {
             {canHealthRead ? (
               <NavItem to="/platform/health" label={t('admin.health.navLabel', 'Health')} />
             ) : null}
+            {canSiteSettingsWrite ? (
+              <NavItem
+                to="/platform/announcements"
+                label={t('admin.announcements.navLabel', 'Announcements')}
+              />
+            ) : null}
           </SidebarGroup>
 
           <SidebarGroup label="DEVELOPER">

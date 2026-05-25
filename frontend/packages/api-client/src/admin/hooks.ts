@@ -9,23 +9,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   acknowledgeHealthAlert,
+  createSystemAnnouncement,
+  deleteSystemAnnouncement,
   fetchHealthAlerts,
   fetchHealthDashboard,
   fetchMetricHistory,
   getOAuthClient,
+  getSystemAnnouncement,
   listAgencies,
   listOAuthClients,
+  listSystemAnnouncements,
   regenerateOAuthClientSecret,
   registerOAuthClient,
   revokeOAuthClient,
   updateHealthThreshold,
   updateOAuthClient,
+  updateSystemAnnouncement,
 } from './api';
 import type {
+  CreateSystemAnnouncementRequest,
   ListAgenciesParams,
+  ListSystemAnnouncementsParams,
   RegisterOAuthClientRequest,
   TimeRange,
   UpdateOAuthClientRequest,
+  UpdateSystemAnnouncementRequest,
   UpdateThresholdRequest,
 } from './types';
 
@@ -44,6 +52,10 @@ export const adminKeys = {
   healthAlerts: (activeOnly: boolean) => [...adminKeys.health(), 'alerts', activeOnly] as const,
   metricHistory: (name: string, range: TimeRange) =>
     [...adminKeys.health(), 'history', name, range] as const,
+  systemAnnouncements: () => [...adminKeys.all, 'system-announcements'] as const,
+  systemAnnouncementList: (params?: ListSystemAnnouncementsParams) =>
+    [...adminKeys.systemAnnouncements(), 'list', params] as const,
+  systemAnnouncement: (id: string) => [...adminKeys.systemAnnouncements(), id] as const,
 };
 
 // ============================================
@@ -171,6 +183,59 @@ export function useUpdateHealthThreshold() {
       updateHealthThreshold(metricName, data),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.healthDashboard() });
+    },
+  });
+}
+
+// ============================================================
+// System Announcements hooks (Epic 10B.4)
+// ============================================================
+
+export function useSystemAnnouncements(params?: ListSystemAnnouncementsParams) {
+  return useQuery({
+    queryKey: adminKeys.systemAnnouncementList(params),
+    queryFn: ({ signal }) => listSystemAnnouncements(params, signal),
+    staleTime: 30_000,
+  });
+}
+
+export function useSystemAnnouncement(id: string) {
+  return useQuery({
+    queryKey: adminKeys.systemAnnouncement(id),
+    queryFn: ({ signal }) => getSystemAnnouncement(id, signal),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+export function useCreateSystemAnnouncement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateSystemAnnouncementRequest) => createSystemAnnouncement(data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncements() });
+    },
+  });
+}
+
+export function useUpdateSystemAnnouncement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSystemAnnouncementRequest }) =>
+      updateSystemAnnouncement(id, data),
+    onSuccess: (_result, { id }) => {
+      void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncements() });
+      void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncement(id) });
+    },
+  });
+}
+
+export function useDeleteSystemAnnouncement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSystemAnnouncement(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncements() });
     },
   });
 }

@@ -145,3 +145,52 @@ export interface UpdateThresholdRequest {
   warning_threshold?: number;
   critical_threshold?: number;
 }
+
+// ============================================================
+// System Announcements (Epic 10B.4)
+// ============================================================
+
+export type SystemAnnouncementSeverity = 'info' | 'warning' | 'critical';
+
+export interface SystemAnnouncement {
+  id: string;
+  title: string;
+  message: string;
+  severity: SystemAnnouncementSeverity;
+  start_at: string;
+  end_at: string | null;
+  is_dismissible: boolean;
+  requires_acknowledgment: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSystemAnnouncementRequest {
+  title: string;
+  message: string;
+  severity: SystemAnnouncementSeverity;
+  start_at: string;
+  end_at?: string | null;
+  is_dismissible?: boolean;
+  requires_acknowledgment?: boolean;
+}
+
+export interface UpdateSystemAnnouncementRequest {
+  title?: string;
+  message?: string;
+  severity?: SystemAnnouncementSeverity;
+  start_at?: string;
+  end_at?: string | null;
+  is_dismissible?: boolean;
+  requires_acknowledgment?: boolean;
+}
+
+export interface ListSystemAnnouncementsParams {
+  include_deleted?: boolean;
+}
+
+export interface CreateSystemAnnouncementResponse {
+  message: string;
+  announcement: SystemAnnouncement;
+}
