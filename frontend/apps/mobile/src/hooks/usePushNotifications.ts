@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { createDeepLink } from '../qrcode/DeepLinkHandler';
 import { colors } from '../screens/shared/screenStyles';
 import { apiRequest } from './useApi';
@@ -66,6 +66,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run-once-on-mount; handlers are stable after first render
   useEffect(() => {
     // Listen for incoming notifications
     notificationListener.current = Notifications.addNotificationReceivedListener(
@@ -93,7 +94,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const checkRegistrationStatus = async () => {
     const { status } = await Notifications.getPermissionsAsync();
@@ -138,10 +139,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         deepLinkUrl = createDeepLink('Dashboard');
     }
 
-    // Use the deep link manager to navigate (handles auth state)
-    // The deep link will be processed by DeepLinkManager which
-    // dispatches to registered handlers
-    const { Linking } = require('react-native');
     Linking.openURL(deepLinkUrl);
   };
 
