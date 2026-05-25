@@ -9,7 +9,7 @@ use std::sync::LazyLock;
 use api_core::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::{get, post},
     Json, Router,
 };
@@ -261,11 +261,12 @@ pub async fn list_signature_requests(
 /// Get a signature request by ID.
 pub async fn get_signature_request(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
     let request = state
         .signature_request_repo
-        .find_by_id(id)
+        .find_by_id_rls(&mut **rls.conn(), id)
         .await
         .map_err(|e| {
             (
@@ -282,6 +283,8 @@ pub async fn get_signature_request(
                 )),
             )
         })?;
+
+    rls.release().await;
 
     let signer_counts = request.signer_counts();
 
@@ -294,12 +297,13 @@ pub async fn get_signature_request(
 /// Send reminder to pending signers.
 pub async fn send_reminder(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(request): Json<SendReminderRequest>,
 ) -> Result<Json<SendReminderResponse>, (StatusCode, Json<ErrorResponse>)> {
     let signature_request = state
         .signature_request_repo
-        .find_by_id(id)
+        .find_by_id_rls(&mut **rls.conn(), id)
         .await
         .map_err(|e| {
             (
@@ -316,6 +320,7 @@ pub async fn send_reminder(
                 )),
             )
         })?;
+    rls.release().await;
 
     // Check if request is still active
     if !signature_request.can_cancel() {
@@ -409,9 +414,33 @@ pub async fn send_reminder(
 /// Cancel a signature request.
 pub async fn cancel_signature_request(
     State(state): State<AppState>,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
     Json(request): Json<CancelSignatureRequestRequest>,
 ) -> Result<Json<CancelSignatureRequestResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the request exists and belongs to this org (RLS-enforced).
+    let exists = state
+        .signature_request_repo
+        .find_by_id_rls(&mut **rls.conn(), id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DATABASE_ERROR", e.to_string())),
+            )
+        })?;
+    rls.release().await;
+
+    if exists.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Signature request not found",
+            )),
+        ));
+    }
+
     let signature_request = state
         .signature_request_repo
         .cancel(id, request.reason.as_deref())
@@ -492,9 +521,26 @@ pub async fn cancel_signature_request(
 /// Handle webhook from e-signature provider.
 pub async fn handle_webhook(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(provider): Path<String>,
     Json(event): Json<SignatureWebhookEvent>,
 ) -> Result<Json<WebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify the webhook secret header to prevent forged events.
+    let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
+    if !expected_secret.is_empty() {
+        let provided = headers
+            .get("x-webhook-secret")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        if provided != expected_secret {
+            warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
+            ));
+        }
+    }
+
     info!(
         provider = %provider,
         event_type = %event.event_type,
