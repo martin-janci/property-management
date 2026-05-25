@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T05:32:16Z",
+  "generated": "2026-05-25T05:33:46Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -539,13 +539,14 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T05:33:46Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 474,
       "pr_url": "https://github.com/martin-janci/property-management/pull/474",
       "merged_at": null,
       "implementer_summary": "pr=474 status=done specialist=react-web note=ViewAnnouncementPage wired to mark_read/acknowledge/get_acknowledgments APIs; AnnouncementComments wired (6.3 bonus); typecheck+biome+build clean",
-      "reviewer_summary": "verdict=approve note=auth/query-keys/invalidation/IDOR all correct; ~10 hardcoded strings in AnnouncementComments.tsx not i18n-wrapped (SHOULD, non-blocking); ready to merge"
+      "reviewer_summary": "verdict=approve note=auth/query-keys/invalidation/IDOR all correct; ~10 hardcoded strings in AnnouncementComments.tsx not i18n-wrapped (SHOULD, non-blocking); ready to merge",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "gap-6-3-comments-web-ui",
