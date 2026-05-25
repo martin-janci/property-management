@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:46:00Z",
+  "generated": "2026-05-25T00:48:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -578,14 +578,14 @@
     {
       "task_id": "gap-80-2-dispute-verify",
       "branch": "auto-impl/gap-80-2-dispute-verify",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T04:07:30Z",
-      "status_changed_at": "2026-05-25T00:20:00Z",
+      "last_updated": "2026-05-25T00:48:00Z",
+      "status_changed_at": "2026-05-25T00:48:00Z",
       "pr_number": 477,
       "pr_url": "https://github.com/martin-janci/property-management/pull/477",
-      "merged_at": null,
+      "merged_at": "2026-05-25T00:48:00Z",
       "implementer_summary": "pr=477 status=partial specialist=react-web note=EvidenceUploader.tsx and useDraftStorage.ts missing; AC-2 and AC-4 not met; story 80-2 stays pending",
       "reviewer_summary": "verdict=approve note=All gap assessments confirmed: EvidenceUploader.tsx/useDraftStorage.ts genuinely missing; AC-2/AC-4 MISSING; AC-1/AC-3/AC-5 correctly partial; story 80-2 stays partial"
     },
