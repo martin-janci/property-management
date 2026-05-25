@@ -5,8 +5,10 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RequestSignatureModal } from '../components/RequestSignatureModal';
 import { PaymentHistoryTable } from '../components/PaymentHistoryTable';
-import type { LeaseStatus, LeaseWithDetails, ViolationSummary } from '../types';
+import { SignatureStatusBadge } from '../components/SignatureStatusBadge';
+import type { LeaseSignatureStatus, LeaseStatus, LeaseWithDetails, ViolationSummary } from '../types';
 
 interface LeaseDetailPageProps {
   lease: LeaseWithDetails;
@@ -49,6 +51,21 @@ export function LeaseDetailPage({
 }: LeaseDetailPageProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [localSignatureStatus, setLocalSignatureStatus] = useState<
+    LeaseSignatureStatus | undefined
+  >(lease.signatureStatus);
+
+  // Derived signature state: prefer local override (set after a successful request)
+  const signatureStatus = localSignatureStatus ?? lease.signatureStatus;
+  const canRequestSignature =
+    !!lease.documentId &&
+    (!signatureStatus || signatureStatus === 'expired' || signatureStatus === 'cancelled');
+
+  // Build parties list from lease data for the signer selection modal
+  const signerParties = [
+    { name: lease.tenant.name, email: lease.tenant.email, role: t('leases.esign.role.tenant', 'Tenant') },
+  ];
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -110,7 +127,7 @@ export function LeaseDetailPage({
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-gray-900">
                 {lease.unit.buildingName} - {lease.unit.number}
               </h1>
@@ -119,12 +136,15 @@ export function LeaseDetailPage({
               >
                 {t(`leases.status.${lease.status}`)}
               </span>
+              {signatureStatus && (
+                <SignatureStatusBadge status={signatureStatus} />
+              )}
             </div>
             <p className="text-gray-600 mt-1">{lease.tenant.name}</p>
             <p className="text-sm text-gray-500">{lease.tenant.email}</p>
             {lease.tenant.phone && <p className="text-sm text-gray-500">{lease.tenant.phone}</p>}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {canEdit && (
               <button
                 type="button"
@@ -132,6 +152,18 @@ export function LeaseDetailPage({
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 {t('common.edit')}
+              </button>
+            )}
+            {canRequestSignature && (
+              <button
+                type="button"
+                onClick={() => setShowSignatureModal(true)}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+                {t('leases.esign.requestSignature', 'Request Signature')}
               </button>
             )}
             {canRenew && (
@@ -177,6 +209,19 @@ export function LeaseDetailPage({
           </div>
         </div>
       </div>
+
+      {/* E-Signature modal */}
+      {showSignatureModal && lease.documentId && (
+        <RequestSignatureModal
+          documentId={lease.documentId}
+          parties={signerParties}
+          onSuccess={(newStatus) => {
+            setLocalSignatureStatus(newStatus);
+            setShowSignatureModal(false);
+          }}
+          onClose={() => setShowSignatureModal(false)}
+        />
+      )}
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow">

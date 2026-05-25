@@ -46,6 +46,15 @@ export type PaymentMethod =
   | 'check'
   | 'other';
 
+// E-signature status on a lease (mirrors backend SignatureRequestStatus)
+export type LeaseSignatureStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'declined'
+  | 'expired'
+  | 'cancelled';
+
 // Lease interface
 export interface Lease {
   id: string;
@@ -68,6 +77,10 @@ export interface Lease {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  /** ID of the primary document attached to this lease, used for e-signatures */
+  documentId?: string;
+  /** Current e-signature request status, if any */
+  signatureStatus?: LeaseSignatureStatus;
 }
 
 // Lease summary for list views
@@ -85,6 +98,10 @@ export interface LeaseSummary {
   rentAmount: number;
   currency: string;
   daysUntilExpiry?: number;
+  /** Current e-signature request status, if any */
+  signatureStatus?: LeaseSignatureStatus;
+  /** ID of the primary document attached to this lease */
+  documentId?: string;
 }
 
 // Lease with full details

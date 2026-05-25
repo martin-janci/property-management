@@ -1,0 +1,65 @@
+/**
+ * E-signature React Query hooks (Epic 84, Story 84.2).
+ */
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as api from './api';
+import type { CreateSignatureRequestBody } from './types';
+
+// Query keys
+export const esignatureKeys = {
+  all: ['esignature'] as const,
+  requestsForDocument: (documentId: string) =>
+    [...esignatureKeys.all, 'document', documentId] as const,
+  request: (id: string) => [...esignatureKeys.all, 'request', id] as const,
+};
+
+/**
+ * List signature requests for a document.
+ */
+export function useSignatureRequests(documentId: string | undefined) {
+  return useQuery({
+    queryKey: esignatureKeys.requestsForDocument(documentId ?? ''),
+    queryFn: () => api.listSignatureRequests(documentId!),
+    enabled: !!documentId,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Get a single signature request by ID.
+ */
+export function useSignatureRequest(id: string | undefined) {
+  return useQuery({
+    queryKey: esignatureKeys.request(id ?? ''),
+    queryFn: () => api.getSignatureRequest(id!),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Create a signature request for a document.
+ * Invalidates the document's signature-request list on success.
+ */
+export function useCreateSignatureRequest(documentId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: CreateSignatureRequestBody) =>
+      api.createSignatureRequest(documentId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: esignatureKeys.requestsForDocument(documentId),
+      });
+    },
+  });
+}
+
+/**
+ * Convenience alias used from the lease detail page.
+ * Sends a signature request for the document attached to a lease.
+ */
+export function useRequestESignature(documentId: string) {
+  return useCreateSignatureRequest(documentId);
+}

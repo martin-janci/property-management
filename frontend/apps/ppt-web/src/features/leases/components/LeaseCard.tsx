@@ -5,6 +5,7 @@
 
 import { useTranslation } from 'react-i18next';
 import type { LeaseStatus, LeaseSummary } from '../types';
+import { SignatureStatusBadge } from './SignatureStatusBadge';
 
 interface LeaseCardProps {
   lease: LeaseSummary;
@@ -76,6 +77,9 @@ export function LeaseCard({ lease, onView, onRenew, onTerminate }: LeaseCardProp
               {formatCurrency(lease.rentAmount, lease.currency)}
               {t('leases.perMonth')}
             </span>
+            {lease.signatureStatus && (
+              <SignatureStatusBadge status={lease.signatureStatus} />
+            )}
           </div>
           <div className="mt-2 text-xs text-gray-500">
             <span>{formatDate(lease.startDate)}</span>
