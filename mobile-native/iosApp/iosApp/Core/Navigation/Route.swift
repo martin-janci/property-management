@@ -103,6 +103,16 @@ enum Route: Hashable {
     }
 }
 
+// MARK: - Listing Type Filter
+
+/// Listing transaction type for sale/rent filtering.
+///
+/// Epic 82 - Story 82.3: Home and Search Screens
+enum ListingTypeFilter: String, Hashable {
+    case sale
+    case rent
+}
+
 // MARK: - Search Filters
 
 /// Search filter options.
@@ -112,6 +122,8 @@ struct SearchFilters: Hashable {
     var priceMin: Int?
     var priceMax: Int?
     var propertyTypes: Set<PropertyType> = []
+    /// Sale/rent type filter, set by HomeView category chips.
+    var listingType: ListingTypeFilter?
     var bedroomsMin: Int?
     var bedroomsMax: Int?
     var bathroomsMin: Int?

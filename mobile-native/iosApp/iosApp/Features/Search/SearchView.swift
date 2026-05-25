@@ -3,7 +3,8 @@ import shared
 
 /// Search screen for Reality Portal iOS app.
 ///
-/// Provides property search with filters and results.
+/// Provides property search with filters, sort order, and paginated results
+/// bound to the reality-server search API via KMP ListingRepository.
 ///
 /// Epic 82 - Story 82.3: Home and Search Screens
 ///   — debounced search (350 ms cancellable token), infinite scroll
@@ -18,7 +19,9 @@ struct SearchView: View {
     @State private var isLoading = false
     @State private var isLoadingMore = false
     @State private var showFilters = false
+    @State private var showSortPicker = false
     @State private var filters = SearchFilters()
+    @State private var sortOption: SortOption = .newest
     @State private var currentPage = 1
     @State private var totalPages = 1
     @State private var totalCount = 0
@@ -49,10 +52,29 @@ struct SearchView: View {
         }
         .navigationTitle(String(localized: "tab_search"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showSortPicker = true
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+                .accessibilityLabel(String(localized: "sort_by"))
+            }
+        }
         .sheet(isPresented: $showFilters) {
             FilterSheet(filters: $filters) {
                 Task { await performSearch() }
             }
+        }
+        .confirmationDialog(String(localized: "sort_by"), isPresented: $showSortPicker, titleVisibility: .visible) {
+            ForEach(SortOption.allCases, id: \.self) { option in
+                Button(option.displayName) {
+                    sortOption = option
+                    Task { await performSearch() }
+                }
+            }
+            Button(String(localized: "cancel"), role: .cancel) {}
         }
         .onChange(of: searchText) { _, newValue in
             scheduleSearch(for: newValue)
@@ -64,25 +86,13 @@ struct SearchView: View {
                 Task { await performSearch() }
             }
         }
-        // Drive the location-denied alert from body-level state.
-        // The inline-Binding approach inside a @ViewBuilder var is unreliable
-        // on iOS 17+ with @Observable (dismiss can fail to reconcile).
-        .onChange(of: locationManager.locationError) { _, err in
-            if err != nil { showLocationDeniedAlert = true }
-        }
-        .onDisappear {
-            debounceTask?.cancel()
-        }
-        .alert(
-            String(localized: "location_access_denied_title"),
-            isPresented: $showLocationDeniedAlert
-        ) {
-            Button(String(localized: "ok")) {
-                showLocationDeniedAlert = false
-                locationManager.clearLocationError()
+        .onAppear {
+            // Consume any pending filters set by HomeView category chips
+            if let pending = coordinator.pendingSearchFilters {
+                filters = pending
+                coordinator.pendingSearchFilters = nil
+                Task { await performSearch() }
             }
-        } message: {
-            if let err = locationManager.locationError { Text(err) }
         }
     }
 
@@ -248,56 +258,8 @@ struct SearchView: View {
     private var resultsGrid: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                HStack {
-                    Text(String(format: String(localized: "properties_found"), totalCount))
-                        .font(.subheadline).foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .padding(.horizontal)
-
-                ForEach(results) { listing in
-                    SearchResultCard(listing: listing) {
-                        coordinator.navigate(to: .listingDetail(id: listing.id))
-                    }
-                }
-
-                if currentPage < totalPages {
-                    Group {
-                        if isLoadingMore { ProgressView().padding() }
-                        else { Color.clear.frame(height: 1) }
-                    }
-                    .onAppear { Task { await loadMoreResults() } }
-                }
-            }
-            .padding(.vertical)
-        }
-    }
-
-    // MARK: - Debounced search
-
-    private func scheduleSearch(for value: String) {
-        debounceTask?.cancel()
-        debounceTask = Task {
-            do {
-                try await Task.sleep(nanoseconds: debounceNs)
-                if searchText == value { await performSearch() }
-            } catch {}
-        }
-    }
-
-    // MARK: - Data
-
-    private func performSearch() async {
-        guard !searchText.isEmpty || filters.hasActiveFilters else {
-            results = []; totalCount = 0; totalPages = 1; currentPage = 1
-            return
-        }
-        isLoading = true
-        currentPage = 1
-        let request = ListingSearchRequest(
-            query: searchText.isEmpty ? nil : searchText,
-            filters: buildKMPFilters(),
-            sort: .newest,
+            filters: searchFilters,
+            sort: sortOption.kmpSortOption,
             page: Int32(currentPage),
             pageSize: 20
         )
@@ -324,8 +286,8 @@ struct SearchView: View {
         currentPage += 1
         let request = ListingSearchRequest(
             query: searchText.isEmpty ? nil : searchText,
-            filters: buildKMPFilters(),
-            sort: .newest,
+            filters: searchFilters,
+            sort: sortOption.kmpSortOption,
             page: Int32(currentPage),
             pageSize: 20
         )
@@ -341,22 +303,24 @@ struct SearchView: View {
     private func buildKMPFilters() -> ListingSearchFilters? {
         guard filters.hasActiveFilters else { return nil }
 
-        var category: PropertyCategory? = nil
-        if let firstType = filters.propertyTypes.first {
-            switch firstType {
-            case .apartment:  category = .apartment
-            case .house:      category = .house
-            case .land:       category = .land
-            case .commercial: category = .commercial
-            case .garage:     category = .garage
+        // Map Swift ListingTypeFilter to KMP ListingType
+        var listingType: ListingType? = nil
+        if let swiftType = filters.listingType {
+            switch swiftType {
+            case .sale: listingType = .sale
+            case .rent: listingType = .rent
             }
         }
 
-        var listingType: ListingType? = nil
-        if let kind = filters.listingType {
-            switch kind {
-            case .sale: listingType = .sale
-            case .rent: listingType = .rent
+        // Map Swift PropertyType to KMP PropertyCategory
+        var category: PropertyCategory? = nil
+        if let firstType = filters.propertyTypes.first {
+            switch firstType {
+            case .apartment: category = .apartment
+            case .house:     category = .house
+            case .land:      category = .land
+            case .commercial: category = .commercial
+            case .garage:    category = .garage
             }
         }
 
@@ -376,6 +340,46 @@ struct SearchView: View {
             nearLng: filters.longitude.map { KotlinDouble(value: $0) },
             radiusKm: filters.radiusKm.map { KotlinDouble(value: $0) }
         )
+    }
+}
+
+// MARK: - Sort Option
+
+/// Available sort orders for search results.
+///
+/// Epic 82 - Story 82.3: Home and Search Screens
+enum SortOption: CaseIterable {
+    case newest
+    case oldest
+    case priceAsc
+    case priceDesc
+    case areaAsc
+    case areaDesc
+    case relevance
+
+    var displayName: String {
+        switch self {
+        case .newest:     return String(localized: "sort_newest")
+        case .oldest:     return String(localized: "sort_oldest")
+        case .priceAsc:   return String(localized: "sort_price_asc")
+        case .priceDesc:  return String(localized: "sort_price_desc")
+        case .areaAsc:    return String(localized: "sort_area_asc")
+        case .areaDesc:   return String(localized: "sort_area_desc")
+        case .relevance:  return String(localized: "sort_relevance")
+        }
+    }
+
+    /// KMP ListingSortOption equivalent.
+    var kmpSortOption: ListingSortOption {
+        switch self {
+        case .newest:     return .newest
+        case .oldest:     return .oldest
+        case .priceAsc:   return .priceAsc
+        case .priceDesc:  return .priceDesc
+        case .areaAsc:    return .areaAsc
+        case .areaDesc:   return .areaDesc
+        case .relevance:  return .relevance
+        }
     }
 }
 

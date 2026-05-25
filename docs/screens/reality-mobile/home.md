@@ -8,9 +8,9 @@ implementations:
   ios-swiftui:
     component: HomeView
     route: Tab.home / Route.home
-    buildStatus: in-progress
+    buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: partial
+    apiStatus: connected
 endpoints:
   - listings_search
 relatedScreens:
@@ -49,8 +49,8 @@ owner: reality-frontend
 - [x] [m] Error state (warning icon + message + Retry button)
 - [x] [m] Empty state ("no listings available" message when both lists empty)
 - [x] [m] Toolbar: authenticated → Inquiries / Favorites / Account icons; unauthenticated → Sign In button
-- [ ] [m] Category chip filter navigation not wired (chips have placeholder closures)
-- [ ] [m] No SectionHeader "See all" links wired to filtered search results
+- [x] [m] Category chip filter navigation wired (pendingSearchFilters via NavigationCoordinator)
+- [x] [m] SectionHeader "See all" links navigate to search tab
 
 ## States
 
@@ -74,3 +74,4 @@ Root tab screen of Reality Portal iOS. Uses KMP `ListingRepository` (via `Depend
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Home/HomeView.swift (epic-82 story 82.3). NavigationCoordinator integration confirmed. Category chip actions unimplemented.
+- 2026-05-25 — agent: wired category chips to pendingSearchFilters on NavigationCoordinator; SearchView.onAppear consumes and auto-searches. buildStatus → shipped.

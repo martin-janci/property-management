@@ -84,6 +84,10 @@ final class NavigationCoordinator {
     /// Intended destination after login (for auth-protected routes).
     var pendingDestination: Route?
 
+    /// Filters to pre-apply when the search tab next becomes active.
+    /// Set by HomeView category chips; consumed and cleared by SearchView.onAppear.
+    var pendingSearchFilters: SearchFilters?
+
     // MARK: - Route Mirrors (for state restoration serialisation)
 
     /// Mirrors of each tab's navigation stack as plain `Route` arrays.
