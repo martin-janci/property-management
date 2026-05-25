@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T06:29:19Z",
+  "generated": "2026-05-25T06:46:17Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -723,15 +723,15 @@
     {
       "task_id": "gap-84-2-esignature-impl",
       "branch": "auto-impl/gap-84-2-esignature-impl",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T06:09:06Z",
-      "status_changed_at": "2026-05-25T06:09:06Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T06:46:17Z",
+      "status_changed_at": "2026-05-25T06:46:17Z",
+      "pr_number": 495,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/495",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=495 status=done specialist=rust-backend note=lightweight HMAC-SHA256 provider + 4 HTML email templates + scheduler reminders/expiry + decline/completion webhook notifications; cargo check exit 0 both crates, 6/6 unit tests pass",
       "reviewer_summary": null
     }
   ]
