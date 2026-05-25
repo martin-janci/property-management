@@ -1245,7 +1245,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/513",
       "merged_at": null,
       "implementer_summary": "pr=513 status=done specialist=react-web note=@ppt/api-client esignature module (types+api+hooks); SignatureStatusBadge (amber/green/red/gray); RequestSignatureModal (signer selection+subject+message+loading+error); LeaseDetailPage Request Signature button + badge in header; LeaseCard badge in status row; LeaseSignatureStatus+documentId types added; typecheck exit 0; biome exit 0; vite build exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes/fixed note=reviewer (martin-janci) requested: remove duplicate LeaseSignatureStatus (use SignatureRequestStatus from @ppt/api-client), fix onSuccess to use actual response status (not hardcoded 'pending'), add focus trap to modal, add role=alert to error div, add i18n to SignatureStatusBadge, add TODO for missing landlord signer; all fixes applied in commit a0465a23 pushed to branch; biome clean"
     }
   ]
 }
