@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:46:00Z",
+  "generated": "2026-05-25T05:16:36Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -564,16 +564,16 @@
     {
       "task_id": "gap-6-4-pin-web-ui",
       "branch": "auto-impl/gap-6-4-pin-web-ui",
-      "status": "review",
+      "status": "failed",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T04:07:30Z",
+      "last_updated": "2026-05-25T05:16:36Z",
       "status_changed_at": "2026-05-25T00:42:00Z",
       "pr_number": 479,
       "pr_url": "https://github.com/martin-janci/property-management/pull/479",
       "merged_at": null,
       "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean",
-      "reviewer_summary": "verdict=approve note=pin/unpin wiring correct ({id,pinned}), fetchJson auth, hooks unconditional, loading/error handled, screen-map updated; non-blocking: useAcknowledgeAnnouncement omits acknowledgments(id) invalidation"
+      "reviewer_summary": "verdict=approve note=pin/unpin wiring correct ({id,pinned}), fetchJson auth, hooks unconditional, loading/error handled, screen-map updated; non-blocking: useAcknowledgeAnnouncement omits acknowledgments(id) invalidation; PR closed without merge; pin/unpin wiring covered by PR #474"
     },
     {
       "task_id": "gap-80-2-dispute-verify",
@@ -606,16 +606,16 @@
     {
       "task_id": "gap-81-1-schedule-e2e-verify",
       "branch": "auto-impl/gap-81-1-schedule-e2e-verify",
-      "status": "review",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T05:16:36Z",
       "status_changed_at": "2026-05-25T02:31:00Z",
       "pr_number": 488,
       "pr_url": "https://github.com/martin-janci/property-management/pull/488",
       "merged_at": null,
       "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped \u2014 no node_modules in env",
-      "reviewer_summary": "verdict=changes note=PR branch contains wrong commit (unrelated migration); frontend changes already on dev have missing ProtectedRoute on /reports, hardcoded organizationId='', and no screen-map update"
+      "reviewer_summary": "verdict=changes note=PR branch contains wrong commit (unrelated migration); frontend changes already on dev have missing ProtectedRoute on /reports, hardcoded organizationId='', and no screen-map update; changes (orgId + throw e + ProtectedRoute) cherry-picked onto dev; PR superseded"
     },
     {
       "task_id": "gap-81-2-execution-history-verify",
