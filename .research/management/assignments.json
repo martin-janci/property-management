@@ -665,13 +665,13 @@
       "status": "review",
       "specialist": "generic",
       "claimed_at": "2026-05-25T04:07:30Z",
-      "last_updated": "2026-05-25T04:20:00Z",
+      "last_updated": "2026-05-25T04:46:00Z",
       "status_changed_at": "2026-05-25T04:20:00Z",
       "pr_number": 492,
       "pr_url": "https://github.com/martin-janci/property-management/pull/492",
       "merged_at": null,
       "implementer_summary": "pr=492 status=done specialist=generic note=PR #474 promoted from draft (verdict=approve, CI green); #479 conflicts on 3 files post-#474; #475 superseded; sequencing plan at .research/management/epic6-announcement-sequencing.md",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=conflict analysis correct on all 3 shared files; #475 supersession sound; follow-up items correctly scoped as issues; draft promotion confirmed; sprint-status plan internally consistent"
     },
     {
       "task_id": "pm-frontend-schedule-followup-test-batch",
