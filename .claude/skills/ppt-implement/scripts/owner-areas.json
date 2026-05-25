@@ -1,0 +1,69 @@
+{
+  "_comment": "owner_role -> list of git-pathspec patterns the role is expected to touch. The scope-check script flags any path in the diff that does NOT match any pattern for the row's owner_role. Unknown owners → exit 1 (cannot judge).",
+  "pm-backend": [
+    "backend/**",
+    "docs/api/typespec/**",
+    "docs/api/openapi.yaml",
+    ".sqlx/**"
+  ],
+  "pm-frontend": [
+    "frontend/apps/ppt-web/**",
+    "frontend/apps/reality-web/**",
+    "frontend/packages/**",
+    "frontend/packages/api-client/**",
+    "docs/screens/**"
+  ],
+  "pm-mobile": [
+    "frontend/apps/mobile/**",
+    "mobile-native/**"
+  ],
+  "pm-security": [
+    "backend/crates/auth/**",
+    "backend/crates/api-core/src/extractors/**",
+    "backend/servers/api-server/src/handlers/auth/**",
+    "backend/servers/api-server/src/handlers/mfa/**",
+    "backend/crates/db/migrations/**",
+    "frontend/apps/ppt-web/src/pages/auth/**",
+    "frontend/apps/ppt-web/src/components/auth/**",
+    "frontend/apps/ppt-web/src/hooks/useMfa.ts",
+    "frontend/apps/ppt-web/src/hooks/useAuth.ts"
+  ],
+  "pm-tech-lead": [
+    "docs/**",
+    ".research/**",
+    "_bmad-output/**"
+  ],
+  "pm-scrum-master": [
+    "_bmad-output/**",
+    ".research/management/**",
+    "docs/**"
+  ],
+  "pm-qa": [
+    "backend/**/tests/**",
+    "frontend/**/tests/**",
+    "frontend/**/__tests__/**",
+    "e2e/**"
+  ],
+  "pm-devops": [
+    ".github/**",
+    "scripts/**",
+    "docker/**",
+    "infra/**",
+    "Dockerfile*",
+    "*.yml",
+    "*.yaml"
+  ],
+  "pm-data": [
+    "backend/crates/db/**",
+    "backend/crates/analytics/**",
+    "docs/data/**"
+  ],
+  "pm-integration": [
+    "backend/servers/api-server/src/handlers/integrations/**",
+    "backend/crates/integrations/**",
+    "docs/integrations/**"
+  ],
+  "generic": [
+    "**"
+  ]
+}

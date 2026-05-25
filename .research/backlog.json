@@ -14,12 +14,12 @@
         "PR #461"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs:3002 \u2014 unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
-        "wired at ai.rs:2059 \u2014 DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
-        "backend/crates/db/src/repositories/llm_document.rs:1141 \u2014 `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
+        "backend/servers/api-server/src/routes/ai.rs:3002 — unlink_voice_device binds `_principal: RequestPrincipal` but ignores it, calling deactivate_voice_device(id) with only the path id",
+        "wired at ai.rs:2059 — DELETE /api/v1/ai/llm/voice/devices/{id} -> unlink_voice_device",
+        "backend/crates/db/src/repositories/llm_document.rs:1141 — `UPDATE voice_assistant_devices SET is_active = FALSE, updated_at = NOW() WHERE id = $1` has no org/owner predicate",
         "any authenticated principal can deactivate another tenant's voice device by guessing/enumerating the UUID (IDOR / cross-tenant write)",
         "found by rotating expert review (Rust), full call path traced from the wired Axum route to the unscoped UPDATE",
-        "resolved: PR #461 merged 2026-05-24 \u2014 fix(security): IDOR on voice device delete/list-commands; unlink_voice_device now passes principal.user_id and llm_document.rs:1151 query is `WHERE id = $1 AND user_id = $2`. Equipment endpoints in the same file remain unscoped \u2014 tracked as security-equipment-idor"
+        "resolved: PR #461 merged 2026-05-24 — fix(security): IDOR on voice device delete/list-commands; unlink_voice_device now passes principal.user_id and llm_document.rs:1151 query is `WHERE id = $1 AND user_id = $2`. Equipment endpoints in the same file remain unscoped — tracked as security-equipment-idor"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs",
@@ -44,9 +44,9 @@
         "issue #160 (HIGH, security/multi-tenancy) closed 2026-05-10 but 31 `TODO: Migrate to *_rls when route handlers pass RLS connection` markers remain across 5 files",
         "voting/mod.rs has 13 residual TODOs (create_poll, find_poll_by_id x8, cast_vote, get_poll_results, list_polls_by_building)",
         "market_pricing.rs (7), handlers/faults/mod.rs (6), notification_preferences.rs (4), reports.rs (1)",
-        "non-RLS repository calls remain on hot multitenancy paths \u2014 adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19",
-        "resolved: PR #420 merged 2026-05-22 \u2014 chore(api-server): remove dead voting & faults handler modules (cleared 19/31 phantom TODOs in dead code)",
-        "resolved: PR #421 merged 2026-05-22 \u2014 fix(api-server): route market_pricing, notification_preferences & reports DB lookups through RLS (cleared remaining 12 live TODOs)"
+        "non-RLS repository calls remain on hot multitenancy paths — adjacent to the X-Tenant-Context / IDOR fixes shipped in #331, #335, #336 over 2026-05-19",
+        "resolved: PR #420 merged 2026-05-22 — chore(api-server): remove dead voting & faults handler modules (cleared 19/31 phantom TODOs in dead code)",
+        "resolved: PR #421 merged 2026-05-22 — fix(api-server): route market_pricing, notification_preferences & reports DB lookups through RLS (cleared remaining 12 live TODOs)"
       ],
       "files": [
         "backend/servers/api-server/src/handlers/voting/mod.rs",
@@ -61,7 +61,7 @@
     },
     {
       "id": "dx-integration-marketplace-stubs",
-      "title": "Integration marketplace install/OAuth flows are placeholders \u2014 wire backend handlers + UI navigation",
+      "title": "Integration marketplace install/OAuth flows are placeholders — wire backend handlers + UI navigation",
       "vector": "dx",
       "score": 2,
       "status": "open",
@@ -72,12 +72,12 @@
         "commit 254f01d"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 \u2014 `TODO: Implement installation flow (Epic API-marketplace install)`",
-        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 \u2014 `TODO: Navigate to integration details route`",
-        "backend/servers/api-server/src/routes/integrations.rs \u2014 `TODO: Generate OAuth URL based on integration type`",
-        "backend/servers/api-server/src/routes/integrations.rs \u2014 `TODO: Full implementation needs building/unit context from TenantContext`",
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:234 — `TODO: Implement installation flow (Epic API-marketplace install)`",
+        "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx:238 — `TODO: Navigate to integration details route`",
+        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Generate OAuth URL based on integration type`",
+        "backend/servers/api-server/src/routes/integrations.rs — `TODO: Full implementation needs building/unit context from TenantContext`",
         "PR #328 explicitly downgraded the UI handlers from `console.log` placeholders to no-op TODOs but did not wire the real endpoints",
-        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain \u2014 item stays open on the UI side"
+        "[partial] 2026-05-23: the two integrations.rs OAuth TODO patterns are no longer present, but both IntegrationMarketplacePage.tsx TODOs (lines 234/238) remain — item stays open on the UI side"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/api-ecosystem/pages/IntegrationMarketplacePage.tsx",
@@ -98,9 +98,9 @@
         "commit 254f01d"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 \u2014 `TODO: wire to alerts API (mark-read mutation)`",
-        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:332 \u2014 `TODO: wire to alerts API (resolve mutation)`",
-        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:366 \u2014 `TODO: navigate to property detail route`"
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:329 — `TODO: wire to alerts API (mark-read mutation)`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:332 — `TODO: wire to alerts API (resolve mutation)`",
+        "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx:366 — `TODO: navigate to property detail route`"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/portfolio-performance/pages/PortfolioDashboardPage.tsx"
@@ -111,7 +111,7 @@
     },
     {
       "id": "refactor-integrations-rs-hot",
-      "title": "integrations.rs churn-hot \u2014 12,977 lines over 14d, candidate for module split",
+      "title": "integrations.rs churn-hot — 12,977 lines over 14d, candidate for module split",
       "vector": "refactor",
       "score": 2,
       "status": "done",
@@ -123,10 +123,10 @@
       ],
       "evidence": [
         "Top-1 code-churn file in window: 12,977 lines (additions+deletions)",
-        "Currently 4,327 lines \u2014 single-file route module covering install/OAuth/sync/webhook surfaces",
+        "Currently 4,327 lines — single-file route module covering install/OAuth/sync/webhook surfaces",
         "Drove most of the multitenancy + admin work in 2026-05-13..2026-05-19",
-        "repeated-churn 2026-05-23: 4,327 lines this run, runs_seen=2 \u2014 still a top-3 churn file",
-        "resolved: PR #456 merged 2026-05-24 \u2014 pm-tech-lead-split-churn-hot-routes split the monolith into routes/integrations/{install,oauth,sync,webhook,mod}.rs by surface; the single integrations.rs file is deleted"
+        "repeated-churn 2026-05-23: 4,327 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — pm-tech-lead-split-churn-hot-routes split the monolith into routes/integrations/{install,oauth,sync,webhook,mod}.rs by surface; the single integrations.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/integrations.rs"
@@ -137,7 +137,7 @@
     },
     {
       "id": "refactor-organizations-rs-hot",
-      "title": "organizations.rs churn-hot \u2014 12,060 lines over 14d (multitenancy + admin)",
+      "title": "organizations.rs churn-hot — 12,060 lines over 14d (multitenancy + admin)",
       "vector": "refactor",
       "score": 2,
       "status": "done",
@@ -151,8 +151,8 @@
         "Top-2 code-churn file in window: 12,060 lines",
         "Currently 4,018 lines",
         "Touched by Multitenancy Phases 2-5.5 (#260), Phase 6 P0 fixes (#265), tenant-context bypass fix (#335), audit forgery fix (#308)",
-        "repeated-churn 2026-05-23: 4,018 lines this run, runs_seen=2 \u2014 still a top-3 churn file",
-        "resolved: PR #456 merged 2026-05-24 \u2014 split into routes/organizations/{core,members,roles,settings,mod}.rs; the single organizations.rs file is deleted"
+        "repeated-churn 2026-05-23: 4,018 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — split into routes/organizations/{core,members,roles,settings,mod}.rs; the single organizations.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/organizations.rs"
@@ -163,7 +163,7 @@
     },
     {
       "id": "refactor-documents-rs-hot",
-      "title": "documents.rs churn-hot \u2014 10,659 lines over 14d",
+      "title": "documents.rs churn-hot — 10,659 lines over 14d",
       "vector": "refactor",
       "score": 2,
       "status": "done",
@@ -175,9 +175,9 @@
       ],
       "evidence": [
         "Top-3 code-churn file in window: 10,659 lines",
-        "Currently 3,553 lines \u2014 paired with repositories/document.rs (also 7,977 lines churn)",
-        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 \u2014 still a top-3 churn file",
-        "resolved: PR #456 merged 2026-05-24 \u2014 split into routes/documents/{core,folders,intelligence,shares,versions,mod}.rs; the single documents.rs file is deleted"
+        "Currently 3,553 lines — paired with repositories/document.rs (also 7,977 lines churn)",
+        "repeated-churn 2026-05-23: 3,553 lines this run, runs_seen=2 — still a top-3 churn file",
+        "resolved: PR #456 merged 2026-05-24 — split into routes/documents/{core,folders,intelligence,shares,versions,mod}.rs; the single documents.rs file is deleted"
       ],
       "files": [
         "backend/servers/api-server/src/routes/documents.rs"
@@ -198,12 +198,12 @@
         "PR #437"
       ],
       "evidence": [
-        "backend/servers/api-server/src/handlers/auth/mod.rs:217 \u2014 `pub struct AuthHandler;` (login/refresh_token/register/reset_password/etc) is declared via `pub mod auth;` but has ZERO references anywhere outside its own file (verified: grep `AuthHandler` excluding handlers/auth/ = empty)",
-        "backend/servers/api-server/src/handlers/buildings/mod.rs:326 \u2014 `pub struct BuildingHandler;` (create_building/get_building/assign_owner/etc) likewise has ZERO references outside its own file",
-        "the live /api/v1/auth/* and /api/v1/buildings/* routes reimplement this logic inline in routes/auth.rs (login at routes/auth.rs:468) and routes/buildings.rs \u2014 two parallel implementations means a security/correctness fix to the route version won't propagate to the handler version, and reviewers can be misled about which path is live",
-        "modules are still declared (`pub mod auth; pub mod buildings;` in handlers/mod.rs:9-10) so the dead code compiles and is discoverable \u2014 reachability gate not triggered (mod declarations exist); flagged as refactor, not phantom-TODO",
-        "found by rotating expert review (api-handlers segment, rust+security lenses); the handler code itself is clean (signature-verified refresh, token rotation, rate limiting, org-membership + RLS scoping) \u2014 the issue is the dead duplication, not a bug inside it",
-        "resolved: code patterns no longer present in cited files \u2014 PR #437 (merged 2026-05-23) deleted handlers/auth/mod.rs, handlers/buildings/mod.rs and handlers/mod.rs (2495 net lines), removing `pub mod handlers` from lib.rs/main.rs; the handlers/ dir is gone"
+        "backend/servers/api-server/src/handlers/auth/mod.rs:217 — `pub struct AuthHandler;` (login/refresh_token/register/reset_password/etc) is declared via `pub mod auth;` but has ZERO references anywhere outside its own file (verified: grep `AuthHandler` excluding handlers/auth/ = empty)",
+        "backend/servers/api-server/src/handlers/buildings/mod.rs:326 — `pub struct BuildingHandler;` (create_building/get_building/assign_owner/etc) likewise has ZERO references outside its own file",
+        "the live /api/v1/auth/* and /api/v1/buildings/* routes reimplement this logic inline in routes/auth.rs (login at routes/auth.rs:468) and routes/buildings.rs — two parallel implementations means a security/correctness fix to the route version won't propagate to the handler version, and reviewers can be misled about which path is live",
+        "modules are still declared (`pub mod auth; pub mod buildings;` in handlers/mod.rs:9-10) so the dead code compiles and is discoverable — reachability gate not triggered (mod declarations exist); flagged as refactor, not phantom-TODO",
+        "found by rotating expert review (api-handlers segment, rust+security lenses); the handler code itself is clean (signature-verified refresh, token rotation, rate limiting, org-membership + RLS scoping) — the issue is the dead duplication, not a bug inside it",
+        "resolved: code patterns no longer present in cited files — PR #437 (merged 2026-05-23) deleted handlers/auth/mod.rs, handlers/buildings/mod.rs and handlers/mod.rs (2495 net lines), removing `pub mod handlers` from lib.rs/main.rs; the handlers/ dir is gone"
       ],
       "files": [
         "backend/servers/api-server/src/handlers/auth/mod.rs",
@@ -226,10 +226,10 @@
         "inquiries.rs:554"
       ],
       "evidence": [
-        "backend/servers/reality-server/src/routes/inquiries.rs:554 \u2014 mark_as_read binds `_principal: RequestPrincipal` but discards it, calling mark_inquiry_read(id) with only the path id",
-        "wired at inquiries.rs:66 \u2014 PUT /api/v1/inquiries/{id}/read -> mark_as_read (reachable production route)",
-        "backend/crates/db/src/repositories/reality_portal.rs:768 \u2014 `UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL` has no realtor/owner predicate",
-        "sibling handlers scope correctly: get_inquiry uses get_inquiry_for_realtor(id, principal.user_id) and respond_to_inquiry(id, ...) \u2014 mark_as_read is the lone unscoped write",
+        "backend/servers/reality-server/src/routes/inquiries.rs:554 — mark_as_read binds `_principal: RequestPrincipal` but discards it, calling mark_inquiry_read(id) with only the path id",
+        "wired at inquiries.rs:66 — PUT /api/v1/inquiries/{id}/read -> mark_as_read (reachable production route)",
+        "backend/crates/db/src/repositories/reality_portal.rs:768 — `UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL` has no realtor/owner predicate",
+        "sibling handlers scope correctly: get_inquiry uses get_inquiry_for_realtor(id, principal.user_id) and respond_to_inquiry(id, ...) — mark_as_read is the lone unscoped write",
         "any authenticated portal user can flip another realtor's inquiry to read by enumerating the UUID (cross-account write IDOR); not covered by open PR #435, which defers a separate community-routes IDOR cluster"
       ],
       "files": [
@@ -238,7 +238,7 @@
       ],
       "created_at": "2026-05-23",
       "updated_at": "2026-05-25",
-      "plan": "plans/security-inquiry-read-idor.md"
+      "plan": "plans/_archive/security-inquiry-read-idor.md"
     },
     {
       "id": "security-ssrf-outbound-url-validation",
@@ -254,12 +254,12 @@
         "PR #450"
       ],
       "evidence": [
-        "issue #439 (P1-05, severity high) \u2014 post-merge review of PR #435: the P1-05 fix hardened MIME/size/magic-bytes on the response body but did NOT validate signed_url itself; SSRF still open",
-        "backend/servers/api-server/src/routes/signatures.rs:628 \u2014 store_signed_document does `client.get(signed_url)` on a bare reqwest::Client::new() with no host validation and no redirect policy; the comment at lines 613-619 claims SSRF hardening but only covers the response",
-        "backend/servers/api-server/src/routes/integrations.rs:2743 \u2014 webhook-test handler does `client.post(&subscription.url)` with the stored URL; redirects are disabled (Policy::none()) but the host is never checked against private/loopback/link-local ranges",
-        "backend/servers/api-server/src/services/actions/api_call.rs:152 \u2014 a working validate_external_url guard (is_blocked_v4 at :212) already exists but is a private method applied only at :251; verified both other sinks unguarded",
+        "issue #439 (P1-05, severity high) — post-merge review of PR #435: the P1-05 fix hardened MIME/size/magic-bytes on the response body but did NOT validate signed_url itself; SSRF still open",
+        "backend/servers/api-server/src/routes/signatures.rs:628 — store_signed_document does `client.get(signed_url)` on a bare reqwest::Client::new() with no host validation and no redirect policy; the comment at lines 613-619 claims SSRF hardening but only covers the response",
+        "backend/servers/api-server/src/routes/integrations.rs:2743 — webhook-test handler does `client.post(&subscription.url)` with the stored URL; redirects are disabled (Policy::none()) but the host is never checked against private/loopback/link-local ranges",
+        "backend/servers/api-server/src/services/actions/api_call.rs:152 — a working validate_external_url guard (is_blocked_v4 at :212) already exists but is a private method applied only at :251; verified both other sinks unguarded",
         "authenticated org member (or a poisoned e-signature provider) can target 169.254.169.254 / 127.0.0.1 / internal services and have the server fetch/POST to them",
-        "resolved: PR #450 merged 2026-05-24 \u2014 pm-backend-fix-ssrf-outbound: validate_external_url added to common crate (backend/crates/common/src/url_validation.rs); now gates signatures.rs:625 (store_signed_document) and routes/integrations/webhook.rs:442 (webhook-test). Both sinks reject private/loopback/link-local hosts before the outbound request"
+        "resolved: PR #450 merged 2026-05-24 — pm-backend-fix-ssrf-outbound: validate_external_url added to common crate (backend/crates/common/src/url_validation.rs); now gates signatures.rs:625 (store_signed_document) and routes/integrations/webhook.rs:442 (webhook-test). Both sinks reject private/loopback/link-local hosts before the outbound request"
       ],
       "files": [
         "backend/servers/api-server/src/routes/signatures.rs",
@@ -283,11 +283,11 @@
         "PR #459"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:117 \u2014 `if (requiredRoles && requiredRoles.length > 0 && user?.role)` short-circuits the role check when user.role is falsy, falling through to `return <>{children}</>` (fail-open)",
-        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx \u2014 AuthContext does not populate a `role` field on the user, so user.role is undefined in practice",
-        "no route in the app currently passes `requiredRoles` (grep of frontend/apps/ppt-web/src shows only ProtectedRoute's own definition + JSDoc) \u2014 so the bypass is LATENT, not currently exploitable; client-side gating is UX, the real authz is server-side RLS",
-        "hardening item: when role-gating goes live (relevant to the 79-2 auth-flow wiring in draft PR #444), this guard must deny on missing role rather than skip \u2014 both Frontend and Completeness reviewers independently flagged the same fall-through",
-        "resolved: PR #459 merged 2026-05-24 \u2014 pm-frontend-protectedroute-failopen: ProtectedRoute.tsx:119 now `if (requiredRoles && requiredRoles.length > 0)` with deny-on-missing-role; user.role populated via api-client auth. Follow-up #482 notes the role fallback uses tenants[0] (multi-tenant edge) \u2014 tracked separately as a GitHub issue"
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:117 — `if (requiredRoles && requiredRoles.length > 0 && user?.role)` short-circuits the role check when user.role is falsy, falling through to `return <>{children}</>` (fail-open)",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx — AuthContext does not populate a `role` field on the user, so user.role is undefined in practice",
+        "no route in the app currently passes `requiredRoles` (grep of frontend/apps/ppt-web/src shows only ProtectedRoute's own definition + JSDoc) — so the bypass is LATENT, not currently exploitable; client-side gating is UX, the real authz is server-side RLS",
+        "hardening item: when role-gating goes live (relevant to the 79-2 auth-flow wiring in draft PR #444), this guard must deny on missing role rather than skip — both Frontend and Completeness reviewers independently flagged the same fall-through",
+        "resolved: PR #459 merged 2026-05-24 — pm-frontend-protectedroute-failopen: ProtectedRoute.tsx:119 now `if (requiredRoles && requiredRoles.length > 0)` with deny-on-missing-role; user.role populated via api-client auth. Follow-up #482 notes the role fallback uses tenants[0] (multi-tenant edge) — tracked separately as a GitHub issue"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
@@ -301,25 +301,28 @@
       "id": "refactor-ppt-web-untranslated-strings",
       "title": "ppt-web status/auth components hardcode English in an otherwise i18n'd app",
       "vector": "refactor",
-      "score": 1,
+      "score": 2,
       "status": "open",
       "confidence": "medium",
       "sources": [
-        "code-review ppt-web-ui 2026-05-24"
+        "code-review ppt-web-ui 2026-05-24",
+        "rotating-expert-review"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 \u2014 status labels/descriptions ('Connected','Connecting...','Connection Error','Real-time updates are active','Click to reconnect') hardcoded; component never imports useTranslation",
-        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 \u2014 'You are offline. Some features may be unavailable.' / 'Connection restored' (aria-live alert) hardcoded English",
-        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 \u2014 'Checking authentication','Loading...','Access Denied','You do not have permission to access this page.' hardcoded on auth/loading paths",
-        "peers (LoginPage, Toast, ErrorBoundary, AuthRequiredGate, PageLoading, LanguageSwitcher) route all user-facing text through react-i18next (sk/cs/de/en) \u2014 these three diverge; low severity (text renders, just in English)"
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 — status labels/descriptions ('Connected','Connecting...','Connection Error','Real-time updates are active','Click to reconnect') hardcoded; component never imports useTranslation",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — 'You are offline. Some features may be unavailable.' / 'Connection restored' (aria-live alert) hardcoded English",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 — 'Checking authentication','Loading...','Access Denied','You do not have permission to access this page.' hardcoded on auth/loading paths",
+        "peers (LoginPage, Toast, ErrorBoundary, AuthRequiredGate, PageLoading, LanguageSwitcher) route all user-facing text through react-i18next (sk/cs/de/en) — these three diverge; low severity (text renders, just in English)",
+        "App.tsx:971-995 — Dispute detail UI hardcodes 'Dispute: '/'Description'/'Timeline'/'No timeline events yet.' (not wrapped in t()) [code-review ppt-web-core]"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx",
         "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx",
-        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx"
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx",
+        "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-05-24",
-      "updated_at": "2026-05-24",
+      "updated_at": "2026-05-25",
       "plan": null
     },
     {
@@ -334,9 +337,9 @@
         "Announcer.tsx:49"
       ],
       "evidence": [
-        "frontend/apps/ppt-web/src/components/Announcer.tsx:49,58 \u2014 the 'clear-then-set' announce timeouts (setTimeout(() => setPoliteMessage(message), 100) and the assertive equivalent) are not stored in politeTimeoutRef/assertiveTimeoutRef; only the 3000ms clear timeout is tracked",
+        "frontend/apps/ppt-web/src/components/Announcer.tsx:49,58 — the 'clear-then-set' announce timeouts (setTimeout(() => setPoliteMessage(message), 100) and the assertive equivalent) are not stored in politeTimeoutRef/assertiveTimeoutRef; only the 3000ms clear timeout is tracked",
         "on a rapid second announce(), the prior pending set is never cancelled, so a stale message can be written after the new one; unmount cleanup clears only the 3000ms ref, not these pending sets",
-        "low-severity a11y bug \u2014 affects screen-reader announcements only; fix is to store and clear the set-timeouts alongside the existing clear-timeout refs"
+        "low-severity a11y bug — affects screen-reader announcements only; fix is to store and clear the set-timeouts alongside the existing clear-timeout refs"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/Announcer.tsx"
@@ -358,11 +361,11 @@
         "equipment.rs:144"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs:1133 \u2014 delete_equipment binds `_principal: RequestPrincipal` but discards it, calling state.equipment_repo.delete(id) with only the path id",
-        "wired at ai.rs:1042 \u2014 DELETE /{id} -> delete_equipment (reachable production route under the AI equipment router)",
-        "backend/crates/db/src/repositories/equipment.rs:144 \u2014 `DELETE FROM equipment WHERE id = $1` has no org/owner/tenant predicate",
+        "backend/servers/api-server/src/routes/ai.rs:1133 — delete_equipment binds `_principal: RequestPrincipal` but discards it, calling state.equipment_repo.delete(id) with only the path id",
+        "wired at ai.rs:1042 — DELETE /{id} -> delete_equipment (reachable production route under the AI equipment router)",
+        "backend/crates/db/src/repositories/equipment.rs:144 — `DELETE FROM equipment WHERE id = $1` has no org/owner/tenant predicate",
         "update_equipment (equipment_repo.update(id, req); equipment.rs:104 `UPDATE equipment SET ... WHERE id`) and update_maintenance (equipment_repo.update_maintenance(id, req); equipment.rs:213) share the same discard pattern",
-        "contrast: update_workflow/delete_workflow in the same file scope via workflow_repo.update(id, org_id) / delete(id, org_id); acknowledge_alert passes principal.user_id \u2014 the equipment cluster is the lone unscoped group",
+        "contrast: update_workflow/delete_workflow in the same file scope via workflow_repo.update(id, org_id) / delete(id, org_id); acknowledge_alert passes principal.user_id — the equipment cluster is the lone unscoped group",
         "any authenticated user can delete/modify another tenant's equipment by enumerating the UUID (cross-tenant write IDOR); same class as the voice-device IDOR fixed in PR #461, found by rotating expert review (Rust, api-core), full call path traced"
       ],
       "files": [
@@ -371,11 +374,11 @@
       ],
       "created_at": "2026-05-25",
       "updated_at": "2026-05-25",
-      "plan": "plans/security-equipment-idor.md"
+      "plan": "plans/_archive/security-equipment-idor.md"
     },
     {
       "id": "refactor-ai-rs-hot",
-      "title": "ai.rs churn-hot \u2014 3,142 lines this run; 3,142-line route monolith, candidate for module split",
+      "title": "ai.rs churn-hot — 3,142 lines this run; 3,142-line route monolith, candidate for module split",
       "vector": "refactor",
       "score": 1,
       "status": "open",
@@ -385,8 +388,8 @@
       ],
       "evidence": [
         "Top code-churn source file this run: 3,142 lines (additions+deletions)",
-        "3,142-line single-file route module covering AI sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices and photo enhancement \u2014 same monolith class as the integrations/organizations/documents files just split in PR #456",
-        "harbored the voice-device IDOR (fixed #461) and the equipment IDOR found this run \u2014 surface count makes cross-tenant-scoping bugs easy to miss; splitting by surface (sessions/equipment/workflows/voice/...) would shrink review blast radius"
+        "3,142-line single-file route module covering AI sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices and photo enhancement — same monolith class as the integrations/organizations/documents files just split in PR #456",
+        "harbored the voice-device IDOR (fixed #461) and the equipment IDOR found this run — surface count makes cross-tenant-scoping bugs easy to miss; splitting by surface (sessions/equipment/workflows/voice/...) would shrink review blast radius"
       ],
       "files": [
         "backend/servers/api-server/src/routes/ai.rs"
@@ -397,7 +400,7 @@
     },
     {
       "id": "refactor-platform-admin-rs-hot",
-      "title": "platform_admin.rs churn-hot \u2014 2,762 lines this run (admin/OAuth-provider feature work)",
+      "title": "platform_admin.rs churn-hot — 2,762 lines this run (admin/OAuth-provider feature work)",
       "vector": "refactor",
       "score": 1,
       "status": "open",
@@ -407,7 +410,7 @@
       ],
       "evidence": [
         "Top-2 code-churn source file this run: 2,762 lines (additions+deletions)",
-        "2,762-line route module; churned from the OAuth-provider admin + platform-health UI backend work (gap-10a/gap-10b PRs #469/#471) \u2014 active feature development, not yet repeated-churn (runs_seen=1)",
+        "2,762-line route module; churned from the OAuth-provider admin + platform-health UI backend work (gap-10a/gap-10b PRs #469/#471) — active feature development, not yet repeated-churn (runs_seen=1)",
         "watch candidate: if it stays a top-3 hotspot next run it warrants a module-split like PR #456"
       ],
       "files": [
@@ -419,7 +422,7 @@
     },
     {
       "id": "refactor-announcements-rs-hot",
-      "title": "announcements.rs churn-hot \u2014 2,722 lines this run (Epic 2B + Epic 6 work)",
+      "title": "announcements.rs churn-hot — 2,722 lines this run (Epic 2B + Epic 6 work)",
       "vector": "refactor",
       "score": 1,
       "status": "open",
@@ -429,7 +432,7 @@
       ],
       "evidence": [
         "Top-3 code-churn source file this run: 2,722 lines (additions+deletions)",
-        "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) \u2014 active feature development, runs_seen=1",
+        "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development, runs_seen=1",
         "watch candidate: re-evaluate for a split if it persists as a hotspot"
       ],
       "files": [
@@ -451,8 +454,8 @@
       ],
       "evidence": [
         "PR #464 (gap-6-6-neighbor-listing-verify) touched frontend/apps/ppt-web/src/App.tsx and src/routes/lazyRoutes.tsx (new neighbors feature wired in) with no matching docs/screens/ppt/*.md update",
-        "added frontend/apps/ppt-web/src/features/neighbors/{hooks,index} + mobile NeighborsScreen \u2014 a real new screen surface",
-        "review candidate (heuristic): screen-map should gain a neighbors entry; not auto-promotable \u2014 a human should confirm whether an existing screen doc covers this"
+        "added frontend/apps/ppt-web/src/features/neighbors/{hooks,index} + mobile NeighborsScreen — a real new screen surface",
+        "review candidate (heuristic): screen-map should gain a neighbors entry; not auto-promotable — a human should confirm whether an existing screen doc covers this"
       ],
       "files": [
         "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
@@ -473,7 +476,7 @@
       ],
       "evidence": [
         "PR #460 (fix(reality-web): host inference wins over env for the production api base) touched frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx with no docs/screens/reality/*.md update",
-        "likely false-positive: the change was an API-base host-inference bugfix inside an existing listing-detail page, not a route/screen change \u2014 the screen doc does not need updating",
+        "likely false-positive: the change was an API-base host-inference bugfix inside an existing listing-detail page, not a route/screen change — the screen doc does not need updating",
         "kept as a low review candidate per the drift heuristic's known false-positive caveat; de-prioritise unless a human marks it real"
       ],
       "files": [
@@ -486,7 +489,7 @@
     },
     {
       "id": "refactor-ai-rs-module-split",
-      "title": "ai.rs (3,134 LOC) \u2014 explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs",
+      "title": "ai.rs (3,134 LOC) — explicit module-split into routes/ai/{sessions,equipment,workflows,voice,llm,mod}.rs",
       "vector": "refactor",
       "score": 2,
       "status": "open",
@@ -497,9 +500,9 @@
         "security-equipment-idor"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/ai.rs \u2014 3,134 lines; single-file route module covering AI chat sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices, and photo-enhancement surfaces",
-        "19 handlers bind `_principal: RequestPrincipal` and discard it \u2014 the IDOR pattern that produced the voice-device IDOR (PR #461) and the equipment IDOR cluster still in backlog",
-        "proposed split: routes/ai/sessions.rs, routes/ai/equipment.rs, routes/ai/workflows.rs, routes/ai/voice.rs, routes/ai/llm.rs, routes/ai/mod.rs \u2014 each file target <700 LOC",
+        "backend/servers/api-server/src/routes/ai.rs — 3,134 lines; single-file route module covering AI chat sessions, equipment/predictive-maintenance, workflows, lease/listing generation, voice devices, and photo-enhancement surfaces",
+        "19 handlers bind `_principal: RequestPrincipal` and discard it — the IDOR pattern that produced the voice-device IDOR (PR #461) and the equipment IDOR cluster still in backlog",
+        "proposed split: routes/ai/sessions.rs, routes/ai/equipment.rs, routes/ai/workflows.rs, routes/ai/voice.rs, routes/ai/llm.rs, routes/ai/mod.rs — each file target <700 LOC",
         "split enables per-surface scoping review; sibling pattern established by PR #456 (integrations/organizations/documents split)",
         "CI lint check-discarded-principal.sh (backend/scripts/lints/) flags any _principal discards that survive the split"
       ],
@@ -512,7 +515,7 @@
     },
     {
       "id": "refactor-platform-admin-rs-module-split",
-      "title": "platform_admin.rs (2,762 LOC) \u2014 explicit module-split into routes/platform_admin/{tenants,features,billing,audit,mod}.rs",
+      "title": "platform_admin.rs (2,762 LOC) — explicit module-split into routes/platform_admin/{tenants,features,billing,audit,mod}.rs",
       "vector": "refactor",
       "score": 2,
       "status": "open",
@@ -521,9 +524,9 @@
         "pm-tech-lead analysis 2026-05-25"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/platform_admin.rs \u2014 2,762 lines; highest-privilege route module covering platform-level tenant management, feature-flag control, billing overrides, audit log, and OAuth-provider admin surfaces",
-        "highest-privilege surface in the system \u2014 large single file increases review blast radius; admin-core gate coverage cannot be scanned per-surface",
-        "proposed split: routes/platform_admin/tenants.rs, features.rs, billing.rs, audit.rs, mod.rs \u2014 each file target <700 LOC",
+        "backend/servers/api-server/src/routes/platform_admin.rs — 2,762 lines; highest-privilege route module covering platform-level tenant management, feature-flag control, billing overrides, audit log, and OAuth-provider admin surfaces",
+        "highest-privilege surface in the system — large single file increases review blast radius; admin-core gate coverage cannot be scanned per-surface",
+        "proposed split: routes/platform_admin/tenants.rs, features.rs, billing.rs, audit.rs, mod.rs — each file target <700 LOC",
         "split enables per-surface admin-gate coverage; sibling pattern established by PR #456",
         "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards introduced during or after the split"
       ],
@@ -536,7 +539,7 @@
     },
     {
       "id": "refactor-announcements-rs-module-split",
-      "title": "announcements.rs (2,722 LOC) \u2014 explicit module-split into routes/announcements/{crud,targeting,delivery,reactions,mod}.rs",
+      "title": "announcements.rs (2,722 LOC) — explicit module-split into routes/announcements/{crud,targeting,delivery,reactions,mod}.rs",
       "vector": "refactor",
       "score": 2,
       "status": "open",
@@ -545,14 +548,60 @@
         "pm-tech-lead analysis 2026-05-25"
       ],
       "evidence": [
-        "backend/servers/api-server/src/routes/announcements.rs \u2014 2,722 lines; single-file route module covering announcement CRUD, audience targeting, push/email delivery triggers, and resident reaction surfaces",
-        "churned in Epic 2B notification pipeline (PR #463) and Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) \u2014 active feature development increasing merge-conflict and review risk",
-        "proposed split: routes/announcements/crud.rs, targeting.rs, delivery.rs, reactions.rs, mod.rs \u2014 each file target <700 LOC",
+        "backend/servers/api-server/src/routes/announcements.rs — 2,722 lines; single-file route module covering announcement CRUD, audience targeting, push/email delivery triggers, and resident reaction surfaces",
+        "churned in Epic 2B notification pipeline (PR #463) and Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development increasing merge-conflict and review risk",
+        "proposed split: routes/announcements/crud.rs, targeting.rs, delivery.rs, reactions.rs, mod.rs — each file target <700 LOC",
         "split aligns ownership with frontend feature slices (ppt-web announcements feature); sibling pattern established by PR #456",
         "CI lint check-discarded-principal.sh (backend/scripts/lints/) catches any _principal discards on announcement mutation handlers"
       ],
       "files": [
         "backend/servers/api-server/src/routes/announcements.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": null
+    },
+    {
+      "id": "test-gap-inquiry-idor-regression",
+      "title": "Add regression tests for inquiry mark_as_read cross-tenant IDOR fix (PR #497)",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 5,
+      "status": "ready",
+      "sources": [
+        "PR #497"
+      ],
+      "evidence": [
+        "PR #497 fixed inquiry mark_as_read IDOR via ownership EXISTS check (reality_portal.rs:779) but shipped with NO test file",
+        "PR #497 body has 3 unchecked test TODOs: B->404 & read_at NULL; A->204 set; idempotent re-mark->204",
+        "find backend -path '*test*' -name '*.rs' | xargs grep -l inquir -> only rls_smoke_tests.rs; no mark-read ownership coverage"
+      ],
+      "files": [
+        "backend/servers/reality-server/src/routes/inquiries.rs",
+        "backend/crates/db/src/repositories/reality_portal.rs"
+      ],
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-25",
+      "plan": "plans/test-gap-inquiry-idor-regression.md"
+    },
+    {
+      "id": "refactor-app-tsx-route-coupling",
+      "title": "Reduce App.tsx route-aggregator coupling (top churn hotspot, merge-conflict risk)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #474",
+        "PR #475",
+        "PR #489"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx churned 367 lines across 3 PRs this run (#474 +289, #489 +72, #475 +6)",
+        "pm-scrum-master flagged triple-conflict rebase risk across #503/#500/80-3 wiring on the central router"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-05-25",
       "updated_at": "2026-05-25",

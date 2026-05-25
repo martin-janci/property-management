@@ -5,48 +5,51 @@
  *
  * Reads environment-specific .env files and injects variables into:
  *   - `extra` block (accessible via expo-constants: Constants.expoConfig.extra)
- *   - `ios.infoPlist` (native iOS Info.plist keys: API_BASE_URL, ENVIRONMENT)
+ *   - `ios.infoPlist` (native iOS app Info.plist keys)
+ *   - `EXPO_PUBLIC_*` env vars are handled automatically by the Expo build
+ *     system when loaded via Metro (see metro.config.js)
  *
- * Environment selection via APP_ENV:
- *   APP_ENV=development  (default in __DEV__ mode) -> loads .env.development
- *   APP_ENV=staging                                -> loads .env.staging
- *   APP_ENV=production  (default in release builds) -> loads .env.production
+ * Environment selection:
+ *   APP_ENV=development  →  .env.development  (default in __DEV__ mode)
+ *   APP_ENV=staging      →  .env.staging
+ *   APP_ENV=production   →  .env.production   (default in release builds)
  *
  * Usage:
- *   pnpm -F mobile start                        # loads .env.development
- *   APP_ENV=staging pnpm -F mobile start        # loads .env.staging
- *   APP_ENV=production pnpm -F mobile start     # loads .env.production
+ *   APP_ENV=staging expo start      # run with staging config
+ *   APP_ENV=production expo build   # build with production config
  */
 
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+/** Supported environments */
 type AppEnvironment = 'development' | 'staging' | 'production';
 
-function getAppEnv(): AppEnvironment {
-  const raw = process.env.APP_ENV ?? '';
-  if (raw === 'staging' || raw === 'production' || raw === 'development') {
-    return raw;
-  }
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
-}
-
-function loadEnvFile(env: AppEnvironment): Record<string, string> {
+function loadEnvFile(env: AppEnvironment): dotenv.DotenvParseOutput {
   const envFile = path.resolve(__dirname, `.env.${env}`);
   const result = dotenv.config({ path: envFile });
   if (result.error) {
-    // Non-fatal: fall back to process.env values
     console.warn(`[app.config.ts] Could not load ${envFile}: ${result.error.message}`);
     return {};
   }
   return result.parsed ?? {};
 }
 
+function getAppEnv(): AppEnvironment {
+  const raw = process.env.APP_ENV ?? '';
+  if (raw === 'staging' || raw === 'production' || raw === 'development') {
+    return raw;
+  }
+  // Fall back to NODE_ENV-based detection
+  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = getAppEnv();
   const envVars = loadEnvFile(appEnv);
 
+  // Resolved values (env file takes priority, then process.env fallback)
   const apiBaseUrl =
     envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
 
@@ -72,16 +75,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier: 'three.two.bit.ppt.management',
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
+        // --------------- environment variable keys exposed natively ---------------
         /**
-         * API_BASE_URL - injected into iOS Info.plist at build time.
-         * Prefer reading via Constants.expoConfig.extra.API_BASE_URL in JS code.
+         * API base URL injected at build time.
+         * Readable via NativeModules or as an Info.plist lookup.
+         * Prefer reading via expo-constants (Constants.expoConfig.extra) in JS.
          */
         API_BASE_URL: apiBaseUrl,
         /**
-         * ENVIRONMENT - identifies the runtime environment natively.
-         * Values: development | staging | production
+         * Current environment identifier: development | staging | production
          */
         ENVIRONMENT: environment,
+        // --------------------------------------------------------------------------
         NSPhotoLibraryUsageDescription:
           'The app needs access to your photos to upload property images.',
         NSCameraUsageDescription:
@@ -99,7 +104,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: ['expo-localization', 'expo-secure-store'],
 
     /**
-     * extra - accessible in JS via:
+     * `extra` block — accessible anywhere in JS via:
      *   import Constants from 'expo-constants';
      *   Constants.expoConfig?.extra?.API_BASE_URL
      *

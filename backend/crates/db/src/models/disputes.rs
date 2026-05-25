@@ -64,6 +64,44 @@ pub mod dispute_status {
     ];
 }
 
+/// Dispute state machine — valid status transitions.
+///
+/// Lifecycle: `filed` (open) → `under_review` (in-review) → `resolved`
+pub mod dispute_state_machine {
+    /// Returns `true` when the `from` → `to` status transition is permitted.
+    pub fn is_valid_transition(from: &str, to: &str) -> bool {
+        match from {
+            "filed" => matches!(to, "under_review" | "awaiting_response" | "withdrawn"),
+            "under_review" => {
+                matches!(
+                    to,
+                    "mediation" | "awaiting_response" | "resolved" | "escalated"
+                )
+            }
+            "awaiting_response" => {
+                matches!(to, "under_review" | "mediation" | "resolved" | "withdrawn")
+            }
+            "mediation" => matches!(to, "under_review" | "resolved" | "escalated"),
+            "escalated" => matches!(to, "under_review" | "resolved" | "closed"),
+            "resolved" => to == "closed",
+            _ => false,
+        }
+    }
+
+    /// Returns the allowed next statuses from `from`, or an empty slice for terminals.
+    pub fn allowed_transitions(from: &str) -> &'static [&'static str] {
+        match from {
+            "filed" => &["under_review", "awaiting_response", "withdrawn"],
+            "under_review" => &["mediation", "awaiting_response", "resolved", "escalated"],
+            "awaiting_response" => &["under_review", "mediation", "resolved", "withdrawn"],
+            "mediation" => &["under_review", "resolved", "escalated"],
+            "escalated" => &["under_review", "resolved", "closed"],
+            "resolved" => &["closed"],
+            _ => &[],
+        }
+    }
+}
+
 /// Dispute priority constants.
 pub mod dispute_priority {
     pub const LOW: &str = "low";

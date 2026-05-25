@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T04:10:00Z",
+  "generated": "2026-05-25T13:57:14Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -41,7 +41,8 @@
       "evidence": [
         "backend mark_read/acknowledge/get_acknowledgments routes",
         "mobile screen shipped, web announcements buildStatus planned",
-        "API types AcknowledgmentStats/UserAcknowledgmentStatus"
+        "API types AcknowledgmentStats/UserAcknowledgmentStatus",
+        "PR #474 wired view-page (mark_read/acknowledge)"
       ],
       "gaps": [
         "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged",
@@ -65,7 +66,8 @@
       "evidence": [
         "backend list/create/delete comment routes",
         "API types AnnouncementComment/CommentWithAuthor defined",
-        "frontend integration in announcements screen"
+        "frontend integration in announcements screen",
+        "PR #475 wired comments web UI"
       ],
       "gaps": [
         "comments web UI in draft PRs #474/#475/#479 — not yet merged",
@@ -239,7 +241,7 @@
         "handlers get_download_url/get_preview_url",
         "screen document-detail with PDF preview spec",
         "SigV4 presigned URLs via aws-sdk-s3",
-        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf \u2014 web preview done; mobile slice still pending"
+        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf — web preview done; mobile slice still pending"
       ],
       "gaps": [
         "sprint-status ready-for-dev",
@@ -762,14 +764,14 @@
         "backend mediation routes assumed implemented (prior scan)"
       ],
       "gaps": [
-        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub \u2014 does not render DisputeDetailPage.tsx",
-        "CRITICAL: No /disputes/:disputeId/mediation route \u2014 MediationPage never rendered",
+        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub — does not render DisputeDetailPage.tsx",
+        "CRITICAL: No /disputes/:disputeId/mediation route — MediationPage never rendered",
         "CRITICAL: useEscalateDispute, useResolveDispute, useAssignMediator, useAddMediationNote not called from any App.tsx route handler",
         "CRITICAL: onNavigateToMediation prop in DisputeDetailPage but no route target exists",
         "No mediation screen-map entry under docs/screens/ppt/"
       ],
       "last_checked": "2026-05-25",
-      "verification_note": "Verified 2026-05-25 by gap-80-3-mediation-verify. Pages and hooks are complete; only App.tsx route wiring is missing. Cannot promote to done \u2014 needs dedicated wiring task."
+      "verification_note": "Verified 2026-05-25 by gap-80-3-mediation-verify. Pages and hooks are complete; only App.tsx route wiring is missing. Cannot promote to done — needs dedicated wiring task."
     },
     {
       "epic": "epic-81",
