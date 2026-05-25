@@ -390,6 +390,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(7),
+        signature_reminder_days_before: std::env::var("SIGNATURE_REMINDER_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
