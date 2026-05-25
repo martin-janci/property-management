@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T10:30:00Z",
+  "generated": "2026-05-25T12:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -802,13 +802,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T10:30:00Z",
+      "last_updated": "2026-05-25T12:30:00Z",
       "status_changed_at": "2026-05-25T10:30:00Z",
       "pr_number": 502,
       "pr_url": "https://github.com/martin-janci/property-management/pull/502",
       "merged_at": null,
       "implementer_summary": "pr=502 status=partial specialist=rust-backend note=POST /api/v1/documents/upload missing from backend; both web+mobile call it but endpoint not implemented — sprint-status cannot be promoted; Band A clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=findings verified: multipart /upload endpoint absent from backend; two-step S3 flow undocumented in clients; Band A clean; safe to merge as verification report; sprint-status stays ready-for-dev"
     },
     {
       "task_id": "gap-82-1-swiftui-audit",
@@ -816,13 +816,14 @@
       "status": "review",
       "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T10:30:00Z",
+      "last_updated": "2026-05-25T12:30:00Z",
       "status_changed_at": "2026-05-25T10:30:00Z",
       "pr_number": 501,
       "pr_url": "https://github.com/martin-janci/property-management/pull/501",
       "merged_at": null,
       "implementer_summary": "pr=501 status=done specialist=ios-swiftui note=audit complete; 11 reality-mobile screen maps created; 9 stub routes + 6 arch gaps documented; Gradle Band-A blocked by sandbox",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all audit findings verified accurate; 11 screen maps complete and correct; 9 stub destinations + 6 arch gaps correctly documented; dual SsoService instance risk real; safe to merge as documentation",
+      "reviewer_verdict": "approve"
     },
     {
       "task_id": "gap-82-2-deep-linking",
@@ -830,13 +831,14 @@
       "status": "review",
       "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T10:08:44Z",
-      "last_updated": "2026-05-25T10:30:00Z",
+      "last_updated": "2026-05-25T12:30:00Z",
       "status_changed_at": "2026-05-25T10:30:00Z",
       "pr_number": 500,
       "pr_url": "https://github.com/martin-janci/property-management/pull/500",
       "merged_at": null,
       "implementer_summary": "pr=500 status=done specialist=ios-swiftui note=DeepLinkHandler (15 routes+SSO), NavigationStateRestorationService, routeMirror arrays; 34 new tests",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=bug: NavigationStateRestorationService.restore() sets NavigationPath but never updates mirror arrays — second save silently discards restored stack; fix: add restoreStack(_:for:) coordinator method; also: encode nil for .login/.register routes",
+      "reviewer_verdict": "changes"
     }
   ]
 }
