@@ -1413,7 +1413,12 @@ fn default_execution_limit() -> i64 {
 
 /// Valid execution status values for query filtering.
 const VALID_EXECUTION_STATUSES: &[&str] = &[
-    "pending", "running", "completed", "failed", "cancelled", "skipped",
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
+    "skipped",
 ];
 
 /// Build a per-execution download URL when the execution has a file ready.
@@ -1423,10 +1428,7 @@ const VALID_EXECUTION_STATUSES: &[&str] = &[
 /// is set (i.e. the execution actually produced a file).
 fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -> Option<String> {
     if exec.file_key.is_some() {
-        Some(format!(
-            "/api/v1/reports/executions/{}/download",
-            exec.id
-        ))
+        Some(format!("/api/v1/reports/executions/{}/download", exec.id))
     } else {
         None
     }
