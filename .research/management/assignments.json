@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T06:27:18Z",
+  "generated": "2026-05-25T06:29:19Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -709,15 +709,15 @@
     {
       "task_id": "pm-frontend-verify-epic81-schedule-execution",
       "branch": "auto-impl/pm-frontend-verify-epic81-schedule-execu",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "failed",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T06:09:06Z",
-      "last_updated": "2026-05-25T06:09:06Z",
-      "status_changed_at": "2026-05-25T06:09:06Z",
+      "last_updated": "2026-05-25T06:29:19Z",
+      "status_changed_at": "2026-05-25T06:29:19Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=none status=done specialist=react-web note=verified: PR#489 merged to dev (d1e3714c); 81-1 pause/resume on dev via cherry-pick; 81-2 execution-history wired+screen-map created; 0 new TS errors in added code; frontend calls no longer 404; 81-1/81-2 promoted from partial to done",
       "reviewer_summary": null
     },
     {
