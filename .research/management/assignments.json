@@ -399,13 +399,13 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-24T16:00:00Z",
-      "last_updated": "2026-05-25T00:10:00Z",
+      "last_updated": "2026-05-25T00:13:00Z",
       "status_changed_at": "2026-05-24T17:15:00Z",
       "pr_number": 470,
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": null,
       "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
-      "reviewer_summary": "verdict=approve note=18 integration tests well-structured and correct: PKCE S256 flow, consent/revoke, refresh rotation with family_id reuse detection, audit trail covered; migration 00156 (5 missing AuditAction variants) idempotent; minor non-blocking: 2 is_client_error() calls instead of specific codes, 1 pre-existing RFC 6749 §5.2 deviation"
+      "reviewer_summary": "verdict=approve note=All 4 post-review commits are targeted fixes (migration adding oauth_* ENUM values, sqlx rename attributes fixing o_auth_* vs oauth_* mismatch, removing revoked_at IS NULL for RFC 9700 replay detection, audit count cast + missing client_secret in test); no regressions; previous minor observations unchanged and non-blocking."
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
@@ -553,13 +553,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-24T22:07:42Z",
-      "last_updated": "2026-05-25T00:10:00Z",
+      "last_updated": "2026-05-25T00:15:00Z",
       "status_changed_at": "2026-05-25T00:10:00Z",
       "pr_number": 475,
       "pr_url": "https://github.com/martin-janci/property-management/pull/475",
       "merged_at": null,
       "implementer_summary": "pr=475 status=done specialist=react-web note=AnnouncementComments component + 3 hooks wired; depth-3 reply cap; typecheck+biome+build clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=i18n gaps (AnnouncementComments fully untranslated, ~12 toast keys missing from en.json), isManager missing technical_manager/property_manager roles, and Story 6.3 comment endpoints absent from sitemap/screen-map endpoints list; hook patterns, TanStack Query keys, cache invalidation, commentsEnabled guard, and depth-3 nesting cap are all correct"
     },
     {
       "task_id": "gap-6-4-pin-web-ui",
