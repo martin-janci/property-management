@@ -9,20 +9,14 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: partial
-endpoints:
-  - PUT /api/v1/reports/schedules/{id}
-  - PUT /api/v1/reports/schedules/{id}/pause
-  - PUT /api/v1/reports/schedules/{id}/resume
-  - GET /api/v1/reports/schedules/{id}/executions
-  - POST /api/v1/reports/executions/{id}/retry
-  - GET /api/v1/reports/executions/{id}/download
+endpoints: []
 relatedScreens: []
 sharedComponents: []
 designSources: []
 useCases:
   - UC-16
 epics:
-  - 81
+  - Epic-81
 diagrams: []
 owner: pm-frontend
 ---
