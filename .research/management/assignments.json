@@ -969,15 +969,15 @@
     {
       "task_id": "pm-qa-create-backend-servers-reality-server",
       "branch": "auto-impl/pm-qa-create-backend-servers-reality-ser",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "failed",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T16:10:00Z",
-      "last_updated": "2026-05-25T16:10:00Z",
-      "status_changed_at": "2026-05-25T16:10:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T18:20:00Z",
+      "status_changed_at": "2026-05-25T17:04:50Z",
+      "pr_number": 507,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/507",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=507 status=closed specialist=rust-backend note=inquiry IDOR regression tests (C1/C2/C3); closed without merging — check failed on respond_to_inquiry Option type mismatch (pre-existing dev bug, now fixed by PR #508)",
       "reviewer_summary": null
     },
     {
