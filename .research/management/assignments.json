@@ -941,16 +941,16 @@
     {
       "task_id": "gap-6-4-pinned-announcements-api",
       "branch": "auto-impl/gap-6-4-pinned-announcements-api",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T14:03:10Z",
-      "last_updated": "2026-05-25T16:10:00Z",
-      "status_changed_at": "2026-05-25T14:30:00Z",
+      "last_updated": "2026-05-25T18:15:00Z",
+      "status_changed_at": "2026-05-25T17:13:13Z",
       "pr_number": 504,
       "pr_url": "https://github.com/martin-janci/property-management/pull/504",
-      "merged_at": null,
+      "merged_at": "2026-05-25T17:13:13Z",
       "implementer_summary": "pr=504 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=PATCH added via MethodRouter chaining (no new import); migration 00158 adds composite pinned-first index; pinned-sort already implemented in list_rls/list_published_rls",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=CI 22/22 green; squash-merged at 17:13:13Z"
     },
     {
       "task_id": "gap-80-2-dispute-filing-api",
