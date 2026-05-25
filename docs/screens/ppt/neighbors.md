@@ -2,8 +2,7 @@
 id: ppt/neighbors
 name: Neighbors
 product: ppt
-sitemapRefs:
-  ppt-web: ppt-neighbors
+sitemapRefs: {}
 implementations:
   ppt-web:
     route: "/neighbors"
@@ -15,19 +14,12 @@ implementations:
     buildStatus: shipped
     redesignStatus: not-started
     apiStatus: complete
-endpoints:
-  - GET /api/v1/buildings/{id}/neighbors
-relatedScreens:
-  - id: ppt/neighbor-detail
-    rel: child
-  - id: ppt/neighbors-privacy
-    rel: sibling
+endpoints: []
+relatedScreens: []
 sharedComponents: []
 diagrams: []
-useCases:
-  - UC-06
-epics:
-  - Epic-6
+useCases: []
+epics: []
 designSources: []
 owner: pm-frontend
 ---
