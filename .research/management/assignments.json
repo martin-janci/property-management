@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T00:48:00Z",
+  "generated": "2026-05-25T00:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -564,15 +564,15 @@
     {
       "task_id": "gap-6-4-pin-web-ui",
       "branch": "auto-impl/gap-6-4-pin-web-ui",
-      "status": "review",
+      "status": "failed",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T00:10:00Z",
-      "last_updated": "2026-05-25T04:07:30Z",
-      "status_changed_at": "2026-05-25T00:42:00Z",
+      "last_updated": "2026-05-25T00:50:00Z",
+      "status_changed_at": "2026-05-25T00:50:00Z",
       "pr_number": 479,
       "pr_url": "https://github.com/martin-janci/property-management/pull/479",
       "merged_at": null,
-      "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean",
+      "implementer_summary": "pr=479 status=done specialist=react-web note=wired ViewAnnouncementPageRoute to useGetAnnouncement+usePinAnnouncement; added useMarkReadAnnouncement+useAcknowledgeAnnouncement hooks; typecheck+lint+build clean [PR closed without merge]",
       "reviewer_summary": "verdict=approve note=pin/unpin wiring correct ({id,pinned}), fetchJson auth, hooks unconditional, loading/error handled, screen-map updated; non-blocking: useAcknowledgeAnnouncement omits acknowledgments(id) invalidation"
     },
     {
