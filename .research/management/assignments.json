@@ -936,7 +936,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/505",
       "merged_at": null,
       "implementer_summary": "pr=505 status=done specialist=rust-backend note=6 comment CRUD endpoints + sanitize_markdown (ammonia) + 9 unit tests; cargo fmt+clippy clean",
-      "reviewer_summary": "verdict=changes note=RLS bypass in list_comments — get_threaded_comments releases RLS context and queries the pool directly, enabling cross-tenant IDOR on comment content; fix by using get_comments_rls + get_comment_replies_rls on the held RlsConnection before releasing it"
+      "reviewer_summary": "verdict=changes note=BLOCKER: list_comments used get_threaded_comments (self.pool, no RLS) allowing cross-tenant IDOR on comment content; fixed by replacing with get_comments_rls+get_comment_replies_rls on same RlsConnection; minor: unit tests missing guard-logic coverage; informational: rel removal and _auth prefix noted"
     },
     {
       "task_id": "gap-6-4-pinned-announcements-api",
