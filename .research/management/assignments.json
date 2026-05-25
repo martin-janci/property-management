@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T02:12:20Z",
+  "generated": "2026-05-25T02:31:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -606,15 +606,15 @@
     {
       "task_id": "gap-81-1-schedule-e2e-verify",
       "branch": "auto-impl/gap-81-1-schedule-e2e-verify",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-25T02:12:20Z",
-      "last_updated": "2026-05-25T02:12:20Z",
-      "status_changed_at": "2026-05-25T02:12:20Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-25T02:31:00Z",
+      "status_changed_at": "2026-05-25T02:31:00Z",
+      "pr_number": 488,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/488",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=488 status=done specialist=react-web note=wired usePauseSchedule/useResumeSchedule/useUpdateSchedule to /reports route in App.tsx; ReportsPage added to lazyRoutes; typecheck baseline unchanged (36692 pre-existing errors, 0 new); Band B skipped \u2014 no node_modules in env",
       "reviewer_summary": null
     },
     {
