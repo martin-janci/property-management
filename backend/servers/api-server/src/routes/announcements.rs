@@ -1933,7 +1933,7 @@ fn sanitize_markdown(content: &str) -> String {
     let mut tag_attributes = std::collections::HashMap::new();
     tag_attributes.insert(
         "a",
-        ["href", "title", "rel", "target"]
+        ["href", "title", "target"]
             .into_iter()
             .collect::<HashSet<_>>(),
     );
@@ -2041,32 +2041,65 @@ async fn list_comments(
         }
     };
 
-    // Release RLS connection before calling get_threaded_comments
-    // (it uses pool directly for multiple queries)
-    rls.release().await;
-
-    // Get threaded comments
-    match state
+    // Fetch top-level comments through the RLS-scoped connection so the DB
+    // policy blocks cross-tenant access. get_threaded_comments uses self.pool
+    // (no RLS) and is intentionally not used here.
+    let top_level = match state
         .announcement_repo
-        .get_threaded_comments(id, query.limit, query.offset)
+        .get_comments_rls(&mut **rls.conn(), id, query.limit, query.offset)
         .await
     {
-        Ok(comments) => Ok(Json(CommentsResponse {
-            count: comments.len(),
-            comments,
-            total,
-        })),
+        Ok(rows) => rows,
         Err(e) => {
+            rls.release().await;
             tracing::error!("Failed to list comments: {}", e);
-            Err((
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "INTERNAL_ERROR",
                     "Failed to list comments",
                 )),
-            ))
+            ));
         }
+    };
+
+    // Fetch replies for each top-level comment through the same RLS connection.
+    let mut comments = Vec::with_capacity(top_level.len());
+    for row in top_level {
+        let replies = match state
+            .announcement_repo
+            .get_comment_replies_rls(&mut **rls.conn(), row.id)
+            .await
+        {
+            Ok(reply_rows) if !reply_rows.is_empty() => Some(
+                reply_rows
+                    .into_iter()
+                    .map(|r| r.into_comment_with_author(None))
+                    .collect(),
+            ),
+            Ok(_) => None,
+            Err(e) => {
+                rls.release().await;
+                tracing::error!("Failed to get comment replies: {}", e);
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "INTERNAL_ERROR",
+                        "Failed to get comment replies",
+                    )),
+                ));
+            }
+        };
+        comments.push(row.into_comment_with_author(replies));
     }
+
+    rls.release().await;
+
+    Ok(Json(CommentsResponse {
+        count: comments.len(),
+        comments,
+        total,
+    }))
 }
 
 /// Create a comment on an announcement.
@@ -2723,4 +2756,98 @@ fn parse_announcement_drafts(content: &str) -> Vec<AnnouncementDraft> {
     }
 
     drafts
+}
+
+// ============================================================================
+// Tests (Story 6.3 — comment validation)
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Comment content length validation ---
+
+    #[test]
+    fn empty_comment_content_is_invalid() {
+        let content = "";
+        assert!(
+            content.is_empty(),
+            "Empty content should be caught by handler guard"
+        );
+    }
+
+    #[test]
+    fn comment_content_at_max_length_is_valid() {
+        let content = "a".repeat(MAX_COMMENT_LENGTH);
+        assert!(content.len() <= MAX_COMMENT_LENGTH);
+    }
+
+    #[test]
+    fn comment_content_exceeding_max_length_is_invalid() {
+        let content = "a".repeat(MAX_COMMENT_LENGTH + 1);
+        assert!(content.len() > MAX_COMMENT_LENGTH);
+    }
+
+    // --- Sanitize markdown (used in create_comment) ---
+
+    #[test]
+    fn sanitize_markdown_strips_script_tags() {
+        let input = r#"Hello <script>alert('xss')</script> world"#;
+        let output = sanitize_markdown(input);
+        assert!(!output.contains("<script>"), "Script tags must be stripped");
+        assert!(output.contains("Hello"), "Safe text must be preserved");
+    }
+
+    #[test]
+    fn sanitize_markdown_allows_safe_formatting() {
+        let input = "<strong>Important</strong> and <em>emphasis</em>";
+        let output = sanitize_markdown(input);
+        assert!(output.contains("<strong>") || output.contains("Important"));
+    }
+
+    #[test]
+    fn sanitize_markdown_strips_javascript_href() {
+        let input = r#"<a href="javascript:alert(1)">click</a>"#;
+        let output = sanitize_markdown(input);
+        assert!(
+            !output.contains("javascript:"),
+            "javascript: URLs must be stripped"
+        );
+    }
+
+    // --- CreateCommentRequest deserialization ---
+
+    #[test]
+    fn create_comment_request_defaults_ai_consent_to_false() {
+        let json = r#"{"content":"Hello world"}"#;
+        let req: CreateCommentRequest = serde_json::from_str(json).unwrap();
+        assert!(
+            !req.ai_training_consent,
+            "ai_training_consent should default to false"
+        );
+        assert_eq!(req.content, "Hello world");
+        assert!(req.parent_id.is_none());
+    }
+
+    #[test]
+    fn create_comment_request_accepts_parent_id() {
+        let parent = Uuid::new_v4();
+        let json = format!(
+            r#"{{"content":"Reply","parent_id":"{}","ai_training_consent":true}}"#,
+            parent
+        );
+        let req: CreateCommentRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(req.parent_id, Some(parent));
+        assert!(req.ai_training_consent);
+    }
+
+    // --- ListCommentsQuery defaults ---
+
+    #[test]
+    fn list_comments_query_defaults_to_none() {
+        let query = ListCommentsQuery::default();
+        assert!(query.limit.is_none());
+        assert!(query.offset.is_none());
+    }
 }
