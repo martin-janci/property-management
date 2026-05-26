@@ -35,13 +35,14 @@ Schema per row:
   "merged_at":          "iso-8601 | null",
 
   // -- NEW fields (hardening 2026-05-25). Backfill missing = null on first read. --
-  "last_reviewed_oid":  "string | null",   // PR.headRefOid at time of last reviewer run (item #10)
+  "last_reviewed_oid":  "string | null",   // PR.headRefOid at time of last reviewer run (item #10) — MANDATORY when reviewer_summary != null (gap 1)
   "scope_drift":        "boolean | null",  // implementer touched files outside owner_role areas (item #3)
   "code_reuse_warn":    "string | null",   // implementer reused-or-duplicated existing helpers (item #4)
   "empty_branch":       "boolean | null",  // branch pushed but 0 commits ahead of dev (item #1)
   "rebase_attempts":    "int",             // count of auto-rebase tries on this row (item #6); default 0
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
+  "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
@@ -115,7 +116,23 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 4. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
    `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`,
-   `reclaim_attempts`) to `null` / `0`.
+   `reclaim_attempts`, `merge_attempted_at`) to `null` / `0`.
+
+   **Gap-1 backfill (re-review forcing):** for any row with
+   `reviewer_summary != null AND last_reviewed_oid == null`, LEAVE
+   `reviewer_summary` intact (do not clear it; it's still useful narrative)
+   but treat that row as oid-drifted on this cycle's Phase 2 / Phase 5 gate.
+   Concretely, in Phase 2 the re-review predicate becomes:
+
+   ```
+   spawn_reviewer iff
+     (reviewer_summary is null)
+     OR (last_reviewed_oid is null)             # gap-1: force re-review
+     OR (PR.headRefOid != last_reviewed_oid)
+   ```
+
+   Once Phase 5 runs and writes the new `last_reviewed_oid`, the forcing
+   condition self-clears on subsequent cycles.
 5. Confirm `.claude/skills/ppt-implement/SKILL.md`,
    `.claude/skills/ppt-review-merged/SKILL.md`,
    `.claude/skills/ppt-pr-merge/SKILL.md`, AND
@@ -162,7 +179,10 @@ fi
 - **PR MERGED** → `new_status="merged"`, `merged_at=PR.mergedAt`.
 - **PR CLOSED (not merged)** → `new_status="failed"`, append `' [PR closed without merge]'` to `implementer_summary`.
 - **PR OPEN** → `new_status="review"`, set `pr_number`/`pr_url` if missing.
-  - Spawn REVIEWER (Phase 5) iff (`reviewer_summary` is null) OR (`PR.headRefOid != row.last_reviewed_oid`).
+  - Spawn REVIEWER (Phase 5) iff
+    (`reviewer_summary` is null) OR
+    (`last_reviewed_oid` is null — gap-1 force re-review) OR
+    (`PR.headRefOid != row.last_reviewed_oid`).
 - **branch exists, no PR**:
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
@@ -252,7 +272,9 @@ Append to `assignments.json`:
   "code_reuse_warn": null,
   "empty_branch": null,
   "rebase_attempts": 0,
-  "reclaim_attempts": 0
+  "reclaim_attempts": 0,
+  "fix_rounds": 0,
+  "merge_attempted_at": null
 }
 ```
 
@@ -334,8 +356,34 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 > Return EXACTLY (one line):
 > `verdict=<approve|changes> head_oid=<PR.headRefOid> note=<short>`
 
-Capture → `reviewer_summary`, `last_reviewed_oid = head_oid` (item #10),
+Capture → `reviewer_summary`, **`last_reviewed_oid = head_oid` (item #10 — MANDATORY)**,
 `last_updated = now`. STATUS UNCHANGED.
+
+**Data invariant (NEW — gap 1):** every reviewer write MUST set
+`last_reviewed_oid` to the `head_oid` returned by the reviewer subagent. It is
+NEVER acceptable to write `reviewer_summary != null` while leaving
+`last_reviewed_oid == null` — that combination breaks the Phase 2 re-review
+gate (the `PR.headRefOid != row.last_reviewed_oid` clause silently evaluates
+true against `null` on some shells but false in `jq`-style equality, and the
+behaviour is platform-dependent). If the reviewer subagent's return line is
+missing `head_oid=…`, treat that as a failed reviewer run: do NOT persist
+`reviewer_summary`, and re-spawn on the next cycle.
+
+**Phase-end self-check (NEW — gap 1):** after persisting all reviewer rows,
+scan `assignments.json` for the invariant violation:
+
+```bash
+BAD=$(jq -r '
+  .assignments
+  | map(select(.reviewer_summary != null and .last_reviewed_oid == null))
+  | length' .research/management/assignments.json)
+if [ "$BAD" != "0" ]; then
+  echo "PHASE 5 INVARIANT VIOLATION: $BAD rows have reviewer_summary but null last_reviewed_oid" >&2
+  jq -r '.assignments[] | select(.reviewer_summary != null and .last_reviewed_oid == null) | "  \(.task_id) pr=\(.pr_number)"' .research/management/assignments.json >&2
+  # Do not exit — this is a data-quality warning. Phase 1 of the next run
+  # will force a re-review (see gap-1 backfill rule).
+fi
+```
 
 **Human-gate label sweep (P6).** After capture, scan the reviewer's `note=`
 substring (case-insensitive) for any of these phrases — the canonical
