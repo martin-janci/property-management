@@ -323,9 +323,15 @@ For each row `status=="review"` where `reviewer_summary` starts with `"verdict=a
 gh pr view <pr_number> --json statusCheckRollup,isDraft,reviewDecision,mergeable,state
 ```
 
-Skip if `state != OPEN`, `isDraft == true`, CI conclusion in
+Skip if `state != OPEN`, CI conclusion in
 `{FAILURE, CANCELLED, TIMED_OUT, ACTION_REQUIRED}`, or any CI status in
 `{IN_PROGRESS, QUEUED}`.
+
+**Do NOT skip on `isDraft == true`** — `ppt-pr-merge` Step 1 auto-promotes
+draft PRs to ready when the approval + green-CI gates pass. Letting drafts
+through is the whole point of the auto-promote path; pre-filtering them here
+re-introduces the stall bug (dispatcher run on 2026-05-25: 0 merge attempts,
+all approved PRs draft).
 
 If pre-flight passes: spawn ONE Task subagent per PR (cap 2 parallel):
 

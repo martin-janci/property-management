@@ -20,10 +20,16 @@ the loop by getting a green, approved PR actually merged.
 - You manually want to "land PR #N".
 
 **Do NOT invoke for:**
-- PRs still in `draft` state
 - PRs with CI failures (run `ppt-pr-followup` first)
 - PRs with unresolved review threads (run `ppt-pr-followup` first)
 - PRs blocked by branch protection rules a human must override
+
+**Drafts:** this skill **auto-promotes** a draft PR to ready (`gh pr ready <pr>`)
+**iff** the PR has reviewer approval (either `reviewDecision == APPROVED` on
+GitHub, or `reviewer_summary.verdict == "approve"` in
+`.research/management/assignments.json`) AND all required CI checks are green.
+Otherwise the skill refuses to touch a draft and points the caller at
+`ppt-pr-followup` (dispatcher mode) for the next step.
 
 ## Inputs
 
@@ -53,10 +59,50 @@ Abort with `merged=false note=<reason>` if ANY of:
 | Check | Abort if |
 |---|---|
 | `state` | != `"OPEN"` (already merged or closed) |
-| `isDraft` | `true` |
-| `reviewDecision` | != `"APPROVED"` (allow `null` ONLY when repo has no required reviews) |
+| `reviewDecision` | != `"APPROVED"` (see "approval source" below; allow `null` ONLY when repo has no required reviews) |
 | `statusCheckRollup[].conclusion` | any of `"FAILURE"`, `"CANCELLED"`, `"TIMED_OUT"`, `"ACTION_REQUIRED"` |
 | `statusCheckRollup[].status` | any `"IN_PROGRESS"`/`"QUEUED"` → return `merged=false note=ci-pending` (caller can retry later) |
+
+### Approval source (GH `reviewDecision` OR dispatcher verdict)
+
+`reviewDecision` is the primary signal. If it is missing/`null` (the dispatcher's
+reviewer agents review via `gh pr review --approve` so this is usually populated,
+but some repos / draft PRs return `null`), fall back to the dispatcher's
+`reviewer_summary` in `.research/management/assignments.json`:
+
+```bash
+# Read dispatcher verdict for the row whose pr_number == <PR>
+VERDICT=$(jq -r --argjson n "$PR" '
+  .assignments[]
+  | select(.pr_number == $n)
+  | .reviewer_summary
+  | tostring
+  | capture("^verdict=(?<v>approve|changes|block|reject)").v // empty
+' .research/management/assignments.json 2>/dev/null)
+```
+
+Treat `VERDICT == "approve"` as approval-equivalent. Any other value (or
+missing assignments.json row) is **not** approval.
+
+### Draft handling — auto-promote on approve, otherwise refuse
+
+If `isDraft == true`:
+
+1. Compute the approval state using both sources above:
+   `APPROVED = (reviewDecision == "APPROVED") OR (VERDICT == "approve")`.
+2. If `APPROVED` AND CI is green per the table above: promote the PR.
+   ```bash
+   gh pr ready "$PR" --repo "$REPO"
+   # Re-read PR state once; isDraft should now be false.
+   ```
+   Then continue with the rest of Step 1 (unresolved-threads check) and the
+   normal merge flow.
+3. If NOT approved (no verdict, or verdict ∈ `{changes, block, reject}`):
+   abort with
+   `merged=false note=draft-unapproved (call ppt-pr-followup to drive the review loop)`.
+4. If CI is not green: abort via the standard CI path
+   (`merged=false note=ci-pending|ci-failed`). **Never promote a draft whose
+   CI isn't green.**
 
 Also check unresolved review threads via GraphQL (the REST `reviewDecision` doesn't catch comments-only threads):
 
@@ -188,7 +234,8 @@ skill never touches assignments.json directly.
 
 ## Hard rules
 
-- Never merge a draft PR.
+- Drafts are auto-promoted on approve; otherwise refuse. Never merge a draft
+  that has not been promoted to ready via the auto-promote path in Step 1.
 - Never merge a PR with failing or in-progress CI.
 - Never merge a PR with unresolved review threads.
 - Auto-resolve ONLY the mechanical patterns listed in Step 2; real code conflicts always abort.
