@@ -48,6 +48,7 @@ use common::notifications::{
 };
 
 use super::email::EmailService;
+use super::push_fanout::{FcmConfig, FcmHttpAdapter};
 
 // ============================================================================
 // Story 2b-4a — Email transport adapter (SMTP via existing EmailService)
@@ -411,7 +412,11 @@ impl NotificationPipeline {
 
         let email_adapter =
             Arc::new(SmtpEmailAdapter::new(email_service)) as Arc<dyn EmailTransport>;
-        let push_adapter = Arc::new(FcmPushAdapter::from_env()) as Arc<dyn PushTransport>;
+        // Epic 8A-3: use the real FCM HTTP adapter so push actually fans out to
+        // device tokens stored in `device_push_tokens`.  Falls back to log-only
+        // when FCM credentials are not configured (env vars not set).
+        let push_adapter = Arc::new(FcmHttpAdapter::new(pool.clone(), FcmConfig::from_env()))
+            as Arc<dyn PushTransport>;
         let in_app_adapter =
             Arc::new(DbInAppAdapter::new(granular_repo, pubsub)) as Arc<dyn InAppTransport>;
 
@@ -589,8 +594,10 @@ impl NotificationPipeline {
                     .await
             }
             NotificationChannel::Push => {
-                // Device tokens would come from a device-token repo; stubbed as empty for now.
-                // A follow-up PR should add `DeviceTokenRepository` and wire it here.
+                // Epic 8A-3: `FcmHttpAdapter` fetches device tokens internally
+                // from `device_push_tokens` via the service-role pool.
+                // The `device_tokens` slice is left empty here; adapters that
+                // pre-fetch tokens can still use it.
                 self.push_adapter.send(user_id, &[], notification).await
             }
             NotificationChannel::InApp => {
