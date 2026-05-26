@@ -3,6 +3,7 @@
  */
 
 export { ClassificationBadge, ClassificationUI } from './ClassificationBadge';
+export { DocumentPreviewModal } from './DocumentPreviewModal';
 export { DocumentSearch } from './DocumentSearch';
 export { DocumentSearchResult } from './DocumentSearchResult';
 export { DocumentSharePanel } from './DocumentSharePanel';
