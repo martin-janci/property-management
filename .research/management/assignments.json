@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T00:50:00Z",
+  "generated": "2026-05-26T00:52:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1335,16 +1335,16 @@
     {
       "task_id": "gap-83-2-booking-integration-backend",
       "branch": "auto-impl/gap-83-2-booking-integration-backend",
-      "status": "changes",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-26T00:25:00Z",
-      "status_changed_at": "2026-05-26T00:25:00Z",
+      "last_updated": "2026-05-26T00:52:00Z",
+      "status_changed_at": "2026-05-26T00:52:00Z",
       "pr_number": 534,
       "pr_url": "https://github.com/martin-janci/property-management/pull/534",
       "merged_at": null,
-      "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; Band A cargo check pass; integrations 7/7 pass",
-      "reviewer_summary": "verdict=changes note=BLOCKING: (1) no RequireCapability RBAC on push_booking_listing/get_booking_conflicts; (2) no org-membership check allows any-org IDOR; HIGH: empty credentials not validated; MEDIUM: N+1 in conflict detection (501 queries), no AppError convention, no truncation signal; LOW: missing handler unit tests"
+      "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; RBAC+org-ownership guard+credential validation fixes applied; cargo check pass; fmt clean; awaiting re-review (blocking issues resolved)",
+      "reviewer_summary": null
     },
     {
       "task_id": "gap-85-2-build-config-android",
