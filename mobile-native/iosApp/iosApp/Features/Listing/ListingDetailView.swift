@@ -5,27 +5,31 @@ import shared
 ///
 /// Displays full property information, photos, and contact options.
 ///
+/// Favorites state is driven by the app-wide `FavoritesService` so that
+/// toggling a favorite here is immediately reflected in `FavoritesView`
+/// without requiring a separate network call or manual refresh.
+///
 /// Epic 82 - Story 82.4: Listing Detail and Favorites
 struct ListingDetailView: View {
     @Environment(NavigationCoordinator.self) private var coordinator
     @Environment(AuthManager.self) private var authManager
+    @Environment(FavoritesService.self) private var favoritesService
     @Environment(\.dismiss) private var dismiss
 
     let listingId: String
 
     @State private var listing: ListingDetailModel?
     @State private var isLoading = true
-    @State private var isFavorite = false
     @State private var showGallery = false
     @State private var showInquirySheet = false
     @State private var errorMessage: String?
 
-    private let listingRepository = DependencyContainer.shared.listingRepository
-    private var favoritesRepository: FavoritesRepository {
-        DependencyContainer.shared.makeAuthenticatedFavoritesRepository(
-            sessionToken: authManager.getSessionToken()
-        )
+    /// Derived from `FavoritesService` — always in sync with `FavoritesView`.
+    private var isFavorite: Bool {
+        favoritesService.isFavorite(listingId: listingId)
     }
+
+    private let listingRepository = DependencyContainer.shared.listingRepository
 
     var body: some View {
         Group {
@@ -354,6 +358,7 @@ struct ListingDetailView: View {
         } label: {
             Image(systemName: isFavorite ? "heart.fill" : "heart")
                 .foregroundStyle(isFavorite ? Color.pptDanger : Color.primary)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFavorite)
         }
     }
 
@@ -378,11 +383,6 @@ struct ListingDetailView: View {
 
         if let kmpListing = result.getOrNull() {
             listing = KMPBridge.toListingDetail(kmpListing)
-
-            // Check if this listing is favorited
-            if authManager.isAuthenticated {
-                await checkFavoriteStatus()
-            }
         } else if let error = result.exceptionOrNull() {
             errorMessage = error.message ?? "Failed to load listing"
         }
@@ -390,41 +390,18 @@ struct ListingDetailView: View {
         isLoading = false
     }
 
-    private func checkFavoriteStatus() async {
-        let result = await favoritesRepository.isFavorite(listingId: listingId)
-        if let isFav = result.getOrNull() {
-            isFavorite = isFav.boolValue
-        }
-    }
-
     private func toggleFavorite() async {
         guard authManager.isAuthenticated else {
-            // Prompt to sign in
+            // Prompt to sign in — store the intended destination so the user
+            // is returned here after successful SSO login.
+            coordinator.pendingDestination = .listingDetail(id: listingId)
             coordinator.navigate(to: .login)
             return
         }
 
-        let newFavoriteState = !isFavorite
-
-        // Optimistic update
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-            isFavorite = newFavoriteState
-        }
-
-        // Persist change
-        if newFavoriteState {
-            let result = await favoritesRepository.addFavorite(listingId: listingId)
-            if result.exceptionOrNull() != nil {
-                // Revert on error
-                isFavorite = false
-            }
-        } else {
-            let result = await favoritesRepository.removeFavorite(listingId: listingId)
-            if result.exceptionOrNull() != nil {
-                // Revert on error
-                isFavorite = true
-            }
-        }
+        // Delegate toggle to FavoritesService. The service applies an
+        // optimistic update so isFavorite reflects the new state immediately.
+        await favoritesService.toggle(listingId: listingId)
     }
 }
 
