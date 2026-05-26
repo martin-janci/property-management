@@ -61,6 +61,18 @@ pub enum SignerStatus {
     Declined,
 }
 
+impl std::fmt::Display for SignerStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pending => write!(f, "pending"),
+            Self::Sent => write!(f, "sent"),
+            Self::Viewed => write!(f, "viewed"),
+            Self::Signed => write!(f, "signed"),
+            Self::Declined => write!(f, "declined"),
+        }
+    }
+}
+
 /// Individual signer in a signature request.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Signer {

@@ -850,9 +850,17 @@ impl Scheduler {
                 .clone()
                 .unwrap_or_else(|| "Document".to_string());
 
+            let org_id_str = sig_req.organization_id.to_string();
             for signer in pending_signers {
+                let signer_status = signer.status.to_string();
                 let sign_url = provider
-                    .build_signing_url(&signer.email, &sig_req.id.to_string())
+                    .build_signing_url(
+                        &signer.email,
+                        &sig_req.id.to_string(),
+                        &org_id_str,
+                        &signer_status,
+                    )
+                    .map(|s| s.url)
                     .unwrap_or_else(|_| {
                         format!(
                             "{}/sign?request_id={}&email={}",

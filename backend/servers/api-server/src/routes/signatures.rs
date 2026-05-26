@@ -171,10 +171,21 @@ pub async fn create_signature_request(
         auth.name.clone()
     };
 
+    let org_id_str = signature_request.organization_id.to_string();
     for signer in &signature_request.signers {
         // Build a HMAC-secured signing URL via the lightweight provider.
+        // The token binds signer email, request id, organisation, and the
+        // signer's current status; the embedded nonce is exposed on
+        // `SignedUrl.nonce` for the future `/sign` consumer to persist.
+        let signer_status = signer.status.to_string();
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(&signer.email, &signature_request.id.to_string())
+            .build_signing_url(
+                &signer.email,
+                &signature_request.id.to_string(),
+                &org_id_str,
+                &signer_status,
+            )
+            .map(|s| s.url)
             .unwrap_or_else(|_| {
                 format!(
                     "{}/sign?request_id={}&email={}",
@@ -375,9 +386,17 @@ pub async fn send_reminder(
         .clone()
         .unwrap_or_else(|| "Document".to_string());
 
+    let org_id_str = signature_request.organization_id.to_string();
     for signer in pending_signers {
+        let signer_status = signer.status.to_string();
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(&signer.email, &signature_request.id.to_string())
+            .build_signing_url(
+                &signer.email,
+                &signature_request.id.to_string(),
+                &org_id_str,
+                &signer_status,
+            )
+            .map(|s| s.url)
             .unwrap_or_else(|_| {
                 format!(
                     "{}/sign?request_id={}&email={}",
