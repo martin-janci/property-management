@@ -49,6 +49,42 @@ Schema per row:
 }
 ```
 
+## action-list.json schema (gap 3 — structured deps)
+
+Each item in `.research/management/action-list.json` `.items[]` carries:
+
+```jsonc
+{
+  "id":          "string",       // e.g. "gap-7a-2-folder-api"
+  "action":      "string",       // free-text description
+  "owner_role":  "string",       // e.g. "pm-backend"
+  "priority":    "high | medium | low",
+  "status":      "open | in-progress | done | dropped",
+  "source":      "string",       // provenance
+  "deadline":    "iso-8601 | null",
+
+  // -- Dependency wiring --
+  "dependency":  "string | null", // LEGACY free-text; informational only
+  "depends_on":  ["task_id", …]   // gap 3 — structured; canonical for Phase 3
+}
+```
+
+**`depends_on` is the canonical, machine-checked dependency field.**
+The free-text `dependency` is retained for human readability but the
+dispatcher MUST NOT regex-parse it for claim decisions. An empty array
+(`"depends_on": []`) means no dependencies.
+
+Refill/refresh flows (`coverage.json` rubric, Tier-1 buffer, manual
+edits) MUST populate `depends_on` directly; the dispatcher does not
+re-parse `dependency` text on each run.
+
+Migration (one-time, gap 3): for any row missing `depends_on`,
+best-effort-parse the legacy `dependency` field by splitting on
+`, ; and / AND` and matching kebab-case task-id-shaped tokens
+(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
+epic descriptions like "Epic 2B WebSocket infrastructure") become
+`[]` and the free-text is left in `dependency` for human follow-up.
+
 ## Timestamp semantics
 
 - `claimed_at` — set ONCE at claim; never changes.
@@ -258,9 +294,25 @@ X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebas
 
 ```python
 free_slots = 3   # constant per run
-candidates = [c for c in action-list if c.status=="open" and c.id not in assignments]
+
+def claimable(c, assignments):
+    # gap 3: structured depends_on is canonical. An item is claimable iff
+    # every depends_on entry references a row in {merged, done}.
+    for dep_id in (c.get("depends_on") or []):
+        row = assignments.find(task_id=dep_id)
+        if row is None or row.status not in ("merged", "done"):
+            return False
+    return True
+
+candidates = [c for c in action-list
+              if c.status == "open"
+              and c.id not in assignments
+              and claimable(c, assignments)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
+
+The legacy `dependency` free-text field is NOT consulted by the claim
+predicate. Only `depends_on` is.
 
 **Same-epic burst-claim guard (NEW — item #2):**
 
@@ -311,7 +363,7 @@ One per newly-claimed task IN THIS RUN. Hard cap 3.
 Prompt:
 
 > You are an implementer. Invoke `.claude/skills/ppt-implement/SKILL.md`.
-> Inputs: `task_id`, `action`, `owner_role`, `priority`, `dependency`, `branch`.
+> Inputs: `task_id`, `action`, `owner_role`, `priority`, `dependency` (legacy free-text), `depends_on` (gap 3 — structured array of task_ids), `branch`.
 > The skill picks the specialist, runs the 3-band verify gate, runs the
 > NEW scope-drift + code-reuse pre-flight checks, opens a DRAFT PR vs `dev`
 > only if verify passes.
@@ -598,7 +650,7 @@ Hang alerts:
 - max 3 followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
-- never claim items whose dependency text mentions another non-`merged` task
+- never claim items whose `depends_on: [task_id, …]` array contains any task whose `assignments.json` row is not in `{merged, done}` (gap 3 — structured field replaces free-text `dependency` parsing)
 - never push to `main`
 - never bypass git hooks (no `--no-verify`)
 - never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
