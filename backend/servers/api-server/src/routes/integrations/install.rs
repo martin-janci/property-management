@@ -952,7 +952,8 @@ pub async fn disconnect_booking(
         (status = 400, description = "No updates provided or connection not configured"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "No Booking.com connection found"),
-        (status = 500, description = "Internal server error")
+        (status = 500, description = "Internal server error"),
+        (status = 502, description = "Booking.com upstream API failure")
     ),
     security(("bearer_auth" = [])),
     tag = "Integrations - Booking.com"
@@ -969,6 +970,13 @@ pub async fn push_booking_availability(
         update_count = request.updates.len(),
         "Pushing availability to Booking.com"
     );
+
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
+        ));
+    }
 
     if request.updates.is_empty() {
         return Err((
@@ -1082,12 +1090,13 @@ pub async fn push_booking_availability(
                 error = %e,
                 "Booking.com availability push failed"
             );
-            Ok(Json(BookingPushResponse {
-                success: false,
-                items_pushed: 0,
-                pushed_at: chrono::Utc::now(),
-                error: Some(e.to_string()),
-            }))
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "UPSTREAM_FAILURE",
+                    format!("Booking.com push failed: {e}"),
+                )),
+            ))
         }
     }
 }
@@ -1107,7 +1116,8 @@ pub async fn push_booking_availability(
         (status = 400, description = "No updates provided or connection not configured"),
         (status = 403, description = "Forbidden"),
         (status = 404, description = "No Booking.com connection found"),
-        (status = 500, description = "Internal server error")
+        (status = 500, description = "Internal server error"),
+        (status = 502, description = "Booking.com upstream API failure")
     ),
     security(("bearer_auth" = [])),
     tag = "Integrations - Booking.com"
@@ -1124,6 +1134,13 @@ pub async fn push_booking_rates(
         update_count = request.updates.len(),
         "Pushing rates to Booking.com"
     );
+
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
+        ));
+    }
 
     if request.updates.is_empty() {
         return Err((
@@ -1215,12 +1232,13 @@ pub async fn push_booking_rates(
                 error = %e,
                 "Booking.com rates push failed"
             );
-            Ok(Json(BookingPushResponse {
-                success: false,
-                items_pushed: 0,
-                pushed_at: chrono::Utc::now(),
-                error: Some(e.to_string()),
-            }))
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "UPSTREAM_FAILURE",
+                    format!("Booking.com push failed: {e}"),
+                )),
+            ))
         }
     }
 }
