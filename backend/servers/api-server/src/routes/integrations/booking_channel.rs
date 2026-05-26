@@ -99,7 +99,7 @@ pub struct ListingPushResponse {
 pub struct BookingConflict {
     /// Internal unit ID where the conflict occurs.
     pub unit_id: Uuid,
-    /// Booking.com reservation ID (external).
+    /// Booking.com external reservation ID (falls back to internal UUID if not set).
     pub booking_reservation_id: String,
     /// Platform of the conflicting reservation.
     pub conflicting_platform: String,
@@ -117,6 +117,8 @@ pub struct ConflictCheckResponse {
     pub conflicts_found: i32,
     pub conflicts: Vec<BookingConflict>,
     pub checked_at: chrono::DateTime<chrono::Utc>,
+    /// True if the query hit the 500-reservation cap — results may be incomplete.
+    pub truncated: bool,
 }
 
 // ============================================================
@@ -490,6 +492,14 @@ pub async fn get_booking_conflicts(
             )
         })?;
 
+    let truncated = booking_reservations.len() >= 500;
+    if truncated {
+        tracing::warn!(
+            org_id = %path.org_id,
+            "Booking.com conflict check hit the 500-reservation cap — results may be incomplete"
+        );
+    }
+
     let mut conflicts: Vec<BookingConflict> = Vec::new();
 
     for bk in &booking_reservations {
@@ -540,7 +550,10 @@ pub async fn get_booking_conflicts(
 
                 conflicts.push(BookingConflict {
                     unit_id: bk.unit_id,
-                    booking_reservation_id: bk.id.to_string(),
+                    booking_reservation_id: bk
+                        .external_booking_id
+                        .clone()
+                        .unwrap_or_else(|| bk.id.to_string()),
                     conflicting_platform: other.platform.clone(),
                     conflicting_booking_id: other.id,
                     overlap_start,
@@ -562,6 +575,7 @@ pub async fn get_booking_conflicts(
         conflicts_found,
         conflicts,
         checked_at: chrono::Utc::now(),
+        truncated,
     }))
 }
 
@@ -631,6 +645,7 @@ mod tests {
                 overlap_end: NaiveDate::from_ymd_opt(2025, 6, 12).unwrap(),
             }],
             checked_at: chrono::Utc::now(),
+            truncated: false,
         };
 
         let json = serde_json::to_value(&response).unwrap();

@@ -861,6 +861,15 @@ pub async fn sync_booking(
             .ok()
             .unwrap_or(uuid::Uuid::nil());
 
+        if room_uuid == uuid::Uuid::nil() {
+            tracing::debug!(
+                reservation_id = %reservation.reservation_id,
+                room_type_id = %reservation.room_type_id,
+                "Skipping reservation: room_type_id is not a UUID (room mapping not configured)"
+            );
+            continue;
+        }
+
         let unit_conn = rental_repo
             .find_connection_by_unit_platform(room_uuid, "booking")
             .await
@@ -885,10 +894,11 @@ pub async fn sync_booking(
         }
 
         // Conflict gate: check the calendar before inserting.
+        // Fail-safe: on DB error treat as unavailable to avoid double-booking.
         let is_available = rental_repo
             .check_availability(unit_id, reservation.check_in, reservation.check_out)
             .await
-            .unwrap_or(true);
+            .unwrap_or(false);
 
         if !is_available {
             tracing::warn!(
