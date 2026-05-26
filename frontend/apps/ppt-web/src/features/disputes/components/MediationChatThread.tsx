@@ -1,17 +1,7 @@
-/**
- * MediationChatThread - chat-style thread for manager/tenant mediation notes.
- * Epic 80: Dispute Mediation (Story 80.3)
- *
- * Renders mediation notes as a chat thread with role-tinted bubbles:
- *   - manager/mediator: violet-tinted (right-aligned for current user)
- *   - tenant/other: surface-tinted (left-aligned)
- *   - private notes: orange border + "Private" badge
- *
- * Uses useMediationNotes (query) + useAddMediationNote (mutation) from @ppt/api-client.
- */
-
 import { useAddMediationNote, useMediationNotes } from '@ppt/api-client';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatTime } from '../utils/formatTime';
 
 interface MediationChatThreadProps {
   disputeId: string;
@@ -19,21 +9,7 @@ interface MediationChatThreadProps {
   currentUserName?: string;
   /** If true, show the private-note toggle (managers/mediators only) */
   canSendPrivate?: boolean;
-}
-
-function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60_000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  onError?: (title: string, message?: string) => void;
 }
 
 export function MediationChatThread({
@@ -41,7 +17,9 @@ export function MediationChatThread({
   currentUserId,
   currentUserName,
   canSendPrivate = false,
+  onError,
 }: MediationChatThreadProps) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -57,12 +35,14 @@ export function MediationChatThread({
       await addNote.mutateAsync({ content, isPrivate });
       setDraft('');
       setIsPrivate(false);
-      // Scroll to bottom after a tick
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 50);
-    } catch {
-      // error toast is handled by the mutation error boundary in App.tsx
+    } catch (err) {
+      onError?.(
+        t('disputes.mediation.sendError'),
+        err instanceof Error ? err.message : t('disputes.mediation.sendErrorDesc')
+      );
     }
   };
 
@@ -87,7 +67,7 @@ export function MediationChatThread({
       <div className="space-y-3 mb-4 max-h-96 overflow-y-auto pr-1">
         {notes.length === 0 && (
           <p className="text-sm text-gray-500 text-center py-6">
-            No messages yet. Start the conversation below.
+            {t('disputes.mediation.noMessages')}
           </p>
         )}
 
@@ -107,7 +87,7 @@ export function MediationChatThread({
                   <span>{formatTime(note.createdAt)}</span>
                   {note.isPrivate && (
                     <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-xs">
-                      Private
+                      {t('disputes.mediation.privateLabel')}
                     </span>
                   )}
                 </div>
@@ -140,7 +120,7 @@ export function MediationChatThread({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message… (Ctrl+Enter to send)"
+          placeholder={t('disputes.mediation.typePlaceholder')}
           rows={3}
           className="w-full px-4 py-3 rounded-t-xl text-sm text-gray-900 placeholder-gray-400 resize-none border-0 focus:outline-none focus:ring-0"
         />
@@ -154,7 +134,7 @@ export function MediationChatThread({
                   onChange={(e) => setIsPrivate(e.target.checked)}
                   className="rounded border-gray-300 text-violet-600"
                 />
-                <span className="text-gray-600">Private (mediator only)</span>
+                <span className="text-gray-600">{t('disputes.mediation.privateSend')}</span>
               </label>
             )}
           </div>
@@ -164,7 +144,7 @@ export function MediationChatThread({
             disabled={!draft.trim() || addNote.isPending}
             className="px-4 py-1.5 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {addNote.isPending ? 'Sending…' : 'Send'}
+            {addNote.isPending ? t('disputes.mediation.sending') : t('disputes.mediation.send')}
           </button>
         </div>
       </div>
@@ -172,7 +152,7 @@ export function MediationChatThread({
       {/* Attribution */}
       {currentUserName && (
         <p className="text-xs text-gray-400 mt-1.5 text-right">
-          Sending as <span className="font-medium">{currentUserName}</span>
+          {t('disputes.mediation.sendingAs', { name: currentUserName })}
         </p>
       )}
     </div>

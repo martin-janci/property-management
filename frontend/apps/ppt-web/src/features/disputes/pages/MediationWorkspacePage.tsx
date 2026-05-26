@@ -1,15 +1,3 @@
-/**
- * MediationWorkspacePage — mediation workspace for dispute resolution.
- * Epic 80: Dispute Mediation (Story 80.3)
- *
- * Three-panel layout:
- *   Left sidebar  — dispute summary card + parties + mediator chip
- *   Main column   — tabbed: "Timeline" | "Chat" | "Resolve"
- *   Right rail    — status + quick-action buttons (Escalate, Assign Mediator)
- *
- * All data comes from @ppt/api-client hooks; no prop drilling of raw data.
- */
-
 import {
   type ResolveDisputeRequest,
   useAssignMediator,
@@ -19,11 +7,13 @@ import {
   useResolveDispute,
 } from '@ppt/api-client';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationResolutionForm } from '../components/MediationResolutionForm';
+import { formatTime } from '../utils/formatTime';
 
 // ============================================
-// Inline sub-components
+// Types
 // ============================================
 
 type Tab = 'timeline' | 'chat' | 'resolve';
@@ -37,13 +27,13 @@ const statusColors: Record<string, string> = {
   closed: 'bg-gray-100 text-gray-700',
 };
 
-const statusLabels: Record<string, string> = {
-  filed: 'Filed',
-  under_review: 'Under Review',
-  mediation: 'In Mediation',
-  escalated: 'Escalated',
-  resolved: 'Resolved',
-  closed: 'Closed',
+const statusLabelKeys: Record<string, string> = {
+  filed: 'disputes.statusFiled',
+  under_review: 'disputes.statusUnderReview',
+  mediation: 'disputes.statusInMediation',
+  escalated: 'disputes.statusEscalated',
+  resolved: 'disputes.statusResolved',
+  closed: 'disputes.statusClosed',
 };
 
 type TimelineEventType =
@@ -84,30 +74,12 @@ const eventColors: Record<TimelineEventType, string> = {
   closed: 'bg-gray-100 text-gray-700',
 };
 
-function formatTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60_000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
-
 // ============================================
-// DisputeTimeline sub-view
+// TimelineView
 // ============================================
 
-interface TimelineViewProps {
-  disputeId: string;
-}
-
-function TimelineView({ disputeId }: TimelineViewProps) {
+function TimelineView({ disputeId }: { disputeId: string }) {
+  const { t } = useTranslation();
   const { data: events = [], isLoading } = useDisputeTimeline(disputeId);
 
   if (isLoading) {
@@ -119,14 +91,12 @@ function TimelineView({ disputeId }: TimelineViewProps) {
   }
 
   if (events.length === 0) {
-    return <p className="text-sm text-gray-500 py-4">No timeline events yet.</p>;
+    return <p className="text-sm text-gray-500 py-4">{t('disputes.mediation.noTimelineEvents')}</p>;
   }
 
   return (
     <div className="relative">
-      {/* Vertical connector line */}
       <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
-
       <div className="space-y-4">
         {events.map((event) => {
           const eventType = event.eventType as TimelineEventType;
@@ -135,14 +105,11 @@ function TimelineView({ disputeId }: TimelineViewProps) {
 
           return (
             <div key={event.id} className="relative flex items-start gap-4 pl-10">
-              {/* Icon dot */}
               <div
                 className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${color}`}
               >
                 {icon}
               </div>
-
-              {/* Content card */}
               <div className="flex-1 bg-white rounded-lg border border-gray-200 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900">{event.actorName}</span>
@@ -167,7 +134,7 @@ function TimelineView({ disputeId }: TimelineViewProps) {
 }
 
 // ============================================
-// Escalate dialog
+// EscalateDialog
 // ============================================
 
 interface EscalateDialogProps {
@@ -177,31 +144,34 @@ interface EscalateDialogProps {
 }
 
 function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogProps) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
       <button
         type="button"
         className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
         onClick={onCancel}
         onKeyDown={(e) => e.key === 'Escape' && onCancel()}
-        aria-label="Close dialog"
+        aria-label={t('disputes.mediation.cancel')}
       />
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Escalate Dispute</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('disputes.mediation.escalateTitle')}
+          </h2>
           <p className="text-sm text-gray-600 mb-4">
-            Escalation moves this dispute to a higher authority. Please provide a reason.
+            {t('disputes.mediation.escalateDescription')}
           </p>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Reason for escalation <span className="text-red-500">*</span>
+            {t('disputes.mediation.reasonForEscalation')} <span className="text-red-500">*</span>
           </label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={4}
-            placeholder="Describe why this dispute needs to be escalated…"
+            placeholder={t('disputes.mediation.reasonPlaceholder')}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <div className="flex justify-end gap-3 mt-5">
@@ -210,7 +180,7 @@ function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogPro
               onClick={onCancel}
               className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Cancel
+              {t('disputes.mediation.cancel')}
             </button>
             <button
               type="button"
@@ -218,7 +188,9 @@ function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogPro
               disabled={!reason.trim() || isSubmitting}
               className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium"
             >
-              {isSubmitting ? 'Escalating…' : 'Escalate'}
+              {isSubmitting
+                ? t('disputes.mediation.escalatingBtn')
+                : t('disputes.mediation.escalateBtn')}
             </button>
           </div>
         </div>
@@ -228,7 +200,7 @@ function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogPro
 }
 
 // ============================================
-// Assign mediator dialog
+// AssignMediatorDialog
 // ============================================
 
 interface AssignMediatorDialogProps {
@@ -238,25 +210,28 @@ interface AssignMediatorDialogProps {
 }
 
 function AssignMediatorDialog({ onConfirm, onCancel, isSubmitting }: AssignMediatorDialogProps) {
+  const { t } = useTranslation();
   const [mediatorId, setMediatorId] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
       <button
         type="button"
         className="fixed inset-0 bg-black bg-opacity-50 cursor-default"
         onClick={onCancel}
         onKeyDown={(e) => e.key === 'Escape' && onCancel()}
-        aria-label="Close dialog"
+        aria-label={t('disputes.mediation.cancel')}
       />
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Assign Mediator</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {t('disputes.mediation.assignMediatorTitle')}
+          </h2>
           <p className="text-sm text-gray-600 mb-4">
-            Enter the user ID of the staff member to assign as mediator.
+            {t('disputes.mediation.assignMediatorDescription')}
           </p>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mediator user ID <span className="text-red-500">*</span>
+            {t('disputes.mediation.mediatorUserId')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -265,16 +240,14 @@ function AssignMediatorDialog({ onConfirm, onCancel, isSubmitting }: AssignMedia
             placeholder="user_xxxxxxxxxxxx"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
-          <p className="mt-1 text-xs text-gray-400">
-            A user-picker will be wired once the staff directory endpoint is available.
-          </p>
+          <p className="mt-1 text-xs text-gray-400">{t('disputes.mediation.userPickerNote')}</p>
           <div className="flex justify-end gap-3 mt-5">
             <button
               type="button"
               onClick={onCancel}
               className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Cancel
+              {t('disputes.mediation.cancel')}
             </button>
             <button
               type="button"
@@ -282,7 +255,7 @@ function AssignMediatorDialog({ onConfirm, onCancel, isSubmitting }: AssignMedia
               disabled={!mediatorId.trim() || isSubmitting}
               className="px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 font-medium"
             >
-              {isSubmitting ? 'Assigning…' : 'Assign'}
+              {isSubmitting ? t('disputes.mediation.assigning') : t('disputes.mediation.assign')}
             </button>
           </div>
         </div>
@@ -316,35 +289,34 @@ export function MediationWorkspacePage({
   onToastSuccess,
   onToastError,
 }: MediationWorkspacePageProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('timeline');
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
-  // Data queries
   const { data: dispute, isLoading: disputeLoading } = useDispute(disputeId);
 
-  // Mutations
   const resolveDispute = useResolveDispute(organizationId);
   const escalateDispute = useEscalateDispute(organizationId);
   const assignMediator = useAssignMediator();
-  // Note: useMediationNotes + useAddMediationNote are consumed inside MediationChatThread
 
   const isMediator = !!dispute && dispute.assignedMediatorId === currentUserId;
   const isParty =
     !!dispute && (dispute.filedBy === currentUserId || dispute.respondentId === currentUserId);
   const canManage = isManager || isMediator;
   const canChat = canManage || isParty;
-  const isActive = dispute?.status !== 'resolved' && dispute?.status !== 'closed';
+  // Fix: false when dispute is undefined (error/loading path)
+  const isActive = !!dispute && dispute.status !== 'resolved' && dispute.status !== 'closed';
 
   const handleResolve = async (data: ResolveDisputeRequest) => {
     try {
       await resolveDispute.mutateAsync({ disputeId, data });
-      onToastSuccess('Dispute resolved', 'The dispute has been marked as resolved.');
+      onToastSuccess(t('disputes.mediation.resolvedSuccess'), t('disputes.mediation.resolvedMsg'));
       setActiveTab('timeline');
     } catch (err) {
       onToastError(
-        'Failed to resolve dispute',
-        err instanceof Error ? err.message : 'Unexpected error'
+        t('disputes.mediation.resolveError'),
+        err instanceof Error ? err.message : undefined
       );
     }
   };
@@ -352,12 +324,15 @@ export function MediationWorkspacePage({
   const handleEscalate = async (reason: string) => {
     try {
       await escalateDispute.mutateAsync({ disputeId, data: { reason } });
-      onToastSuccess('Dispute escalated', 'The dispute has been escalated.');
+      onToastSuccess(
+        t('disputes.mediation.escalatedSuccess'),
+        t('disputes.mediation.escalatedMsg')
+      );
       setShowEscalateDialog(false);
     } catch (err) {
       onToastError(
-        'Failed to escalate dispute',
-        err instanceof Error ? err.message : 'Unexpected error'
+        t('disputes.mediation.escalateError'),
+        err instanceof Error ? err.message : undefined
       );
     }
   };
@@ -365,12 +340,12 @@ export function MediationWorkspacePage({
   const handleAssignMediator = async (mediatorId: string) => {
     try {
       await assignMediator.mutateAsync({ disputeId, data: { mediatorId } });
-      onToastSuccess('Mediator assigned', 'The mediator has been assigned to this dispute.');
+      onToastSuccess(t('disputes.mediation.assignedSuccess'), t('disputes.mediation.assignedMsg'));
       setShowAssignDialog(false);
     } catch (err) {
       onToastError(
-        'Failed to assign mediator',
-        err instanceof Error ? err.message : 'Unexpected error'
+        t('disputes.mediation.assignError'),
+        err instanceof Error ? err.message : undefined
       );
     }
   };
@@ -385,7 +360,16 @@ export function MediationWorkspacePage({
 
   const disputeStatus = dispute?.status ?? 'unknown';
   const referenceNumber = dispute ? `DSP-${dispute.id.toUpperCase()}` : disputeId;
-  const disputeTitle = dispute?.subject ?? 'Dispute';
+  const disputeTitle = dispute?.subject ?? t('disputes.title');
+  const statusLabel = statusLabelKeys[disputeStatus]
+    ? t(statusLabelKeys[disputeStatus])
+    : disputeStatus;
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'timeline', label: t('disputes.mediation.tabTimeline') },
+    { id: 'chat', label: t('disputes.mediation.tabDiscussion') },
+    { id: 'resolve', label: t('disputes.mediation.tabResolution') },
+  ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -396,7 +380,7 @@ export function MediationWorkspacePage({
           onClick={onBack}
           className="text-sm text-violet-600 hover:text-violet-800 mb-4 flex items-center gap-1"
         >
-          ← Back to Dispute
+          {t('disputes.mediation.backToDispute')}
         </button>
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
@@ -407,10 +391,10 @@ export function MediationWorkspacePage({
                   statusColors[disputeStatus] ?? 'bg-gray-100 text-gray-700'
                 }`}
               >
-                {statusLabels[disputeStatus] ?? disputeStatus}
+                {statusLabel}
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Mediation Workspace</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('disputes.mediation.title')}</h1>
             <p className="text-gray-500 mt-0.5 text-sm">{disputeTitle}</p>
           </div>
 
@@ -422,21 +406,21 @@ export function MediationWorkspacePage({
                 onClick={() => setShowAssignDialog(true)}
                 className="px-4 py-2 text-sm border border-violet-300 text-violet-700 rounded-lg hover:bg-violet-50"
               >
-                Assign Mediator
+                {t('disputes.mediation.assignMediator')}
               </button>
               <button
                 type="button"
                 onClick={() => setShowEscalateDialog(true)}
                 className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
               >
-                Escalate
+                {t('disputes.mediation.escalate')}
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('resolve')}
                 className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
               >
-                Resolve Dispute
+                {t('disputes.mediation.resolveDispute')}
               </button>
             </div>
           )}
@@ -448,35 +432,47 @@ export function MediationWorkspacePage({
         <div className="lg:col-span-1 space-y-4">
           {/* Dispute summary */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Dispute</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              {t('disputes.mediation.disputePanel')}
+            </h3>
             <dl className="space-y-2 text-sm">
               <div>
-                <dt className="text-xs text-gray-400 uppercase tracking-wide">Filed by</dt>
+                <dt className="text-xs text-gray-400 uppercase tracking-wide">
+                  {t('disputes.mediation.filedBy')}
+                </dt>
                 <dd className="font-medium text-gray-900">
                   {dispute?.filerDetails?.name ?? dispute?.filedBy ?? '—'}
                 </dd>
               </div>
               {dispute?.respondent && (
                 <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">Respondent</dt>
+                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
+                    {t('disputes.mediation.respondent')}
+                  </dt>
                   <dd className="font-medium text-gray-900">{dispute.respondent}</dd>
                 </div>
               )}
               {dispute?.assignedMediator && (
                 <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">Mediator</dt>
+                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
+                    {t('disputes.mediation.mediator')}
+                  </dt>
                   <dd className="font-medium text-violet-700">{dispute.assignedMediator}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-xs text-gray-400 uppercase tracking-wide">Filed</dt>
+                <dt className="text-xs text-gray-400 uppercase tracking-wide">
+                  {t('disputes.mediation.filed')}
+                </dt>
                 <dd className="text-gray-600">
                   {dispute ? new Date(dispute.filedAt).toLocaleDateString() : '—'}
                 </dd>
               </div>
               {dispute?.resolutionDeadline && (
                 <div>
-                  <dt className="text-xs text-gray-400 uppercase tracking-wide">Deadline</dt>
+                  <dt className="text-xs text-gray-400 uppercase tracking-wide">
+                    {t('disputes.mediation.deadline')}
+                  </dt>
                   <dd className="text-orange-600 font-medium">
                     {new Date(dispute.resolutionDeadline).toLocaleDateString()}
                   </dd>
@@ -487,12 +483,14 @@ export function MediationWorkspacePage({
 
           {/* Parties */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Parties</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              {t('disputes.mediation.parties')}
+            </h3>
             <div className="space-y-2">
               {dispute?.filerDetails && (
                 <div className="p-2.5 bg-blue-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">{dispute.filerDetails.name}</p>
-                  <p className="text-xs text-blue-600 mt-0.5">Filer</p>
+                  <p className="text-xs text-blue-600 mt-0.5">{t('disputes.mediation.filer')}</p>
                   {dispute.filerDetails.email && (
                     <p className="text-xs text-gray-500">{dispute.filerDetails.email}</p>
                   )}
@@ -503,7 +501,9 @@ export function MediationWorkspacePage({
                   <p className="text-sm font-medium text-gray-900">
                     {dispute.respondentDetails.name}
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Respondent</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {t('disputes.mediation.respondent')}
+                  </p>
                   {dispute.respondentDetails.email && (
                     <p className="text-xs text-gray-500">{dispute.respondentDetails.email}</p>
                   )}
@@ -514,23 +514,29 @@ export function MediationWorkspacePage({
                   <p className="text-sm font-medium text-gray-900">
                     {dispute.mediatorDetails.name}
                   </p>
-                  <p className="text-xs text-violet-600 mt-0.5">Mediator</p>
+                  <p className="text-xs text-violet-600 mt-0.5">
+                    {t('disputes.mediation.mediator')}
+                  </p>
                 </div>
               )}
               {!dispute?.filerDetails && !dispute?.respondentDetails && (
-                <p className="text-xs text-gray-400">Party details unavailable.</p>
+                <p className="text-xs text-gray-400">
+                  {t('disputes.mediation.partyDetailsUnavailable')}
+                </p>
               )}
             </div>
           </div>
 
           {/* Mediation guidelines */}
           <div className="bg-violet-50 rounded-xl border border-violet-100 p-4">
-            <h3 className="text-sm font-semibold text-violet-900 mb-2">Guidelines</h3>
+            <h3 className="text-sm font-semibold text-violet-900 mb-2">
+              {t('disputes.mediation.guidelines')}
+            </h3>
             <ul className="text-xs text-violet-800 space-y-1.5 list-disc list-inside">
-              <li>Be respectful and constructive</li>
-              <li>Focus on interests, not positions</li>
-              <li>Discussions are confidential</li>
-              <li>Work towards a shared solution</li>
+              <li>{t('disputes.mediation.guideline1')}</li>
+              <li>{t('disputes.mediation.guideline2')}</li>
+              <li>{t('disputes.mediation.guideline3')}</li>
+              <li>{t('disputes.mediation.guideline4')}</li>
             </ul>
           </div>
         </div>
@@ -541,13 +547,7 @@ export function MediationWorkspacePage({
             {/* Tabs */}
             <div className="border-b border-gray-200 px-6">
               <nav className="flex gap-6" aria-label="Workspace tabs">
-                {(
-                  [
-                    { id: 'timeline', label: 'Timeline' },
-                    { id: 'chat', label: 'Discussion' },
-                    { id: 'resolve', label: 'Resolution' },
-                  ] as { id: Tab; label: string }[]
-                ).map((tab) => (
+                {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
@@ -577,10 +577,11 @@ export function MediationWorkspacePage({
                       currentUserId={currentUserId}
                       currentUserName={currentUserName}
                       canSendPrivate={canManage}
+                      onError={onToastError}
                     />
                   ) : (
                     <p className="text-sm text-gray-500 text-center py-8">
-                      You must be a party or manager to participate in this discussion.
+                      {t('disputes.mediation.mustBeParty')}
                     </p>
                   )}
                 </>
@@ -595,19 +596,18 @@ export function MediationWorkspacePage({
                           statusColors[disputeStatus] ?? 'bg-gray-100 text-gray-700'
                         }`}
                       >
-                        {statusLabels[disputeStatus] ?? disputeStatus}
+                        {statusLabel}
                       </span>
                       <p className="text-gray-500 text-sm mt-3">
-                        This dispute is no longer active.
+                        {t('disputes.mediation.noLongerActive')}
                       </p>
                     </div>
                   ) : canManage ? (
                     <>
                       <h2 className="text-base font-semibold text-gray-900 mb-4">
-                        Record Resolution
+                        {t('disputes.mediation.recordResolution')}
                       </h2>
                       <MediationResolutionForm
-                        disputeId={disputeId}
                         isSubmitting={resolveDispute.isPending}
                         onResolve={handleResolve}
                         onCancel={() => setActiveTab('timeline')}
@@ -615,7 +615,7 @@ export function MediationWorkspacePage({
                     </>
                   ) : (
                     <p className="text-sm text-gray-500 text-center py-8">
-                      Only managers and mediators can record a resolution.
+                      {t('disputes.mediation.onlyManagersCanResolve')}
                     </p>
                   )}
                 </>
