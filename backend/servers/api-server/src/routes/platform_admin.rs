@@ -2807,24 +2807,23 @@ pub async fn get_onboarding_config(
 ) -> Result<Json<OnboardingConfigResponse>, (StatusCode, Json<ErrorResponse>)> {
     extract_super_admin_token(&headers, &state)?;
 
-    let tours = state
-        .onboarding_repo
-        .list_all_tours()
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "Failed to list onboarding tours");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new(
-                    "DATABASE_ERROR",
-                    "Failed to retrieve onboarding configuration",
-                )),
-            )
-        })?;
+    let tours = state.onboarding_repo.list_all_tours().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list onboarding tours");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to retrieve onboarding configuration",
+            )),
+        )
+    })?;
 
     let total = tours.len();
 
-    tracing::info!(total_tours = total, "Platform admin retrieved onboarding config");
+    tracing::info!(
+        total_tours = total,
+        "Platform admin retrieved onboarding config"
+    );
 
     Ok(Json(OnboardingConfigResponse { tours, total }))
 }
