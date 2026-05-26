@@ -125,7 +125,13 @@ pub async fn ws_handler(
     // Clone the pubsub service before moving into the closure.
     let pubsub_service = state.pubsub_service.clone();
 
-    ws.on_upgrade(move |socket| handle_ws_session(socket, user_id, exp, pubsub_service))
+    // Issue #438: echo the `ppt.v1` subprotocol so browsers that send
+    // `new WebSocket(url, ['bearer.<jwt>', 'ppt.v1'])` complete the
+    // handshake. The spec requires the server to echo at least one of
+    // the offered subprotocols or the browser aborts with a silent
+    // network error — not a 401.
+    ws.protocols(["ppt.v1"])
+        .on_upgrade(move |socket| handle_ws_session(socket, user_id, exp, pubsub_service))
         .into_response()
 }
 
