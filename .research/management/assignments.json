@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T14:35:00Z",
+  "generated": "2026-05-26T14:40:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1686,13 +1686,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-26T14:30:00Z",
+      "last_updated": "2026-05-26T14:40:00Z",
       "status_changed_at": "2026-05-26T14:30:00Z",
       "pr_number": 556,
       "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
       "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=3 required fixes: (1) role=dialog/aria-modal placed on backdrop div instead of panel div (screen-reader accessibility bug); (2) handleMoveConfirm logic duplicated verbatim in DocumentsBrowse and FolderTreePage \u2014 extract to shared hook; (3) no visible query invalidation after move mutation. Minor: incomplete Tab focus-trap, no unit tests for buildFolderCrumbs, style tag inside nav element"
     },
     {
       "task_id": "gap-7a-4-document-preview-ui",
@@ -1700,13 +1700,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-26T14:35:00Z",
+      "last_updated": "2026-05-26T14:40:00Z",
       "status_changed_at": "2026-05-26T14:35:00Z",
       "pr_number": 557,
       "pr_url": "https://github.com/martin-janci/property-management/pull/557",
       "merged_at": null,
       "implementer_summary": "pr=557 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=DocumentPreviewModal (PDF/image/fallback inline preview + download button); per-row preview+download buttons in DocumentsBrowse; usePreviewUrl+useDownloadUrl wired; modal accessible (Escape, backdrop, focus, aria-modal)",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=4 blockers: role=dialog on backdrop not panel, no focus trap, useDownloadUrl called eagerly for all N rows on mount, anchor.download silently ignored for cross-origin S3 presigned URLs; 3 important: duplicated download component, buttons nested inside button (invalid HTML), all strings bypass i18n"
     }
   ],
   "assignments.generated": "2026-05-26T13:45:00Z"
