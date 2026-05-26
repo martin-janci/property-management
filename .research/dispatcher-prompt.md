@@ -377,6 +377,15 @@ Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Ti
 
 ```bash
 git add .research/management/assignments.json [.research/management/action-list.json if refilled]
+# Commit-scope guard (#526): before the dispatcher's self-commit, refuse
+# if `git diff --cached` strays outside `.research/management/`. Catches
+# the PR #496 class of failure (stop hook bundling parallel-agent work
+# into a doc-edit commit). Exit 2 = REFUSE — bail without committing.
+bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
+  --allow '.research/management/**' || {
+  echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
+  exit 0
+}
 git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merged-attempts, X merged-now, F failed, A active, B buffer, RB rebased'
 git push origin dev   # if another run committed since our pull: rebase + retry once;
                       # if still conflicts, log and bail — next run will re-evaluate state
