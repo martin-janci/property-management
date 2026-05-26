@@ -505,7 +505,27 @@ through is the whole point of the auto-promote path; pre-filtering them here
 re-introduces the stall bug (dispatcher run on 2026-05-25: 0 merge attempts,
 all approved PRs draft).
 
-If pre-flight passes: spawn ONE Task subagent per PR (cap 2 parallel):
+**CI-stuck escalation (gap 4):** if the PR's CI rollup is `IN_PROGRESS` or
+`QUEUED` AND `row.merge_attempted_at != null` AND
+`(now - merge_attempted_at) > 6h` → the CI is wedged. Mark the row:
+
+```python
+row.status = "failed"
+row.status_changed_at = now
+row.last_updated = now
+row.implementer_summary += ' [ci-stuck >6h after first merge attempt; escalating]'
+```
+
+Post a comment on the PR explaining (`gh pr comment <n> --body
+"Auto-escalation: CI has been IN_PROGRESS for >6h since first merge attempt at
+<merge_attempted_at>. Human action required — check the runner / re-trigger /
+close the PR."`), then surface in Phase 7 (`CI-stuck escalations: [PR#<n> …]`).
+
+Do NOT spawn the merger subagent for an escalated row.
+
+If pre-flight passes (and not CI-stuck): spawn ONE Task subagent per PR
+(cap 2 parallel). **Set `row.merge_attempted_at = now` BEFORE spawning**,
+regardless of outcome — this is the back-off anchor.
 
 > You are a PR merger. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` end-to-end.
 > Inputs: `pr_number=<n>`, `repo=martin-janci/property-management`, `base=dev`,
@@ -619,6 +639,8 @@ Transitions (this run):   [<id> in-progress→review, …]             ([] if no
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
 Merge attempts (this run):[PR#<n> merged=<true|false|queued> <note>, …]
+CI-stuck escalations:     [PR#<n> task=<id> waited=<h>, …]                (gap 4; [] if none)
+Approved+CI-pending:      [PR#<n> task=<id> attempted=<iso8601> wait=<h>, …]  (gap 4; [] if none)
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
