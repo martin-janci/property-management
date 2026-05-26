@@ -20,6 +20,7 @@ import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
+import { HelpTooltip } from '../features/help';
 
 interface FeatureFlagValues extends Record<string, unknown> {
   'beta.new_listings_search': boolean;
@@ -376,7 +377,10 @@ const FeatureFlagsPage: React.FC = () => {
         />
       )}
       <section>
-        <h1>{t('admin.featureFlags.title')}</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.featureFlags.title')}
+          <HelpTooltip text={t('admin.featureFlags.helpTooltip')} />
+        </h1>
         <p role="alert" className="ppt-admin-warning" style={{ color: '#b00020', fontWeight: 600 }}>
           {t('admin.featureFlags.warning')}
         </p>
