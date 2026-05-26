@@ -184,7 +184,10 @@ pub async fn push_booking_listing(
             tracing::error!(error = %e, "DB error looking up Booking.com connection");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to check connection")),
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
             )
         })?
         .ok_or_else(|| {
@@ -210,8 +213,7 @@ pub async fn push_booking_listing(
     let username = connection.access_token.clone().unwrap_or_default();
     let password = connection.refresh_token.clone().unwrap_or_default();
 
-    let credentials =
-        integrations::BookingCredentials::new(hotel_id.clone(), username, password);
+    let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
 
     // Build a PropertyMapping with a single room-type entry for this unit.
@@ -357,7 +359,10 @@ pub async fn get_booking_conflicts(
             tracing::error!(error = %e, "DB error looking up Booking.com connection");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to check connection")),
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
             )
         })?
         .ok_or_else(|| {
@@ -391,7 +396,10 @@ pub async fn get_booking_conflicts(
             tracing::error!(error = %e, "Failed to list Booking.com bookings");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse::new("DATABASE_ERROR", "Failed to list bookings")),
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to list bookings",
+                )),
             )
         })?;
 
