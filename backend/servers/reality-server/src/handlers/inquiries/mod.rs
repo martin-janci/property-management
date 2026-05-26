@@ -246,10 +246,19 @@ impl InquiriesHandler {
             .map_err(|e| e.to_string())
     }
 
-    /// Mark inquiry as read.
-    pub async fn mark_as_read(&self, inquiry_id: Uuid) -> Result<(), String> {
+    /// Mark inquiry as read, scoped to its owning realtor.
+    ///
+    /// Returns `Ok(true)` if the row existed and belonged to the realtor,
+    /// `Ok(false)` otherwise. Issue #519: previously the unscoped repo call
+    /// was kept here in dead-code form, preserving the IDOR signature for
+    /// the next person to wire it up.
+    pub async fn mark_as_read(
+        &self,
+        inquiry_id: Uuid,
+        realtor_id: Uuid,
+    ) -> Result<bool, String> {
         self.repo
-            .mark_inquiry_read(inquiry_id)
+            .mark_inquiry_read_for_realtor(inquiry_id, realtor_id)
             .await
             .map_err(|e| e.to_string())
     }
