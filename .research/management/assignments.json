@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T04:52:00Z",
+  "generated": "2026-05-26T05:10:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1527,15 +1527,15 @@
     {
       "task_id": "gap-10b-7-contextual-help-ui",
       "branch": "auto-impl/gap-10b-7-contextual-help-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-26T04:43:00Z",
-      "last_updated": "2026-05-26T04:43:00Z",
-      "status_changed_at": "2026-05-26T04:43:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T05:10:00Z",
+      "status_changed_at": "2026-05-26T05:10:00Z",
+      "pr_number": 541,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/541",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=541 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=static help sidebar+tooltip in admin-web; biome exit 0; scope_drift=admin-web/** missing from owner-areas.json (justified: react-web specialist explicitly covers admin-web)",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
