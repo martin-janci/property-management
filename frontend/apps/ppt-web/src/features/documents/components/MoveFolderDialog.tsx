@@ -55,7 +55,10 @@ function FolderOption({ node, depth, selectedId, onSelect }: FolderOptionProps) 
               fill="none"
               stroke="currentColor"
               strokeWidth="2.5"
-              style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.12s' }}
+              style={{
+                transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.12s',
+              }}
               aria-hidden="true"
             >
               <polyline points="9 18 15 12 9 6" />
@@ -162,7 +165,9 @@ export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderB
         const isLast = idx === crumbs.length - 1;
         return (
           <span key={crumb.id} className="folder-bc__segment">
-            <span className="folder-bc__sep" aria-hidden="true">/</span>
+            <span className="folder-bc__sep" aria-hidden="true">
+              /
+            </span>
             {isLast ? (
               <span className="folder-bc__crumb folder-bc__crumb--current" aria-current="page">
                 {crumb.name}
@@ -297,7 +302,7 @@ export function MoveFolderDialog({
 
   const tree = data?.tree ?? [];
   const selectedName = selectedId
-    ? buildFolderCrumbs(tree, selectedId).at(-1)?.name ?? selectedId
+    ? (buildFolderCrumbs(tree, selectedId).at(-1)?.name ?? selectedId)
     : null;
 
   const hasChanged = selectedId !== currentFolderId;
@@ -321,13 +326,16 @@ export function MoveFolderDialog({
         {/* Header */}
         <div className="mfd__header">
           <h3 className="mfd__title">Presunúť do priečinka</h3>
-          <button
-            type="button"
-            className="mfd__close"
-            onClick={onCancel}
-            aria-label="Zavrieť"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <button type="button" className="mfd__close" onClick={onCancel} aria-label="Zavrieť">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -348,7 +356,13 @@ export function MoveFolderDialog({
           <span className="mfd__dest-prefix">Cieľ:</span>
           {selectedName ? (
             <span className="mfd__dest-value mfd__dest-value--folder">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--ppt-brand-500)" aria-hidden="true">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="var(--ppt-brand-500)"
+                aria-hidden="true"
+              >
                 <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
               </svg>
               {selectedName}
@@ -367,14 +381,31 @@ export function MoveFolderDialog({
             onClick={() => setSelectedId(null)}
             aria-pressed={selectedId === null}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
             Všetky dokumenty (bez priečinka)
             {selectedId === null && (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ppt-brand-500)" strokeWidth="2.5" aria-hidden="true" className="mfd__root-check">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--ppt-brand-500)"
+                strokeWidth="2.5"
+                aria-hidden="true"
+                className="mfd__root-check"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -389,7 +420,9 @@ export function MoveFolderDialog({
           )}
 
           {error && !isLoading && (
-            <p className="mfd__error" role="alert">Priečinky sa nepodarilo načítať.</p>
+            <p className="mfd__error" role="alert">
+              Priečinky sa nepodarilo načítať.
+            </p>
           )}
 
           {!isLoading && !error && tree.length === 0 && (
