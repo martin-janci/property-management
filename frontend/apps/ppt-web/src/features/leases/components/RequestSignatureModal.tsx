@@ -33,12 +33,44 @@ export function RequestSignatureModal({
   const createRequest = useCreateSignatureRequest(documentId);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Focus the first interactive element on mount.
   useEffect(() => {
     const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     focusable?.[0]?.focus();
   }, []);
+
+  // Escape closes the modal; Tab/Shift+Tab cycles focus within the dialog (focus trap).
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable || focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(
     new Set(parties.map((p) => p.email))
@@ -84,14 +116,14 @@ export function RequestSignatureModal({
   };
 
   return (
-    <div
-      ref={dialogRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="esign-modal-title"
-    >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div
+        ref={dialogRef}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="esign-modal-title"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 id="esign-modal-title" className="text-lg font-semibold text-gray-900">
