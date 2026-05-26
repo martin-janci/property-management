@@ -18,6 +18,7 @@ export * from './critical-notifications';
 export * from './disputes';
 export * from './documents';
 export * from './emergency';
+export * from './esignature';
 export * from './facilities';
 export * from './faults';
 export * from './financial';
