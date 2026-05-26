@@ -1034,6 +1034,24 @@ function DisputeDetailRoute() {
     user?.role === 'technical_manager' ||
     user?.role === 'property_manager';
 
+  // #516 — these dispute actions are not yet wired to a backend mutation.
+  // Render-time `() => {}` no-ops silently swallowed clicks (user clicks,
+  // nothing happens). Until the API surface lands, surface a toast so the
+  // user knows the action exists but is pending implementation.
+  const notImplemented = useCallback(
+    (label: string) => () => {
+      showToast({
+        type: 'info',
+        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
+        message: t('disputes.actionPendingImpl', {
+          defaultValue: '{{action}} will be available in a future release.',
+          action: label,
+        }),
+      });
+    },
+    [showToast, t]
+  );
+
   const handleUpdateStatus = async (status: UiDisputeStatus, reason?: string) => {
     const apiStatus = mapUiStatusToApiStatus(status);
     if (!apiStatus || !disputeId) return;
@@ -1066,17 +1084,17 @@ function DisputeDetailRoute() {
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
       onUpdateStatus={handleUpdateStatus}
-      onAddEvidence={() => {}}
-      onDeleteEvidence={() => {}}
-      onProposeResolution={() => {}}
-      onVoteResolution={() => {}}
-      onAcceptResolution={() => {}}
-      onImplementResolution={() => {}}
-      onCompleteResolutionTerm={() => {}}
-      onCreateAction={() => {}}
-      onCompleteAction={() => {}}
-      onSendReminder={() => {}}
-      onEscalate={() => {}}
+      onAddEvidence={notImplemented('Add evidence')}
+      onDeleteEvidence={notImplemented('Delete evidence')}
+      onProposeResolution={notImplemented('Propose resolution')}
+      onVoteResolution={notImplemented('Vote on resolution')}
+      onAcceptResolution={notImplemented('Accept resolution')}
+      onImplementResolution={notImplemented('Implement resolution')}
+      onCompleteResolutionTerm={notImplemented('Complete resolution term')}
+      onCreateAction={notImplemented('Create action')}
+      onCompleteAction={notImplemented('Complete action')}
+      onSendReminder={notImplemented('Send reminder')}
+      onEscalate={notImplemented('Escalate')}
       onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
     />
   );
@@ -1134,6 +1152,21 @@ function DisputeMediationRoute() {
   const isMediator = !!dispute && dispute.assignedMediatorId === user?.id;
   const isParty = !!dispute && (dispute.filedBy === user?.id || dispute.respondentId === user?.id);
 
+  // #516 — toast on unimplemented mediation actions, see DisputeDetailRoute.
+  const notImplemented = useCallback(
+    (label: string) => () => {
+      showToast({
+        type: 'info',
+        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
+        message: t('disputes.actionPendingImpl', {
+          defaultValue: '{{action}} will be available in a future release.',
+          action: label,
+        }),
+      });
+    },
+    [showToast, t]
+  );
+
   const handleCompleteSession = async (_sessionId: string, notes: string) => {
     if (!disputeId) return;
     try {
@@ -1173,11 +1206,11 @@ function DisputeMediationRoute() {
           ),
         });
       }}
-      onCancelSession={() => {}}
+      onCancelSession={notImplemented('Cancel session')}
       onCompleteSession={handleCompleteSession}
-      onConfirmAttendance={() => {}}
-      onRecordAttendance={() => {}}
-      onSubmitResponse={() => {}}
+      onConfirmAttendance={notImplemented('Confirm attendance')}
+      onRecordAttendance={notImplemented('Record attendance')}
+      onSubmitResponse={notImplemented('Submit response')}
     />
   );
 }
