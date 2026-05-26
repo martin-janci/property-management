@@ -43,6 +43,30 @@ Otherwise the skill refuses to touch a draft and points the caller at
 | `dry_run`      | `false`                            | Run preconditions + conflict resolve, skip the merge call |
 | `mode`         | `merge`                            | `merge` (default — full flow) or `rebase-only` (run Step 2 conflict-resolver + push, then return without merging — used by dispatcher Phase 5.6 to unstick stale-approved PRs) |
 
+## Stacked PRs — refused unless opt-in
+
+If the PR's `baseRefName` is anything other than `dev` or `main`, this is a
+stacked PR (PR-on-PR). The mechanical-conflict resolver in Step 2 only knows
+how to rebase onto `dev`/`main`, and the dispatcher's `assignments.json` only
+tracks PRs targeting `dev`. By default this skill refuses to merge such PRs.
+
+```bash
+BASE_REF=$(gh pr view "$PR" --repo "$REPO" --json baseRefName -q .baseRefName)
+case "$BASE_REF" in
+  dev|main) ;;
+  *)
+    if [ "${ALLOW_STACKED:-0}" != "1" ]; then
+      echo "merged=false pr=$PR note=this PR is stacked (base=$BASE_REF); refusing to merge until base is dev/main"
+      exit 0
+    fi
+    ;;
+esac
+```
+
+Resolution: the PR author should merge the bottom of the stack first, then
+retarget this PR's base to `dev` via `gh pr edit "$PR" --base dev`, then
+re-invoke `ppt-pr-merge`.
+
 ## Step 1 — Preconditions (HARD GATES — abort if any fail)
 
 ```bash
@@ -51,7 +75,21 @@ REPO=<repo>
 
 # Read full PR state
 gh pr view "$PR" --repo "$REPO" --json \
-  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName
+  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName,labels
+```
+
+**Human-gate label check (P6).** If the PR carries the `needs-human-review`
+label, refuse regardless of approval / CI status. This overrides any
+auto-promote-from-draft behavior — an approve + green CI is not enough when
+a human gate is set.
+
+```bash
+HAS_GATE=$(gh pr view "$PR" --repo "$REPO" --json labels \
+  --jq '[.labels[].name] | index("needs-human-review") // empty')
+if [ -n "$HAS_GATE" ]; then
+  echo "merged=false pr=$PR note=blocked-by-needs-human-review-label"
+  exit 0
+fi
 ```
 
 Abort with `merged=false note=<reason>` if ANY of:
@@ -238,6 +276,7 @@ skill never touches assignments.json directly.
   that has not been promoted to ready via the auto-promote path in Step 1.
 - Never merge a PR with failing or in-progress CI.
 - Never merge a PR with unresolved review threads.
+- Never merge a PR carrying the `needs-human-review` label, even if approved + green (P6).
 - Auto-resolve ONLY the mechanical patterns listed in Step 2; real code conflicts always abort.
 - Always verify the auto-resolved branch with a quick per-stack check before pushing.
 - Never bypass branch protection (no `--admin` flag from this skill — humans only).

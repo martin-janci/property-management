@@ -1,5 +1,10 @@
 {
   "version": 3,
+  "_pointer": {
+    "dispatcher_state_at": ".research/management/assignments.json (on planning branch)",
+    "routine_state_at": ".research/state.json (this file, on dev/main)",
+    "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
+  },
   "last_run_iso": "2026-05-26T03:12:00Z",
   "last_run_ms": 600000,
   "last_pr_seen": 511,

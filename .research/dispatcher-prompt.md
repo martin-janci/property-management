@@ -41,6 +41,7 @@ Schema per row:
   "empty_branch":       "boolean | null",  // branch pushed but 0 commits ahead of dev (item #1)
   "rebase_attempts":    "int",             // count of auto-rebase tries on this row (item #6); default 0
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
+  "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
@@ -61,7 +62,8 @@ Schema per row:
 | from        | to       | trigger                                                        |
 |---          |---       |---                                                              |
 | in-progress | review   | Phase 4 returns `pr=<n>`                                        |
-| in-progress | failed   | Phase 4 returns `pr=none` OR Phase 2 detects no-branch >2h OR Phase 2 detects empty-branch |
+| in-progress | failed   | Phase 4 returns `pr=none` OR Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch |
+| in-progress | in-progress | Phase 2 detects sandbox-timeout (`cloud-ok`: 60m, else 120m) AND `reclaim_attempts < 1` → re-spawn implementer once; bump `reclaim_attempts`, bump `status_changed_at` so the next grace window starts now |
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
 | review      | review   | PR still open (no `status_changed_at` bump)                    |
@@ -112,12 +114,20 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 3. Read `action-list.json`, `assignments.json`, `coverage.json`.
 4. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
-   `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`) to
-   `null` / `0`.
+   `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`,
+   `reclaim_attempts`) to `null` / `0`.
 5. Confirm `.claude/skills/ppt-implement/SKILL.md`,
    `.claude/skills/ppt-review-merged/SKILL.md`,
    `.claude/skills/ppt-pr-merge/SKILL.md`, AND
    `.claude/skills/ppt-pr-followup/SKILL.md` exist. If any missing, ABORT.
+6. **Ensure gating labels exist** (P6) — idempotent:
+
+   ```bash
+   bash .claude/skills/ppt-pr-followup/scripts/ensure-labels.sh \
+     martin-janci/property-management
+   ```
+
+   This creates `needs-human-review` once and is a no-op thereafter.
 
 ---
 
@@ -156,8 +166,21 @@ fi
 - **branch exists, no PR**:
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
-- **no branch + in-progress + (now - status_changed_at) > 2h** → `new_status="failed"`, `implementer_summary='no branch pushed within 2h'`.
-- **no branch + in-progress + grace < 2h** → keep `prev_status` (another run's implementer may still be working).
+- **no branch + in-progress** → run the **sandbox-reclaim helper** (P3):
+
+  ```bash
+  MODE_TAG=$(grep -oE '^Mode:[[:space:]]*[a-z-]+' .research/plans/<slug>.md 2>/dev/null | head -1 | awk '{print $2}')
+  bash .claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh
+  # honours BRANCH, STATUS_CHANGED_AT, MODE_TAG, RECLAIM_ATTEMPTS env vars;
+  # prints one line: `action=<wait|reclaim|fail> reason=<short> branch_state=<…>`
+  ```
+
+  Timeout is **60m for `Mode: cloud-ok`** plans, **120m otherwise**.
+
+  Apply the helper's verdict:
+  - `action=wait` → keep `prev_status`; do not touch `status_changed_at`. Another run's implementer may still be working.
+  - `action=reclaim` (only when `reclaim_attempts < 1`) → re-spawn the SAME specialist with the SAME brief via Phase 4's machinery (mirror followup-skill respawn pattern). On respawn: bump `reclaim_attempts += 1`, set `status_changed_at = now` so the next grace window restarts. Status stays `in-progress`.
+  - `action=fail` → `new_status="failed"`, append the helper's `reason=<…>` to `implementer_summary` (e.g. `'sandbox-failure-after-reclaim'` or `'empty-branch'`).
 
 Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=new_status`, `status_changed_at=now`.
 
@@ -228,7 +251,8 @@ Append to `assignments.json`:
   "scope_drift": null,
   "code_reuse_warn": null,
   "empty_branch": null,
-  "rebase_attempts": 0
+  "rebase_attempts": 0,
+  "reclaim_attempts": 0
 }
 ```
 
@@ -312,6 +336,29 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 
 Capture → `reviewer_summary`, `last_reviewed_oid = head_oid` (item #10),
 `last_updated = now`. STATUS UNCHANGED.
+
+**Human-gate label sweep (P6).** After capture, scan the reviewer's `note=`
+substring (case-insensitive) for any of these phrases — the canonical
+allow-list. Match means: the reviewer is parking the PR in draft pending a
+human-only check.
+
+| Phrase fragment (case-insensitive) | Why it's a human gate |
+|---|---|
+| `macos reviewer required` | Cross-platform check the bot can't do |
+| `needs domain expert review` | Subject-matter judgement call |
+| `needs security review` | Sec team must sign off before un-draft |
+| `needs product review` | Product/UX decision |
+| `human review required` | Generic catch-all |
+| `do not auto-merge` | Explicit operator override |
+
+If any fragment matches, label the PR:
+
+```bash
+gh pr edit "$PR" --repo martin-janci/property-management --add-label needs-human-review
+```
+
+If no fragment matches and the PR currently has the label, leave it alone
+(humans add this label too; the dispatcher only adds, never removes).
 
 No cap on reviewer subagents — review every pending review row in parallel.
 
@@ -451,6 +498,7 @@ In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
 Merge attempts (this run):[PR#<n> merged=<true|false|queued> <note>, …]
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
+Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
 Scope-drift flagged:      [PR#<n> task=<id> note=<paths>, …]        (item #3; [] if none)
 Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; [] if none)
@@ -493,6 +541,7 @@ Hang alerts:
 - **scope-drift** and **code-reuse-warn** (items #3, #4) are non-blocking on implementer return, but feed the reviewer prompt and are surfaced in Phase 7
 - **reviewer re-runs** (item #10) gate on `PR.headRefOid != row.last_reviewed_oid` — never re-review the same SHA
 - **auto-rebase** (item #6) is bounded at 3 attempts per row; after that a human must intervene
+- **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
 
 ---
