@@ -1,7 +1,7 @@
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-const PRODUCT_DIRS = ['ppt', 'reality'];
+const PRODUCT_DIRS = ['ppt', 'reality', 'reality-mobile'];
 const IGNORED = new Set(['README.md', '_template.md']);
 
 export async function discoverScreenMaps(rootDir: string): Promise<string[]> {
