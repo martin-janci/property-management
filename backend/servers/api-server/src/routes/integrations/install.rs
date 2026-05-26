@@ -11,7 +11,7 @@ use axum::{
 };
 use integrations::{
     AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
-    PropertyMapping, RateUpdate, RoomTypeMapping, PortalType,
+    PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -1057,7 +1057,10 @@ pub async fn push_booking_availability(
         })
         .collect();
 
-    match client.push_availability(&mapping, availability_updates).await {
+    match client
+        .push_availability(&mapping, availability_updates)
+        .await
+    {
         Ok(()) => {
             tracing::info!(
                 org_id = %path.org_id,
