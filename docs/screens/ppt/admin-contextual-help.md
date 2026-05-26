@@ -9,7 +9,7 @@ implementations:
     component: HelpSidebar, HelpTooltip, useContextualHelp
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: static
+    apiStatus: n/a
 endpoints: []
 relatedScreens:
   - id: ppt/admin-platform-health
