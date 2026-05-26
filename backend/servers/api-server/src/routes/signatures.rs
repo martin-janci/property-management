@@ -193,9 +193,17 @@ pub async fn create_signature_request(
                 )
             });
 
-        // TODO(#527): per-signer locale (lookup by email → users.locale, or
-        // fall back to org default). For now subjects come out English.
-        let signer_locale = Locale::English;
+        // Resolve the signer's locale from their user record (if any).
+        // Guest signers (no account) and DB errors both fall back to
+        // English — never fail an outgoing email over a locale lookup.
+        let signer_locale = state
+            .user_repo
+            .find_by_email(&signer.email)
+            .await
+            .ok()
+            .flatten()
+            .map(|u| u.locale_enum())
+            .unwrap_or(Locale::English);
         if let Err(e) = state
             .email_service
             .send_signature_request_email(
@@ -408,8 +416,16 @@ pub async fn send_reminder(
                 )
             });
 
-        // TODO(#527): per-signer locale lookup.
-        let signer_locale = Locale::English;
+        // Resolve the signer's locale from their user record (if any);
+        // English fallback for guests and DB errors.
+        let signer_locale = state
+            .user_repo
+            .find_by_email(&signer.email)
+            .await
+            .ok()
+            .flatten()
+            .map(|u| u.locale_enum())
+            .unwrap_or(Locale::English);
         if let Err(e) = state
             .email_service
             .send_signature_reminder_email(

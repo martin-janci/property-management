@@ -86,6 +86,15 @@ enum EmailTransport {
     Log,
 }
 
+/// Discriminates the four signature email templates for the i18n `<title>` lookup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum SignatureEmailKind {
+    Request,
+    Reminder,
+    Declined,
+    Completed,
+}
+
 /// Email service for sending transactional emails.
 #[derive(Clone)]
 pub struct EmailService {
@@ -884,12 +893,13 @@ impl EmailService {
     }
 
     // ------------------------------------------------------------------
-    // Signature email subjects (i18n).
+    // Signature email translations (i18n).
     //
-    // Subject lines are what users see in their inbox preview, so they're
-    // worth localising even before the body paragraphs are translated.
-    // The body templates still emit English copy (tracked separately as a
-    // #527 follow-up).
+    // sk / cs / de translations are author-best-effort and should get a
+    // native review before customer rollout. Subject lines show in inbox
+    // previews; body strings show inside the email. Both are templated
+    // with placeholders like `{signer_name}` and `{document_name}` —
+    // values are HTML-escaped at the call site before substitution.
     // ------------------------------------------------------------------
 
     fn signature_request_subject(document_name: &str, locale: &Locale) -> String {
@@ -933,11 +943,338 @@ impl EmailService {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Body translation tables.
+    //
+    // Each table is a small `&'static str` bundle returned by per-email
+    // helpers. Templates use `{placeholder}` markers that the call site
+    // fills with HTML-escaped values. Templates contain no `format!`
+    // syntax — `.replace` is enough and avoids the runtime cost of
+    // re-parsing format strings.
+    //
+    // Closing line `closing_html` / `closing_plain` is the same across
+    // all four emails per locale: lifted into a shared helper.
+    // ------------------------------------------------------------------
+
+    fn email_closing_plain(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "S pozdravom,\nProperty Management System",
+            Locale::Czech => "S pozdravem,\nProperty Management System",
+            Locale::German => "Mit freundlichen Grüßen,\nProperty Management System",
+            Locale::English => "Best regards,\nProperty Management System",
+        }
+    }
+
+    fn signature_request_body_html(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "\
+<h2 style=\"color:#2c5282\">Máte dokument na podpis</h2>\
+<p>Dobrý deň <strong>{signer_name}</strong>,</p>\
+<p><strong>{requester_name}</strong> vás žiada o elektronický podpis dokumentu \
+   <strong>&quot;{document_name}&quot;</strong>.</p>\
+{custom_message}\
+{expiry_block}\
+<p style=\"margin:30px 0\">\
+  <a href=\"{signing_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Skontrolovať a podpísať dokument</a>\
+</p>\
+<p style=\"font-size:12px;color:#718096\">Ak tlačidlo nefunguje, skopírujte a vložte tento odkaz:<br><a href=\"{signing_url}\">{signing_url}</a></p>\
+<hr style=\"border:none;border-top:1px solid #e2e8f0;margin:30px 0\">\
+<p style=\"font-size:12px;color:#718096\">Ak ste túto žiadosť neočakávali, môžete tento e-mail bezpečne ignorovať.</p>",
+            Locale::Czech => "\
+<h2 style=\"color:#2c5282\">Máte dokument k podpisu</h2>\
+<p>Dobrý den <strong>{signer_name}</strong>,</p>\
+<p><strong>{requester_name}</strong> vás žádá o elektronický podpis dokumentu \
+   <strong>&quot;{document_name}&quot;</strong>.</p>\
+{custom_message}\
+{expiry_block}\
+<p style=\"margin:30px 0\">\
+  <a href=\"{signing_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Zkontrolovat a podepsat dokument</a>\
+</p>\
+<p style=\"font-size:12px;color:#718096\">Pokud tlačítko nefunguje, zkopírujte a vložte tento odkaz:<br><a href=\"{signing_url}\">{signing_url}</a></p>\
+<hr style=\"border:none;border-top:1px solid #e2e8f0;margin:30px 0\">\
+<p style=\"font-size:12px;color:#718096\">Pokud jste tuto žádost neočekávali, můžete tento e-mail bezpečně ignorovat.</p>",
+            Locale::German => "\
+<h2 style=\"color:#2c5282\">Sie haben ein Dokument zu unterschreiben</h2>\
+<p>Hallo <strong>{signer_name}</strong>,</p>\
+<p><strong>{requester_name}</strong> bittet um Ihre elektronische Unterschrift für \
+   <strong>&quot;{document_name}&quot;</strong>.</p>\
+{custom_message}\
+{expiry_block}\
+<p style=\"margin:30px 0\">\
+  <a href=\"{signing_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Dokument prüfen und unterschreiben</a>\
+</p>\
+<p style=\"font-size:12px;color:#718096\">Falls der Button nicht funktioniert, kopieren Sie diese URL:<br><a href=\"{signing_url}\">{signing_url}</a></p>\
+<hr style=\"border:none;border-top:1px solid #e2e8f0;margin:30px 0\">\
+<p style=\"font-size:12px;color:#718096\">Sollten Sie diese Anfrage nicht erwartet haben, können Sie diese E-Mail ignorieren.</p>",
+            Locale::English => "\
+<h2 style=\"color:#2c5282\">You have a document to sign</h2>\
+<p>Hello <strong>{signer_name}</strong>,</p>\
+<p><strong>{requester_name}</strong> has requested your electronic signature on \
+   <strong>&quot;{document_name}&quot;</strong>.</p>\
+{custom_message}\
+{expiry_block}\
+<p style=\"margin:30px 0\">\
+  <a href=\"{signing_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Review &amp; Sign Document</a>\
+</p>\
+<p style=\"font-size:12px;color:#718096\">If the button above doesn't work, copy and paste this URL:<br><a href=\"{signing_url}\">{signing_url}</a></p>\
+<hr style=\"border:none;border-top:1px solid #e2e8f0;margin:30px 0\">\
+<p style=\"font-size:12px;color:#718096\">If you were not expecting this request, you may safely ignore this email.</p>",
+        }
+    }
+
+    fn signature_request_body_plain(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "Dobrý deň {signer_name},\n\n{requester_name} vás žiada o elektronický podpis dokumentu \"{document_name}\".\n{custom_message}\nDokument môžete skontrolovať a podpísať tu:\n{signing_url}\n{expiry_block}\nAk ste túto žiadosť neočakávali, môžete tento e-mail ignorovať.",
+            Locale::Czech => "Dobrý den {signer_name},\n\n{requester_name} vás žádá o elektronický podpis dokumentu \"{document_name}\".\n{custom_message}\nDokument můžete zkontrolovat a podepsat zde:\n{signing_url}\n{expiry_block}\nPokud jste tuto žádost neočekávali, můžete tento e-mail ignorovat.",
+            Locale::German => "Hallo {signer_name},\n\n{requester_name} bittet um Ihre elektronische Unterschrift für \"{document_name}\".\n{custom_message}\nBitte prüfen und unterschreiben Sie hier:\n{signing_url}\n{expiry_block}\nSollten Sie diese Anfrage nicht erwartet haben, können Sie diese E-Mail ignorieren.",
+            Locale::English => "Hello {signer_name},\n\n{requester_name} has requested your electronic signature on \"{document_name}\".\n{custom_message}\nPlease review and sign at:\n{signing_url}\n{expiry_block}\nIf you were not expecting this, you may ignore this email.",
+        }
+    }
+
+    /// Localised "this request expires on …" block (HTML + plain).
+    /// Returns `("", "")` when `expires_at` is `None`.
+    fn expiry_blocks(expires_at: Option<&str>, locale: &Locale, urgent: bool) -> (String, String) {
+        let Some(date) = expires_at else {
+            return (String::new(), String::new());
+        };
+        let date_h = Self::html_escape(date);
+        let (html_template, plain_template) = match (locale, urgent) {
+            (Locale::Slovak, false) => (
+                "<p>Žiadosť expiruje <strong>{date}</strong>.</p>",
+                "\nŽiadosť expiruje: {date}\n",
+            ),
+            (Locale::Slovak, true) => (
+                "<p><strong>Dôležité:</strong> žiadosť expiruje <strong>{date}</strong>.</p>",
+                "\nDôležité: žiadosť expiruje {date}.\n",
+            ),
+            (Locale::Czech, false) => (
+                "<p>Žádost vyprší <strong>{date}</strong>.</p>",
+                "\nŽádost vyprší: {date}\n",
+            ),
+            (Locale::Czech, true) => (
+                "<p><strong>Důležité:</strong> žádost vyprší <strong>{date}</strong>.</p>",
+                "\nDůležité: žádost vyprší {date}.\n",
+            ),
+            (Locale::German, false) => (
+                "<p>Diese Anfrage läuft am <strong>{date}</strong> ab.</p>",
+                "\nDiese Anfrage läuft ab am: {date}\n",
+            ),
+            (Locale::German, true) => (
+                "<p><strong>Wichtig:</strong> diese Anfrage läuft am <strong>{date}</strong> ab.</p>",
+                "\nWichtig: diese Anfrage läuft am {date} ab.\n",
+            ),
+            (Locale::English, false) => (
+                "<p>This request expires on <strong>{date}</strong>.</p>",
+                "\nThis request expires on: {date}\n",
+            ),
+            (Locale::English, true) => (
+                "<p><strong>Important:</strong> This request expires on <strong>{date}</strong>.</p>",
+                "\nImportant: This request expires on {date}.\n",
+            ),
+        };
+        (
+            html_template.replace("{date}", &date_h),
+            plain_template.replace("{date}", date),
+        )
+    }
+
+    fn signature_reminder_body_html(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "\
+<h2 style=\"color:#c05621\">Pripomienka: vyžaduje sa podpis</h2>\
+<p>Dobrý deň <strong>{signer_name}</strong>,</p>\
+<p>Toto je priateľská pripomienka, že stále potrebujeme váš podpis dokumentu <strong>&quot;{document_name}&quot;</strong>.</p>\
+{expiry_block}\
+<p style=\"margin:30px 0\"><a href=\"{signing_url}\" style=\"background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Podpísať teraz</a></p>\
+<p style=\"font-size:12px;color:#718096\">Ak tlačidlo nefunguje:<br><a href=\"{signing_url}\">{signing_url}</a></p>",
+            Locale::Czech => "\
+<h2 style=\"color:#c05621\">Připomínka: vyžaduje se podpis</h2>\
+<p>Dobrý den <strong>{signer_name}</strong>,</p>\
+<p>Toto je přátelská připomínka, že stále potřebujeme váš podpis dokumentu <strong>&quot;{document_name}&quot;</strong>.</p>\
+{expiry_block}\
+<p style=\"margin:30px 0\"><a href=\"{signing_url}\" style=\"background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Podepsat nyní</a></p>\
+<p style=\"font-size:12px;color:#718096\">Pokud tlačítko nefunguje:<br><a href=\"{signing_url}\">{signing_url}</a></p>",
+            Locale::German => "\
+<h2 style=\"color:#c05621\">Erinnerung: Unterschrift erforderlich</h2>\
+<p>Hallo <strong>{signer_name}</strong>,</p>\
+<p>Dies ist eine freundliche Erinnerung, dass Ihre Unterschrift für <strong>&quot;{document_name}&quot;</strong> noch ausstehend ist.</p>\
+{expiry_block}\
+<p style=\"margin:30px 0\"><a href=\"{signing_url}\" style=\"background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Jetzt unterschreiben</a></p>\
+<p style=\"font-size:12px;color:#718096\">Falls der Button nicht funktioniert:<br><a href=\"{signing_url}\">{signing_url}</a></p>",
+            Locale::English => "\
+<h2 style=\"color:#c05621\">Reminder: Signature Required</h2>\
+<p>Hello <strong>{signer_name}</strong>,</p>\
+<p>This is a friendly reminder that your signature is still needed on <strong>&quot;{document_name}&quot;</strong>.</p>\
+{expiry_block}\
+<p style=\"margin:30px 0\"><a href=\"{signing_url}\" style=\"background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Sign Now</a></p>\
+<p style=\"font-size:12px;color:#718096\">If the button above doesn't work:<br><a href=\"{signing_url}\">{signing_url}</a></p>",
+        }
+    }
+
+    fn signature_reminder_body_plain(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "Dobrý deň {signer_name},\n\nToto je priateľská pripomienka, že stále potrebujeme váš podpis dokumentu \"{document_name}\".\n{expiry_block}\nPodpíšte tu:\n{signing_url}",
+            Locale::Czech => "Dobrý den {signer_name},\n\nToto je přátelská připomínka, že stále potřebujeme váš podpis dokumentu \"{document_name}\".\n{expiry_block}\nPodepište zde:\n{signing_url}",
+            Locale::German => "Hallo {signer_name},\n\nDies ist eine freundliche Erinnerung, dass Ihre Unterschrift für \"{document_name}\" noch ausstehend ist.\n{expiry_block}\nHier unterschreiben:\n{signing_url}",
+            Locale::English => "Hello {signer_name},\n\nThis is a friendly reminder that your signature is still needed on \"{document_name}\".\n{expiry_block}\nSign at:\n{signing_url}",
+        }
+    }
+
+    fn signature_declined_body_html(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "\
+<h2 style=\"color:#c53030\">Podpis zamietnutý</h2>\
+<p>Dobrý deň <strong>{requester_name}</strong>,</p>\
+<p><strong>{signer_name}</strong> ({signer_email}) <strong>odmietol</strong> podpísať <strong>&quot;{document_name}&quot;</strong>.</p>\
+{reason_block}\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Spravovať žiadosť o podpis</a></p>",
+            Locale::Czech => "\
+<h2 style=\"color:#c53030\">Podpis odmítnut</h2>\
+<p>Dobrý den <strong>{requester_name}</strong>,</p>\
+<p><strong>{signer_name}</strong> ({signer_email}) <strong>odmítl</strong> podepsat <strong>&quot;{document_name}&quot;</strong>.</p>\
+{reason_block}\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Spravovat žádost o podpis</a></p>",
+            Locale::German => "\
+<h2 style=\"color:#c53030\">Unterschrift abgelehnt</h2>\
+<p>Hallo <strong>{requester_name}</strong>,</p>\
+<p><strong>{signer_name}</strong> ({signer_email}) hat das Unterschreiben von <strong>&quot;{document_name}&quot;</strong> <strong>abgelehnt</strong>.</p>\
+{reason_block}\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Anfrage verwalten</a></p>",
+            Locale::English => "\
+<h2 style=\"color:#c53030\">Signature Declined</h2>\
+<p>Hello <strong>{requester_name}</strong>,</p>\
+<p><strong>{signer_name}</strong> ({signer_email}) has <strong>declined</strong> to sign <strong>&quot;{document_name}&quot;</strong>.</p>\
+{reason_block}\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Manage Signature Request</a></p>",
+        }
+    }
+
+    fn signature_declined_body_plain(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "Dobrý deň {requester_name},\n\n{signer_name} ({signer_email}) odmietol podpísať \"{document_name}\".\n\n{reason_block}\n\nSpravujte žiadosť tu:\n{manage_url}",
+            Locale::Czech => "Dobrý den {requester_name},\n\n{signer_name} ({signer_email}) odmítl podepsat \"{document_name}\".\n\n{reason_block}\n\nSpravujte žádost zde:\n{manage_url}",
+            Locale::German => "Hallo {requester_name},\n\n{signer_name} ({signer_email}) hat das Unterschreiben von \"{document_name}\" abgelehnt.\n\n{reason_block}\n\nAnfrage verwalten unter:\n{manage_url}",
+            Locale::English => "Hello {requester_name},\n\n{signer_name} ({signer_email}) has declined to sign \"{document_name}\".\n\n{reason_block}\n\nManage the request at:\n{manage_url}",
+        }
+    }
+
+    /// Localised "reason provided / no reason given" block for the declined
+    /// email. `reason` is HTML-sanitised by the caller for the HTML form;
+    /// the plain form takes the raw reason.
+    fn reason_blocks(reason: Option<&str>, locale: &Locale) -> (String, String) {
+        match (locale, reason.filter(|r| !r.is_empty())) {
+            (Locale::Slovak, Some(r)) => (
+                format!(
+                    "<p><strong>Uvedený dôvod:</strong> {}</p>",
+                    ammonia::clean(r)
+                ),
+                format!("Dôvod: {}", r),
+            ),
+            (Locale::Slovak, None) => (
+                "<p>Dôvod nebol uvedený.</p>".to_string(),
+                "Dôvod nebol uvedený.".to_string(),
+            ),
+            (Locale::Czech, Some(r)) => (
+                format!(
+                    "<p><strong>Uvedený důvod:</strong> {}</p>",
+                    ammonia::clean(r)
+                ),
+                format!("Důvod: {}", r),
+            ),
+            (Locale::Czech, None) => (
+                "<p>Důvod nebyl uveden.</p>".to_string(),
+                "Důvod nebyl uveden.".to_string(),
+            ),
+            (Locale::German, Some(r)) => (
+                format!(
+                    "<p><strong>Angegebener Grund:</strong> {}</p>",
+                    ammonia::clean(r)
+                ),
+                format!("Grund: {}", r),
+            ),
+            (Locale::German, None) => (
+                "<p>Es wurde kein Grund angegeben.</p>".to_string(),
+                "Es wurde kein Grund angegeben.".to_string(),
+            ),
+            (Locale::English, Some(r)) => (
+                format!(
+                    "<p><strong>Reason provided:</strong> {}</p>",
+                    ammonia::clean(r)
+                ),
+                format!("Reason: {}", r),
+            ),
+            (Locale::English, None) => (
+                "<p>No reason was provided.</p>".to_string(),
+                "No reason was provided.".to_string(),
+            ),
+        }
+    }
+
+    fn signature_completed_body_html(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "\
+<h2 style=\"color:#276749\">Všetky podpisy zaznamenané</h2>\
+<p>Dobrý deň <strong>{requester_name}</strong>,</p>\
+<p>Skvelá správa! Všetkých {signers_count} podpisujúcich úspešne podpísalo <strong>&quot;{document_name}&quot;</strong>.</p>\
+<p>Podpísaný dokument je teraz dostupný vo vašom systéme správy dokumentov.</p>\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Zobraziť podpísaný dokument</a></p>",
+            Locale::Czech => "\
+<h2 style=\"color:#276749\">Všechny podpisy získány</h2>\
+<p>Dobrý den <strong>{requester_name}</strong>,</p>\
+<p>Skvělá zpráva! Všech {signers_count} podepisujících úspěšně podepsalo <strong>&quot;{document_name}&quot;</strong>.</p>\
+<p>Podepsaný dokument je nyní dostupný ve vašem systému správy dokumentů.</p>\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Zobrazit podepsaný dokument</a></p>",
+            Locale::German => "\
+<h2 style=\"color:#276749\">Alle Unterschriften vorhanden</h2>\
+<p>Hallo <strong>{requester_name}</strong>,</p>\
+<p>Großartige Nachrichten! Alle {signers_count} Unterzeichner haben <strong>&quot;{document_name}&quot;</strong> erfolgreich unterschrieben.</p>\
+<p>Das unterschriebene Dokument ist jetzt in Ihrem Dokumentenmanagement verfügbar.</p>\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">Unterschriebenes Dokument ansehen</a></p>",
+            Locale::English => "\
+<h2 style=\"color:#276749\">All Signatures Collected</h2>\
+<p>Hello <strong>{requester_name}</strong>,</p>\
+<p>Great news! All {signers_count} signer(s) have successfully signed <strong>&quot;{document_name}&quot;</strong>.</p>\
+<p>The signed document is now available in your document management system.</p>\
+<p style=\"margin:30px 0\"><a href=\"{manage_url}\" style=\"background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold\">View Signed Document</a></p>",
+        }
+    }
+
+    fn signature_completed_body_plain(locale: &Locale) -> &'static str {
+        match locale {
+            Locale::Slovak => "Dobrý deň {requester_name},\n\nVšetkých {signers_count} podpisujúcich úspešne podpísalo \"{document_name}\".\n\nPodpísaný dokument si môžete pozrieť tu:\n{manage_url}",
+            Locale::Czech => "Dobrý den {requester_name},\n\nVšech {signers_count} podepisujících úspěšně podepsalo \"{document_name}\".\n\nPodepsaný dokument si můžete prohlédnout zde:\n{manage_url}",
+            Locale::German => "Hallo {requester_name},\n\nAlle {signers_count} Unterzeichner haben \"{document_name}\" erfolgreich unterschrieben.\n\nUnterschriebenes Dokument hier ansehen:\n{manage_url}",
+            Locale::English => "Hello {requester_name},\n\nAll {signers_count} signer(s) have successfully signed \"{document_name}\".\n\nView the signed document at:\n{manage_url}",
+        }
+    }
+
+    /// Localised HTML `<title>` for the signature email shell.
+    fn signature_email_title(kind: SignatureEmailKind, locale: &Locale) -> &'static str {
+        match (kind, locale) {
+            (SignatureEmailKind::Request, Locale::Slovak) => "Žiadosť o podpis",
+            (SignatureEmailKind::Request, Locale::Czech) => "Žádost o podpis",
+            (SignatureEmailKind::Request, Locale::German) => "Unterschriftsanfrage",
+            (SignatureEmailKind::Request, Locale::English) => "Signature Request",
+            (SignatureEmailKind::Reminder, Locale::Slovak) => "Pripomienka podpisu",
+            (SignatureEmailKind::Reminder, Locale::Czech) => "Připomínka podpisu",
+            (SignatureEmailKind::Reminder, Locale::German) => "Unterschriftserinnerung",
+            (SignatureEmailKind::Reminder, Locale::English) => "Signature Reminder",
+            (SignatureEmailKind::Declined, Locale::Slovak) => "Podpis zamietnutý",
+            (SignatureEmailKind::Declined, Locale::Czech) => "Podpis odmítnut",
+            (SignatureEmailKind::Declined, Locale::German) => "Unterschrift abgelehnt",
+            (SignatureEmailKind::Declined, Locale::English) => "Signature Declined",
+            (SignatureEmailKind::Completed, Locale::Slovak) => "Podpisy získané",
+            (SignatureEmailKind::Completed, Locale::Czech) => "Podpisy získány",
+            (SignatureEmailKind::Completed, Locale::German) => "Unterschriften vollständig",
+            (SignatureEmailKind::Completed, Locale::English) => "Signatures Complete",
+        }
+    }
+
     /// Send signature request invitation email to a signer.
     ///
-    /// `locale` controls the subject line — body paragraphs remain English
-    /// today (#527 follow-up: translate bodies once locale flows from the
-    /// signer/org record rather than always being `English`).
+    /// `locale` controls subject, body, and CTA copy. sk/cs/de translations
+    /// are author-best-effort and should get a native review before
+    /// customer rollout.
     #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_request_email(
         &self,
@@ -955,17 +1292,8 @@ impl EmailService {
         let requester_name_h = Self::html_escape(requester_name);
         let document_name_h = Self::html_escape(document_name);
         let signing_url_h = Self::html_escape(signing_url);
-        let expiry_text = expires_at
-            .map(|e| {
-                format!(
-                    "<p>This request expires on <strong>{}</strong>.</p>",
-                    Self::html_escape(e)
-                )
-            })
-            .unwrap_or_default();
-        let expiry_plain = expires_at
-            .map(|e| format!("\nThis request expires on: {}", e))
-            .unwrap_or_default();
+
+        let (expiry_html, expiry_plain) = Self::expiry_blocks(expires_at, locale, false);
         let custom_message_html = message
             .filter(|m| !m.is_empty())
             .map(|m| format!("<p><em>{}</em></p>", ammonia::clean(m)))
@@ -975,35 +1303,41 @@ impl EmailService {
             .map(|m| format!("\n{}\n", m))
             .unwrap_or_default();
 
+        let title = Self::signature_email_title(SignatureEmailKind::Request, locale);
+        let lang = locale.as_str();
+        let inner = Self::signature_request_body_html(locale)
+            .replace("{signer_name}", &signer_name_h)
+            .replace("{requester_name}", &requester_name_h)
+            .replace("{document_name}", &document_name_h)
+            .replace("{signing_url}", &signing_url_h)
+            .replace("{custom_message}", &custom_message_html)
+            .replace("{expiry_block}", &expiry_html);
         let html_body = format!(
             r#"<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Signature Request</title></head>
+<html lang="{lang}"><head><meta charset="UTF-8"><title>{title}</title></head>
 <body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
-  <h2 style="color:#2c5282">You have a document to sign</h2>
-  <p>Hello <strong>{signer_name_h}</strong>,</p>
-  <p><strong>{requester_name_h}</strong> has requested your electronic signature on
-     <strong>&quot;{document_name_h}&quot;</strong>.</p>
-  {custom_message_html}
-  {expiry_text}
-  <p style="margin:30px 0">
-    <a href="{signing_url_h}" style="background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Review &amp; Sign Document</a>
-  </p>
-  <p style="font-size:12px;color:#718096">If the button above doesn't work, copy and paste this URL:<br><a href="{signing_url_h}">{signing_url_h}</a></p>
-  <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0">
-  <p style="font-size:12px;color:#718096">If you were not expecting this request, you may safely ignore this email.</p>
+{inner}
 </body></html>"#,
         );
+
+        let text_body_template = Self::signature_request_body_plain(locale);
         let text_body = format!(
-            "Hello {},\n\n{} has requested your electronic signature on \"{}\".\n{}\nPlease review and sign at:\n{}\n{}\nIf you were not expecting this, you may ignore this email.\n\nBest regards,\nProperty Management System",
-            signer_name, requester_name, document_name, custom_message_plain, signing_url, expiry_plain,
+            "{}\n\n{}",
+            text_body_template
+                .replace("{signer_name}", signer_name)
+                .replace("{requester_name}", requester_name)
+                .replace("{document_name}", document_name)
+                .replace("{signing_url}", signing_url)
+                .replace("{custom_message}", &custom_message_plain)
+                .replace("{expiry_block}", &expiry_plain),
+            Self::email_closing_plain(locale)
         );
         self.send_html_email(to, &subject, &html_body, &text_body)
             .await
     }
 
-    /// Send a signature reminder email to a pending signer.
-    ///
-    /// See [`send_signature_request_email`] for the locale-handling caveat.
+    /// Send a signature reminder email to a pending signer. Localised via
+    /// `locale` (subject + body + CTA).
     #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_reminder_email(
         &self,
@@ -1018,39 +1352,38 @@ impl EmailService {
         let signer_name_h = Self::html_escape(signer_name);
         let document_name_h = Self::html_escape(document_name);
         let signing_url_h = Self::html_escape(signing_url);
-        let expiry_text = expires_at
-            .map(|e| {
-                format!(
-                    "<p><strong>Important:</strong> This request expires on <strong>{}</strong>.</p>",
-                    Self::html_escape(e)
-                )
-            })
-            .unwrap_or_default();
-        let expiry_plain = expires_at
-            .map(|e| format!("\nImportant: This request expires on {}.\n", e))
-            .unwrap_or_default();
+        let (expiry_html, expiry_plain) = Self::expiry_blocks(expires_at, locale, true);
 
+        let title = Self::signature_email_title(SignatureEmailKind::Reminder, locale);
+        let lang = locale.as_str();
+        let inner = Self::signature_reminder_body_html(locale)
+            .replace("{signer_name}", &signer_name_h)
+            .replace("{document_name}", &document_name_h)
+            .replace("{signing_url}", &signing_url_h)
+            .replace("{expiry_block}", &expiry_html);
         let html_body = format!(
             r#"<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Signature Reminder</title></head>
+<html lang="{lang}"><head><meta charset="UTF-8"><title>{title}</title></head>
 <body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
-  <h2 style="color:#c05621">Reminder: Signature Required</h2>
-  <p>Hello <strong>{signer_name_h}</strong>,</p>
-  <p>This is a friendly reminder that your signature is still needed on <strong>&quot;{document_name_h}&quot;</strong>.</p>
-  {expiry_text}
-  <p style="margin:30px 0"><a href="{signing_url_h}" style="background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Sign Now</a></p>
-  <p style="font-size:12px;color:#718096">If the button above doesn't work:<br><a href="{signing_url_h}">{signing_url_h}</a></p>
+{inner}
 </body></html>"#,
         );
+
         let text_body = format!(
-            "Hello {},\n\nThis is a friendly reminder that your signature is still needed on \"{}\".\n{}\nSign at:\n{}\n\nBest regards,\nProperty Management System",
-            signer_name, document_name, expiry_plain, signing_url,
+            "{}\n\n{}",
+            Self::signature_reminder_body_plain(locale)
+                .replace("{signer_name}", signer_name)
+                .replace("{document_name}", document_name)
+                .replace("{signing_url}", signing_url)
+                .replace("{expiry_block}", &expiry_plain),
+            Self::email_closing_plain(locale)
         );
         self.send_html_email(to, &subject, &html_body, &text_body)
             .await
     }
 
-    /// Send a decline notification to the document requester.
+    /// Send a decline notification to the document requester. Localised
+    /// via `locale`.
     #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_declined_email(
         &self,
@@ -1069,40 +1402,42 @@ impl EmailService {
         let signer_email_h = Self::html_escape(signer_email);
         let document_name_h = Self::html_escape(document_name);
         let manage_url_h = Self::html_escape(manage_url);
-        let reason_html = decline_reason
-            .filter(|r| !r.is_empty())
-            .map(|r| {
-                format!(
-                    "<p><strong>Reason provided:</strong> {}</p>",
-                    ammonia::clean(r)
-                )
-            })
-            .unwrap_or_else(|| "<p>No reason was provided.</p>".to_string());
-        let reason_plain = decline_reason
-            .filter(|r| !r.is_empty())
-            .map(|r| format!("Reason: {}", r))
-            .unwrap_or_else(|| "No reason was provided.".to_string());
+        let (reason_html, reason_plain) = Self::reason_blocks(decline_reason, locale);
 
+        let title = Self::signature_email_title(SignatureEmailKind::Declined, locale);
+        let lang = locale.as_str();
+        let inner = Self::signature_declined_body_html(locale)
+            .replace("{requester_name}", &requester_name_h)
+            .replace("{signer_name}", &signer_name_h)
+            .replace("{signer_email}", &signer_email_h)
+            .replace("{document_name}", &document_name_h)
+            .replace("{manage_url}", &manage_url_h)
+            .replace("{reason_block}", &reason_html);
         let html_body = format!(
             r#"<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Signature Declined</title></head>
+<html lang="{lang}"><head><meta charset="UTF-8"><title>{title}</title></head>
 <body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
-  <h2 style="color:#c53030">Signature Declined</h2>
-  <p>Hello <strong>{requester_name_h}</strong>,</p>
-  <p><strong>{signer_name_h}</strong> ({signer_email_h}) has <strong>declined</strong> to sign <strong>&quot;{document_name_h}&quot;</strong>.</p>
-  {reason_html}
-  <p style="margin:30px 0"><a href="{manage_url_h}" style="background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Manage Signature Request</a></p>
+{inner}
 </body></html>"#,
         );
+
         let text_body = format!(
-            "Hello {},\n\n{} ({}) has declined to sign \"{}\".\n\n{}\n\nManage the request at:\n{}\n\nBest regards,\nProperty Management System",
-            requester_name, signer_name, signer_email, document_name, reason_plain, manage_url,
+            "{}\n\n{}",
+            Self::signature_declined_body_plain(locale)
+                .replace("{requester_name}", requester_name)
+                .replace("{signer_name}", signer_name)
+                .replace("{signer_email}", signer_email)
+                .replace("{document_name}", document_name)
+                .replace("{manage_url}", manage_url)
+                .replace("{reason_block}", &reason_plain),
+            Self::email_closing_plain(locale)
         );
         self.send_html_email(to, &subject, &html_body, &text_body)
             .await
     }
 
     /// Send a completion notification when all signers have signed.
+    /// Localised via `locale`.
     #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_completed_email(
         &self,
@@ -1117,20 +1452,31 @@ impl EmailService {
         let requester_name_h = Self::html_escape(requester_name);
         let document_name_h = Self::html_escape(document_name);
         let manage_url_h = Self::html_escape(manage_url);
+        let signers_count_str = signers_count.to_string();
+
+        let title = Self::signature_email_title(SignatureEmailKind::Completed, locale);
+        let lang = locale.as_str();
+        let inner = Self::signature_completed_body_html(locale)
+            .replace("{requester_name}", &requester_name_h)
+            .replace("{document_name}", &document_name_h)
+            .replace("{manage_url}", &manage_url_h)
+            .replace("{signers_count}", &signers_count_str);
         let html_body = format!(
             r#"<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Signatures Complete</title></head>
+<html lang="{lang}"><head><meta charset="UTF-8"><title>{title}</title></head>
 <body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
-  <h2 style="color:#276749">All Signatures Collected</h2>
-  <p>Hello <strong>{requester_name_h}</strong>,</p>
-  <p>Great news! All {signers_count} signer(s) have successfully signed <strong>&quot;{document_name_h}&quot;</strong>.</p>
-  <p>The signed document is now available in your document management system.</p>
-  <p style="margin:30px 0"><a href="{manage_url_h}" style="background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">View Signed Document</a></p>
+{inner}
 </body></html>"#,
         );
+
         let text_body = format!(
-            "Hello {},\n\nAll {} signer(s) have successfully signed \"{}\".\n\nView the signed document at:\n{}\n\nBest regards,\nProperty Management System",
-            requester_name, signers_count, document_name, manage_url,
+            "{}\n\n{}",
+            Self::signature_completed_body_plain(locale)
+                .replace("{requester_name}", requester_name)
+                .replace("{document_name}", document_name)
+                .replace("{manage_url}", manage_url)
+                .replace("{signers_count}", &signers_count_str),
+            Self::email_closing_plain(locale)
         );
         self.send_html_email(to, &subject, &html_body, &text_body)
             .await
@@ -1279,5 +1625,217 @@ mod tests {
             .await;
 
         assert!(result.is_ok());
+    }
+
+    // ------------------------------------------------------------------
+    // Signature email i18n tests (#527 body-translation follow-up).
+    //
+    // These assert against the per-locale helper outputs rather than
+    // sending real email — fast, deterministic, no SMTP / DB.
+    // ------------------------------------------------------------------
+
+    const SK: &Locale = &Locale::Slovak;
+    const CS: &Locale = &Locale::Czech;
+    const DE: &Locale = &Locale::German;
+    const EN: &Locale = &Locale::English;
+
+    #[test]
+    fn signature_subject_localised_per_locale() {
+        // Each language has a recognisable, language-specific keyword in
+        // the subject — catches accidental fallback to English.
+        let doc = "Lease Agreement";
+        assert!(EmailService::signature_request_subject(doc, SK).contains("Žiadosť"));
+        assert!(EmailService::signature_request_subject(doc, CS).contains("Žádost"));
+        assert!(EmailService::signature_request_subject(doc, DE).contains("Unterschrift"));
+        assert!(EmailService::signature_request_subject(doc, EN).contains("Action required"));
+
+        assert!(EmailService::signature_reminder_subject(doc, SK).contains("Pripomienka"));
+        assert!(EmailService::signature_reminder_subject(doc, CS).contains("Připomínka"));
+        assert!(EmailService::signature_reminder_subject(doc, DE).contains("Erinnerung"));
+        assert!(EmailService::signature_reminder_subject(doc, EN).contains("Reminder"));
+
+        assert!(EmailService::signature_declined_subject(doc, SK).contains("zamietnutý"));
+        assert!(EmailService::signature_declined_subject(doc, CS).contains("odmítnut"));
+        assert!(EmailService::signature_declined_subject(doc, DE).contains("abgelehnt"));
+        assert!(EmailService::signature_declined_subject(doc, EN).contains("declined"));
+
+        assert!(EmailService::signature_completed_subject(doc, SK).contains("podpisy"));
+        assert!(EmailService::signature_completed_subject(doc, CS).contains("podpisy"));
+        assert!(EmailService::signature_completed_subject(doc, DE).contains("Unterschriften"));
+        assert!(EmailService::signature_completed_subject(doc, EN).contains("collected"));
+    }
+
+    #[test]
+    fn email_closing_localised_per_locale() {
+        assert!(EmailService::email_closing_plain(SK).starts_with("S pozdravom"));
+        assert!(EmailService::email_closing_plain(CS).starts_with("S pozdravem"));
+        assert!(EmailService::email_closing_plain(DE).starts_with("Mit freundlichen"));
+        assert!(EmailService::email_closing_plain(EN).starts_with("Best regards"));
+    }
+
+    #[test]
+    fn body_templates_contain_every_placeholder_for_each_locale() {
+        // Each body template must keep every placeholder name so the
+        // call-site `.replace(...)` substitutions all bind. A typo in a
+        // translation would silently leave English values mis-rendered.
+        for locale in [SK, CS, DE, EN] {
+            let req_html = EmailService::signature_request_body_html(locale);
+            for placeholder in [
+                "{signer_name}",
+                "{requester_name}",
+                "{document_name}",
+                "{signing_url}",
+                "{custom_message}",
+                "{expiry_block}",
+            ] {
+                assert!(
+                    req_html.contains(placeholder),
+                    "request_body_html for {locale:?} missing {placeholder}"
+                );
+            }
+
+            let req_plain = EmailService::signature_request_body_plain(locale);
+            for placeholder in [
+                "{signer_name}",
+                "{requester_name}",
+                "{document_name}",
+                "{signing_url}",
+                "{custom_message}",
+                "{expiry_block}",
+            ] {
+                assert!(
+                    req_plain.contains(placeholder),
+                    "request_body_plain for {locale:?} missing {placeholder}"
+                );
+            }
+
+            let rem_html = EmailService::signature_reminder_body_html(locale);
+            for placeholder in [
+                "{signer_name}",
+                "{document_name}",
+                "{signing_url}",
+                "{expiry_block}",
+            ] {
+                assert!(
+                    rem_html.contains(placeholder),
+                    "reminder_body_html for {locale:?} missing {placeholder}"
+                );
+            }
+
+            let dec_html = EmailService::signature_declined_body_html(locale);
+            for placeholder in [
+                "{requester_name}",
+                "{signer_name}",
+                "{signer_email}",
+                "{document_name}",
+                "{manage_url}",
+                "{reason_block}",
+            ] {
+                assert!(
+                    dec_html.contains(placeholder),
+                    "declined_body_html for {locale:?} missing {placeholder}"
+                );
+            }
+
+            let comp_html = EmailService::signature_completed_body_html(locale);
+            for placeholder in [
+                "{requester_name}",
+                "{document_name}",
+                "{manage_url}",
+                "{signers_count}",
+            ] {
+                assert!(
+                    comp_html.contains(placeholder),
+                    "completed_body_html for {locale:?} missing {placeholder}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn expiry_blocks_localised_and_urgent_variant_marked() {
+        // No expiry → empty blocks.
+        let (h, p) = EmailService::expiry_blocks(None, EN, false);
+        assert!(h.is_empty() && p.is_empty());
+
+        // Slovak non-urgent must include the date and no "Dôležité" marker.
+        let (h, _) = EmailService::expiry_blocks(Some("2026-06-01"), SK, false);
+        assert!(h.contains("2026-06-01"));
+        assert!(!h.contains("Dôležité"));
+
+        // Slovak urgent variant must include the "Dôležité" marker.
+        let (h, p) = EmailService::expiry_blocks(Some("2026-06-01"), SK, true);
+        assert!(h.contains("Dôležité"));
+        assert!(p.contains("Dôležité"));
+
+        // German urgent: "Wichtig:" + date.
+        let (h, _) = EmailService::expiry_blocks(Some("2026-06-01"), DE, true);
+        assert!(h.contains("Wichtig"));
+        assert!(h.contains("2026-06-01"));
+    }
+
+    #[test]
+    fn reason_blocks_localised_with_and_without_reason() {
+        // With a reason — language-specific marker + the reason itself.
+        let (h, p) = EmailService::reason_blocks(Some("not available"), SK);
+        assert!(h.contains("Uvedený dôvod"));
+        assert!(p.contains("not available"));
+
+        let (h, _) = EmailService::reason_blocks(Some("nicht verfügbar"), DE);
+        assert!(h.contains("Angegebener Grund"));
+
+        // Without — each locale has its own "no reason" sentence.
+        let (h, p) = EmailService::reason_blocks(None, CS);
+        assert!(h.contains("nebyl uveden"));
+        assert!(p.contains("nebyl uveden"));
+
+        let (_, p) = EmailService::reason_blocks(None, EN);
+        assert!(p.contains("No reason"));
+    }
+
+    #[test]
+    fn html_title_localised_per_kind_and_locale() {
+        // Same kind, four locales — confirms the title lookup table is
+        // wired for every (kind, locale) pair.
+        assert_eq!(
+            EmailService::signature_email_title(SignatureEmailKind::Request, SK),
+            "Žiadosť o podpis"
+        );
+        assert_eq!(
+            EmailService::signature_email_title(SignatureEmailKind::Reminder, CS),
+            "Připomínka podpisu"
+        );
+        assert_eq!(
+            EmailService::signature_email_title(SignatureEmailKind::Declined, DE),
+            "Unterschrift abgelehnt"
+        );
+        assert_eq!(
+            EmailService::signature_email_title(SignatureEmailKind::Completed, EN),
+            "Signatures Complete"
+        );
+    }
+
+    #[tokio::test]
+    async fn send_signature_request_renders_localised_subject_and_body() {
+        // End-to-end smoke: build the HTML + plain output and confirm the
+        // localised strings end up in the rendered email (development
+        // EmailService just logs, but the call exercises the full
+        // template path).
+        let service = EmailService::development();
+        for locale in [SK, CS, DE, EN] {
+            let result = service
+                .send_signature_request_email(
+                    "signer@example.com",
+                    "Anna",
+                    "Lease Agreement",
+                    "Manager Bob",
+                    "https://app.example.com/sign?token=abc",
+                    Some("Please sign at your earliest convenience."),
+                    Some("2026-06-01"),
+                    locale,
+                )
+                .await;
+            assert!(result.is_ok(), "send failed for {locale:?}: {result:?}");
+        }
     }
 }

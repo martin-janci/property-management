@@ -6,7 +6,7 @@
 use db::models::Locale;
 use db::repositories::{
     AnnouncementRepository, MeterRepository, SessionRepository, SignatureRequestRepository,
-    UnitResidentRepository, VoteRepository,
+    UnitResidentRepository, UserRepository, VoteRepository,
 };
 use db::DbPool;
 use integrations::LightweightProvider;
@@ -78,6 +78,9 @@ pub struct Scheduler {
     meter_repo: MeterRepository,
     unit_resident_repo: UnitResidentRepository,
     signature_request_repo: SignatureRequestRepository,
+    /// Used by the signature reminder loop to resolve each signer's locale
+    /// (falls back to English for guest signers / DB errors).
+    user_repo: UserRepository,
     notification_service: Arc<NotificationService>,
     email_service: EmailService,
     config: SchedulerConfig,
@@ -104,6 +107,7 @@ impl Scheduler {
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -127,6 +131,7 @@ impl Scheduler {
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
             signature_request_repo: SignatureRequestRepository::new(pool.clone()),
+            user_repo: UserRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
@@ -880,10 +885,16 @@ impl Scheduler {
                         )
                     });
 
-                // TODO(#527): per-signer locale lookup (users.locale or
-                // organization default). For now scheduler reminders go out
-                // in English.
-                let signer_locale = Locale::English;
+                // Resolve the signer's stored locale; English fallback for
+                // guest signers and any DB error so we don't drop reminders.
+                let signer_locale = self
+                    .user_repo
+                    .find_by_email(&signer.email)
+                    .await
+                    .ok()
+                    .flatten()
+                    .map(|u| u.locale_enum())
+                    .unwrap_or(Locale::English);
                 match self
                     .email_service
                     .send_signature_reminder_email(
