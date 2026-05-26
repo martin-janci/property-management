@@ -11,6 +11,7 @@
  */
 
 import { useDownloadUrl, usePreviewUrl } from '@ppt/api-client';
+import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import { PdfPreview } from './PdfPreview';
 
