@@ -1,9 +1,8 @@
 ---
 id: reality-mobile/auth-login
 name: Login (iOS SwiftUI)
-product: reality
-sitemapRefs:
-  reality-web: reality-auth-login
+product: reality-mobile
+sitemapRefs: {}
 implementations:
   ios-swiftui:
     component: LoginView
@@ -12,14 +11,12 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - POST /api/v1/auth/sso/validate (via KMP SsoService.validateAndLogin)
+  - sso_login
 relatedScreens:
   - id: reality/auth-login
     rel: web-counterpart
   - id: reality-mobile/account
     rel: parent
-  - id: reality-mobile/auth-register
-    rel: sibling
 sharedComponents: []
 diagrams: []
 useCases:
