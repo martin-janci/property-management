@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T14:04:05Z",
+  "generated": "2026-05-26T14:30:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1683,15 +1683,15 @@
     {
       "task_id": "gap-7a-2-folder-ui",
       "branch": "auto-impl/gap-7a-2-folder-ui",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-26T14:04:05Z",
-      "status_changed_at": "2026-05-26T14:04:05Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T14:30:00Z",
+      "status_changed_at": "2026-05-26T14:30:00Z",
+      "pr_number": 556,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
       "reviewer_summary": null
     },
     {
