@@ -305,6 +305,10 @@ pub struct AirbnbWebhookEvent {
     pub event_type: AirbnbWebhookEventType,
     /// Event timestamp.
     pub timestamp: DateTime<Utc>,
+    /// Airbnb-assigned unique event identifier used for deduplication.
+    /// Optional because older webhook schema versions may omit it.
+    #[serde(rename = "event_id")]
+    pub event_id: Option<String>,
     /// Affected listing ID.
     pub listing_id: Option<String>,
     /// Reservation confirmation code.
