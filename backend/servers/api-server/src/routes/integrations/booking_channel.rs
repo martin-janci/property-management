@@ -29,6 +29,7 @@ use uuid::Uuid;
 use super::sync::OrgIdPath;
 use crate::state::AppState;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 
 // ============================================================
 // Types
@@ -174,6 +175,36 @@ pub async fn push_booking_listing(
         "Pushing listing to Booking.com"
     );
 
+    // BLOCKING-1: Ensure caller belongs to this org (defense-in-depth alongside RLS).
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+
+    // BLOCKING-2: Require an administrative role to manage integrations.
+    let role = auth.role.unwrap_or(TenantRole::Guest);
+    let allowed = matches!(
+        role,
+        TenantRole::SuperAdmin
+            | TenantRole::PlatformAdmin
+            | TenantRole::OrgAdmin
+            | TenantRole::Manager
+    );
+    if !allowed {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
+
     let rental_repo = &state.rental_repo;
 
     // Resolve the org's Booking.com connection.
@@ -210,8 +241,34 @@ pub async fn push_booking_listing(
         )
     })?;
 
-    let username = connection.access_token.clone().unwrap_or_default();
-    let password = connection.refresh_token.clone().unwrap_or_default();
+    // HIGH: Validate credentials explicitly — empty strings silently break OTA API calls.
+    let username = connection.access_token.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Booking.com credentials are incomplete (missing access_token)",
+            )),
+        )
+    })?;
+    let password = connection.refresh_token.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Booking.com credentials are incomplete (missing refresh_token)",
+            )),
+        )
+    })?;
+    if username.is_empty() || password.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Booking.com credentials are incomplete (empty)",
+            )),
+        ));
+    }
 
     let credentials = integrations::BookingCredentials::new(hotel_id.clone(), username, password);
     let client = BookingClient::new(credentials);
@@ -348,6 +405,36 @@ pub async fn get_booking_conflicts(
         org_id = %path.org_id,
         "Checking Booking.com reservation conflicts"
     );
+
+    // BLOCKING-1: Ensure caller belongs to this org (defense-in-depth alongside RLS).
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+
+    // BLOCKING-2: Require an administrative role to manage integrations.
+    let role = auth.role.unwrap_or(TenantRole::Guest);
+    let allowed = matches!(
+        role,
+        TenantRole::SuperAdmin
+            | TenantRole::PlatformAdmin
+            | TenantRole::OrgAdmin
+            | TenantRole::Manager
+    );
+    if !allowed {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
 
     let rental_repo = &state.rental_repo;
 
