@@ -6,7 +6,7 @@
  *   <HelpTooltip text="Maintenance mode suspends all non-admin API requests." />
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------

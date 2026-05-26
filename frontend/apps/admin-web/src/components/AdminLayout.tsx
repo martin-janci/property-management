@@ -214,9 +214,7 @@ export function AdminLayout() {
               background: help.isOpen
                 ? 'var(--ppt-brand-100, #dbeafe)'
                 : 'var(--ppt-bg-subtle, #f3f4f6)',
-              color: help.isOpen
-                ? 'var(--ppt-brand-700, #1d4ed8)'
-                : 'var(--ppt-fg-muted, #6b7280)',
+              color: help.isOpen ? 'var(--ppt-brand-700, #1d4ed8)' : 'var(--ppt-fg-muted, #6b7280)',
               fontSize: '13px',
               fontWeight: 700,
               cursor: 'pointer',
@@ -229,9 +227,7 @@ export function AdminLayout() {
           </button>
         </div>
         <Outlet />
-        {help.isOpen && (
-          <HelpSidebar article={help.article} onClose={help.close} />
-        )}
+        {help.isOpen && <HelpSidebar article={help.article} onClose={help.close} />}
       </main>
     </div>
   );

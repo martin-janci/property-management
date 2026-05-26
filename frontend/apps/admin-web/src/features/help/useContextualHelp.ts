@@ -8,7 +8,7 @@
 
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { type HelpArticle, getArticleForPath } from '../../help/articles';
+import { getArticleForPath, type HelpArticle } from '../../help/articles';
 
 export interface ContextualHelpState {
   /** True when the help sidebar is visible. */

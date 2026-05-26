@@ -197,7 +197,6 @@ function renderArticleBody(body: string): React.ReactNode {
     nodes.push(
       <ul key={key++}>
         {listItems.map((item, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable list
           <li key={i}>{renderInline(item)}</li>
         ))}
       </ul>
@@ -229,17 +228,14 @@ function renderArticleBody(body: string): React.ReactNode {
         <thead>
           <tr>
             {headers.map((h, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: stable
               <th key={i}>{renderInline(h)}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {dataRows.map((row, ri) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: stable
             <tr key={ri}>
               {row.map((cell, ci) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: stable
                 <td key={ci}>{renderInline(cell)}</td>
               ))}
             </tr>
@@ -330,21 +326,15 @@ export function HelpSidebar({ article, onClose }: HelpSidebarProps) {
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="ppt-help-backdrop"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="ppt-help-backdrop" onClick={onClose} aria-hidden="true" />
 
       {/* Panel */}
-      <aside
-        className="ppt-help-panel"
-        role="complementary"
-        aria-label={t('admin.help.panelLabel', 'Contextual help')}
-      >
+      <aside className="ppt-help-panel" aria-label={t('admin.help.panelLabel', 'Contextual help')}>
         {/* Header */}
         <div className="ppt-help-header">
-          <div className="ppt-help-header__icon" aria-hidden="true">?</div>
+          <div className="ppt-help-header__icon" aria-hidden="true">
+            ?
+          </div>
           <h2 className="ppt-help-header__title">{article.title}</h2>
           <button
             ref={closeRef}
@@ -359,9 +349,7 @@ export function HelpSidebar({ article, onClose }: HelpSidebarProps) {
 
         {/* Body */}
         <div className="ppt-help-body">
-          <div className="ppt-help-article">
-            {renderArticleBody(article.body)}
-          </div>
+          <div className="ppt-help-article">{renderArticleBody(article.body)}</div>
         </div>
 
         {/* Footer — link to external docs if available */}
