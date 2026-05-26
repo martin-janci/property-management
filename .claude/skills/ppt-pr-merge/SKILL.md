@@ -43,6 +43,30 @@ Otherwise the skill refuses to touch a draft and points the caller at
 | `dry_run`      | `false`                            | Run preconditions + conflict resolve, skip the merge call |
 | `mode`         | `merge`                            | `merge` (default — full flow) or `rebase-only` (run Step 2 conflict-resolver + push, then return without merging — used by dispatcher Phase 5.6 to unstick stale-approved PRs) |
 
+## Stacked PRs — refused unless opt-in
+
+If the PR's `baseRefName` is anything other than `dev` or `main`, this is a
+stacked PR (PR-on-PR). The mechanical-conflict resolver in Step 2 only knows
+how to rebase onto `dev`/`main`, and the dispatcher's `assignments.json` only
+tracks PRs targeting `dev`. By default this skill refuses to merge such PRs.
+
+```bash
+BASE_REF=$(gh pr view "$PR" --repo "$REPO" --json baseRefName -q .baseRefName)
+case "$BASE_REF" in
+  dev|main) ;;
+  *)
+    if [ "${ALLOW_STACKED:-0}" != "1" ]; then
+      echo "merged=false pr=$PR note=this PR is stacked (base=$BASE_REF); refusing to merge until base is dev/main"
+      exit 0
+    fi
+    ;;
+esac
+```
+
+Resolution: the PR author should merge the bottom of the stack first, then
+retarget this PR's base to `dev` via `gh pr edit "$PR" --base dev`, then
+re-invoke `ppt-pr-merge`.
+
 ## Step 1 — Preconditions (HARD GATES — abort if any fail)
 
 ```bash
