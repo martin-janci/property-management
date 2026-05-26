@@ -49,6 +49,26 @@ for the environment smoke check.
 
 **Editing the backlog by hand:** edit `backlog.json` only. `backlog.md` is regenerated each run; hand-edits there will be lost.
 
+## Routine vs dispatcher state
+
+Two separate loops write into `.research/` and the distinction matters when
+debugging "why hasn't X been touched":
+
+| Loop | Cadence | Branch | State file | Read-only? |
+|---|---|---|---|---|
+| **Daily routine** | once / day (cloud cron) | commits on `dev` | `.research/state.json` | yes — only reads GitHub + repo |
+| **Autonomous dispatcher** | every ~2h | commits on `planning` | `.research/management/assignments.json` (on `planning` branch) | no — claims/reviews/merges |
+
+The two never share a cursor file. If `state.json` hasn't advanced in days
+while `assignments.json` is fresh, the routine is stuck (cloud cron broken,
+env vars missing, or the trigger payload disabled) — the dispatcher is fine.
+If `assignments.json` is stale while `state.json` ticks, the dispatcher is
+stuck (rate-limited, no buffer, sandbox failures) — the routine is fine.
+
+The routine's Phase 1 (or Phase 6) sanity check flags when `state.json` has
+not advanced in **3+ days** under "Since last run" → "Routine lag" in the
+daily brief, so the operator notices on the next routine commit.
+
 ## Flow
 
 1. **Routine fires** (daily 05:00 local) → reads `state.json`, scans GitHub

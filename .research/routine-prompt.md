@@ -300,6 +300,13 @@ if [ "$LAG_HOURS" -gt 36 ]; then
   echo "lag_warning: routine has not run in ${LAG_DAYS}d ${LAG_HOURS}h — surface in brief Since last run"
 fi
 
+# Stale-routine alert (P4) — if state.json hasn't advanced in 3+ days the
+# cloud cron is likely broken even if the dispatcher (separate loop, separate
+# branch) is still ticking. Flag in the brief so the operator notices.
+if [ "$LAG_DAYS" -ge 3 ]; then
+  echo "stale_routine_alert: state.json last_run_iso=${SINCE_ISO} is ${LAG_DAYS}d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."
+fi
+
 # Merged PRs since last_pr_seen
 gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
