@@ -1343,7 +1343,7 @@
       "pr_number": 534,
       "pr_url": "https://github.com/martin-janci/property-management/pull/534",
       "merged_at": null,
-      "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; cargo check pass; integrations 7/7 pass; fmt fix pushed",
+      "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; Band A cargo check pass; integrations 7/7 pass",
       "reviewer_summary": null
     }
   ],
