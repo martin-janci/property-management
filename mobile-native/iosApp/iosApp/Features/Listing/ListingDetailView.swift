@@ -520,6 +520,12 @@ private enum ContactPreference: String, CaseIterable {
 
 // MARK: - Photo Gallery View
 
+/// Full-screen photo gallery with swipe-to-advance and pinch-to-zoom.
+///
+/// Each photo page manages its own zoom state so that navigating away from a
+/// zoomed page (by swiping left/right) resets zoom for the next page.
+/// A double-tap on a zoomed photo resets zoom; a double-tap when at 1x zooms
+/// to 2.5x. Pinch is clamped to [1x, 5x] to prevent excessive magnification.
 private struct PhotoGalleryView: View {
     let photos: [String]
     @Environment(\.dismiss) private var dismiss
@@ -532,35 +538,8 @@ private struct PhotoGalleryView: View {
 
             TabView(selection: $currentIndex) {
                 ForEach(photos.indices, id: \.self) { index in
-                    ZStack {
-                        if let url = URL(string: photos[index]) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                case .failure, .empty:
-                                    Image(systemName: "photo")
-                                        .font(.largeTitle)
-                                        .foregroundStyle(.secondary)
-                                @unknown default:
-                                    Image(systemName: "photo")
-                                        .font(.largeTitle)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        } else {
-                            Rectangle()
-                                .fill(Color(.systemGray5))
-                                .overlay {
-                                    Image(systemName: "photo")
-                                        .font(.largeTitle)
-                                        .foregroundStyle(.secondary)
-                                }
-                        }
-                    }
-                    .tag(index)
+                    ZoomablePhotoPage(photoUrl: photos[index])
+                        .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -584,6 +563,128 @@ private struct PhotoGalleryView: View {
     }
 }
 
+// MARK: - Zoomable Photo Page
+
+/// A single photo page with pinch-to-zoom and double-tap-to-zoom support.
+///
+/// Zoom state is held locally so that swiping to another page starts fresh at 1x.
+private struct ZoomablePhotoPage: View {
+    let photoUrl: String
+
+    // Current committed scale factor (set when the gesture ends).
+    @State private var scale: CGFloat = 1.0
+    // Live delta from the active MagnificationGesture (resets on each gesture start).
+    @State private var gestureScale: CGFloat = 1.0
+    // Offset for panning when zoomed.
+    @State private var offset: CGSize = .zero
+    @State private var gestureOffset: CGSize = .zero
+
+    private let minScale: CGFloat = 1.0
+    private let maxScale: CGFloat = 5.0
+    private let doubleTapZoom: CGFloat = 2.5
+
+    /// The combined effective scale including the in-progress gesture delta.
+    private var effectiveScale: CGFloat {
+        min(max(scale * gestureScale, minScale), maxScale)
+    }
+
+    var body: some View {
+        ZStack {
+            if let url = URL(string: photoUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .scaleEffect(effectiveScale)
+                            .offset(x: offset.width + gestureOffset.width,
+                                    y: offset.height + gestureOffset.height)
+                            .gesture(
+                                SimultaneousGesture(
+                                    magnificationGesture,
+                                    dragGesture
+                                )
+                            )
+                            .onTapGesture(count: 2) {
+                                handleDoubleTap()
+                            }
+                            .animation(.interactiveSpring(), value: scale)
+                            .animation(.interactiveSpring(), value: offset)
+                    case .failure, .empty:
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                    @unknown default:
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } else {
+                Rectangle()
+                    .fill(Color(.systemGray5))
+                    .overlay {
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                    }
+            }
+        }
+    }
+
+    // MARK: - Gestures
+
+    private var magnificationGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                gestureScale = value
+            }
+            .onEnded { value in
+                let newScale = min(max(scale * value, minScale), maxScale)
+                scale = newScale
+                gestureScale = 1.0
+                // When zoomed back to 1x reset any accumulated pan offset.
+                if scale <= minScale {
+                    withAnimation(.spring()) {
+                        offset = .zero
+                    }
+                }
+            }
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                // Only allow panning when zoomed in.
+                guard scale > minScale else { return }
+                gestureOffset = value.translation
+            }
+            .onEnded { value in
+                guard scale > minScale else { return }
+                offset = CGSize(
+                    width: offset.width + value.translation.width,
+                    height: offset.height + value.translation.height
+                )
+                gestureOffset = .zero
+            }
+    }
+
+    // MARK: - Double Tap
+
+    private func handleDoubleTap() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+            if scale > minScale {
+                // Already zoomed -- reset to fit.
+                scale = minScale
+                offset = .zero
+            } else {
+                scale = doubleTapZoom
+            }
+        }
+    }
+}
+
 // MARK: - Preview Data
 
 /// ListingDetail type alias for backwards compatibility
@@ -597,4 +698,5 @@ typealias ListingDetail = ListingDetailModel
     }
     .environment(NavigationCoordinator())
     .environment(AuthManager())
+    .environment(FavoritesService())
 }
