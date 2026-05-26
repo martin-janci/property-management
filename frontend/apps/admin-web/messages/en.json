@@ -84,6 +84,7 @@
         "buildingDisabled": "Disable this building (kill switch)",
         "newListingsSearch": "New listings search (beta)"
       },
+      "helpTooltip": "Feature flags take effect immediately for all users in the affected tenant. Use the kill switch with caution.",
       "title": "Feature Flags",
       "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
     },
@@ -158,6 +159,7 @@
         "supportEmail": "Support email",
         "supportEmailPlaceholder": "support@example.com"
       },
+      "helpTooltip": "Maintenance mode returns 503 to all non-admin requests. Enabling it requires an audit reason.",
       "title": "Platform Settings"
     },
     "help": {

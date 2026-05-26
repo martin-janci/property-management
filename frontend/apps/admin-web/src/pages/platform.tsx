@@ -241,7 +241,7 @@ const PlatformPage: React.FC = () => {
       <section>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {t('admin.platform.title')}
-          <HelpTooltip text="Maintenance mode returns 503 to all non-admin requests. Enabling it requires an audit reason." />
+          <HelpTooltip text={t('admin.platform.helpTooltip')} />
         </h1>
         <SettingsForm<PlatformValues>
           fields={fields}

@@ -6,7 +6,7 @@
  *   <HelpTooltip text="Maintenance mode suspends all non-admin API requests." />
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
@@ -97,6 +97,7 @@ export function HelpTooltip({ text }: HelpTooltipProps) {
   ensureStyles();
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
+  const tooltipId = useId();
 
   return (
     <span className="ppt-help-tip">
@@ -104,6 +105,7 @@ export function HelpTooltip({ text }: HelpTooltipProps) {
         type="button"
         className="ppt-help-tip__btn"
         aria-label={t('admin.help.tooltip', 'Help')}
+        aria-describedby={tooltipId}
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
         onFocus={() => setVisible(true)}
@@ -112,7 +114,7 @@ export function HelpTooltip({ text }: HelpTooltipProps) {
         ?
       </button>
       {visible && (
-        <span className="ppt-help-tip__bubble" role="tooltip">
+        <span id={tooltipId} className="ppt-help-tip__bubble" role="tooltip">
           {text}
         </span>
       )}

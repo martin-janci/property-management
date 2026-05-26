@@ -379,7 +379,7 @@ const FeatureFlagsPage: React.FC = () => {
       <section>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {t('admin.featureFlags.title')}
-          <HelpTooltip text="Feature flags take effect immediately for all users in the affected tenant. Use the kill switch with caution." />
+          <HelpTooltip text={t('admin.featureFlags.helpTooltip')} />
         </h1>
         <p role="alert" className="ppt-admin-warning" style={{ color: '#b00020', fontWeight: 600 }}>
           {t('admin.featureFlags.warning')}

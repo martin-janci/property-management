@@ -84,6 +84,7 @@
         "buildingDisabled": "Vypnúť túto budovu (núdzový vypínač)",
         "newListingsSearch": "Nové vyhľadávanie inzerátov (beta)"
       },
+      "helpTooltip": "Funkčné príznaky sa prejavia okamžite pre všetkých používateľov daného nájomníka. Núdzový vypínač používajte opatrne.",
       "title": "Funkčné príznaky",
       "warning": "Núdzový vypínač pre nájomníka — zmeny sa prejavia okamžite pre každého používateľa v tomto nájomníkovi."
     },
@@ -158,6 +159,7 @@
         "supportEmail": "E-mail podpory",
         "supportEmailPlaceholder": "podpora@example.com"
       },
+      "helpTooltip": "Režim údržby vracia odpoveď 503 na všetky požiadavky mimo administrátorov. Jeho aktivácia vyžaduje dôvod auditu.",
       "title": "Nastavenia platformy"
     },
     "help": {
