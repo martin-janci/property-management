@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T00:25:00Z",
+  "generated": "2026-05-26T00:50:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1321,15 +1321,15 @@
     {
       "task_id": "gap-83-1-airbnb-integration-backend",
       "branch": "auto-impl/gap-83-1-airbnb-integration-backend",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-25T22:10:38Z",
-      "status_changed_at": "2026-05-25T22:10:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T00:50:00Z",
+      "status_changed_at": "2026-05-26T00:50:00Z",
+      "pr_number": 538,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/538",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=538 status=done specialist=rust-backend note=direct-connect+webhook+availability-sync shipped; cargo check exit 0; 4/4 unit tests green; cargo fmt fix pushed",
       "reviewer_summary": null
     },
     {
