@@ -160,6 +160,13 @@
       },
       "title": "Platform Settings"
     },
+    "help": {
+      "openHelp": "Open contextual help",
+      "panelLabel": "Contextual help",
+      "close": "Close help",
+      "openDocs": "Open full documentation",
+      "tooltip": "Help"
+    },
     "users": {
       "actions": {
         "edit": "Edit",

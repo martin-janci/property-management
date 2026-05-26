@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
+import { HelpTooltip } from '../features/help';
 
 interface PlatformValues extends Record<string, unknown> {
   'platform.maintenance_mode': boolean;
@@ -238,7 +239,10 @@ const PlatformPage: React.FC = () => {
         />
       )}
       <section>
-        <h1>{t('admin.platform.title')}</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.platform.title')}
+          <HelpTooltip text="Maintenance mode returns 503 to all non-admin requests. Enabling it requires an audit reason." />
+        </h1>
         <SettingsForm<PlatformValues>
           fields={fields}
           initialValues={initialValues}

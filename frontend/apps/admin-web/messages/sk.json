@@ -160,6 +160,13 @@
       },
       "title": "Nastavenia platformy"
     },
+    "help": {
+      "openHelp": "Otvoriť kontextovú pomoc",
+      "panelLabel": "Kontextová pomoc",
+      "close": "Zavrieť pomoc",
+      "openDocs": "Otvoriť úplnú dokumentáciu",
+      "tooltip": "Pomoc"
+    },
     "users": {
       "actions": {
         "edit": "Upraviť",

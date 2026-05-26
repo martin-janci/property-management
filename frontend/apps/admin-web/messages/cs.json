@@ -160,6 +160,13 @@
       },
       "title": "Nastavení platformy"
     },
+    "help": {
+      "openHelp": "Otevřít kontextovou nápovědu",
+      "panelLabel": "Kontextová nápověda",
+      "close": "Zavřít nápovědu",
+      "openDocs": "Otevřít úplnou dokumentaci",
+      "tooltip": "Nápověda"
+    },
     "users": {
       "actions": {
         "edit": "Upravit",
