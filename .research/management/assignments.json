@@ -1660,7 +1660,26 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": null
+    },
+    {
+      "task_id": "gap-80-3-mediation-ui",
+      "branch": "auto-impl/gap-80-3-mediation-ui",
+      "status": "review",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-26T13:30:00Z",
+      "last_updated": "2026-05-26T13:45:00Z",
+      "status_changed_at": "2026-05-26T13:45:00Z",
+      "pr_number": 555,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/555",
+      "merged_at": null,
+      "implementer_summary": "pr=555 status=done specialist=react-web note=MediationWorkspacePage 3-panel layout (sidebar/tabbed/header rail); MediationChatThread; MediationResolutionForm; App.tsx DisputeMediationRoute wired; lazyRoutes updated; dispute-detail screen-map agent log entry added",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     }
   ],
-  "assignments.generated": "2026-05-26T13:30:00Z"
+  "assignments.generated": "2026-05-26T13:45:00Z"
 }
