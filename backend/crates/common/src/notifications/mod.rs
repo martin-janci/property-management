@@ -363,6 +363,12 @@ pub enum NotificationError {
     /// Rate limit exceeded.
     #[error("Rate limit exceeded for user {0}")]
     RateLimitExceeded(Uuid),
+
+    /// Transport not configured (e.g. FCM_SERVER_KEY unset).
+    /// Issue #484: the pipeline maps this to `skipped` rather than
+    /// `sent` so callers get accurate delivery counts.
+    #[error("Push transport not configured")]
+    PushNotConfigured,
 }
 
 // ============================================================================
