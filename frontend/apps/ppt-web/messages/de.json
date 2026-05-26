@@ -603,5 +603,59 @@
         "message": "Bitte bestätigen Sie über Ihre Authenticator-App, um fortzufahren."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Ausführungsverlauf des Zeitplans",
+      "scheduleDetails": "Zeitplandetails",
+      "executionHistory": "Ausführungsverlauf",
+      "executionCount": "{{filtered}} von {{total}} Ausführungen",
+      "backToSchedules": "Zurück zu Zeitplänen",
+      "frequency": {
+        "label": "Häufigkeit",
+        "daily": "Täglich",
+        "weekly": "Wöchentlich",
+        "monthly": "Monatlich",
+        "quarterly": "Vierteljährlich",
+        "yearly": "Jährlich"
+      },
+      "format": "Format",
+      "statusLabel": "Status",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "recipients": "Empfänger",
+      "lastRun": "Letzter Lauf",
+      "nextRun": "Nächster Lauf",
+      "status": {
+        "pending": "Ausstehend",
+        "running": "Läuft",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen",
+        "cancelled": "Abgebrochen",
+        "skipped": "Übersprungen"
+      },
+      "colStatus": "Status",
+      "colStartedAt": "Gestartet um",
+      "colDuration": "Dauer",
+      "colFile": "Datei",
+      "colSize": "Größe",
+      "colActions": "Aktionen",
+      "download": "Herunterladen",
+      "downloadExecution": "Bericht vom {{date}} herunterladen",
+      "retry": "Wiederholen",
+      "retrying": "Wird wiederholt...",
+      "retryExecution": "Ausführung vom {{date}} wiederholen",
+      "noExecutions": "Keine Ausführungen gefunden",
+      "clearFilters": "Filter zurücksetzen",
+      "loadMore": "Mehr laden",
+      "loading": "Laden...",
+      "errorTitle": "Ausführungen konnten nicht geladen werden",
+      "errorMessage": "Bitte versuchen Sie es später erneut."
+    },
+    "execution": {
+      "downloadFailed": "Bericht konnte nicht heruntergeladen werden.",
+      "retryQueued": "Ausführung zur Wiederholung in die Warteschlange gestellt.",
+      "retryFailed": "Ausführung konnte nicht wiederholt werden."
+    }
   }
 }

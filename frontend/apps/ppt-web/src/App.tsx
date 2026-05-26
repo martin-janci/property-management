@@ -150,6 +150,7 @@ import {
   RegisterPage,
   ReportsPage,
   ResetPasswordPage,
+  ScheduleDetailPage,
   ServerErrorPage,
   SessionExpiredPage,
   ThreadDetailPage,
@@ -665,6 +666,15 @@ function App() {
                                   element={
                                     <ProtectedRoute>
                                       <ReportsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Story 81.2: Schedule detail with inline execution history table */}
+                                <Route
+                                  path="/reports/schedules/:scheduleId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ScheduleDetailPageRoute />
                                     </ProtectedRoute>
                                   }
                                 />
@@ -2876,6 +2886,106 @@ function ReportsPageRoute() {
       onLoadMoreExecutions={handleLoadMoreExecutions}
       onDownloadReport={handleDownloadReport}
       onRetryExecution={handleRetryExecution}
+    />
+  );
+}
+
+/**
+ * Schedule detail page route — renders execution history table inline (Story 81.2).
+ *
+ * Route: /reports/schedules/:scheduleId
+ * Uses useReportExecutionHistory to fetch paginated executions and renders them
+ * via ScheduleDetailPage. Falls back to MSW stub data when api-server is absent.
+ */
+function ScheduleDetailPageRoute() {
+  const { scheduleId = '' } = useParams<{ scheduleId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const EXECUTION_PAGE_SIZE = 20;
+  const [executionOffset, setExecutionOffset] = useState(0);
+
+  const {
+    data: executionHistoryData,
+    isLoading: executionsLoading,
+    isError: executionsError,
+  } = useReportExecutionHistory(
+    { scheduleId },
+    {
+      limit: EXECUTION_PAGE_SIZE,
+      offset: executionOffset,
+      enabled: !!scheduleId,
+      refetchInterval: 10_000,
+    }
+  );
+
+  const downloadReport = useDownloadReport();
+  const retryExecution = useRetryReportExecution();
+
+  const executions = executionHistoryData?.executions ?? [];
+  const hasMore = executionHistoryData?.hasMore ?? false;
+
+  const handleLoadMore = () => setExecutionOffset((prev) => prev + EXECUTION_PAGE_SIZE);
+
+  const handleDownloadReport = (executionId: string) => {
+    downloadReport.mutate(executionId, {
+      onError: () => {
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('reports.execution.downloadFailed', 'Failed to download report.'),
+        });
+      },
+    });
+  };
+
+  const handleRetryExecution = async (executionId: string) => {
+    try {
+      await retryExecution.mutateAsync(executionId);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.execution.retryQueued', 'Execution queued for retry.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.execution.retryFailed', 'Failed to retry execution.'),
+      });
+      throw new Error('retry failed');
+    }
+  };
+
+  // Stub schedule object — schedule metadata will be enriched once the
+  // GET /api/v1/reports/schedules/:id endpoint is wired in a future story.
+  const stubSchedule: import('@ppt/api-client').ReportSchedule = {
+    id: scheduleId,
+    report_id: '',
+    organization_id: '',
+    name: `Schedule ${scheduleId}`,
+    frequency: 'monthly',
+    time: '08:00',
+    timezone: 'UTC',
+    format: 'pdf',
+    recipients: [],
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  return (
+    <ScheduleDetailPage
+      schedule={stubSchedule}
+      executions={executions}
+      isLoading={executionsLoading}
+      isError={executionsError}
+      hasMore={hasMore}
+      onLoadMore={handleLoadMore}
+      onDownload={handleDownloadReport}
+      onRetry={handleRetryExecution}
+      onBack={() => navigate('/reports')}
     />
   );
 }

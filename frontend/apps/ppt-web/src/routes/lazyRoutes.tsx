@@ -201,6 +201,10 @@ export const BudgetManagementPage = lazy(() =>
 export const ReportsPage = lazy(() =>
   import('../features/reports').then((m) => ({ default: m.ReportsPage }))
 );
+// Story 81.2 - Schedule detail with execution history table
+export const ScheduleDetailPage = lazy(() =>
+  import('../features/reports').then((m) => ({ default: m.ScheduleDetailPage }))
+);
 
 // Command Palette (Epic 129) - loaded eagerly since it's used globally
 // CommandPaletteDialog and CommandPaletteProvider are NOT lazy loaded

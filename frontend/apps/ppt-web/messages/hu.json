@@ -603,5 +603,59 @@
         "message": "A folytatáshoz erősítse meg a hitelesítő alkalmazásban."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Ütemterv végrehajtási előzményei",
+      "scheduleDetails": "Ütemterv részletei",
+      "executionHistory": "Végrehajtási előzmények",
+      "executionCount": "{{filtered}} / {{total}} végrehajtás",
+      "backToSchedules": "Vissza az ütemtervekhez",
+      "frequency": {
+        "label": "Gyakoriság",
+        "daily": "Napi",
+        "weekly": "Heti",
+        "monthly": "Havi",
+        "quarterly": "Negyedéves",
+        "yearly": "Éves"
+      },
+      "format": "Formátum",
+      "statusLabel": "Állapot",
+      "active": "Aktív",
+      "inactive": "Inaktív",
+      "recipients": "Címzettek",
+      "lastRun": "Utolsó futás",
+      "nextRun": "Következő futás",
+      "status": {
+        "pending": "Függőben",
+        "running": "Fut",
+        "completed": "Befejezett",
+        "failed": "Sikertelen",
+        "cancelled": "Törölve",
+        "skipped": "Kihagyva"
+      },
+      "colStatus": "Állapot",
+      "colStartedAt": "Indítva",
+      "colDuration": "Időtartam",
+      "colFile": "Fájl",
+      "colSize": "Méret",
+      "colActions": "Műveletek",
+      "download": "Letöltés",
+      "downloadExecution": "Jelentés letöltése {{date}}-ről",
+      "retry": "Újra",
+      "retrying": "Ismétlés...",
+      "retryExecution": "Végrehajtás megismétlése {{date}}-ről",
+      "noExecutions": "Nem található végrehajtás",
+      "clearFilters": "Szűrők törlése",
+      "loadMore": "Több betöltése",
+      "loading": "Betöltés...",
+      "errorTitle": "Nem sikerült betölteni a végrehajtásokat",
+      "errorMessage": "Kérjük, próbálja újra később."
+    },
+    "execution": {
+      "downloadFailed": "Nem sikerült letölteni a jelentést.",
+      "retryQueued": "A végrehajtás újraküldésre várakozik.",
+      "retryFailed": "Nem sikerült megismételni a végrehajtást."
+    }
   }
 }
