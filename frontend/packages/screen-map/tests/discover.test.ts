@@ -48,7 +48,9 @@ describe('discoverScreenMaps', () => {
     expect(found).toEqual([]);
   });
 
-  it('propagates non-ENOENT readdir errors instead of silently skipping', async () => {
+  it.skipIf(typeof process.getuid === 'function' && process.getuid() === 0)(
+    'propagates non-ENOENT readdir errors instead of silently skipping',
+    async () => {
     // chmod 000 the product dir to provoke EACCES on readdir.
     const dir = path.join(tmpRoot, 'ppt');
     await mkdir(dir, { recursive: true });
@@ -59,5 +61,5 @@ describe('discoverScreenMaps', () => {
     } finally {
       await chmod(dir, 0o755);
     }
-  });
+  );
 });
