@@ -159,6 +159,144 @@ impl CaddyClient {
         Ok(())
     }
 
+    /// Register a host + path-prefix → upstream mapping. Sibling of
+    /// `register_route` for the case where one host needs more than one
+    /// route — e.g. a shared-mode worktree's `wt-<name>.<domain>` serves
+    /// the frontend at `/` but must proxy `/api/*` to a separate shared
+    /// backend container (fix for #453: shared worktrees previously had
+    /// only the frontend route, so every `/api/*` call 502'd at the
+    /// frontend dev server which has no such handler).
+    ///
+    /// **`suffix`** is appended to the route's `@id` so it doesn't collide
+    /// with the host-only route's id. Use a stable, host-independent
+    /// string per call site (e.g. `"api"`).
+    ///
+    /// **Caddy first-match dispatch**: routes are evaluated in array
+    /// order, not by specificity. Callers MUST register the path-matched
+    /// route BEFORE any host-only route on the same host, otherwise the
+    /// host-only route matches first and the path matcher is never tried.
+    /// `register_route(host, …)` deletes only its own `@id`, so an earlier
+    /// `register_path_route` survives and stays at its earlier array
+    /// position (i.e. routes end up as `[path-matched, host-only]` — the
+    /// order Caddy needs).
+    ///
+    /// Idempotency, retry semantics, error paths, and instance assumptions
+    /// match `register_route` — see that method's doc for the full
+    /// rationale. `path` is the standard Caddy path matcher syntax
+    /// (e.g. `"/api/*"`, `"/admin/*"`).
+    #[instrument(skip(self), fields(host = %host, path = %path, upstream = %upstream, suffix = %suffix))]
+    pub async fn register_path_route(
+        &self,
+        host: &str,
+        path: &str,
+        upstream: &str,
+        suffix: &str,
+    ) -> Result<()> {
+        // DELETE-loop sweeps any stale routes carrying this `@id` first.
+        self.unregister_path_route(host, suffix).await?;
+
+        let route_id = path_route_id(host, suffix);
+        let payload = json!({
+            "@id": route_id,
+            "match": [{"host": [host], "path": [path]}],
+            "handle": [
+                {
+                    "handler": "reverse_proxy",
+                    "upstreams": [{"dial": upstream}]
+                }
+            ]
+        });
+        let append_url = format!("{}/config/apps/http/servers/srv0/routes/...", self.base);
+        let resp = self
+            .http
+            .post(&append_url)
+            .json(&json!([payload]))
+            .send()
+            .await?;
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            let log_body = truncate_utf8(&body, 512);
+            error!(
+                host,
+                path,
+                upstream,
+                %status,
+                body = %log_body,
+                body_truncated = body.len() > 512,
+                "caddy register path-route POST failed",
+            );
+            return Err(crate::DeployError::Internal(format!(
+                "caddy register path-route POST failed: {status} — {log_body}"
+            )));
+        }
+        Ok(())
+    }
+
+    /// Unregister a path-matched route previously added via
+    /// `register_path_route` for the same `(host, suffix)` pair. Same
+    /// loop-until-404 semantics as `unregister_route` but scoped to the
+    /// `path_route_id(host, suffix)` namespace so the host's host-only
+    /// route is untouched. 404 (route not present) is the normal "wasn't
+    /// there" path and returns `Ok(())`.
+    #[instrument(skip(self), fields(host = %host, suffix = %suffix))]
+    pub async fn unregister_path_route(&self, host: &str, suffix: &str) -> Result<()> {
+        let route_id = path_route_id(host, suffix);
+        let url = format!("{}/id/{}", self.base, route_id);
+        let iters = std::sync::atomic::AtomicUsize::new(0);
+        let sweep = async {
+            for _ in 0..MAX_DELETE_ITERS {
+                let resp = self.http.delete(&url).send().await?;
+                iters.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                let status = resp.status();
+                if status.as_u16() == 404 {
+                    return Ok(());
+                }
+                if !status.is_success() {
+                    let body = resp.text().await.unwrap_or_default();
+                    let log_body = truncate_utf8(&body, 512);
+                    error!(
+                        host,
+                        suffix,
+                        %status,
+                        body = %log_body,
+                        body_truncated = body.len() > 512,
+                        "caddy unregister path-route DELETE failed",
+                    );
+                    return Err(crate::DeployError::Internal(format!(
+                        "caddy unregister path-route: {status} — {log_body}"
+                    )));
+                }
+            }
+            error!(
+                host,
+                suffix,
+                max_iters = MAX_DELETE_ITERS,
+                "caddy unregister path-route: id index appears stuck",
+            );
+            Err(crate::DeployError::Internal(format!(
+                "caddy unregister path-route: {host}/{suffix} still resolved after {MAX_DELETE_ITERS} DELETE iterations"
+            )))
+        };
+        match tokio::time::timeout(SWEEP_DEADLINE, sweep).await {
+            Ok(inner) => inner,
+            Err(_) => {
+                let n = iters.load(std::sync::atomic::Ordering::SeqCst);
+                error!(
+                    host,
+                    suffix,
+                    deadline_secs = SWEEP_DEADLINE.as_secs(),
+                    completed_deletes = n,
+                    "caddy unregister path-route: sweep deadline exceeded",
+                );
+                Err(crate::DeployError::Internal(format!(
+                    "caddy unregister path-route: {}s deadline exceeded for {host}/{suffix} after {n} DELETEs",
+                    SWEEP_DEADLINE.as_secs()
+                )))
+            }
+        }
+    }
+
     /// Remove ALL routes registered under this host's `@id`. Loops DELETE
     /// until Caddy returns 404, which is the documented "no such id" reply
     /// for `/id/<id>` requests. Older deploy-server versions could leave
@@ -428,6 +566,14 @@ fn sanitize_id(host: &str) -> String {
 /// (DELETE URL) compute the id through here.
 fn route_id(host: &str) -> String {
     format!("ppt-deploy-{}", sanitize_id(host))
+}
+
+/// `@id` for a path-matched route that lives alongside a host-only route
+/// for the same host. The suffix keeps the two ids distinct so each can be
+/// added/removed independently (e.g. shared-mode worktree `/api/*` route
+/// added before the host-only frontend route — fix for #453).
+fn path_route_id(host: &str, suffix: &str) -> String {
+    format!("ppt-deploy-{}-{}", sanitize_id(host), suffix)
 }
 
 #[cfg(test)]
