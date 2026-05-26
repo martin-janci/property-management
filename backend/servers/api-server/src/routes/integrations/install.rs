@@ -887,7 +887,117 @@ pub async fn sync_booking(
         )
     })?;
 
-    let items_synced = reservations.len() as i32;
+    let pulled_count = reservations.len() as i32;
+    let mut persisted_count = 0i32;
+
+    // Attempt to persist reservations when a unit-level connection exists for the
+    // room_type_id.  Org-level connections (unit_id = nil UUID) cannot satisfy the
+    // rental_bookings.unit_id NOT NULL FK, so those are counted but not stored —
+    // the operator must map room types via the listing-push / room-mapping API.
+    for reservation in &reservations {
+        // Try to parse the Booking.com room_type_id as a UUID (set by the operator
+        // during room-type mapping).  String IDs like "DBL" won't parse and result
+        // in Uuid::nil(), which matches the org-level connection → we skip.
+        let room_uuid = reservation
+            .room_type_id
+            .parse::<uuid::Uuid>()
+            .ok()
+            .unwrap_or(uuid::Uuid::nil());
+
+        if room_uuid == uuid::Uuid::nil() {
+            tracing::debug!(
+                reservation_id = %reservation.reservation_id,
+                room_type_id = %reservation.room_type_id,
+                "Skipping reservation: room_type_id is not a UUID (room mapping not configured)"
+            );
+            continue;
+        }
+
+        let unit_conn = rental_repo
+            .find_connection_by_unit_platform(room_uuid, "booking")
+            .await
+            .ok()
+            .flatten();
+
+        let unit_id = match unit_conn {
+            Some(ref conn) if conn.unit_id != uuid::Uuid::nil() => conn.unit_id,
+            _ => continue,
+        };
+
+        // Skip if already persisted.
+        let already_exists = rental_repo
+            .find_booking_by_external_id("booking", &reservation.reservation_id)
+            .await
+            .ok()
+            .flatten()
+            .is_some();
+
+        if already_exists {
+            continue;
+        }
+
+        // Conflict gate: check the calendar before inserting.
+        // Fail-safe: on DB error treat as unavailable to avoid double-booking.
+        let is_available = rental_repo
+            .check_availability(unit_id, reservation.check_in, reservation.check_out)
+            .await
+            .unwrap_or(false);
+
+        if !is_available {
+            tracing::warn!(
+                reservation_id = %reservation.reservation_id,
+                unit_id = %unit_id,
+                check_in = %reservation.check_in,
+                check_out = %reservation.check_out,
+                "Booking.com reservation conflicts with existing calendar block — skipping"
+            );
+            continue;
+        }
+
+        let guest_name = format!(
+            "{} {}",
+            reservation.guest.first_name.trim(),
+            reservation.guest.last_name.trim()
+        );
+
+        let create = db::models::CreateBooking {
+            unit_id,
+            platform: "booking".to_string(),
+            external_booking_id: Some(reservation.reservation_id.clone()),
+            guest_name,
+            guest_email: reservation.guest.email.clone(),
+            guest_phone: reservation.guest.phone.clone(),
+            guest_count: reservation.adults + reservation.children,
+            check_in: reservation.check_in,
+            check_out: reservation.check_out,
+            check_in_time: None,
+            check_out_time: None,
+            total_amount: Some(reservation.total_price),
+            currency: Some(reservation.currency.clone()),
+            platform_fee: Some(reservation.commission),
+            cleaning_fee: None,
+            guest_notes: reservation.special_requests.clone(),
+            internal_notes: None,
+        };
+
+        match rental_repo.create_booking(path.org_id, create).await {
+            Ok(_) => {
+                persisted_count += 1;
+                tracing::info!(
+                    reservation_id = %reservation.reservation_id,
+                    unit_id = %unit_id,
+                    "Persisted Booking.com reservation"
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    reservation_id = %reservation.reservation_id,
+                    error = %e,
+                    "Failed to persist Booking.com reservation"
+                );
+            }
+        }
+    }
 
     let _ = rental_repo
         .update_connection_last_sync(connection.id, chrono::Utc::now())
@@ -896,13 +1006,14 @@ pub async fn sync_booking(
     tracing::info!(
         org_id = %path.org_id,
         hotel_id = %hotel_id,
-        reservations_count = items_synced,
+        pulled_count = pulled_count,
+        persisted_count = persisted_count,
         "Booking.com sync completed"
     );
 
     Ok(Json(SyncResponse {
         success: true,
-        items_synced,
+        items_synced: pulled_count,
         synced_at: chrono::Utc::now(),
         error: None,
     }))
