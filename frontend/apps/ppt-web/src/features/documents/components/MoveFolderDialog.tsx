@@ -301,9 +301,8 @@ export function MoveFolderDialog({
   }, []);
 
   const tree = data?.tree ?? [];
-  const selectedName = selectedId
-    ? (buildFolderCrumbs(tree, selectedId).at(-1)?.name ?? selectedId)
-    : null;
+  const crumbs = selectedId ? buildFolderCrumbs(tree, selectedId) : [];
+  const selectedName = selectedId ? (crumbs[crumbs.length - 1]?.name ?? selectedId) : null;
 
   const hasChanged = selectedId !== currentFolderId;
 
