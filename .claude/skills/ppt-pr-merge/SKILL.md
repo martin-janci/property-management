@@ -75,7 +75,21 @@ REPO=<repo>
 
 # Read full PR state
 gh pr view "$PR" --repo "$REPO" --json \
-  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName
+  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName,labels
+```
+
+**Human-gate label check (P6).** If the PR carries the `needs-human-review`
+label, refuse regardless of approval / CI status. This overrides any
+auto-promote-from-draft behavior — an approve + green CI is not enough when
+a human gate is set.
+
+```bash
+HAS_GATE=$(gh pr view "$PR" --repo "$REPO" --json labels \
+  --jq '[.labels[].name] | index("needs-human-review") // empty')
+if [ -n "$HAS_GATE" ]; then
+  echo "merged=false pr=$PR note=blocked-by-needs-human-review-label"
+  exit 0
+fi
 ```
 
 Abort with `merged=false note=<reason>` if ANY of:
@@ -262,6 +276,7 @@ skill never touches assignments.json directly.
   that has not been promoted to ready via the auto-promote path in Step 1.
 - Never merge a PR with failing or in-progress CI.
 - Never merge a PR with unresolved review threads.
+- Never merge a PR carrying the `needs-human-review` label, even if approved + green (P6).
 - Auto-resolve ONLY the mechanical patterns listed in Step 2; real code conflicts always abort.
 - Always verify the auto-resolved branch with a quick per-stack check before pushing.
 - Never bypass branch protection (no `--admin` flag from this skill — humans only).

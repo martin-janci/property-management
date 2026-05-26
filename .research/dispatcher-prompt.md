@@ -120,6 +120,14 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
    `.claude/skills/ppt-review-merged/SKILL.md`,
    `.claude/skills/ppt-pr-merge/SKILL.md`, AND
    `.claude/skills/ppt-pr-followup/SKILL.md` exist. If any missing, ABORT.
+6. **Ensure gating labels exist** (P6) — idempotent:
+
+   ```bash
+   bash .claude/skills/ppt-pr-followup/scripts/ensure-labels.sh \
+     martin-janci/property-management
+   ```
+
+   This creates `needs-human-review` once and is a no-op thereafter.
 
 ---
 
@@ -328,6 +336,29 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 
 Capture → `reviewer_summary`, `last_reviewed_oid = head_oid` (item #10),
 `last_updated = now`. STATUS UNCHANGED.
+
+**Human-gate label sweep (P6).** After capture, scan the reviewer's `note=`
+substring (case-insensitive) for any of these phrases — the canonical
+allow-list. Match means: the reviewer is parking the PR in draft pending a
+human-only check.
+
+| Phrase fragment (case-insensitive) | Why it's a human gate |
+|---|---|
+| `macos reviewer required` | Cross-platform check the bot can't do |
+| `needs domain expert review` | Subject-matter judgement call |
+| `needs security review` | Sec team must sign off before un-draft |
+| `needs product review` | Product/UX decision |
+| `human review required` | Generic catch-all |
+| `do not auto-merge` | Explicit operator override |
+
+If any fragment matches, label the PR:
+
+```bash
+gh pr edit "$PR" --repo martin-janci/property-management --add-label needs-human-review
+```
+
+If no fragment matches and the PR currently has the label, leave it alone
+(humans add this label too; the dispatcher only adds, never removes).
 
 No cap on reviewer subagents — review every pending review row in parallel.
 
