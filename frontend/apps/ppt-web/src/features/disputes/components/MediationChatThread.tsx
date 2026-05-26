@@ -19,7 +19,7 @@ export function MediationChatThread({
   canSendPrivate = false,
   onError,
 }: MediationChatThreadProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [draft, setDraft] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export function MediationChatThread({
                   className={`flex items-center gap-2 text-xs text-gray-500 ${isMine ? 'flex-row-reverse' : ''}`}
                 >
                   <span className="font-medium text-gray-700">{note.authorName}</span>
-                  <span>{formatTime(note.createdAt)}</span>
+                  <span>{formatTime(note.createdAt, i18n.language)}</span>
                   {note.isPrivate && (
                     <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-xs">
                       {t('disputes.mediation.privateLabel')}

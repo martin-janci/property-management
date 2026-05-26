@@ -79,7 +79,7 @@ const eventColors: Record<TimelineEventType, string> = {
 // ============================================
 
 function TimelineView({ disputeId }: { disputeId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: events = [], isLoading } = useDisputeTimeline(disputeId);
 
   if (isLoading) {
@@ -113,7 +113,9 @@ function TimelineView({ disputeId }: { disputeId: string }) {
               <div className="flex-1 bg-white rounded-lg border border-gray-200 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-900">{event.actorName}</span>
-                  <span className="text-xs text-gray-400">{formatTime(event.createdAt)}</span>
+                  <span className="text-xs text-gray-400">
+                    {formatTime(event.createdAt, i18n.language)}
+                  </span>
                 </div>
                 <p className="mt-0.5 text-sm text-gray-700">{event.description}</p>
                 {event.metadata &&

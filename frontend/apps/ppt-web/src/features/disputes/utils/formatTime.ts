@@ -1,4 +1,4 @@
-export function formatTime(dateString: string): string {
+export function formatTime(dateString: string, locale = 'en'): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -6,9 +6,11 @@ export function formatTime(dateString: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+  if (diffMins < 1) return rtf.format(0, 'second');
+  if (diffMins < 60) return rtf.format(-diffMins, 'minute');
+  if (diffHours < 24) return rtf.format(-diffHours, 'hour');
+  if (diffDays < 7) return rtf.format(-diffDays, 'day');
+  return date.toLocaleDateString(locale);
 }
