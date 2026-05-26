@@ -607,5 +607,59 @@
         "message": "Aby kontynuować, potwierdź w aplikacji uwierzytelniającej."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Historia wykonań harmonogramu",
+      "scheduleDetails": "Szczegóły harmonogramu",
+      "executionHistory": "Historia wykonań",
+      "executionCount": "{{filtered}} z {{total}} wykonań",
+      "backToSchedules": "Powrót do harmonogramów",
+      "frequency": {
+        "label": "Częstotliwość",
+        "daily": "Codziennie",
+        "weekly": "Co tydzień",
+        "monthly": "Co miesiąc",
+        "quarterly": "Co kwartał",
+        "yearly": "Co rok"
+      },
+      "format": "Format",
+      "statusLabel": "Status",
+      "active": "Aktywny",
+      "inactive": "Nieaktywny",
+      "recipients": "Odbiorcy",
+      "lastRun": "Ostatnie uruchomienie",
+      "nextRun": "Następne uruchomienie",
+      "status": {
+        "pending": "Oczekuje",
+        "running": "Działa",
+        "completed": "Zakończone",
+        "failed": "Błąd",
+        "cancelled": "Anulowane",
+        "skipped": "Pominięte"
+      },
+      "colStatus": "Status",
+      "colStartedAt": "Uruchomiono",
+      "colDuration": "Czas trwania",
+      "colFile": "Plik",
+      "colSize": "Rozmiar",
+      "colActions": "Akcje",
+      "download": "Pobierz",
+      "downloadExecution": "Pobierz raport z {{date}}",
+      "retry": "Ponów",
+      "retrying": "Ponawianie...",
+      "retryExecution": "Ponów wykonanie z {{date}}",
+      "noExecutions": "Nie znaleziono wykonań",
+      "clearFilters": "Wyczyść filtry",
+      "loadMore": "Wczytaj więcej",
+      "loading": "Wczytywanie...",
+      "errorTitle": "Nie udało się wczytać wykonań",
+      "errorMessage": "Spróbuj ponownie później."
+    },
+    "execution": {
+      "downloadFailed": "Nie udało się pobrać raportu.",
+      "retryQueued": "Wykonanie zostało dodane do kolejki ponowień.",
+      "retryFailed": "Nie udało się ponowić wykonania."
+    }
   }
 }

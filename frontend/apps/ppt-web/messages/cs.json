@@ -607,5 +607,59 @@
         "message": "Pro pokračování potvrďte v autentizační aplikaci."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Historie spuštění plánu",
+      "scheduleDetails": "Podrobnosti plánu",
+      "executionHistory": "Historie spuštění",
+      "executionCount": "{{filtered}} z {{total}} spuštění",
+      "backToSchedules": "Zpět na plány",
+      "frequency": {
+        "label": "Frekvence",
+        "daily": "Denně",
+        "weekly": "Týdně",
+        "monthly": "Měsíčně",
+        "quarterly": "Čtvrtletně",
+        "yearly": "Ročně"
+      },
+      "format": "Formát",
+      "statusLabel": "Stav",
+      "active": "Aktivní",
+      "inactive": "Neaktivní",
+      "recipients": "Příjemci",
+      "lastRun": "Poslední spuštění",
+      "nextRun": "Další spuštění",
+      "status": {
+        "pending": "Čeká",
+        "running": "Běží",
+        "completed": "Dokončeno",
+        "failed": "Selhalo",
+        "cancelled": "Zrušeno",
+        "skipped": "Přeskočeno"
+      },
+      "colStatus": "Stav",
+      "colStartedAt": "Zahájeno",
+      "colDuration": "Trvání",
+      "colFile": "Soubor",
+      "colSize": "Velikost",
+      "colActions": "Akce",
+      "download": "Stáhnout",
+      "downloadExecution": "Stáhnout zprávu ze dne {{date}}",
+      "retry": "Opakovat",
+      "retrying": "Opakuje se...",
+      "retryExecution": "Opakovat spuštění ze dne {{date}}",
+      "noExecutions": "Nenalezena žádná spuštění",
+      "clearFilters": "Zrušit filtry",
+      "loadMore": "Načíst více",
+      "loading": "Načítá se...",
+      "errorTitle": "Nepodařilo se načíst spuštění",
+      "errorMessage": "Zkuste to prosím později."
+    },
+    "execution": {
+      "downloadFailed": "Nepodařilo se stáhnout zprávu.",
+      "retryQueued": "Spuštění bylo zařazeno do fronty k opakování.",
+      "retryFailed": "Nepodařilo se opakovat spuštění."
+    }
   }
 }

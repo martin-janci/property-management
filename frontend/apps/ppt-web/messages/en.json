@@ -2895,5 +2895,59 @@
         "message": "Please confirm with your authenticator app to continue."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Schedule execution history",
+      "scheduleDetails": "Schedule details",
+      "executionHistory": "Execution history",
+      "executionCount": "{{filtered}} of {{total}} executions",
+      "backToSchedules": "Back to schedules",
+      "frequency": {
+        "label": "Frequency",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      },
+      "format": "Format",
+      "statusLabel": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "recipients": "Recipients",
+      "lastRun": "Last run",
+      "nextRun": "Next run",
+      "status": {
+        "pending": "Pending",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "skipped": "Skipped"
+      },
+      "colStatus": "Status",
+      "colStartedAt": "Started at",
+      "colDuration": "Duration",
+      "colFile": "File",
+      "colSize": "Size",
+      "colActions": "Actions",
+      "download": "Download",
+      "downloadExecution": "Download report from {{date}}",
+      "retry": "Retry",
+      "retrying": "Retrying...",
+      "retryExecution": "Retry execution from {{date}}",
+      "noExecutions": "No executions found",
+      "clearFilters": "Clear filters",
+      "loadMore": "Load more",
+      "loading": "Loading...",
+      "errorTitle": "Failed to load executions",
+      "errorMessage": "Please try again later."
+    },
+    "execution": {
+      "downloadFailed": "Failed to download report.",
+      "retryQueued": "Execution queued for retry.",
+      "retryFailed": "Failed to retry execution."
+    }
   }
 }

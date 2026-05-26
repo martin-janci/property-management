@@ -607,5 +607,59 @@
         "message": "Pre pokračovanie potvrďte v autentifikačnej aplikácii."
       }
     }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "História spustení plánu",
+      "scheduleDetails": "Podrobnosti plánu",
+      "executionHistory": "História spustení",
+      "executionCount": "{{filtered}} z {{total}} spustení",
+      "backToSchedules": "Späť na plány",
+      "frequency": {
+        "label": "Frekvencia",
+        "daily": "Denne",
+        "weekly": "Týždenne",
+        "monthly": "Mesačne",
+        "quarterly": "Štvrťročne",
+        "yearly": "Ročne"
+      },
+      "format": "Formát",
+      "statusLabel": "Stav",
+      "active": "Aktívny",
+      "inactive": "Neaktívny",
+      "recipients": "Príjemcovia",
+      "lastRun": "Posledné spustenie",
+      "nextRun": "Ďalšie spustenie",
+      "status": {
+        "pending": "Čaká",
+        "running": "Beží",
+        "completed": "Dokončené",
+        "failed": "Zlyhalo",
+        "cancelled": "Zrušené",
+        "skipped": "Preskočené"
+      },
+      "colStatus": "Stav",
+      "colStartedAt": "Začaté",
+      "colDuration": "Trvanie",
+      "colFile": "Súbor",
+      "colSize": "Veľkosť",
+      "colActions": "Akcie",
+      "download": "Stiahnuť",
+      "downloadExecution": "Stiahnuť správu zo dňa {{date}}",
+      "retry": "Opakovať",
+      "retrying": "Opakuje sa...",
+      "retryExecution": "Opakovať spustenie zo dňa {{date}}",
+      "noExecutions": "Nenašli sa žiadne spustenia",
+      "clearFilters": "Zrušiť filtre",
+      "loadMore": "Načítať viac",
+      "loading": "Načítava sa...",
+      "errorTitle": "Nepodarilo sa načítať spustenia",
+      "errorMessage": "Skúste to prosím neskôr."
+    },
+    "execution": {
+      "downloadFailed": "Nepodarilo sa stiahnuť správu.",
+      "retryQueued": "Spustenie bolo zaradené do frontu na opakovanie.",
+      "retryFailed": "Nepodarilo sa opakovať spustenie."
+    }
   }
 }
