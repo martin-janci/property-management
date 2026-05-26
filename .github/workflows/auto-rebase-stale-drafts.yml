@@ -1,0 +1,170 @@
+name: Auto-rebase stale conflicting drafts
+
+# Nightly sweep of open DRAFT PRs that are CONFLICTING with dev and haven't
+# been touched in >24h. For PRs authored by the dispatcher/owner allow-list,
+# rebase onto origin/dev and force-push with --force-with-lease. Only the
+# mechanical conflict shapes that `ppt-pr-merge` knows how to resolve are
+# auto-resolved here — anything else is left alone with a PR comment.
+#
+# Why it exists: the autonomous dispatcher's PR queue silts up when several
+# implementer branches diverge from dev. Manual rebase round-trips dominate
+# the time-to-merge curve. This unsticks the queue overnight when nobody is
+# around. (See P7 in the dispatcher-hardening plan.)
+
+on:
+  schedule:
+    # 03:00 UTC nightly — quiet hours, well after the last dispatcher tick.
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-rebase-stale-drafts
+  cancel-in-progress: false
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        env:
+          ACTOR_NAME: github-actions[bot]
+          ACTOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          git config user.name "$ACTOR_NAME"
+          git config user.email "$ACTOR_EMAIL"
+
+      - name: Find candidate draft PRs
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # Allow-list of PR authors whose branches we'll force-push to. Keep
+          # tight — external contributors should never have their branches
+          # mutated by automation.
+          AUTHOR_ALLOWLIST: 'martin-janci'
+        run: |
+          set -euo pipefail
+
+          # Pull every open draft PR. The mergeable field can be UNKNOWN on
+          # cold reads; gh re-asks until it resolves.
+          PRS=$(gh pr list --repo "$REPO" --state open --draft \
+            --json number,author,updatedAt,mergeable,headRefName,baseRefName \
+            --limit 100)
+
+          NOW=$(date -u +%s)
+          # Pre-build a regex of allowed authors.
+          ALLOW_REGEX=$(echo "$AUTHOR_ALLOWLIST" | tr ',' '|')
+
+          CANDIDATES=$(echo "$PRS" | jq -c --arg now "$NOW" --arg allow "$ALLOW_REGEX" '
+            [
+              .[]
+              | select(.mergeable == "CONFLICTING")
+              | select(.author.login | test("^(" + $allow + ")$"))
+              | . as $pr
+              | (.updatedAt | fromdateiso8601) as $upd
+              | select(($now | tonumber) - $upd > 86400)
+              | {number, head: .headRefName, base: .baseRefName}
+            ]
+          ')
+
+          echo "candidates<<EOF"  >> "$GITHUB_OUTPUT"
+          echo "$CANDIDATES"      >> "$GITHUB_OUTPUT"
+          echo "EOF"              >> "$GITHUB_OUTPUT"
+          echo "Found $(echo "$CANDIDATES" | jq 'length') candidate PR(s)."
+
+      - name: Rebase each candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          CANDIDATES: ${{ steps.find.outputs.candidates }}
+        run: |
+          set -euo pipefail
+
+          COUNT=$(echo "$CANDIDATES" | jq 'length')
+          if [ "$COUNT" -eq 0 ]; then
+            echo "no candidates; exiting clean"
+            exit 0
+          fi
+
+          git fetch origin dev
+
+          # Iterate using jq -r index access so we never interpolate PR
+          # data into the shell via `${{ }}` (env-var indirection pattern).
+          for i in $(seq 0 $((COUNT - 1))); do
+            PR=$(echo "$CANDIDATES"   | jq -r ".[$i].number")
+            HEAD=$(echo "$CANDIDATES" | jq -r ".[$i].head")
+            BASE=$(echo "$CANDIDATES" | jq -r ".[$i].base")
+
+            echo "::group::PR #$PR ($HEAD -> $BASE)"
+
+            if [ "$BASE" != "dev" ]; then
+              echo "skipping: base is $BASE (only rebasing onto dev)"
+              echo "::endgroup::"
+              continue
+            fi
+
+            # Fresh worktree per PR so a previous failure can't poison the next.
+            WORKDIR="$(mktemp -d)/pr-$PR"
+            mkdir -p "$WORKDIR"
+            git worktree add "$WORKDIR" "origin/$HEAD" || {
+              echo "could not check out origin/$HEAD; skipping"
+              echo "::endgroup::"
+              continue
+            }
+
+            (
+              cd "$WORKDIR"
+              git checkout -B "$HEAD"
+
+              if git rebase origin/dev; then
+                echo "rebase clean for PR #$PR"
+                git push --force-with-lease origin "$HEAD"
+              else
+                # Inspect conflicts. Mechanical patterns (mirror ppt-pr-merge
+                # Step 2 table) get base-side resolution + a regen if needed.
+                # Everything else is real code conflict — abort and comment.
+                CONFLICTS=$(git diff --name-only --diff-filter=U || true)
+                MECHANICAL='^(backend/\.sqlx/.*\.json|backend/Cargo\.lock|docs/api/openapi\.yaml|frontend/packages/api-client/src/.*\.ts|frontend/pnpm-lock\.yaml|VERSION|mobile-native/gradle\.properties)$'
+
+                NON_MECHANICAL=$(echo "$CONFLICTS" | grep -Ev "$MECHANICAL" || true)
+
+                if [ -n "$NON_MECHANICAL" ]; then
+                  echo "real conflicts in: $NON_MECHANICAL"
+                  git rebase --abort || true
+                  BODY=$(printf 'Auto-rebase failed: real code conflict in:\n```\n%s\n```\nNeeds manual intervention. (Workflow: `.github/workflows/auto-rebase-stale-drafts.yml`.)' "$NON_MECHANICAL")
+                  gh pr comment "$PR" --repo "$REPO" --body "$BODY"
+                else
+                  echo "only mechanical conflicts: resolving from base"
+                  # Take base side for each mechanical conflict; regen later if applicable.
+                  for f in $CONFLICTS; do
+                    git checkout --theirs -- "$f" || true
+                    git add -- "$f" || true
+                  done
+                  if git rebase --continue; then
+                    git push --force-with-lease origin "$HEAD"
+                    echo "rebase resolved mechanically for PR #$PR"
+                  else
+                    echo "rebase --continue failed; aborting"
+                    git rebase --abort || true
+                    gh pr comment "$PR" --repo "$REPO" --body \
+                      "Auto-rebase aborted: mechanical-only conflict path could not finish the rebase. Needs manual intervention. (Workflow: \`.github/workflows/auto-rebase-stale-drafts.yml\`.)"
+                  fi
+                fi
+              fi
+            ) || echo "PR #$PR step errored — moving on"
+
+            git worktree remove --force "$WORKDIR" || true
+            echo "::endgroup::"
+          done
