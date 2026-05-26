@@ -35,18 +35,55 @@ Schema per row:
   "merged_at":          "iso-8601 | null",
 
   // -- NEW fields (hardening 2026-05-25). Backfill missing = null on first read. --
-  "last_reviewed_oid":  "string | null",   // PR.headRefOid at time of last reviewer run (item #10)
+  "last_reviewed_oid":  "string | null",   // PR.headRefOid at time of last reviewer run (item #10) — MANDATORY when reviewer_summary != null (gap 1)
   "scope_drift":        "boolean | null",  // implementer touched files outside owner_role areas (item #3)
   "code_reuse_warn":    "string | null",   // implementer reused-or-duplicated existing helpers (item #4)
   "empty_branch":       "boolean | null",  // branch pushed but 0 commits ahead of dev (item #1)
   "rebase_attempts":    "int",             // count of auto-rebase tries on this row (item #6); default 0
   "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
   "reclaim_attempts":   "int",             // count of sandbox-timeout reclaims attempted (P3); default 0, cap = 1
+  "merge_attempted_at": "iso-8601 | null", // last time Phase 5.5 tried to merge this row (gap 4); used for CI-stuck back-off
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
 }
 ```
+
+## action-list.json schema (gap 3 — structured deps)
+
+Each item in `.research/management/action-list.json` `.items[]` carries:
+
+```jsonc
+{
+  "id":          "string",       // e.g. "gap-7a-2-folder-api"
+  "action":      "string",       // free-text description
+  "owner_role":  "string",       // e.g. "pm-backend"
+  "priority":    "high | medium | low",
+  "status":      "open | in-progress | done | dropped",
+  "source":      "string",       // provenance
+  "deadline":    "iso-8601 | null",
+
+  // -- Dependency wiring --
+  "dependency":  "string | null", // LEGACY free-text; informational only
+  "depends_on":  ["task_id", …]   // gap 3 — structured; canonical for Phase 3
+}
+```
+
+**`depends_on` is the canonical, machine-checked dependency field.**
+The free-text `dependency` is retained for human readability but the
+dispatcher MUST NOT regex-parse it for claim decisions. An empty array
+(`"depends_on": []`) means no dependencies.
+
+Refill/refresh flows (`coverage.json` rubric, Tier-1 buffer, manual
+edits) MUST populate `depends_on` directly; the dispatcher does not
+re-parse `dependency` text on each run.
+
+Migration (one-time, gap 3): for any row missing `depends_on`,
+best-effort-parse the legacy `dependency` field by splitting on
+`, ; and / AND` and matching kebab-case task-id-shaped tokens
+(`gap-…`, `pm-…`, `epic-…`). Unparseable values (owner-role names,
+epic descriptions like "Epic 2B WebSocket infrastructure") become
+`[]` and the free-text is left in `dependency` for human follow-up.
 
 ## Timestamp semantics
 
@@ -61,8 +98,8 @@ Schema per row:
 
 | from        | to       | trigger                                                        |
 |---          |---       |---                                                              |
-| in-progress | review   | Phase 4 returns `pr=<n>`                                        |
-| in-progress | failed   | Phase 4 returns `pr=none` OR Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch |
+| in-progress | review   | Phase 2 of a SUBSEQUENT run sees a PR exists on `<branch>` (gap 5 — async-spawn model). Fast-path: Phase 4 of THIS run captures `pr=<n>` from a sync return; either path is valid. |
+| in-progress | failed   | Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch OR (fast-path) Phase 4 returns `pr=none` on a synchronous return |
 | in-progress | in-progress | Phase 2 detects sandbox-timeout (`cloud-ok`: 60m, else 120m) AND `reclaim_attempts < 1` → re-spawn implementer once; bump `reclaim_attempts`, bump `status_changed_at` so the next grace window starts now |
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
@@ -115,7 +152,23 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 4. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
    `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`,
-   `reclaim_attempts`) to `null` / `0`.
+   `reclaim_attempts`, `merge_attempted_at`) to `null` / `0`.
+
+   **Gap-1 backfill (re-review forcing):** for any row with
+   `reviewer_summary != null AND last_reviewed_oid == null`, LEAVE
+   `reviewer_summary` intact (do not clear it; it's still useful narrative)
+   but treat that row as oid-drifted on this cycle's Phase 2 / Phase 5 gate.
+   Concretely, in Phase 2 the re-review predicate becomes:
+
+   ```
+   spawn_reviewer iff
+     (reviewer_summary is null)
+     OR (last_reviewed_oid is null)             # gap-1: force re-review
+     OR (PR.headRefOid != last_reviewed_oid)
+   ```
+
+   Once Phase 5 runs and writes the new `last_reviewed_oid`, the forcing
+   condition self-clears on subsequent cycles.
 5. Confirm `.claude/skills/ppt-implement/SKILL.md`,
    `.claude/skills/ppt-review-merged/SKILL.md`,
    `.claude/skills/ppt-pr-merge/SKILL.md`, AND
@@ -162,7 +215,10 @@ fi
 - **PR MERGED** → `new_status="merged"`, `merged_at=PR.mergedAt`.
 - **PR CLOSED (not merged)** → `new_status="failed"`, append `' [PR closed without merge]'` to `implementer_summary`.
 - **PR OPEN** → `new_status="review"`, set `pr_number`/`pr_url` if missing.
-  - Spawn REVIEWER (Phase 5) iff (`reviewer_summary` is null) OR (`PR.headRefOid != row.last_reviewed_oid`).
+  - Spawn REVIEWER (Phase 5) iff
+    (`reviewer_summary` is null) OR
+    (`last_reviewed_oid` is null — gap-1 force re-review) OR
+    (`PR.headRefOid != row.last_reviewed_oid`).
 - **branch exists, no PR**:
   - If `COMMITS_AHEAD == 0` → **EMPTY BRANCH** (item #1): `new_status="failed"`, `empty_branch=true`, `implementer_summary='branch pushed but 0 commits ahead of dev; nothing to PR'`. Delete the orphan: `git push origin --delete <branch>` (best-effort; ignore failure).
   - Else: `gh pr create --base dev --head <branch> --draft --title '<task_id>: <short>' --body 'Auto: <action>'`, `new_status="review"`, spawn REVIEWER.
@@ -204,11 +260,33 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
 ```python
 open_count = count(action-list.json items where status=="open" AND id NOT in assignments)
+
+# gap 2: an item is "dep-blocked" if any depends_on entry points at a
+# task that is NOT in assignments with status in {merged, done}.
+def is_dep_blocked(item, assignments):
+    deps = item.get("depends_on") or []
+    if not deps:
+        return False
+    for dep_id in deps:
+        row = assignments.find(task_id=dep_id)
+        if row is None or row.status not in ("merged", "done"):
+            return True
+    return False
+
+dep_blocked_count    = count(open items where is_dep_blocked(item, assignments))
+open_claimable_count = open_count - dep_blocked_count
 ```
 
-- **Tier 1 (self-refill):** if `open_count < 6` AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_count)`. Log `Tier 1: <old> → <new> (+N)`.
-- **Tier 2 (upstream kick):** if `open_count` still < 12 OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`, fire-and-forget. Log `Tier 2: <http-code or skipped>`.
-- Else: SKIP, log `buffer OK: <open_count>/36`.
+- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`.
+- **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`, fire-and-forget. Log `Tier 2: <http-code or skipped>`.
+- Else: SKIP, log `buffer OK: claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>)`.
+
+The Phase 6 commit message MUST surface both counts:
+
+```
+chore(research): dispatcher <date> — C claimed, R reviewed, M merge-attempts,
+X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased
+```
 
 ---
 
@@ -216,9 +294,25 @@ open_count = count(action-list.json items where status=="open" AND id NOT in ass
 
 ```python
 free_slots = 3   # constant per run
-candidates = [c for c in action-list if c.status=="open" and c.id not in assignments]
+
+def claimable(c, assignments):
+    # gap 3: structured depends_on is canonical. An item is claimable iff
+    # every depends_on entry references a row in {merged, done}.
+    for dep_id in (c.get("depends_on") or []):
+        row = assignments.find(task_id=dep_id)
+        if row is None or row.status not in ("merged", "done"):
+            return False
+    return True
+
+candidates = [c for c in action-list
+              if c.status == "open"
+              and c.id not in assignments
+              and claimable(c, assignments)]
 candidates.sort(key=lambda c: (priority_rank(c.priority), source_rank(c.source)))
 ```
+
+The legacy `dependency` free-text field is NOT consulted by the claim
+predicate. Only `depends_on` is.
 
 **Same-epic burst-claim guard (NEW — item #2):**
 
@@ -252,7 +346,9 @@ Append to `assignments.json`:
   "code_reuse_warn": null,
   "empty_branch": null,
   "rebase_attempts": 0,
-  "reclaim_attempts": 0
+  "reclaim_attempts": 0,
+  "fix_rounds": 0,
+  "merge_attempted_at": null
 }
 ```
 
@@ -264,10 +360,39 @@ If fewer than 3 candidates available (buffer drained), claim what's there — do
 
 One per newly-claimed task IN THIS RUN. Hard cap 3.
 
+### Subagent execution model (gap 5 — IMPORTANT)
+
+**Phase 4 spawn is fire-and-forget.** The Claude Code SDK launches the
+implementer subagent asynchronously; the dispatcher does NOT block on
+its completion. The dispatcher's job in Phase 4 is to:
+
+1. Record the row as `status=in-progress, claimed_at=now`.
+2. Hand off the brief to the subagent via the `Task` tool.
+3. Return — the dispatcher run ends shortly after, while implementers
+   may still be executing in the background.
+
+**Outcome observation lives in Phase 2 of the NEXT dispatcher run**,
+not in Phase 4 of THIS run. Phase 2 of that next run looks at:
+- Does a branch named `<row.branch>` exist on origin?
+- Does a PR exist for that branch?
+- What's the PR's GH state (OPEN / MERGED / CLOSED)?
+- What's `COMMITS_AHEAD`?
+
+…and authoritatively transitions the row's status from there.
+
+The state-machine row `in-progress → review (Phase 4 returns pr=<n>)` in
+the table below is a HISTORICAL note for runs that happen to complete
+before the cron interval expires; in steady-state the same transition
+fires in Phase 2 of the next run when it sees the freshly-created PR.
+
+The implementer's `pr=<n>` return-line capture in this phase is still
+useful (it lets fast runs short-circuit), but its ABSENCE is not failure
+— the next Phase 2 will reconcile from GitHub truth.
+
 Prompt:
 
 > You are an implementer. Invoke `.claude/skills/ppt-implement/SKILL.md`.
-> Inputs: `task_id`, `action`, `owner_role`, `priority`, `dependency`, `branch`.
+> Inputs: `task_id`, `action`, `owner_role`, `priority`, `dependency` (legacy free-text), `depends_on` (gap 3 — structured array of task_ids), `branch`.
 > The skill picks the specialist, runs the 3-band verify gate, runs the
 > NEW scope-drift + code-reuse pre-flight checks, opens a DRAFT PR vs `dev`
 > only if verify passes.
@@ -275,7 +400,13 @@ Prompt:
 > Return EXACTLY (one line):
 > `pr=<n|none> status=<done|partial|blocked> specialist=<name> scope_drift=<true|false> code_reuse_warn=<short|none> note=<short>`
 
-Capture the line. STATE TRANSITION:
+Capture the line **IFF the subagent returns synchronously within this
+run**. If it doesn't return (the SDK backgrounds it past the dispatcher's
+own exit — the common case), skip this capture entirely; leave the row
+as `status=in-progress` with `claimed_at=now`, and let Phase 2 of the
+next dispatcher run observe the outcome from GitHub.
+
+STATE TRANSITION (fast-path only — gap 5):
 
 ```python
 prev_status = "in-progress"
@@ -334,8 +465,34 @@ For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.h
 > Return EXACTLY (one line):
 > `verdict=<approve|changes> head_oid=<PR.headRefOid> note=<short>`
 
-Capture → `reviewer_summary`, `last_reviewed_oid = head_oid` (item #10),
+Capture → `reviewer_summary`, **`last_reviewed_oid = head_oid` (item #10 — MANDATORY)**,
 `last_updated = now`. STATUS UNCHANGED.
+
+**Data invariant (NEW — gap 1):** every reviewer write MUST set
+`last_reviewed_oid` to the `head_oid` returned by the reviewer subagent. It is
+NEVER acceptable to write `reviewer_summary != null` while leaving
+`last_reviewed_oid == null` — that combination breaks the Phase 2 re-review
+gate (the `PR.headRefOid != row.last_reviewed_oid` clause silently evaluates
+true against `null` on some shells but false in `jq`-style equality, and the
+behaviour is platform-dependent). If the reviewer subagent's return line is
+missing `head_oid=…`, treat that as a failed reviewer run: do NOT persist
+`reviewer_summary`, and re-spawn on the next cycle.
+
+**Phase-end self-check (NEW — gap 1):** after persisting all reviewer rows,
+scan `assignments.json` for the invariant violation:
+
+```bash
+BAD=$(jq -r '
+  .assignments
+  | map(select(.reviewer_summary != null and .last_reviewed_oid == null))
+  | length' .research/management/assignments.json)
+if [ "$BAD" != "0" ]; then
+  echo "PHASE 5 INVARIANT VIOLATION: $BAD rows have reviewer_summary but null last_reviewed_oid" >&2
+  jq -r '.assignments[] | select(.reviewer_summary != null and .last_reviewed_oid == null) | "  \(.task_id) pr=\(.pr_number)"' .research/management/assignments.json >&2
+  # Do not exit — this is a data-quality warning. Phase 1 of the next run
+  # will force a re-review (see gap-1 backfill rule).
+fi
+```
 
 **Human-gate label sweep (P6).** After capture, scan the reviewer's `note=`
 substring (case-insensitive) for any of these phrases — the canonical
@@ -383,7 +540,27 @@ through is the whole point of the auto-promote path; pre-filtering them here
 re-introduces the stall bug (dispatcher run on 2026-05-25: 0 merge attempts,
 all approved PRs draft).
 
-If pre-flight passes: spawn ONE Task subagent per PR (cap 2 parallel):
+**CI-stuck escalation (gap 4):** if the PR's CI rollup is `IN_PROGRESS` or
+`QUEUED` AND `row.merge_attempted_at != null` AND
+`(now - merge_attempted_at) > 6h` → the CI is wedged. Mark the row:
+
+```python
+row.status = "failed"
+row.status_changed_at = now
+row.last_updated = now
+row.implementer_summary += ' [ci-stuck >6h after first merge attempt; escalating]'
+```
+
+Post a comment on the PR explaining (`gh pr comment <n> --body
+"Auto-escalation: CI has been IN_PROGRESS for >6h since first merge attempt at
+<merge_attempted_at>. Human action required — check the runner / re-trigger /
+close the PR."`), then surface in Phase 7 (`CI-stuck escalations: [PR#<n> …]`).
+
+Do NOT spawn the merger subagent for an escalated row.
+
+If pre-flight passes (and not CI-stuck): spawn ONE Task subagent per PR
+(cap 2 parallel). **Set `row.merge_attempted_at = now` BEFORE spawning**,
+regardless of outcome — this is the back-off anchor.
 
 > You are a PR merger. Invoke `.claude/skills/ppt-pr-merge/SKILL.md` end-to-end.
 > Inputs: `pr_number=<n>`, `repo=martin-janci/property-management`, `base=dev`,
@@ -477,7 +654,7 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
   exit 0
 }
-git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merged-attempts, X merged-now, F failed, A active, B buffer, RB rebased'
+git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased'
 git push origin dev   # if another run committed since our pull: rebase + retry once;
                       # if still conflicts, log and bail — next run will re-evaluate state
 ```
@@ -497,6 +674,8 @@ Transitions (this run):   [<id> in-progress→review, …]             ([] if no
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
 Merge attempts (this run):[PR#<n> merged=<true|false|queued> <note>, …]
+CI-stuck escalations:     [PR#<n> task=<id> waited=<h>, …]                (gap 4; [] if none)
+Approved+CI-pending:      [PR#<n> task=<id> attempted=<iso8601> wait=<h>, …]  (gap 4; [] if none)
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
@@ -505,7 +684,7 @@ Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; 
 Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
-Buffer:     <open_count>/36 <T1: refilled +N | T2: upstream kicked | OK>
+Buffer:     claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>) <T1: refilled +N | T2: upstream kicked | OK>
 Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
@@ -528,7 +707,7 @@ Hang alerts:
 - max 3 followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
-- never claim items whose dependency text mentions another non-`merged` task
+- never claim items whose `depends_on: [task_id, …]` array contains any task whose `assignments.json` row is not in `{merged, done}` (gap 3 — structured field replaces free-text `dependency` parsing)
 - never push to `main`
 - never bypass git hooks (no `--no-verify`)
 - never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
