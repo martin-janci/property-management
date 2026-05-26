@@ -1,0 +1,192 @@
+{
+  "date": "2026-05-26",
+  "trigger": "",
+  "signals": [
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+      "type": "repeated-churn",
+      "source": "PR #511",
+      "score_delta": 1,
+      "evidence": "frontend/apps/ppt-web/src/App.tsx +253/-65 (318 lines) via PR #511 — DisputeDetailRoute/DisputeMediationRoute wiring + pinned-band props; runs_seen 1->2 (cumulative re-emit, score not re-applied to churn-hotspot)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+      "type": "repeated-churn",
+      "source": "PR #504, PR #505",
+      "score_delta": 1,
+      "evidence": "announcements.rs churned 167 lines this run — PR #504 PATCH pin endpoint (+7/-3) and PR #505 comments RLS rework + test module (+142/-15); runs_seen 1->2",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #511",
+      "score_delta": 0,
+      "evidence": "AnnouncementsScreen.tsx +104/-35 (139 lines) via PR #511 pinned-band feature; one-time feature add on a ~500-line screen file, not a monolith — tracked in hotspot_history (runs_seen=1), no backlog item created (sub-monolith feature churn)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-reality-server-realtors-mark-inquiry-read-idor",
+      "type": "code-review-finding",
+      "source": "issue #519, PR #508, realtors.rs:250",
+      "score_delta": 3,
+      "evidence": "Phase 1.5 reality-server review (lead: issue #519): realtors.rs:250 mark_inquiry_read binds no principal and calls unscoped reality_portal.rs:767 mark_inquiry_read(id) (UPDATE ... WHERE id=$1 AND read_at IS NULL, no realtor predicate) — wired at POST /api/v1/realtors/inquiries/{id}/read; cross-account write IDOR, code-verified. Scoped sibling mark_inquiry_read_for_realtor (reality_portal.rs:779) already exists",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "code-review-api-core-dispute-fsm-no-tests",
+      "type": "code-review-finding",
+      "source": "PR #506, issue #520",
+      "score_delta": 2,
+      "evidence": "PR #506 dispute state machine (dispute_state_machine module + update_status transition enforcement + 422 mapping) merged with ZERO test files; pure table-driven FSM trivial to unit-test. Issue #520 additionally flags update_status runs WHERE id=$2 AND status=$3 via self.pool with no organization_id predicate (cross-tenant authz needs RLS verification)",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-507",
+      "type": "closed-not-merged-pr",
+      "source": "PR #507",
+      "score_delta": 1,
+      "evidence": "PR #507 (inquiry IDOR regression tests for PR #497) closed UNMERGED 2026-05-25 — the regression test was authored then abandoned; reinforces the still-open test-gap-inquiry-idor-regression",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "closed-not-merged-pr-512",
+      "type": "closed-not-merged-pr",
+      "source": "PR #512",
+      "score_delta": 0,
+      "evidence": "PR #512 (wire DisputeDetailPage + /disputes/:id/mediation route) closed UNMERGED 2026-05-25 — superseded by PR #511 which landed the same App.tsx dispute wiring; benign, no backlog item",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type (screen-map-drift/orphan, fixme-in-merged-code, dep lockfile-drift, stalled-review) fired this run; the realtors IDOR is a code change and goes to the manual plan path",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-26.md && head -1 | grep ^# 2026-05-26",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq re-emitted non-cumulative w/ delta!=0",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + no open item >14d undecayed (none qualify)",
+      "observed": "true; 0 stale-open",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plan has adversarial-pass annotation in brief",
+      "observed": "1/1 annotated",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans; 4 meta + 11 headings + mode + cap + files-exist",
+      "observed": "1 plan, all checks ok",
+      "expected": "pass"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames in staged (baseline docs excluded)",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "phases-failed honesty",
+      "observed": "none failed; cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still present",
+      "observed": "2/2 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count >= HEAD",
+      "observed": "5 >= 5",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix cap+idempotency",
+      "observed": "0 actions; true",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts parse + pm_cursor in 0..7",
+      "observed": "exit 0; idx=4",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token literal in added lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

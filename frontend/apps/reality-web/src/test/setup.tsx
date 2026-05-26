@@ -50,7 +50,6 @@ vi.mock('next/link', () => ({
 // Mock next/image
 vi.mock('next/image', () => ({
   default: ({ src, alt, ...props }: { src: string; alt: string }) => {
-    // biome-ignore lint/a11y/useAltText: Mock component always receives alt from Next.js Image
     return <img src={src} alt={alt || ''} {...props} />;
   },
 }));

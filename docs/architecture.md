@@ -288,7 +288,12 @@ Use S3-compatible storage (AWS S3, MinIO for self-hosted).
 
 ### ADR-008: WebSocket for Real-Time Features
 
-**Status:** Accepted
+**Status:** Implemented
+
+**Owner:** pm-backend (Epic 2B — story 2B-C.1)
+
+**Implemented:** 2026-05-25 — PR #472 (WebSocket realtime sync, merged to dev).
+Ownership was formally confirmed by pm-tech-lead per action `pm-tech-lead-confirm-websocket-infra-ownership`; delivery was explicitly scheduled as story 2B-C.1 under DEC-001, not implicitly assumed.
 
 **Context:**
 Need real-time updates for:
@@ -296,6 +301,8 @@ Need real-time updates for:
 - Messaging and typing indicators
 - Fault status updates
 - Presence indicators
+- Notification preference sync (8A.3)
+- Direct messaging realtime (6-5)
 
 **Decision:**
 Implement WebSocket server using Axum's WebSocket support.
@@ -309,6 +316,11 @@ Implement WebSocket server using Axum's WebSocket support.
 - Stateful connections require sticky sessions
 - Need fallback for WebSocket-blocked networks
 - Connection management complexity
+
+**Delivery note:**
+The Axum WS upgrade handler, connection registry, and pub/sub bridge were delivered in PR #472 as part of Epic 2B.
+This unblocked: 8A.3 WS half (preference sync), 6-5 direct messaging realtime, and future DM slice.
+Remaining 8A.3 work: mobile-push leg (FCM/APNs registration — tracked as `gap-8a-3-mobile-push`).
 
 ---
 

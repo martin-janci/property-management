@@ -56,13 +56,8 @@ fun LoginScreen(
     var isSubmitting by remember { mutableStateOf(false) }
     val scope = rememberAuthScope()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-        ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             AuthBrandHero(
                 title = stringResource(R.string.app_name),
                 subtitle = stringResource(R.string.auth_login_subtitle),
@@ -70,7 +65,7 @@ fun LoginScreen(
             Column(
                 modifier =
                     Modifier.fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp),
+                        .padding(start = 20.dp, end = 20.dp, top = 32.dp, bottom = 24.dp)
             ) {
                 generalError?.let {
                     ErrorBanner(it)
@@ -116,10 +111,7 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onForgotPasswordClick) {
                         Text(
                             text = stringResource(R.string.forgot_password),
@@ -179,10 +171,7 @@ fun LoginScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = stringResource(R.string.auth_login_no_account),

@@ -60,7 +60,7 @@ class InquiryModelsContractTest {
                 listingId = "lst-1",
                 message = "Is this available?",
                 name = "Jane",
-                email = "jane@example.com"
+                email = "jane@example.com",
             )
         val encoded = json.encodeToString(req)
         assertTrue(encoded.contains("\"listing_id\":\"lst-1\""), "missing snake_case: $encoded")
@@ -175,7 +175,7 @@ class InquiryModelsContractTest {
                 preferredTime = "14:00",
                 alternativeDate = "2026-05-02",
                 alternativeTime = "10:00",
-                message = "Looking forward"
+                message = "Looking forward",
             )
         val encoded = json.encodeToString(req)
         assertTrue(encoded.contains("\"listing_id\":\"lst-1\""))

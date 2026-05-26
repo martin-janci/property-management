@@ -274,7 +274,8 @@ impl InquiriesHandler {
             .repo
             .respond_to_inquiry(inquiry_id, realtor_id, message)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Inquiry not found".to_string())?;
 
         // Send notification to inquirer (async)
         Self::send_response_notification(inquiry_id).await;

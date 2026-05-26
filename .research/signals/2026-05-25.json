@@ -1,0 +1,175 @@
+{
+  "signals": [
+    {
+      "id": "unchecked-todo-pr-497",
+      "type": "unchecked-todo",
+      "source": "PR #497",
+      "score_delta": 3,
+      "evidence": "PR #497 (fix(security) inquiry IDOR) has 3 unchecked test TODOs in body; security candidate -> +3",
+      "confidence": "high",
+      "candidate_vector": "security"
+    },
+    {
+      "id": "hotfix-no-test-pr-497",
+      "type": "hotfix-no-test",
+      "source": "PR #497",
+      "score_delta": 2,
+      "evidence": "PR #497 titled fix(security) merged with only inquiries.rs + reality_portal.rs, no *test* file",
+      "confidence": "high",
+      "candidate_vector": "test-gap"
+    },
+    {
+      "id": "unchecked-todo-pr-476",
+      "type": "unchecked-todo",
+      "source": "PR #476",
+      "score_delta": 0,
+      "evidence": "PR #476 dispatcher hardening has 2 unchecked TODOs (CI green checkbox; post-merge live-trigger update) — operational/process TODOs in .research/.claude tooling, not application work; logged not scored",
+      "confidence": "high",
+      "candidate_vector": "dx"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #474,#475,#489",
+      "score_delta": 1,
+      "evidence": "App.tsx churned 367 lines across 3 PRs this run (route-aggregator coupling)",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-core-hardcoded-dispute-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-core",
+      "score_delta": 1,
+      "evidence": [
+        "frontend/apps/ppt-web/src/App.tsx:971-995 — Dispute detail UI hardcodes user-facing strings, not wrapped in t()"
+      ],
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "expert": "frontend"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-25.md && head -1 matches",
+      "observed": "exists, '# 2026-05-25'",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal id re-scored",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8 + decay (no item >14d old)",
+      "observed": "true; oldest open=5d",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plan has adversarial annotation in brief",
+      "observed": "'adversarial pass: passed'",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, all sections+files resolve",
+      "observed": "1 plan, all 15 sections, files exist",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached outside .research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secret/hostname scan on staged diff",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md regen byte-identical",
+      "observed": "diff -q exit 0",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder-rot scan plan+brief",
+      "observed": "clean",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plans present in plans/ or _archive/",
+      "observed": "all 3 ok",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive grows",
+      "observed": "5 >= 3",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE regen byte-identical (0 triage rows)",
+      "observed": "schema preserved",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions cap+idempotency",
+      "observed": "0 actions; autofix not disabled",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts parse + pm_cursor 0..7",
+      "observed": "ok; next_index=4",
+      "expected": "exit 0/true"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan on staged add lines",
+      "observed": "0",
+      "expected": "0"
+    }
+  ],
+  "auto_fix_actions": []
+}

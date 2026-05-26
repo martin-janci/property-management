@@ -45,10 +45,7 @@ fun SavedSearchesScreen(
     onDelete: (id: String) -> Unit,
     onCreateNewSearch: (() -> Unit)? = null,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
@@ -104,10 +101,7 @@ fun SavedSearchesScreen(
 
             when {
                 isLoading ->
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 searches.isEmpty() -> EmptyState()
@@ -195,7 +189,7 @@ private fun SavedSearchRow(
                                 Text(
                                     if (search.alertsEnabled)
                                         stringResource(R.string.saved_search_disable_alerts)
-                                    else stringResource(R.string.saved_search_enable_alerts),
+                                    else stringResource(R.string.saved_search_enable_alerts)
                                 )
                             },
                             leadingIcon = {

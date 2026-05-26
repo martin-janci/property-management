@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{http, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http, routing::get, Router};
 use db::models::{
     AddFavorite, CreateAgencyInvitation, CreateFeedSubscription, CreateListingInquiry,
     CreatePortalImportJob, CreatePortalSavedSearch, CreateRealityAgency, CreateRealtorProfile,
@@ -472,6 +472,10 @@ async fn main() -> anyhow::Result<()> {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         // Add state
         .with_state(state)
+        // P0-15: global request body cap. Reality-server is public-facing
+        // and accepts no large uploads; 4 MiB is more than enough for
+        // JSON+forms.
+        .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // CORS configuration - origins configurable via CORS_ALLOWED_ORIGINS env var

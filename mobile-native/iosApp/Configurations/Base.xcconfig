@@ -1,0 +1,12 @@
+// Base.xcconfig
+// Reality Portal - Base configuration shared across all environments.
+// Epic 85 - Story 85.2: Build Configuration by Environment
+
+PRODUCT_BUNDLE_IDENTIFIER = three.two.bit.ppt.reality
+PRODUCT_NAME = Reality Portal
+SWIFT_VERSION = 5.9
+IPHONEOS_DEPLOYMENT_TARGET = 15.0
+ARCHS = arm64
+VALID_ARCHS = arm64
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM = $(DEVELOPMENT_TEAM)

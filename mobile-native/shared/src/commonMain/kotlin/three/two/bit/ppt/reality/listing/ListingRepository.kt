@@ -14,7 +14,7 @@ import three.two.bit.ppt.reality.api.HttpClientProvider
 class ListingRepository(
     private val baseUrl: String,
     private val sessionToken: String? = null,
-    private val client: HttpClient = HttpClientProvider.client
+    private val client: HttpClient = HttpClientProvider.client,
 ) {
 
     private fun HttpRequestBuilder.configureRequest() {
@@ -115,7 +115,7 @@ class ListingRepository(
         latitude: Double,
         longitude: Double,
         radiusKm: Double = 10.0,
-        limit: Int = 20
+        limit: Int = 20,
     ): Result<ListingSearchResponse> {
         return try {
             val response =

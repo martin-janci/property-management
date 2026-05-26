@@ -55,7 +55,7 @@
 ### backend/
 | Component | Technology |
 |-----------|------------|
-| Framework | Rust 1.75+, Axum 0.7 |
+| Framework | Rust 1.75+, Axum 0.8 |
 | Database | PostgreSQL 16+ (RLS), SQLx |
 | Cache | Redis (sessions, pub/sub) |
 | Auth | JWT (15m access, 7d refresh), Argon2id |
@@ -116,9 +116,9 @@ hotfix/{issue-description}
 ### Before Starting an Epic
 
 ```bash
-# Create feature branch from main
-git checkout main
-git pull origin main
+# Create feature branch from dev
+git checkout dev
+git pull origin dev
 git checkout -b feature/epic-{N}-{description}
 ```
 
@@ -167,8 +167,8 @@ git commit -m "feat(epic-{N}): story {N}.{M} - {description}"
 │  5. Run /bmad:bmm:workflows:code-review                     │
 │  6. Fix issues → Commit fixes                               │
 ├─────────────────────────────────────────────────────────────┤
-│  7. Push branch and create PR                               │
-│  8. Merge to main after approval                            │
+│  7. Push branch and create PR targeting dev                 │
+│  8. Merge to dev after approval                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -177,7 +177,7 @@ git commit -m "feat(epic-{N}): story {N}.{M} - {description}"
 Single source of truth: `VERSION` file (semantic versioning X.Y.Z)
 
 ```bash
-# Patch auto-bumps via CI after merge to main (version-bump.yml workflow)
+# Patch auto-bumps via CI after merge to dev (version-bump.yml workflow)
 # Manual bumps:
 ./scripts/bump-version.sh minor   # 0.1.x -> 0.2.0
 ./scripts/bump-version.sh major   # 0.x.y -> 1.0.0

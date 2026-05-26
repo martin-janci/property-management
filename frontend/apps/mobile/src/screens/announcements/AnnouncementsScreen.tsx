@@ -33,9 +33,7 @@ export interface Announcement {
   commentsCount: number;
 }
 
-/** API shape returned by `GET /api/v1/announcements`. The response holds
- *  the full Announcement model, but only some fields map onto our UI; the
- *  rest are filled with sensible defaults. */
+/** API shape returned by `GET /api/v1/announcements`. */
 interface ApiAnnouncement {
   id: string;
   title: string;
@@ -48,16 +46,12 @@ interface ApiAnnouncement {
 }
 
 interface ApiAnnouncementListResponse {
-  announcements: ApiAnnouncement[];
+  announcements?: ApiAnnouncement[];
+  items?: ApiAnnouncement[];
   total?: number;
 }
 
-/** Coerce the api-server response into the UI's Announcement shape. The
- *  server doesn't (yet) expose category/author/attachments/comment-count
- *  on the list endpoint, so we default them. `isRead` defaults to false so
- *  newly-loaded announcements visibly distinguish themselves until the user
- *  opens them — the screen's local `readIds` set then layers a read flag on
- *  top of this default. */
+/** Coerce the api-server response into the UI's Announcement shape. */
 function toUiAnnouncement(a: ApiAnnouncement): Announcement {
   return {
     id: a.id,
@@ -73,6 +67,12 @@ function toUiAnnouncement(a: ApiAnnouncement): Announcement {
   };
 }
 
+/** Normalise both paginated (`items`) and legacy (`announcements`) list shapes. */
+function extractItems(data: ApiAnnouncementListResponse | undefined): ApiAnnouncement[] {
+  if (!data) return [];
+  return data.items ?? data.announcements ?? [];
+}
+
 interface AnnouncementsScreenProps {
   onNavigate?: (screen: string, params?: Record<string, unknown>) => void;
 }
@@ -82,13 +82,26 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
+  // Main list (all published)
   const { data, isLoading, error, refetch, isFetching } = useApiQuery<ApiAnnouncementListResponse>(
     ['announcements', 'list'],
     '/api/v1/announcements?status=published',
     { staleTime: 60_000 }
   );
 
-  const announcements: Announcement[] = (data?.announcements ?? [])
+  // Story 6.4 — pinned published announcements for the sticky band.
+  // This query is separate so the band is immune to category/search filters.
+  const { data: pinnedData } = useApiQuery<ApiAnnouncementListResponse>(
+    ['announcements', 'pinned'],
+    '/api/v1/announcements?status=published&pinned=true&pageSize=20',
+    { staleTime: 5 * 60_000 }
+  );
+
+  const allRaw: Announcement[] = extractItems(data)
+    .map(toUiAnnouncement)
+    .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
+
+  const pinnedItems: Announcement[] = extractItems(pinnedData)
     .map(toUiAnnouncement)
     .map((a) => ({ ...a, isRead: readIds.has(a.id) ? true : a.isRead }));
 
@@ -152,7 +165,9 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
     });
   };
 
-  const filteredAnnouncements = announcements
+  // Main list excludes pinned items (they appear in the sticky band above)
+  const filteredAnnouncements = allRaw
+    .filter((a) => !a.isPinned)
     .filter((a) => (filter === 'all' ? true : a.category === filter))
     .filter(
       (a) =>
@@ -160,12 +175,14 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
         a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.content.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => {
-      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const unreadCount = announcements.filter((a) => !a.isRead).length;
+  const unreadCount = allRaw.filter((a) => !a.isRead).length;
+
+  const handleCardPress = (announcement: Announcement) => {
+    markAsRead(announcement.id);
+    onNavigate?.('AnnouncementDetail', { announcementId: announcement.id });
+  };
 
   return (
     <View style={styles.container}>
@@ -176,6 +193,32 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
           {unreadCount > 0 && <Text style={styles.unreadBadge}>{unreadCount} unread</Text>}
         </View>
       </View>
+
+      {/* Story 6.4 — Pinned announcements sticky band */}
+      {pinnedItems.length > 0 && (
+        <View style={styles.pinnedBand}>
+          <View style={styles.pinnedBandLabel}>
+            <Text style={styles.pinnedBandLabelText}>Pinned</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.pinnedBandChips}
+          >
+            {pinnedItems.map((ann) => (
+              <Pressable
+                key={ann.id}
+                style={styles.pinnedChip}
+                onPress={() => handleCardPress(ann)}
+              >
+                <Text style={styles.pinnedChipText} numberOfLines={1}>
+                  {ann.title}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Search */}
       <View style={styles.searchContainer}>
@@ -235,17 +278,8 @@ export function AnnouncementsScreen({ onNavigate }: AnnouncementsScreenProps) {
             <Pressable
               key={announcement.id}
               style={[styles.announcementCard, !announcement.isRead && styles.unreadCard]}
-              onPress={() => {
-                markAsRead(announcement.id);
-                onNavigate?.('AnnouncementDetail', { announcementId: announcement.id });
-              }}
+              onPress={() => handleCardPress(announcement)}
             >
-              {announcement.isPinned && (
-                <View style={styles.pinnedBadge}>
-                  <Text style={styles.pinnedText}>📌 Pinned</Text>
-                </View>
-              )}
-
               <View style={styles.announcementHeader}>
                 <View
                   style={[
@@ -308,6 +342,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.accent,
     marginTop: 4,
+  },
+  // Story 6.4 — pinned band
+  pinnedBand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.warningBg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.warning,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    minHeight: 44,
+  },
+  pinnedBandLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+    flexShrink: 0,
+  },
+  pinnedBandLabelText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.warningInk,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  pinnedBandChips: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  pinnedChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    maxWidth: 200,
+  },
+  pinnedChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.warningInk,
   },
   searchContainer: {
     padding: 16,
@@ -392,14 +469,6 @@ const styles = StyleSheet.create({
   unreadCard: {
     borderLeftWidth: 3,
     borderLeftColor: colors.accent,
-  },
-  pinnedBadge: {
-    marginBottom: 8,
-  },
-  pinnedText: {
-    fontSize: 12,
-    color: colors.warning,
-    fontWeight: '600',
   },
   announcementHeader: {
     flexDirection: 'row',

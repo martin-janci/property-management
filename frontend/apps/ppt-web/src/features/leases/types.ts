@@ -3,6 +3,8 @@
  * Epic 19: Lease Management & Tenant Screening
  */
 
+import type { SignatureRequestStatus } from '@ppt/api-client';
+
 // Lease status options
 export type LeaseStatus =
   | 'draft'
@@ -68,6 +70,10 @@ export interface Lease {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  /** ID of the primary document attached to this lease, used for e-signatures */
+  documentId?: string;
+  /** Current e-signature request status, if any */
+  signatureStatus?: SignatureRequestStatus;
 }
 
 // Lease summary for list views
@@ -85,6 +91,10 @@ export interface LeaseSummary {
   rentAmount: number;
   currency: string;
   daysUntilExpiry?: number;
+  /** Current e-signature request status, if any */
+  signatureStatus?: SignatureRequestStatus;
+  /** ID of the primary document attached to this lease */
+  documentId?: string;
 }
 
 // Lease with full details

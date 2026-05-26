@@ -239,6 +239,7 @@ mod tests {
         assert_git_ok(&["init", work_str]);
         assert_git_ok(&["-C", work_str, "config", "user.email", "t@t"]);
         assert_git_ok(&["-C", work_str, "config", "user.name", "t"]);
+        assert_git_ok(&["-C", work_str, "config", "commit.gpgsign", "false"]);
         std::fs::write(work.join("README.md"), "hi").unwrap();
         assert_git_ok(&["-C", work_str, "add", "."]);
         assert_git_ok(&["-C", work_str, "commit", "-m", "init"]);

@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import Security
 import shared
 
 /// User information from authentication.
@@ -32,7 +31,8 @@ struct User: Identifiable, Equatable {
 /// Authentication state manager for Reality Portal iOS app.
 ///
 /// Epic 82 - Story 82.5: Inquiries and Account
-/// Integrates with KMP SsoService for SSO authentication and uses iOS Keychain for token storage.
+/// Integrates with KMP SsoService for SSO authentication and uses
+/// `KeychainService` for secure token storage (no raw Security framework calls).
 @Observable
 final class AuthManager {
     // MARK: - Published Properties
@@ -60,9 +60,8 @@ final class AuthManager {
     private let configuration = Configuration.shared
     private let ssoService = SsoService()
 
-    // Keychain keys
-    private let accessTokenKey = "reality_portal_access_token"
-    private let refreshTokenKey = "reality_portal_refresh_token"
+    /// Shared Keychain service — scoped to the app's bundle identifier.
+    private let keychain = KeychainService(service: Configuration.shared.keychainService)
 
     // MARK: - Initialization
 
@@ -137,13 +136,13 @@ final class AuthManager {
 
     /// Restore session from stored tokens.
     func restoreSession() {
-        // Load tokens from Keychain
-        guard let storedToken = loadFromKeychain(key: accessTokenKey) else {
+        // Load tokens from Keychain using KeychainService
+        guard let storedToken = keychain.loadOptional(forKey: KeychainService.Keys.accessToken) else {
             return
         }
 
         accessToken = storedToken
-        refreshToken = loadFromKeychain(key: refreshTokenKey)
+        refreshToken = keychain.loadOptional(forKey: KeychainService.Keys.refreshToken)
 
         // Validate and restore the session using KMP SsoService
         Task {
@@ -222,77 +221,16 @@ final class AuthManager {
         self.accessToken = accessToken
         self.refreshToken = refreshToken
 
-        // Store in Keychain
-        saveToKeychain(key: accessTokenKey, value: accessToken)
+        // Store in Keychain via KeychainService (eliminates raw Security framework calls)
+        try? keychain.save(accessToken, forKey: KeychainService.Keys.accessToken)
         if !refreshToken.isEmpty {
-            saveToKeychain(key: refreshTokenKey, value: refreshToken)
+            try? keychain.save(refreshToken, forKey: KeychainService.Keys.refreshToken)
         }
     }
 
     private func clearStoredTokens() {
-        deleteFromKeychain(key: accessTokenKey)
-        deleteFromKeychain(key: refreshTokenKey)
-    }
-
-    // MARK: - Keychain Operations
-
-    private func saveToKeychain(key: String, value: String) {
-        guard let data = value.data(using: .utf8) else { return }
-
-        // Delete existing item first
-        deleteFromKeychain(key: key)
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: configuration.keychainService,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        ]
-
-        let status = SecItemAdd(query as CFDictionary, nil)
-        if status != errSecSuccess {
-            #if DEBUG
-            print("Keychain save failed for key \(key): \(status)")
-            #endif
-        }
-    }
-
-    private func loadFromKeychain(key: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: configuration.keychainService,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let value = String(data: data, encoding: .utf8) else {
-            #if DEBUG
-            // Log non-expected errors for debugging (errSecItemNotFound is expected when key doesn't exist)
-            if status != errSecSuccess && status != errSecItemNotFound {
-                print("Keychain load failed for key \(key): \(status)")
-            }
-            #endif
-            return nil
-        }
-
-        return value
-    }
-
-    private func deleteFromKeychain(key: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: configuration.keychainService,
-            kSecAttrAccount as String: key
-        ]
-
-        SecItemDelete(query as CFDictionary)
+        try? keychain.delete(forKey: KeychainService.Keys.accessToken)
+        try? keychain.delete(forKey: KeychainService.Keys.refreshToken)
     }
 }
 

@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{http, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http, routing::get, Router};
 use http::HeaderValue;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -19,7 +19,6 @@ use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-mod handlers;
 mod observability;
 mod routes;
 mod services;
@@ -391,6 +390,10 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(7),
+        signature_reminder_days_before: std::env::var("SIGNATURE_REMINDER_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
@@ -452,6 +455,11 @@ async fn main() -> anyhow::Result<()> {
         .nest(
             "/api/v1/users/me/notification-preferences",
             routes::notification_preferences::router(),
+        )
+        // WebSocket realtime notification sync (Epic 8A, Story 8A.3)
+        .nest(
+            "/api/v1/users/me/notifications",
+            routes::ws_notifications::router(),
         )
         // Granular notification preferences routes (Epic 8B)
         .nest(
@@ -687,6 +695,13 @@ async fn main() -> anyhow::Result<()> {
     // `lib.rs::create_router` exactly via the shared `attach_admin_extensions`
     // helper so production and tests cannot drift.
     let app = attach_admin_extensions(app, &admin_ext)
+        // P0-15: global request body cap. Default Axum limit is 2 MiB which
+        // is fine for JSON but exposes every multipart handler to memory
+        // abuse when the handler itself forgets to limit. Upload routes
+        // that legitimately need more (restore, migration import) raise
+        // this per-route via `DefaultBodyLimit::max(...)` and stream
+        // chunks instead of buffering full payloads. Cap here: 16 MiB.
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST

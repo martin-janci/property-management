@@ -1091,10 +1091,12 @@ async fn list_equipment(
 
 async fn get_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.find_by_id(id).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.find_by_id(id, tenant_id).await {
         Ok(Some(equipment)) => Ok(Json(serde_json::json!(equipment))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
@@ -1112,12 +1114,18 @@ async fn get_equipment(
 
 async fn update_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipment>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.update(id, req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.update(id, tenant_id, req).await {
         Ok(equipment) => Ok(Json(serde_json::json!(equipment))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to update equipment: {}", e);
             Err((
@@ -1130,10 +1138,12 @@ async fn update_equipment(
 
 async fn delete_equipment(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.delete(id).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state.equipment_repo.delete(id, tenant_id).await {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -1151,13 +1161,20 @@ async fn delete_equipment(
 
 async fn list_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
     match state
         .equipment_repo
-        .list_maintenance(id, query.limit.unwrap_or(50), query.offset.unwrap_or(0))
+        .list_maintenance(
+            id,
+            tenant_id,
+            query.limit.unwrap_or(50),
+            query.offset.unwrap_or(0),
+        )
         .await
     {
         Ok(records) => Ok(Json(serde_json::json!({ "maintenance": records }))),
@@ -1173,12 +1190,24 @@ async fn list_maintenance(
 
 async fn create_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(_id): Path<Uuid>,
     Json(req): Json<CreateMaintenance>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.create_maintenance(req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    // The repository INSERT is guarded by a sub-select that ensures req.equipment_id
+    // belongs to this tenant; a foreign equipment_id yields RowNotFound → 404.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state
+        .equipment_repo
+        .create_maintenance(tenant_id, req)
+        .await
+    {
         Ok(record) => Ok((StatusCode::CREATED, Json(serde_json::json!(record)))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Equipment not found")),
+        )),
         Err(e) => {
             tracing::error!("Failed to create maintenance: {}", e);
             Err((
@@ -1191,12 +1220,25 @@ async fn create_maintenance(
 
 async fn update_maintenance(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenance>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
-    match state.equipment_repo.update_maintenance(id, req).await {
+    // SECURITY: derive the tenant from the verified JWT — never trust client input.
+    let tenant_id = require_tenant_id(&principal)?;
+    match state
+        .equipment_repo
+        .update_maintenance(id, tenant_id, req)
+        .await
+    {
         Ok(record) => Ok(Json(serde_json::json!(record))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "NOT_FOUND",
+                "Maintenance record not found",
+            )),
+        )),
         Err(e) => {
             tracing::error!("Failed to update maintenance: {}", e);
             Err((
@@ -3001,10 +3043,17 @@ async fn exchange_voice_oauth_tokens(
 
 async fn unlink_voice_device(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    match state.llm_document_repo.deactivate_voice_device(id).await {
+    // Scope the deactivation to the caller's own devices.  A non-owned or
+    // non-existent id both return false from the repository and are mapped to
+    // 404, giving an attacker no information about whether the target id exists.
+    match state
+        .llm_document_repo
+        .deactivate_voice_device(id, principal.user_id)
+        .await
+    {
         Ok(true) => Ok(StatusCode::NO_CONTENT),
         Ok(false) => Err((
             StatusCode::NOT_FOUND,
@@ -3022,7 +3071,7 @@ async fn unlink_voice_device(
 
 async fn list_voice_commands(
     State(state): State<AppState>,
-    _principal: RequestPrincipal,
+    principal: RequestPrincipal,
     Path(device_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
@@ -3030,6 +3079,7 @@ async fn list_voice_commands(
         .llm_document_repo
         .list_voice_commands(
             device_id,
+            principal.user_id,
             query.limit.unwrap_or(50),
             query.offset.unwrap_or(0),
         )

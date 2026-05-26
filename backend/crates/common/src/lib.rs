@@ -15,3 +15,4 @@ pub use notifications::*;
 pub use sitemap::Sitemap;
 pub use tenant::*;
 pub use types::*;
+pub mod url_validation;

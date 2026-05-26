@@ -4,25 +4,49 @@ import type {
   Dispute as ApiDispute,
   DisputeStatus as ApiDisputeStatus,
   DisputeType as ApiDisputeType,
+  FaultSummary as ApiFaultSummary,
   OutageCommodity as ApiOutageCommodity,
   OutageSeverity as ApiOutageSeverity,
   OutageStatus as ApiOutageStatus,
   OutageSummary as ApiOutageSummary,
+  FaultListQuery,
   OutageListQuery,
 } from '@ppt/api-client';
 import {
   setMfaChallengeHandler,
+  useAcknowledgeAnnouncement,
+  useAnnouncement,
+  useAnnouncementAcknowledgmentStats,
+  useAnnouncementComments,
+  useAnnouncements,
+  useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
+  useCreateAnnouncementComment,
   useCreateDispute,
   useCreateOutage,
+  useDeleteAnnouncement,
+  useDeleteAnnouncementComment,
   useDispute,
+  useDisputeEvidence,
   useDisputes,
+  useDisputeTimeline,
+  useDownloadReport,
+  useFaults,
+  useMarkReadAnnouncement,
   useOutage,
   useOutages,
+  usePauseSchedule,
+  usePinAnnouncement,
+  usePublishAnnouncement,
+  useReportExecutionHistory,
   useResolveOutage,
+  useResumeSchedule,
+  useRetryReportExecution,
   useStartOutage,
+  useUpdateDisputeStatus,
   useUpdateOutage,
+  useUpdateSchedule,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useEffect, useState } from 'react';
@@ -46,6 +70,17 @@ import {
   ToastProvider,
   useToast,
 } from './components';
+import {
+  toApiSendMessageRequest,
+  toStartThreadRequest,
+  useMarkThreadRead,
+  useMessageRecipients,
+  useSendMessage,
+  useStartThread,
+  useThread,
+  useThreads,
+  useUnreadCount,
+} from './features/messaging/hooks/useMessaging';
 import './styles/accessibility.css';
 import './features/settings/styles/accessibility.css';
 import { AuthProvider, OrganizationProvider, useAuth, WebSocketProvider } from './contexts';
@@ -61,6 +96,9 @@ import type {
   DisputeSummary,
   DisputeStatus as UiDisputeStatus,
 } from './features/disputes/components/DisputeCard';
+import type { ActivityType } from './features/disputes/components/DisputeTimeline';
+import type { DisputeDetail as UiDisputeDetail } from './features/disputes/pages/DisputeDetailPage';
+import { useNeighbors, usePrivacySettings } from './features/neighbors';
 import type { ListOutagesParams, OutageDetail } from './features/outages';
 // Lazy-loaded route components for code splitting (Epic 130)
 import {
@@ -73,6 +111,7 @@ import {
   CreateFaultPage,
   CreateGroupPage,
   CreateOutagePage,
+  DisputeDetailPage,
   DisputesPage,
   DocumentDetailPage,
   DocumentsPage,
@@ -87,6 +126,7 @@ import {
   FeedPage,
   FileDisputePage,
   FinancialDashboardPage,
+  FolderTreePage,
   ForbiddenPage,
   ForgotPasswordPage,
   GroupDetailPage,
@@ -94,15 +134,21 @@ import {
   InvoiceManagementPage,
   LoginPage,
   MarketplacePage,
+  MediationPage,
   MessagesPage,
+  NeighborDetailPage,
+  NeighborsPage,
+  NeighborsPrivacySettingsPage,
   NewMessagePage,
   NewsListPage,
   NotFoundPage,
+  OAuthGrantsPage,
   OutagesPage,
   PaymentManagementPage,
   PrivacySettingsPage,
   ProfileEditPage,
   RegisterPage,
+  ReportsPage,
   ResetPasswordPage,
   ServerErrorPage,
   SessionExpiredPage,
@@ -173,6 +219,28 @@ function mapUiStatusToApiStatus(status: UiDisputeStatus): ApiDisputeStatus | und
     closed: 'closed',
   };
   return mapping[status];
+}
+
+/**
+ * Map API TimelineEventType to UI ActivityType (story 80-3).
+ * Most event names overlap; the few that differ are approximated.
+ */
+function mapTimelineEventType(
+  eventType: import('@ppt/api-client').TimelineEventType
+): ActivityType {
+  const mapping: Record<import('@ppt/api-client').TimelineEventType, ActivityType> = {
+    dispute_filed: 'dispute_filed',
+    status_changed: 'status_changed',
+    mediator_assigned: 'party_added',
+    evidence_added: 'evidence_added',
+    note_added: 'comment_added',
+    meeting_scheduled: 'session_scheduled',
+    resolution_proposed: 'resolution_proposed',
+    resolution_accepted: 'resolution_accepted',
+    escalated: 'escalated',
+    closed: 'closed',
+  };
+  return mapping[eventType] ?? 'status_changed';
 }
 
 /** Format API Building address to string for UI components */
@@ -293,7 +361,14 @@ function WebSocketWrapper({ children }: { children: ReactNode }) {
 
 function AppNavigation() {
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <Link to="/">{t('nav.home')}</Link>
@@ -308,6 +383,24 @@ function AppNavigation() {
       <div className="ml-auto flex items-center gap-3">
         {isAuthenticated && <ConnectionStatus />}
         <LanguageSwitcher />
+        {isAuthenticated && (
+          <button
+            type="button"
+            className="btn-outline-token px-3 py-1.5 rounded-lg text-sm font-medium"
+            onClick={handleLogout}
+            aria-label={t('auth.signOut', { defaultValue: 'Sign out' })}
+          >
+            {t('auth.signOut', { defaultValue: 'Sign out' })}
+          </button>
+        )}
+        {!isAuthenticated && (
+          <Link
+            to="/login"
+            className="btn-primary-token px-3 py-1.5 rounded-lg text-sm font-medium"
+          >
+            {t('auth.signIn')}
+          </Link>
+        )}
       </div>
     </nav>
   );
@@ -406,6 +499,14 @@ function App() {
                                   }
                                 />
                                 <Route
+                                  path="/documents/folders"
+                                  element={
+                                    <ProtectedRoute>
+                                      <FolderTreePageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
                                   path="/documents/upload"
                                   element={
                                     <ProtectedRoute>
@@ -454,12 +555,25 @@ function App() {
                                 />
                                 {/* Privacy settings route (Epic 63) */}
                                 <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+                                {/* OAuth Grants management route (Epic 10A, Story 10A-3) */}
+                                <Route
+                                  path="/settings/oauth-grants"
+                                  element={
+                                    <ProtectedRoute>
+                                      <OAuthGrantsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
                                 {/* Dispute Resolution routes (Epic 77) */}
                                 <Route path="/disputes" element={<DisputesPageRoute />} />
                                 <Route path="/disputes/new" element={<FileDisputePageRoute />} />
                                 <Route
                                   path="/disputes/:disputeId"
                                   element={<DisputeDetailRoute />}
+                                />
+                                <Route
+                                  path="/disputes/:disputeId/mediation"
+                                  element={<DisputeMediationRoute />}
                                 />
                                 {/* Outages routes (UC-12) */}
                                 <Route path="/outages" element={<OutagesPageRoute />} />
@@ -492,6 +606,16 @@ function App() {
                                 <Route
                                   path="/messages/:threadId"
                                   element={<ThreadDetailPageRoute />}
+                                />
+                                {/* Neighbors routes (Epic 6, Story 6.6) */}
+                                <Route path="/neighbors" element={<NeighborsPageRoute />} />
+                                <Route
+                                  path="/neighbors/:neighborId"
+                                  element={<NeighborDetailRoute />}
+                                />
+                                <Route
+                                  path="/neighbors/privacy"
+                                  element={<NeighborsPrivacySettingsRoute />}
                                 />
                                 {/* Faults routes (UC-03) */}
                                 <Route path="/faults" element={<FaultsPageRoute />} />
@@ -535,6 +659,16 @@ function App() {
                                   element={<BudgetManagementPageRoute />}
                                 />
 
+                                {/* Reports routes (Epic 81) */}
+                                <Route
+                                  path="/reports"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ReportsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+
                                 {/* Phase 5 admin is at admin.rlt.sk now;
                                   see frontend/apps/admin-web. */}
 
@@ -565,6 +699,13 @@ function DocumentsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? 'default-org';
   return <DocumentsPage organizationId={organizationId} />;
+}
+
+/** Route wrapper for folder-tree page (gap-7a-2) */
+function FolderTreePageRoute() {
+  const { user } = useAuth();
+  const organizationId = user?.organizationId ?? 'default-org';
+  return <FolderTreePage organizationId={organizationId} />;
 }
 
 /** Route wrapper for document detail page to extract params */
@@ -779,20 +920,33 @@ function FileDisputePageRoute() {
 }
 
 /**
- * Route wrapper for dispute detail page (Epic 77, Story 80.1).
+ * Route wrapper for dispute detail page (Epic 77, Story 80-3).
  *
- * Uses useDispute hook from @ppt/api-client for data fetching.
- * Implements real API integration with loading/error states.
- * Maps API DisputeWithDetails to UI-friendly display format.
+ * Replaces the inline JSX stub with the full DisputeDetailPage component.
+ * Wires useDispute, useDisputeTimeline, useDisputeEvidence, and
+ * useUpdateDisputeStatus from @ppt/api-client.
+ *
+ * API DisputeWithDetails → UI DisputeDetail mapping:
+ *   - subject           → title
+ *   - type              → category (via mapTypeToCategory)
+ *   - status            → status (via mapApiStatusToUiStatus)
+ *   - filedBy           → filedBy + filedByName
+ *   - assignedMediator  → assignedToName
+ *   - referenceNumber   synthesised as DSP-{id.toUpperCase()}
+ *   - priority          UI-only, hardcoded 'medium' until API exposes it
  */
 function DisputeDetailRoute() {
   const { t } = useTranslation();
   const { disputeId } = useParams<{ disputeId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { showToast } = useToast();
 
-  const { data: dispute, isLoading, error, refetch } = useDispute(disputeId ?? '');
+  const { data: dispute, isLoading, error } = useDispute(disputeId ?? '');
+  const { data: timelineData, isLoading: timelineLoading } = useDisputeTimeline(disputeId ?? '');
+  const { data: evidenceData, isLoading: evidenceLoading } = useDisputeEvidence(disputeId ?? '');
+  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
 
-  // Use useEffect for error toast to prevent spam on re-renders
   useEffect(() => {
     if (error) {
       showToast({
@@ -813,83 +967,217 @@ function DisputeDetailRoute() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="loading-page">
-        <h1>{t('common.loadingDispute')}</h1>
-        <p>{t('common.pleaseWait')}</p>
-      </div>
-    );
-  }
-
-  // Add retry button for error states
-  if (error) {
+  if (!dispute && !isLoading && error) {
     return (
       <div className="error-page">
         <h1>{t('errors.errorLoadingDispute')}</h1>
         <p>{t('errors.disputeLoadError')}</p>
-        <div className="error-actions">
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-2"
-          >
-            {t('common.tryAgain')}
-          </button>
-          <Link to="/disputes" className="px-4 py-2 border border-gray-300 rounded-lg">
-            {t('common.backToDisputes')}
-          </Link>
-        </div>
+        <Link to="/disputes" className="px-4 py-2 border border-gray-300 rounded-lg">
+          {t('common.backToDisputes')}
+        </Link>
       </div>
     );
   }
 
-  if (!dispute) {
+  // Map API DisputeWithDetails → UI DisputeDetail
+  const uiDispute: UiDisputeDetail | undefined = dispute
+    ? {
+        id: dispute.id,
+        organizationId: dispute.organizationId,
+        unitId: dispute.unitId,
+        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
+        category: mapTypeToCategory(dispute.type),
+        title: dispute.subject,
+        description: dispute.description,
+        status: mapApiStatusToUiStatus(dispute.status),
+        // priority is UI-only; API does not expose it yet
+        priority: 'medium' as DisputePriority,
+        filedBy: dispute.filedBy,
+        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
+        assignedTo: dispute.assignedMediatorId,
+        assignedToName: dispute.assignedMediator,
+        createdAt: dispute.createdAt,
+        updatedAt: dispute.updatedAt,
+      }
+    : undefined;
+
+  // Map API TimelineEvent[] → UI TimelineEntry[]
+  const timeline = (timelineData ?? []).map((ev) => ({
+    id: ev.id,
+    actorId: ev.actorId,
+    actorName: ev.actorName,
+    activityType: mapTimelineEventType(ev.eventType),
+    description: ev.description,
+    metadata: ev.metadata,
+    createdAt: ev.createdAt,
+  }));
+
+  // Map API DisputeEvidence[] → UI DisputeEvidence[]
+  const evidence = (evidenceData ?? []).map((ev) => ({
+    id: ev.id,
+    uploadedBy: ev.uploadedBy,
+    uploaderName: ev.uploadedBy,
+    filename: ev.fileName,
+    originalFilename: ev.fileName,
+    contentType: ev.fileType,
+    sizeBytes: ev.fileSize,
+    storageUrl: ev.fileUrl,
+    description: ev.description,
+    createdAt: ev.createdAt,
+  }));
+
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
+
+  const handleUpdateStatus = async (status: UiDisputeStatus, reason?: string) => {
+    const apiStatus = mapUiStatusToApiStatus(status);
+    if (!apiStatus || !disputeId) return;
+    try {
+      await updateStatus.mutateAsync({ disputeId, data: { status: apiStatus, reason } });
+      showToast({
+        type: 'success',
+        title: t('disputes.statusUpdated', 'Status updated'),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('disputes.statusUpdateFailed', 'Failed to update status'),
+        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
+      });
+    }
+  };
+
+  return (
+    <DisputeDetailPage
+      dispute={uiDispute!}
+      parties={[]}
+      evidence={evidence}
+      timeline={timeline}
+      resolutions={[]}
+      actionItems={[]}
+      isManager={isManager}
+      isLoading={isLoading || timelineLoading || evidenceLoading}
+      currentUserId={user?.id}
+      onBack={() => navigate('/disputes')}
+      onUpdateStatus={handleUpdateStatus}
+      onAddEvidence={() => {}}
+      onDeleteEvidence={() => {}}
+      onProposeResolution={() => {}}
+      onVoteResolution={() => {}}
+      onAcceptResolution={() => {}}
+      onImplementResolution={() => {}}
+      onCompleteResolutionTerm={() => {}}
+      onCreateAction={() => {}}
+      onCompleteAction={() => {}}
+      onSendReminder={() => {}}
+      onEscalate={() => {}}
+      onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
+    />
+  );
+}
+
+/**
+ * Route wrapper for dispute mediation page (Epic 77, Story 80-3).
+ *
+ * New route: /disputes/:disputeId/mediation
+ * Renders MediationPage for the given dispute.
+ * Sessions/submissions data is deferred until the mediation backend sessions
+ * API is wired; the page renders with empty lists and shows the schedule UI.
+ */
+function DisputeMediationRoute() {
+  const { t } = useTranslation();
+  const { disputeId } = useParams<{ disputeId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+
+  const { data: dispute, isLoading } = useDispute(disputeId ?? '');
+  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
+
+  if (!disputeId) {
     return (
       <div className="error-page">
         <h1>{t('errors.disputeNotFound')}</h1>
-        <p>{t('errors.disputeNotExist')}</p>
+        <p>{t('errors.disputeNotFoundDesc')}</p>
         <Link to="/disputes">{t('common.backToDisputes')}</Link>
       </div>
     );
   }
 
-  // Map API type to UI category for display
-  const category = mapTypeToCategory(dispute.type);
-  const status = mapApiStatusToUiStatus(dispute.status);
+  // Map API dispute → UI DisputeDetail for MediationPage
+  const uiDispute: UiDisputeDetail | undefined = dispute
+    ? {
+        id: dispute.id,
+        organizationId: dispute.organizationId,
+        unitId: dispute.unitId,
+        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
+        category: mapTypeToCategory(dispute.type),
+        title: dispute.subject,
+        description: dispute.description,
+        status: mapApiStatusToUiStatus(dispute.status),
+        priority: 'medium' as DisputePriority,
+        filedBy: dispute.filedBy,
+        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
+        assignedTo: dispute.assignedMediatorId,
+        assignedToName: dispute.assignedMediator,
+        createdAt: dispute.createdAt,
+        updatedAt: dispute.updatedAt,
+      }
+    : undefined;
+
+  const isMediator = !!dispute && dispute.assignedMediatorId === user?.id;
+  const isParty = !!dispute && (dispute.filedBy === user?.id || dispute.respondentId === user?.id);
+
+  const handleCompleteSession = async (_sessionId: string, notes: string) => {
+    if (!disputeId) return;
+    try {
+      await updateStatus.mutateAsync({ disputeId, data: { status: 'resolved', reason: notes } });
+      showToast({
+        type: 'success',
+        title: t('disputes.sessionCompleted', 'Session completed'),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('disputes.sessionCompleteFailed', 'Failed to complete session'),
+        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
+      });
+    }
+  };
 
   return (
-    <div className="dispute-detail-page">
-      <h1>Dispute: {dispute.subject}</h1>
-      <div className="dispute-meta">
-        <span className={`status status--${status}`}>{status.split('_').join(' ')}</span>
-        <span className="type">{category.split('_').join(' ')}</span>
-      </div>
-      <div className="dispute-description">
-        <h2>Description</h2>
-        <p>{dispute.description}</p>
-      </div>
-      <div className="dispute-timeline">
-        <h2>Timeline</h2>
-        {dispute.timeline && dispute.timeline.length > 0 ? (
-          <ul>
-            {dispute.timeline.map((event) => (
-              <li key={event.id}>
-                <strong>{event.eventType.split('_').join(' ')}</strong>: {event.description}
-                <span className="text-gray-500 ml-2">
-                  ({new Date(event.createdAt).toLocaleDateString()})
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>
-            <em>No timeline events yet.</em>
-          </p>
-        )}
-      </div>
-      <Link to="/disputes">{t('common.backToDisputes')}</Link>
-    </div>
+    <MediationPage
+      dispute={uiDispute!}
+      parties={[]}
+      sessions={[]}
+      submissions={[]}
+      isMediator={isMediator}
+      isParty={isParty}
+      currentUserId={user?.id}
+      isLoading={isLoading}
+      onBack={() => navigate(`/disputes/${disputeId}`)}
+      onScheduleSession={() => {
+        showToast({
+          type: 'info',
+          title: t('disputes.mediationSessionScheduled', 'Session scheduling'),
+          message: t(
+            'disputes.mediationSessionScheduledMsg',
+            'Session scheduling will be available once the mediation backend is wired.'
+          ),
+        });
+      }}
+      onCancelSession={() => {}}
+      onCompleteSession={handleCompleteSession}
+      onConfirmAttendance={() => {}}
+      onRecordAttendance={() => {}}
+      onSubmitResponse={() => {}}
+    />
   );
 }
 
@@ -1227,31 +1515,135 @@ function EditOutagePageRoute() {
 // Announcements Route Wrappers (UC-06)
 // ============================================
 
+/**
+ * Route wrapper for announcements list page (UC-06, gap-79-1).
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useAnnouncements — TanStack Query list with filter params
+ *   useDeleteAnnouncement / usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement
+ *
+ * AnnouncementSummary from @ppt/api-client matches the page's prop type
+ * directly — no type mapping required.
+ */
 function AnnouncementsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [listParams, setListParams] = useState<import('@ppt/api-client').ListAnnouncementsParams>({
+    page: 1,
+    pageSize: 10,
+  });
 
-  // Mock data for now - would use useAnnouncements hook with real API
-  const announcements: import('@ppt/api-client').AnnouncementSummary[] = [];
-  const isLoading = false;
+  const { data, isLoading, error } = useAnnouncements(listParams);
+  // Story 6.4 — separate query for the sticky pinned band; immune to list filters
+  const { data: pinnedData } = useAnnouncements({
+    pinned: true,
+    status: 'published',
+    pageSize: 20,
+  });
+  const deleteAnnouncement = useDeleteAnnouncement();
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcements' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcements = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const pinnedAnnouncements = pinnedData?.items ?? [];
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.deleted', { defaultValue: 'Deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.deleteFailed', { defaultValue: 'Delete failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePublish = async (id: string) => {
+    try {
+      await publishAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('announcements.published', { defaultValue: 'Published' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.publishFailed', { defaultValue: 'Publish failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleArchive = async (id: string) => {
+    try {
+      await archiveAnnouncement.mutateAsync(id);
+      showToast({
+        type: 'info',
+        title: t('announcements.archived', { defaultValue: 'Archived' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.archiveFailed', { defaultValue: 'Archive failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePin = async (id: string, pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id, pinned });
+      showToast({
+        type: 'info',
+        title: pinned
+          ? t('announcements.pinned', { defaultValue: 'Pinned' })
+          : t('announcements.unpinned', { defaultValue: 'Unpinned' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.pinFailed', { defaultValue: 'Pin action failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
 
   return (
     <AnnouncementsPage
       announcements={announcements}
-      total={0}
+      total={total}
       isLoading={isLoading}
+      pinnedAnnouncements={pinnedAnnouncements}
       onNavigateToCreate={() => navigate('/announcements/new')}
       onNavigateToView={(id) => navigate(`/announcements/${id}`)}
       onNavigateToEdit={(id) => navigate(`/announcements/${id}/edit`)}
-      onDelete={(id) => showToast({ type: 'info', title: 'Delete', message: `Deleting ${id}` })}
-      onPublish={(id) =>
-        showToast({ type: 'success', title: 'Published', message: `Published ${id}` })
-      }
-      onArchive={(id) => showToast({ type: 'info', title: 'Archived', message: `Archived ${id}` })}
-      onPin={(id, pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: `${id}` })
-      }
-      onFilterChange={() => {}}
+      onDelete={handleDelete}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onFilterChange={(params) => setListParams({ ...listParams, ...params })}
     />
   );
 }
@@ -1274,51 +1666,283 @@ function CreateAnnouncementPageRoute() {
   );
 }
 
-function ViewAnnouncementPageRoute() {
-  const { announcementId } = useParams<{ announcementId: string }>();
+/**
+ * Inner component for announcement detail — all hooks called unconditionally.
+ *
+ * Wired to @ppt/api-client standalone hooks:
+ *   useAnnouncement                    — TanStack Query detail (announcement + attachments)
+ *   useMarkReadAnnouncement            — POST /api/v1/announcements/:id/read
+ *   useAcknowledgeAnnouncement         — POST /api/v1/announcements/:id/acknowledge
+ *   useAnnouncementAcknowledgmentStats — GET  /api/v1/announcements/:id/acknowledgments
+ *   useAnnouncementComments            — GET  /api/v1/announcements/:id/comments (Story 6.3)
+ *   useCreateAnnouncementComment       — POST /api/v1/announcements/:id/comments (Story 6.3)
+ *   useDeleteAnnouncementComment       — DELETE /api/v1/announcements/:id/comments/:cid (Story 6.3)
+ *   usePublishAnnouncement / useArchiveAnnouncement / usePinAnnouncement / useDeleteAnnouncement
+ */
+function ViewAnnouncementPageInner({ announcementId }: { announcementId: string }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+  const { user } = useAuth();
 
-  if (!announcementId) {
-    return <div>Announcement not found</div>;
-  }
+  const { data, isLoading, error } = useAnnouncement(announcementId);
+  const markRead = useMarkReadAnnouncement();
+  const acknowledge = useAcknowledgeAnnouncement();
+  const publishAnnouncement = usePublishAnnouncement();
+  const archiveAnnouncement = useArchiveAnnouncement();
+  const pinAnnouncement = usePinAnnouncement();
+  const deleteAnnouncement = useDeleteAnnouncement();
 
-  // Mock data - would use useAnnouncement hook
-  const mockAnnouncement: import('@ppt/api-client').AnnouncementWithDetails = {
+  // Fetch ack stats only when the announcement requires acknowledgment (manager view)
+  const { data: ackStatsData } = useAnnouncementAcknowledgmentStats(
+    announcementId,
+    !!data?.announcement?.acknowledgmentRequired
+  );
+
+  // Story 6.3: Comments — only fetch when commentsEnabled
+  const commentsEnabled = !!data?.announcement?.commentsEnabled;
+  const { data: commentsData, isLoading: commentsLoading } = useAnnouncementComments(
+    announcementId,
+    undefined,
+    commentsEnabled
+  );
+  const createComment = useCreateAnnouncementComment();
+  const deleteComment = useDeleteAnnouncementComment();
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('announcements.failedToLoad', { defaultValue: 'Failed to load announcement' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const announcement = data?.announcement;
+  const attachments = data?.attachments ?? [];
+
+  const handleMarkRead = async () => {
+    try {
+      await markRead.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.markedRead', { defaultValue: 'Marked as read' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.markReadFailed', { defaultValue: 'Failed to mark as read' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    try {
+      await acknowledge.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.acknowledged', { defaultValue: 'Acknowledged' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.acknowledgeFailed', { defaultValue: 'Failed to acknowledge' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      await publishAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.published', { defaultValue: 'Published' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.publishFailed', { defaultValue: 'Publish failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await archiveAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'info',
+        title: t('announcements.archived', { defaultValue: 'Archived' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.archiveFailed', { defaultValue: 'Archive failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handlePin = async (pinned: boolean) => {
+    try {
+      await pinAnnouncement.mutateAsync({ id: announcementId, pinned });
+      showToast({
+        type: 'info',
+        title: pinned
+          ? t('announcements.pinned', { defaultValue: 'Pinned' })
+          : t('announcements.unpinned', { defaultValue: 'Unpinned' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.pinFailed', { defaultValue: 'Pin action failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteAnnouncement.mutateAsync(announcementId);
+      showToast({
+        type: 'success',
+        title: t('announcements.deleted', { defaultValue: 'Deleted' }),
+        message: '',
+      });
+      navigate('/announcements');
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.deleteFailed', { defaultValue: 'Delete failed' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  // Story 6.3: Comment handlers
+  const handleAddComment = async (content: string, parentId?: string) => {
+    try {
+      await createComment.mutateAsync({ announcementId, content, parentId });
+      showToast({
+        type: 'success',
+        title: t('announcements.commentPosted', { defaultValue: 'Comment posted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.commentFailed', { defaultValue: 'Failed to post comment' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, reason?: string) => {
+    try {
+      await deleteComment.mutateAsync({ announcementId, commentId, reason });
+      showToast({
+        type: 'info',
+        title: t('announcements.commentDeleted', { defaultValue: 'Comment deleted' }),
+        message: '',
+      });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: t('announcements.commentDeleteFailed', { defaultValue: 'Failed to delete comment' }),
+        message: err instanceof Error ? err.message : '',
+      });
+    }
+  };
+
+  const EMPTY_ANNOUNCEMENT: import('@ppt/api-client').AnnouncementWithDetails = {
     id: announcementId,
-    organizationId: 'org-1',
-    authorId: 'user-1',
-    authorName: 'Admin User',
-    title: 'Sample Announcement',
-    content: 'This is a sample announcement content.',
-    status: 'published',
+    organizationId: '',
+    authorId: '',
+    authorName: '',
+    title: '',
+    content: '',
+    status: 'draft',
     targetType: 'all',
     targetIds: [],
     pinned: false,
     acknowledgmentRequired: false,
-    commentsEnabled: true,
-    readCount: 10,
-    acknowledgedCount: 5,
-    commentCount: 2,
+    commentsEnabled: false,
+    readCount: 0,
+    acknowledgedCount: 0,
+    commentCount: 0,
     attachmentCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: '',
+    updatedAt: '',
   };
+
+  // Build commentsProps when comments are enabled (Story 6.3)
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
+  const commentsProps = commentsEnabled
+    ? {
+        comments: commentsData?.comments ?? [],
+        total: commentsData?.total ?? 0,
+        isLoading: commentsLoading,
+        currentUserId: user?.id,
+        isManager,
+        onAddComment: handleAddComment,
+        onDeleteComment: handleDeleteComment,
+      }
+    : undefined;
+
+  if (isLoading || !announcement) {
+    return (
+      <ViewAnnouncementPage
+        announcement={EMPTY_ANNOUNCEMENT}
+        attachments={[]}
+        isLoading
+        onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
+        onPublish={handlePublish}
+        onArchive={handleArchive}
+        onPin={handlePin}
+        onDelete={handleDelete}
+        onBack={() => navigate('/announcements')}
+      />
+    );
+  }
 
   return (
     <ViewAnnouncementPage
-      announcement={mockAnnouncement}
-      attachments={[]}
+      announcement={announcement}
+      attachments={attachments}
       onEdit={() => navigate(`/announcements/${announcementId}/edit`)}
-      onPublish={() => showToast({ type: 'success', title: 'Published', message: '' })}
-      onArchive={() => showToast({ type: 'info', title: 'Archived', message: '' })}
-      onPin={(pinned) =>
-        showToast({ type: 'info', title: pinned ? 'Pinned' : 'Unpinned', message: '' })
-      }
-      onDelete={() => navigate('/announcements')}
+      onPublish={handlePublish}
+      onArchive={handleArchive}
+      onPin={handlePin}
+      onDelete={handleDelete}
       onBack={() => navigate('/announcements')}
+      onMarkRead={handleMarkRead}
+      onAcknowledge={announcement.acknowledgmentRequired ? handleAcknowledge : undefined}
+      acknowledgmentStats={ackStatsData?.stats}
+      commentsProps={commentsProps}
     />
   );
+}
+
+/** Route wrapper — guards for missing param before mounting inner component */
+function ViewAnnouncementPageRoute() {
+  const { announcementId } = useParams<{ announcementId: string }>();
+  if (!announcementId) {
+    return <div>Announcement not found</div>;
+  }
+  return <ViewAnnouncementPageInner announcementId={announcementId} />;
 }
 
 function EditAnnouncementPageRoute() {
@@ -1368,15 +1992,39 @@ function EditAnnouncementPageRoute() {
 
 function MessagesPageRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { showToast } = useToast();
+  const [msgQueryParams, setMsgQueryParams] = useState<{ limit: number; offset: number }>({
+    limit: 20,
+    offset: 0,
+  });
+
+  const { threads, total, isLoading: threadsLoading } = useThreads(msgQueryParams);
+  const { data: unreadData } = useUnreadCount();
+  const unreadCount = unreadData?.unreadCount ?? 0;
 
   return (
     <MessagesPage
-      threads={[]}
-      total={0}
-      unreadCount={0}
+      threads={threads}
+      total={total}
+      unreadCount={unreadCount}
+      isLoading={threadsLoading}
       onNavigateToThread={(threadId) => navigate(`/messages/${threadId}`)}
       onNavigateToCreate={() => navigate('/messages/new')}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setMsgQueryParams({
+          limit: params.pageSize ?? 20,
+          offset: ((params.page ?? 1) - 1) * (params.pageSize ?? 20),
+        });
+      }}
+      onDeleteThreads={() => {
+        // Thread deletion is not yet supported by the API
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('messaging.deleteNotSupported', 'Deleting threads is not yet supported'),
+        });
+      }}
     />
   );
 }
@@ -1384,14 +2032,38 @@ function MessagesPageRoute() {
 function NewMessagePageRoute() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  // Fetch potential recipients from neighbors.
+  // buildingId is not part of the auth token; the hook handles undefined gracefully.
+  const { recipients, isLoading: isLoadingRecipients } = useMessageRecipients(undefined);
+  const startThread = useStartThread();
+
+  const handleNewMsgSubmit = async (data: import('./features/messaging').CreateThreadRequest) => {
+    if (!data.recipientIds[0]) return;
+    try {
+      const result = await startThread.mutateAsync(toStartThreadRequest(data));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('messaging.messageSent', 'Message sent'),
+      });
+      navigate(`/messages/${result.thread.id}`);
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
+  };
 
   return (
     <NewMessagePage
-      recipients={[]}
-      onSubmit={() => {
-        showToast({ type: 'success', title: 'Sent', message: 'Message sent' });
-        navigate('/messages');
-      }}
+      recipients={recipients}
+      isLoadingRecipients={isLoadingRecipients}
+      isSubmitting={startThread.isPending}
+      onSubmit={handleNewMsgSubmit}
       onCancel={() => navigate('/messages')}
     />
   );
@@ -1401,31 +2073,52 @@ function ThreadDetailPageRoute() {
   const { threadId } = useParams<{ threadId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const { thread, isLoading: threadLoading } = useThread(threadId ?? '', !!threadId);
+  const sendMessage = useSendMessage();
+  const markRead = useMarkThreadRead();
 
   if (!threadId) {
     return <div>Thread not found</div>;
   }
 
-  // Mock thread data
-  const mockThread: import('./features/messaging').ThreadWithMessages = {
-    id: threadId,
-    subject: 'Sample Thread',
-    participants: [],
-    participantCount: 2,
-    messageCount: 0,
-    messages: [],
-    unreadCount: 0,
-    lastMessageAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+  const handleThreadSendMessage = async (
+    data: import('./features/messaging').SendMessageRequest
+  ) => {
+    try {
+      await sendMessage.mutateAsync({ threadId, data: toApiSendMessageRequest(data) });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('messaging.sendFailed', 'Failed to send message'),
+      });
+    }
   };
+
+  const handleThreadMarkAsRead = () => {
+    markRead.mutate(threadId);
+  };
+
+  // Show loading skeleton until thread data arrives
+  if (threadLoading || !thread) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <ThreadDetailPage
-      thread={mockThread}
+      thread={thread}
       currentUserId={user?.id ?? ''}
-      onSendMessage={() => {}}
-      onMarkAsRead={() => {}}
+      isLoading={false}
+      isSending={sendMessage.isPending}
+      onSendMessage={handleThreadSendMessage}
+      onMarkAsRead={handleThreadMarkAsRead}
       onBack={() => navigate('/messages')}
     />
   );
@@ -1435,18 +2128,111 @@ function ThreadDetailPageRoute() {
 // Faults Route Wrappers (UC-03)
 // ============================================
 
+/**
+ * Map API FaultStatus (snake_case values) → UI FaultStatus.
+ *
+ * API: 'reported' | 'triaged' | 'in_progress' | 'scheduled' | 'on_hold' | 'resolved' | 'closed' | 'reopened'
+ * UI:  'new'      | 'triaged' | 'in_progress' | 'scheduled' | 'waiting_parts' | 'resolved' | 'closed' | 'reopened'
+ */
+function mapApiFaultStatusToUi(
+  status: ApiFaultSummary['status']
+): import('./features/faults/components/FaultCard').FaultStatus {
+  const mapping: Record<
+    ApiFaultSummary['status'],
+    import('./features/faults/components/FaultCard').FaultStatus
+  > = {
+    reported: 'new',
+    triaged: 'triaged',
+    in_progress: 'in_progress',
+    scheduled: 'scheduled',
+    on_hold: 'waiting_parts',
+    resolved: 'resolved',
+    closed: 'closed',
+    reopened: 'reopened',
+  };
+  return mapping[status] ?? 'new';
+}
+
+/** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
+function transformApiFaultToUi(
+  fault: ApiFaultSummary
+): import('./features/faults/components/FaultCard').FaultSummary {
+  return {
+    id: fault.id,
+    buildingId: fault.building_id,
+    unitId: fault.unit_id,
+    title: fault.title,
+    category: fault.category,
+    priority: fault.priority ?? 'medium',
+    status: mapApiFaultStatusToUi(fault.status),
+    createdAt: fault.created_at,
+  };
+}
+
+/**
+ * Route wrapper for faults list page (UC-03, gap-79-1).
+ *
+ * Wired to useFaults from @ppt/api-client (TanStack Query).
+ * API FaultSummary uses snake_case and a slightly different status enum;
+ * transformApiFaultToUi() bridges the gap to the UI FaultCard type.
+ */
 function FaultsPageRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [faultQuery, setFaultQuery] = useState<FaultListQuery>({ page: 1, limit: 10 });
+
+  const { data, isLoading, error } = useFaults(faultQuery);
+
+  useEffect(() => {
+    if (error) {
+      showToast({
+        type: 'error',
+        title: t('faults.failedToLoad', { defaultValue: 'Failed to load faults' }),
+        message: error instanceof Error ? error.message : t('auth.unexpectedError'),
+      });
+    }
+  }, [error, showToast, t]);
+
+  const faults = (data?.faults ?? []).map(transformApiFaultToUi);
+  const total = data?.count ?? 0;
 
   return (
     <FaultsPage
-      faults={[]}
-      total={0}
+      faults={faults}
+      total={total}
+      isLoading={isLoading}
       onNavigateToCreate={() => navigate('/faults/new')}
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
-      onFilterChange={() => {}}
+      onFilterChange={(params) => {
+        setFaultQuery({
+          status: params.status
+            ? (() => {
+                const statusMap: Record<
+                  import('./features/faults/components/FaultCard').FaultStatus,
+                  ApiFaultSummary['status'] | undefined
+                > = {
+                  new: 'reported',
+                  triaged: 'triaged',
+                  in_progress: 'in_progress',
+                  waiting_parts: 'on_hold',
+                  scheduled: 'scheduled',
+                  resolved: 'resolved',
+                  closed: 'closed',
+                  reopened: 'reopened',
+                };
+                return statusMap[params.status];
+              })()
+            : undefined,
+          category: params.category,
+          priority: params.priority,
+          search: params.search,
+          page: params.page,
+          limit: params.pageSize,
+        });
+      }}
     />
   );
 }
@@ -1477,7 +2263,15 @@ function FaultDetailPageRoute() {
     return <div>Fault not found</div>;
   }
 
-  // Mock fault data
+  // P0-10 (deferred): this route renders hardcoded mock data because the
+  // local FaultDetailPage component's `FaultDetail` type and the
+  // api-client's `FaultWithDetails` type are divergent (FE-006: the
+  // hand-written and generated type layers both define overlapping
+  // shapes with different field sets). Wiring real `useFault()` here
+  // would require either updating FaultDetailPage to accept the
+  // api-client types, OR mapping between them at the call site.
+  // Both options are larger than the security-fix scope of this PR.
+  // Tracked as a follow-up plan; see PR description.
   const mockFault: import('./features/faults').FaultDetail = {
     id: faultId,
     organizationId: 'org-1',
@@ -1824,5 +2618,308 @@ function Home() {
 }
 
 // Login component removed - now using LoginPage from ./pages/LoginPage
+
+// ---------------------------------------------------------------------------
+// Neighbor Route Wrappers (Epic 6, Story 6.6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Neighbors listing page — wired to backend GET /api/v1/buildings/{id}/neighbors.
+ *
+ * Building context: The route uses the first building from `useBuildings()`.
+ * Once a building-selector is added to the app-shell, swap for the selected ID.
+ */
+function NeighborsPageRoute() {
+  const navigate = useNavigate();
+  const { data: buildingsData, isLoading: isLoadingBuildings } = useBuildings();
+
+  // Pick the first building the user has access to; URL-param selection deferred.
+  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const buildingName = buildingsData?.items?.[0]?.name;
+
+  const { neighbors, isLoading, error } = useNeighbors(buildingId, !isLoadingBuildings);
+
+  return (
+    <NeighborsPage
+      neighbors={neighbors}
+      buildingName={buildingName}
+      isLoading={isLoading || isLoadingBuildings}
+      error={error}
+      onViewProfile={(n) => navigate(`/neighbors/${n.id}`)}
+      onContact={(n) => navigate(`/messages/new?recipientId=${n.id}`)}
+      onManagePrivacy={() => navigate('/neighbors/privacy')}
+    />
+  );
+}
+
+/**
+ * Neighbor detail page — extracts :neighborId from the URL.
+ * Fetches the neighbor from the building list and finds by id.
+ */
+function NeighborDetailRoute() {
+  const { neighborId } = useParams<{ neighborId: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { data: buildingsData } = useBuildings();
+
+  const buildingId = buildingsData?.items?.[0]?.id ?? '';
+  const { neighbors, isLoading } = useNeighbors(buildingId, !!buildingId);
+  const neighbor = neighbors.find((n) => n.id === neighborId);
+
+  if (!neighborId) {
+    return (
+      <div className="error-page">
+        <h1>{t('errors.notFound')}</h1>
+        <p>{t('errors.neighborNotFound', 'Neighbor not found.')}</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-page">
+        <p>{t('common.loading')}</p>
+      </div>
+    );
+  }
+
+  if (!neighbor) {
+    return (
+      <div className="error-page">
+        <h1>{t('errors.notFound')}</h1>
+        <p>{t('errors.neighborNotFound', 'Neighbor not found.')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <NeighborDetailPage
+      neighbor={neighbor}
+      onBack={() => navigate('/neighbors')}
+      onMessage={(n) => navigate(`/messages/new?recipientId=${n.id}`)}
+    />
+  );
+}
+
+// Reports Route Wrappers (Epic 81)
+
+/**
+ * Reports page route — wires pause/resume/update schedule hooks (Story 81.1).
+ *
+ * The EditScheduleModal pause/resume buttons call these handlers which in
+ * turn invoke the live backend endpoints PUT /api/v1/reports/schedules/{id}/pause
+ * and PUT /api/v1/reports/schedules/{id}/resume (from PR #448).
+ */
+function ReportsPageRoute() {
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const organizationId = user?.organizationId ?? '';
+
+  const pauseSchedule = usePauseSchedule();
+  const resumeSchedule = useResumeSchedule();
+  const updateSchedule = useUpdateSchedule();
+
+  const handlePauseSchedule = async (id: string) => {
+    try {
+      await pauseSchedule.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.paused', 'Schedule paused successfully.'),
+      });
+    } catch (e) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.pauseFailed', 'Failed to pause schedule.'),
+      });
+      throw e;
+    }
+  };
+
+  const handleResumeSchedule = async (id: string) => {
+    try {
+      await resumeSchedule.mutateAsync(id);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.resumed', 'Schedule resumed successfully.'),
+      });
+    } catch (e) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.resumeFailed', 'Failed to resume schedule.'),
+      });
+      throw e;
+    }
+  };
+
+  const handleUpdateSchedule = async (
+    id: string,
+    data: Partial<import('@ppt/api-client').CreateReportSchedule>
+  ) => {
+    try {
+      await updateSchedule.mutateAsync({ id, data });
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.schedule.updated', 'Schedule updated successfully.'),
+      });
+    } catch (e) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.schedule.updateFailed', 'Failed to update schedule.'),
+      });
+      throw e;
+    }
+  };
+
+  // --- Story 81.2: Execution history state and hooks ---
+  const [activeScheduleId, setActiveScheduleId] = useState<string>('');
+  const [executionOffset, setExecutionOffset] = useState(0);
+  const EXECUTION_PAGE_SIZE = 20;
+
+  const { data: executionHistoryData, isLoading: executionsLoading } = useReportExecutionHistory(
+    { scheduleId: activeScheduleId },
+    {
+      limit: EXECUTION_PAGE_SIZE,
+      offset: executionOffset,
+      enabled: !!activeScheduleId,
+      refetchInterval: activeScheduleId ? 10_000 : false,
+    }
+  );
+
+  const downloadReport = useDownloadReport();
+  const retryExecution = useRetryReportExecution();
+
+  const executions = executionHistoryData?.executions ?? [];
+  const hasMore = executionHistoryData?.hasMore ?? false;
+
+  const handleFetchExecutions = (scheduleId: string) => {
+    setActiveScheduleId(scheduleId);
+    setExecutionOffset(0);
+  };
+
+  const handleLoadMoreExecutions = () => {
+    setExecutionOffset((prev) => prev + EXECUTION_PAGE_SIZE);
+  };
+
+  const handleDownloadReport = (executionId: string) => {
+    downloadReport.mutate(executionId, {
+      onError: () => {
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('reports.execution.downloadFailed', 'Failed to download report.'),
+        });
+      },
+    });
+  };
+
+  const handleRetryExecution = async (executionId: string) => {
+    try {
+      await retryExecution.mutateAsync(executionId);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.execution.retryQueued', 'Execution queued for retry.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.execution.retryFailed', 'Failed to retry execution.'),
+      });
+      throw new Error('retry failed');
+    }
+  };
+
+  return (
+    <ReportsPage
+      organizationId={organizationId}
+      dataSources={[]}
+      reports={[]}
+      schedules={[]}
+      kpis={[]}
+      buildings={[]}
+      trendAnalysis={
+        {
+          metric: '',
+          period: 'monthly',
+          current_value: 0,
+          previous_value: 0,
+          change: 0,
+          change_percentage: 0,
+          trend: 'stable' as const,
+          anomalies: [],
+        } as import('@ppt/api-client').TrendAnalysis
+      }
+      trendLines={[]}
+      periodComparison={
+        {
+          metric: '',
+          periods: [],
+          difference: 0,
+          difference_percentage: 0,
+        } as import('@ppt/api-client').PeriodComparison
+      }
+      onPauseSchedule={handlePauseSchedule}
+      onResumeSchedule={handleResumeSchedule}
+      onUpdateSchedule={handleUpdateSchedule}
+      executions={executions}
+      executionsLoading={executionsLoading}
+      executionsHasMore={hasMore}
+      onFetchExecutions={handleFetchExecutions}
+      onLoadMoreExecutions={handleLoadMoreExecutions}
+      onDownloadReport={handleDownloadReport}
+      onRetryExecution={handleRetryExecution}
+    />
+  );
+}
+
+/**
+ * Neighbor privacy settings page — wired to GET/PUT /api/v1/users/me/privacy.
+ */
+function NeighborsPrivacySettingsRoute() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const { settings, isLoading, isSubmitting, error, updateSettings } = usePrivacySettings();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleSubmit = async (newSettings: import('./features/neighbors').PrivacySettings) => {
+    try {
+      await updateSettings(newSettings);
+      setSuccessMessage(t('neighbors.privacy.saved', 'Privacy settings saved.'));
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('neighbors.privacy.saved', 'Privacy settings saved.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('neighbors.privacy.saveFailed', 'Failed to save privacy settings.'),
+      });
+    }
+  };
+
+  return (
+    <NeighborsPrivacySettingsPage
+      settings={settings}
+      isLoading={isLoading}
+      error={error}
+      isSubmitting={isSubmitting}
+      successMessage={successMessage}
+      onSubmit={handleSubmit}
+      onBack={() => navigate('/neighbors')}
+    />
+  );
+}
 
 export default App;

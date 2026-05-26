@@ -3,7 +3,7 @@
 //! Provides database operations for managing e-signature workflows.
 
 use chrono::{Duration, Utc};
-use sqlx::{Error as SqlxError, PgPool, Row};
+use sqlx::{Error as SqlxError, Executor, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 use crate::models::{
@@ -87,6 +87,26 @@ impl SignatureRequestRepository {
         )
         .bind(id)
         .fetch_optional(&self.pool)
+        .await
+    }
+
+    /// Find a signature request by ID using an RLS-scoped connection.
+    pub async fn find_by_id_rls<'e, E>(
+        &self,
+        executor: E,
+        id: Uuid,
+    ) -> Result<Option<SignatureRequest>, SqlxError>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        sqlx::query_as::<_, SignatureRequest>(
+            r#"
+            SELECT * FROM signature_requests
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(executor)
         .await
     }
 

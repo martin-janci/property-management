@@ -59,6 +59,28 @@ async fn main() -> anyhow::Result<()> {
         );
         caddy_pool.insert(name.clone(), Arc::new(CaddyClient::new(&t.caddy_url)));
     }
+
+    // PO-002 one-shot reconciliation: sweep routes left by older
+    // deploy-server versions that POST-appended without `@id`. Those
+    // routes are invisible to `unregister_route`'s DELETE-by-id sweep,
+    // so without this purge the first deploy on each Caddy would still
+    // see duplicates. Best-effort — log and continue if any target is
+    // unreachable so a single bad Caddy doesn't block startup.
+    //
+    // `caddy_pool` already contains the staging entry (built from the
+    // same targets.targets map below), so iterating the pool is the
+    // single canonical pass — no separate `caddy.purge()` call.
+    let wt_host_prefix = "wt-";
+    for (name, c) in &caddy_pool {
+        if let Err(e) = c.purge_legacy_untagged_routes(wt_host_prefix).await {
+            tracing::warn!(
+                target = %name,
+                error = %e,
+                "caddy purge_legacy_untagged_routes failed at startup; continuing",
+            );
+        }
+    }
+
     let docker_pool = Arc::new(docker_pool);
     let caddy_pool = Arc::new(caddy_pool);
 

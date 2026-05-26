@@ -1,11 +1,20 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    androidTarget {
+    // AGP 9 migration: the new com.android.kotlin.multiplatform.library plugin replaces
+    // `com.android.library` + `androidTarget`. It is variant-agnostic: no build types,
+    // no product flavors, no BuildConfig generation.
+    // See https://kotlinlang.org/docs/multiplatform/multiplatform-project-agp-9-migration.html
+    androidLibrary {
+        namespace = "three.two.bit.ppt.reality.shared"
+        compileSdk = libs.versions.compileSdk.get().toInt()
+        minSdk = libs.versions.minSdk.get().toInt()
+
+        // Preserve the JVM target migrated in PR #378 (compilerOptions DSL).
         compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
     }
 
@@ -45,51 +54,6 @@ kotlin {
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
             dependencies { implementation(libs.ktor.client.darwin) }
-        }
-    }
-}
-
-android {
-    namespace = "three.two.bit.ppt.reality.shared"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig { minSdk = libs.versions.minSdk.get().toInt() }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    // Epic 85 - Story 85.2: Build Configuration by Environment
-    // Enable BuildConfig generation for shared module
-    buildFeatures { buildConfig = true }
-
-    // Epic 85 - Story 85.2: Build Configuration by Environment
-    // Product flavors matching the app module
-    flavorDimensions += "environment"
-    productFlavors {
-        create("development") {
-            dimension = "environment"
-            // Android emulator uses 10.0.2.2 to reach host localhost
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8081\"")
-            buildConfigField("String", "ENVIRONMENT", "\"development\"")
-            buildConfigField("Boolean", "ENABLE_LOGGING", "true")
-        }
-        create("staging") {
-            dimension = "environment"
-            buildConfigField(
-                "String",
-                "API_BASE_URL",
-                "\"https://staging-reality.ppt.example.com\""
-            )
-            buildConfigField("String", "ENVIRONMENT", "\"staging\"")
-            buildConfigField("Boolean", "ENABLE_LOGGING", "true")
-        }
-        create("production") {
-            dimension = "environment"
-            buildConfigField("String", "API_BASE_URL", "\"https://reality.ppt.example.com\"")
-            buildConfigField("String", "ENVIRONMENT", "\"production\"")
-            buildConfigField("Boolean", "ENABLE_LOGGING", "false")
         }
     }
 }

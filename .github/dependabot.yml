@@ -1,4 +1,15 @@
 version: 2
+
+# Grouping strategy
+# -----------------
+# - Coordinated dependency families (tokio, axum, ...) update together so
+#   their versions never drift apart across a partial merge.
+# - Every remaining minor + patch bump is batched into one "safe" PR per
+#   ecosystem, to cut review noise for low-risk updates.
+# - Major-version bumps deliberately fall OUT of the safe groups and land as
+#   individual PRs, so the breaking change is obvious and gets reviewed on
+#   its own. (See #350 / #359: majors merged in a batch without the required
+#   code changes broke `main`.)
 updates:
   - package-ecosystem: "cargo"
     directory: "/backend"
@@ -13,14 +24,28 @@ updates:
         patterns: ["serde*"]
       sqlx:
         patterns: ["sqlx*"]
+      cargo-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: "gradle"
     directory: "/mobile-native"
     schedule:
@@ -37,3 +62,6 @@ updates:
       ktor:
         patterns:
           - "io.ktor*"
+      gradle-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]

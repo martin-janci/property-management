@@ -260,11 +260,43 @@ impl DisputeRepository {
     }
 
     pub async fn update_status(&self, req: UpdateDisputeStatus) -> Result<Dispute, AppError> {
+        // Guard: target status must be a known value.
+        if !dispute_status::ALL.contains(&req.status.as_str()) {
+            return Err(AppError::BadRequest(format!(
+                "Unknown dispute status '{}'. Valid: {}",
+                req.status,
+                dispute_status::ALL.join(", ")
+            )));
+        }
+
+        // Load current status so we can enforce the state machine.
+        let current_status: Option<String> =
+            sqlx::query_scalar("SELECT status FROM disputes WHERE id = $1")
+                .bind(req.dispute_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let current_status = current_status
+            .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
+
+        // Enforce state machine — reject illegal transitions.
+        if !dispute_state_machine::is_valid_transition(&current_status, &req.status) {
+            let allowed = dispute_state_machine::allowed_transitions(&current_status);
+            return Err(AppError::BadRequest(format!(
+                "Invalid status transition '{}' to '{}'. Allowed from '{}': [{}]",
+                current_status,
+                req.status,
+                current_status,
+                allowed.join(", ")
+            )));
+        }
+
         let dispute = sqlx::query_as::<_, Dispute>(
             r#"
             UPDATE disputes
             SET status = $1
-            WHERE id = $2
+            WHERE id = $2 AND status = $3
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
                       assigned_to, created_at, updated_at
@@ -272,14 +304,22 @@ impl DisputeRepository {
         )
         .bind(&req.status)
         .bind(req.dispute_id)
-        .fetch_one(&self.pool)
+        .bind(&current_status)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::BadRequest("Invalid status transition".to_string()))?;
 
-        // Record activity
+        // Record activity.
         let description = match &req.reason {
-            Some(reason) => format!("Status changed to '{}': {}", req.status, reason),
-            None => format!("Status changed to '{}'", req.status),
+            Some(reason) => format!(
+                "Status changed from '{}' to '{}': {}",
+                current_status, req.status, reason
+            ),
+            None => format!(
+                "Status changed from '{}' to '{}'",
+                current_status, req.status
+            ),
         };
         self.record_activity(
             req.dispute_id,

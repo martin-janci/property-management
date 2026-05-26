@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class ListingType {
     @SerialName("sale") SALE,
-    @SerialName("rent") RENT
+    @SerialName("rent") RENT,
 }
 
 /** Property category. */
@@ -25,7 +25,7 @@ enum class PropertyCategory {
     @SerialName("commercial") COMMERCIAL,
     @SerialName("garage") GARAGE,
     @SerialName("office") OFFICE,
-    @SerialName("warehouse") WAREHOUSE
+    @SerialName("warehouse") WAREHOUSE,
 }
 
 /** Listing status. */
@@ -35,7 +35,7 @@ enum class ListingStatus {
     @SerialName("pending") PENDING,
     @SerialName("sold") SOLD,
     @SerialName("rented") RENTED,
-    @SerialName("withdrawn") WITHDRAWN
+    @SerialName("withdrawn") WITHDRAWN,
 }
 
 /** Geographic coordinates. */
@@ -50,7 +50,7 @@ data class Address(
     val region: String? = null,
     @SerialName("postal_code") val postalCode: String? = null,
     val country: String,
-    val coordinates: Coordinates? = null
+    val coordinates: Coordinates? = null,
 )
 
 /** Listing image. */
@@ -61,7 +61,7 @@ data class ListingImage(
     @SerialName("thumbnail_url") val thumbnailUrl: String? = null,
     @SerialName("is_primary") val isPrimary: Boolean = false,
     val caption: String? = null,
-    val order: Int = 0
+    val order: Int = 0,
 )
 
 /** Agency information. */
@@ -71,7 +71,7 @@ data class AgencyInfo(
     val name: String,
     @SerialName("logo_url") val logoUrl: String? = null,
     val phone: String? = null,
-    val email: String? = null
+    val email: String? = null,
 )
 
 /** Realtor information. */
@@ -82,7 +82,7 @@ data class RealtorInfo(
     @SerialName("avatar_url") val avatarUrl: String? = null,
     val phone: String? = null,
     val email: String? = null,
-    val agency: AgencyInfo? = null
+    val agency: AgencyInfo? = null,
 )
 
 /** Property listing summary for search results. */
@@ -108,7 +108,7 @@ data class ListingSummary(
     @SerialName("is_new") val isNew: Boolean = false,
     @SerialName("is_price_reduced") val isPriceReduced: Boolean = false,
     @SerialName("created_at") val createdAt: String,
-    @SerialName("updated_at") val updatedAt: String
+    @SerialName("updated_at") val updatedAt: String,
 )
 
 /** Full property listing details. */
@@ -147,7 +147,7 @@ data class ListingDetail(
     @SerialName("view_count") val viewCount: Int = 0,
     @SerialName("inquiry_count") val inquiryCount: Int = 0,
     @SerialName("created_at") val createdAt: String,
-    @SerialName("updated_at") val updatedAt: String
+    @SerialName("updated_at") val updatedAt: String,
 )
 
 /** Search filters for listings. */
@@ -171,7 +171,7 @@ data class ListingSearchFilters(
     @SerialName("year_built_max") val yearBuiltMax: Int? = null,
     @SerialName("near_lat") val nearLat: Double? = null,
     @SerialName("near_lng") val nearLng: Double? = null,
-    @SerialName("radius_km") val radiusKm: Double? = null
+    @SerialName("radius_km") val radiusKm: Double? = null,
 )
 
 /** Sort options for listings. */
@@ -183,7 +183,7 @@ enum class ListingSortOption {
     @SerialName("price_desc") PRICE_DESC,
     @SerialName("area_asc") AREA_ASC,
     @SerialName("area_desc") AREA_DESC,
-    @SerialName("relevance") RELEVANCE
+    @SerialName("relevance") RELEVANCE,
 }
 
 /** Paginated search response. */
@@ -193,7 +193,7 @@ data class ListingSearchResponse(
     val total: Int,
     val page: Int,
     @SerialName("page_size") val pageSize: Int,
-    @SerialName("total_pages") val totalPages: Int
+    @SerialName("total_pages") val totalPages: Int,
 )
 
 /** Search request. */
@@ -203,7 +203,7 @@ data class ListingSearchRequest(
     val filters: ListingSearchFilters? = null,
     val sort: ListingSortOption = ListingSortOption.NEWEST,
     val page: Int = 1,
-    @SerialName("page_size") val pageSize: Int = 20
+    @SerialName("page_size") val pageSize: Int = 20,
 )
 
 /** Featured listings response. */
@@ -218,7 +218,7 @@ data class CitySuggestion(
     val city: String,
     val region: String? = null,
     val country: String,
-    @SerialName("listing_count") val listingCount: Int
+    @SerialName("listing_count") val listingCount: Int,
 )
 
 /** Search suggestions response. */
@@ -226,5 +226,5 @@ data class CitySuggestion(
 data class SearchSuggestionsResponse(
     val cities: List<CitySuggestion>,
     val regions: List<String>,
-    @SerialName("recent_searches") val recentSearches: List<String>
+    @SerialName("recent_searches") val recentSearches: List<String>,
 )

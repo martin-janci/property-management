@@ -66,10 +66,7 @@ sealed class Screen(val route: String) {
     data object Home : Screen("home")
 
     data object Search : Screen("search?type={type}&category={category}") {
-        fun createRoute(
-            type: ListingType? = null,
-            category: PropertyCategory? = null,
-        ): String {
+        fun createRoute(type: ListingType? = null, category: PropertyCategory? = null): String {
             val params = buildList {
                 type?.let { add("type=${it.name.lowercase()}") }
                 category?.let { add("category=${it.name.lowercase()}") }
@@ -155,7 +152,7 @@ fun RealityNavHost(
                     onAccountClick = { tabNavigate(Screen.Account.route) },
                 )
             }
-        },
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -215,7 +212,7 @@ fun RealityNavHost(
 
             composable(
                 route = Screen.ListingDetail.route,
-                arguments = listOf(navArgument("listingId") { type = NavType.StringType })
+                arguments = listOf(navArgument("listingId") { type = NavType.StringType }),
             ) { backStackEntry ->
                 val listingId =
                     backStackEntry.arguments?.getString("listingId") ?: return@composable
@@ -224,7 +221,7 @@ fun RealityNavHost(
                     repository = listingRepository,
                     ssoService = ssoService,
                     onBackClick = { navController.popBackStack() },
-                    onInquirySuccess = { navController.navigate(Screen.Inquiries.route) }
+                    onInquirySuccess = { navController.navigate(Screen.Inquiries.route) },
                 )
             }
 

@@ -7,9 +7,9 @@
 //! - Story 55.4: Consumption Report
 //! - Story 55.5: Export Reports to PDF/Excel
 
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     routing::get,
     Json, Router,
@@ -17,9 +17,10 @@ use axum::{
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
 use db::models::{
-    ConsumptionAnomaly, ConsumptionSummary, DateRange, FaultStatistics, FaultTrends,
-    OccupancySummary, OccupancyTrends, UnitConsumption, UnitOccupancy, UtilityTypeConsumption,
-    VoteParticipationDetail, VotingParticipationSummary, YearComparison,
+    report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
+    ExecutionDownloadUrl, ExecutionHistoryResponse, FaultStatistics, FaultTrends, OccupancySummary,
+    OccupancyTrends, ReportExecution, ReportSchedule, UnitConsumption, UnitOccupancy,
+    UtilityTypeConsumption, VoteParticipationDetail, VotingParticipationSummary, YearComparison,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -209,6 +210,20 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
+        // Epic 81: Story 81.1 — Schedule pause/resume
+        .route("/schedules/{id}/pause", axum::routing::put(pause_schedule))
+        .route(
+            "/schedules/{id}/resume",
+            axum::routing::put(resume_schedule),
+        )
+        // Epic 81: Story 81.2 — Execution history
+        .route("/schedules/{id}/executions", get(list_schedule_executions))
+        .route("/executions/{id}", get(get_execution))
+        .route("/executions/{id}/download", get(get_execution_download_url))
+        .route(
+            "/executions/{id}/retry",
+            axum::routing::post(retry_execution),
+        )
 }
 
 // ============================================================================
@@ -216,13 +231,20 @@ pub fn router() -> Router<AppState> {
 // ============================================================================
 
 /// Get building name by ID if provided.
-/// Note: This helper function is called from report handlers. RLS migration
-/// would require passing RlsConnection through all callers.
-async fn get_building_name(state: &AppState, building_id: Option<Uuid>) -> Option<String> {
+///
+/// RLS-scoped: callers pass their request's `RlsConnection` so the lookup is
+/// constrained to buildings the authenticated tenant can see (prevents leaking
+/// a building name across tenants via an arbitrary id).
+async fn get_building_name(
+    state: &AppState,
+    rls: &mut RlsConnection,
+    building_id: Option<Uuid>,
+) -> Option<String> {
     if let Some(id) = building_id {
-        // TODO: Migrate to find_by_id_rls when handlers pass RlsConnection
-        #[allow(deprecated)]
-        let result = state.building_repo.find_by_id(id).await;
+        let result = state
+            .building_repo
+            .find_by_id_rls(&mut **rls.conn(), id)
+            .await;
         result.ok().flatten().and_then(|b| b.name)
     } else {
         None
@@ -538,6 +560,7 @@ fn validate_date_range(
 pub async fn get_fault_statistics_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<FaultStatisticsQuery>,
 ) -> Result<Json<FaultStatisticsReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Get date range (default to last 30 days if not specified)
@@ -551,8 +574,24 @@ pub async fn get_fault_statistics_report(
     // Validate date range
     validate_date_range(from_date, to_date)?;
 
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Get fault statistics from repository (using organization_id for multi-tenant filtering)
     let statistics = state
@@ -619,6 +658,7 @@ pub async fn get_fault_statistics_report(
 pub async fn get_voting_participation_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<VotingParticipationQuery>,
 ) -> Result<Json<VotingParticipationReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Get date range (default to last 12 months if not specified)
@@ -632,8 +672,24 @@ pub async fn get_voting_participation_report(
     // Validate date range
     validate_date_range(from_date, to_date)?;
 
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query voting participation data from repository
     let participation_data = state
@@ -694,6 +750,7 @@ pub async fn get_voting_participation_report(
 pub async fn get_occupancy_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<OccupancyReportQuery>,
 ) -> Result<Json<OccupancyReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate month if provided
@@ -727,8 +784,24 @@ pub async fn get_occupancy_report(
         NaiveDate::from_ymd_opt(query.year, 12, 31).unwrap_or(from_date)
     };
 
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query occupancy data from person_month repository
     let occupancy_data = state
@@ -807,6 +880,7 @@ pub async fn get_occupancy_report(
 pub async fn get_consumption_report(
     State(state): State<AppState>,
     _auth: AuthUser,
+    mut rls: RlsConnection,
     Query(query): Query<ConsumptionReportQuery>,
 ) -> Result<Json<ConsumptionReportResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate date range
@@ -826,8 +900,24 @@ pub async fn get_consumption_report(
         }
     }
 
+    // Enforce that the requested organization matches the authenticated tenant
+    // (super-admins may query across orgs). Closes a cross-tenant IDOR where a
+    // caller could request another org's report by supplying its UUID.
+    if !rls.is_super_admin() && query.organization_id != rls.tenant_id() {
+        rls.release().await;
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "organization_id does not match the authenticated tenant",
+            )),
+        ));
+    }
+
     // Get building name if building_id is provided
-    let building_name = get_building_name(&state, query.building_id).await;
+    let building_name = get_building_name(&state, &mut rls, query.building_id).await;
+    // RLS lookup complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Query consumption data from meter repository
     let consumption_data = state
@@ -1234,4 +1324,220 @@ pub async fn get_export_job_status(
         error_message: job.error_message,
         progress_percent,
     }))
+}
+
+// ============================================================================
+// Epic 81: Report Schedule Management & Execution History
+// ============================================================================
+
+/// Pause a report schedule (Story 81.1).
+#[utoipa::path(
+    put,
+    path = "/api/v1/reports/schedules/{id}/pause",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    responses(
+        (status = 200, description = "Schedule paused", body = ReportSchedule),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Schedule not found"),
+    )
+)]
+pub async fn pause_schedule(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .report_schedule_repo
+        .pause(id)
+        .await
+        .map(Json)
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to pause schedule")),
+            )
+        })
+}
+
+/// Resume a paused report schedule (Story 81.1).
+#[utoipa::path(
+    put,
+    path = "/api/v1/reports/schedules/{id}/resume",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    responses(
+        (status = 200, description = "Schedule resumed", body = ReportSchedule),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Schedule not found"),
+    )
+)]
+pub async fn resume_schedule(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .report_schedule_repo
+        .resume(id)
+        .await
+        .map(Json)
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to resume schedule")),
+            )
+        })
+}
+
+/// Query parameters for listing execution history (Story 81.2).
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ListExecutionsParams {
+    pub status: Option<String>,
+    #[serde(default = "default_execution_limit")]
+    pub limit: i64,
+    #[serde(default)]
+    pub offset: i64,
+}
+
+fn default_execution_limit() -> i64 {
+    20
+}
+
+/// List execution history for a report schedule (Story 81.2).
+#[utoipa::path(
+    get,
+    path = "/api/v1/reports/schedules/{id}/executions",
+    tag = "reports",
+    params(
+        ("id" = Uuid, Path, description = "Schedule ID"),
+        ListExecutionsParams,
+    ),
+    responses(
+        (status = 200, description = "Execution history", body = ExecutionHistoryResponse),
+        (status = 401, description = "Unauthorized"),
+    )
+)]
+pub async fn list_schedule_executions(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Query(params): Query<ListExecutionsParams>,
+) -> Result<Json<ExecutionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let query = ExecutionHistoryQuery {
+        schedule_id: id,
+        status: params.status,
+        date_from: None,
+        date_to: None,
+        limit: params.limit,
+        offset: params.offset,
+    };
+    state
+        .report_schedule_repo
+        .list_executions(query)
+        .await
+        .map(Json)
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to list executions")),
+            )
+        })
+}
+
+/// Get a single report execution by ID (Story 81.2).
+#[utoipa::path(
+    get,
+    path = "/api/v1/reports/executions/{id}",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Execution ID")),
+    responses(
+        (status = 200, description = "Report execution", body = ReportExecution),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "Execution not found"),
+    )
+)]
+pub async fn get_execution(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ReportExecution>, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .report_schedule_repo
+        .get_execution(id)
+        .await
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get execution")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "EXECUTION_NOT_FOUND",
+                    "Report execution not found",
+                )),
+            )
+        })
+        .map(Json)
+}
+
+/// Get presigned download URL for a completed report execution (Story 81.2).
+#[utoipa::path(
+    get,
+    path = "/api/v1/reports/executions/{id}/download",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Execution ID")),
+    responses(
+        (status = 200, description = "Download URL", body = ExecutionDownloadUrl),
+        (status = 401, description = "Unauthorized"),
+    )
+)]
+pub async fn get_execution_download_url(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ExecutionDownloadUrl>, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .report_schedule_repo
+        .get_download_url(id)
+        .await
+        .map(Json)
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to get download URL")),
+            )
+        })
+}
+
+/// Retry a failed report execution (Story 81.2).
+#[utoipa::path(
+    post,
+    path = "/api/v1/reports/executions/{id}/retry",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Execution ID")),
+    responses(
+        (status = 200, description = "Execution queued for retry", body = ReportExecution),
+        (status = 401, description = "Unauthorized"),
+    )
+)]
+pub async fn retry_execution(
+    State(state): State<AppState>,
+    _auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ReportExecution>, (StatusCode, Json<ErrorResponse>)> {
+    state
+        .report_schedule_repo
+        .retry_execution(id)
+        .await
+        .map(Json)
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to retry execution")),
+            )
+        })
 }

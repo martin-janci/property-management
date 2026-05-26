@@ -59,9 +59,18 @@ impl EquipmentRepository {
     }
 
     /// Get equipment by ID.
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Equipment>, sqlx::Error> {
-        sqlx::query_as("SELECT * FROM equipment WHERE id = $1")
+    /// Fetch a single equipment row scoped to `org_id`.
+    ///
+    /// Returns `None` for both "not found" and "belongs to another tenant" so
+    /// callers cannot enumerate foreign-tenant IDs by status code.
+    pub async fn find_by_id(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+    ) -> Result<Option<Equipment>, sqlx::Error> {
+        sqlx::query_as("SELECT * FROM equipment WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .fetch_optional(&self.pool)
             .await
     }
@@ -100,8 +109,18 @@ impl EquipmentRepository {
         .await
     }
 
-    /// Update equipment.
-    pub async fn update(&self, id: Uuid, data: UpdateEquipment) -> Result<Equipment, sqlx::Error> {
+    /// Update equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal so that a
+    /// caller in org B cannot modify equipment belonging to org A.  The WHERE
+    /// clause `AND organization_id = $14` makes the update a no-op (returns
+    /// `RowNotFound`) when the row exists but belongs to a different tenant.
+    pub async fn update(
+        &self,
+        id: Uuid,
+        org_id: Uuid,
+        data: UpdateEquipment,
+    ) -> Result<Equipment, sqlx::Error> {
         sqlx::query_as(
             r#"
             UPDATE equipment SET
@@ -118,7 +137,7 @@ impl EquipmentRepository {
                 notes = COALESCE($12, notes),
                 metadata = COALESCE($13, metadata),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND organization_id = $14
             RETURNING *
             "#,
         )
@@ -135,22 +154,36 @@ impl EquipmentRepository {
         .bind(data.status)
         .bind(data.notes)
         .bind(data.metadata.map(sqlx::types::Json))
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
     }
 
-    /// Delete equipment.
-    pub async fn delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM equipment WHERE id = $1")
+    /// Delete equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.  The WHERE
+    /// clause `AND organization_id = $2` ensures a caller in org B cannot delete
+    /// equipment belonging to org A (returns `false` / not-found rather than
+    /// deleting the row).
+    pub async fn delete(&self, id: Uuid, org_id: Uuid) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM equipment WHERE id = $1 AND organization_id = $2")
             .bind(id)
+            .bind(org_id)
             .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
     }
 
     /// Create maintenance record.
+    /// Create a maintenance record — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The INSERT is guarded by a sub-select that ensures `data.equipment_id`
+    /// belongs to `org_id`; if the equipment does not exist in that org the
+    /// INSERT produces no row and `sqlx` returns `RowNotFound`.
     pub async fn create_maintenance(
         &self,
+        org_id: Uuid,
         data: CreateMaintenance,
     ) -> Result<EquipmentMaintenance, sqlx::Error> {
         sqlx::query_as(
@@ -158,7 +191,9 @@ impl EquipmentRepository {
             INSERT INTO equipment_maintenance
                 (equipment_id, maintenance_type, description, performed_by, external_vendor,
                  cost, parts_replaced, fault_id, scheduled_date, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+            FROM equipment
+            WHERE id = $1 AND organization_id = $11
             RETURNING *
             "#,
         )
@@ -172,6 +207,7 @@ impl EquipmentRepository {
         .bind(data.fault_id)
         .bind(data.scheduled_date)
         .bind(data.notes)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await
     }
@@ -187,32 +223,46 @@ impl EquipmentRepository {
             .await
     }
 
-    /// List maintenance records for equipment.
+    /// List maintenance records for equipment — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// The JOIN ensures only maintenance records whose parent equipment
+    /// belongs to `org_id` are returned.
     pub async fn list_maintenance(
         &self,
         equipment_id: Uuid,
+        org_id: Uuid,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<EquipmentMaintenance>, sqlx::Error> {
         sqlx::query_as(
             r#"
-            SELECT * FROM equipment_maintenance
-            WHERE equipment_id = $1
-            ORDER BY COALESCE(completed_date, scheduled_date) DESC NULLS LAST
-            LIMIT $2 OFFSET $3
+            SELECT em.* FROM equipment_maintenance em
+            JOIN equipment e ON e.id = em.equipment_id
+            WHERE em.equipment_id = $1 AND e.organization_id = $2
+            ORDER BY COALESCE(em.completed_date, em.scheduled_date) DESC NULLS LAST
+            LIMIT $3 OFFSET $4
             "#,
         )
         .bind(equipment_id)
+        .bind(org_id)
         .bind(limit)
         .bind(offset)
         .fetch_all(&self.pool)
         .await
     }
 
-    /// Update maintenance record.
+    /// Update maintenance record — tenant-scoped.
+    ///
+    /// `org_id` must originate from the verified request principal.
+    /// `equipment_maintenance` has no direct `organization_id` column; the
+    /// tenant boundary is enforced via the parent `equipment` row using an
+    /// `EXISTS` sub-select so a caller in org B cannot mutate a maintenance
+    /// record whose parent equipment belongs to org A.
     pub async fn update_maintenance(
         &self,
         id: Uuid,
+        org_id: Uuid,
         data: UpdateMaintenance,
     ) -> Result<EquipmentMaintenance, sqlx::Error> {
         let result: EquipmentMaintenance = sqlx::query_as(
@@ -229,6 +279,11 @@ impl EquipmentRepository {
                 notes = COALESCE($10, notes),
                 updated_at = NOW()
             WHERE id = $1
+              AND EXISTS (
+                  SELECT 1 FROM equipment e
+                  WHERE e.id = equipment_maintenance.equipment_id
+                    AND e.organization_id = $11
+              )
             RETURNING *
             "#,
         )
@@ -242,6 +297,7 @@ impl EquipmentRepository {
         .bind(data.completed_date)
         .bind(data.status)
         .bind(data.notes)
+        .bind(org_id)
         .fetch_one(&self.pool)
         .await?;
 

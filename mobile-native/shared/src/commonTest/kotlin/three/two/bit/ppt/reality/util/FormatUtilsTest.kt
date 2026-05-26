@@ -12,7 +12,7 @@ class FormatUtilsTest {
         district: String? = null,
         region: String? = null,
         postalCode: String? = null,
-        country: String = "SK"
+        country: String = "SK",
     ): Address =
         Address(
             street = street,
@@ -20,7 +20,7 @@ class FormatUtilsTest {
             district = district,
             region = region,
             postalCode = postalCode,
-            country = country
+            country = country,
         )
 
     // -------- formatPrice (currency symbol prefix) --------
@@ -106,7 +106,7 @@ class FormatUtilsTest {
                 city = "Bratislava",
                 district = "Old Town",
                 postalCode = "81101",
-                region = "BA"
+                region = "BA",
             )
         assertEquals("Old Town, Bratislava, BA", FormatUtils.buildLocationString(addr))
     }
@@ -116,7 +116,7 @@ class FormatUtilsTest {
         val addr = address(street = "Hlavna 1", city = "Bratislava")
         assertEquals(
             "Hlavna 1, Bratislava",
-            FormatUtils.buildLocationString(addr, includeStreet = true)
+            FormatUtils.buildLocationString(addr, includeStreet = true),
         )
     }
 
@@ -125,7 +125,7 @@ class FormatUtilsTest {
         val addr = address(city = "Bratislava", postalCode = "81101")
         assertEquals(
             "81101, Bratislava",
-            FormatUtils.buildLocationString(addr, includePostalCode = true)
+            FormatUtils.buildLocationString(addr, includePostalCode = true),
         )
     }
 
@@ -137,11 +137,11 @@ class FormatUtilsTest {
                 city = "Bratislava",
                 district = "Old Town",
                 region = "BA",
-                postalCode = "81101"
+                postalCode = "81101",
             )
         assertEquals(
             "Hlavna 1, 81101, Old Town, Bratislava, BA",
-            FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true)
+            FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true),
         )
     }
 
@@ -156,7 +156,7 @@ class FormatUtilsTest {
         val addr = address(city = "Bratislava")
         assertEquals(
             "Bratislava",
-            FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true)
+            FormatUtils.buildLocationString(addr, includeStreet = true, includePostalCode = true),
         )
     }
 
@@ -169,7 +169,7 @@ class FormatUtilsTest {
                 street = "Hlavna 1",
                 city = "Bratislava",
                 district = "Old Town",
-                postalCode = "81101"
+                postalCode = "81101",
             )
         assertEquals("Old Town, Bratislava", FormatUtils.buildSimpleLocationString(addr))
     }
@@ -182,11 +182,11 @@ class FormatUtilsTest {
                 city = "Bratislava",
                 district = "Old Town",
                 region = "BA",
-                postalCode = "81101"
+                postalCode = "81101",
             )
         assertEquals(
             "Hlavna 1, 81101, Old Town, Bratislava, BA",
-            FormatUtils.buildDetailedLocationString(addr)
+            FormatUtils.buildDetailedLocationString(addr),
         )
     }
 }

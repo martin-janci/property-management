@@ -82,7 +82,7 @@ async fn cleanup_test_org(pool: &PgPool, org_id: Uuid) {
 mod airbnb_integration {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_airbnb_connection_status_unauthorized(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -98,7 +98,7 @@ mod airbnb_integration {
         response.assert_status(StatusCode::UNAUTHORIZED);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_airbnb_connection_status_with_auth(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -141,7 +141,7 @@ mod airbnb_integration {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_airbnb_sync_requires_connection(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -195,7 +195,7 @@ mod airbnb_integration {
 mod booking_integration {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_booking_connection_status_unauthorized(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -210,7 +210,7 @@ mod booking_integration {
         response.assert_status(StatusCode::UNAUTHORIZED);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_booking_connect_requires_credentials(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -252,7 +252,7 @@ mod booking_integration {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_booking_connect_with_invalid_credentials(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -305,7 +305,7 @@ mod booking_integration {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_booking_disconnect(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -359,7 +359,7 @@ mod booking_integration {
 mod error_handling {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_integration_endpoints_require_org_id(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -390,7 +390,7 @@ mod error_handling {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_integration_endpoints_require_org_membership(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let owner = TestUser::new();
@@ -447,7 +447,7 @@ mod error_handling {
 mod idempotency {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_disconnect_is_idempotent(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();

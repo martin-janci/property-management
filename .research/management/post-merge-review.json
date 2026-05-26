@@ -24,6 +24,111 @@
         {"pr": 495, "issue": 527, "findings": 11, "specialist": "rust-backend", "note": "hardcoded HMAC fallback secret; webhook secret fail-open + non-constant-time compare; no replay protection/key rotation; scheduler uses dev email service + non-RLS raw query + no per-signer idempotency; English-only templates; thin negative-path tests"},
         {"pr": 494, "issue": 528, "findings": 5, "specialist": "rust-backend", "note": "lint coverage gaps (no-underscore/let-_ discards); no self-tests; allowlist UX; #[must_use] alternative; minor shebang/regex hygiene"}
       ]
+    },
+    {
+      "run_at": "2026-05-25T02:12:20Z",
+      "prs_scanned": 15,
+      "clean": [458, 464, 465, 468, 469, 471, 462],
+      "skipped": [],
+      "with_issues": [
+        {
+          "pr": 472,
+          "issue": 480,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "JWT in WS query param logged; token not re-validated after upgrade; ping/timeout loop broken"
+        },
+        {
+          "pr": 470,
+          "issue": 481,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "CRITICAL: AND revoked_at IS NULL removed from refresh-token lookup — revoked tokens reusable; no negative revocation test"
+        },
+        {
+          "pr": 459,
+          "issue": 482,
+          "findings": 3,
+          "specialist": "react-web",
+          "note": "tenants[0].role wrong for multi-tenant users; no ProtectedRoute tests; stale role in storage after refresh"
+        },
+        {
+          "pr": 461,
+          "issue": 483,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "no IDOR regression tests; list-commands discloses existence via 200-empty vs 404"
+        },
+        {
+          "pr": 463,
+          "issue": 484,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "dispatch_to_users is serial — N+1 latency for broadcast; FCM stub marks failed pushes as Sent"
+        },
+        {
+          "pr": 467,
+          "issue": 485,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "window.confirm for revoke (acknowledged tech-debt); no UUID validation on user-ID share input"
+        },
+        {
+          "pr": 466,
+          "issue": 486,
+          "findings": 2,
+          "specialist": "react-web",
+          "note": "getToken() bypasses axios interceptor (no silent refresh); inline IIFE + missing useCallback cause extra renders"
+        },
+        {
+          "pr": 473,
+          "issue": 487,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "no rate-limit tests for TOTP brute-force; mod common re-declared inside nested test module"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "skipped": [433, 435],
+      "with_issues": [],
+      "trigger": "manual /ppt-review-merged invocation",
+      "note": "all in-window PRs already labeled post-merge-reviewed; no-op"
+    },
+    {
+      "run_at": "2026-05-24T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [],
+      "skipped": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 439,
+          "findings": 10,
+          "specialist": "rust-backend",
+          "secondary_specialists": ["db-migration", "react-web"],
+          "note": "P1-05 SSRF still open; P1-04 Debug-format hash unstable; P1-01 ordering+swallowed audit; SERIALIZABLE no-retry; missing IG3 tests; SameSite=Strict gotcha; signatures.rs AppError convention",
+          "duplicates_issue": 438,
+          "trigger": "manual /ppt-review-merged invocation"
+        }
+      ]
+    },
+    {
+      "run_at": "2026-05-23T00:00:00Z",
+      "prs_scanned": 2,
+      "clean": [433],
+      "with_issues": [
+        {
+          "pr": 435,
+          "issue": 438,
+          "findings": 4,
+          "specialist": "rust-backend",
+          "note": "build_refresh_cookie panic on non-ASCII token; WS subprotocol server-side echo absent; vendor-role membership check still TODO; P0-03 rejection path has no integration test"
+        }
+      ]
     }
   ]
 }

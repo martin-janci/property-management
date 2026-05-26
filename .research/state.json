@@ -1,25 +1,51 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-20T10:53:33Z",
-  "last_run_ms": 1779274413000,
-  "last_pr_seen": 343,
-  "last_issue_seen": 160,
-  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "last_run_iso": "2026-05-26T03:12:00Z",
+  "last_run_ms": 600000,
+  "last_pr_seen": 511,
+  "last_issue_seen": 528,
+  "last_commit_sha": "8fa7597f482777f03fdc991cce5bb0067ac906e6",
+  "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12977
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4327
     },
     "backend/servers/api-server/src/routes/organizations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12060
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4018
     },
     "backend/servers/api-server/src/routes/documents.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 3553
+    },
+    "backend/servers/api-server/src/routes/ai.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 10659
+      "last_seen": "2026-05-25",
+      "recent_churn": 3142
+    },
+    "backend/servers/api-server/src/routes/platform_admin.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-25",
+      "recent_churn": 2762
+    },
+    "backend/servers/api-server/src/routes/announcements.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-26",
+      "recent_churn": 167
+    },
+    "frontend/apps/ppt-web/src/App.tsx": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-26",
+      "recent_churn": 318
+    },
+    "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 139
     }
   },
   "seen_signals": [
@@ -29,14 +55,80 @@
     "unchecked-todo-rls-migration-residual",
     "unchecked-todo-integration-marketplace-stubs",
     "unchecked-todo-portfolio-dashboard-stubs",
-    "dep-update-noise-2026-05-20"
+    "dep-update-noise-2026-05-20",
+    "lag-warning-2026-05-23",
+    "dep-update-noise-2026-05-23",
+    "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
+    "code-review-api-core-voice-device-idor",
+    "code-review-api-handlers-dead-dup-auth-bldg-handlers",
+    "code-review-reality-server-inquiry-read-idor",
+    "code-review-ppt-web-ui-role-gate-fail-open",
+    "code-review-ppt-web-ui-untranslated-strings",
+    "code-review-ppt-web-ui-announcer-stale-msg",
+    "code-review-api-core-ssrf-outbound-fetch",
+    "code-review-api-core-equipment-idor",
+    "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
+    "screen-map-drift-pr-464-ppt",
+    "screen-map-drift-pr-460-reality",
+    "unchecked-todo-pr-497",
+    "hotfix-no-test-pr-497",
+    "unchecked-todo-pr-476",
+    "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+    "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+    "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+    "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-api-core-dispute-fsm-no-tests",
+    "closed-not-merged-pr-507",
+    "closed-not-merged-pr-512"
   ],
   "auto_fix_history": {},
+  "review_cursor": {
+    "api-handlers": "2026-05-23",
+    "api-core": "2026-05-25",
+    "reality-server": "2026-05-26",
+    "ppt-web-ui": "2026-05-24",
+    "ppt-web-core": "2026-05-25",
+    "reality-web": null,
+    "mobile-rn": null,
+    "mobile-native-kmp": null
+  },
   "stats": {
-    "runs": 1,
-    "vectors_created": 6,
-    "plans_created": 0,
+    "runs": 8,
+    "vectors_created": 23,
+    "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0
+  },
+  "pm_cursor": {
+    "rotation": [
+      "pm-tech-lead",
+      "pm-backend",
+      "pm-frontend",
+      "pm-qa",
+      "pm-devops",
+      "pm-security",
+      "pm-data",
+      "pm-integration"
+    ],
+    "next_index": 4,
+    "role_last_run": {
+      "pm-tech-lead": "2026-05-23",
+      "pm-backend": "2026-05-24",
+      "pm-frontend": "2026-05-25",
+      "pm-qa": "2026-05-25",
+      "pm-devops": null,
+      "pm-security": null,
+      "pm-data": null,
+      "pm-integration": null
+    }
+  },
+  "coverage_cursor": {
+    "next_index": 3
   }
 }

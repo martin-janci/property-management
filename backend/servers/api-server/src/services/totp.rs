@@ -5,7 +5,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{phc::PasswordHash, PasswordHasher, PasswordVerifier},
     Argon2,
 };
 use rand::RngExt;
@@ -171,9 +171,16 @@ impl TotpService {
     pub fn decrypt_secret(&self, encrypted: &str) -> Result<String, TotpError> {
         let key = self.encryption_key.ok_or(TotpError::MissingEncryptionKey)?;
 
-        // If it doesn't contain ':', assume it's a legacy unencrypted secret
+        // Reject any value that does not match the nonce:ciphertext format.
+        // Previously this branch silently returned the value verbatim as a
+        // "legacy unencrypted secret" — that path is a privilege-escalation
+        // surface (anyone who can write to two_factor_auth.secret controls
+        // the OTP seed). Migration of legacy rows must run through an
+        // explicit, opt-in flag, not through silent acceptance.
         if !encrypted.contains(':') {
-            return Ok(encrypted.to_string());
+            return Err(TotpError::DecryptionError(
+                "TOTP secret is not in encrypted nonce:ciphertext format; legacy plaintext secrets are rejected".to_string(),
+            ));
         }
 
         let parts: Vec<&str> = encrypted.splitn(2, ':').collect();
@@ -343,10 +350,10 @@ impl TotpService {
         // Normalize the code (remove any dashes/spaces, uppercase) to match verification behavior
         let normalized_code = code.replace(['-', ' '], "").to_uppercase();
 
-        let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
+        // password-hash 0.6: `hash_password` generates a random salt internally.
         let hash = argon2
-            .hash_password(normalized_code.as_bytes(), &salt)
+            .hash_password(normalized_code.as_bytes())
             .map_err(|e| TotpError::HashError(e.to_string()))?;
         Ok(hash.to_string())
     }
@@ -493,15 +500,22 @@ mod tests {
     }
 
     #[test]
-    fn test_decrypt_legacy_unencrypted() {
-        // Create service with encryption enabled
+    fn test_decrypt_legacy_unencrypted_is_rejected() {
+        // P0-14: legacy plaintext secrets used to be returned as-is — that
+        // was a privilege-escalation surface (anyone who could write to
+        // two_factor_auth.secret controlled the OTP seed). The new contract
+        // is fail-closed: any value not in nonce:ciphertext format is a
+        // hard error.
         let key: [u8; 32] = [0xaa; 32];
         let service = TotpService::with_encryption_key("Test".to_string(), key);
 
-        // Legacy secret without ':' should be returned as-is
         let legacy_secret = "JBSWY3DPEHPK3PXP";
-        let decrypted = service.decrypt_secret(legacy_secret).unwrap();
-        assert_eq!(decrypted, legacy_secret);
+        let result = service.decrypt_secret(legacy_secret);
+        assert!(
+            matches!(result, Err(TotpError::DecryptionError(_))),
+            "legacy plaintext TOTP secret must be rejected, got {:?}",
+            result
+        );
     }
 
     #[test]

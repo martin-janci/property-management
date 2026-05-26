@@ -32,7 +32,7 @@ use common::TestApp;
 mod basic_health {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_endpoint_returns_ok(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -47,7 +47,7 @@ mod basic_health {
         response.assert_status(StatusCode::OK);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_response_format(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -73,7 +73,7 @@ mod basic_health {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_includes_version(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -94,7 +94,7 @@ mod basic_health {
         }
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_includes_uptime(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -143,7 +143,7 @@ mod readiness {
             .find(|d| d.get("name").and_then(|n| n.as_str()) == Some(name))
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn readiness_returns_ok_with_working_db(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -159,7 +159,7 @@ mod readiness {
         response.assert_status(StatusCode::OK);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn readiness_reports_database_dependency(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -184,7 +184,7 @@ mod readiness {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn readiness_reports_database_latency(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -205,7 +205,7 @@ mod readiness {
         assert!(latency.is_number(), "latency_ms should be numeric");
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn readiness_redis_failure_stays_200_degraded(pool: PgPool) {
         // Per the module docstring, Redis is non-critical: any Redis-related
         // status (including unconfigured/unhealthy) must NOT 503. The test
@@ -244,7 +244,7 @@ mod response_time {
     use super::*;
     use std::time::Instant;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_responds_quickly(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -268,7 +268,7 @@ mod response_time {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_idempotent(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -295,7 +295,7 @@ mod content_type {
     use super::*;
     use axum::http::header;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_returns_json(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -321,7 +321,7 @@ mod content_type {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_response_is_valid_json(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -346,7 +346,7 @@ mod content_type {
 mod http_methods {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_accepts_get(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -361,7 +361,7 @@ mod http_methods {
         response.assert_status(StatusCode::OK);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_rejects_post(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -381,7 +381,7 @@ mod http_methods {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_health_handles_head_request(pool: PgPool) {
         let app = TestApp::new(pool).await;
 

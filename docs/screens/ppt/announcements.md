@@ -7,9 +7,9 @@ sitemapRefs:
 implementations:
   ppt-web:
     component: AnnouncementsPage
-    buildStatus: planned
+    buildStatus: in-progress
     redesignStatus: in-progress
-    apiStatus: stub
+    apiStatus: partial
   mobile:
     component: AnnouncementsScreen
     buildStatus: shipped
@@ -17,6 +17,13 @@ implementations:
     apiStatus: partial
 endpoints:
   - announcements_list
+  - announcements_get
+  - announcements_mark_read
+  - announcements_acknowledge
+  - announcements_get_acknowledgments
+  - announcements_comments_list
+  - announcements_comments_create
+  - announcements_comments_delete
 epics:
   - Epic-6
 relatedScreens:
@@ -112,6 +119,16 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-25 — agent: gap-6-4-pinned-announcements-ui — Story 6.4: added PinnedAnnouncementsBand component + CSS; wired usePinnedAnnouncements (pinned=true) query in AnnouncementsPageRoute (App.tsx); propagated pinnedAnnouncements prop through AnnouncementsPage → AnnouncementList; mobile AnnouncementsScreen adds pinned-band with separate /api/v1/announcements?pinned=true query
+
+- 2026-05-25 — agent: gap-6-3 review fixes — added i18n to AnnouncementComments.tsx (useTranslation + 12 keys); registered 18 toast keys + comments sub-object in en.json; fixed isManager to include technical_manager + property_manager; added announcements_comments_list/create/delete to sitemap + screen-map
+
+- 2026-05-24 — agent: gap-6-3-comments-web-ui — Story 6.3: added AnnouncementComments component + CSS; added useAnnouncementComments/useCreateAnnouncementComment/useDeleteAnnouncementComment standalone hooks to @ppt/api-client; wired comment hooks in ViewAnnouncementPageInner with manager-role delete affordance; ppt-web buildStatus planned→in-progress
+
+- 2026-05-24 — agent: gap-6-2-announcement-web-ui — Story 6.2: added useAnnouncement/useMarkReadAnnouncement/useAcknowledgeAnnouncement/useAnnouncementAcknowledgmentStats standalone hooks; replaced ViewAnnouncementPageRoute mock stub with real wiring (ViewAnnouncementPageInner); added acknowledgmentStats prop + AcknowledgmentStatsPanel; apiStatus stub→partial
+
+- 2026-05-24 — agent: gap-79-1 — wired AnnouncementsPage to useAnnouncements+useDeleteAnnouncement+usePublishAnnouncement+useArchiveAnnouncement+usePinAnnouncement hooks; ppt-web.apiStatus stub→partial; auth header fix applied (Authorization: Bearer from getToken())
 
 - 2026-05-09 (later) — agent: integrated Batch D (pages/ppt-announcements.html — list now designed: 4 artboards loaded-2-selected-1-pinned/empty/loading-8/error); replaced design list-as-TBD with real list specs; updated states; attached new pages/ppt-announcements.html as primary designSource; mobile reference updated to MobAnnouncementsScreen + MobAnnouncementDetailScreen
 - 2026-05-09 — agent: design analyzed (ui_kits/ppt-web/announcement-detail.html — DETAIL only; list pending + ui_kits/mobile/screens.jsx for mobile list); flipped ppt-web from n/a → planned + redesignStatus in-progress (drift: route not in sitemap); flipped mobile redesignStatus → in-progress; attached 2 designSources (with note on detail-only coverage); populated functionality checklist (5 sections + 5-state pill set), states, design-specific notes; declared 4 sharedComponents; added 1 relatedScreen
