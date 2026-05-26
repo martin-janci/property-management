@@ -826,7 +826,8 @@ impl Scheduler {
             "Processing signature requests approaching expiry for reminders"
         );
 
-        let provider = LightweightProvider::from_env();
+        let provider = LightweightProvider::from_env()
+            .expect("ESIGN_TOKEN_SECRET must be configured (validated at startup)");
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
