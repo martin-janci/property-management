@@ -1644,14 +1644,14 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T13:30:00Z",
-      "last_updated": "2026-05-26T20:08:57Z",
+      "last_updated": "2026-05-26T20:19:18Z",
       "status_changed_at": "2026-05-26T13:45:00Z",
       "pr_number": 555,
       "pr_url": "https://github.com/martin-janci/property-management/pull/555",
       "merged_at": null,
       "implementer_summary": "pr=555 status=done specialist=react-web note=MediationWorkspacePage 3-panel layout (sidebar/tabbed/header rail); MediationChatThread; MediationResolutionForm; App.tsx DisputeMediationRoute wired; lazyRoutes updated; dispute-detail screen-map agent log entry added",
-      "reviewer_summary": "verdict=approve note=both prior blocking issues fixed (biome-ignore correctly removed \u2014 noAlert rule not active in biome.json; formatTime now uses Intl.RelativeTimeFormat with locale param); all 5 CI checks green; no raw fetch, no IDOR, no auth bypass; all 6 locale files have mediation keys; dialogs have role/aria attributes; screen-map updated correctly",
-      "last_reviewed_oid": "81e428c02a71f2545c3765b8411aaa1f6afb9b3e",
+      "reviewer_summary": "verdict=approve note=New commit (464fca1) after prior approval (81e428c0) adds: (1) oauth.rs security fix (AND revoked_at IS NULL on refresh token auth), (2) inquiry_mark_read_idor_tests.rs migrated from dropped portal_users to users table, (3) cosmetic Biome reformatting. All 6 prior blocking frontend issues remain resolved. React-web conventions/i18n(83 keys\u00d76 locales)/auth-gating/a11y/screen-map all correct. Posted as COMMENT (GitHub blocked self-APPROVE).",
+      "last_reviewed_oid": "464fca146ec3982cd0db82dd8567bb7822592ec8",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -1696,5 +1696,5 @@
       "rebase_attempts": null
     }
   ],
-  "assignments.generated": "2026-05-26T20:08:57Z"
+  "assignments.generated": "2026-05-26T20:19:18Z"
 }
