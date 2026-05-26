@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-25T14:02:01Z",
-  "last_run_ms": 300000,
-  "last_pr_seen": 502,
-  "last_issue_seen": 487,
-  "last_commit_sha": "a06e243cc8f01dcacedccc8f0846fd1251edb98d",
+  "last_run_iso": "2026-05-26T03:12:00Z",
+  "last_run_ms": 600000,
+  "last_pr_seen": 511,
+  "last_issue_seen": 528,
+  "last_commit_sha": "8fa7597f482777f03fdc991cce5bb0067ac906e6",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -33,14 +33,19 @@
       "recent_churn": 2762
     },
     "backend/servers/api-server/src/routes/announcements.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-25",
-      "recent_churn": 2722
+      "runs_seen": 2,
+      "last_seen": "2026-05-26",
+      "recent_churn": 167
     },
     "frontend/apps/ppt-web/src/App.tsx": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-26",
+      "recent_churn": 318
+    },
+    "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx": {
       "runs_seen": 1,
-      "last_seen": "2026-05-25",
-      "recent_churn": 367
+      "last_seen": "2026-05-26",
+      "recent_churn": 139
     }
   },
   "seen_signals": [
@@ -73,13 +78,20 @@
     "hotfix-no-test-pr-497",
     "unchecked-todo-pr-476",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
-    "code-review-ppt-web-core-hardcoded-dispute-strings"
+    "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+    "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+    "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+    "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "code-review-api-core-dispute-fsm-no-tests",
+    "closed-not-merged-pr-507",
+    "closed-not-merged-pr-512"
   ],
   "auto_fix_history": {},
   "review_cursor": {
     "api-handlers": "2026-05-23",
     "api-core": "2026-05-25",
-    "reality-server": "2026-05-23",
+    "reality-server": "2026-05-26",
     "ppt-web-ui": "2026-05-24",
     "ppt-web-core": "2026-05-25",
     "reality-web": null,
@@ -87,9 +99,9 @@
     "mobile-native-kmp": null
   },
   "stats": {
-    "runs": 7,
-    "vectors_created": 21,
-    "plans_created": 5,
+    "runs": 8,
+    "vectors_created": 23,
+    "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0
   },

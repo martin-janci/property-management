@@ -5,10 +5,17 @@ import shared
 ///
 /// Displays user's saved favorite listings.
 ///
+/// Uses `FavoritesService` as the authoritative source so that a listing
+/// favorited or un-favorited in `ListingDetailView` is immediately reflected
+/// here without a pull-to-refresh. When the service's `favoriteIds` set
+/// shrinks (e.g. the user un-hearts a listing in the detail view), the local
+/// `favorites` array is pruned automatically via `.onChange`.
+///
 /// Epic 82 - Story 82.4: Listing Detail and Favorites
 struct FavoritesView: View {
     @Environment(NavigationCoordinator.self) private var coordinator
     @Environment(AuthManager.self) private var authManager
+    @Environment(FavoritesService.self) private var favoritesService
 
     @State private var favorites: [ListingPreview] = []
     @State private var isLoading = true
@@ -39,6 +46,14 @@ struct FavoritesView: View {
         .task {
             if authManager.isAuthenticated {
                 await loadFavorites()
+            }
+        }
+        // Cross-view sync: when FavoritesService removes an ID (e.g. toggled off
+        // from ListingDetailView), prune the local display list immediately.
+        .onChange(of: favoritesService.favoriteIds) { _, newIds in
+            let pruned = favorites.filter { newIds.contains($0.id) }
+            if pruned.count != favorites.count {
+                favorites = pruned
             }
         }
     }
@@ -162,14 +177,17 @@ struct FavoritesView: View {
     }
 
     private func removeFavorite(_ id: String) async {
-        // Optimistic update
+        // Optimistic update on the display list.
         favorites.removeAll { $0.id == id }
 
-        // Persist removal via KMP
-        let result = await favoritesRepository.removeFavorite(listingId: id)
+        // Delegate to FavoritesService so that the heart icon in
+        // ListingDetailView (and any other observer) updates in sync.
+        await favoritesService.remove(listingId: id)
 
-        if result.exceptionOrNull() != nil {
-            // Reload on error to restore state
+        // If the service reverted its optimistic update due to a server error,
+        // the .onChange above will NOT add the item back to the display list
+        // (we lost the full ListingPreview model). Reload to restore it.
+        if favoritesService.isFavorite(listingId: id) {
             await loadFavorites()
         }
     }
@@ -263,4 +281,5 @@ private struct FavoriteListingCard: View {
     }
     .environment(NavigationCoordinator())
     .environment(AuthManager())
+    .environment(FavoritesService())
 }
