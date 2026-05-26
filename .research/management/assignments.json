@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T10:21:38Z",
+  "generated": "2026-05-26T11:18:37Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1598,15 +1598,15 @@
     {
       "task_id": "gap-7a-4-document-download-api",
       "branch": "auto-impl/gap-7a-4-document-download-api",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-26T10:07:49Z",
-      "last_updated": "2026-05-26T10:21:38Z",
-      "status_changed_at": "2026-05-26T10:07:49Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T11:18:37Z",
+      "status_changed_at": "2026-05-26T11:18:37Z",
+      "pr_number": 550,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/550",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=550 status=done specialist=rust-backend note=fixed from_env bug; added generate_preview_url+inline presigning; cargo check+9 tests clean",
       "reviewer_summary": null
     },
     {
