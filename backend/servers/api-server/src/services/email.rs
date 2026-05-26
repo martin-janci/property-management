@@ -883,7 +883,61 @@ impl EmailService {
             .replace('\'', "&#x27;")
     }
 
+    // ------------------------------------------------------------------
+    // Signature email subjects (i18n).
+    //
+    // Subject lines are what users see in their inbox preview, so they're
+    // worth localising even before the body paragraphs are translated.
+    // The body templates still emit English copy (tracked separately as a
+    // #527 follow-up).
+    // ------------------------------------------------------------------
+
+    fn signature_request_subject(document_name: &str, locale: &Locale) -> String {
+        match locale {
+            Locale::Slovak => format!("Žiadosť o podpis: „{}\"", document_name),
+            Locale::Czech => format!("Žádost o podpis: „{}\"", document_name),
+            Locale::German => {
+                format!("Unterschrift erforderlich: „{}\"", document_name)
+            }
+            Locale::English => format!("Action required: Please sign \"{}\"", document_name),
+        }
+    }
+
+    fn signature_reminder_subject(document_name: &str, locale: &Locale) -> String {
+        match locale {
+            Locale::Slovak => format!("Pripomienka: podpíšte „{}\"", document_name),
+            Locale::Czech => format!("Připomínka: podepište „{}\"", document_name),
+            Locale::German => format!("Erinnerung: Unterschrift für „{}\"", document_name),
+            Locale::English => format!(
+                "Reminder: Your signature is still needed on \"{}\"",
+                document_name
+            ),
+        }
+    }
+
+    fn signature_declined_subject(document_name: &str, locale: &Locale) -> String {
+        match locale {
+            Locale::Slovak => format!("Podpis zamietnutý pre „{}\"", document_name),
+            Locale::Czech => format!("Podpis odmítnut pro „{}\"", document_name),
+            Locale::German => format!("Unterschrift abgelehnt für „{}\"", document_name),
+            Locale::English => format!("Signature declined for \"{}\"", document_name),
+        }
+    }
+
+    fn signature_completed_subject(document_name: &str, locale: &Locale) -> String {
+        match locale {
+            Locale::Slovak => format!("Všetky podpisy zaznamenané pre „{}\"", document_name),
+            Locale::Czech => format!("Všechny podpisy získány pro „{}\"", document_name),
+            Locale::German => format!("Alle Unterschriften vorhanden für „{}\"", document_name),
+            Locale::English => format!("All signatures collected for \"{}\"", document_name),
+        }
+    }
+
     /// Send signature request invitation email to a signer.
+    ///
+    /// `locale` controls the subject line — body paragraphs remain English
+    /// today (#527 follow-up: translate bodies once locale flows from the
+    /// signer/org record rather than always being `English`).
     #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_request_email(
         &self,
@@ -894,8 +948,9 @@ impl EmailService {
         signing_url: &str,
         message: Option<&str>,
         expires_at: Option<&str>,
+        locale: &Locale,
     ) -> Result<(), EmailError> {
-        let subject = format!("Action required: Please sign \"{}\"", document_name);
+        let subject = Self::signature_request_subject(document_name, locale);
         let signer_name_h = Self::html_escape(signer_name);
         let requester_name_h = Self::html_escape(requester_name);
         let document_name_h = Self::html_escape(document_name);
@@ -947,6 +1002,9 @@ impl EmailService {
     }
 
     /// Send a signature reminder email to a pending signer.
+    ///
+    /// See [`send_signature_request_email`] for the locale-handling caveat.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_reminder_email(
         &self,
         to: &str,
@@ -954,11 +1012,9 @@ impl EmailService {
         document_name: &str,
         signing_url: &str,
         expires_at: Option<&str>,
+        locale: &Locale,
     ) -> Result<(), EmailError> {
-        let subject = format!(
-            "Reminder: Your signature is still needed on \"{}\"",
-            document_name
-        );
+        let subject = Self::signature_reminder_subject(document_name, locale);
         let signer_name_h = Self::html_escape(signer_name);
         let document_name_h = Self::html_escape(document_name);
         let signing_url_h = Self::html_escape(signing_url);
@@ -1005,8 +1061,9 @@ impl EmailService {
         signer_email: &str,
         decline_reason: Option<&str>,
         manage_url: &str,
+        locale: &Locale,
     ) -> Result<(), EmailError> {
-        let subject = format!("Signature declined for \"{}\"", document_name);
+        let subject = Self::signature_declined_subject(document_name, locale);
         let requester_name_h = Self::html_escape(requester_name);
         let signer_name_h = Self::html_escape(signer_name);
         let signer_email_h = Self::html_escape(signer_email);
@@ -1046,6 +1103,7 @@ impl EmailService {
     }
 
     /// Send a completion notification when all signers have signed.
+    #[allow(clippy::too_many_arguments)]
     pub async fn send_signature_completed_email(
         &self,
         to: &str,
@@ -1053,8 +1111,9 @@ impl EmailService {
         document_name: &str,
         signers_count: usize,
         manage_url: &str,
+        locale: &Locale,
     ) -> Result<(), EmailError> {
-        let subject = format!("All signatures collected for \"{}\"", document_name);
+        let subject = Self::signature_completed_subject(document_name, locale);
         let requester_name_h = Self::html_escape(requester_name);
         let document_name_h = Self::html_escape(document_name);
         let manage_url_h = Self::html_escape(manage_url);

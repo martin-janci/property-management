@@ -193,6 +193,9 @@ pub async fn create_signature_request(
                 )
             });
 
+        // TODO(#527): per-signer locale (lookup by email → users.locale, or
+        // fall back to org default). For now subjects come out English.
+        let signer_locale = Locale::English;
         if let Err(e) = state
             .email_service
             .send_signature_request_email(
@@ -203,6 +206,7 @@ pub async fn create_signature_request(
                 &sign_url,
                 signature_request.message.as_deref(),
                 expires_str.as_deref(),
+                &signer_locale,
             )
             .await
         {
@@ -404,6 +408,8 @@ pub async fn send_reminder(
                 )
             });
 
+        // TODO(#527): per-signer locale lookup.
+        let signer_locale = Locale::English;
         if let Err(e) = state
             .email_service
             .send_signature_reminder_email(
@@ -412,6 +418,7 @@ pub async fn send_reminder(
                 &doc_label,
                 &sign_url,
                 expires_str.as_deref(),
+                &signer_locale,
             )
             .await
         {
@@ -545,6 +552,43 @@ pub async fn cancel_signature_request(
     }))
 }
 
+/// Result of the webhook-secret check. The webhook handler maps each variant
+/// to an HTTP error response; tests assert against the variant directly so
+/// they don't have to spin up an axum router or AppState.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum WebhookSecretCheck {
+    /// Header matched the configured secret.
+    Ok,
+    /// Server side has no secret configured. Maps to **503**.
+    NotConfigured,
+    /// Header missing or mismatched. Maps to **401**.
+    Mismatch,
+}
+
+/// Pure-function form of the webhook-secret check used by [`handle_webhook`].
+///
+/// Kept as a free function so the unit tests can exercise every branch
+/// without constructing an `AppState` / live DB pool — the original inline
+/// check was only reachable via a full HTTP test harness.
+pub(crate) fn check_webhook_secret(
+    headers: &HeaderMap,
+    expected_secret: Option<&str>,
+) -> WebhookSecretCheck {
+    let expected = expected_secret.unwrap_or("");
+    if expected.is_empty() {
+        return WebhookSecretCheck::NotConfigured;
+    }
+    let provided = headers
+        .get("x-webhook-secret")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+    if bool::from(provided.as_bytes().ct_eq(expected.as_bytes())) {
+        WebhookSecretCheck::Ok
+    } else {
+        WebhookSecretCheck::Mismatch
+    }
+}
+
 /// Handle webhook from e-signature provider.
 pub async fn handle_webhook(
     State(state): State<AppState>,
@@ -561,30 +605,28 @@ pub async fn handle_webhook(
     // post-start — still better to refuse than to forge-complete signature
     // requests.
     let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
-    if expected_secret.is_empty() {
-        error!(
-            provider = %provider,
-            "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
-        );
-        return Err((
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ErrorResponse::new(
-                "WEBHOOK_NOT_CONFIGURED",
-                "Webhook receiver is not configured",
-            )),
-        ));
-    }
-    let provided = headers
-        .get("x-webhook-secret")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    // Constant-time compare to avoid leaking the secret via timing.
-    if !bool::from(provided.as_bytes().ct_eq(expected_secret.as_bytes())) {
-        warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
-        ));
+    match check_webhook_secret(&headers, Some(&expected_secret)) {
+        WebhookSecretCheck::Ok => {}
+        WebhookSecretCheck::NotConfigured => {
+            error!(
+                provider = %provider,
+                "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
+            );
+            return Err((
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "WEBHOOK_NOT_CONFIGURED",
+                    "Webhook receiver is not configured",
+                )),
+            ));
+        }
+        WebhookSecretCheck::Mismatch => {
+            warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
+            ));
+        }
     }
 
     info!(
@@ -665,6 +707,8 @@ pub async fn handle_webhook(
                 .await
             {
                 Ok(Some(requester)) => {
+                    // Requester has a user record, so use their stored locale.
+                    let requester_locale = requester.locale_enum();
                     if let Err(e) = state
                         .email_service
                         .send_signature_declined_email(
@@ -675,6 +719,7 @@ pub async fn handle_webhook(
                             signer_email,
                             event.decline_reason.as_deref(),
                             &manage_url,
+                            &requester_locale,
                         )
                         .await
                     {
@@ -745,6 +790,7 @@ pub async fn handle_webhook(
         {
             Ok(Some(requester)) => {
                 let signers_count = updated_request.signers.len();
+                let requester_locale = requester.locale_enum();
                 if let Err(e) = state
                     .email_service
                     .send_signature_completed_email(
@@ -753,6 +799,7 @@ pub async fn handle_webhook(
                         signature_request.subject.as_deref().unwrap_or("Document"),
                         signers_count,
                         &manage_url,
+                        &requester_locale,
                     )
                     .await
                 {
@@ -1010,4 +1057,78 @@ pub async fn list_signature_requests_for_doc(
     Path(document_id): Path<Uuid>,
 ) -> Result<Json<ListSignatureRequestsResponse>, (StatusCode, Json<ErrorResponse>)> {
     list_signature_requests(State(state), rls, Path(document_id)).await
+}
+
+// ---------------------------------------------------------------------------
+// Unit tests — webhook secret check (#527 Bucket D, finding #11).
+//
+// Kept as pure-function tests against `check_webhook_secret` so they don't
+// require AppState / a DB pool. Cover all three branches: 503 when the
+// secret is unset, 401 when the header is missing / mismatched, and Ok on
+// a clean match.
+// ---------------------------------------------------------------------------
+#[cfg(test)]
+mod webhook_secret_tests {
+    use super::{check_webhook_secret, WebhookSecretCheck};
+    use axum::http::HeaderMap;
+
+    fn hdrs(value: Option<&str>) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        if let Some(v) = value {
+            h.insert("x-webhook-secret", v.parse().unwrap());
+        }
+        h
+    }
+
+    #[test]
+    fn missing_env_returns_not_configured() {
+        let h = hdrs(Some("anything"));
+        assert_eq!(
+            check_webhook_secret(&h, None),
+            WebhookSecretCheck::NotConfigured
+        );
+        assert_eq!(
+            check_webhook_secret(&h, Some("")),
+            WebhookSecretCheck::NotConfigured
+        );
+    }
+
+    #[test]
+    fn missing_header_returns_mismatch() {
+        let h = hdrs(None);
+        assert_eq!(
+            check_webhook_secret(&h, Some("real-secret")),
+            WebhookSecretCheck::Mismatch
+        );
+    }
+
+    #[test]
+    fn wrong_header_returns_mismatch() {
+        let h = hdrs(Some("not-the-real-secret"));
+        assert_eq!(
+            check_webhook_secret(&h, Some("real-secret")),
+            WebhookSecretCheck::Mismatch
+        );
+    }
+
+    #[test]
+    fn matching_header_returns_ok() {
+        let h = hdrs(Some("real-secret"));
+        assert_eq!(
+            check_webhook_secret(&h, Some("real-secret")),
+            WebhookSecretCheck::Ok
+        );
+    }
+
+    #[test]
+    fn different_lengths_do_not_short_circuit_to_ok() {
+        // The `subtle` ConstantTimeEq impl on byte slices returns Choice(0)
+        // for unequal lengths — never Ok. This guards against a future
+        // accidental refactor that swaps to a length-prefixed compare.
+        let h = hdrs(Some("short"));
+        assert_eq!(
+            check_webhook_secret(&h, Some("a-much-longer-real-secret")),
+            WebhookSecretCheck::Mismatch
+        );
+    }
 }

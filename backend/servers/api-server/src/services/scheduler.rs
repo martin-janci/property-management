@@ -3,6 +3,7 @@
 //! Handles scheduled announcements publishing, vote management, reminders,
 //! and session cleanup.
 
+use db::models::Locale;
 use db::repositories::{
     AnnouncementRepository, MeterRepository, SessionRepository, SignatureRequestRepository,
     UnitResidentRepository, VoteRepository,
@@ -879,6 +880,10 @@ impl Scheduler {
                         )
                     });
 
+                // TODO(#527): per-signer locale lookup (users.locale or
+                // organization default). For now scheduler reminders go out
+                // in English.
+                let signer_locale = Locale::English;
                 match self
                     .email_service
                     .send_signature_reminder_email(
@@ -887,6 +892,7 @@ impl Scheduler {
                         &doc_label,
                         &sign_url,
                         expires_str.as_deref(),
+                        &signer_locale,
                     )
                     .await
                 {
