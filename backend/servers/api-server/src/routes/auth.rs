@@ -853,17 +853,34 @@ pub async fn login(
 
 /// Build the standard `refresh_token` cookie attributes. Centralized so
 /// login, refresh, and logout all agree on Path/SameSite/Secure flags.
+///
+/// Issue #439 P0-12: SameSite is `Lax` (not `Strict`) by default so the
+/// cookie survives OAuth/SSO redirect-back top-level navigations and
+/// future WS-auth subprotocol handshakes. Set
+/// `PPT_AUTH_COOKIE_SAMESITE=Strict` to opt back into Strict when running
+/// without SSO. The refresh endpoint is POST-only, so Lax still defends
+/// CSRF for the usual cross-origin GET-and-redirect class of attacks;
+/// state-changing routes are additionally guarded by the CSRF token
+/// middleware where applicable.
+///
+/// `Domain` is optional and read from `PPT_AUTH_COOKIE_DOMAIN`; omit when
+/// unset (back-compat — the cookie stays host-bound to the API origin).
 fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> String {
-    // Path=/api/v1/auth — only the auth endpoints actually need this
-    // cookie; scoping reduces accidental cross-route leakage.
-    // SameSite=Strict — the refresh endpoint is same-origin POST only,
-    // so Strict gives us CSRF protection at no UX cost.
-    // Secure — non-negotiable.
-    // HttpOnly — non-negotiable; the point of moving off localStorage.
-    format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age={}",
-        value, max_age_seconds
-    )
+    let same_site = std::env::var("PPT_AUTH_COOKIE_SAMESITE").unwrap_or_else(|_| "Lax".into());
+    let same_site = match same_site.as_str() {
+        "Strict" | "Lax" | "None" => same_site,
+        _ => "Lax".into(),
+    };
+    let mut cookie = format!(
+        "refresh_token={value}; HttpOnly; Secure; SameSite={same_site}; Path=/api/v1/auth; Max-Age={max_age_seconds}"
+    );
+    if let Ok(domain) = std::env::var("PPT_AUTH_COOKIE_DOMAIN") {
+        if !domain.trim().is_empty() {
+            cookie.push_str("; Domain=");
+            cookie.push_str(domain.trim());
+        }
+    }
+    cookie
 }
 
 /// Parse the `refresh_token` cookie out of the `Cookie:` header. Returns
@@ -968,20 +985,11 @@ pub async fn refresh_token(
                 token_id = %token.id,
                 "Revoked refresh token replayed; invalidating all user refresh tokens"
             );
-            // Best-effort fan-out revocation. Even if this fails the
-            // caller still gets 401, but we want the security log row.
+            // Issue #439 P1-01: write the audit row FIRST so a downstream
+            // revoke failure cannot rob us of the security signal. Mirror
+            // the P1-09 pattern: surface audit-write errors via
+            // `tracing::warn!` instead of `let _ = ...`.
             if let Err(err) = state
-                .session_repo
-                .revoke_all_user_tokens(user_id_for_log, None)
-                .await
-            {
-                tracing::error!(
-                    error = %err,
-                    user_id = %user_id_for_log,
-                    "Failed to fan-out-revoke after refresh-token replay"
-                );
-            }
-            let _ = state
                 .audit_log_repo
                 .create(CreateAuditLog {
                     user_id: Some(user_id_for_log),
@@ -998,7 +1006,27 @@ pub async fn refresh_token(
                     ip_address: None,
                     user_agent: None,
                 })
-                .await;
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    user_id = %user_id_for_log,
+                    "audit row missed for refresh-replay"
+                );
+            }
+            // Best-effort fan-out revocation. Even if this fails the
+            // caller still gets 401, but we want the security log row.
+            if let Err(err) = state
+                .session_repo
+                .revoke_all_user_tokens(user_id_for_log, None)
+                .await
+            {
+                tracing::error!(
+                    error = %err,
+                    user_id = %user_id_for_log,
+                    "Failed to fan-out-revoke after refresh-token replay"
+                );
+            }
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ErrorResponse::new(

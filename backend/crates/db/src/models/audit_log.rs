@@ -70,6 +70,64 @@ pub enum AuditAction {
     RefreshTokenReplayDetected,
 }
 
+impl AuditAction {
+    /// Stable canonical name used in the audit-chain integrity hash.
+    ///
+    /// `format!("{:?}", action)` is **not** a stable serialization — it
+    /// changes when variants are renamed, reordered, or when the Rust
+    /// toolchain bumps its Debug formatting rules — which would silently
+    /// break the integrity chain for every row written after the change
+    /// (issue #439 P1-04). This method exhausts the enum so a future
+    /// variant addition is a compile error rather than a silent drift.
+    ///
+    /// The returned strings deliberately match the historical
+    /// `format!("{:?}", action)` output (PascalCase) so existing rows
+    /// keep their integrity hashes — this fix decouples the hash from
+    /// the `Debug` derive WITHOUT breaking the existing chain.
+    pub fn canonical_name(&self) -> &'static str {
+        match self {
+            Self::Login => "Login",
+            Self::Logout => "Logout",
+            Self::LoginFailed => "LoginFailed",
+            Self::PasswordChanged => "PasswordChanged",
+            Self::PasswordResetRequested => "PasswordResetRequested",
+            Self::PasswordResetCompleted => "PasswordResetCompleted",
+            Self::MfaEnabled => "MfaEnabled",
+            Self::MfaDisabled => "MfaDisabled",
+            Self::MfaBackupCodeUsed => "MfaBackupCodeUsed",
+            Self::MfaBackupCodesRegenerated => "MfaBackupCodesRegenerated",
+            Self::AccountCreated => "AccountCreated",
+            Self::AccountUpdated => "AccountUpdated",
+            Self::AccountSuspended => "AccountSuspended",
+            Self::AccountReactivated => "AccountReactivated",
+            Self::AccountDeleted => "AccountDeleted",
+            Self::DataExportRequested => "DataExportRequested",
+            Self::DataExportDownloaded => "DataExportDownloaded",
+            Self::DataDeletionRequested => "DataDeletionRequested",
+            Self::DataDeletionCancelled => "DataDeletionCancelled",
+            Self::DataDeletionCompleted => "DataDeletionCompleted",
+            Self::PrivacySettingsUpdated => "PrivacySettingsUpdated",
+            Self::RoleAssigned => "RoleAssigned",
+            Self::RoleRemoved => "RoleRemoved",
+            Self::PermissionsChanged => "PermissionsChanged",
+            Self::OrgMemberAdded => "OrgMemberAdded",
+            Self::OrgMemberRemoved => "OrgMemberRemoved",
+            Self::OrgSettingsChanged => "OrgSettingsChanged",
+            Self::ResourceCreated => "ResourceCreated",
+            Self::ResourceUpdated => "ResourceUpdated",
+            Self::ResourceDeleted => "ResourceDeleted",
+            Self::ResourceAccessed => "ResourceAccessed",
+            Self::OAuthAuthorize => "OAuthAuthorize",
+            Self::OAuthRevoke => "OAuthRevoke",
+            Self::OAuthClientCreate => "OAuthClientCreate",
+            Self::OAuthClientRevoke => "OAuthClientRevoke",
+            Self::OAuthClientSecretRegenerate => "OAuthClientSecretRegenerate",
+            Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
+            Self::RefreshTokenReplayDetected => "RefreshTokenReplayDetected",
+        }
+    }
+}
+
 /// An audit log entry.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AuditLog {
