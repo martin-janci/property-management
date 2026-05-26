@@ -6,7 +6,7 @@ import {
   useEscalateDispute,
   useResolveDispute,
 } from '@ppt/api-client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MediationChatThread } from '../components/MediationChatThread';
 import { MediationResolutionForm } from '../components/MediationResolutionForm';
@@ -85,7 +85,11 @@ function TimelineView({ disputeId }: { disputeId: string }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+        <div
+          role="status"
+          aria-label={t('common.loading')}
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"
+        />
       </div>
     );
   }
@@ -148,6 +152,10 @@ interface EscalateDialogProps {
 function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogProps) {
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
@@ -170,6 +178,7 @@ function EscalateDialog({ onConfirm, onCancel, isSubmitting }: EscalateDialogPro
             {t('disputes.mediation.reasonForEscalation')} <span className="text-red-500">*</span>
           </label>
           <textarea
+            ref={textareaRef}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={4}
@@ -214,6 +223,10 @@ interface AssignMediatorDialogProps {
 function AssignMediatorDialog({ onConfirm, onCancel, isSubmitting }: AssignMediatorDialogProps) {
   const { t } = useTranslation();
   const [mediatorId, setMediatorId] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
@@ -236,6 +249,7 @@ function AssignMediatorDialog({ onConfirm, onCancel, isSubmitting }: AssignMedia
             {t('disputes.mediation.mediatorUserId')} <span className="text-red-500">*</span>
           </label>
           <input
+            ref={inputRef}
             type="text"
             value={mediatorId}
             onChange={(e) => setMediatorId(e.target.value)}
@@ -355,7 +369,11 @@ export function MediationWorkspacePage({
   if (disputeLoading && !dispute) {
     return (
       <div className="flex justify-center py-16">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600" />
+        <div
+          role="status"
+          aria-label={t('common.loading')}
+          className="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600"
+        />
       </div>
     );
   }

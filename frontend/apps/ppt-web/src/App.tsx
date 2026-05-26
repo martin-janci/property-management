@@ -1142,6 +1142,12 @@ function DisputeMediationRoute() {
     );
   }
 
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
+
+  const organizationId = user.organizationId;
+
   const isManager =
     user?.role === 'manager' ||
     user?.role === 'org_admin' ||
@@ -1156,7 +1162,7 @@ function DisputeMediationRoute() {
       currentUserName={
         user ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email : undefined
       }
-      organizationId={user?.organizationId ?? ''}
+      organizationId={organizationId}
       isManager={isManager}
       onBack={() => navigate(`/disputes/${disputeId}`)}
       onToastSuccess={(title, message) =>

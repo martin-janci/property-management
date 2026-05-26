@@ -56,7 +56,11 @@ export function MediationChatThread({
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
+        <div
+          role="status"
+          aria-label={t('common.loading')}
+          className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"
+        />
       </div>
     );
   }
