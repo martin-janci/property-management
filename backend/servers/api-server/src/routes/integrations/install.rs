@@ -9,9 +9,10 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
 use integrations::{
     AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
-    PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
+    IntegrationCrypto, PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
 };
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
@@ -229,6 +230,39 @@ pub struct ConnectionIdPath {
     pub connection_id: Uuid,
 }
 
+// ==================== Gap 83-1 Types ====================
+
+/// Direct-connect request (supply pre-obtained tokens instead of OAuth redirect).
+///
+/// The `org_id` is taken from the URL path (`/organizations/{org_id}/airbnb/direct-connect`)
+/// to prevent IDOR — callers cannot influence which organisation they connect to.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AirbnbDirectConnectRequest {
+    /// Airbnb access token obtained outside the OAuth flow.
+    pub access_token: String,
+    /// Optional refresh token.
+    pub refresh_token: Option<String>,
+    /// Optional Airbnb account / listing ID to associate.
+    pub airbnb_account_id: Option<String>,
+}
+
+/// Direct-connect response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AirbnbDirectConnectResponse {
+    pub success: bool,
+    pub connection_id: Uuid,
+    pub listings_count: Option<i32>,
+    pub message: String,
+}
+
+/// Availability-sync enqueue response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AirbnbAvailabilitySyncResponse {
+    pub job_id: Uuid,
+    pub queued: bool,
+    pub message: String,
+}
+
 // ==================== Router ====================
 
 /// Create install-surface router.
@@ -245,6 +279,15 @@ pub fn router() -> Router<crate::state::AppState> {
         )
         .route("/organizations/{org_id}/airbnb/sync", post(sync_airbnb))
         .route("/organizations/{org_id}/airbnb", delete(disconnect_airbnb))
+        // Gap 83-1: direct token connect + availability-sync enqueue
+        .route(
+            "/organizations/{org_id}/airbnb/direct-connect",
+            post(direct_connect_airbnb),
+        )
+        .route(
+            "/organizations/{org_id}/airbnb/availability-sync",
+            post(enqueue_airbnb_availability_sync),
+        )
         // Booking.com Install (Story 83.2 — install/status/disconnect)
         .route(
             "/organizations/{org_id}/booking/status",
@@ -1488,5 +1531,316 @@ pub async fn archive_inquiry(
     Err((
         StatusCode::NOT_FOUND,
         Json(ErrorResponse::new("NOT_FOUND", "Portal inquiry not found")),
+    ))
+}
+
+// ==================== Gap 83-1 Handlers ====================
+
+/// Direct-connect Airbnb using a pre-obtained access token (no OAuth redirect).
+///
+/// The caller supplies a valid Airbnb access token. This handler verifies the
+/// token by fetching listings, encrypts the tokens at rest (if
+/// `INTEGRATION_ENCRYPTION_KEY` is set), and upserts the connection record.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/airbnb/direct-connect",
+    params(OrgIdPath),
+    request_body = AirbnbDirectConnectRequest,
+    responses(
+        (status = 200, description = "Airbnb connected", body = AirbnbDirectConnectResponse),
+        (status = 400, description = "Invalid or expired token"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Airbnb"
+)]
+pub async fn direct_connect_airbnb(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<AirbnbDirectConnectRequest>,
+) -> Result<Json<AirbnbDirectConnectResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Org ownership guard — prevent IDOR.
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    if !matches!(
+        role,
+        common::TenantRole::SuperAdmin
+            | common::TenantRole::PlatformAdmin
+            | common::TenantRole::OrgAdmin
+            | common::TenantRole::Manager
+    ) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
+
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        "Direct-connecting Airbnb with pre-obtained token"
+    );
+
+    let org_id = path.org_id;
+
+    // Validate required env vars before making any external calls.
+    let client_id = std::env::var("AIRBNB_CLIENT_ID").map_err(|_| {
+        tracing::error!("AIRBNB_CLIENT_ID is not configured");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Airbnb integration is not configured",
+            )),
+        )
+    })?;
+    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").map_err(|_| {
+        tracing::error!("AIRBNB_CLIENT_SECRET is not configured");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Airbnb integration is not configured",
+            )),
+        )
+    })?;
+    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+
+    // Verify the token is valid by fetching listings.
+    let oauth_config = AirbnbOAuthConfig {
+        client_id,
+        client_secret,
+        redirect_uri,
+    };
+    let client = AirbnbClient::new(oauth_config);
+
+    let listings = client
+        .fetch_listings(&request.access_token)
+        .await
+        .map_err(|e| {
+            tracing::warn!(error = %e, "Airbnb token validation failed");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_TOKEN",
+                    "Airbnb access token is invalid or expired",
+                )),
+            )
+        })?;
+
+    let listings_count = listings.len() as i32;
+
+    // Optionally encrypt tokens before storage.
+    let (stored_access, stored_refresh) = match IntegrationCrypto::try_from_env() {
+        Some(crypto) => {
+            let encrypted_access = crypto.encrypt(&request.access_token).map_err(|e| {
+                tracing::error!(error = %e, "Failed to encrypt Airbnb access token");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "CRYPTO_ERROR",
+                        "Failed to encrypt token",
+                    )),
+                )
+            })?;
+            let encrypted_refresh = request
+                .refresh_token
+                .as_deref()
+                .map(|rt| crypto.encrypt(rt))
+                .transpose()
+                .map_err(|e| {
+                    tracing::error!(error = %e, "Failed to encrypt Airbnb refresh token");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "CRYPTO_ERROR",
+                            "Failed to encrypt refresh token",
+                        )),
+                    )
+                })?;
+            (encrypted_access, encrypted_refresh)
+        }
+        None => {
+            tracing::warn!(
+                "INTEGRATION_ENCRYPTION_KEY is not set; Airbnb tokens will be stored in plaintext"
+            );
+            (request.access_token.clone(), request.refresh_token.clone())
+        }
+    };
+
+    let connection = state
+        .rental_repo
+        .upsert_airbnb_connection(
+            org_id,
+            None,
+            &stored_access,
+            stored_refresh.as_deref(),
+            None,
+            request.airbnb_account_id.as_deref(),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to upsert Airbnb connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to store Airbnb connection",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        connection_id = %connection.id,
+        listings = listings_count,
+        "Airbnb direct connect succeeded"
+    );
+
+    Ok(Json(AirbnbDirectConnectResponse {
+        success: true,
+        connection_id: connection.id,
+        listings_count: Some(listings_count),
+        message: format!(
+            "Airbnb connected successfully. {} listing(s) found.",
+            listings_count
+        ),
+    }))
+}
+
+/// Enqueue an Airbnb availability-sync background job for an organisation.
+///
+/// Returns HTTP 202 Accepted with the job ID so the caller can poll for
+/// completion via the background-jobs API.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/airbnb/availability-sync",
+    params(OrgIdPath),
+    responses(
+        (status = 202, description = "Availability sync job queued", body = AirbnbAvailabilitySyncResponse),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Airbnb connection found for organisation"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Airbnb"
+)]
+pub async fn enqueue_airbnb_availability_sync(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+) -> Result<(StatusCode, Json<AirbnbAvailabilitySyncResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Org ownership guard.
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    if !matches!(
+        role,
+        common::TenantRole::SuperAdmin
+            | common::TenantRole::PlatformAdmin
+            | common::TenantRole::OrgAdmin
+            | common::TenantRole::Manager
+    ) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
+
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        "Enqueueing Airbnb availability sync"
+    );
+
+    // Verify that a connection exists before queueing work.
+    let connection = state
+        .rental_repo
+        .find_airbnb_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up Airbnb connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check Airbnb connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Airbnb connection found for this organisation",
+                )),
+            )
+        })?;
+
+    let payload = serde_json::json!({
+        "org_id": path.org_id,
+        "connection_id": connection.id,
+        "sync_type": "availability",
+    });
+
+    let job_data = CreateBackgroundJob {
+        job_type: job_type::SYNC_EXTERNAL.to_string(),
+        priority: Some(1),
+        payload,
+        scheduled_at: None,
+        queue: Some(queue::LOW_PRIORITY.to_string()),
+        max_attempts: Some(3),
+        org_id: Some(path.org_id),
+    };
+
+    let job = state
+        .background_job_repo
+        .create(job_data, Some(auth.user_id))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to create availability sync job");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to enqueue availability sync job",
+                )),
+            )
+        })?;
+
+    tracing::info!(job_id = %job.id, org_id = %path.org_id, "Airbnb availability sync job queued");
+
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(AirbnbAvailabilitySyncResponse {
+            job_id: job.id,
+            queued: true,
+            message: "Availability sync job queued successfully".to_string(),
+        }),
     ))
 }
