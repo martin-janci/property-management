@@ -1,139 +1,28 @@
 /**
- * DocumentPreviewModal — inline preview modal for PDF and image documents (gap-7a-4).
+ * DocumentPreviewModal (gap-7a-4).
  *
- * Features:
- * - Opens a full-screen overlay with PDF or image preview.
- * - Uses usePreviewUrl + useDownloadUrl hooks from @ppt/api-client.
- * - PDF rendering via the existing PdfPreview component.
- * - Image rendering via a native <img> tag with zoom-to-fit.
- * - Download button in the modal header (calls useDownloadUrl and triggers anchor download).
- * - Accessible: focus-trap, Escape key to close, ARIA roles.
+ * Inline preview overlay for PDF and image documents.
+ * Renders PDF via PdfPreview (react-pdf), images via <img>, and a
+ * fallback download prompt for other mime types.
+ *
+ * Accessibility:
+ *  - role="dialog" + aria-modal + aria-labelledby on the panel, not the backdrop (ARIA 1.2 §3.15)
+ *  - useId() for collision-safe aria-labelledby across concurrent instances
+ *  - Focus trap: Tab/Shift+Tab cycle within the panel
+ *  - Auto-focus close button on mount; Escape key closes the modal
+ *  - Backdrop click closes (click must target the backdrop itself)
+ *  - Body scroll locked while open
  */
 
-import { useDownloadUrl, usePreviewUrl } from '@ppt/api-client';
+import { getDownloadUrl, usePreviewUrl } from '@ppt/api-client';
 import type React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { PdfPreview } from './PdfPreview';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+const FOCUSABLE_SELECTOR =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-function isPdfMimeType(mimeType: string): boolean {
-  return mimeType === 'application/pdf';
-}
-
-function isImageMimeType(mimeType: string): boolean {
-  return mimeType.startsWith('image/');
-}
-
-// ─── ImagePreview sub-component ──────────────────────────────────────────────
-
-function ImagePreview({ documentId, fileName }: { documentId: string; fileName: string }) {
-  const { data, isLoading, error } = usePreviewUrl(documentId);
-
-  if (isLoading) {
-    return (
-      <div className="doc-preview-modal__state" aria-busy="true">
-        <div className="doc-preview-modal__spinner" aria-label="Načítava sa náhľad..." />
-      </div>
-    );
-  }
-
-  if (error || !data?.url) {
-    return (
-      <div className="doc-preview-modal__state doc-preview-modal__state--error" role="alert">
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <p>Náhľad nie je dostupný.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="doc-preview-modal__image-wrap">
-      <img src={data.url} alt={fileName} className="doc-preview-modal__image" />
-    </div>
-  );
-}
-
-// ─── FallbackPreview sub-component ───────────────────────────────────────────
-
-function FallbackPreview({ fileName }: { fileName: string }) {
-  return (
-    <div className="doc-preview-modal__state">
-      <svg
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        opacity="0.4"
-        aria-hidden="true"
-      >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-      </svg>
-      <p>Náhľad nie je dostupný pre tento typ súboru.</p>
-      <p className="doc-preview-modal__state-hint">{fileName}</p>
-    </div>
-  );
-}
-
-// ─── DownloadButton sub-component ────────────────────────────────────────────
-
-function DownloadButton({ documentId, fileName }: { documentId: string; fileName: string }) {
-  const { data, isLoading } = useDownloadUrl(documentId);
-
-  const handleDownload = useCallback(() => {
-    if (!data?.url) return;
-    const anchor = document.createElement('a');
-    anchor.href = data.url;
-    anchor.download = fileName;
-    anchor.rel = 'noopener noreferrer';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  }, [data?.url, fileName]);
-
-  return (
-    <button
-      type="button"
-      className="doc-preview-modal__download-btn"
-      onClick={handleDownload}
-      disabled={isLoading || !data?.url}
-      aria-label={`Stiahnuť ${fileName}`}
-      title={`Stiahnuť ${fileName}`}
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        aria-hidden="true"
-      >
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Stiahnuť
-    </button>
-  );
-}
-
-// ─── Main modal component ─────────────────────────────────────────────────────
+// ─── types ────────────────────────────────────────────────────────────────────
 
 export interface DocumentPreviewModalProps {
   /** Document UUID */
@@ -148,6 +37,132 @@ export interface DocumentPreviewModalProps {
   onClose: () => void;
 }
 
+// ─── sub-components ───────────────────────────────────────────────────────────
+
+interface ImagePreviewProps {
+  documentId: string;
+  title: string;
+}
+
+function ImagePreview({ documentId, title }: ImagePreviewProps) {
+  const { data, isLoading, error } = usePreviewUrl(documentId);
+
+  if (isLoading) {
+    return (
+      <div className="doc-preview__loading" aria-busy="true" aria-label="Načítavanie náhľadu">
+        <div className="doc-preview__spinner" />
+        <p>Načítavanie náhľadu…</p>
+      </div>
+    );
+  }
+
+  if (error || !data?.url) {
+    return (
+      <div className="doc-preview__fallback">
+        <p>Náhľad nie je dostupný.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="doc-preview__image-wrap">
+      <img src={data.url} alt={title} className="doc-preview__image" />
+    </div>
+  );
+}
+
+function FallbackPreview({ fileName }: { fileName: string }) {
+  return (
+    <div className="doc-preview__fallback">
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        aria-hidden="true"
+        className="doc-preview__fallback-icon"
+      >
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+      <p className="doc-preview__fallback-name">{fileName}</p>
+      <p className="doc-preview__fallback-msg">
+        Náhľad nie je pre tento typ súboru k dispozícii. Stiahnite si súbor pre zobrazenie.
+      </p>
+    </div>
+  );
+}
+
+interface DownloadButtonProps {
+  documentId: string;
+  fileName: string;
+  className?: string;
+}
+
+function DownloadButton({
+  documentId,
+  fileName,
+  className = 'doc-preview__download-btn',
+}: DownloadButtonProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const { url } = await getDownloadUrl(documentId);
+      // Fetch as blob to preserve filename: browsers silently ignore anchor.download
+      // for cross-origin URLs (S3 presigned URLs are cross-origin).
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = blobUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(blobUrl);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [documentId, fileName, isDownloading]);
+
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={handleDownload}
+      disabled={isDownloading}
+      aria-label={`Stiahnuť ${fileName}`}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      {isDownloading ? 'Sťahujem…' : 'Stiahnuť'}
+    </button>
+  );
+}
+
+export { DownloadButton as DocumentDownloadButton };
+
+// ─── main component ───────────────────────────────────────────────────────────
+
+const isPdf = (mimeType: string) => mimeType === 'application/pdf';
+const isImage = (mimeType: string) => mimeType.startsWith('image/');
+
 export function DocumentPreviewModal({
   documentId,
   title,
@@ -155,24 +170,56 @@ export function DocumentPreviewModal({
   mimeType,
   onClose,
 }: DocumentPreviewModalProps) {
+  const titleId = useId();
   const backdropRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Close on Escape
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
-  // Auto-focus close button on mount (focus-trap entry point)
+  // Auto-focus close button on mount for immediate dismiss via keyboard.
   useEffect(() => {
     closeBtnRef.current?.focus();
   }, []);
 
-  // Close on backdrop click (not on content click)
+  // Lock body scroll while the modal is open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  // Escape key closes modal.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Focus trap: cycle Tab / Shift+Tab within the dialog panel.
+  const handlePanelKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }, []);
+
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === backdropRef.current) onClose();
@@ -180,35 +227,29 @@ export function DocumentPreviewModal({
     [onClose]
   );
 
-  const isPdf = isPdfMimeType(mimeType);
-  const isImage = isImageMimeType(mimeType);
-
   return (
-    <div
-      ref={backdropRef}
-      className="doc-preview-modal__backdrop"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Náhľad: ${title}`}
-      onClick={handleBackdropClick}
-    >
-      <div className="doc-preview-modal__panel">
+    <div ref={backdropRef} className="doc-preview-backdrop" onClick={handleBackdropClick}>
+      {/* role="dialog" must be on the panel element, not the backdrop (ARIA 1.2 §3.15) */}
+      <div
+        ref={panelRef}
+        className="doc-preview-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onKeyDown={handlePanelKeyDown}
+      >
         {/* Header */}
-        <div className="doc-preview-modal__header">
-          <div className="doc-preview-modal__header-title">
-            <span className="doc-preview-modal__file-ext" aria-hidden="true">
-              {fileName.split('.').pop()?.toUpperCase()?.slice(0, 4) ?? 'DOC'}
-            </span>
-            <h2 className="doc-preview-modal__title" title={title}>
-              {title}
-            </h2>
-          </div>
-          <div className="doc-preview-modal__header-actions">
+        <div className="doc-preview__header">
+          <span id={titleId} className="doc-preview__title" title={title}>
+            {title}
+          </span>
+          <div className="doc-preview__header-actions">
             <DownloadButton documentId={documentId} fileName={fileName} />
             <button
               ref={closeBtnRef}
               type="button"
-              className="doc-preview-modal__close-btn"
+              className="doc-preview__close-btn"
               onClick={onClose}
               aria-label="Zavrieť náhľad"
             >
@@ -228,246 +269,243 @@ export function DocumentPreviewModal({
           </div>
         </div>
 
-        {/* Content area */}
-        <div className="doc-preview-modal__content">
-          {isPdf && <PdfPreview documentId={documentId} isPdf className="doc-preview-modal__pdf" />}
-          {!isPdf && isImage && <ImagePreview documentId={documentId} fileName={fileName} />}
-          {!isPdf && !isImage && <FallbackPreview fileName={fileName} />}
+        {/* Content */}
+        <div className="doc-preview__body">
+          {isPdf(mimeType) ? (
+            <PdfPreview documentId={documentId} isPdf className="doc-preview__pdf" />
+          ) : isImage(mimeType) ? (
+            <ImagePreview documentId={documentId} title={title} />
+          ) : (
+            <FallbackPreview fileName={fileName} />
+          )}
         </div>
       </div>
 
-      <style>{modalStyles}</style>
+      <style>{`
+        .doc-preview-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          background: rgba(0, 0, 0, 0.65);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          animation: doc-preview-fade-in 0.15s ease-out;
+        }
+
+        @keyframes doc-preview-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        .doc-preview-modal {
+          display: flex;
+          flex-direction: column;
+          width: min(960px, 100%);
+          max-height: calc(100vh - 2rem);
+          background: var(--ppt-bg-surface);
+          border-radius: 0.75rem;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+          overflow: hidden;
+          outline: none;
+          animation: doc-preview-slide-up 0.15s ease-out;
+        }
+
+        @keyframes doc-preview-slide-up {
+          from { transform: translateY(12px); opacity: 0; }
+          to   { transform: translateY(0);   opacity: 1; }
+        }
+
+        .doc-preview__header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          border-bottom: 1px solid var(--ppt-border-default);
+          flex-shrink: 0;
+          background: var(--ppt-bg-surface);
+        }
+
+        .doc-preview__title {
+          flex: 1;
+          min-width: 0;
+          font-size: 0.9375rem;
+          font-weight: 600;
+          color: var(--ppt-fg-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .doc-preview__header-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-shrink: 0;
+        }
+
+        .doc-preview__download-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.375rem 0.875rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          background: var(--ppt-brand-500);
+          color: #fff;
+          border: none;
+          border-radius: 0.375rem;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .doc-preview__download-btn:hover:not(:disabled) {
+          background: var(--ppt-brand-600, var(--ppt-brand-500));
+        }
+
+        .doc-preview__download-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .doc-preview__download-btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+        }
+
+        .doc-preview__close-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 2rem;
+          height: 2rem;
+          background: transparent;
+          border: 1px solid var(--ppt-border-default);
+          border-radius: 0.375rem;
+          color: var(--ppt-fg-muted);
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+
+        .doc-preview__close-btn:hover {
+          background: var(--ppt-bg-app);
+          color: var(--ppt-fg-primary);
+        }
+
+        .doc-preview__close-btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+        }
+
+        .doc-preview__body {
+          flex: 1;
+          overflow: auto;
+          min-height: 0;
+        }
+
+        /* PDF */
+        .doc-preview__pdf {
+          width: 100%;
+          height: 100%;
+        }
+
+        /* Image */
+        .doc-preview__image-wrap {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          min-height: 300px;
+        }
+
+        .doc-preview__image {
+          max-width: 100%;
+          max-height: calc(100vh - 12rem);
+          object-fit: contain;
+          border-radius: 0.375rem;
+        }
+
+        /* Fallback / error */
+        .doc-preview__fallback {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          padding: 3rem 2rem;
+          text-align: center;
+          color: var(--ppt-fg-muted);
+          min-height: 240px;
+        }
+
+        .doc-preview__fallback-icon {
+          color: var(--ppt-fg-subtle);
+        }
+
+        .doc-preview__fallback-name {
+          font-weight: 600;
+          color: var(--ppt-fg-primary);
+        }
+
+        .doc-preview__fallback-msg {
+          font-size: 0.875rem;
+          max-width: 36ch;
+        }
+
+        /* Loading */
+        .doc-preview__loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          padding: 3rem 2rem;
+          color: var(--ppt-fg-muted);
+          min-height: 240px;
+          font-size: 0.875rem;
+        }
+
+        .doc-preview__spinner {
+          width: 2rem;
+          height: 2rem;
+          border: 3px solid var(--ppt-border-default);
+          border-top-color: var(--ppt-brand-500);
+          border-radius: 50%;
+          animation: doc-preview-spin 0.7s linear infinite;
+        }
+
+        @keyframes doc-preview-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+          .doc-preview-backdrop {
+            padding: 0;
+            align-items: flex-end;
+          }
+
+          .doc-preview-modal {
+            width: 100%;
+            max-height: 92vh;
+            border-radius: 1rem 1rem 0 0;
+          }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+          .doc-preview-backdrop,
+          .doc-preview-modal {
+            animation: none;
+          }
+
+          .doc-preview__spinner {
+            animation: none;
+            border-top-color: var(--ppt-brand-500);
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
-const modalStyles = `
-  .doc-preview-modal__backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    padding: 1.5rem;
-    overflow: hidden;
-    animation: doc-preview-fade-in 0.15s ease-out;
-  }
-
-  @media (max-width: 640px) {
-    .doc-preview-modal__backdrop {
-      padding: 0;
-      align-items: flex-end;
-    }
-  }
-
-  @keyframes doc-preview-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  .doc-preview-modal__panel {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 900px;
-    max-height: 100%;
-    background: var(--ppt-bg-surface, #fff);
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-    animation: doc-preview-slide-up 0.18s ease-out;
-  }
-
-  @media (max-width: 640px) {
-    .doc-preview-modal__panel {
-      border-radius: 1rem 1rem 0 0;
-      max-height: 92vh;
-    }
-  }
-
-  @keyframes doc-preview-slide-up {
-    from { transform: translateY(16px); opacity: 0.5; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-
-  .doc-preview-modal__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.875rem 1rem;
-    background: var(--ppt-bg-app, #f9fafb);
-    border-bottom: 1px solid var(--ppt-border-default, #e5e7eb);
-    flex-shrink: 0;
-  }
-
-  .doc-preview-modal__header-title {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .doc-preview-modal__file-ext {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    font-size: 0.5625rem;
-    font-weight: 700;
-    font-family: monospace;
-    border-radius: 0.375rem;
-    background: var(--ppt-brand-500, #2563eb);
-    color: #fff;
-    letter-spacing: 0.025em;
-  }
-
-  .doc-preview-modal__title {
-    margin: 0;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--ppt-fg-primary, #111827);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .doc-preview-modal__header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-  }
-
-  .doc-preview-modal__download-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4375rem 0.875rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    background: var(--ppt-brand-500, #2563eb);
-    color: #fff;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background 0.12s;
-    white-space: nowrap;
-  }
-
-  .doc-preview-modal__download-btn:hover:not(:disabled) {
-    background: var(--ppt-color-primary, #1d4ed8);
-  }
-
-  .doc-preview-modal__download-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .doc-preview-modal__close-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    background: transparent;
-    border: 1px solid var(--ppt-border-default, #e5e7eb);
-    border-radius: 0.5rem;
-    color: var(--ppt-fg-muted, #6b7280);
-    cursor: pointer;
-    transition: all 0.12s;
-  }
-
-  .doc-preview-modal__close-btn:hover {
-    background: var(--ppt-bg-surface, #fff);
-    border-color: var(--ppt-border-strong, #9ca3af);
-    color: var(--ppt-fg-primary, #111827);
-  }
-
-  .doc-preview-modal__content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .doc-preview-modal__pdf {
-    /* Override PdfPreview border/radius — modal provides the chrome */
-    border: none !important;
-    border-radius: 0 !important;
-    min-height: 60vh;
-  }
-
-  .doc-preview-modal__image-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    padding: 1.5rem;
-    background: var(--ppt-bg-app, #f3f4f6);
-  }
-
-  .doc-preview-modal__image {
-    max-width: 100%;
-    max-height: 75vh;
-    object-fit: contain;
-    border-radius: 0.375rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  }
-
-  .doc-preview-modal__state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    min-height: 60vh;
-    padding: 2.5rem 1.5rem;
-    color: var(--ppt-fg-muted, #6b7280);
-    text-align: center;
-  }
-
-  .doc-preview-modal__state p {
-    margin: 0;
-    font-size: 0.875rem;
-  }
-
-  .doc-preview-modal__state-hint {
-    font-size: 0.75rem !important;
-    opacity: 0.7;
-    font-family: monospace;
-  }
-
-  .doc-preview-modal__state--error {
-    color: var(--ppt-color-danger, #dc2626);
-  }
-
-  .doc-preview-modal__spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid var(--ppt-border-default, #e5e7eb);
-    border-top-color: var(--ppt-brand-500, #2563eb);
-    border-radius: 50%;
-    animation: doc-preview-spin 0.7s linear infinite;
-  }
-
-  @keyframes doc-preview-spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .doc-preview-modal__backdrop,
-    .doc-preview-modal__panel {
-      animation: none;
-    }
-    .doc-preview-modal__spinner {
-      animation-duration: 1.5s;
-    }
-  }
-`;

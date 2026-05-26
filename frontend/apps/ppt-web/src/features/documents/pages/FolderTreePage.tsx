@@ -20,15 +20,9 @@
  *     that opens MoveFolderDialog.
  */
 
-import {
-  type DocumentSummary,
-  useDocuments,
-  useFolderTree,
-  useMoveDocument,
-} from '@ppt/api-client';
+import { type DocumentSummary, useDocuments, useFolderTree } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useToast } from '../../../components/Toast';
 import { DocumentsBrowse } from '../components/DocumentsBrowse';
 import { FolderTree } from '../components/FolderTree';
 import {
@@ -36,6 +30,7 @@ import {
   FolderBreadcrumb,
   MoveFolderDialog,
 } from '../components/MoveFolderDialog';
+import { useMoveDocumentWithToast } from '../hooks/useMoveDocumentWithToast';
 
 // ─── sub-component: folder-scoped document list ───────────────────────────────
 
@@ -175,8 +170,9 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
 
   // Move-to-folder state
   const [moveTarget, setMoveTarget] = useState<DocumentSummary | null>(null);
-  const moveDocument = useMoveDocument();
-  const { showToast } = useToast();
+  // useMoveDocumentWithToast wraps useMoveDocument; query invalidation for
+  // documentKeys.lists() and documentKeys.folders() happens inside useMoveDocument.onSuccess.
+  const { executeMoveWithToast, isPending: isMovePending } = useMoveDocumentWithToast();
 
   // Folder tree data — needed for breadcrumbs
   const { data: treeData } = useFolderTree(buildingId);
@@ -205,26 +201,10 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
   const handleMoveConfirm = useCallback(
     async (folderId: string | null) => {
       if (!moveTarget) return;
-      try {
-        await moveDocument.mutateAsync({ documentId: moveTarget.id, folderId });
-        showToast({
-          type: 'success',
-          title: 'Dokument presunutý',
-          message: folderId
-            ? `„${moveTarget.title}" bol presunutý do priečinka.`
-            : `„${moveTarget.title}" bol presunutý do koreňa.`,
-        });
-      } catch (err) {
-        showToast({
-          type: 'error',
-          title: 'Presun zlyhal',
-          message: err instanceof Error ? err.message : 'Dokument sa nepodarilo presunúť.',
-        });
-      } finally {
-        setMoveTarget(null);
-      }
+      await executeMoveWithToast(moveTarget, folderId);
+      setMoveTarget(null);
     },
-    [moveTarget, moveDocument, showToast]
+    [moveTarget, executeMoveWithToast]
   );
 
   return (
@@ -343,7 +323,7 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
           currentFolderId={selectedFolderId}
           onConfirm={handleMoveConfirm}
           onCancel={() => setMoveTarget(null)}
-          isPending={moveDocument.isPending}
+          isPending={isMovePending}
         />
       )}
 

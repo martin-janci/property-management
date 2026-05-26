@@ -17,12 +17,11 @@ import {
   type DocumentListQuery,
   type DocumentStatus,
   type DocumentSummary,
+  getDownloadUrl,
   useDocuments,
-  useDownloadUrl,
-  useMoveDocument,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
-import { useToast } from '../../../components/Toast';
+import { useMoveDocumentWithToast } from '../hooks/useMoveDocumentWithToast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { MoveFolderDialog } from './MoveFolderDialog';
 
@@ -86,26 +85,32 @@ interface DocumentRowProps {
   selected: boolean;
 }
 
-/**
- * Inline download button (gap-7a-4).
- * Fetches a presigned download URL on demand and triggers an anchor download.
- */
 function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
-  const { data, isLoading } = useDownloadUrl(doc.id);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = useCallback(
-    (e: { stopPropagation: () => void }) => {
+    async (e: { stopPropagation: () => void }) => {
       e.stopPropagation();
-      if (!data?.url) return;
-      const anchor = document.createElement('a');
-      anchor.href = data.url;
-      anchor.download = doc.file_name;
-      anchor.rel = 'noopener noreferrer';
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
+      if (isDownloading) return;
+      setIsDownloading(true);
+      try {
+        const { url } = await getDownloadUrl(doc.id);
+        // Fetch as blob to preserve filename: browsers ignore anchor.download for cross-origin URLs.
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = doc.file_name;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(blobUrl);
+      } finally {
+        setIsDownloading(false);
+      }
     },
-    [data?.url, doc.file_name]
+    [doc.id, doc.file_name, isDownloading]
   );
 
   return (
@@ -113,7 +118,7 @@ function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
       type="button"
       className="doc-row__action-btn"
       onClick={handleDownload}
-      disabled={isLoading || !data?.url}
+      disabled={isDownloading}
       aria-label={`Stiahnuť ${doc.file_name}`}
       title="Stiahnuť"
     >
@@ -137,27 +142,19 @@ function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
 function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: DocumentRowProps) {
   const ext = doc.file_name.split('.').pop()?.toUpperCase() ?? 'DOC';
 
-  const handlePreview = useCallback(
-    (e: { stopPropagation: () => void }) => {
-      e.stopPropagation();
-      onPreview(doc);
-    },
-    [doc, onPreview]
-  );
-
-  const handleMove = useCallback(
-    (e: { stopPropagation: () => void }) => {
-      e.stopPropagation();
-      onMoveRequest(doc);
-    },
-    [doc, onMoveRequest]
-  );
-
+  // Use div+role="button" to avoid invalid interactive-in-interactive nesting (HTML spec §4.10.6).
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={`doc-row${selected ? ' doc-row--selected' : ''}`}
       onClick={() => onSelect(doc.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(doc.id);
+        }
+      }}
     >
       <span className="doc-row__icon" aria-hidden="true">
         {ext.slice(0, 3)}
@@ -181,11 +178,13 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
         className="doc-row__actions"
         onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}
       >
-        {/* Preview button (gap-7a-4) */}
         <button
           type="button"
           className="doc-row__action-btn"
-          onClick={handlePreview}
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview(doc);
+          }}
           aria-label={`Náhľad ${doc.file_name}`}
           title="Náhľad"
         >
@@ -202,13 +201,14 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
             <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
-        {/* Download button (gap-7a-4) */}
         <RowDownloadButton doc={doc} />
-        {/* Move to folder (gap-7a-2) */}
         <button
           type="button"
           className="doc-row__action-btn"
-          onClick={handleMove}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveRequest(doc);
+          }}
           aria-label={`Presunúť ${doc.file_name} do priečinka`}
           title="Presunúť do priečinka"
         >
@@ -227,7 +227,7 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
           </svg>
         </button>
       </span>
-    </button>
+    </div>
   );
 }
 
@@ -270,8 +270,9 @@ export function DocumentsBrowse({
   // Move-to-folder state
   const [moveTarget, setMoveTarget] = useState<DocumentSummary | null>(null);
 
-  const moveDocument = useMoveDocument();
-  const { showToast } = useToast();
+  // useMoveDocumentWithToast wraps useMoveDocument; query invalidation for
+  // documentKeys.lists() and documentKeys.folders() happens inside useMoveDocument.onSuccess.
+  const { executeMoveWithToast, isPending: isMovePending } = useMoveDocumentWithToast();
 
   const PAGE_SIZE = 20;
 
@@ -312,26 +313,10 @@ export function DocumentsBrowse({
   const handleMoveConfirm = useCallback(
     async (folderId: string | null) => {
       if (!moveTarget) return;
-      try {
-        await moveDocument.mutateAsync({ documentId: moveTarget.id, folderId });
-        showToast({
-          type: 'success',
-          title: 'Dokument presunutý',
-          message: folderId
-            ? `„${moveTarget.title}" bol presunutý do priečinka.`
-            : `„${moveTarget.title}" bol presunutý do koreňa.`,
-        });
-      } catch (err) {
-        showToast({
-          type: 'error',
-          title: 'Presun zlyhal',
-          message: err instanceof Error ? err.message : 'Dokument sa nepodarilo presunúť.',
-        });
-      } finally {
-        setMoveTarget(null);
-      }
+      await executeMoveWithToast(moveTarget, folderId);
+      setMoveTarget(null);
     },
-    [moveTarget, moveDocument, showToast]
+    [moveTarget, executeMoveWithToast]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -543,10 +528,10 @@ export function DocumentsBrowse({
         <MoveFolderDialog
           documentTitles={[moveTarget.title]}
           buildingId={buildingId}
-          currentFolderId={null}
+          currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */
           onConfirm={handleMoveConfirm}
           onCancel={() => setMoveTarget(null)}
-          isPending={moveDocument.isPending}
+          isPending={isMovePending}
         />
       )}
 

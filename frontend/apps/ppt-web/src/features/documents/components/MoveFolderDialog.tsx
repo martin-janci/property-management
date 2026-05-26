@@ -139,51 +139,53 @@ export interface FolderBreadcrumbProps {
 
 export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderBreadcrumbProps) {
   return (
-    <nav className={`folder-bc ${className}`} aria-label="Umiestnenie priečinka">
-      <button
-        type="button"
-        className="folder-bc__crumb folder-bc__crumb--link"
-        onClick={() => onNavigate(null)}
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
+    <>
+      <nav className={`folder-bc ${className}`} aria-label="Umiestnenie priečinka">
+        <button
+          type="button"
+          className="folder-bc__crumb folder-bc__crumb--link"
+          onClick={() => onNavigate(null)}
         >
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-          <line x1="8" y1="21" x2="16" y2="21" />
-          <line x1="12" y1="17" x2="12" y2="21" />
-        </svg>
-        Všetky
-      </button>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          Všetky
+        </button>
 
-      {crumbs.map((crumb, idx) => {
-        const isLast = idx === crumbs.length - 1;
-        return (
-          <span key={crumb.id} className="folder-bc__segment">
-            <span className="folder-bc__sep" aria-hidden="true">
-              /
-            </span>
-            {isLast ? (
-              <span className="folder-bc__crumb folder-bc__crumb--current" aria-current="page">
-                {crumb.name}
+        {crumbs.map((crumb, idx) => {
+          const isLast = idx === crumbs.length - 1;
+          return (
+            <span key={crumb.id} className="folder-bc__segment">
+              <span className="folder-bc__sep" aria-hidden="true">
+                /
               </span>
-            ) : (
-              <button
-                type="button"
-                className="folder-bc__crumb folder-bc__crumb--link"
-                onClick={() => onNavigate(crumb.id)}
-              >
-                {crumb.name}
-              </button>
-            )}
-          </span>
-        );
-      })}
+              {isLast ? (
+                <span className="folder-bc__crumb folder-bc__crumb--current" aria-current="page">
+                  {crumb.name}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="folder-bc__crumb folder-bc__crumb--link"
+                  onClick={() => onNavigate(crumb.id)}
+                >
+                  {crumb.name}
+                </button>
+              )}
+            </span>
+          );
+        })}
+      </nav>
 
       <style>{`
         .folder-bc {
@@ -226,7 +228,7 @@ export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderB
           cursor: default;
         }
       `}</style>
-    </nav>
+    </>
   );
 }
 
