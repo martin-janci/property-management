@@ -9,23 +9,33 @@
 
 import type { ReportExecution, ReportExecutionStatus, ReportSchedule } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type ExecutionFilters, HistoryFilters } from '../components/HistoryFilters';
 
 // ============================================================================
 // Sub-components
 // ============================================================================
 
-const STATUS_STYLES: Record<ReportExecutionStatus, { bg: string; text: string; label: string }> = {
-  pending: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Pending' },
-  running: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Running' },
-  completed: { bg: 'bg-green-100', text: 'text-green-700', label: 'Completed' },
-  failed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Failed' },
-  cancelled: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Cancelled' },
-  skipped: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Skipped' },
+const STATUS_STYLE_CLASSES: Record<ReportExecutionStatus, { bg: string; text: string }> = {
+  pending: { bg: 'bg-gray-100', text: 'text-gray-700' },
+  running: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  completed: { bg: 'bg-green-100', text: 'text-green-700' },
+  failed: { bg: 'bg-red-100', text: 'text-red-700' },
+  cancelled: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  skipped: { bg: 'bg-gray-100', text: 'text-gray-500' },
 };
 
 function StatusBadge({ status }: { status: ReportExecutionStatus }) {
-  const style = STATUS_STYLES[status];
+  const { t } = useTranslation();
+  const style = STATUS_STYLE_CLASSES[status];
+  const statusLabels: Record<ReportExecutionStatus, string> = {
+    pending: t('reports.detail.status.pending', 'Pending'),
+    running: t('reports.detail.status.running', 'Running'),
+    completed: t('reports.detail.status.completed', 'Completed'),
+    failed: t('reports.detail.status.failed', 'Failed'),
+    cancelled: t('reports.detail.status.cancelled', 'Cancelled'),
+    skipped: t('reports.detail.status.skipped', 'Skipped'),
+  };
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}
@@ -52,7 +62,7 @@ function StatusBadge({ status }: { status: ReportExecutionStatus }) {
           />
         </svg>
       )}
-      {style.label}
+      {statusLabels[status]}
     </span>
   );
 }
@@ -70,7 +80,7 @@ function formatDuration(startedAt: string, completedAt?: string): string {
 }
 
 function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return new Date(dateString).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -86,14 +96,6 @@ function formatFileSize(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: 'Daily',
-  weekly: 'Weekly',
-  monthly: 'Monthly',
-  quarterly: 'Quarterly',
-  yearly: 'Yearly',
-};
-
 // ============================================================================
 // Props
 // ============================================================================
@@ -102,6 +104,7 @@ export interface ScheduleDetailPageProps {
   schedule: ReportSchedule;
   executions: ReportExecution[];
   isLoading?: boolean;
+  isError?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
   onDownload?: (executionId: string) => void;
@@ -117,12 +120,14 @@ export function ScheduleDetailPage({
   schedule,
   executions,
   isLoading,
+  isError,
   hasMore,
   onLoadMore,
   onDownload,
   onRetry,
   onBack,
 }: ScheduleDetailPageProps) {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<ExecutionFilters>({});
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
@@ -157,6 +162,17 @@ export function ScheduleDetailPage({
   const failedCount = executions.filter((e) => e.status === 'failed').length;
   const runningCount = executions.filter((e) => e.status === 'running').length;
 
+  const frequencyLabel = (freq: string) => {
+    const map: Record<string, string> = {
+      daily: t('reports.detail.frequency.daily', 'Daily'),
+      weekly: t('reports.detail.frequency.weekly', 'Weekly'),
+      monthly: t('reports.detail.frequency.monthly', 'Monthly'),
+      quarterly: t('reports.detail.frequency.quarterly', 'Quarterly'),
+      yearly: t('reports.detail.frequency.yearly', 'Yearly'),
+    };
+    return map[freq] ?? freq;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Page header */}
@@ -168,7 +184,7 @@ export function ScheduleDetailPage({
                 type="button"
                 onClick={onBack}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-                aria-label="Back to schedules"
+                aria-label={t('reports.detail.backToSchedules', 'Back to schedules')}
               >
                 <svg
                   className="w-5 h-5"
@@ -188,7 +204,9 @@ export function ScheduleDetailPage({
             )}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{schedule.name}</h1>
-              <p className="text-sm text-gray-500 mt-1">Schedule execution history</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {t('reports.detail.subtitle', 'Schedule execution history')}
+              </p>
             </div>
           </div>
         </div>
@@ -197,42 +215,50 @@ export function ScheduleDetailPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Schedule metadata card */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Schedule details</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">
+            {t('reports.detail.scheduleDetails', 'Schedule details')}
+          </h2>
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Frequency
+                {t('reports.detail.frequency.label', 'Frequency')}
               </dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {FREQUENCY_LABELS[schedule.frequency] ?? schedule.frequency} at {schedule.time}
+                {frequencyLabel(schedule.frequency)} at {schedule.time}
               </dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Format</dt>
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {t('reports.detail.format', 'Format')}
+              </dt>
               <dd className="mt-1 text-sm text-gray-900 uppercase">{schedule.format}</dd>
             </div>
             <div>
-              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</dt>
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {t('reports.detail.statusLabel', 'Status')}
+              </dt>
               <dd className="mt-1">
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     schedule.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  {schedule.is_active ? 'Active' : 'Inactive'}
+                  {schedule.is_active
+                    ? t('reports.detail.active', 'Active')
+                    : t('reports.detail.inactive', 'Inactive')}
                 </span>
               </dd>
             </div>
             <div>
               <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Recipients
+                {t('reports.detail.recipients', 'Recipients')}
               </dt>
               <dd className="mt-1 text-sm text-gray-900">{schedule.recipients.length}</dd>
             </div>
             {schedule.last_run_at && (
               <div>
                 <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Last run
+                  {t('reports.detail.lastRun', 'Last run')}
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
                   {formatDateTime(schedule.last_run_at)}
@@ -242,7 +268,7 @@ export function ScheduleDetailPage({
             {schedule.next_run_at && schedule.is_active && (
               <div>
                 <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Next run
+                  {t('reports.detail.nextRun', 'Next run')}
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900">
                   {formatDateTime(schedule.next_run_at)}
@@ -256,24 +282,35 @@ export function ScheduleDetailPage({
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-green-600">{completedCount}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {t('reports.detail.status.completed', 'Completed')}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-red-600">{failedCount}</p>
-            <p className="text-xs text-gray-500 mt-1">Failed</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {t('reports.detail.status.failed', 'Failed')}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-2xl font-bold text-blue-600">{runningCount}</p>
-            <p className="text-xs text-gray-500 mt-1">Running</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {t('reports.detail.status.running', 'Running')}
+            </p>
           </div>
         </div>
 
         {/* Execution history table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">Execution history</h2>
+            <h2 className="text-base font-semibold text-gray-900">
+              {t('reports.detail.executionHistory', 'Execution history')}
+            </h2>
             <span className="text-sm text-gray-500">
-              {filteredExecutions.length} of {executions.length} executions
+              {t('reports.detail.executionCount', '{{filtered}} of {{total}} executions', {
+                filtered: filteredExecutions.length,
+                total: executions.length,
+              })}
             </span>
           </div>
 
@@ -282,8 +319,31 @@ export function ScheduleDetailPage({
             <HistoryFilters filters={filters} onChange={setFilters} />
           </div>
 
-          {/* Table */}
-          {isLoading && executions.length === 0 ? (
+          {/* Error state */}
+          {isError ? (
+            <div className="p-12 text-center">
+              <svg
+                className="w-12 h-12 text-red-400 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                />
+              </svg>
+              <p className="text-gray-900 font-medium">
+                {t('reports.detail.errorTitle', 'Failed to load executions')}
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                {t('reports.detail.errorMessage', 'Please try again later.')}
+              </p>
+            </div>
+          ) : isLoading && executions.length === 0 ? (
             <div className="p-6">
               <div className="animate-pulse space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -307,57 +367,60 @@ export function ScheduleDetailPage({
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                 />
               </svg>
-              <p className="text-gray-500">No executions found</p>
+              <p className="text-gray-500">{t('reports.detail.noExecutions', 'No executions found')}</p>
               {Object.keys(filters).length > 0 && (
                 <button
                   type="button"
                   onClick={() => setFilters({})}
                   className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
                 >
-                  Clear filters
+                  {t('reports.detail.clearFilters', 'Clear filters')}
                 </button>
               )}
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table
+                className="min-w-full divide-y divide-gray-200"
+                aria-label={t('reports.detail.executionHistory', 'Execution history')}
+              >
                 <thead className="bg-gray-50">
                   <tr>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Status
+                      {t('reports.detail.colStatus', 'Status')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Started at
+                      {t('reports.detail.colStartedAt', 'Started at')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Duration
+                      {t('reports.detail.colDuration', 'Duration')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      File
+                      {t('reports.detail.colFile', 'File')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Size
+                      {t('reports.detail.colSize', 'Size')}
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Actions
+                      {t('reports.detail.colActions', 'Actions')}
                     </th>
                   </tr>
                 </thead>
@@ -393,6 +456,11 @@ export function ScheduleDetailPage({
                             <button
                               type="button"
                               onClick={() => onDownload(execution.id)}
+                              aria-label={t(
+                                'reports.detail.downloadExecution',
+                                'Download report from {{date}}',
+                                { date: formatDateTime(execution.startedAt) }
+                              )}
                               className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
                             >
                               <svg
@@ -409,7 +477,7 @@ export function ScheduleDetailPage({
                                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                                 />
                               </svg>
-                              Download
+                              {t('reports.detail.download', 'Download')}
                             </button>
                           )}
                           {execution.status === 'failed' && onRetry && (
@@ -417,6 +485,11 @@ export function ScheduleDetailPage({
                               type="button"
                               onClick={() => handleRetry(execution.id)}
                               disabled={retryingId === execution.id}
+                              aria-label={t(
+                                'reports.detail.retryExecution',
+                                'Retry execution from {{date}}',
+                                { date: formatDateTime(execution.startedAt) }
+                              )}
                               className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-orange-600 bg-orange-50 rounded hover:bg-orange-100 disabled:opacity-50"
                             >
                               {retryingId === execution.id ? (
@@ -441,7 +514,7 @@ export function ScheduleDetailPage({
                                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                     />
                                   </svg>
-                                  Retrying...
+                                  {t('reports.detail.retrying', 'Retrying...')}
                                 </>
                               ) : (
                                 <>
@@ -459,7 +532,7 @@ export function ScheduleDetailPage({
                                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                                     />
                                   </svg>
-                                  Retry
+                                  {t('reports.detail.retry', 'Retry')}
                                 </>
                               )}
                             </button>
@@ -482,7 +555,9 @@ export function ScheduleDetailPage({
                 disabled={isLoading}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium disabled:opacity-50"
               >
-                {isLoading ? 'Loading...' : 'Load more'}
+                {isLoading
+                  ? t('reports.detail.loading', 'Loading...')
+                  : t('reports.detail.loadMore', 'Load more')}
               </button>
             </div>
           )}

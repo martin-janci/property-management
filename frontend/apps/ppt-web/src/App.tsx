@@ -2906,7 +2906,11 @@ function ScheduleDetailPageRoute() {
   const EXECUTION_PAGE_SIZE = 20;
   const [executionOffset, setExecutionOffset] = useState(0);
 
-  const { data: executionHistoryData, isLoading: executionsLoading } = useReportExecutionHistory(
+  const {
+    data: executionHistoryData,
+    isLoading: executionsLoading,
+    isError: executionsError,
+  } = useReportExecutionHistory(
     { scheduleId },
     {
       limit: EXECUTION_PAGE_SIZE,
@@ -2976,6 +2980,7 @@ function ScheduleDetailPageRoute() {
       schedule={stubSchedule}
       executions={executions}
       isLoading={executionsLoading}
+      isError={executionsError}
       hasMore={hasMore}
       onLoadMore={handleLoadMore}
       onDownload={handleDownloadReport}
