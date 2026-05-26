@@ -411,6 +411,7 @@ impl OAuthRepository {
             r#"
             SELECT * FROM oauth_refresh_tokens
             WHERE token_hash = $1
+              AND revoked_at IS NULL
             "#,
         )
         .bind(token_hash)
