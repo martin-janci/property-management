@@ -40,6 +40,7 @@ Schema per row:
   "code_reuse_warn":    "string | null",   // implementer reused-or-duplicated existing helpers (item #4)
   "empty_branch":       "boolean | null",  // branch pushed but 0 commits ahead of dev (item #1)
   "rebase_attempts":    "int",             // count of auto-rebase tries on this row (item #6); default 0
+  "fix_rounds":         "int",             // count of ppt-pr-followup respawn rounds; default 0; hard cap 3
 
   "implementer_summary": "string | null",
   "reviewer_summary":    "string | null"
@@ -111,10 +112,12 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 3. Read `action-list.json`, `assignments.json`, `coverage.json`.
 4. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
-   `code_reuse_warn`, `empty_branch`, `rebase_attempts`) to `null` / `0`.
+   `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`) to
+   `null` / `0`.
 5. Confirm `.claude/skills/ppt-implement/SKILL.md`,
-   `.claude/skills/ppt-review-merged/SKILL.md`, AND
-   `.claude/skills/ppt-pr-merge/SKILL.md` exist. If any missing, ABORT.
+   `.claude/skills/ppt-review-merged/SKILL.md`,
+   `.claude/skills/ppt-pr-merge/SKILL.md`, AND
+   `.claude/skills/ppt-pr-followup/SKILL.md` exist. If any missing, ABORT.
 
 ---
 
@@ -377,6 +380,41 @@ Phase 5.5 next run will pick up the now-clean PR via the standard path.
 
 ---
 
+## Phase 5.7 — Respawn implementer on `verdict=changes` (NEW)
+
+For each row `status == "review"` where `reviewer_summary` starts with
+`"verdict=changes"`:
+
+Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
+
+> You are the PR follow-up driver. Invoke
+> `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
+>
+> 1. Run `bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh --pr <n>`.
+> 2. If the script's stdout contains a `=== ppt-pr-followup respawn brief ===`
+>    block, take that brief and spawn the original specialist via the `Task`
+>    tool (same channel Phase 4 uses), waiting for it to return.
+> 3. After the spawned implementer returns, set `status=review` on the row
+>    and bump `last_updated`. (The script already cleared `reviewer_summary`
+>    and flipped `status=in-progress`; this flip back to `review` is what
+>    re-arms Phase 5 for a fresh reviewer pass on the new commits.)
+> 4. Return EXACTLY the script's final line, e.g.
+>    `followup=respawned pr=<n> specialist=<sp> round=<k>`.
+>
+> If the script exits non-zero (failed/round-cap), do not spawn; just return
+> the script's last line.
+
+Capture line. The script already mutated `assignments.json`; this phase
+adds nothing further to the file beyond the post-respawn `status=review`
+flip.
+
+Idempotency: the script's `status=in-progress` write makes a second
+Phase 5.7 invocation a no-op until the spawned implementer finishes and
+the next reviewer pass posts a fresh `reviewer_summary`. Hard cap is 3
+fix rounds per row; subsequent calls return `failed`.
+
+---
+
 ## Phase 6 — Persist & push
 
 Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Tier 1 refilled.
@@ -439,6 +477,7 @@ Hang alerts:
 - max 1 post-merge reviewer subagent per run
 - max 2 pr-merge subagents in parallel in Phase 5.5
 - max 1 rebase subagent in parallel in Phase 5.6 (item #6)
+- max 3 followup/respawn subagents in parallel in Phase 5.7 (matches Phase 4 implementer cap)
 - no cap on reviewer (Phase 5) subagents
 - never re-claim an id already in assignments (regardless of its status)
 - never claim items whose dependency text mentions another non-`merged` task
@@ -446,7 +485,7 @@ Hang alerts:
 - never bypass git hooks (no `--no-verify`)
 - never set `assignment.status="merged"` inside Phase 5.5 — only Phase 2 sets `merged` from GH truth
 - Tier 2 upstream kick is fire-and-forget with `--max-time 10`
-- always defer to `ppt-implement`, `ppt-review-merged`, `ppt-pr-merge` skills
+- always defer to `ppt-implement`, `ppt-review-merged`, `ppt-pr-merge`, `ppt-pr-followup` skills
 - buffer guard adds items only; never edits/removes existing
 - do NOT inline implementer / reviewer / merger logic
 - Phase 2's `<2h grace, no branch yet` case respects that another run's implementer may still be working on this task — don't fail prematurely
