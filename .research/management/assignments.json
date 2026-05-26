@@ -1175,7 +1175,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/512",
       "merged_at": "2026-05-25T19:15:00Z",
       "implementer_summary": "pr=512 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=wired DisputeDetailPage+DisputeMediationRoute+mediation route; typecheck+build clean; scope_drift from dev merge (announcements/push-tokens commits); sessions/submissions empty pending backend",
-      "reviewer_summary": "verdict=n/a note=superseded by PR #511 which contained the same commit 8cdd5e03; all changes landed via #511 squash-merge"
+      "reviewer_summary": "verdict=n/a note=superseded by PR #511 which contained the same commit 8cdd5e03; all changes landed via #511 squash-merge",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "pm-qa-establish-pr-merge-policy-requiring-a",
@@ -1189,7 +1194,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/510",
       "merged_at": "2026-05-25T19:10:00Z",
       "implementer_summary": "pr=510 status=done specialist=generic note=security-test-gate workflow added",
-      "reviewer_summary": "verdict=approve note=all 3 items verified: checkout@v6 present, */tests/*.rs single-level glob correct, unlabeled trigger present; logic sound: job-level if skips non-security PRs cleanly, draft=advisory exit 0, non-draft hard-fail exit 1; test patterns cover Rust integration/unit, TS __tests__/spec/test, e2e; CI conclusion=skipped as expected (PR has no security label); no issues"
+      "reviewer_summary": "verdict=approve note=all 3 items verified: checkout@v6 present, */tests/*.rs single-level glob correct, unlabeled trigger present; logic sound: job-level if skips non-security PRs cleanly, draft=advisory exit 0, non-draft hard-fail exit 1; test patterns cover Rust integration/unit, TS __tests__/spec/test, e2e; CI conclusion=skipped as expected (PR has no security label); no issues",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-6-4-pinned-announcements-ui",
@@ -1203,7 +1213,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/511",
       "merged_at": "2026-05-25T19:15:00Z",
       "implementer_summary": "pr=511 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=pinned band in ppt-web (PinnedAnnouncementsBand+CSS wired) and mobile sticky chip row; useAnnouncements(pinned:true) in AnnouncementsPageRoute; typecheck+biome clean both stacks",
-      "reviewer_summary": "verdict=approve note=CI run 26415080299 all-green (lint+screen-map+test+build-web+build-mobile+build-reality); PinnedAnnouncementsBand correct (role=region+aria-label, focus-visible ring, chips keyboard-accessible); useAnnouncements(pinned:true) called unconditionally; mobile correctly filters pinned from main list via !a.isPinned; all API calls via useApiQuery/@ppt/api-client fetchJson (no raw fetch); dispute routes DisputeDetailPage+MediationPage lazy-imported correctly, ProtectedRoute context inherited from parent routes; both screen-maps (announcements+dispute-detail) updated with Agent Log; non-blocking: role=listitem removed from chip buttons inside role=list container (a11y SHOULD), mobile Pinned label not i18n-wrapped, usePinnedAnnouncements hook exported but unused in App.tsx (redundant with inline useAnnouncements call)"
+      "reviewer_summary": "verdict=approve note=CI run 26415080299 all-green (lint+screen-map+test+build-web+build-mobile+build-reality); PinnedAnnouncementsBand correct (role=region+aria-label, focus-visible ring, chips keyboard-accessible); useAnnouncements(pinned:true) called unconditionally; mobile correctly filters pinned from main list via !a.isPinned; all API calls via useApiQuery/@ppt/api-client fetchJson (no raw fetch); dispute routes DisputeDetailPage+MediationPage lazy-imported correctly, ProtectedRoute context inherited from parent routes; both screen-maps (announcements+dispute-detail) updated with Agent Log; non-blocking: role=listitem removed from chip buttons inside role=list container (a11y SHOULD), mobile Pinned label not i18n-wrapped, usePinnedAnnouncements hook exported but unused in App.tsx (redundant with inline useAnnouncements call)",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-8a-3-push-fanout-delivery",
@@ -1217,7 +1232,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/515",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=2 blocking issues: APNs-only users get spurious PushFailed error (wrong any_sent logic), migration numbered 00161 skipping 00160 with contradicting internal comment; 1 minor: delete_stale_token uses runtime sqlx::query instead of compile-time macro. cargo check + clippy both exit 0."
+      "reviewer_summary": "verdict=changes note=2 blocking issues: APNs-only users get spurious PushFailed error (wrong any_sent logic), migration numbered 00161 skipping 00160 with contradicting internal comment; 1 minor: delete_stale_token uses runtime sqlx::query instead of compile-time macro. cargo check + clippy both exit 0.",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-80-3-mediation-api",
@@ -1231,7 +1251,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/514",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=4 required fixes: resolve_dispute missing updated_at bump, update_mediation_notes missing empty-string guard (422), wrong activity_type used for notes update, RequireCapability extractor convention not followed"
+      "reviewer_summary": "verdict=changes note=4 required fixes: resolve_dispute missing updated_at bump, update_mediation_notes missing empty-string guard (422), wrong activity_type used for notes update, RequireCapability extractor convention not followed",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-84-2-esignature-email-ui",
@@ -1245,7 +1270,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/513",
       "merged_at": null,
       "implementer_summary": "pr=513 status=done specialist=react-web note=@ppt/api-client esignature module (types+api+hooks); SignatureStatusBadge (amber/green/red/gray); RequestSignatureModal (signer selection+subject+message+loading+error); LeaseDetailPage Request Signature button + badge in header; LeaseCard badge in status row; LeaseSignatureStatus+documentId types added; typecheck exit 0; biome exit 0; vite build exit 0",
-      "reviewer_summary": "verdict=changes note=6 issues: (1) LeaseSignatureStatus duplicates SignatureRequestStatus from api-client \u2014 remove and import; (2) onSuccess hardcodes 'pending' instead of result.signature_request.status; (3) signerParties missing landlord/manager \u2014 add TODO; (4) no focus trap in modal (WCAG 2.1 \u00a72.1.2); (5) error div missing role=alert; (6) SignatureStatusBadge labels not i18n-wrapped"
+      "reviewer_summary": "verdict=changes note=6 issues: (1) LeaseSignatureStatus duplicates SignatureRequestStatus from api-client \u2014 remove and import; (2) onSuccess hardcodes 'pending' instead of result.signature_request.status; (3) signerParties missing landlord/manager \u2014 add TODO; (4) no focus trap in modal (WCAG 2.1 \u00a72.1.2); (5) error div missing role=alert; (6) SignatureStatusBadge labels not i18n-wrapped",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-80-2-dispute-filing-ui",
@@ -1316,12 +1346,17 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/533",
       "merged_at": null,
       "implementer_summary": "pr=533 status=done specialist=ios-swiftui note=wired HomeView category chips to pendingSearchFilters; added SortOption enum + toolbar in SearchView; fixed buildKMPFilters type mapping; Band A Gradle failed (Android SDK missing in sandbox), macOS reviewer needed",
-      "reviewer_summary": "verdict=approve note=LGTM; all CI green; macOS reviewer must confirm KMP link locally before un-draft; minor: buildKMPFilters multi-type pre-existing, not introduced by PR"
+      "reviewer_summary": "verdict=approve note=LGTM; all CI green; macOS reviewer must confirm KMP link locally before un-draft; minor: buildKMPFilters multi-type pre-existing, not introduced by PR",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-83-1-airbnb-integration-backend",
       "branch": "auto-impl/gap-83-1-airbnb-integration-backend",
-      "status": "changes",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T22:10:38Z",
       "last_updated": "2026-05-26T02:15:36Z",
@@ -1330,12 +1365,17 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/538",
       "merged_at": null,
       "implementer_summary": "pr=538 status=done specialist=rust-backend note=direct-connect+webhook+availability-sync shipped; cargo check exit 0; 4/4 unit tests green; cargo fmt fix pushed",
-      "reviewer_summary": "verdict=changes note=BLOCKING: (1) IDOR: org_id in body not path; (2) no org-membership check in enqueue handler; (3) webhook no-ops need TODO comments; MEDIUM: empty creds via unwrap_or_default, body:String vs Bytes for HMAC; path convention: /airbnb/connect should be /organizations/{org_id}/airbnb/connect"
+      "reviewer_summary": "verdict=changes note=BLOCKING: (1) IDOR: org_id in body not path; (2) no org-membership check in enqueue handler; (3) webhook no-ops need TODO comments; MEDIUM: empty creds via unwrap_or_default, body:String vs Bytes for HMAC; path convention: /airbnb/connect should be /organizations/{org_id}/airbnb/connect",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-83-2-booking-integration-backend",
       "branch": "auto-impl/gap-83-2-booking-integration-backend",
-      "status": "changes",
+      "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T22:10:38Z",
       "last_updated": "2026-05-26T02:15:36Z",
@@ -1344,7 +1384,12 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/534",
       "merged_at": null,
       "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; RBAC+org-ownership guard+credential validation fixes applied; cargo check pass; fmt clean; awaiting re-review (blocking issues resolved)",
-      "reviewer_summary": "verdict=changes note=BLOCKING: check_availability unwrap_or(true)\u2192(false) data-integrity bug; booking_reservation_id field naming bug (internal UUID vs external ID); MEDIUM: N+1 in conflict detection, missing room_type_id skip warning; NON-ISSUES: AppError not IntoResponse in this codebase, ManageIntegrations capability does not exist"
+      "reviewer_summary": "verdict=changes note=BLOCKING: check_availability unwrap_or(true)\u2192(false) data-integrity bug; booking_reservation_id field naming bug (internal UUID vs external ID); MEDIUM: N+1 in conflict detection, missing room_type_id skip warning; NON-ISSUES: AppError not IntoResponse in this codebase, ManageIntegrations capability does not exist",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-85-2-build-config-android",
@@ -1358,7 +1403,12 @@
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=536 status=done specialist=react-native scope_drift=true note=Android release build wired: EAS credentialsSource+gradleCommand, adaptive icon, FCM via google-services.json.template, 13 permissions, intent filters, keystore script, CI workflow; typecheck+biome clean",
-      "reviewer_summary": "verdict=changes note=2 blocking issues: GH Actions versions v6 dont exist (checkout/setup-node/pnpm-action-setup must be v4), CI Lint & Format Check failing; advisory: missing Android npm scripts, eas-cli devDependency not in package.json"
+      "reviewer_summary": "verdict=changes note=2 blocking issues: GH Actions versions v6 dont exist (checkout/setup-node/pnpm-action-setup must be v4), CI Lint & Format Check failing; advisory: missing Android npm scripts, eas-cli devDependency not in package.json",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-85-2-build-config-ios",
@@ -1372,7 +1422,12 @@
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=535 status=done specialist=react-native scope_drift=true note=eas.json+app.config.ts iOS build config (bundleId,ATS,buildNumber,OTA)+eas-build-ios.yml workflow; typecheck+lint clean",
-      "reviewer_summary": "verdict=changes note=Blocking: workflow uses actions/checkout@v6, setup-node@v6, pnpm/action-setup@v6 which dont exist (latest are v4); fix version pins before merge; Non-blocking: remove unused submit.staging, guard updates.url against missing EXPO_PROJECT_ID"
+      "reviewer_summary": "verdict=changes note=Blocking: workflow uses actions/checkout@v6, setup-node@v6, pnpm/action-setup@v6 which dont exist (latest are v4); fix version pins before merge; Non-blocking: remove unused submit.staging, guard updates.url against missing EXPO_PROJECT_ID",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-82-3-search-enhancements",
@@ -1386,21 +1441,31 @@
       "merged_at": null,
       "specialist": "ios-swiftui",
       "implementer_summary": "pr=537 status=done specialist=ios-swiftui scope_drift=false note=debounced search+infinite scroll+CoreLocation+FilterSheet wired; brace-balance verified; gradlew Band A blocked (no AGP/Xcode on Linux host)",
-      "reviewer_summary": "verdict=changes note=two must-fix bugs: (1) nearMeChip alert binding uses set:{_ in} no-op making location-denied alert undismissible; (2) properties_found i18n key used in resultsGrid but absent from all 6 locale files; 5 non-English locales carry untranslated strings for all 15 new keys"
+      "reviewer_summary": "verdict=changes note=two must-fix bugs: (1) nearMeChip alert binding uses set:{_ in} no-op making location-denied alert undismissible; (2) properties_found i18n key used in resultsGrid but absent from all 6 locale files; 5 non-English locales carry untranslated strings for all 15 new keys",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-82-4-photo-gallery",
       "branch": "auto-impl/gap-82-4-photo-gallery",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-26T02:15:36Z",
-      "last_updated": "2026-05-26T02:15:36Z",
-      "status_changed_at": "2026-05-26T02:15:36Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T02:21:42Z",
+      "status_changed_at": "2026-05-26T02:21:42Z",
+      "pr_number": 540,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/540",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "specialist": "ios-swiftui",
+      "implementer_summary": "pr=540 status=done specialist=ios-swiftui scope_drift=true code_reuse_warn=none note=ZoomablePhotoPage pinch/double-tap zoom + FavoritesService cross-view sync; Gradle/Xcode verify skipped (cloud\u2014no macOS)",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-82-5-ios-push-keychain",
@@ -1414,7 +1479,12 @@
       "merged_at": null,
       "specialist": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     },
     {
       "task_id": "gap-83-1-airbnb-oauth",
@@ -1428,8 +1498,13 @@
       "merged_at": null,
       "specialist": "rust-backend",
       "implementer_summary": "pr=538 status=done specialist=rust-backend note=all functionality already exists in dev (oauth.rs airbnb_oauth_callback) and open draft PR#538; no new branch needed; pointing at PR#538",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null
     }
   ],
-  "assignments.generated": "2026-05-26T02:15:36Z"
+  "assignments.generated": "2026-05-26T02:21:42Z"
 }
