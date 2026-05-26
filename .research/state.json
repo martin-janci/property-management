@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-05-26T03:12:00Z",
-  "last_run_ms": 600000,
-  "last_pr_seen": 511,
+  "last_run_iso": "2026-05-26T22:31:02Z",
+  "last_run_ms": 520000,
+  "last_pr_seen": 562,
   "last_issue_seen": 528,
-  "last_commit_sha": "8fa7597f482777f03fdc991cce5bb0067ac906e6",
+  "last_commit_sha": "cfaf94decbeed8a2310f5bd0f53ff6b33d128872",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -51,6 +51,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-26",
       "recent_churn": 139
+    },
+    "backend/servers/api-server/src/routes/integrations/install.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 877
+    },
+    "frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 869
+    },
+    "backend/servers/api-server/src/services/push_fanout.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 689
     }
   },
   "seen_signals": [
@@ -90,7 +105,17 @@
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
     "code-review-api-core-dispute-fsm-no-tests",
     "closed-not-merged-pr-507",
-    "closed-not-merged-pr-512"
+    "closed-not-merged-pr-512",
+    "fixme-in-merged-code-pr-538-webhook-rs",
+    "fixme-in-merged-code-pr-515-push-fanout-rs",
+    "screen-map-drift-pr-547-ppt",
+    "screen-map-drift-pr-549-ppt",
+    "hotfix-no-test-pr-532",
+    "hotfix-no-test-pr-553",
+    "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+    "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "code-review-mobile-native-kmp-ios-deeplink-sso"
   ],
   "auto_fix_history": {},
   "review_cursor": {
@@ -101,11 +126,11 @@
     "ppt-web-core": "2026-05-25",
     "reality-web": null,
     "mobile-rn": null,
-    "mobile-native-kmp": null
+    "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 8,
-    "vectors_created": 23,
+    "runs": 9,
+    "vectors_created": 26,
     "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0

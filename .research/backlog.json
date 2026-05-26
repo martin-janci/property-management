@@ -306,14 +306,16 @@
       "confidence": "medium",
       "sources": [
         "code-review ppt-web-ui 2026-05-24",
-        "rotating-expert-review"
+        "rotating-expert-review",
+        "PR #549"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 — status labels/descriptions ('Connected','Connecting...','Connection Error','Real-time updates are active','Click to reconnect') hardcoded; component never imports useTranslation",
         "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — 'You are offline. Some features may be unavailable.' / 'Connection restored' (aria-live alert) hardcoded English",
         "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 — 'Checking authentication','Loading...','Access Denied','You do not have permission to access this page.' hardcoded on auth/loading paths",
         "peers (LoginPage, Toast, ErrorBoundary, AuthRequiredGate, PageLoading, LanguageSwitcher) route all user-facing text through react-i18next (sk/cs/de/en) — these three diverge; low severity (text renders, just in English)",
-        "App.tsx:971-995 — Dispute detail UI hardcodes 'Dispute: '/'Description'/'Timeline'/'No timeline events yet.' (not wrapped in t()) [code-review ppt-web-core]"
+        "App.tsx:971-995 — Dispute detail UI hardcodes 'Dispute: '/'Description'/'Timeline'/'No timeline events yet.' (not wrapped in t()) [code-review ppt-web-core]",
+        "PR #549 added partial i18n during SystemAnnouncementsPage split and PR #547 added reports messages; remaining inline English strings in the cited components still untranslated"
       ],
       "files": [
         "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx",
@@ -322,7 +324,7 @@
         "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-05-24",
-      "updated_at": "2026-05-25",
+      "updated_at": "2026-05-26",
       "plan": null
     },
     {
@@ -430,13 +432,15 @@
       "sources": [
         "git log origin/dev since 2026-05-24",
         "PR #504",
-        "PR #505"
+        "PR #505",
+        "PR #548"
       ],
       "evidence": [
         "Top-3 code-churn source file this run: 2,722 lines (additions+deletions)",
         "2,722-line route module; churned from the Epic 2B notification pipeline (#463) and the in-flight Epic 6 announcement web-UI wiring (draft PRs #474/#475/#479) — active feature development, runs_seen=1",
         "watch candidate: re-evaluate for a split if it persists as a hotspot",
-        "repeated-churn 2026-05-26: PR #504 (PATCH pin endpoint, +10) and PR #505 (comments RLS rework + test module, +142/-15) churned it again; runs_seen=2 — still a top-3 hotspot, reinforces the announcements module-split case"
+        "repeated-churn 2026-05-26: PR #504 (PATCH pin endpoint, +10) and PR #505 (comments RLS rework + test module, +142/-15) churned it again; runs_seen=2 — still a top-3 hotspot, reinforces the announcements module-split case",
+        "PR #548 touched announcements.rs again (transactional pin_with_cap_rls TOCTOU fix) on 2026-05-26"
       ],
       "files": [
         "backend/servers/api-server/src/routes/announcements.rs"
@@ -570,16 +574,18 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 6,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "PR #497",
-        "PR #507"
+        "PR #507",
+        "PR #548"
       ],
       "evidence": [
         "PR #497 fixed inquiry mark_as_read IDOR via ownership EXISTS check (reality_portal.rs:779) but shipped with NO test file",
         "PR #497 body has 3 unchecked test TODOs: B->404 & read_at NULL; A->204 set; idempotent re-mark->204",
         "find backend -path '*test*' -name '*.rs' | xargs grep -l inquir -> only rls_smoke_tests.rs; no mark-read ownership coverage",
-        "2026-05-26: PR #507 (pm-qa-...-inquiry IDOR regression tests for PR #497) was CLOSED UNMERGED 2026-05-25 — the regression test was authored then abandoned, so the gap is still open; a reality-server tests/inquiry_idor_tests.rs now exists (from the realtors-IDOR track) and is the natural home for these cases"
+        "2026-05-26: PR #507 (pm-qa-...-inquiry IDOR regression tests for PR #497) was CLOSED UNMERGED 2026-05-25 — the regression test was authored then abandoned, so the gap is still open; a reality-server tests/inquiry_idor_tests.rs now exists (from the realtors-IDOR track) and is the natural home for these cases",
+        "resolved: regression test backend/crates/db/tests/inquiry_mark_read_idor_tests.rs added in PR #548 (128 lines) — exercises wrong-realtor mark_inquiry_read returning no row / 404"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/inquiries.rs",
@@ -587,7 +593,7 @@
       ],
       "created_at": "2026-05-25",
       "updated_at": "2026-05-26",
-      "plan": "plans/test-gap-inquiry-idor-regression.md"
+      "plan": "plans/_archive/test-gap-inquiry-idor-regression.md"
     },
     {
       "id": "refactor-app-tsx-route-coupling",
@@ -600,12 +606,15 @@
         "PR #474",
         "PR #475",
         "PR #489",
-        "PR #511"
+        "PR #511",
+        "PR #547",
+        "PR #549"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/App.tsx churned 367 lines across 3 PRs this run (#474 +289, #489 +72, #475 +6)",
         "pm-scrum-master flagged triple-conflict rebase risk across #503/#500/80-3 wiring on the central router",
-        "repeated-churn 2026-05-26: PR #511 added +253/-65 (318 lines) wiring DisputeDetailPage + DisputeMediationRoute + pinned-band props through the central router; runs_seen=2 — App.tsx keeps absorbing per-feature route + data-mapping logic that belongs in route modules"
+        "repeated-churn 2026-05-26: PR #511 added +253/-65 (318 lines) wiring DisputeDetailPage + DisputeMediationRoute + pinned-band props through the central router; runs_seen=2 — App.tsx keeps absorbing per-feature route + data-mapping logic that belongs in route modules",
+        "PR #547 (report execution-history route) and PR #549 (useCallback route wrappers) both touched App.tsx again on 2026-05-26 — aggregator coupling persists"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx"
@@ -620,18 +629,20 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "issue #519",
         "PR #508",
-        "realtors.rs:250"
+        "realtors.rs:250",
+        "PR #548"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/realtors.rs:250 — mark_inquiry_read(State, Path<Uuid>) binds NO principal and calls state.reality_portal_repo.mark_inquiry_read(id); wired at realtors.rs:28 as POST /api/v1/realtors/inquiries/{id}/read",
         "backend/crates/db/src/repositories/reality_portal.rs:767 — mark_inquiry_read(id) runs `UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL` with no realtor/owner predicate (cross-account write IDOR)",
         "scoped sibling mark_inquiry_read_for_realtor(id, realtor_id) already exists at reality_portal.rs:779 — the fix is to bind principal and call it, returning 404 on a non-owned row",
         "distinct from the done security-inquiry-read-idor (inquiries.rs mark_as_read, fixed by PR #497) — this is a SECOND read-marking route on the realtors surface that PR #508 (respond_to_inquiry fix) did not touch",
-        "surfaced by issue #519 (follow-up, from-merged-review of PR #508), code-verified this run"
+        "surfaced by issue #519 (follow-up, from-merged-review of PR #508), code-verified this run",
+        "resolved: PR #548 merged 2026-05-26 — mark_inquiry_read now calls mark_inquiry_read_for_realtor(id, principal.user_id) (realtors.rs:259), returning 404 on non-owned rows; regression test backend/crates/db/tests/inquiry_mark_read_idor_tests.rs added (closes issue #519)"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/realtors.rs",
@@ -640,7 +651,7 @@
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",
-      "plan": "plans/security-realtors-mark-inquiry-read-idor.md"
+      "plan": "plans/_archive/security-realtors-mark-inquiry-read-idor.md"
     },
     {
       "id": "test-gap-dispute-fsm-no-tests",
@@ -648,21 +659,90 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "sources": [
         "PR #506",
-        "issue #520"
+        "issue #520",
+        "PR #514",
+        "PR #548"
       ],
       "evidence": [
         "PR #506 (gap-80-2 dispute state machine) added dispute_state_machine::is_valid_transition/allowed_transitions (db/models/disputes.rs) + transition enforcement in dispute.rs update_status + 422 mapping in routes/disputes.rs — with ZERO test files in the diff",
         "the FSM is pure, table-driven logic (is_valid_transition) trivial to unit-test, yet no #[cfg(test)] mod or tests/*.rs was added; a regression test would lock the filed→under_review→resolved transition table",
         "issue #520 (follow-up, from-merged-review of PR #506) additionally flags a cross-tenant authz concern: update_status runs `UPDATE disputes ... WHERE id = $2 AND status = $3` via self.pool with no organization_id predicate — needs verification of whether RLS covers this path before treating as security",
-        "the handler does gate on user.role.is_manager() (routes/disputes.rs) but role alone does not scope to the manager's own org"
+        "the handler does gate on user.role.is_manager() (routes/disputes.rs) but role alone does not scope to the manager's own org",
+        "resolved: PR #514 added backend/servers/api-server/tests/dispute_cross_org_idor_tests.rs (263 lines) + PR #548 added backend/crates/db/tests/dispute_cross_tenant_tests.rs; update_dispute_status now derives organization_id from user.tenant_id (disputes.rs:402) enforcing org tenancy (closes issue #520)"
       ],
       "files": [
         "backend/crates/db/src/models/disputes.rs",
         "backend/crates/db/src/repositories/dispute.rs",
         "backend/servers/api-server/src/routes/disputes.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "bug-webhook-airbnb-dup-sync-jobs",
+      "title": "Airbnb webhook at-least-once delivery enqueues duplicate SYNC_EXTERNAL jobs",
+      "vector": "bug",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "PR #538",
+        "webhook.rs:1028"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO acknowledges Airbnb delivers webhooks at-least-once; a rapid sequence of events for the same listing enqueues duplicate SYNC_EXTERNAL background jobs",
+        "no dedup today: the handler inserts a CreateBackgroundJob unconditionally; fix needs an idempotent worker-level upsert or a check for an already-queued SYNC_EXTERNAL job for (org_id, connection_id) before insert"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/webhook.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "dx-push-fanout-blpop-drain",
+      "title": "PushFanoutWorker BLPOP queue-drain deferred — Redis path is a logging no-op",
+      "vector": "dx",
+      "score": 2,
+      "status": "open",
+      "confidence": "high",
+      "sources": [
+        "PR #515",
+        "push_fanout.rs:621"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/services/push_fanout.rs:621 — TODO: BLPOP drain left for a follow-up PR; when Redis is present process_pending_jobs only logs a heartbeat and returns",
+        "real delivery currently happens synchronously via FcmHttpAdapter::send inside NotificationPipeline::dispatch; the dedicated Redis push_fanout_queue is never drained, so any jobs enqueued there are dropped"
+      ],
+      "files": [
+        "backend/servers/api-server/src/services/push_fanout.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-ppt-report-history",
+      "title": "Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc",
+      "vector": "test-gap",
+      "score": 2,
+      "status": "open",
+      "confidence": "medium",
+      "sources": [
+        "PR #547",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ],
+      "evidence": [
+        "PR #547 added the report execution-history table to ScheduleDetailPage and wired it via frontend/apps/ppt-web/src/{App.tsx,routes/lazyRoutes.tsx} without touching any docs/screens/ppt/*.md",
+        "best-effort drift heuristic (route-basename match) — review candidate, may already be covered by an existing reports screen doc under a different slug"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/reports/pages/ScheduleDetailPage.tsx"
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",

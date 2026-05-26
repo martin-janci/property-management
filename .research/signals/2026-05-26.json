@@ -1,78 +1,110 @@
 {
   "date": "2026-05-26",
   "trigger": "",
+  "_note": "Same-day incremental rerun. The 03:12Z run covered merged PRs #503–#511; this run (≈22:31Z) processes the rest of the day's merges #513–#562. seen_signals is cumulative, so only this increment's new signal IDs appear here (G4: none collide with the committed seen_signals).",
+  "run_window": {
+    "since_iso": "2026-05-26T03:12:00Z",
+    "last_pr_seen_in": 511,
+    "last_pr_seen_out": 562
+  },
   "signals": [
     {
-      "id": "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
-      "type": "repeated-churn",
-      "source": "PR #511",
-      "score_delta": 1,
-      "evidence": "frontend/apps/ppt-web/src/App.tsx +253/-65 (318 lines) via PR #511 — DisputeDetailRoute/DisputeMediationRoute wiring + pinned-band props; runs_seen 1->2 (cumulative re-emit, score not re-applied to churn-hotspot)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
-      "type": "repeated-churn",
-      "source": "PR #504, PR #505",
-      "score_delta": 1,
-      "evidence": "announcements.rs churned 167 lines this run — PR #504 PATCH pin endpoint (+7/-3) and PR #505 comments RLS rework + test module (+142/-15); runs_seen 1->2",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
-      "type": "churn-hotspot",
-      "source": "PR #511",
-      "score_delta": 0,
-      "evidence": "AnnouncementsScreen.tsx +104/-35 (139 lines) via PR #511 pinned-band feature; one-time feature add on a ~500-line screen file, not a monolith — tracked in hotspot_history (runs_seen=1), no backlog item created (sub-monolith feature churn)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "code-review-reality-server-realtors-mark-inquiry-read-idor",
-      "type": "code-review-finding",
-      "source": "issue #519, PR #508, realtors.rs:250",
-      "score_delta": 3,
-      "evidence": "Phase 1.5 reality-server review (lead: issue #519): realtors.rs:250 mark_inquiry_read binds no principal and calls unscoped reality_portal.rs:767 mark_inquiry_read(id) (UPDATE ... WHERE id=$1 AND read_at IS NULL, no realtor predicate) — wired at POST /api/v1/realtors/inquiries/{id}/read; cross-account write IDOR, code-verified. Scoped sibling mark_inquiry_read_for_realtor (reality_portal.rs:779) already exists",
-      "confidence": "high",
-      "candidate_vector": "security"
-    },
-    {
-      "id": "code-review-api-core-dispute-fsm-no-tests",
-      "type": "code-review-finding",
-      "source": "PR #506, issue #520",
+      "id": "fixme-in-merged-code-pr-538-webhook-rs",
+      "type": "fixme-in-merged-code",
+      "source": "PR #538",
       "score_delta": 2,
-      "evidence": "PR #506 dispute state machine (dispute_state_machine module + update_status transition enforcement + 422 mapping) merged with ZERO test files; pure table-driven FSM trivial to unit-test. Issue #520 additionally flags update_status runs WHERE id=$2 AND status=$3 via self.pool with no organization_id predicate (cross-tenant authz needs RLS verification)",
       "confidence": "high",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO: Airbnb at-least-once webhook delivery enqueues duplicate SYNC_EXTERNAL jobs for the same listing; needs idempotent upsert or already-queued-job check. Verified by reading the diff/file this run."
     },
     {
-      "id": "closed-not-merged-pr-507",
-      "type": "closed-not-merged-pr",
-      "source": "PR #507",
-      "score_delta": 1,
-      "evidence": "PR #507 (inquiry IDOR regression tests for PR #497) closed UNMERGED 2026-05-25 — the regression test was authored then abandoned; reinforces the still-open test-gap-inquiry-idor-regression",
+      "id": "fixme-in-merged-code-pr-515-push-fanout-rs",
+      "type": "fixme-in-merged-code",
+      "source": "PR #515",
+      "score_delta": 2,
       "confidence": "high",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "dx",
+      "evidence": "backend/servers/api-server/src/services/push_fanout.rs:621 — TODO: BLPOP queue-drain deferred to a follow-up PR; the Redis branch of process_pending_jobs only logs a heartbeat. Delivery works synchronously via FcmHttpAdapter::send today, so this is deferred plumbing not a live outage."
     },
     {
-      "id": "closed-not-merged-pr-512",
-      "type": "closed-not-merged-pr",
-      "source": "PR #512",
+      "id": "screen-map-drift-pr-547-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #547",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #547 (report execution-history UI) touched frontend/apps/ppt-web/src/App.tsx + routes/lazyRoutes.tsx without updating any docs/screens/ppt/*.md. Best-effort drift heuristic — review candidate."
+    },
+    {
+      "id": "screen-map-drift-pr-549-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #549",
       "score_delta": 0,
-      "evidence": "PR #512 (wire DisputeDetailPage + /disputes/:id/mediation route) closed UNMERGED 2026-05-25 — superseded by PR #511 which landed the same App.tsx dispute wiring; benign, no backlog item",
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #549 touched App.tsx but the diff is useCallback route wrappers around existing routes (per PR body), not new screens. Heuristic false-positive — score suppressed, no backlog item."
+    },
+    {
+      "id": "hotfix-no-test-pr-532",
+      "type": "hotfix-no-test",
+      "source": "PR #532",
+      "score_delta": 0,
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "test-gap",
+      "evidence": "fix(security) e-signature config fail-closed has no *test* file path, but the PR body + esignature.rs carry 4 new inline #[cfg(test)] unit tests (from_env failure modes, IG3). Verified — score suppressed."
+    },
+    {
+      "id": "hotfix-no-test-pr-553",
+      "type": "hotfix-no-test",
+      "source": "PR #553",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "fix(mobile) ships only iOS/RN config + Swift (Info.plist, .env, AuthManager/DeepLinkHandler) with no unit test; PR body defers Xcode/Swift compile verification to CI. Native config — score suppressed, noted in brief."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #534, #538, #544",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "877 lines this run — new integrations install module built out across the Booking.com/Airbnb channel-sync epics (83.1/83.2). One-time feature build-out, runs_seen=1; recorded in hotspot_history, no backlog item."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #549",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "869 lines this run — #549 split the 867-LoC SystemAnnouncementsPage into orchestrator + 5 components + 3 lib files (issue #521). One-time refactor, runs_seen=1; no backlog item."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "PR #515",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "689 lines this run — new push-notification fanout worker (Epic 8A-3). One-time feature add, runs_seen=1; the deferred BLPOP plumbing is tracked separately as dx-push-fanout-blpop-drain."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ios-deeplink-sso",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating review — segment mobile-native-kmp (PR #553/#522 freshly landed, never reviewed)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "Reviewed iOS deep-link/SSO hardening (AuthManager.beginSsoFlow/consumeSsoState, DeepLinkHandler.allowedUniversalLinkHosts). Solid: 32-byte SecRandomCopyBytes CSRF nonce, single-use defer-clear, empty-state rejection, universal-link host allow-list, Route.requiresAuth gating. No actionable finding — recorded for cursor advance, no backlog item."
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type (screen-map-drift/orphan, fixme-in-merged-code, dep lockfile-drift, stalled-review) fired this run; the realtors IDOR is a code change and goes to the manual plan path",
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f briefs/2026-05-26.md && head -1 | grep ^# 2026-05-26",
+      "command": "test -f briefs/2026-05-26.md && head -1 | grep '# 2026-05-26'",
       "observed": "exit 0",
       "expected": "exit 0"
     },
@@ -86,37 +118,37 @@
     {
       "goal": "G3",
       "passed": true,
-      "command": "jq unique backlog ids",
+      "command": "jq unique ids",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "jq re-emitted non-cumulative w/ delta!=0",
+      "command": "jq signals vs prev seen_signals",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "score cap<=8 + no open item >14d undecayed (none qualify)",
-      "observed": "true; 0 stale-open",
+      "command": "jq score cap<=8; no open item >14d so decay n/a",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "new plan has adversarial-pass annotation in brief",
-      "observed": "1/1 annotated",
-      "expected": "all annotated"
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 new plans; 4 meta + 11 headings + mode + cap + files-exist",
-      "observed": "1 plan, all checks ok",
-      "expected": "pass"
+      "command": "git diff --cached -A plans/ md count",
+      "observed": "0",
+      "expected": "<=2"
     },
     {
       "goal": "G8",
@@ -128,63 +160,63 @@
     {
       "goal": "G9",
       "passed": true,
-      "command": "secrets/hostnames in staged (baseline docs excluded)",
+      "command": "secrets/hostnames grep",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "diff backlog.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "phases-failed honesty",
-      "observed": "none failed; cursors advanced",
-      "expected": "consistent"
+      "command": "no failed phases; cursors advanced",
+      "observed": "none failed",
+      "expected": "none failed"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior-run plan slugs still present",
-      "observed": "2/2 present",
-      "expected": "all present"
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "both archived slugs in _archive/",
+      "expected": "present"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive count >= HEAD",
-      "observed": "5 >= 5",
+      "command": "archive count now>=HEAD",
+      "observed": "7>=5",
       "expected": "ge"
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "diff IDEAS_TRIAGE.md regen",
-      "observed": "identical",
-      "expected": "identical"
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto-fix cap+idempotency",
-      "observed": "0 actions; true",
-      "expected": "true"
+      "command": "auto_fix_actions empty; no PR/issue/comment",
+      "observed": "[]",
+      "expected": "<=3 with caps"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts parse + pm_cursor in 0..7",
-      "observed": "exit 0; idx=4",
-      "expected": "exit 0"
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "skipped",
+      "expected": "no-op"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "telegram token literal in added lines",
+      "command": "telegram token value grep",
       "observed": "0",
       "expected": "0"
     }
