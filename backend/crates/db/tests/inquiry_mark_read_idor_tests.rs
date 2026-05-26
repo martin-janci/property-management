@@ -114,7 +114,10 @@ async fn realtor_b_cannot_mark_realtor_a_inquiry_read(pool: PgPool) {
             .fetch_one(&pool)
             .await
             .expect("select");
-    assert!(read_at.is_none(), "read_at must remain NULL after IDOR attempt");
+    assert!(
+        read_at.is_none(),
+        "read_at must remain NULL after IDOR attempt"
+    );
 
     // Owning realtor flips it.
     let updated = repo

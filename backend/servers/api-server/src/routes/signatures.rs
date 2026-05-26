@@ -21,7 +21,6 @@ use db::models::{
     WebhookResponse,
 };
 use integrations::{generate_storage_key, LightweightProvider};
-use subtle::ConstantTimeEq;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -182,22 +181,31 @@ pub async fn create_signature_request(
         // mint signature for the wrong org.
         let sign_url = ESIGN_PROVIDER
             .as_ref()
-            .ok_or(integrations::esignature::ESignatureError::ConfigError(
-                "provider unavailable".into(),
-            ))
+            .ok_or_else(|| {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "MISCONFIGURED",
+                        "E-signature provider not configured",
+                    )),
+                )
+            })
             .and_then(|p| {
                 p.build_signing_url(
                     &signer.email,
                     &signature_request.id.to_string(),
                     &signature_request.organization_id.to_string(),
                 )
-            })
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
-                )
-            });
+                .map_err(|_| {
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "MISCONFIGURED",
+                            "E-signature provider not configured",
+                        )),
+                    )
+                })
+            })?;
 
         if let Err(e) = state
             .email_service
@@ -395,22 +403,31 @@ pub async fn send_reminder(
     for signer in pending_signers {
         let sign_url = ESIGN_PROVIDER
             .as_ref()
-            .ok_or(integrations::esignature::ESignatureError::ConfigError(
-                "provider unavailable".into(),
-            ))
+            .ok_or_else(|| {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "MISCONFIGURED",
+                        "E-signature provider not configured",
+                    )),
+                )
+            })
             .and_then(|p| {
                 p.build_signing_url(
                     &signer.email,
                     &signature_request.id.to_string(),
                     &signature_request.organization_id.to_string(),
                 )
-            })
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
-                )
-            });
+                .map_err(|_| {
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "MISCONFIGURED",
+                            "E-signature provider not configured",
+                        )),
+                    )
+                })
+            })?;
 
         if let Err(e) = state
             .email_service

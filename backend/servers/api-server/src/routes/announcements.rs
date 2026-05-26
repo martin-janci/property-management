@@ -1267,7 +1267,7 @@ async fn pin_announcement(
         match state
             .announcement_repo
             .pin_with_cap_rls(
-                &mut **rls.conn(),
+                rls.conn(),
                 id,
                 announcement.organization_id,
                 user_id,

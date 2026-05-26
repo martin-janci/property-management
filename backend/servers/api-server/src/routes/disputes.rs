@@ -173,9 +173,6 @@ pub struct AddEvidenceRequest {
 /// Update dispute status request.
 #[derive(Debug, Deserialize)]
 pub struct UpdateStatusRequest {
-    /// Organization scope — required so the repo can filter the UPDATE
-    /// and reject cross-tenant requests (issue #520).
-    pub organization_id: Uuid,
     pub status: String,
     pub reason: Option<String>,
 }
@@ -399,11 +396,20 @@ async fn update_dispute_status(
             Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
         ));
     }
+    // Issue #520: derive org from the authenticated JWT, not from the request
+    // body, so a caller cannot bypass the tenancy guard by supplying a
+    // different org_id in the payload.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
     let result = state
         .dispute_repo
         .update_status(UpdateDisputeStatus {
             dispute_id: id,
-            organization_id: data.organization_id,
+            organization_id,
             status: data.status,
             reason: data.reason,
             updated_by: user.user_id,

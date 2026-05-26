@@ -840,7 +840,10 @@ pub async fn login(
             headers.append(axum::http::header::SET_COOKIE, hv);
         }
         Err(e) => {
-            tracing::error!(error = e, "Skipping refresh-token Set-Cookie header (malformed value)");
+            tracing::error!(
+                error = e,
+                "Skipping refresh-token Set-Cookie header (malformed value)"
+            );
         }
     }
 

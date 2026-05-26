@@ -208,7 +208,6 @@ impl LightweightConfig {
             )));
         }
 
-
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
         let webhook_url = std::env::var("ESIGN_WEBHOOK_URL").ok();

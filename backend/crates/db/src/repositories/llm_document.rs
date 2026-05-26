@@ -1208,13 +1208,12 @@ impl LlmDocumentRepository {
         device_id: Uuid,
         user_id: Uuid,
     ) -> Result<bool, SqlxError> {
-        let row: Option<(Uuid,)> = sqlx::query_as(
-            "SELECT id FROM voice_assistant_devices WHERE id = $1 AND user_id = $2",
-        )
-        .bind(device_id)
-        .bind(user_id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let row: Option<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM voice_assistant_devices WHERE id = $1 AND user_id = $2")
+                .bind(device_id)
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await?;
         Ok(row.is_some())
     }
 

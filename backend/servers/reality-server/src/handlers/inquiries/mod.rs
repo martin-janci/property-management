@@ -252,11 +252,7 @@ impl InquiriesHandler {
     /// `Ok(false)` otherwise. Issue #519: previously the unscoped repo call
     /// was kept here in dead-code form, preserving the IDOR signature for
     /// the next person to wire it up.
-    pub async fn mark_as_read(
-        &self,
-        inquiry_id: Uuid,
-        realtor_id: Uuid,
-    ) -> Result<bool, String> {
+    pub async fn mark_as_read(&self, inquiry_id: Uuid, realtor_id: Uuid) -> Result<bool, String> {
         self.repo
             .mark_inquiry_read_for_realtor(inquiry_id, realtor_id)
             .await
