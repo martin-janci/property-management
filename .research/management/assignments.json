@@ -1345,6 +1345,48 @@
       "merged_at": null,
       "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; Band A cargo check pass; integrations 7/7 pass",
       "reviewer_summary": "verdict=changes note=BLOCKING: (1) no RequireCapability RBAC on push_booking_listing/get_booking_conflicts; (2) no org-membership check allows any-org IDOR; HIGH: empty credentials not validated; MEDIUM: N+1 in conflict detection (501 queries), no AppError convention, no truncation signal; LOW: missing handler unit tests"
+    },
+    {
+      "task_id": "gap-85-2-build-config-android",
+      "branch": "auto-impl/gap-85-2-build-config-android",
+      "status": "in-progress",
+      "claimed_at": "2026-05-26T00:11:44Z",
+      "last_updated": "2026-05-26T00:11:44Z",
+      "status_changed_at": "2026-05-26T00:11:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-85-2-build-config-ios",
+      "branch": "auto-impl/gap-85-2-build-config-ios",
+      "status": "in-progress",
+      "claimed_at": "2026-05-26T00:11:44Z",
+      "last_updated": "2026-05-26T00:11:44Z",
+      "status_changed_at": "2026-05-26T00:11:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-82-3-search-enhancements",
+      "branch": "auto-impl/gap-82-3-search-enhancements",
+      "status": "in-progress",
+      "claimed_at": "2026-05-26T00:11:44Z",
+      "last_updated": "2026-05-26T00:11:44Z",
+      "status_changed_at": "2026-05-26T00:11:44Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ],
   "assignments.generated": "2026-05-25T22:10:38Z"
