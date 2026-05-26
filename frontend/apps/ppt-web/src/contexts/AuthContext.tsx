@@ -15,6 +15,8 @@ import {
   AuthError,
   type AuthErrorCode,
   type AuthUser,
+  type TenantMembership,
+  type TenantRole,
   clearTokenProvider,
   createAuthApi,
   setTokenProvider,
@@ -153,6 +155,75 @@ const tokenStorage = {
 };
 
 // ============================================================================
+// Role derivation
+// ============================================================================
+
+/**
+ * Privilege order for picking the "best" tenant role when the JWT does not
+ * resolve to a specific tenant. Highest-privilege first.
+ */
+const ROLE_PRIORITY: readonly TenantRole[] = [
+  'super_admin',
+  'org_admin',
+  'manager',
+  'technical_manager',
+  'property_manager',
+  'real_estate_agent',
+  'owner',
+  'owner_delegate',
+  'tenant',
+  'resident',
+  'guest',
+] as const;
+
+/** Best-effort decode of the unverified payload of a JWT. */
+function decodeJwtPayload(token: string | null | undefined): Record<string, unknown> | null {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '==='.slice((b64.length + 3) % 4);
+    const json = atob(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pick the membership matching `tenant_id` from the JWT; if that's missing,
+ * fall back to the highest-privilege role across all memberships. Returns
+ * `undefined` if the user has no memberships.
+ */
+export function deriveActiveRole(
+  accessToken: string | null | undefined,
+  tenants: TenantMembership[] | undefined
+): TenantRole | undefined {
+  if (!tenants || tenants.length === 0) return undefined;
+
+  const claims = decodeJwtPayload(accessToken);
+  const tenantId =
+    claims && typeof claims.tenant_id === 'string' ? (claims.tenant_id as string) : null;
+  if (tenantId) {
+    const match = tenants.find((t) => t.tenantId === tenantId);
+    if (match) return match.role;
+  }
+
+  // Embedded `role` claim wins next.
+  if (claims && typeof claims.role === 'string') {
+    const claimRole = claims.role as TenantRole;
+    if (ROLE_PRIORITY.includes(claimRole)) return claimRole;
+  }
+
+  // Highest privilege available — preferable to insertion-order tenants[0].
+  for (const role of ROLE_PRIORITY) {
+    if (tenants.some((t) => t.role === role)) return role;
+  }
+  return tenants[0].role;
+}
+
+// ============================================================================
 // API Client Instance
 // ============================================================================
 
@@ -231,6 +302,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
+
+      // Re-derive the role from the freshly issued access token so a
+      // server-side promotion (e.g. tenant → manager) doesn't stay stale in
+      // localStorage for the full refresh-token lifetime. See #482.
+      const claims = decodeJwtPayload(response.accessToken);
+      const claimRole =
+        claims && typeof claims.role === 'string' ? (claims.role as TenantRole) : null;
+      const storedUser = tokenStorage.getUser();
+      if (storedUser && claimRole && ROLE_PRIORITY.includes(claimRole)) {
+        const updated = { ...storedUser, role: claimRole };
+        tokenStorage.setUser(updated);
+        setUser(updated);
+      }
 
       return response.accessToken;
     } catch (error) {
@@ -311,11 +395,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.login(credentials);
 
-      // Derive role from tenant memberships when not embedded in user object.
-      const userWithRole =
-        response.user.role == null && response.tenants && response.tenants.length > 0
-          ? { ...response.user, role: response.tenants[0].role }
-          : response.user;
+      // Derive role from the JWT `tenant_id` claim (or, failing that, the
+      // highest-privilege membership) instead of `tenants[0]`. See #482.
+      const derivedRole =
+        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
+      const userWithRole: AuthUser =
+        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
 
       // Store tokens and user
       tokenStorage.setAccessToken(response.accessToken);
