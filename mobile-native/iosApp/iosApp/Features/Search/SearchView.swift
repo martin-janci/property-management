@@ -175,10 +175,12 @@ struct SearchView: View {
             String(localized: "location_access_denied_title"),
             isPresented: Binding(
                 get: { locationManager.locationError != nil },
-                set: { _ in }
+                set: { _ in locationManager.clearLocationError() }
             )
         ) {
-            Button(String(localized: "ok")) {}
+            Button(String(localized: "ok")) {
+                locationManager.clearLocationError()
+            }
         } message: {
             if let err = locationManager.locationError { Text(err) }
         }

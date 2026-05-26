@@ -241,15 +241,15 @@
 
 
 /* Search - Near Me / Location (added Story 82.3) */
-"filter_near_me" = "Near Me";
-"filter_near_me_section" = "Location";
-"filter_radius" = "Radius";
+"filter_near_me" = "W pobliżu";
+"filter_near_me_section" = "Lokalizacja";
+"filter_radius" = "Promień";
 "radius_km_format" = "%d km";
-"location_detected_format" = "Location: %.4f, %.4f";
-"locating" = "Locating…";
-"location_access_denied" = "Location access was denied. Enable it in Settings to use Near Me filters.";
-"location_unavailable" = "Location is unavailable.";
-"location_access_denied_title" = "Location Access Denied";
+"location_detected_format" = "Lokalizacja: %.4f, %.4f";
+"locating" = "Wyznaczam lokalizację…";
+"location_access_denied" = "Dostęp do lokalizacji został odmówiony. Włącz go w Ustawieniach, aby korzystać z filtrów W pobliżu.";
+"location_unavailable" = "Lokalizacja jest niedostępna.";
+"location_access_denied_title" = "Odmowa dostępu do lokalizacji";
 
 /* Search - Listing type / FilterSheet additions (Story 82.3) */
 "filter_listing_type" = "Listing Type";

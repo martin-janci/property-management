@@ -63,6 +63,11 @@ final class LocationManager: NSObject {
         isLocating = false
     }
 
+    /// Clear any outstanding location error (call from alert dismiss action).
+    func clearLocationError() {
+        locationError = nil
+    }
+
     // MARK: - Private
 
     private func fetchLocation() {
