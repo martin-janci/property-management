@@ -8,7 +8,7 @@
 //! Focuses on the route contract rather than full DB round-trips
 //! to keep tests fast and free of sqlx::test DB setup.
 
-mod common;
+use crate::common;
 
 use axum::{
     body::Body,
