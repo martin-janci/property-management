@@ -1,9 +1,9 @@
 ---
 id: reality-mobile/compare-listings
 name: Compare Listings (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
-  reality-web: reality-compare-properties
+  reality-web: reality-compare
 implementations:
   ios-swiftui:
     component: CompareListingsView
@@ -12,7 +12,7 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/listings/{id} (called for each listing ID)
+  - listings_get
 relatedScreens:
   - id: reality/compare-properties
     rel: web-counterpart

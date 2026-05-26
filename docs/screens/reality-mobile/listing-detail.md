@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/listing-detail
 name: Listing Detail (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-listing-detail
 implementations:
@@ -12,9 +12,9 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/listings/{id}
-  - POST /api/v1/favorites
-  - DELETE /api/v1/favorites/{id}
+  - listings_get
+  - favorites_add
+  - favorites_remove
 relatedScreens:
   - id: reality/listing-detail
     rel: web-counterpart

@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/favorites
 name: Favorites (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-favorites
 implementations:
@@ -12,8 +12,8 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/favorites
-  - DELETE /api/v1/favorites/{id}
+  - favorites_list
+  - favorites_remove
 relatedScreens:
   - id: reality/favorites
     rel: web-counterpart

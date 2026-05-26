@@ -1,22 +1,29 @@
 /**
- * Two products covered by the screen-map system.
+ * Products covered by the screen-map system.
  * - `ppt`: Property Management (ppt-web + mobile)
- * - `reality`: Reality Portal (reality-web + mobile-native)
+ * - `reality`: Reality Portal web (reality-web)
+ * - `reality-mobile`: Reality Portal native iOS/Android (KMP + SwiftUI)
  */
-export type Product = 'ppt' | 'reality';
+export type Product = 'ppt' | 'reality' | 'reality-mobile';
 
 /**
- * All platforms across both products. A given screen will only use the
+ * All platforms across all products. A given screen will only use the
  * platforms relevant to its product (ppt → ppt-web/mobile;
- * reality → reality-web/mobile-native).
+ * reality → reality-web; reality-mobile → ios-swiftui/android-kmp/mobile-native).
  */
-export type Platform = 'ppt-web' | 'reality-web' | 'mobile' | 'mobile-native';
+export type Platform =
+  | 'ppt-web'
+  | 'reality-web'
+  | 'mobile'
+  | 'mobile-native'
+  | 'ios-swiftui'
+  | 'android-kmp';
 
 export type BuildStatus = 'planned' | 'in-progress' | 'shipped' | 'n/a';
 export type RedesignStatus = 'not-started' | 'in-progress' | 'applied' | 'n/a';
 export type ApiStatus = 'stub' | 'partial' | 'complete' | 'n/a';
 
-export type RelatedRel = 'parent' | 'child' | 'action' | 'sibling';
+export type RelatedRel = 'parent' | 'child' | 'action' | 'sibling' | 'web-counterpart';
 export type DiagramKind = 'sequence' | 'flow' | 'state' | 'class';
 
 export interface Implementation {
