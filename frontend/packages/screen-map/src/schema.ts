@@ -15,13 +15,7 @@ export const BuildStatusSchema = z.enum(['planned', 'in-progress', 'shipped', 'n
 export const RedesignStatusSchema = z.enum(['not-started', 'in-progress', 'applied', 'n/a']);
 export const ApiStatusSchema = z.enum(['stub', 'partial', 'complete', 'n/a']);
 
-export const RelatedRelSchema = z.enum([
-  'parent',
-  'child',
-  'action',
-  'sibling',
-  'web-counterpart',
-]);
+export const RelatedRelSchema = z.enum(['parent', 'child', 'action', 'sibling', 'web-counterpart']);
 export const DiagramKindSchema = z.enum(['sequence', 'flow', 'state', 'class']);
 
 export const ImplementationSchema = z.object({

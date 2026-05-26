@@ -231,12 +231,7 @@ pub async fn open_handler(
         // host (registered later in section 5) and doesn't need this.
         if matches!(req.backend, BackendMode::Shared) {
             svc.caddy
-                .register_path_route(
-                    &host_ppt,
-                    "/api/*",
-                    &svc.shared_api_upstream_ppt,
-                    "api",
-                )
+                .register_path_route(&host_ppt, "/api/*", &svc.shared_api_upstream_ppt, "api")
                 .await?;
             svc.caddy
                 .register_path_route(
@@ -283,11 +278,7 @@ pub async fn open_handler(
             if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_ppt, "api").await {
                 tracing::warn!(host = %host_ppt, error = %unreg_err, "caddy unregister path-route failed during open-rollback");
             }
-            if let Err(unreg_err) = svc
-                .caddy
-                .unregister_path_route(&host_reality, "api")
-                .await
-            {
+            if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_reality, "api").await {
                 tracing::warn!(host = %host_reality, error = %unreg_err, "caddy unregister path-route failed during open-rollback");
             }
         }
