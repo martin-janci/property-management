@@ -19,6 +19,7 @@ import {
   useAnnouncementAcknowledgmentStats,
   useAnnouncementComments,
   useAnnouncements,
+  usePinnedAnnouncements,
   useArchiveAnnouncement,
   useBuildings,
   useCancelOutage,
@@ -49,7 +50,7 @@ import {
   useUpdateSchedule,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
@@ -1535,12 +1536,10 @@ function AnnouncementsPageRoute() {
   });
 
   const { data, isLoading, error } = useAnnouncements(listParams);
-  // Story 6.4 — separate query for the sticky pinned band; immune to list filters
-  const { data: pinnedData } = useAnnouncements({
-    pinned: true,
-    status: 'published',
-    pageSize: 20,
-  });
+  // Story 6.4 — separate query for the sticky pinned band; immune to list filters.
+  // Routes through the shared hook (#486 / #516) so the URL + staleTime + pageSize
+  // can't drift between this callsite and other consumers (mobile).
+  const { data: pinnedData } = usePinnedAnnouncements();
   const deleteAnnouncement = useDeleteAnnouncement();
   const publishAnnouncement = usePublishAnnouncement();
   const archiveAnnouncement = useArchiveAnnouncement();
@@ -1611,6 +1610,12 @@ function AnnouncementsPageRoute() {
     }
   };
 
+  const handleAnnouncementsFilterChange = useCallback(
+    (params: Partial<import('@ppt/api-client').ListAnnouncementsParams>) =>
+      setListParams((prev) => ({ ...prev, ...params })),
+    []
+  );
+
   const handlePin = async (id: string, pinned: boolean) => {
     try {
       await pinAnnouncement.mutateAsync({ id, pinned });
@@ -1643,7 +1648,7 @@ function AnnouncementsPageRoute() {
       onPublish={handlePublish}
       onArchive={handleArchive}
       onPin={handlePin}
-      onFilterChange={(params) => setListParams({ ...listParams, ...params })}
+      onFilterChange={handleAnnouncementsFilterChange}
     />
   );
 }
@@ -2153,6 +2158,24 @@ function mapApiFaultStatusToUi(
   return mapping[status] ?? 'new';
 }
 
+/**
+ * Map UI fault status (used by FaultCard) to the API status enum.
+ * Module-level (#486) so the route wrapper doesn't recreate it per call.
+ */
+const UI_FAULT_STATUS_TO_API: Record<
+  import('./features/faults/components/FaultCard').FaultStatus,
+  ApiFaultSummary['status'] | undefined
+> = {
+  new: 'reported',
+  triaged: 'triaged',
+  in_progress: 'in_progress',
+  waiting_parts: 'on_hold',
+  scheduled: 'scheduled',
+  resolved: 'resolved',
+  closed: 'closed',
+  reopened: 'reopened',
+};
+
 /** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
 function transformApiFaultToUi(
   fault: ApiFaultSummary
@@ -2197,6 +2220,29 @@ function FaultsPageRoute() {
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
 
+  // useCallback so child FaultsPage doesn't re-render on every parent render
+  // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
+  const handleFaultsFilterChange = useCallback(
+    (params: {
+      status?: import('./features/faults/components/FaultCard').FaultStatus;
+      category?: ApiFaultSummary['category'];
+      priority?: ApiFaultSummary['priority'];
+      search?: string;
+      page?: number;
+      pageSize?: number;
+    }) => {
+      setFaultQuery({
+        status: params.status ? UI_FAULT_STATUS_TO_API[params.status] : undefined,
+        category: params.category,
+        priority: params.priority,
+        search: params.search,
+        page: params.page,
+        limit: params.pageSize,
+      });
+    },
+    []
+  );
+
   return (
     <FaultsPage
       faults={faults}
@@ -2206,33 +2252,7 @@ function FaultsPageRoute() {
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
-      onFilterChange={(params) => {
-        setFaultQuery({
-          status: params.status
-            ? (() => {
-                const statusMap: Record<
-                  import('./features/faults/components/FaultCard').FaultStatus,
-                  ApiFaultSummary['status'] | undefined
-                > = {
-                  new: 'reported',
-                  triaged: 'triaged',
-                  in_progress: 'in_progress',
-                  waiting_parts: 'on_hold',
-                  scheduled: 'scheduled',
-                  resolved: 'resolved',
-                  closed: 'closed',
-                  reopened: 'reopened',
-                };
-                return statusMap[params.status];
-              })()
-            : undefined,
-          category: params.category,
-          priority: params.priority,
-          search: params.search,
-          page: params.page,
-          limit: params.pageSize,
-        });
-      }}
+      onFilterChange={handleFaultsFilterChange}
     />
   );
 }

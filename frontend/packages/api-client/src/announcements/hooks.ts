@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getToken } from '../auth';
+import { authenticatedFetchJson } from '../lib/fetch';
 import type { AnnouncementsApi } from './api';
 import type {
   AddAttachmentRequest,
@@ -22,35 +22,15 @@ import type {
 } from './types';
 
 // ============================================================================
-// Standalone fetch helpers (mirrors announcements/api.ts but avoids needing
-// an injected ApiConfig — auth tokens are handled by the axios interceptors
-// configured in ppt-web/src/lib/api.ts which patches window.fetch via the
-// same base path /api/v1).
+// Standalone hooks share a centralized authenticated fetch helper (see #486).
+// `authenticatedFetchJson` lives in `../lib/fetch.ts` so any future change to
+// token handling / 401 refresh / telemetry happens in one place instead of
+// being duplicated per hooks module.
 // ============================================================================
 
 const ANNOUNCEMENTS_BASE = '/api/v1/announcements';
 
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...init?.headers,
-    },
-  });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error((err as { message?: string }).message || `HTTP ${response.status}`);
-  }
-  if (response.status === 204) return undefined as unknown as T;
-  return response.json() as Promise<T>;
-}
+const fetchJson = authenticatedFetchJson;
 
 function buildAnnouncementQuery(params?: ListAnnouncementsParams): string {
   if (!params) return '';
