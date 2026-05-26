@@ -11,19 +11,19 @@
  *   - JWT `role` claim re-derivation on refresh invalidates cached role
  */
 /// <reference types="vitest/globals" />
+
+import type { AuthUser, TenantMembership } from '@ppt/api-client';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import type { AuthUser, TenantMembership } from '@ppt/api-client';
 import { describe, expect, it, vi } from 'vitest';
-import { deriveActiveRole } from '../contexts/AuthContext';
 import type { AuthContextValue } from '../contexts/AuthContext';
+import { deriveActiveRole } from '../contexts/AuthContext';
 
 // Mock useAuth so we can drive ProtectedRoute under different conditions
 // without standing up the real provider.
 vi.mock('../contexts/AuthContext', async () => {
-  const actual = await vi.importActual<typeof import('../contexts/AuthContext')>(
-    '../contexts/AuthContext'
-  );
+  const actual =
+    await vi.importActual<typeof import('../contexts/AuthContext')>('../contexts/AuthContext');
   return {
     ...actual,
     useAuth: () => mockAuth,

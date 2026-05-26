@@ -4,9 +4,10 @@
  * Verifies: render-when-empty short-circuit, chip count, click handler.
  */
 /// <reference types="vitest/globals" />
+
+import type { AnnouncementSummary } from '@ppt/api-client';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AnnouncementSummary } from '@ppt/api-client';
 import { describe, expect, it, vi } from 'vitest';
 import { PinnedAnnouncementsBand } from './PinnedAnnouncementsBand';
 
@@ -57,10 +58,7 @@ describe('PinnedAnnouncementsBand', () => {
   it('calls onView with the announcement id when a chip is clicked', async () => {
     const onView = vi.fn();
     render(
-      <PinnedAnnouncementsBand
-        announcements={[ann('abc-123', 'Click me')]}
-        onView={onView}
-      />
+      <PinnedAnnouncementsBand announcements={[ann('abc-123', 'Click me')]} onView={onView} />
     );
     await userEvent.click(screen.getByText('Click me'));
     expect(onView).toHaveBeenCalledWith('abc-123');

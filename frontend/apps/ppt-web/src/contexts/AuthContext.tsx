@@ -15,11 +15,11 @@ import {
   AuthError,
   type AuthErrorCode,
   type AuthUser,
-  type TenantMembership,
-  type TenantRole,
   clearTokenProvider,
   createAuthApi,
   setTokenProvider,
+  type TenantMembership,
+  type TenantRole,
 } from '@ppt/api-client';
 import type React from 'react';
 import {
