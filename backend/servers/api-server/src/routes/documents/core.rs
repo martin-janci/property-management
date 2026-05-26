@@ -1134,53 +1134,49 @@ async fn get_download_url(
         }
     };
 
-    // Story 84.1: Generate S3 presigned URL for download
-    // Security: Storage service must be configured to serve documents
-    let (url, expires_at) = match integrations::StorageService::from_env() {
-        Ok(storage) => {
-            match storage
-                .generate_download_url(
-                    &document.file_key,
-                    &document.file_name,
-                    &document.mime_type,
-                    None, // Use default 15 minute expiration
-                )
-                .await
-            {
-                Ok(presigned) => (presigned.url, presigned.expires_at),
-                Err(e) => {
-                    tracing::error!(
-                        error = %e,
-                        file_key = %document.file_key,
-                        "Failed to generate presigned URL"
-                    );
-                    return Err((
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "STORAGE_ERROR",
-                            "Unable to generate download URL. Please try again later.",
-                        )),
-                    ));
-                }
-            }
-        }
-        Err(e) => {
+    // Story 7A.4: Generate presigned S3 URL with Content-Disposition: attachment.
+    // Use state.storage_service (initialised at startup with the real S3 client).
+    // StorageService::from_env() is sync and does NOT set up the S3 client, so
+    // presigning would always fail — that was the bug in the original stub.
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — document downloads unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+
+    let presigned = storage
+        .generate_download_url(
+            &document.file_key,
+            &document.file_name,
+            &document.mime_type,
+            None, // Default: 15-minute expiration
+        )
+        .await
+        .map_err(|e| {
             tracing::error!(
                 error = %e,
-                "Storage service not configured - document downloads unavailable"
+                file_key = %document.file_key,
+                "Failed to generate presigned download URL"
             );
-            return Err((
+            (
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(ErrorResponse::new(
-                    "STORAGE_NOT_CONFIGURED",
-                    "Document storage is not configured. Please contact support.",
+                    "STORAGE_ERROR",
+                    "Unable to generate download URL. Please try again later.",
                 )),
-            ));
-        }
-    };
+            )
+        })?;
 
     rls.release().await;
-    Ok(Json(UrlResponse { url, expires_at }))
+    Ok(Json(UrlResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 /// Get preview URL for a document.
@@ -1238,54 +1234,48 @@ async fn get_preview_url(
         ));
     }
 
-    // Story 84.1: Generate S3 presigned URL for inline preview
-    // Security: Storage service must be configured to serve previews
-    let (url, expires_at) = match integrations::StorageService::from_env() {
-        Ok(storage) => {
-            // For preview, we use a longer expiration time
-            match storage
-                .generate_download_url(
-                    &document.file_key,
-                    &document.file_name,
-                    &document.mime_type,
-                    Some(3600), // 1 hour for preview
-                )
-                .await
-            {
-                Ok(presigned) => (presigned.url, presigned.expires_at),
-                Err(e) => {
-                    tracing::error!(
-                        error = %e,
-                        file_key = %document.file_key,
-                        "Failed to generate presigned preview URL"
-                    );
-                    return Err((
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "STORAGE_ERROR",
-                            "Unable to generate preview URL. Please try again later.",
-                        )),
-                    ));
-                }
-            }
-        }
-        Err(e) => {
+    // Story 7A.4: Generate presigned S3 URL with Content-Disposition: inline.
+    // generate_preview_url (new method) sets inline disposition so the browser
+    // renders the file rather than downloading it.
+    // Use state.storage_service (same reason as get_download_url).
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — document previews unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+
+    let presigned = storage
+        .generate_preview_url(
+            &document.file_key,
+            &document.mime_type,
+            None, // Default: 1-hour expiration for inline preview
+        )
+        .await
+        .map_err(|e| {
             tracing::error!(
                 error = %e,
-                "Storage service not configured - document previews unavailable"
+                file_key = %document.file_key,
+                "Failed to generate presigned preview URL"
             );
-            return Err((
+            (
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(ErrorResponse::new(
-                    "STORAGE_NOT_CONFIGURED",
-                    "Document storage is not configured. Please contact support.",
+                    "STORAGE_ERROR",
+                    "Unable to generate preview URL. Please try again later.",
                 )),
-            ));
-        }
-    };
+            )
+        })?;
 
     rls.release().await;
-    Ok(Json(UrlResponse { url, expires_at }))
+    Ok(Json(UrlResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 // ============================================================================
