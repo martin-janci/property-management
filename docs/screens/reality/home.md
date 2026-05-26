@@ -14,10 +14,7 @@ implementations:
     component: HomeScreen
     buildStatus: in-progress
     redesignStatus: applied
-    apiStatus: wired
-endpoints:
-  - GET /api/v1/listings/featured
-  - GET /api/v1/listings/recent
+    apiStatus: complete
 sharedComponents:
   - listing-card
   - hero-search
@@ -32,7 +29,9 @@ designSources:
 useCases:
   - UC-31
   - UC-44
-endpoints: []
+endpoints:
+  - GET /api/v1/listings/featured
+  - GET /api/v1/listings/recent
 epics: []
 diagrams: []
 owner: reality-frontend
@@ -100,7 +99,7 @@ Reality Portal homepage with hero search, featured listings, neighbourhood explo
 
 <!-- newest entries on top -->
 
-- 2026-05-26 — agent: confirmed Android KMP HomeScreen wired to ListingRepository.getFeaturedListings() + getRecentListings(); updated apiStatus partial→wired; added endpoints block (GET /api/v1/listings/featured, GET /api/v1/listings/recent). gap-82-6.
+- 2026-05-26 — agent: gap-82-6 — confirmed Android KMP HomeScreen wired to ListingRepository.getFeaturedListings() + getRecentListings() via shared Ktor SDK; apiStatus partial→complete; added endpoints block.
 - 2026-05-12 — agent: implemented KMP HomeScreen redesign per ui_kits/mobile-native/screens.jsx KmpHomeScreen. New layout: custom top bar (logo + bell with red dot + avatar circle), hero card with Brand800→Brand500 gradient + search trigger + transaction-type pills, featured carousel (260dp cards w/ FEATURED badge), 3×2 category grid (Apartments / Houses / Commercial / Land / Recreation / Parking), recent listings vertical list w/ 64dp thumbnails. Added Brand800 token + 14 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (ui_kits/reality-web/home.html); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), states, and design-specific notes; linked UC-31 + UC-44; declared sharedComponents listing-card / hero-search / quickstat
 - 2026-05-08 — init: created from scan (source: sitemap)

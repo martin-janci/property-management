@@ -14,7 +14,7 @@ implementations:
     component: SearchScreen
     buildStatus: in-progress
     redesignStatus: applied
-    apiStatus: wired
+    apiStatus: complete
 endpoints:
   - listings_search
 relatedScreens:
@@ -123,7 +123,7 @@ Search results page — the workhorse of UC-31. Bridges discovery (map browsing,
 
 <!-- newest entries on top -->
 
-- 2026-05-26 — agent: confirmed Android KMP SearchScreen wired to ListingRepository.searchListings(); apiStatus partial→wired. All filter/sort/pagination params map to POST /api/v1/listings/search. gap-82-6.
+- 2026-05-26 — agent: gap-82-6 — confirmed Android KMP SearchScreen wired to ListingRepository.searchListings() via shared Ktor SDK; all filter/sort/pagination params map to POST /api/v1/listings/search; apiStatus partial→complete.
 - 2026-05-13 — agent: implemented KMP SearchScreen redesign per ui_kits/mobile-native/screens.jsx KmpListingsScreen. New layout: thin top bar (back + Filtre chip with active-filter count + List/Mapa pill segmented control), single-line outlined search input, horizontal rooms chip strip (All / 1+1 / 2+1 / 3+1 / 4+1), collapsible advanced-filter panel (type / category / price / sort), redesigned ListingCard (16:9 hero with Featured/transaction-type uppercase badges + heart pill, price+city row, title, meta line). FAB "Save search" (primaryContainer). Map view = placeholder until Mapbox/MapLibre integration lands. Added 5 new strings (sk/en). buildStatus → in-progress, redesignStatus → applied.
 - 2026-05-09 — agent: design analyzed (ui_kits/reality-web/listings.html, 4 artboards: main + empty + loading + error); flipped reality-web redesignStatus → in-progress; attached designSource; populated functionality checklist (8 sections), all 4 states, design-specific notes; linked UC-31/44/45/48; declared 7 sharedComponents; added 3 relatedScreens
 - 2026-05-08 — init: created from scan (source: sitemap)
