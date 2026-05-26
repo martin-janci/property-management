@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T04:43:00Z",
+  "generated": "2026-05-26T04:52:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1546,15 +1546,15 @@
     {
       "task_id": "gap-82-6-kmp-android-home",
       "branch": "auto-impl/gap-82-6-kmp-android-home",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "failed",
+      "specialist": "kotlin-mp",
       "claimed_at": "2026-05-26T04:43:00Z",
-      "last_updated": "2026-05-26T04:43:00Z",
-      "status_changed_at": "2026-05-26T04:43:00Z",
+      "last_updated": "2026-05-26T04:52:00Z",
+      "status_changed_at": "2026-05-26T04:52:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=none status=partial specialist=kotlin-mp note=Band-A-gradle-failed-env:AGP-9.2.1-not-cached-in-sandbox;code-already-in-dev-CI-passing;screen-map-docs-only-apiStatus-partial\u2192complete;drift=dispatcher-commit-assignments.json+Cargo.lock",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
