@@ -61,11 +61,7 @@ function ImagePreview({ documentId, fileName }: { documentId: string; fileName: 
 
   return (
     <div className="doc-preview-modal__image-wrap">
-      <img
-        src={data.url}
-        alt={fileName}
-        className="doc-preview-modal__image"
-      />
+      <img src={data.url} alt={fileName} className="doc-preview-modal__image" />
     </div>
   );
 }
@@ -96,13 +92,7 @@ function FallbackPreview({ fileName }: { fileName: string }) {
 
 // ─── DownloadButton sub-component ────────────────────────────────────────────
 
-function DownloadButton({
-  documentId,
-  fileName,
-}: {
-  documentId: string;
-  fileName: string;
-}) {
+function DownloadButton({ documentId, fileName }: { documentId: string; fileName: string }) {
   const { data, isLoading } = useDownloadUrl(documentId);
 
   const handleDownload = useCallback(() => {
