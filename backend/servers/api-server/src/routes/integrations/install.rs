@@ -9,7 +9,10 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
-use integrations::{AirbnbClient, AirbnbOAuthConfig, BookingClient, PortalType};
+use integrations::{
+    AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
+    PropertyMapping, RateUpdate, RoomTypeMapping, PortalType,
+};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -87,6 +90,89 @@ pub struct BookingConnectRequest {
     pub hotel_id: String,
     pub username: String,
     pub password: String,
+}
+
+/// Room-type mapping entry in a push request.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PushRoomTypeMapping {
+    /// Internal unit UUID.
+    pub internal_unit_id: Uuid,
+    /// Booking.com room-type code.
+    pub external_room_type_id: String,
+    /// Human-readable name (optional).
+    pub external_room_type_name: Option<String>,
+}
+
+/// Single availability update DTO (mirrors integrations::AvailabilityUpdate).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AvailabilityUpdateDto {
+    /// Room type ID.
+    pub room_type_id: String,
+    /// Date for the update (YYYY-MM-DD).
+    pub date: chrono::NaiveDate,
+    /// Number of available rooms.
+    pub available_count: i32,
+    /// Stop-sell flag.
+    #[serde(default)]
+    pub stop_sell: bool,
+    /// Closed to arrival.
+    #[serde(default)]
+    pub cta: bool,
+    /// Closed to departure.
+    #[serde(default)]
+    pub ctd: bool,
+    /// Minimum length of stay.
+    pub min_los: Option<i32>,
+    /// Maximum length of stay.
+    pub max_los: Option<i32>,
+}
+
+/// Single rate update DTO (mirrors integrations::RateUpdate).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RateUpdateDto {
+    /// Room type ID.
+    pub room_type_id: String,
+    /// Rate plan code.
+    pub rate_plan_code: String,
+    /// Date for the rate (YYYY-MM-DD).
+    pub date: chrono::NaiveDate,
+    /// Base rate amount (decimal string, e.g. "129.00").
+    pub base_rate: rust_decimal::Decimal,
+    /// Currency code (ISO 4217, e.g. "EUR").
+    pub currency: String,
+    /// Extra person rate.
+    pub extra_person_rate: Option<rust_decimal::Decimal>,
+    /// Extra child rate.
+    pub extra_child_rate: Option<rust_decimal::Decimal>,
+}
+
+/// Request body for pushing availability to Booking.com.
+///
+/// Sends OTA_HotelAvailNotifRQ to the Booking.com Supply XML API.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BookingPushAvailabilityRequest {
+    /// Room-type mappings (internal unit → Booking.com room type).
+    pub room_mappings: Vec<PushRoomTypeMapping>,
+    /// Availability updates to push.
+    pub updates: Vec<AvailabilityUpdateDto>,
+}
+
+/// Request body for pushing rates to Booking.com.
+///
+/// Sends OTA_HotelRateAmountNotifRQ to the Booking.com Supply XML API.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BookingPushRatesRequest {
+    /// Rate updates to push.
+    pub updates: Vec<RateUpdateDto>,
+}
+
+/// Push result response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct BookingPushResponse {
+    pub success: bool,
+    pub items_pushed: i32,
+    pub pushed_at: chrono::DateTime<chrono::Utc>,
+    pub error: Option<String>,
 }
 
 // ==================== Portal Types ====================
@@ -169,6 +255,14 @@ pub fn router() -> Router<crate::state::AppState> {
             post(connect_booking),
         )
         .route("/organizations/{org_id}/booking/sync", post(sync_booking))
+        .route(
+            "/organizations/{org_id}/booking/push-availability",
+            post(push_booking_availability),
+        )
+        .route(
+            "/organizations/{org_id}/booking/push-rates",
+            post(push_booking_rates),
+        )
         .route(
             "/organizations/{org_id}/booking",
             delete(disconnect_booking),
@@ -839,6 +933,293 @@ pub async fn disconnect_booking(
     );
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ==================== Booking.com Push Handlers ====================
+
+/// Push availability updates to Booking.com.
+///
+/// Sends OTA_HotelAvailNotifRQ to the Booking.com Supply XML API for the
+/// connected property.  Requires an active Booking.com connection with stored
+/// credentials.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/booking/push-availability",
+    params(OrgIdPath),
+    request_body = BookingPushAvailabilityRequest,
+    responses(
+        (status = 200, description = "Availability pushed", body = BookingPushResponse),
+        (status = 400, description = "No updates provided or connection not configured"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Booking.com connection found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Booking.com"
+)]
+pub async fn push_booking_availability(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<BookingPushAvailabilityRequest>,
+) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        update_count = request.updates.len(),
+        "Pushing availability to Booking.com"
+    );
+
+    if request.updates.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NO_UPDATES",
+                "At least one availability update is required",
+            )),
+        ));
+    }
+
+    let rental_repo = &state.rental_repo;
+
+    let connection = rental_repo
+        .find_booking_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find Booking.com connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Booking.com connection found",
+                )),
+            )
+        })?;
+
+    let hotel_id = connection.external_property_id.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Hotel ID not configured for this connection",
+            )),
+        )
+    })?;
+
+    let username = connection.access_token.clone().unwrap_or_default();
+    let password = connection.refresh_token.clone().unwrap_or_default();
+
+    let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
+    let client = BookingClient::new(credentials);
+
+    // Build property mapping from the request room mappings
+    let mapping = PropertyMapping {
+        internal_property_id: path.org_id,
+        external_property_id: hotel_id.clone(),
+        external_property_name: None,
+        room_mappings: request
+            .room_mappings
+            .iter()
+            .map(|rm| RoomTypeMapping {
+                internal_unit_id: rm.internal_unit_id,
+                external_room_type_id: rm.external_room_type_id.clone(),
+                external_room_type_name: rm.external_room_type_name.clone(),
+            })
+            .collect(),
+        sync_enabled: true,
+        last_sync_at: None,
+    };
+
+    let items_count = request.updates.len() as i32;
+
+    // Convert DTOs to integration types
+    let availability_updates: Vec<AvailabilityUpdate> = request
+        .updates
+        .into_iter()
+        .map(|u| AvailabilityUpdate {
+            room_type_id: u.room_type_id,
+            date: u.date,
+            available_count: u.available_count,
+            stop_sell: u.stop_sell,
+            cta: u.cta,
+            ctd: u.ctd,
+            min_los: u.min_los,
+            max_los: u.max_los,
+        })
+        .collect();
+
+    match client.push_availability(&mapping, availability_updates).await {
+        Ok(()) => {
+            tracing::info!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                items_pushed = items_count,
+                "Booking.com availability push succeeded"
+            );
+            Ok(Json(BookingPushResponse {
+                success: true,
+                items_pushed: items_count,
+                pushed_at: chrono::Utc::now(),
+                error: None,
+            }))
+        }
+        Err(e) => {
+            tracing::error!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                error = %e,
+                "Booking.com availability push failed"
+            );
+            Ok(Json(BookingPushResponse {
+                success: false,
+                items_pushed: 0,
+                pushed_at: chrono::Utc::now(),
+                error: Some(e.to_string()),
+            }))
+        }
+    }
+}
+
+/// Push rate updates to Booking.com.
+///
+/// Sends OTA_HotelRateAmountNotifRQ to the Booking.com Supply XML API for the
+/// connected property.  Requires an active Booking.com connection with stored
+/// credentials.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/booking/push-rates",
+    params(OrgIdPath),
+    request_body = BookingPushRatesRequest,
+    responses(
+        (status = 200, description = "Rates pushed", body = BookingPushResponse),
+        (status = 400, description = "No updates provided or connection not configured"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Booking.com connection found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Booking.com"
+)]
+pub async fn push_booking_rates(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<BookingPushRatesRequest>,
+) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        update_count = request.updates.len(),
+        "Pushing rates to Booking.com"
+    );
+
+    if request.updates.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NO_UPDATES",
+                "At least one rate update is required",
+            )),
+        ));
+    }
+
+    let rental_repo = &state.rental_repo;
+
+    let connection = rental_repo
+        .find_booking_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find Booking.com connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Booking.com connection found",
+                )),
+            )
+        })?;
+
+    let hotel_id = connection.external_property_id.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Hotel ID not configured for this connection",
+            )),
+        )
+    })?;
+
+    let username = connection.access_token.clone().unwrap_or_default();
+    let password = connection.refresh_token.clone().unwrap_or_default();
+
+    let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
+    let client = BookingClient::new(credentials);
+
+    let items_count = request.updates.len() as i32;
+
+    // Convert DTOs to integration types
+    let rate_updates: Vec<RateUpdate> = request
+        .updates
+        .into_iter()
+        .map(|u| RateUpdate {
+            room_type_id: u.room_type_id,
+            rate_plan_code: u.rate_plan_code,
+            date: u.date,
+            base_rate: u.base_rate,
+            currency: u.currency,
+            extra_person_rate: u.extra_person_rate,
+            extra_child_rate: u.extra_child_rate,
+        })
+        .collect();
+
+    match client.push_rates(&hotel_id, rate_updates).await {
+        Ok(()) => {
+            tracing::info!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                items_pushed = items_count,
+                "Booking.com rates push succeeded"
+            );
+            Ok(Json(BookingPushResponse {
+                success: true,
+                items_pushed: items_count,
+                pushed_at: chrono::Utc::now(),
+                error: None,
+            }))
+        }
+        Err(e) => {
+            tracing::error!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                error = %e,
+                "Booking.com rates push failed"
+            );
+            Ok(Json(BookingPushResponse {
+                success: false,
+                items_pushed: 0,
+                pushed_at: chrono::Utc::now(),
+                error: Some(e.to_string()),
+            }))
+        }
+    }
 }
 
 // ==================== Portal Connection Handlers ====================
