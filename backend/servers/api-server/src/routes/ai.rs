@@ -3075,6 +3075,30 @@ async fn list_voice_commands(
     Path(device_id): Path<Uuid>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<ErrorResponse>)> {
+    // Issue #483: unify disclosure posture with unlink_voice_device — was
+    // returning HTTP 200 + empty list for not-owned devices, which leaks
+    // device-UUID existence. Return 404 instead.
+    match state
+        .llm_document_repo
+        .user_owns_voice_device(device_id, principal.user_id)
+        .await
+    {
+        Ok(true) => {}
+        Ok(false) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Device not found")),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("Failed to verify voice device ownership: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("INTERNAL_ERROR", "Failed to list")),
+            ));
+        }
+    }
+
     match state
         .llm_document_repo
         .list_voice_commands(

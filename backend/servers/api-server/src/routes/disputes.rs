@@ -396,10 +396,20 @@ async fn update_dispute_status(
             Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
         ));
     }
+    // Issue #520: derive org from the authenticated JWT, not from the request
+    // body, so a caller cannot bypass the tenancy guard by supplying a
+    // different org_id in the payload.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
     let result = state
         .dispute_repo
         .update_status(UpdateDisputeStatus {
             dispute_id: id,
+            organization_id,
             status: data.status,
             reason: data.reason,
             updated_by: user.user_id,
@@ -417,9 +427,13 @@ async fn update_dispute_status(
                 )),
             ))
         }
-        Err(common::errors::AppError::NotFound(msg)) => Err((
+        // Issue #520: a `NotFound` here can mean either "no such dispute"
+        // or "dispute belongs to a different org" — surface both as 404
+        // so the response shape is not an existence oracle for
+        // cross-tenant probes.
+        Err(common::errors::AppError::NotFound(_)) => Err((
             StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", msg.as_str())),
+            Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
         )),
         Err(e) => {
             tracing::error!("Failed to update dispute status: {:?}", e);

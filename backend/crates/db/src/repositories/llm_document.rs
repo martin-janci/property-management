@@ -1198,7 +1198,25 @@ impl LlmDocumentRepository {
         .await
     }
 
-    /// List voice command history for a device.
+    /// Return true iff the given device belongs to the given user.
+    ///
+    /// Issue #483: used by `list_voice_commands` to return 404 (not 200
+    /// with empty list) on a cross-user probe — matches the disclosure
+    /// posture of the unlink handler.
+    pub async fn user_owns_voice_device(
+        &self,
+        device_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<bool, SqlxError> {
+        let row: Option<(Uuid,)> =
+            sqlx::query_as("SELECT id FROM voice_assistant_devices WHERE id = $1 AND user_id = $2")
+                .bind(device_id)
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await?;
+        Ok(row.is_some())
+    }
+
     /// List voice command history for a device.
     ///
     /// `user_id` scopes the query to commands for devices owned by the caller,

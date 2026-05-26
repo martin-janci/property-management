@@ -144,15 +144,18 @@ impl PushTransport for FcmPushAdapter {
         notification: &Notification,
     ) -> TransportResult {
         if !self.is_configured() {
-            // Log-only mode: integration pending (FCM key not configured)
+            // Issue #484: previously returned Ok(()) which caused the
+            // pipeline to mark the delivery as `Sent`. Return the
+            // explicit `PushNotConfigured` error so callers see a
+            // `Skipped` outcome and `sent` counters are not inflated.
             tracing::info!(
                 user_id = %user_id,
                 token_count = device_tokens.len(),
                 title = %notification.title,
                 category = %notification.category,
-                "[Epic 2B] Push notification (FCM not configured — log-only)"
+                "[Epic 2B] Push notification (FCM not configured — skipped)"
             );
-            return Ok(());
+            return Err(NotificationError::PushNotConfigured);
         }
 
         // TODO (follow-up): call FCM HTTP v1 API for each device_token
@@ -532,28 +535,34 @@ impl NotificationPipeline {
         entity_id: Option<Uuid>,
         channels: Option<&[NotificationChannel]>,
     ) -> Vec<(Uuid, PipelineResult)> {
-        let mut results = Vec::with_capacity(user_ids.len());
+        // Issue #484: bounded-concurrency fan-out so a building-wide
+        // announcement to 200 residents finishes in ~max-per-user time
+        // (≈10 ms) rather than ~sum-of-all-times (≈1 s). Concurrency cap
+        // protects the Postgres pool.
+        use futures_util::stream::{self, StreamExt};
+        const DISPATCH_CONCURRENCY: usize = 20;
 
-        for &user_id in user_ids {
-            let r = match self
-                .dispatch(user_id, notification, entity_id, channels)
-                .await
-            {
-                Ok(r) => r,
-                Err(e) => {
-                    tracing::warn!(
-                        user_id = %user_id,
-                        error = %e,
-                        "[Epic 2B] Dispatch error for user"
-                    );
-                    // Return an empty result so callers can still tally totals
-                    PipelineResult::default()
-                }
-            };
-            results.push((user_id, r));
-        }
-
-        results
+        stream::iter(user_ids.iter().copied())
+            .map(|user_id| async move {
+                let r = match self
+                    .dispatch(user_id, notification, entity_id, channels)
+                    .await
+                {
+                    Ok(r) => r,
+                    Err(e) => {
+                        tracing::warn!(
+                            user_id = %user_id,
+                            error = %e,
+                            "[Epic 2B] Dispatch error for user"
+                        );
+                        PipelineResult::default()
+                    }
+                };
+                (user_id, r)
+            })
+            .buffer_unordered(DISPATCH_CONCURRENCY)
+            .collect::<Vec<_>>()
+            .await
     }
 
     /// Aggregate `dispatch_to_users` into a single summary count.
@@ -609,6 +618,16 @@ impl NotificationPipeline {
 
         match outcome {
             Ok(()) => record.into_sent(),
+            // Issue #484: transport-not-configured is a `skipped`
+            // outcome, not a failure. Keeps `sent` counters honest.
+            Err(NotificationError::PushNotConfigured) => {
+                tracing::debug!(
+                    user_id = %user_id,
+                    channel = %channel,
+                    "[Epic 2B] Push channel skipped — FCM not configured"
+                );
+                record.into_skipped()
+            }
             Err(e) => {
                 tracing::warn!(
                     user_id = %user_id,

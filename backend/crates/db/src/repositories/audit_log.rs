@@ -61,7 +61,8 @@ impl AuditLogRepository {
         if let Some(user_id) = data.user_id {
             hasher.update(user_id.to_string().as_bytes());
         }
-        hasher.update(format!("{:?}", data.action).as_bytes());
+        // Issue #439 P1-04: stable canonical name instead of Debug format.
+        hasher.update(data.action.canonical_name().as_bytes());
         if let Some(ref resource_type) = data.resource_type {
             hasher.update(resource_type.as_bytes());
         }
@@ -115,7 +116,8 @@ impl AuditLogRepository {
         if let Some(user_id) = log.user_id {
             hasher.update(user_id.to_string().as_bytes());
         }
-        hasher.update(format!("{:?}", log.action).as_bytes());
+        // Issue #439 P1-04: stable canonical name instead of Debug format.
+        hasher.update(log.action.canonical_name().as_bytes());
         if let Some(ref resource_type) = log.resource_type {
             hasher.update(resource_type.as_bytes());
         }

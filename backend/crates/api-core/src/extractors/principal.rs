@@ -54,7 +54,15 @@ pub struct PrincipalClaims {
 
 /// The authoritative per-request principal. Built fresh on every request from
 /// trusted server-side state.
+///
+/// Issue #528 (4): marked `#[must_use]` so any expression returning a
+/// `RequestPrincipal` whose value is dropped triggers `unused_must_use`
+/// at compile time. (Note: parameter-binding discards still fall through
+/// to the shell-based `check-discarded-principal` lint — see
+/// `backend/scripts/lints/check-discarded-principal.sh` — until the
+/// linear-typing wrapper in the issue's option 2 lands.)
 #[derive(Debug, Clone, Copy)]
+#[must_use = "RequestPrincipal must be used for authz/tenant-scoping — see backend/scripts/lints/check-discarded-principal.sh"]
 pub struct RequestPrincipal {
     pub user_id: Uuid,
     pub kind: PrincipalKind,

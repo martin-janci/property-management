@@ -830,12 +830,22 @@ pub async fn login(
     // `withCredentials: true` on /auth/refresh and stops storing the
     // refresh in localStorage, the body field can be dropped. Scoped
     // to /api/v1/auth so it isn't sent on unrelated API calls.
-    let cookie = build_refresh_cookie(&refresh_token, /*max_age_seconds=*/ 7 * 24 * 60 * 60);
+    // Issue #438: build_refresh_cookie now returns Result; a malformed
+    // token character would previously panic the login handler.
     let mut headers = axum::http::HeaderMap::new();
-    headers.append(
-        axum::http::header::SET_COOKIE,
-        axum::http::HeaderValue::from_str(&cookie).expect("cookie header is ASCII"),
-    );
+    match build_refresh_cookie(&refresh_token, /*max_age_seconds=*/ 7 * 24 * 60 * 60)
+        .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
+    {
+        Ok(hv) => {
+            headers.append(axum::http::header::SET_COOKIE, hv);
+        }
+        Err(e) => {
+            tracing::error!(
+                error = e,
+                "Skipping refresh-token Set-Cookie header (malformed value)"
+            );
+        }
+    }
 
     Ok((
         headers,
@@ -853,17 +863,48 @@ pub async fn login(
 
 /// Build the standard `refresh_token` cookie attributes. Centralized so
 /// login, refresh, and logout all agree on Path/SameSite/Secure flags.
-fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> String {
-    // Path=/api/v1/auth — only the auth endpoints actually need this
-    // cookie; scoping reduces accidental cross-route leakage.
-    // SameSite=Strict — the refresh endpoint is same-origin POST only,
-    // so Strict gives us CSRF protection at no UX cost.
-    // Secure — non-negotiable.
-    // HttpOnly — non-negotiable; the point of moving off localStorage.
-    format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age={}",
-        value, max_age_seconds
-    )
+///
+/// Issue #439 P0-12: SameSite is `Lax` (not `Strict`) by default so the
+/// cookie survives OAuth/SSO redirect-back top-level navigations and
+/// future WS-auth subprotocol handshakes. Set
+/// `PPT_AUTH_COOKIE_SAMESITE=Strict` to opt back into Strict when running
+/// without SSO. The refresh endpoint is POST-only, so Lax still defends
+/// CSRF for the usual cross-origin GET-and-redirect class of attacks;
+/// state-changing routes are additionally guarded by the CSRF token
+/// middleware where applicable.
+///
+/// `Domain` is optional and read from `PPT_AUTH_COOKIE_DOMAIN`; omit when
+/// unset (back-compat — the cookie stays host-bound to the API origin).
+fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> Result<String, &'static str> {
+    // Issue #438: reject token characters that would let a malformed value
+    // inject extra cookie attributes (`; Domain=.attacker.com`) or break
+    // the HTTP header framing (`\r\n`). Also reject non-ASCII so the
+    // downstream `HeaderValue::from_str` never panics — the previous
+    // `.expect(...)` was a silent-DoS vector on the login/logout path.
+    // Empty value is allowed (clear-cookie path uses max_age=0).
+    if !value.is_empty()
+        && !value.bytes().all(|b| {
+            // RFC 6265 cookie-octet: visible US-ASCII except `;` `,` `"` `\` and whitespace.
+            (0x21..=0x7E).contains(&b) && b != b';' && b != b',' && b != b'"' && b != b'\\'
+        })
+    {
+        return Err("invalid refresh-token characters for Set-Cookie");
+    }
+    let same_site = std::env::var("PPT_AUTH_COOKIE_SAMESITE").unwrap_or_else(|_| "Lax".into());
+    let same_site = match same_site.as_str() {
+        "Strict" | "Lax" | "None" => same_site,
+        _ => "Lax".into(),
+    };
+    let mut cookie = format!(
+        "refresh_token={value}; HttpOnly; Secure; SameSite={same_site}; Path=/api/v1/auth; Max-Age={max_age_seconds}"
+    );
+    if let Ok(domain) = std::env::var("PPT_AUTH_COOKIE_DOMAIN") {
+        if !domain.trim().is_empty() {
+            cookie.push_str("; Domain=");
+            cookie.push_str(domain.trim());
+        }
+    }
+    Ok(cookie)
 }
 
 /// Parse the `refresh_token` cookie out of the `Cookie:` header. Returns
@@ -968,20 +1009,11 @@ pub async fn refresh_token(
                 token_id = %token.id,
                 "Revoked refresh token replayed; invalidating all user refresh tokens"
             );
-            // Best-effort fan-out revocation. Even if this fails the
-            // caller still gets 401, but we want the security log row.
+            // Issue #439 P1-01: write the audit row FIRST so a downstream
+            // revoke failure cannot rob us of the security signal. Mirror
+            // the P1-09 pattern: surface audit-write errors via
+            // `tracing::warn!` instead of `let _ = ...`.
             if let Err(err) = state
-                .session_repo
-                .revoke_all_user_tokens(user_id_for_log, None)
-                .await
-            {
-                tracing::error!(
-                    error = %err,
-                    user_id = %user_id_for_log,
-                    "Failed to fan-out-revoke after refresh-token replay"
-                );
-            }
-            let _ = state
                 .audit_log_repo
                 .create(CreateAuditLog {
                     user_id: Some(user_id_for_log),
@@ -998,7 +1030,27 @@ pub async fn refresh_token(
                     ip_address: None,
                     user_agent: None,
                 })
-                .await;
+                .await
+            {
+                tracing::warn!(
+                    error = %err,
+                    user_id = %user_id_for_log,
+                    "audit row missed for refresh-replay"
+                );
+            }
+            // Best-effort fan-out revocation. Even if this fails the
+            // caller still gets 401, but we want the security log row.
+            if let Err(err) = state
+                .session_repo
+                .revoke_all_user_tokens(user_id_for_log, None)
+                .await
+            {
+                tracing::error!(
+                    error = %err,
+                    user_id = %user_id_for_log,
+                    "Failed to fan-out-revoke after refresh-token replay"
+                );
+            }
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(ErrorResponse::new(
@@ -1229,12 +1281,12 @@ pub async fn logout(
 
     // Always return success to prevent token enumeration. Clear the
     // refresh cookie by setting Max-Age=0 with the same attributes.
-    let clear_cookie = build_refresh_cookie("", 0);
     let mut response_headers = axum::http::HeaderMap::new();
-    response_headers.append(
-        axum::http::header::SET_COOKIE,
-        axum::http::HeaderValue::from_str(&clear_cookie).expect("cookie header is ASCII"),
-    );
+    if let Ok(hv) = build_refresh_cookie("", 0)
+        .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
+    {
+        response_headers.append(axum::http::header::SET_COOKIE, hv);
+    }
     Ok((
         response_headers,
         Json(LogoutResponse {
