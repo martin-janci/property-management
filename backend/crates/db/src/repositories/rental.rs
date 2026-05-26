@@ -673,11 +673,11 @@ impl RentalRepository {
         let (total,) = count_builder.fetch_one(&self.pool).await?;
 
         // Fetch bookings (simplified - using direct query)
-        let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
+        let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, Option<String>, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
             r#"
             SELECT
                 b.id, b.unit_id, u.name, bld.name,
-                b.platform::text, b.guest_name, b.guest_count,
+                b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
                 b.status,
                 (SELECT status FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
@@ -704,6 +704,7 @@ impl RentalRepository {
                     unit_name,
                     building_name,
                     platform,
+                    external_booking_id,
                     guest_name,
                     guest_count,
                     check_in,
@@ -719,6 +720,7 @@ impl RentalRepository {
                         unit_name,
                         building_name,
                         platform,
+                        external_booking_id,
                         guest_name,
                         guest_count,
                         check_in,
