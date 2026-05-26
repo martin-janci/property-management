@@ -1335,15 +1335,15 @@
     {
       "task_id": "gap-83-2-booking-integration-backend",
       "branch": "auto-impl/gap-83-2-booking-integration-backend",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-25T22:10:38Z",
-      "status_changed_at": "2026-05-25T22:10:38Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T00:05:00Z",
+      "status_changed_at": "2026-05-26T00:05:00Z",
+      "pr_number": 534,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/534",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=534 status=done specialist=rust-backend note=Booking.com listing-push+conflict-detection+reservation-persist; cargo check pass; integrations 7/7 pass; fmt fix pushed",
       "reviewer_summary": null
     }
   ],
