@@ -45,16 +45,38 @@ function getAppEnv(): AppEnvironment {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
 
+/** Sentinel value written into .env.production — must be overridden by CI. */
+const PROD_URL_SENTINEL = '__SET_BY_CI__';
+
+/** RFC 2606 example domains — never valid in production. */
+function isPlaceholderUrl(value: string): boolean {
+  return (
+    value === PROD_URL_SENTINEL ||
+    /(^|\.)example\.(com|net|org)(:|\/|$)/i.test(value)
+  );
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = getAppEnv();
   const envVars = loadEnvFile(appEnv);
 
-  // Resolved values (env file takes priority, then process.env fallback)
+  // Resolved values — single source of truth is the .env.<appEnv> file loaded
+  // via dotenv above. CI may also pre-seed process.env (e.g. eas.json `env`)
+  // for the same names without the EXPO_PUBLIC_ prefix.
   const apiBaseUrl =
-    envVars.API_BASE_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.ppt.example.com';
+    envVars.API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8080';
 
   const wsBaseUrl =
-    envVars.WS_BASE_URL ?? process.env.EXPO_PUBLIC_WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+    envVars.WS_BASE_URL ?? process.env.WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
+
+  // Fail fast if a production build is about to ship with a placeholder URL.
+  if (appEnv === 'production' && (isPlaceholderUrl(apiBaseUrl) || isPlaceholderUrl(wsBaseUrl))) {
+    throw new Error(
+      `[app.config.ts] Refusing to build production with placeholder API URL ` +
+        `(API_BASE_URL=${apiBaseUrl}, WS_BASE_URL=${wsBaseUrl}). ` +
+        `Override via CI (e.g. eas.json env) before building.`,
+    );
+  }
 
   const environment: AppEnvironment = (envVars.ENVIRONMENT as AppEnvironment | undefined) ?? appEnv;
 

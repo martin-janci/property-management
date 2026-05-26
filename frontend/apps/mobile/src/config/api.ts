@@ -13,22 +13,20 @@ import Constants from 'expo-constants';
 export type Environment = 'development' | 'staging' | 'production';
 
 /**
- * Get configuration value from Expo extra or environment variables.
- * Supports both app.config.js extra values and process.env variables.
+ * Get configuration value from Expo extra (single source of truth).
+ *
+ * Values flow: .env.<appEnv> → app.config.ts (dotenv) → Constants.expoConfig.extra.
+ * EXPO_PUBLIC_* fallback was removed (issue #523) — app.config.ts is now the
+ * only path so iOS Info.plist and JS read the same value.
  */
 function getConfigValue(key: string, defaultValue: string): string {
-  // Check Expo Constants extra first (from app.config.js)
   const extra = Constants.expoConfig?.extra;
   if (extra && key in extra) {
-    return String(extra[key]);
+    const raw = extra[key];
+    if (raw !== undefined && raw !== null) {
+      return String(raw);
+    }
   }
-
-  // Fall back to process.env (EXPO_PUBLIC_ prefix for Expo compatibility)
-  const envValue = process.env[`EXPO_PUBLIC_${key}`];
-  if (envValue) {
-    return envValue;
-  }
-
   return defaultValue;
 }
 
@@ -50,8 +48,9 @@ export function getApiBaseUrl(): string {
     return Platform.OS === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
   }
 
-  // Production fallback
-  return 'https://api.ppt.example.com';
+  // Production fallback — should never hit this in a real prod build because
+  // app.config.ts guards against placeholder URLs.
+  return 'http://localhost:8080';
 }
 
 /**
