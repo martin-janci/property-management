@@ -426,6 +426,9 @@ pub struct VoteOnResolution {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateDisputeStatus {
     pub dispute_id: Uuid,
+    /// Tenancy scope — `update_status` MUST filter by this so a manager in
+    /// org A cannot drive a dispute in org B (issue #520).
+    pub organization_id: Uuid,
     pub status: String,
     pub reason: Option<String>,
     pub updated_by: Uuid,

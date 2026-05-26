@@ -173,6 +173,9 @@ pub struct AddEvidenceRequest {
 /// Update dispute status request.
 #[derive(Debug, Deserialize)]
 pub struct UpdateStatusRequest {
+    /// Organization scope — required so the repo can filter the UPDATE
+    /// and reject cross-tenant requests (issue #520).
+    pub organization_id: Uuid,
     pub status: String,
     pub reason: Option<String>,
 }
@@ -400,6 +403,7 @@ async fn update_dispute_status(
         .dispute_repo
         .update_status(UpdateDisputeStatus {
             dispute_id: id,
+            organization_id: data.organization_id,
             status: data.status,
             reason: data.reason,
             updated_by: user.user_id,
@@ -417,9 +421,13 @@ async fn update_dispute_status(
                 )),
             ))
         }
-        Err(common::errors::AppError::NotFound(msg)) => Err((
+        // Issue #520: a `NotFound` here can mean either "no such dispute"
+        // or "dispute belongs to a different org" — surface both as 404
+        // so the response shape is not an existence oracle for
+        // cross-tenant probes.
+        Err(common::errors::AppError::NotFound(_)) => Err((
             StatusCode::NOT_FOUND,
-            Json(ErrorResponse::new("NOT_FOUND", msg.as_str())),
+            Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
         )),
         Err(e) => {
             tracing::error!("Failed to update dispute status: {:?}", e);

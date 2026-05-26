@@ -271,13 +271,20 @@ impl DisputeRepository {
             )));
         }
 
-        // Load current status so we can enforce the state machine.
-        let current_status: Option<String> =
-            sqlx::query_scalar("SELECT status FROM disputes WHERE id = $1")
-                .bind(req.dispute_id)
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(|e| AppError::Database(e.to_string()))?;
+        // Issue #520: enforce tenancy on the SELECT so a manager in org A
+        // cannot drive a dispute in org B by guessing its UUID. The
+        // organization_id filter mirrors the `file_dispute` / `list` /
+        // `get_statistics` handlers, which all scope by org. Map "no row"
+        // to 404 so the response shape cannot be used as a cross-tenant
+        // existence oracle.
+        let current_status: Option<String> = sqlx::query_scalar(
+            "SELECT status FROM disputes WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(req.dispute_id)
+        .bind(req.organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         let current_status = current_status
             .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
@@ -298,7 +305,7 @@ impl DisputeRepository {
             r#"
             UPDATE disputes
             SET status = $1
-            WHERE id = $2 AND status = $3
+            WHERE id = $2 AND organization_id = $3 AND status = $4
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
                       assigned_to, resolved_at, resolution_notes, mediation_notes,
@@ -307,6 +314,7 @@ impl DisputeRepository {
         )
         .bind(&req.status)
         .bind(req.dispute_id)
+        .bind(req.organization_id)
         .bind(&current_status)
         .fetch_optional(&self.pool)
         .await
