@@ -40,6 +40,8 @@ pub struct SigningToken {
     pub signer_email: String,
     /// The signature request UUID.
     pub request_id: String,
+    /// The owning organization UUID (issue #527 (c): tenancy binding).
+    pub org_id: String,
     /// Unix timestamp when this token expires.
     pub expires_at: u64,
     /// Raw HMAC-SHA256 bytes (32 bytes).
@@ -47,10 +49,15 @@ pub struct SigningToken {
 }
 
 impl SigningToken {
-    /// Create and sign a new token.  must be the raw secret bytes.
+    /// Create and sign a new token. `secret` must be the raw secret bytes.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC input so a token
+    /// minted for org A cannot be replayed against a request in org B,
+    /// even if a signer email collides across tenants.
     pub fn new(
         signer_email: &str,
         request_id: &str,
+        org_id: &str,
         ttl: Duration,
         secret: &[u8],
     ) -> Result<Self, ESignatureError> {
@@ -60,7 +67,7 @@ impl SigningToken {
             .as_secs()
             + ttl.as_secs();
 
-        let message = format!("{}|{}|{}", signer_email, request_id, expires_at);
+        let message = format!("{signer_email}|{request_id}|{org_id}|{expires_at}");
         let mut mac = HmacSha256::new_from_slice(secret)
             .map_err(|e| ESignatureError::HmacError(e.to_string()))?;
         mac.update(message.as_bytes());
@@ -69,6 +76,7 @@ impl SigningToken {
         Ok(Self {
             signer_email: signer_email.to_string(),
             request_id: request_id.to_string(),
+            org_id: org_id.to_string(),
             expires_at,
             mac_bytes,
         })
@@ -86,8 +94,8 @@ impl SigningToken {
         }
 
         let message = format!(
-            "{}|{}|{}",
-            self.signer_email, self.request_id, self.expires_at
+            "{}|{}|{}|{}",
+            self.signer_email, self.request_id, self.org_id, self.expires_at
         );
         let mut mac = HmacSha256::new_from_slice(secret)
             .map_err(|e| ESignatureError::HmacError(e.to_string()))?;
@@ -97,17 +105,17 @@ impl SigningToken {
             .map_err(|_| ESignatureError::InvalidToken)
     }
 
-    /// Encode the token to a URL-safe base64 string: .
+    /// Encode the token to a URL-safe base64 string.
     pub fn encode(&self) -> String {
         let mac_hex = hex::encode(&self.mac_bytes);
         let raw = format!(
-            "{}|{}|{}|{}",
-            self.signer_email, self.request_id, self.expires_at, mac_hex
+            "{}|{}|{}|{}|{}",
+            self.signer_email, self.request_id, self.org_id, self.expires_at, mac_hex
         );
         URL_SAFE_NO_PAD.encode(raw.as_bytes())
     }
 
-    /// Decode a URL-safe base64 token string back to a .
+    /// Decode a URL-safe base64 token string back to a `SigningToken`.
     pub fn decode(encoded: &str) -> Result<Self, ESignatureError> {
         let raw_bytes = URL_SAFE_NO_PAD
             .decode(encoded)
@@ -115,21 +123,23 @@ impl SigningToken {
         let raw = String::from_utf8(raw_bytes)
             .map_err(|e| ESignatureError::DecodeError(e.to_string()))?;
 
-        let parts: Vec<&str> = raw.splitn(4, '|').collect();
-        if parts.len() != 4 {
+        let parts: Vec<&str> = raw.splitn(5, '|').collect();
+        if parts.len() != 5 {
             return Err(ESignatureError::InvalidToken);
         }
 
         let signer_email = parts[0].to_string();
         let request_id = parts[1].to_string();
-        let expires_at = parts[2]
+        let org_id = parts[2].to_string();
+        let expires_at = parts[3]
             .parse::<u64>()
             .map_err(|_| ESignatureError::InvalidToken)?;
-        let mac_bytes = hex::decode(parts[3]).map_err(|_| ESignatureError::InvalidToken)?;
+        let mac_bytes = hex::decode(parts[4]).map_err(|_| ESignatureError::InvalidToken)?;
 
         Ok(Self {
             signer_email,
             request_id,
+            org_id,
             expires_at,
             mac_bytes,
         })
@@ -181,8 +191,6 @@ impl LightweightConfig {
                 tracing::warn!(
                     "ESIGN_TOKEN_SECRET not set, using development default (DEVELOPMENT MODE ONLY)"
                 );
-                // Distinct from any prod secret and long enough to clear the
-                // 32-byte floor; the string is recognisable in logs.
                 b"DEV_ONLY-esign-token-secret-do-not-use-in-prod".to_vec()
             }
             Err(_) => {
@@ -199,6 +207,7 @@ impl LightweightConfig {
                 "ESIGN_TOKEN_SECRET must be at least {MIN_TOKEN_SECRET_LEN} bytes long for minimum security",
             )));
         }
+
 
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
@@ -238,14 +247,18 @@ impl LightweightProvider {
     }
 
     /// Generate a signed signing URL for the given signer and request.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC.
     pub fn build_signing_url(
         &self,
         signer_email: &str,
         request_id: &str,
+        org_id: &str,
     ) -> Result<String, ESignatureError> {
         let token = SigningToken::new(
             signer_email,
             request_id,
+            org_id,
             Duration::from_secs(self.config.token_ttl_secs),
             &self.config.token_secret,
         )?;
@@ -258,9 +271,22 @@ impl LightweightProvider {
     }
 
     /// Decode and verify an inbound signing token from a URL query parameter.
-    pub fn verify_token(&self, encoded: &str) -> Result<SigningToken, ESignatureError> {
+    ///
+    /// Issue #527 (c): caller MUST pass the org_id from the
+    /// in-database signature_request to confirm the token was minted for
+    /// the same tenant.
+    pub fn verify_token(
+        &self,
+        encoded: &str,
+        expected_org_id: &str,
+    ) -> Result<SigningToken, ESignatureError> {
         let token = SigningToken::decode(encoded)?;
         token.verify(&self.config.token_secret)?;
+        // Constant-time-ish org binding check (orgs are UUIDs so length
+        // is fixed — a plain `!=` is acceptable here).
+        if token.org_id != expected_org_id {
+            return Err(ESignatureError::InvalidToken);
+        }
         Ok(token)
     }
 
@@ -323,12 +349,14 @@ mod tests {
     use super::*;
 
     const SECRET: &[u8] = b"test-secret-key-that-is-32-bytes!";
+    const ORG: &str = "00000000-0000-0000-0000-000000000123";
 
     #[test]
     fn test_signing_token_roundtrip() {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -339,6 +367,7 @@ mod tests {
 
         assert_eq!(decoded.signer_email, "alice@example.com");
         assert_eq!(decoded.request_id, "req-uuid-1234");
+        assert_eq!(decoded.org_id, ORG);
         assert_eq!(decoded.expires_at, token.expires_at);
     }
 
@@ -347,6 +376,7 @@ mod tests {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -360,6 +390,7 @@ mod tests {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -378,6 +409,7 @@ mod tests {
         let mut token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -388,8 +420,8 @@ mod tests {
 
         // Re-sign with the past expiry so MAC matches
         let message = format!(
-            "{}|{}|{}",
-            token.signer_email, token.request_id, token.expires_at
+            "{}|{}|{}|{}",
+            token.signer_email, token.request_id, token.org_id, token.expires_at
         );
         let mut mac = HmacSha256::new_from_slice(SECRET).unwrap();
         mac.update(message.as_bytes());
@@ -412,7 +444,7 @@ mod tests {
         };
         let provider = LightweightProvider::new(config);
         let url = provider
-            .build_signing_url("alice@example.com", "req-1")
+            .build_signing_url("alice@example.com", "req-1", ORG)
             .expect("build url");
 
         assert!(url.starts_with("https://app.example.com/sign?token="));
@@ -428,16 +460,39 @@ mod tests {
         };
         let provider = LightweightProvider::new(config);
         let url = provider
-            .build_signing_url("alice@example.com", "req-1")
+            .build_signing_url("alice@example.com", "req-1", ORG)
             .expect("build url");
 
         let token_str = url.split("token=").nth(1).unwrap();
         let verified = provider
-            .verify_token(token_str)
+            .verify_token(token_str, ORG)
             .expect("verify_token should succeed");
 
         assert_eq!(verified.signer_email, "alice@example.com");
         assert_eq!(verified.request_id, "req-1");
+        assert_eq!(verified.org_id, ORG);
+    }
+
+    #[test]
+    fn test_lightweight_provider_verify_token_wrong_org_rejected() {
+        let config = LightweightConfig {
+            token_secret: SECRET.to_vec(),
+            base_url: "https://app.example.com".to_string(),
+            webhook_url: None,
+            token_ttl_secs: 3600,
+        };
+        let provider = LightweightProvider::new(config);
+        let url = provider
+            .build_signing_url("alice@example.com", "req-1", ORG)
+            .expect("build url");
+
+        let token_str = url.split("token=").nth(1).unwrap();
+        let other_org = "00000000-0000-0000-0000-000000000999";
+        let result = provider.verify_token(token_str, other_org);
+        assert!(
+            matches!(result, Err(ESignatureError::InvalidToken)),
+            "Should reject token bound to a different org"
+        );
     }
 
     // ---------------------------------------------------------------------------
