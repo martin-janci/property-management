@@ -1615,13 +1615,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T10:07:49Z",
-      "last_updated": "2026-05-26T11:50:00Z",
+      "last_updated": "2026-05-26T12:30:00Z",
       "status_changed_at": "2026-05-26T10:21:38Z",
       "pr_number": 547,
       "pr_url": "https://github.com/martin-janci/property-management/pull/547",
       "merged_at": null,
-      "implementer_summary": "pr=547 status=done specialist=react-web note=ScheduleDetailPage with exec-history table, MSW stubs; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=pending note=reviewer agent spawned 2026-05-26T11:50Z; CI all-green"
+      "implementer_summary": "pr=547 status=done specialist=react-web note=ScheduleDetailPage with exec-history table, MSW stubs; typecheck+biome+build clean | fix-round-1 1cd18839: useTranslation+t() for all hardcoded strings; reports namespace added to all 6 locales (en/sk/cs/de/hu/pl); table aria-label; download+retry button aria-label with execution date; isError prop+error state; App.tsx passes isError from useReportExecutionHistory",
+      "reviewer_summary": "verdict=changes-applied note=3 reviewer findings resolved: i18n, accessibility (aria-label on table+action buttons), error state; pushed to auto-impl/gap-81-2-report-execution-history-ui@1cd18839; awaiting re-review"
     }
   ],
   "assignments.generated": "2026-05-26T08:02:25Z"
