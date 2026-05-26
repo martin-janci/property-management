@@ -98,8 +98,8 @@ epic descriptions like "Epic 2B WebSocket infrastructure") become
 
 | from        | to       | trigger                                                        |
 |---          |---       |---                                                              |
-| in-progress | review   | Phase 4 returns `pr=<n>`                                        |
-| in-progress | failed   | Phase 4 returns `pr=none` OR Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch |
+| in-progress | review   | Phase 2 of a SUBSEQUENT run sees a PR exists on `<branch>` (gap 5 — async-spawn model). Fast-path: Phase 4 of THIS run captures `pr=<n>` from a sync return; either path is valid. |
+| in-progress | failed   | Phase 2 detects sandbox-timeout AFTER one reclaim attempt OR Phase 2 detects empty-branch OR (fast-path) Phase 4 returns `pr=none` on a synchronous return |
 | in-progress | in-progress | Phase 2 detects sandbox-timeout (`cloud-ok`: 60m, else 120m) AND `reclaim_attempts < 1` → re-spawn implementer once; bump `reclaim_attempts`, bump `status_changed_at` so the next grace window starts now |
 | review      | merged   | Phase 2 sees PR MERGED on GH (set `merged_at`)                 |
 | review      | failed   | Phase 2 sees PR CLOSED without merge                            |
@@ -360,6 +360,35 @@ If fewer than 3 candidates available (buffer drained), claim what's there — do
 
 One per newly-claimed task IN THIS RUN. Hard cap 3.
 
+### Subagent execution model (gap 5 — IMPORTANT)
+
+**Phase 4 spawn is fire-and-forget.** The Claude Code SDK launches the
+implementer subagent asynchronously; the dispatcher does NOT block on
+its completion. The dispatcher's job in Phase 4 is to:
+
+1. Record the row as `status=in-progress, claimed_at=now`.
+2. Hand off the brief to the subagent via the `Task` tool.
+3. Return — the dispatcher run ends shortly after, while implementers
+   may still be executing in the background.
+
+**Outcome observation lives in Phase 2 of the NEXT dispatcher run**,
+not in Phase 4 of THIS run. Phase 2 of that next run looks at:
+- Does a branch named `<row.branch>` exist on origin?
+- Does a PR exist for that branch?
+- What's the PR's GH state (OPEN / MERGED / CLOSED)?
+- What's `COMMITS_AHEAD`?
+
+…and authoritatively transitions the row's status from there.
+
+The state-machine row `in-progress → review (Phase 4 returns pr=<n>)` in
+the table below is a HISTORICAL note for runs that happen to complete
+before the cron interval expires; in steady-state the same transition
+fires in Phase 2 of the next run when it sees the freshly-created PR.
+
+The implementer's `pr=<n>` return-line capture in this phase is still
+useful (it lets fast runs short-circuit), but its ABSENCE is not failure
+— the next Phase 2 will reconcile from GitHub truth.
+
 Prompt:
 
 > You are an implementer. Invoke `.claude/skills/ppt-implement/SKILL.md`.
@@ -371,7 +400,13 @@ Prompt:
 > Return EXACTLY (one line):
 > `pr=<n|none> status=<done|partial|blocked> specialist=<name> scope_drift=<true|false> code_reuse_warn=<short|none> note=<short>`
 
-Capture the line. STATE TRANSITION:
+Capture the line **IFF the subagent returns synchronously within this
+run**. If it doesn't return (the SDK backgrounds it past the dispatcher's
+own exit — the common case), skip this capture entirely; leave the row
+as `status=in-progress` with `claimed_at=now`, and let Phase 2 of the
+next dispatcher run observe the outcome from GitHub.
+
+STATE TRANSITION (fast-path only — gap 5):
 
 ```python
 prev_status = "in-progress"
