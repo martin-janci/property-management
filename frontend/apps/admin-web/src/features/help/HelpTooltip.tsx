@@ -113,11 +113,14 @@ export function HelpTooltip({ text }: HelpTooltipProps) {
       >
         ?
       </button>
-      {visible && (
-        <span id={tooltipId} className="ppt-help-tip__bubble" role="tooltip">
-          {text}
-        </span>
-      )}
+      <span
+        id={tooltipId}
+        className="ppt-help-tip__bubble"
+        role="tooltip"
+        style={{ visibility: visible ? 'visible' : 'hidden' }}
+      >
+        {text}
+      </span>
     </span>
   );
 }
