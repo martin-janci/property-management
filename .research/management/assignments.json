@@ -1363,15 +1363,15 @@
     {
       "task_id": "gap-85-2-build-config-ios",
       "branch": "auto-impl/gap-85-2-build-config-ios",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-26T00:11:44Z",
-      "last_updated": "2026-05-26T00:11:44Z",
-      "status_changed_at": "2026-05-26T00:11:44Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-26T00:26:42Z",
+      "status_changed_at": "2026-05-26T00:26:42Z",
+      "pr_number": 535,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/535",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "react-native",
+      "implementer_summary": "pr=535 status=done specialist=react-native scope_drift=true note=eas.json+app.config.ts iOS build config (bundleId,ATS,buildNumber,OTA)+eas-build-ios.yml workflow; typecheck+lint clean",
       "reviewer_summary": null
     },
     {
