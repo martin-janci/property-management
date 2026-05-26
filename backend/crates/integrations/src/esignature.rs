@@ -149,17 +149,57 @@ pub struct LightweightConfig {
     pub token_ttl_secs: u64,
 }
 
+/// Minimum byte length required for `ESIGN_TOKEN_SECRET`.
+///
+/// Matches the 32-char floor enforced for `JWT_SECRET` in `api-server::main`
+/// — both are HMAC-SHA256 keys, so the same security floor applies.
+pub const MIN_TOKEN_SECRET_LEN: usize = 32;
+
 impl LightweightConfig {
     /// Load configuration from environment variables.
     ///
-    /// -  - hex-encoded secret (required, falls back to a dev default)
-    /// -  - base URL for signing links (required)
-    /// -  - optional webhook URL
-    /// -  - TTL in seconds (default 604800 = 7 days)
-    pub fn from_env() -> Self {
-        let token_secret = std::env::var("ESIGN_TOKEN_SECRET")
-            .map(|s| s.into_bytes())
-            .unwrap_or_else(|_| b"dev-esign-secret-key-32bytes-pad!".to_vec());
+    /// - `ESIGN_TOKEN_SECRET` — raw secret bytes used as the HMAC-SHA256 key.
+    ///   Required in production. When `RUST_ENV=development` is set the
+    ///   loader falls back to a clearly-marked development default and emits
+    ///   a `warn!`; in any other environment a missing or too-short secret
+    ///   is a hard error (the binary refuses to start). This mirrors the
+    ///   handling of `JWT_SECRET`.
+    /// - `BASE_URL` — base URL for signing links (default `http://localhost:3000`).
+    /// - `ESIGN_WEBHOOK_URL` — optional outbound webhook URL.
+    /// - `ESIGN_TOKEN_TTL` — TTL in seconds (default 604800 = 7 days).
+    ///
+    /// # Errors
+    /// Returns `ESignatureError::ConfigError` if `ESIGN_TOKEN_SECRET` is
+    /// missing in a non-development environment, or if it is shorter than
+    /// [`MIN_TOKEN_SECRET_LEN`] bytes.
+    pub fn from_env() -> Result<Self, ESignatureError> {
+        let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
+
+        let token_secret = match std::env::var("ESIGN_TOKEN_SECRET") {
+            Ok(s) => s.into_bytes(),
+            Err(_) if is_development => {
+                tracing::warn!(
+                    "ESIGN_TOKEN_SECRET not set, using development default (DEVELOPMENT MODE ONLY)"
+                );
+                // Distinct from any prod secret and long enough to clear the
+                // 32-byte floor; the string is recognisable in logs.
+                b"DEV_ONLY-esign-token-secret-do-not-use-in-prod".to_vec()
+            }
+            Err(_) => {
+                return Err(ESignatureError::ConfigError(
+                    "ESIGN_TOKEN_SECRET environment variable is required. \
+                     Set RUST_ENV=development to use dev defaults."
+                        .into(),
+                ));
+            }
+        };
+
+        if token_secret.len() < MIN_TOKEN_SECRET_LEN {
+            return Err(ESignatureError::ConfigError(format!(
+                "ESIGN_TOKEN_SECRET must be at least {MIN_TOKEN_SECRET_LEN} bytes long for minimum security",
+            )));
+        }
+
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
         let webhook_url = std::env::var("ESIGN_WEBHOOK_URL").ok();
@@ -168,12 +208,12 @@ impl LightweightConfig {
             .and_then(|v| v.parse().ok())
             .unwrap_or(604_800);
 
-        Self {
+        Ok(Self {
             token_secret,
             base_url,
             webhook_url,
             token_ttl_secs,
-        }
+        })
     }
 }
 
@@ -189,8 +229,12 @@ impl LightweightProvider {
     }
 
     /// Instantiate from environment variables.
-    pub fn from_env() -> Self {
-        Self::new(LightweightConfig::from_env())
+    ///
+    /// # Errors
+    /// Propagates errors from [`LightweightConfig::from_env`] (e.g. missing
+    /// `ESIGN_TOKEN_SECRET` outside of development).
+    pub fn from_env() -> Result<Self, ESignatureError> {
+        Ok(Self::new(LightweightConfig::from_env()?))
     }
 
     /// Generate a signed signing URL for the given signer and request.
@@ -394,5 +438,98 @@ mod tests {
 
         assert_eq!(verified.signer_email, "alice@example.com");
         assert_eq!(verified.request_id, "req-1");
+    }
+
+    // ---------------------------------------------------------------------------
+    // from_env() tests for #527 / Bucket A
+    //
+    // These tests mutate process-global env vars and must not run in parallel
+    // with each other or with any other env-touching test in this crate.
+    // A static mutex serialises them; we restore prior env state on drop.
+    // ---------------------------------------------------------------------------
+
+    use std::sync::Mutex;
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    struct EnvGuard {
+        keys: Vec<(&'static str, Option<String>)>,
+    }
+    impl EnvGuard {
+        fn capture(keys: &[&'static str]) -> Self {
+            let snap = keys
+                .iter()
+                .map(|k| (*k, std::env::var(k).ok()))
+                .collect::<Vec<_>>();
+            for k in keys {
+                std::env::remove_var(k);
+            }
+            Self { keys: snap }
+        }
+    }
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            for (k, v) in &self.keys {
+                match v {
+                    Some(val) => std::env::set_var(k, val),
+                    None => std::env::remove_var(k),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn from_env_fails_when_token_secret_missing_in_prod() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        // RUST_ENV is not "development" (it's unset), so missing secret => error.
+
+        let result = LightweightConfig::from_env();
+        assert!(
+            matches!(result, Err(ESignatureError::ConfigError(_))),
+            "Expected ConfigError for missing ESIGN_TOKEN_SECRET outside dev, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn from_env_fails_when_token_secret_too_short() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var("ESIGN_TOKEN_SECRET", "tooshort"); // 8 bytes — below floor
+
+        let result = LightweightConfig::from_env();
+        let msg = match result {
+            Err(ESignatureError::ConfigError(m)) => m,
+            other => panic!("Expected ConfigError for too-short secret, got {other:?}"),
+        };
+        assert!(
+            msg.contains("at least"),
+            "Error message should reference the length floor, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn from_env_allows_dev_default_when_rust_env_development() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var("RUST_ENV", "development");
+
+        let cfg = LightweightConfig::from_env().expect("dev default should succeed");
+        assert!(cfg.token_secret.len() >= MIN_TOKEN_SECRET_LEN);
+    }
+
+    #[test]
+    fn from_env_accepts_valid_secret_in_prod() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var(
+            "ESIGN_TOKEN_SECRET",
+            "this-is-a-valid-32-byte-or-longer-secret",
+        );
+
+        let cfg = LightweightConfig::from_env().expect("valid secret should succeed");
+        assert_eq!(
+            cfg.token_secret,
+            b"this-is-a-valid-32-byte-or-longer-secret"
+        );
     }
 }
