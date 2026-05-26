@@ -79,6 +79,28 @@ enum Route: Hashable {
 
     /// Agency directory (UC-51.1).
     case agencies
+
+    /// Whether this route requires the user to be authenticated before it
+    /// can be navigated to. Used by the deep-link entry point to gate
+    /// universal/custom-scheme links: unauthenticated users are bounced
+    /// to `.login` (with the intended destination stored on the coordinator
+    /// as `pendingDestination`) instead of landing inside a protected view.
+    var requiresAuth: Bool {
+        switch self {
+        case .favorites,
+             .inquiries, .inquiryDetail, .newInquiry,
+             .account, .profile, .settings,
+             .savedSearches:
+            return true
+        case .home, .featuredListings,
+             .search, .searchResults,
+             .listingDetail, .listingGallery, .listingMap,
+             .login, .register,
+             .compareListings,
+             .realtors, .agencies:
+            return false
+        }
+    }
 }
 
 // MARK: - Search Filters

@@ -23,15 +23,24 @@ struct RealityPortalApp: App {
     // MARK: - State Objects
 
     @State private var navigationCoordinator = NavigationCoordinator()
-    @State private var authManager = AuthManager()
+    @State private var authManager: AuthManager
     @State private var favoritesService = FavoritesService()
     @State private var pushNotificationManager = PushNotificationManager(
         keychainService: KeychainService(service: Configuration.shared.keychainService)
     )
     @Environment(\.scenePhase) private var scenePhase
 
-    private let restorationService = NavigationStateRestorationService()
+    private let restorationService: NavigationStateRestorationService
     private let deepLinkHandler = DeepLinkHandler()
+
+    init() {
+        let restoration = NavigationStateRestorationService()
+        self.restorationService = restoration
+        // AuthManager needs the restoration service so logout can wipe the
+        // persisted navigation state (otherwise protected stacks would survive
+        // sign-out and only be dropped by the next launch's auth-gating).
+        self._authManager = State(initialValue: AuthManager(restorationService: restoration))
+    }
 
     // MARK: - App Body
 
@@ -137,13 +146,24 @@ struct RealityPortalApp: App {
     // MARK: - Incoming URL Handling
 
     /// Routes an incoming URL to either SSO authentication or navigation.
+    ///
+    /// Auth-gating: routes whose `requiresAuth` is `true` are intercepted
+    /// when the user is not authenticated — the intended destination is
+    /// stashed on the coordinator as `pendingDestination` and the user is
+    /// bounced to `.login`. `AuthManager` replays the destination after a
+    /// successful sign-in / SSO callback.
     private func handleIncomingURL(_ url: URL) {
         let result = deepLinkHandler.parse(url)
         switch result {
-        case .ssoCallback(let token, _):
-            handleSsoCallback(token: token)
+        case .ssoCallback(let token, let state):
+            handleSsoCallback(token: token, state: state)
         case .route(let route):
-            navigationCoordinator.navigate(to: route)
+            if route.requiresAuth && !authManager.isAuthenticated {
+                navigationCoordinator.pendingDestination = route
+                navigationCoordinator.navigate(to: .login)
+            } else {
+                navigationCoordinator.navigate(to: route)
+            }
         case .unrecognized:
             #if DEBUG
             print("Unrecognised deep link: \(url)")
@@ -151,7 +171,17 @@ struct RealityPortalApp: App {
         }
     }
 
-    private func handleSsoCallback(token: String) {
+    private func handleSsoCallback(token: String, state: String?) {
+        // CSRF protection: the `state` value must match the nonce the app
+        // minted before opening the SSO browser flow. AuthManager owns the
+        // nonce; reject the callback here before touching the token.
+        guard authManager.consumeSsoState(state) else {
+            #if DEBUG
+            print("SSO callback rejected: state mismatch (CSRF)")
+            #endif
+            navigationCoordinator.navigate(to: .login)
+            return
+        }
         Task { @MainActor in
             do {
                 try await authManager.loginWithSsoToken(token)
