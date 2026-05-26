@@ -51,15 +51,16 @@ describe('discoverScreenMaps', () => {
   it.skipIf(typeof process.getuid === 'function' && process.getuid() === 0)(
     'propagates non-ENOENT readdir errors instead of silently skipping',
     async () => {
-    // chmod 000 the product dir to provoke EACCES on readdir.
-    const dir = path.join(tmpRoot, 'ppt');
-    await mkdir(dir, { recursive: true });
-    const { chmod } = await import('node:fs/promises');
-    await chmod(dir, 0o000);
-    try {
-      await expect(discoverScreenMaps(tmpRoot)).rejects.toThrow();
-    } finally {
-      await chmod(dir, 0o755);
+      // chmod 000 the product dir to provoke EACCES on readdir.
+      const dir = path.join(tmpRoot, 'ppt');
+      await mkdir(dir, { recursive: true });
+      const { chmod } = await import('node:fs/promises');
+      await chmod(dir, 0o000);
+      try {
+        await expect(discoverScreenMaps(tmpRoot)).rejects.toThrow();
+      } finally {
+        await chmod(dir, 0o755);
+      }
     }
   );
 });
