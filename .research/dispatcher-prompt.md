@@ -224,11 +224,33 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 
 ```python
 open_count = count(action-list.json items where status=="open" AND id NOT in assignments)
+
+# gap 2: an item is "dep-blocked" if any depends_on entry points at a
+# task that is NOT in assignments with status in {merged, done}.
+def is_dep_blocked(item, assignments):
+    deps = item.get("depends_on") or []
+    if not deps:
+        return False
+    for dep_id in deps:
+        row = assignments.find(task_id=dep_id)
+        if row is None or row.status not in ("merged", "done"):
+            return True
+    return False
+
+dep_blocked_count    = count(open items where is_dep_blocked(item, assignments))
+open_claimable_count = open_count - dep_blocked_count
 ```
 
-- **Tier 1 (self-refill):** if `open_count < 6` AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_count)`. Log `Tier 1: <old> → <new> (+N)`.
-- **Tier 2 (upstream kick):** if `open_count` still < 12 OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`, fire-and-forget. Log `Tier 2: <http-code or skipped>`.
-- Else: SKIP, log `buffer OK: <open_count>/36`.
+- **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`.
+- **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`, fire-and-forget. Log `Tier 2: <http-code or skipped>`.
+- Else: SKIP, log `buffer OK: claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>)`.
+
+The Phase 6 commit message MUST surface both counts:
+
+```
+chore(research): dispatcher <date> — C claimed, R reviewed, M merge-attempts,
+X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased
+```
 
 ---
 
@@ -525,7 +547,7 @@ bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
   echo "dispatcher commit-scope-guard refused — staged paths outside .research/management/. NOT committing; surface in next run." >&2
   exit 0
 }
-git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merged-attempts, X merged-now, F failed, A active, B buffer, RB rebased'
+git commit -m 'chore(research): dispatcher <yyyy-mm-dd HH:MM> — C claimed, R reviewed, M merge-attempts, X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebased'
 git push origin dev   # if another run committed since our pull: rebase + retry once;
                       # if still conflicts, log and bail — next run will re-evaluate state
 ```
@@ -553,7 +575,7 @@ Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; 
 Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
 Merged total: <Mt_total>; this cycle: <Mt_this>
 Failed total: <F_total>;  this cycle: <F_this>
-Buffer:     <open_count>/36 <T1: refilled +N | T2: upstream kicked | OK>
+Buffer:     claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>) <T1: refilled +N | T2: upstream kicked | OK>
 Post-merge: <due | skipped> [<scanned=N clean=K issues=M>]
 Hang alerts:
   WARN (review >48h): [<task_id> PR#<n> age=<dd:hh:mm>, …]   (ALWAYS PRINT; [] if none)
