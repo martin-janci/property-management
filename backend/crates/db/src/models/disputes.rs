@@ -138,6 +138,9 @@ pub struct Dispute {
     pub priority: String,
     pub filed_by: Uuid,
     pub assigned_to: Option<Uuid>,
+    pub resolved_at: Option<DateTime<Utc>>,
+    pub resolution_notes: Option<String>,
+    pub mediation_notes: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -426,6 +429,27 @@ pub struct UpdateDisputeStatus {
     pub status: String,
     pub reason: Option<String>,
     pub updated_by: Uuid,
+}
+
+/// Request to resolve a dispute with resolution notes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResolveDispute {
+    pub dispute_id: Uuid,
+    pub resolution_notes: String,
+    pub resolved_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
+}
+
+/// Request to update mediation notes on a dispute.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateMediationNotes {
+    pub dispute_id: Uuid,
+    pub notes: String,
+    /// User performing the update — recorded in the audit trail.
+    pub updated_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
 }
 
 // =============================================================================
