@@ -6,352 +6,549 @@
  * managers see all documents, non-managers only see documents accessible to
  * their role/unit. This component surfaces those permission boundaries in the
  * UI via the audience filter chips and status segmented control.
+ *
+ * gap-7a-2-folder-ui: Added "Move to folder" action button per document row,
+ * wired to MoveFolderDialog + useMoveDocument hook.
  */
 
 import {
-  type AccessScope,
-  DOCUMENT_CATEGORIES,
-  type DocumentListQuery,
-  type DocumentStatus,
-  type DocumentSummary,
-  useDocuments,
-} from '@ppt/api-client';
-import { useCallback, useMemo, useState } from 'react';
+	type AccessScope,
+	DOCUMENT_CATEGORIES,
+	type DocumentListQuery,
+	type DocumentStatus,
+	type DocumentSummary,
+	useDocuments,
+	useDownloadUrl,
+	useMoveDocument,
+} from "@ppt/api-client";
+import { useCallback, useMemo, useState } from "react";
+import { useToast } from "../../../components/Toast";
+import { DocumentPreviewModal } from "./DocumentPreviewModal";
+import { MoveFolderDialog } from "./MoveFolderDialog";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('sk-SK', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+	return new Date(iso).toLocaleDateString("sk-SK", {
+		day: "2-digit",
+		month: "2-digit",
+		year: "numeric",
+	});
 }
 
 /** Map access_scope value to a human-readable audience label. */
 function audienceLabel(scope: string | undefined): string {
-  switch (scope) {
-    case 'organization':
-      return 'Všetci rezidenti';
-    case 'building':
-      return 'Bytový dom';
-    case 'unit':
-      return 'Iba jednotka';
-    case 'user':
-      return 'Konkrétni používatelia';
-    case 'public':
-      return 'Verejné';
-    default:
-      return 'Všetci rezidenti';
-  }
+	switch (scope) {
+		case "organization":
+			return "Všetci rezidenti";
+		case "building":
+			return "Bytový dom";
+		case "unit":
+			return "Iba jednotka";
+		case "user":
+			return "Konkrétni používatelia";
+		case "public":
+			return "Verejné";
+		default:
+			return "Všetci rezidenti";
+	}
 }
 
 /** Returns CSS class modifier for audience badge color-coding. */
 function audienceMod(scope: string | undefined): string {
-  switch (scope) {
-    case 'organization':
-      return 'audience--org';
-    case 'building':
-      return 'audience--building';
-    case 'user':
-      return 'audience--role';
-    case 'public':
-      return 'audience--public';
-    default:
-      return 'audience--org';
-  }
+	switch (scope) {
+		case "organization":
+			return "audience--org";
+		case "building":
+			return "audience--building";
+		case "user":
+			return "audience--role";
+		case "public":
+			return "audience--public";
+		default:
+			return "audience--org";
+	}
 }
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
 interface DocumentRowProps {
-  doc: DocumentSummary;
-  onSelect: (id: string) => void;
-  selected: boolean;
+	doc: DocumentSummary;
+	onSelect: (id: string) => void;
+	onPreview: (doc: DocumentSummary) => void;
+	onMoveRequest: (doc: DocumentSummary) => void;
+	selected: boolean;
 }
 
-function DocumentRow({ doc, onSelect, selected }: DocumentRowProps) {
-  const ext = doc.file_name.split('.').pop()?.toUpperCase() ?? 'DOC';
-  return (
-    <button
-      type="button"
-      className={`doc-row${selected ? ' doc-row--selected' : ''}`}
-      onClick={() => onSelect(doc.id)}
-    >
-      <span className="doc-row__icon" aria-hidden="true">
-        {ext.slice(0, 3)}
-      </span>
-      <span className="doc-row__body">
-        <span className="doc-row__title">{doc.title}</span>
-        <span className="doc-row__meta">
-          {doc.category} · {formatFileSize(doc.size_bytes)} · {formatDate(doc.updated_at)}
-        </span>
-      </span>
-      <span className={`doc-row__audience ${audienceMod(doc.access_scope)}`}>
-        {audienceLabel(doc.access_scope)}
-      </span>
-      {doc.status && doc.status !== 'published' && (
-        <span className={`doc-row__status doc-row__status--${doc.status}`}>
-          {doc.status === 'draft' ? 'Návrh' : 'Archivované'}
-        </span>
-      )}
-    </button>
-  );
+/**
+ * Inline download button (gap-7a-4).
+ * Fetches a presigned download URL on demand and triggers an anchor download.
+ */
+function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
+	const { data, isLoading } = useDownloadUrl(doc.id);
+
+	const handleDownload = useCallback(
+		(e: { stopPropagation: () => void }) => {
+			e.stopPropagation();
+			if (!data?.url) return;
+			const anchor = document.createElement("a");
+			anchor.href = data.url;
+			anchor.download = doc.file_name;
+			anchor.rel = "noopener noreferrer";
+			document.body.appendChild(anchor);
+			anchor.click();
+			document.body.removeChild(anchor);
+		},
+		[data?.url, doc.file_name],
+	);
+
+	return (
+		<button
+			type="button"
+			className="doc-row__action-btn"
+			onClick={handleDownload}
+			disabled={isLoading || !data?.url}
+			aria-label={`Stiahnuť ${doc.file_name}`}
+			title="Stiahnuť"
+		>
+			<svg
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="2"
+				aria-hidden="true"
+			>
+				<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+				<polyline points="7 10 12 15 17 10" />
+				<line x1="12" y1="15" x2="12" y2="3" />
+			</svg>
+		</button>
+	);
+}
+
+function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: DocumentRowProps) {
+	const ext = doc.file_name.split(".").pop()?.toUpperCase() ?? "DOC";
+
+	const handlePreview = useCallback(
+		(e: { stopPropagation: () => void }) => {
+			e.stopPropagation();
+			onPreview(doc);
+		},
+		[doc, onPreview],
+	);
+
+	const handleMove = useCallback(
+		(e: { stopPropagation: () => void }) => {
+			e.stopPropagation();
+			onMoveRequest(doc);
+		},
+		[doc, onMoveRequest],
+	);
+
+	return (
+		<button
+			type="button"
+			className={`doc-row${selected ? " doc-row--selected" : ""}`}
+			onClick={() => onSelect(doc.id)}
+		>
+			<span className="doc-row__icon" aria-hidden="true">
+				{ext.slice(0, 3)}
+			</span>
+			<span className="doc-row__body">
+				<span className="doc-row__title">{doc.title}</span>
+				<span className="doc-row__meta">
+					{doc.category} · {formatFileSize(doc.size_bytes)} · {formatDate(doc.updated_at)}
+				</span>
+			</span>
+			<span className={`doc-row__audience ${audienceMod(doc.access_scope)}`}>
+				{audienceLabel(doc.access_scope)}
+			</span>
+			{doc.status && doc.status !== "published" && (
+				<span className={`doc-row__status doc-row__status--${doc.status}`}>
+					{doc.status === "draft" ? "Návrh" : "Archivované"}
+				</span>
+			)}
+			{/* Row action buttons (gap-7a-4: preview + download; gap-7a-2: move) */}
+			<span className="doc-row__actions" onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}>
+				{/* Preview button (gap-7a-4) */}
+				<button
+					type="button"
+					className="doc-row__action-btn"
+					onClick={handlePreview}
+					aria-label={`Náhľad ${doc.file_name}`}
+					title="Náhľad"
+				>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						aria-hidden="true"
+					>
+						<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+						<circle cx="12" cy="12" r="3" />
+					</svg>
+				</button>
+				{/* Download button (gap-7a-4) */}
+				<RowDownloadButton doc={doc} />
+				{/* Move to folder (gap-7a-2) */}
+				<button
+					type="button"
+					className="doc-row__action-btn"
+					onClick={handleMove}
+					aria-label={`Presunúť ${doc.file_name} do priečinka`}
+					title="Presunúť do priečinka"
+				>
+					<svg
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						aria-hidden="true"
+					>
+						<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+						<line x1="12" y1="11" x2="12" y2="17" />
+						<line x1="9" y1="14" x2="15" y2="14" />
+					</svg>
+				</button>
+			</span>
+		</button>
+	);
 }
 
 // ─── main component ───────────────────────────────────────────────────────────
 
 const STATUS_TABS: { label: string; value: DocumentStatus | undefined }[] = [
-  { label: 'Všetky', value: undefined },
-  { label: 'Publikované', value: 'published' },
-  { label: 'Návrhy', value: 'draft' },
-  { label: 'Archivované', value: 'archived' },
+	{ label: "Všetky", value: undefined },
+	{ label: "Publikované", value: "published" },
+	{ label: "Návrhy", value: "draft" },
+	{ label: "Archivované", value: "archived" },
 ];
 
 const AUDIENCE_OPTIONS: { label: string; value: AccessScope }[] = [
-  { label: 'Všetci rezidenti', value: 'organization' },
-  { label: 'Bytový dom', value: 'building' },
-  { label: 'Iba jednotka', value: 'unit' },
-  { label: 'Konkrétni používatelia', value: 'user' },
-  { label: 'Verejné', value: 'public' },
+	{ label: "Všetci rezidenti", value: "organization" },
+	{ label: "Bytový dom", value: "building" },
+	{ label: "Iba jednotka", value: "unit" },
+	{ label: "Konkrétni používatelia", value: "user" },
+	{ label: "Verejné", value: "public" },
 ];
 
 export interface DocumentsBrowseProps {
-  organizationId: string;
-  buildingId?: string;
-  onSelectDocument?: (documentId: string) => void;
+	organizationId: string;
+	buildingId?: string;
+	onSelectDocument?: (documentId: string) => void;
 }
 
 export function DocumentsBrowse({
-  organizationId: _organizationId,
-  buildingId: _buildingId,
-  onSelectDocument,
+	organizationId: _organizationId,
+	buildingId,
+	onSelectDocument,
 }: DocumentsBrowseProps) {
-  const [selectedStatus, setSelectedStatus] = useState<DocumentStatus | undefined>(undefined);
-  const [selectedAudience, setSelectedAudience] = useState<AccessScope | undefined>(undefined);
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
-  const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
+	const [selectedStatus, setSelectedStatus] = useState<DocumentStatus | undefined>(undefined);
+	const [selectedAudience, setSelectedAudience] = useState<AccessScope | undefined>(undefined);
+	const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+	const [search, setSearch] = useState("");
+	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [page, setPage] = useState(0);
+	/** Document currently open in the inline preview modal (gap-7a-4). */
+	const [previewDoc, setPreviewDoc] = useState<DocumentSummary | null>(null);
+	// Move-to-folder state
+	const [moveTarget, setMoveTarget] = useState<DocumentSummary | null>(null);
 
-  const PAGE_SIZE = 20;
+	const moveDocument = useMoveDocument();
+	const { showToast } = useToast();
 
-  const query = useMemo<DocumentListQuery>(
-    () => ({
-      search: search.length >= 2 ? search : undefined,
-      category: selectedCategory,
-      status: selectedStatus,
-      access_scope: selectedAudience,
-      limit: PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-    }),
-    [search, selectedCategory, selectedStatus, selectedAudience, page]
-  );
+	const PAGE_SIZE = 20;
 
-  const { data, isLoading, error, refetch } = useDocuments(query);
+	const query = useMemo<DocumentListQuery>(
+		() => ({
+			search: search.length >= 2 ? search : undefined,
+			category: selectedCategory,
+			status: selectedStatus,
+			access_scope: selectedAudience,
+			limit: PAGE_SIZE,
+			offset: page * PAGE_SIZE,
+		}),
+		[search, selectedCategory, selectedStatus, selectedAudience, page],
+	);
 
-  const handleSelect = useCallback(
-    (id: string) => {
-      setSelectedId(id);
-      onSelectDocument?.(id);
-    },
-    [onSelectDocument]
-  );
+	const { data, isLoading, error, refetch } = useDocuments(query);
 
-  const handleClearFilters = useCallback(() => {
-    setSelectedStatus(undefined);
-    setSelectedAudience(undefined);
-    setSelectedCategory(undefined);
-    setSearch('');
-    setPage(0);
-  }, []);
+	const handleSelect = useCallback(
+		(id: string) => {
+			setSelectedId(id);
+			onSelectDocument?.(id);
+		},
+		[onSelectDocument],
+	);
 
-  const hasActiveFilters =
-    selectedStatus || selectedAudience || selectedCategory || search.length >= 2;
+	const handlePreview = useCallback((doc: DocumentSummary) => {
+		setPreviewDoc(doc);
+	}, []);
 
-  return (
-    <div className="docs-browse">
-      {/* Status tabs */}
-      <div className="docs-browse__tabs" role="tablist" aria-label="Status dokumentov">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.value ?? 'all'}
-            type="button"
-            role="tab"
-            aria-selected={selectedStatus === tab.value}
-            className={`docs-browse__tab${selectedStatus === tab.value ? ' docs-browse__tab--active' : ''}`}
-            onClick={() => {
-              setSelectedStatus(tab.value);
-              setPage(0);
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+	const handleClosePreview = useCallback(() => {
+		setPreviewDoc(null);
+	}, []);
 
-      {/* Filter bar */}
-      <div className="docs-browse__filters">
-        <div className="docs-browse__search-wrap">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
-            placeholder="Hľadať podľa názvu…"
-            className="docs-browse__search"
-            aria-label="Hľadať dokumenty"
-          />
-        </div>
+	const handleMoveRequest = useCallback((doc: DocumentSummary) => {
+		setMoveTarget(doc);
+	}, []);
 
-        {/* Audience filter */}
-        <fieldset className="docs-browse__fieldset">
-          <legend className="docs-browse__legend">Publikum</legend>
-          <div className="docs-browse__chips">
-            {AUDIENCE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                aria-pressed={selectedAudience === opt.value}
-                className={`docs-browse__chip${selectedAudience === opt.value ? ' docs-browse__chip--active' : ''}`}
-                onClick={() => {
-                  setSelectedAudience(selectedAudience === opt.value ? undefined : opt.value);
-                  setPage(0);
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+	const handleMoveConfirm = useCallback(
+		async (folderId: string | null) => {
+			if (!moveTarget) return;
+			try {
+				await moveDocument.mutateAsync({ documentId: moveTarget.id, folderId });
+				showToast({
+					type: "success",
+					title: "Dokument presunutý",
+					message: folderId
+						? `„${moveTarget.title}" bol presunutý do priečinka.`
+						: `„${moveTarget.title}" bol presunutý do koreňa.`,
+				});
+			} catch (err) {
+				showToast({
+					type: "error",
+					title: "Presun zlyhal",
+					message: err instanceof Error ? err.message : "Dokument sa nepodarilo presunúť.",
+				});
+			} finally {
+				setMoveTarget(null);
+			}
+		},
+		[moveTarget, moveDocument, showToast],
+	);
 
-        {/* Category filter */}
-        <fieldset className="docs-browse__fieldset">
-          <legend className="docs-browse__legend">Kategória</legend>
-          <div className="docs-browse__chips">
-            {DOCUMENT_CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                aria-pressed={selectedCategory === cat}
-                className={`docs-browse__chip${selectedCategory === cat ? ' docs-browse__chip--active' : ''}`}
-                onClick={() => {
-                  setSelectedCategory(selectedCategory === cat ? undefined : cat);
-                  setPage(0);
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+	const handleClearFilters = useCallback(() => {
+		setSelectedStatus(undefined);
+		setSelectedAudience(undefined);
+		setSelectedCategory(undefined);
+		setSearch("");
+		setPage(0);
+	}, []);
 
-        {hasActiveFilters && (
-          <button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
-            Vymazať filtre
-          </button>
-        )}
-      </div>
+	const hasActiveFilters =
+		selectedStatus || selectedAudience || selectedCategory || search.length >= 2;
 
-      {/* Results */}
-      <div className="docs-browse__results">
-        {isLoading && (
-          <ul
-            className="docs-browse__skeleton"
-            aria-label="Načítavanie dokumentov"
-            aria-busy="true"
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <li key={i} className="docs-browse__skel-row" />
-            ))}
-          </ul>
-        )}
+	return (
+		<div className="docs-browse">
+			{/* Status tabs */}
+			<div className="docs-browse__tabs" role="tablist" aria-label="Status dokumentov">
+				{STATUS_TABS.map((tab) => (
+					<button
+						key={tab.value ?? "all"}
+						type="button"
+						role="tab"
+						aria-selected={selectedStatus === tab.value}
+						className={`docs-browse__tab${selectedStatus === tab.value ? " docs-browse__tab--active" : ""}`}
+						onClick={() => {
+							setSelectedStatus(tab.value);
+							setPage(0);
+						}}
+					>
+						{tab.label}
+					</button>
+				))}
+			</div>
 
-        {error && !isLoading && (
-          <div className="docs-browse__error" role="alert">
-            <p>Dokumenty sa nepodarilo načítať.</p>
-            <button type="button" className="docs-browse__retry" onClick={() => refetch()}>
-              Skúsiť znova
-            </button>
-          </div>
-        )}
+			{/* Filter bar */}
+			<div className="docs-browse__filters">
+				<div className="docs-browse__search-wrap">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						aria-hidden="true"
+					>
+						<circle cx="11" cy="11" r="8" />
+						<path d="M21 21l-4.35-4.35" />
+					</svg>
+					<input
+						type="search"
+						value={search}
+						onChange={(e: { target: { value: string } }) => {
+							setSearch(e.target.value);
+							setPage(0);
+						}}
+						placeholder="Hľadať podľa názvu…"
+						className="docs-browse__search"
+						aria-label="Hľadať dokumenty"
+					/>
+				</div>
 
-        {!isLoading && !error && data && data.documents.length === 0 && (
-          <div className="docs-browse__empty">
-            <p>Žiadne dokumenty nezodpovedajú zvoleným filtrom.</p>
-            {hasActiveFilters && (
-              <button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
-                Vymazať filtre
-              </button>
-            )}
-          </div>
-        )}
+				{/* Audience filter */}
+				<fieldset className="docs-browse__fieldset">
+					<legend className="docs-browse__legend">Publikum</legend>
+					<div className="docs-browse__chips">
+						{AUDIENCE_OPTIONS.map((opt) => (
+							<button
+								key={opt.value}
+								type="button"
+								aria-pressed={selectedAudience === opt.value}
+								className={`docs-browse__chip${selectedAudience === opt.value ? " docs-browse__chip--active" : ""}`}
+								onClick={() => {
+									setSelectedAudience(selectedAudience === opt.value ? undefined : opt.value);
+									setPage(0);
+								}}
+							>
+								{opt.label}
+							</button>
+						))}
+					</div>
+				</fieldset>
 
-        {!isLoading && !error && data && data.documents.length > 0 && (
-          <>
-            <div className="docs-browse__count" aria-live="polite">
-              {data.total} dokument{data.total !== 1 ? 'ov' : ''} · zobrazených{' '}
-              {data.documents.length}
-            </div>
-            <ul className="docs-browse__list">
-              {data.documents.map((doc: DocumentSummary) => (
-                <li key={doc.id}>
-                  <DocumentRow doc={doc} selected={selectedId === doc.id} onSelect={handleSelect} />
-                </li>
-              ))}
-            </ul>
+				{/* Category filter */}
+				<fieldset className="docs-browse__fieldset">
+					<legend className="docs-browse__legend">Kategória</legend>
+					<div className="docs-browse__chips">
+						{DOCUMENT_CATEGORIES.map((cat: string) => (
+							<button
+								key={cat}
+								type="button"
+								aria-pressed={selectedCategory === cat}
+								className={`docs-browse__chip${selectedCategory === cat ? " docs-browse__chip--active" : ""}`}
+								onClick={() => {
+									setSelectedCategory(selectedCategory === cat ? undefined : cat);
+									setPage(0);
+								}}
+							>
+								{cat}
+							</button>
+						))}
+					</div>
+				</fieldset>
 
-            {/* Pagination */}
-            {data.total > PAGE_SIZE && (
-              <div className="docs-browse__pagination">
-                <button
-                  type="button"
-                  disabled={page === 0}
-                  className="docs-browse__page-btn"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  aria-label="Predchádzajúca strana"
-                >
-                  ‹ Predch.
-                </button>
-                <span className="docs-browse__page-info">
-                  Strana {page + 1} / {Math.ceil(data.total / PAGE_SIZE)}
-                </span>
-                <button
-                  type="button"
-                  disabled={(page + 1) * PAGE_SIZE >= data.total}
-                  className="docs-browse__page-btn"
-                  onClick={() => setPage((p) => p + 1)}
-                  aria-label="Nasledujúca strana"
-                >
-                  Ďalšia ›
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+				{hasActiveFilters && (
+					<button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
+						Vymazať filtre
+					</button>
+				)}
+			</div>
 
-      <style>{`
+			{/* Results */}
+			<div className="docs-browse__results">
+				{isLoading && (
+					<ul
+						className="docs-browse__skeleton"
+						aria-label="Načítavanie dokumentov"
+						aria-busy="true"
+					>
+						{Array.from({ length: 6 }).map((_, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows have no identity
+							<li key={i} className="docs-browse__skel-row" />
+						))}
+					</ul>
+				)}
+
+				{error && !isLoading && (
+					<div className="docs-browse__error" role="alert">
+						<p>Dokumenty sa nepodarilo načítať.</p>
+						<button type="button" className="docs-browse__retry" onClick={() => refetch()}>
+							Skúsiť znova
+						</button>
+					</div>
+				)}
+
+				{!isLoading && !error && data && data.documents.length === 0 && (
+					<div className="docs-browse__empty">
+						<p>Žiadne dokumenty nezodpovedajú zvoleným filtrom.</p>
+						{hasActiveFilters && (
+							<button type="button" className="docs-browse__clear" onClick={handleClearFilters}>
+								Vymazať filtre
+							</button>
+						)}
+					</div>
+				)}
+
+				{!isLoading && !error && data && data.documents.length > 0 && (
+					<>
+						<div className="docs-browse__count" aria-live="polite">
+							{data.total} dokument{data.total !== 1 ? "ov" : ""} · zobrazených{" "}
+							{data.documents.length}
+						</div>
+						<ul className="docs-browse__list">
+							{data.documents.map((doc: DocumentSummary) => (
+								<li key={doc.id}>
+									<DocumentRow
+										doc={doc}
+										selected={selectedId === doc.id}
+										onSelect={handleSelect}
+										onPreview={handlePreview}
+										onMoveRequest={handleMoveRequest}
+									/>
+								</li>
+							))}
+						</ul>
+
+						{/* Pagination */}
+						{data.total > PAGE_SIZE && (
+							<div className="docs-browse__pagination">
+								<button
+									type="button"
+									disabled={page === 0}
+									className="docs-browse__page-btn"
+									onClick={() => setPage((p: number) => Math.max(0, p - 1))}
+									aria-label="Predchádzajúca strana"
+								>
+									‹ Predch.
+								</button>
+								<span className="docs-browse__page-info">
+									Strana {page + 1} / {Math.ceil(data.total / PAGE_SIZE)}
+								</span>
+								<button
+									type="button"
+									disabled={(page + 1) * PAGE_SIZE >= data.total}
+									className="docs-browse__page-btn"
+									onClick={() => setPage((p: number) => p + 1)}
+									aria-label="Nasledujúca strana"
+								>
+									Ďalšia ›
+								</button>
+							</div>
+						)}
+					</>
+				)}
+			</div>
+
+			{/* Inline preview modal (gap-7a-4) */}
+			{previewDoc && (
+				<DocumentPreviewModal
+					documentId={previewDoc.id}
+					title={previewDoc.title}
+					fileName={previewDoc.file_name}
+					mimeType={previewDoc.mime_type}
+					onClose={handleClosePreview}
+				/>
+			)}
+
+			{/* Move-to-folder dialog */}
+			{moveTarget && (
+				<MoveFolderDialog
+					documentTitles={[moveTarget.title]}
+					buildingId={buildingId}
+					currentFolderId={null}
+					onConfirm={handleMoveConfirm}
+					onCancel={() => setMoveTarget(null)}
+					isPending={moveDocument.isPending}
+				/>
+			)}
+
+			<style>{`
         .docs-browse {
           display: flex;
           flex-direction: column;
@@ -627,6 +824,40 @@ export function DocumentsBrowse({
           color: var(--ppt-fg-subtle);
         }
 
+        /* Action buttons */
+        .doc-row__actions {
+          display: flex;
+          align-items: center;
+          gap: 0.125rem;
+          flex-shrink: 0;
+          opacity: 0;
+          transition: opacity 0.12s;
+        }
+
+        .doc-row:hover .doc-row__actions,
+        .doc-row--selected .doc-row__actions {
+          opacity: 1;
+        }
+
+        .doc-row__action-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 1.625rem;
+          height: 1.625rem;
+          border: none;
+          border-radius: 0.25rem;
+          background: transparent;
+          color: var(--ppt-fg-muted);
+          cursor: pointer;
+          transition: all 0.1s;
+        }
+
+        .doc-row__action-btn:hover {
+          background: var(--ppt-border-default);
+          color: var(--ppt-brand-500);
+        }
+
         /* Loading skeleton */
         .docs-browse__skeleton {
           list-style: none;
@@ -726,8 +957,8 @@ export function DocumentsBrowse({
           font-variant-numeric: tabular-nums;
         }
       `}</style>
-    </div>
-  );
+		</div>
+	);
 }
 
 export default DocumentsBrowse;
