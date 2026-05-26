@@ -1,6 +1,8 @@
 # PPT Project Roadmap (Deep Scan)
 
-_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-25 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-26 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+
+_Upkeep 2026-05-26: 21 PRs merged (#513–#562). Stories advanced: 84-2 e-signature UI (#513) + fail-closed (#532) → **done**; document folder API (#551, 7a-2), download/preview API (#550, 7a-4), mediation API (#514, 80-3), report execution-history UI (#547, 81-2), push-fanout worker (#515, 8a-3), Booking channel sync/OTA (#534/#544, 83-2), Airbnb backend (#538, 83-1) all enriched — remain `partial` pending UI wiring / tests / mobile slices. The #516–#528 follow-up issue cluster is fully CLOSED (resolved by cleanup PRs #548/#549). 9 action-list items marked done. Rotating epic re-checked: epic-9 (coverage_cursor.next_index=3) — 9-1 TOTP 2FA confirmed done, no churn. Rotating role: pm-devops added 3 actions/3 risks — OTA credential handling, push-fanout observability, channel-sync rollback._
 
 _Upkeep 2026-05-25: 30 PRs merged (#441–#473). Epic 2B notification pipeline (#463) + WebSocket realtime sync (#472) cleared the DEC-001 blockers. Stories advanced to **done**: 9-1 (MFA frontend #441 + e2e #473). Already-done stories enriched with UI evidence: 7a-3/7a-5 (web+mobile doc UI), 6-5 (messaging+WS), 6-6 (neighbor listing #464), 10a-2/10a-3 (OAuth admin + user-grants UI #468/#469/#471). 8a-3 WS half cleared by #472 (mobile-push leg remains). Epic 6 announcement web UI (6-2/6-3/6-4) unblocked, now in draft PRs #474/#475/#479. Rotating epic re-checked: epic-7a (7a-1 mobile merged #447; 7a-2 folder UI + 7a-4 mobile preview still partial)._
 
@@ -69,4 +71,4 @@ _Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 
 - Epic 82 iOS stories scored "partial" with low confidence — the implementation files exist but story-to-code mapping is uncertain (epic numbering conflict with `epics-007.md`). Worth a 30-minute alignment pass before further planning.
 - 7a-* sprint-status shows `ready-for-dev` despite merged PRs. Sprint-status is stale here — update once apiStatus is verified.
 
-Buffer: 64/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep refreshed epic-6 evidence + 5 pm-analysis actions added)
+Buffer: 58/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep marked 9 actions done from merged PRs + 3 pm-devops actions added; epic-9 re-checked)

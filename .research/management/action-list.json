@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T13:57:14Z",
+  "generated": "2026-05-26T22:32:04Z",
   "items": [
     {
       "id": "pm-backend-fix-ai-equipment-idor",
@@ -610,10 +610,11 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-24",
-      "depends_on": []
+      "depends_on": [],
+      "resolved_by": "#513/#532"
     },
     {
       "id": "gap-85-1-rn-env-config",
@@ -848,12 +849,13 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-7a-1-backend-multipart-upload"
-      ]
+      ],
+      "resolved_by": "#551"
     },
     {
       "id": "gap-7a-2-folder-ui",
@@ -874,12 +876,13 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-7a-1-backend-multipart-upload"
-      ]
+      ],
+      "resolved_by": "#550"
     },
     {
       "id": "gap-7a-4-document-preview-ui",
@@ -900,12 +903,13 @@
       "owner_role": "pm-backend",
       "priority": "high",
       "dependency": "gap-8a-3-mobile-push must be merged first",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-8a-3-mobile-push"
-      ]
+      ],
+      "resolved_by": "#515"
     },
     {
       "id": "gap-10b-6-onboarding-tour-api",
@@ -972,12 +976,13 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-80-2-dispute-filing-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-80-2-dispute-filing-api"
-      ]
+      ],
+      "resolved_by": "#514"
     },
     {
       "id": "gap-80-3-mediation-ui",
@@ -1033,12 +1038,13 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-81-2-report-execution-history-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-81-2-report-execution-history-api"
-      ]
+      ],
+      "resolved_by": "#547"
     },
     {
       "id": "gap-82-3-swiftui-home-search",
@@ -1085,10 +1091,11 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "depends_on": [],
+      "resolved_by": "#538"
     },
     {
       "id": "gap-83-2-booking-integration-backend",
@@ -1096,10 +1103,11 @@
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "none",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
-      "depends_on": []
+      "depends_on": [],
+      "resolved_by": "#534/#544"
     },
     {
       "id": "gap-84-2-esignature-email-backend",
@@ -1119,12 +1127,13 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-84-2-esignature-email-backend",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
         "gap-84-2-esignature-email-backend"
-      ]
+      ],
+      "resolved_by": "#513"
     },
     {
       "id": "gap-85-2-build-config-android",
@@ -1249,6 +1258,36 @@
       "depends_on": [
         "pm-frontend"
       ]
+    },
+    {
+      "id": "pm-devops-ci-secrets-channel-creds",
+      "action": "Add CI secret-scanning + env-scoped secrets handling for new OTA channel credentials (Booking.com/Airbnb API keys in integrations/install.rs) \u2014 ensure no creds in repo or logs",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-security",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-26"
+    },
+    {
+      "id": "pm-devops-push-fanout-worker-observability",
+      "action": "Add metrics/logging + dead-letter + backoff monitoring for the new push-fanout background worker (push_fanout.rs) so delivery failures are observable before mobile push GA",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-backend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-26"
+    },
+    {
+      "id": "pm-devops-deploy-rollback-channel-sync",
+      "action": "Define rollback/runbook + feature-flag gating for channel-sync workers (booking_channel.rs) so a bad OTA push can be disabled without a redeploy",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-26"
     }
   ]
 }

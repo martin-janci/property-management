@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T13:57:14Z",
+  "generated": "2026-05-26T22:31:41Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -45,10 +45,10 @@
         "PR #474 wired view-page (mark_read/acknowledge)"
       ],
       "gaps": [
-        "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) — not yet merged",
+        "web viewing/ack UI in draft PRs #474/#475/#479 (Epic 6 announcement web UI) \u2014 not yet merged",
         "apiStatus stub until web PRs land"
       ],
-      "notes": "Epic 2B notification pipeline merged (PR #463) AND WebSocket realtime sync merged (PR #472) — both dependencies cleared; web viewing/ack UI now in flight (draft PRs #474/#475/#479)",
+      "notes": "Epic 2B notification pipeline merged (PR #463) AND WebSocket realtime sync merged (PR #472) \u2014 both dependencies cleared; web viewing/ack UI now in flight (draft PRs #474/#475/#479)",
       "last_checked": "2026-05-25"
     },
     {
@@ -70,10 +70,10 @@
         "PR #475 wired comments web UI"
       ],
       "gaps": [
-        "comments web UI in draft PRs #474/#475/#479 — not yet merged",
+        "comments web UI in draft PRs #474/#475/#479 \u2014 not yet merged",
         "comment threading/reply unclear"
       ],
-      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; comments web UI in flight (draft #474/#475/#479)",
+      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged \u2014 dependency cleared; comments web UI in flight (draft #474/#475/#479)",
       "last_checked": "2026-05-25"
     },
     {
@@ -94,9 +94,9 @@
         "frontend pin status integrated in screens"
       ],
       "gaps": [
-        "pin/unpin web UI in draft PRs #474/#475/#479 — not yet merged"
+        "pin/unpin web UI in draft PRs #474/#475/#479 \u2014 not yet merged"
       ],
-      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged — dependency cleared; pin/unpin web UI in flight (draft #474/#475/#479)",
+      "notes": "Epic 2B notification pipeline (PR #463) + WebSocket sync (PR #472) merged \u2014 dependency cleared; pin/unpin web UI in flight (draft #474/#475/#479)",
       "last_checked": "2026-05-25"
     },
     {
@@ -116,7 +116,7 @@
         "frontend messages/message-thread/messages-new shipped",
         "API types MessageThread/ThreadWithPreview/MessageWithSender",
         "messaging screens wired to API (PR #449, merged 2026-05-25)",
-        "WebSocket realtime sync shipped (PR #472, merged 2026-05-25) — live thread updates no longer deferred"
+        "WebSocket realtime sync shipped (PR #472, merged 2026-05-25) \u2014 live thread updates no longer deferred"
       ],
       "gaps": [
         "test coverage for realtime sync tracked in follow-up issue (#480-#487 cluster)"
@@ -169,7 +169,7 @@
         "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify",
+        "sprint-status ready-for-dev \u2014 promote to done after verify",
         "upload test coverage tracked in follow-up issue (#480-#487 cluster)"
       ],
       "last_checked": "2026-05-25"
@@ -189,14 +189,16 @@
       "evidence": [
         "folder hierarchy with 5-level depth + circular check",
         "handlers list_folders/get_folder_tree/create/update/delete",
-        "RLS policies for tenant isolation"
+        "RLS policies for tenant isolation",
+        "document folder API shipped (PR #551, merged 2026-05-26) \u2014 folder CRUD + tree endpoints confirmed; folder-ui PR #556 OPEN/draft",
+        "PR #551 document folder API merged"
       ],
       "gaps": [
-        "sprint-status ready-for-dev",
-        "no dedicated folder-tree UI page",
+        "dedicated folder-tree UI page in open draft #556 \u2014 not yet merged",
         "mobile implementation pending"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-26",
+      "notes": "folder API merged (#551); dedicated folder-tree web UI still in open draft #556"
     },
     {
       "epic": "epic-7a",
@@ -219,7 +221,7 @@
         "mobile document permission/RLS UI shipped (gap-7a-3 PRs #462/#465, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify"
+        "sprint-status ready-for-dev \u2014 promote to done after verify"
       ],
       "status_note": "advanced partial->done (web+mobile permission UI both shipped)",
       "last_checked": "2026-05-25"
@@ -241,14 +243,16 @@
         "handlers get_download_url/get_preview_url",
         "screen document-detail with PDF preview spec",
         "SigV4 presigned URLs via aws-sdk-s3",
-        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf — web preview done; mobile slice still pending"
+        "PR #446 (gap-7a-4) merged 2026-05-24: PDF.js client-side rendering shipped in ppt-web DocumentDetail via react-pdf \u2014 web preview done; mobile slice still pending",
+        "document download/preview API shipped (PR #550, merged 2026-05-26) \u2014 get_download_url/get_preview_url backend confirmed; doc-preview UI PR #557 OPEN/draft",
+        "PR #550 document download/preview API merged"
       ],
       "gaps": [
-        "sprint-status ready-for-dev",
-        "screen-map apiStatus partial",
-        "mobile preview slice still pending"
+        "mobile preview slice still pending",
+        "doc-preview web polish in open draft #557"
       ],
-      "last_checked": "2026-05-25"
+      "last_checked": "2026-05-26",
+      "notes": "document download/preview API merged (#550); web preview polish in open draft #557; mobile preview slice pending"
     },
     {
       "epic": "epic-7a",
@@ -271,7 +275,7 @@
         "web document sharing UI (user/role/building/public link) shipped (gap-7a-5 PRs #451/#467, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev — promote to done after verify",
+        "sprint-status ready-for-dev \u2014 promote to done after verify",
         "share-flow test coverage tracked in follow-up issue (#480-#487 cluster)"
       ],
       "last_checked": "2026-05-25"
@@ -336,15 +340,16 @@
         "server-side DB persistence in #7",
         "sync.ts module + React Query handles refresh sync",
         "browser push utilities prepared",
-        "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) — WS half of preference sync now delivered",
-        "Epic 2B notification pipeline merged (PR #463) — channel routing + delivery transports available"
+        "WebSocket realtime sync infra shipped (PR #472, merged 2026-05-25) \u2014 WS half of preference sync now delivered",
+        "Epic 2B notification pipeline merged (PR #463) \u2014 channel routing + delivery transports available",
+        "push-fanout worker shipped (PR #515, merged 2026-05-26) \u2014 push_fanout.rs delivers to device tokens; channel-routing half of the mobile-push leg now present"
       ],
       "gaps": [
-        "mobile OS push integration (FCM/APNs) still deferred",
-        "backend tests for realtime sync tracked in follow-up issue (#480-#487 cluster)"
+        "client-side FCM/APNs token registration + iOS Keychain push leg still pending (iOS push PR #539 OPEN/draft)",
+        "backend tests for realtime sync + fanout fan-out ordering tracked as follow-up"
       ],
-      "notes": "WS half cleared by PR #472; only mobile-push leg remains before promotion to done",
-      "last_checked": "2026-05-25"
+      "notes": "WS half cleared by #472; push-fanout server worker cleared by #515. Only the client FCM/APNs registration leg (draft #539) remains before promotion to done.",
+      "last_checked": "2026-05-26"
     },
     {
       "epic": "epic-9",
@@ -364,12 +369,13 @@
         "MFA routes /setup /verify /disable /status /backup-codes",
         "2FA integrated into POST /auth/login",
         "TwoFactorAuthPage routed at /settings/two-factor",
-        "MFA frontend integration shipped (PR #441, merged 2026-05-25) — useMfa hooks wired to /api/v1/auth/mfa/*, scaffold removed, feature exposed end-to-end",
-        "MFA e2e test coverage shipped (PR #473, merged 2026-05-25) — QR scan → verify → login 2FA prompt → disable → backup-codes flows"
+        "MFA frontend integration shipped (PR #441, merged 2026-05-25) \u2014 useMfa hooks wired to /api/v1/auth/mfa/*, scaffold removed, feature exposed end-to-end",
+        "MFA e2e test coverage shipped (PR #473, merged 2026-05-25) \u2014 QR scan \u2192 verify \u2192 login 2FA prompt \u2192 disable \u2192 backup-codes flows"
       ],
       "gaps": [],
       "status_note": "advanced partial->done (frontend integration PR #441 + e2e PR #473 both merged)",
-      "last_checked": "2026-05-25"
+      "last_checked": "2026-05-26",
+      "notes": " | rotating re-check 2026-05-26: 9-1 TOTP 2FA setup confirmed done (no churn this window)"
     },
     {
       "epic": "epic-10a",
@@ -411,7 +417,7 @@
         "oauth.rs: register/list/update/revoke/regenerate_client_secret",
         "routes /api/v1/admin/oauth/clients (CRUD) gated by OauthClientWrite",
         "Argon2id secret hashing + redirect URI validation",
-        "OAuth client management admin UI shipped (gap-10a-2 PRs #468/#469/#471, merged 2026-05-25) — register/list/update/revoke/regenerate-secret + scope-management console in admin-web"
+        "OAuth client management admin UI shipped (gap-10a-2 PRs #468/#469/#471, merged 2026-05-25) \u2014 register/list/update/revoke/regenerate-secret + scope-management console in admin-web"
       ],
       "gaps": [
         "integration tests for client management missing (tracked in follow-up issue #480-#487 cluster)"
@@ -435,7 +441,7 @@
         "migrations oauth_refresh_tokens + user_oauth_grants",
         "oauth.rs: refresh_tokens/introspect_token/list_user_grants/revoke_user_grant",
         "token rotation with family_id + reuse detection",
-        "user OAuth grants management page shipped (gap-10a-3 PRs #468/#469/#471, merged 2026-05-25) — users can list + revoke third-party app access in ppt-web"
+        "user OAuth grants management page shipped (gap-10a-3 PRs #468/#469/#471, merged 2026-05-25) \u2014 users can list + revoke third-party app access in ppt-web"
       ],
       "gaps": [
         "no introspection integration tests (tracked in follow-up issue #480-#487 cluster)",
@@ -597,14 +603,15 @@
         "sprint-status ready-for-dev",
         "help.rs routes defined (articles/FAQ/tooltips with search/context)",
         "mounted at /api/v1/help",
-        "type stubs HelpArticle/FaqEntry/HelpCategory"
+        "type stubs HelpArticle/FaqEntry/HelpCategory",
+        "contextual help UI shipped (PR #541, merged 2026-05-26) \u2014 help/FAQ/tooltip surface now in frontend"
       ],
       "gaps": [
-        "handlers are stubs with basic token extraction",
-        "no frontend component",
+        "backend handler bodies still stubs \u2014 UI shipped against stub responses; needs real article/FAQ/tooltip persistence",
         "no screen documentation"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "UI shipped (#541) but backend handlers still stubbed \u2014 partial, not done",
+      "last_checked": "2026-05-26"
     },
     {
       "epic": "epic-79",
@@ -761,17 +768,18 @@
         "types.ts: ResolveDisputeRequest, AssignMediatorRequest, EscalateDisputeRequest, AddMediationNoteRequest, MediationNote, TimelineEvent",
         "ResolutionCard: voting, accept, implement, term-completion flows",
         "ActionItemCard: onEscalate callback present",
-        "backend mediation routes assumed implemented (prior scan)"
+        "backend mediation API shipped (PR #514, merged 2026-05-26) \u2014 assign-mediator / resolve / escalate / mediation-notes routes now confirmed implemented",
+        "PR #514 mediation API merged; UI PR #555 open"
       ],
       "gaps": [
-        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub — does not render DisputeDetailPage.tsx",
-        "CRITICAL: No /disputes/:disputeId/mediation route — MediationPage never rendered",
+        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub \u2014 does not render DisputeDetailPage.tsx",
+        "CRITICAL: No /disputes/:disputeId/mediation route \u2014 MediationPage never rendered (mediation-ui PR #555 OPEN, not yet merged)",
         "CRITICAL: useEscalateDispute, useResolveDispute, useAssignMediator, useAddMediationNote not called from any App.tsx route handler",
-        "CRITICAL: onNavigateToMediation prop in DisputeDetailPage but no route target exists",
         "No mediation screen-map entry under docs/screens/ppt/"
       ],
-      "last_checked": "2026-05-25",
-      "verification_note": "Verified 2026-05-25 by gap-80-3-mediation-verify. Pages and hooks are complete; only App.tsx route wiring is missing. Cannot promote to done — needs dedicated wiring task."
+      "last_checked": "2026-05-26",
+      "verification_note": "Backend mediation API now merged (#514); the blocking gap is App.tsx route wiring + the open mediation-ui PR #555. Cannot promote to done until #555 merges and routes are wired.",
+      "notes": "mediation API merged (#514) and mediation-ui PR #555 still OPEN \u2014 App.tsx route wiring not yet landed; remains partial until #555 merges"
     },
     {
       "epic": "epic-81",
@@ -814,14 +822,16 @@
         "useReportExecutionHistory hook",
         "API client getReportExecutionHistory/getReportExecutionDownloadUrl/retryReportExecution",
         "integrated into ReportsPage",
-        "merged PR #93"
+        "merged PR #93",
+        "report execution-history UI shipped (PR #547, merged 2026-05-26) \u2014 ScheduleDetailPage execution-history view wired",
+        "PR #547 report execution-history UI merged"
       ],
       "gaps": [
-        "backend GET /schedules/{id}/executions not implemented",
-        "backend GET /executions/{id}/download (presigned) missing",
-        "no execution history table or retry logic in backend"
+        "backend GET /schedules/{id}/executions + GET /executions/{id}/download (presigned) endpoint verification still pending \u2014 confirm UI no longer 404s",
+        "no execution history table or retry logic confirmed in backend"
       ],
-      "last_checked": "2026-05-23"
+      "last_checked": "2026-05-26",
+      "notes": "report execution-history UI merged (#547); backend executions/download endpoint verification still pending"
     },
     {
       "epic": "epic-82",
@@ -954,14 +964,17 @@
         "rental.rs models RentalPlatformConnection/RentalBooking/GuestRegistration",
         "rental.rs repository in PR #23",
         "routes/rentals.rs has sync endpoints",
-        "Epic 18 Short-Term Rental Integration merged"
+        "Epic 18 Short-Term Rental Integration merged",
+        "Airbnb integration backend shipped (PR #538, merged 2026-05-26) \u2014 /integrations/airbnb/* routes + OAuth token exchange + sync now present",
+        "PR #538 Airbnb integration backend merged"
       ],
       "gaps": [
-        "no OAuth token exchange route (models only)",
-        "Airbnb realtime webhook handler not implemented",
-        "no /integrations/airbnb/* API routes"
+        "Airbnb realtime webhook handler depth + sync reconciliation tests pending",
+        "no frontend connect/disconnect UI surface yet"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "backend routes now present (#538); promote to done after webhook/sync verify + UI",
+      "last_checked": "2026-05-26",
+      "notes": "Airbnb integration backend merged (#538); realtime webhook depth + reconciliation tests + connect/disconnect UI still pending"
     },
     {
       "epic": "epic-83",
@@ -978,14 +991,18 @@
         "booking.rs BookingError/BookingCredentials/BookingProperty/BookingReservation models",
         "OTA XML message types defined",
         "rental.rs supports platform='booking'",
-        "db constants include Booking.com"
+        "db constants include Booking.com",
+        "Booking.com channel sync shipped (PR #534, merged 2026-05-26) \u2014 booking_channel.rs sync engine",
+        "Booking OTA XML shipped (PR #544, merged 2026-05-26) \u2014 OTA message parse/generate + rate/availability push",
+        "PR #534 Booking channel sync + #544 Booking OTA merged"
       ],
       "gaps": [
-        "no OTA XML parsing/generation code",
-        "push notification endpoint not implemented",
-        "rate/availability push (AC-5) missing"
+        "channel-sync reconciliation + OTA round-trip tests pending",
+        "no frontend connect/disconnect UI surface yet"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "OTA XML + channel sync now present (#534/#544); promote to done after tests + UI",
+      "last_checked": "2026-05-26",
+      "notes": "Booking.com channel sync (#534) + Booking OTA (#544) merged; reconciliation/round-trip tests + connect/disconnect UI still pending"
     },
     {
       "epic": "epic-83",
@@ -1032,22 +1049,25 @@
       "id": "84-2-esignature-email",
       "title": "E-Signature Email Integration",
       "phase": "phase2",
-      "status": "not-started",
+      "status": "done",
       "confidence": "high",
       "platform": [
-        "backend"
+        "backend",
+        "frontend"
       ],
       "owner_role": "pm-backend",
       "evidence": [
-        "forms.rs basic signature image validation only - no workflow"
+        "e-signature email backend (HMAC request flow) shipped earlier (gap-84-2-esignature-email-backend done)",
+        "e-signature UI shipped (PR #513, merged 2026-05-26)",
+        "e-sig fail-closed security hardening shipped (PR #532, merged 2026-05-26) \u2014 signature verification now rejects on any validation error rather than defaulting open",
+        "PR #513 e-signature UI + #532 fail-closed security merged"
       ],
       "gaps": [
-        "no DocuSign/e-signature service integration",
-        "no signature request email templates",
-        "no reminder scheduling system",
-        "no decline notification handling"
+        "reminder-scheduling cadence + decline-notification e2e test coverage tracked as follow-up"
       ],
-      "last_checked": "2026-05-23"
+      "status_note": "advanced not-started->done (backend HMAC flow + UI #513 + fail-closed security #532)",
+      "last_checked": "2026-05-26",
+      "notes": "e-signature UI (#513) + fail-closed security (#532) merged; story done"
     },
     {
       "epic": "epic-84",

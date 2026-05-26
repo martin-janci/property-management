@@ -570,16 +570,18 @@
       "vector": "test-gap",
       "confidence": "high",
       "score": 6,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "PR #497",
-        "PR #507"
+        "PR #507",
+        "PR #548"
       ],
       "evidence": [
         "PR #497 fixed inquiry mark_as_read IDOR via ownership EXISTS check (reality_portal.rs:779) but shipped with NO test file",
         "PR #497 body has 3 unchecked test TODOs: B->404 & read_at NULL; A->204 set; idempotent re-mark->204",
         "find backend -path '*test*' -name '*.rs' | xargs grep -l inquir -> only rls_smoke_tests.rs; no mark-read ownership coverage",
-        "2026-05-26: PR #507 (pm-qa-...-inquiry IDOR regression tests for PR #497) was CLOSED UNMERGED 2026-05-25 — the regression test was authored then abandoned, so the gap is still open; a reality-server tests/inquiry_idor_tests.rs now exists (from the realtors-IDOR track) and is the natural home for these cases"
+        "2026-05-26: PR #507 (pm-qa-...-inquiry IDOR regression tests for PR #497) was CLOSED UNMERGED 2026-05-25 — the regression test was authored then abandoned, so the gap is still open; a reality-server tests/inquiry_idor_tests.rs now exists (from the realtors-IDOR track) and is the natural home for these cases",
+        "resolved: PR #548 merged 2026-05-26 — added backend/crates/db/tests/inquiry_mark_read_idor_tests.rs (mark-read ownership: realtor_b_cannot_mark_realtor_a_inquiry_read) and reality-server/tests/inquiry_idor_tests.rs is present; the 'only rls_smoke_tests.rs' evidence no longer holds — dedicated mark-read IDOR coverage now exists"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/inquiries.rs",
@@ -587,7 +589,7 @@
       ],
       "created_at": "2026-05-25",
       "updated_at": "2026-05-26",
-      "plan": "plans/test-gap-inquiry-idor-regression.md"
+      "plan": "plans/_archive/test-gap-inquiry-idor-regression.md"
     },
     {
       "id": "refactor-app-tsx-route-coupling",
@@ -620,18 +622,20 @@
       "vector": "security",
       "confidence": "high",
       "score": 3,
-      "status": "ready",
+      "status": "done",
       "sources": [
         "issue #519",
         "PR #508",
-        "realtors.rs:250"
+        "realtors.rs:250",
+        "PR #548"
       ],
       "evidence": [
         "backend/servers/reality-server/src/routes/realtors.rs:250 — mark_inquiry_read(State, Path<Uuid>) binds NO principal and calls state.reality_portal_repo.mark_inquiry_read(id); wired at realtors.rs:28 as POST /api/v1/realtors/inquiries/{id}/read",
         "backend/crates/db/src/repositories/reality_portal.rs:767 — mark_inquiry_read(id) runs `UPDATE listing_inquiries SET status = 'read', read_at = NOW() WHERE id = $1 AND read_at IS NULL` with no realtor/owner predicate (cross-account write IDOR)",
         "scoped sibling mark_inquiry_read_for_realtor(id, realtor_id) already exists at reality_portal.rs:779 — the fix is to bind principal and call it, returning 404 on a non-owned row",
         "distinct from the done security-inquiry-read-idor (inquiries.rs mark_as_read, fixed by PR #497) — this is a SECOND read-marking route on the realtors surface that PR #508 (respond_to_inquiry fix) did not touch",
-        "surfaced by issue #519 (follow-up, from-merged-review of PR #508), code-verified this run"
+        "surfaced by issue #519 (follow-up, from-merged-review of PR #508), code-verified this run",
+        "resolved: PR #548 merged 2026-05-26 — realtors.rs mark_inquiry_read now binds `principal: RequestPrincipal` and calls `mark_inquiry_read_for_realtor(id, principal.user_id)` (verified at realtors.rs:7-16); regression coverage in backend/crates/db/tests/inquiry_mark_read_idor_tests.rs (realtor_b_cannot_mark_realtor_a_inquiry_read); issue #519 closed"
       ],
       "files": [
         "backend/servers/reality-server/src/routes/realtors.rs",
@@ -640,7 +644,7 @@
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",
-      "plan": "plans/security-realtors-mark-inquiry-read-idor.md"
+      "plan": "plans/_archive/security-realtors-mark-inquiry-read-idor.md"
     },
     {
       "id": "test-gap-dispute-fsm-no-tests",
@@ -651,18 +655,114 @@
       "status": "open",
       "sources": [
         "PR #506",
-        "issue #520"
+        "issue #520",
+        "PR #514",
+        "PR #548"
       ],
       "evidence": [
         "PR #506 (gap-80-2 dispute state machine) added dispute_state_machine::is_valid_transition/allowed_transitions (db/models/disputes.rs) + transition enforcement in dispute.rs update_status + 422 mapping in routes/disputes.rs — with ZERO test files in the diff",
         "the FSM is pure, table-driven logic (is_valid_transition) trivial to unit-test, yet no #[cfg(test)] mod or tests/*.rs was added; a regression test would lock the filed→under_review→resolved transition table",
         "issue #520 (follow-up, from-merged-review of PR #506) additionally flags a cross-tenant authz concern: update_status runs `UPDATE disputes ... WHERE id = $2 AND status = $3` via self.pool with no organization_id predicate — needs verification of whether RLS covers this path before treating as security",
-        "the handler does gate on user.role.is_manager() (routes/disputes.rs) but role alone does not scope to the manager's own org"
+        "the handler does gate on user.role.is_manager() (routes/disputes.rs) but role alone does not scope to the manager's own org",
+        "[partial] 2026-05-26: the cross-tenant half is now covered — PR #514 added backend/servers/api-server/tests/dispute_cross_org_idor_tests.rs and PR #548 added backend/crates/db/tests/dispute_cross_tenant_tests.rs; issue #520 closed. Residual gap: the pure FSM table (is_valid_transition/allowed_transitions, disputes.rs:72/92) still has NO unit test (grep: no test references is_valid_transition) — narrowed to a low-value pure-logic test-gap"
       ],
       "files": [
         "backend/crates/db/src/models/disputes.rs",
         "backend/crates/db/src/repositories/dispute.rs",
         "backend/servers/api-server/src/routes/disputes.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "security-integrations-install-bola",
+      "title": "BOLA: Airbnb/Booking integration handlers in install.rs missing tenant check (connect/disconnect/sync/status)",
+      "vector": "security",
+      "confidence": "high",
+      "score": 5,
+      "status": "ready",
+      "sources": [
+        "code-review api-handlers 2026-05-26",
+        "install.rs:600",
+        "PR #538",
+        "PR #544"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:600 — disconnect_airbnb(State, auth: AuthUser, Path<OrgIdPath>) calls rental_repo.revoke_airbnb_connection(path.org_id) at :647 with no auth.tenant_id/org check; the destructive revoke runs on a caller-supplied org id",
+        "install.rs:340-833 — grep for `auth.tenant_id != Some | verify_org_access | is_platform_admin` over this range returns 0 matches; status_airbnb (~349), connect_airbnb (421), sync_airbnb (479), disconnect_airbnb (600) and booking connect/status handlers (684/746/830) all take Path<OrgIdPath> unguarded",
+        "install.rs:1128 — a correct guard `if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin()` already exists in the same file (repeated ~:1292/:1677), proving the omission is accidental; booking_channel.rs:181/412 and sync.rs verify_org_access() guard every sibling handler",
+        "any authenticated user can connect/disconnect/sync/read another org's Airbnb channel integration by editing the URL org_id (cross-tenant write BOLA); handlers live (Airbnb backend PR #538, Booking OTA PR #544)",
+        "found by rotating expert review (api-handlers segment, rust + security lenses) 2026-05-26; disconnect_airbnb body code-verified this run (0 guards in 340-833 range)"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": "plans/security-integrations-install-bola.md"
+    },
+    {
+      "id": "security-install-oauth-state-debug-log",
+      "title": "Integrations install.rs logs the OAuth state (CSRF) token at debug level",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review api-handlers 2026-05-26",
+        "install.rs:456"
+      ],
+      "evidence": [
+        "backend/servers/api-server/src/routes/integrations/install.rs:456 — `tracing::debug!(oauth_state = %oauth_state, ...)` logs the OAuth CSRF state token in plaintext; low risk at debug level but should not be logged",
+        "minor secondary finding from the same rotating expert review that surfaced security-integrations-install-bola; carved out of that plan's scope to keep the BOLA fix surgical"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "test-gap-screen-map-drift-ppt-reports-history",
+      "title": "Screen-map drift: PR #547 added a report execution-history route in ppt-web without a docs/screens/ppt entry",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #547"
+      ],
+      "evidence": [
+        "PR #547 (gap-81-2 report execution-history UI) added a new <Route> wiring ScheduleDetailPageRoute in frontend/apps/ppt-web/src/App.tsx + frontend/apps/ppt-web/src/routes/lazyRoutes.tsx (ScheduleDetailPage) with no matching docs/screens/ppt/*.md update — verified the route addition in the diff and that no docs/screens/ppt file was touched",
+        "review candidate (heuristic): the schedule-detail / execution-history screen should gain or extend a docs/screens/ppt entry; not auto-promotable — a human should confirm whether an existing reports screen doc already covers it"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/App.tsx",
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+      ],
+      "created_at": "2026-05-26",
+      "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "security-esign-deploy-secrets-unset",
+      "title": "e-signature fail-closed (PR #532): ESIGN secrets must be set in staging/prod or api-server panics on restart",
+      "vector": "security",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #532"
+      ],
+      "evidence": [
+        "PR #532 (fix(security): e-signature config fail-closed) merged 2026-05-26 with two unchecked reviewer boxes warning that ESIGN_TOKEN_SECRET (>=32 bytes) and ESIGN_WEBHOOK_SECRET must be set in staging AND production — without them, an api-server restart after this PR panics by design (fail-closed)",
+        "operational/deploy reminder, not a code defect: the fail-closed behavior is correct; the open question is whether the secrets are actually provisioned in staging/prod env before the next restart — confidence medium because prod env config was not verified this run",
+        "files cited for context: signatures.rs reads the secrets; the panic is intentional in the config-validation path"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/signatures.rs"
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",

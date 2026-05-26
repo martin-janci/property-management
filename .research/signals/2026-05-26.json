@@ -1,192 +1,110 @@
 {
   "date": "2026-05-26",
   "trigger": "",
+  "note": "Second run on 2026-05-26 (evening, 22:37Z). Overwrites the morning 03:12Z signals per the same-day-rerun convergence rule; the morning run's signal ids are preserved in state.seen_signals. Window: merged PRs #513-#562 since last_run_iso 2026-05-26T03:12:00Z.",
   "signals": [
     {
-      "id": "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
-      "type": "repeated-churn",
-      "source": "PR #511",
-      "score_delta": 1,
-      "evidence": "frontend/apps/ppt-web/src/App.tsx +253/-65 (318 lines) via PR #511 — DisputeDetailRoute/DisputeMediationRoute wiring + pinned-band props; runs_seen 1->2 (cumulative re-emit, score not re-applied to churn-hotspot)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
-      "type": "repeated-churn",
-      "source": "PR #504, PR #505",
-      "score_delta": 1,
-      "evidence": "announcements.rs churned 167 lines this run — PR #504 PATCH pin endpoint (+7/-3) and PR #505 comments RLS rework + test module (+142/-15); runs_seen 1->2",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
-      "type": "churn-hotspot",
-      "source": "PR #511",
-      "score_delta": 0,
-      "evidence": "AnnouncementsScreen.tsx +104/-35 (139 lines) via PR #511 pinned-band feature; one-time feature add on a ~500-line screen file, not a monolith — tracked in hotspot_history (runs_seen=1), no backlog item created (sub-monolith feature churn)",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "code-review-reality-server-realtors-mark-inquiry-read-idor",
+      "id": "code-review-api-handlers-install-airbnb-bola",
       "type": "code-review-finding",
-      "source": "issue #519, PR #508, realtors.rs:250",
+      "source": "rotating-expert-review api-handlers 2026-05-26",
       "score_delta": 3,
-      "evidence": "Phase 1.5 reality-server review (lead: issue #519): realtors.rs:250 mark_inquiry_read binds no principal and calls unscoped reality_portal.rs:767 mark_inquiry_read(id) (UPDATE ... WHERE id=$1 AND read_at IS NULL, no realtor predicate) — wired at POST /api/v1/realtors/inquiries/{id}/read; cross-account write IDOR, code-verified. Scoped sibling mark_inquiry_read_for_realtor (reality_portal.rs:779) already exists",
       "confidence": "high",
-      "candidate_vector": "security"
+      "candidate_vector": "security",
+      "evidence": "install.rs:600 disconnect_airbnb (and connect 421, sync 479, status ~349, booking connect/status 684/746/830) take auth: AuthUser + Path<OrgIdPath> but never check auth.tenant_id == path.org_id; disconnect_airbnb calls revoke_airbnb_connection(path.org_id) at :647. BOLA: any authed user disconnects/connects/reads any org's integration by editing the URL org_id. Verified: 0 tenant guards in lines 340-833."
     },
     {
-      "id": "code-review-api-core-dispute-fsm-no-tests",
+      "id": "code-review-api-handlers-install-inconsistent-authz",
       "type": "code-review-finding",
-      "source": "PR #506, issue #520",
+      "source": "rotating-expert-review api-handlers 2026-05-26",
       "score_delta": 2,
-      "evidence": "PR #506 dispute state machine (dispute_state_machine module + update_status transition enforcement + 422 mapping) merged with ZERO test files; pure table-driven FSM trivial to unit-test. Issue #520 additionally flags update_status runs WHERE id=$2 AND status=$3 via self.pool with no organization_id predicate (cross-tenant authz needs RLS verification)",
       "confidence": "high",
-      "candidate_vector": "test-gap"
+      "candidate_vector": "security",
+      "evidence": "install.rs:1128 (and ~1292/1677) guard with `auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin()` while the Airbnb/booking handlers at 340-833 omit it; booking_channel.rs:181/412 and sync.rs verify_org_access() guard every sibling handler — the in-file inconsistency confirms the BOLA gap is accidental. Corroborates code-review-api-handlers-install-airbnb-bola (folded into the same backlog item, score 3+2=5)."
     },
     {
-      "id": "closed-not-merged-pr-507",
-      "type": "closed-not-merged-pr",
-      "source": "PR #507",
+      "id": "code-review-api-handlers-install-oauth-state-log",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review api-handlers 2026-05-26",
       "score_delta": 1,
-      "evidence": "PR #507 (inquiry IDOR regression tests for PR #497) closed UNMERGED 2026-05-25 — the regression test was authored then abandoned; reinforces the still-open test-gap-inquiry-idor-regression",
-      "confidence": "high",
-      "candidate_vector": "test-gap"
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "install.rs:456 — tracing::debug!(oauth_state = %oauth_state, ...) logs the OAuth CSRF state token in plaintext; low risk at debug level but should not be logged."
     },
     {
-      "id": "closed-not-merged-pr-512",
-      "type": "closed-not-merged-pr",
-      "source": "PR #512",
+      "id": "screen-map-drift-pr-547-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #547",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #547 (gap-81-2 report execution-history UI) added a new <Route> (ScheduleDetailPageRoute) in frontend/apps/ppt-web/src/App.tsx + routes/lazyRoutes.tsx with no docs/screens/ppt/*.md update — route addition verified in diff. Best-effort drift heuristic: review candidate, not auto-promotable."
+    },
+    {
+      "id": "screen-map-drift-pr-549-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #549",
       "score_delta": 0,
-      "evidence": "PR #512 (wire DisputeDetailPage + /disputes/:id/mediation route) closed UNMERGED 2026-05-25 — superseded by PR #511 which landed the same App.tsx dispute wiring; benign, no backlog item",
+      "confidence": "low",
+      "candidate_vector": "test-gap",
+      "evidence": "suppressed false-positive: PR #549 touched frontend/apps/ppt-web/src/App.tsx but the diff shows only AuthContext/cleanup edits, no <Route>/path= change (grep for added route lines empty). Drift heuristic fired on the file touch but there is no new screen surface — score suppressed to 0, logged for audit, added to seen_signals so it does not re-fire."
+    },
+    {
+      "id": "unchecked-todo-pr-532",
+      "type": "unchecked-todo",
+      "source": "PR #532",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "PR #532 (e-signature config fail-closed) merged with two unchecked reviewer boxes: ESIGN_TOKEN_SECRET (>=32 bytes) + ESIGN_WEBHOOK_SECRET must be set in staging AND production or an api-server restart panics by design. Operational/deploy reminder; confidence medium because prod env provisioning was not verified this run. The other 13 PRs with unchecked boxes this run were QA/test-plan template checklists, not scored."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
+      "type": "churn-hotspot",
+      "source": "merged PRs #534/#538/#544 this run",
+      "score_delta": 1,
       "confidence": "high",
-      "candidate_vector": "refactor"
+      "candidate_vector": "refactor",
+      "evidence": "877 lines (additions+deletions) across merged PRs this run — top-1 code churn file. New split file (from PR #456) churned by active Booking/Airbnb channel feature work. runs_seen=1 (not yet repeated-churn). No dedicated backlog item — the file is already prominent via security-integrations-install-bola; churn logged in brief Watch."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PR #549 this run",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "869 lines (additions+deletions) this run — top-2 code churn file. Driven by the planned 867-LoC file split / react-hook-form refactor (follow-up #521) landed in PR #549 — healthy active refactor, not instability. runs_seen=1. No backlog item (active-development churn); watch candidate."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #515 this run",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "689 lines (additions+deletions) this run — top-3 code churn file. Brand-new file created by PR #515 (push notification fanout worker); churn = initial creation, not instability. runs_seen=1. No backlog item; pm-devops flagged observability follow-up (metrics/dead-letter) before mobile push GA."
     }
   ],
   "auto_fix_actions": [],
-  "auto_fix_skipped_reason": "no candidate — no allowlisted signal type (screen-map-drift/orphan, fixme-in-merged-code, dep lockfile-drift, stalled-review) fired this run; the realtors IDOR is a code change and goes to the manual plan path",
+  "auto_fix_skipped_reason": "no candidate — the only allowlisted signal (screen-map-drift-pr-547-ppt) is confidence=medium with backlog score 2, below the high-confidence + score>=3 certainty bar",
   "goal_checks": [
-    {
-      "goal": "G1",
-      "passed": true,
-      "command": "test -f briefs/2026-05-26.md && head -1 | grep ^# 2026-05-26",
-      "observed": "exit 0",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G2",
-      "passed": true,
-      "command": "jq state advanced vs HEAD",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G3",
-      "passed": true,
-      "command": "jq unique backlog ids",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G4",
-      "passed": true,
-      "command": "jq re-emitted non-cumulative w/ delta!=0",
-      "observed": "true",
-      "expected": "true"
-    },
-    {
-      "goal": "G5",
-      "passed": true,
-      "command": "score cap<=8 + no open item >14d undecayed (none qualify)",
-      "observed": "true; 0 stale-open",
-      "expected": "true"
-    },
-    {
-      "goal": "G6",
-      "passed": true,
-      "command": "new plan has adversarial-pass annotation in brief",
-      "observed": "1/1 annotated",
-      "expected": "all annotated"
-    },
-    {
-      "goal": "G7",
-      "passed": true,
-      "command": "<=2 new plans; 4 meta + 11 headings + mode + cap + files-exist",
-      "observed": "1 plan, all checks ok",
-      "expected": "pass"
-    },
-    {
-      "goal": "G8",
-      "passed": true,
-      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G9",
-      "passed": true,
-      "command": "secrets/hostnames in staged (baseline docs excluded)",
-      "observed": "0",
-      "expected": "0"
-    },
-    {
-      "goal": "G10",
-      "passed": true,
-      "command": "diff backlog.md regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G11",
-      "passed": true,
-      "command": "phases-failed honesty",
-      "observed": "none failed; cursors advanced",
-      "expected": "consistent"
-    },
-    {
-      "goal": "G12",
-      "passed": true,
-      "command": "prior-run plan slugs still present",
-      "observed": "2/2 present",
-      "expected": "all present"
-    },
-    {
-      "goal": "G13",
-      "passed": true,
-      "command": "archive count >= HEAD",
-      "observed": "5 >= 5",
-      "expected": "ge"
-    },
-    {
-      "goal": "G14",
-      "passed": true,
-      "command": "diff IDEAS_TRIAGE.md regen",
-      "observed": "identical",
-      "expected": "identical"
-    },
-    {
-      "goal": "G15",
-      "passed": true,
-      "command": "auto-fix cap+idempotency",
-      "observed": "0 actions; true",
-      "expected": "true"
-    },
-    {
-      "goal": "G16",
-      "passed": true,
-      "command": "management artifacts parse + pm_cursor in 0..7",
-      "observed": "exit 0; idx=4",
-      "expected": "exit 0"
-    },
-    {
-      "goal": "G17",
-      "passed": true,
-      "command": "telegram token literal in added lines",
-      "observed": "0",
-      "expected": "0"
-    }
+    { "goal": "G1", "passed": true, "command": "test -f briefs/<today>.md && head -1 matches '# <today>'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq advance-check staged vs HEAD", "observed": "true", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq unique backlog ids", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "jq re-emit score-delta discipline", "observed": "true (screen-map-drift-549 re-suppressed at delta 0; churn ids all new)", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "jq cap<=8 + decay (0 items older than 14d)", "observed": "max score 6; 0 stale open items", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "grep brief for plan + 'adversarial pass:'", "observed": "G6 PASS", "expected": "match" },
+    { "goal": "G7", "passed": true, "command": "1 new plan; 4 metadata + 11 headings + cap ticked + Mode + files exist", "observed": "count=1, all sections present, 3/3 files resolve", "expected": "<=2, all gates" },
+    { "goal": "G8", "passed": true, "command": "staged paths outside .research/", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "secret/hostname grep on staged diff (excl baseline docs)", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "diff backlog.md vs regen", "observed": "identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "placeholder-rot grep on new plan + brief", "observed": "no rot matches", "expected": "0" },
+    { "goal": "G12", "passed": true, "command": "prior-run plan slugs present in plans/ or _archive/", "observed": "p0-10, realtors-idor (archived), inquiry-idor (archived) all present", "expected": "all present" },
+    { "goal": "G13", "passed": true, "command": "archive count working >= HEAD", "observed": "7 >= 5", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "diff IDEAS_TRIAGE.md vs regen", "observed": "identical (empty triage row)", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "jq auto-fix caps + idempotency", "observed": "auto_fix_actions empty; kill switch unset; no candidate", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "management artifacts valid + pm_cursor in 0..7", "observed": "action-list/risks valid, project-state non-empty, next_index=5", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "telegram token value grep on added lines", "observed": "0", "expected": "0" },
+    { "goal": "note", "passed": true, "command": "pre-existing hand-authored plan p0-10-mock-route-wiring.md uses a custom frontmatter format (not the routine's 15-section template); untouched this run so G7 (new-plan-only) does not gate it — surfaced in brief Open questions", "observed": "informational", "expected": "informational" }
   ]
 }
