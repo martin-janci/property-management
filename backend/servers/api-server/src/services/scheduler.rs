@@ -17,6 +17,11 @@ use tracing::Instrument;
 use super::notification::{NotificationService, NotificationServiceConfig};
 use super::EmailService;
 
+/// Per-signer minimum interval between reminder emails sent by the
+/// background scheduler. Prevents the every-60s scheduler tick from
+/// spamming the same signer for the entire reminder window.
+const SIGNATURE_REMINDER_MIN_INTERVAL_HOURS: i64 = 12;
+
 /// Scheduler service configuration.
 #[derive(Clone)]
 pub struct SchedulerConfig {
@@ -803,18 +808,10 @@ impl Scheduler {
         let cutoff =
             chrono::Utc::now() + chrono::Duration::days(self.config.signature_reminder_days_before);
 
-        let expiring_requests: Vec<db::models::SignatureRequest> = sqlx::query_as(
-            r#"
-            SELECT * FROM signature_requests
-            WHERE status IN ('pending', 'in_progress')
-              AND expires_at IS NOT NULL
-              AND expires_at > NOW()
-              AND expires_at <= $1
-            "#,
-        )
-        .bind(cutoff)
-        .fetch_all(&self.pool)
-        .await?;
+        let expiring_requests = self
+            .signature_request_repo
+            .find_expiring_in_window(cutoff)
+            .await?;
 
         if expiring_requests.is_empty() {
             return Ok(());
@@ -831,6 +828,12 @@ impl Scheduler {
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
+        // Per-signer minimum interval between reminders. The scheduler ticks
+        // every 60s by default; without this gate every pending signer
+        // would get spammed on every tick for the entire reminder window.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SIGNATURE_REMINDER_MIN_INTERVAL_HOURS);
+
         let mut total_reminders = 0u64;
 
         for sig_req in &expiring_requests {
@@ -838,6 +841,12 @@ impl Scheduler {
                 .signers
                 .iter()
                 .filter(|s| !s.is_complete())
+                .filter(|s| {
+                    // Skip signers reminded within the dedup window.
+                    s.last_reminder_at
+                        .map(|t| now.signed_duration_since(t) >= min_interval)
+                        .unwrap_or(true)
+                })
                 .collect();
 
             if pending_signers.is_empty() {
@@ -888,6 +897,21 @@ impl Scheduler {
                             "Sent scheduled signature reminder email"
                         );
                         total_reminders += 1;
+                        // Stamp the signer so subsequent ticks within the
+                        // dedup window skip them. Failure here is logged
+                        // but not fatal — the next tick will re-evaluate.
+                        if let Err(e) = self
+                            .signature_request_repo
+                            .touch_signer_reminder(sig_req.id, &signer.email, now)
+                            .await
+                        {
+                            tracing::warn!(
+                                error = %e,
+                                signature_request_id = %sig_req.id,
+                                signer_email = %signer.email,
+                                "Failed to stamp last_reminder_at — next tick may resend"
+                            );
+                        }
                     }
                     Err(e) => {
                         tracing::warn!(
