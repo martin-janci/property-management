@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T05:12:00Z",
+  "generated": "2026-05-27T05:16:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1686,13 +1686,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T05:08:00Z",
+      "last_updated": "2026-05-27T05:16:00Z",
       "status_changed_at": "2026-05-26T14:30:00Z",
       "pr_number": 556,
       "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
       "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=Both MoveFolderDialog and DocumentPreviewModal re-implement the focus trap inline (duplicating FOCUSABLE_SELECTOR x3) instead of using the existing useFocusTrap hook from src/hooks/useFocusTrap.ts; the inline implementations also fail to restore focus to the trigger element on close (a11y regression). Secondary: mfd buttons lack :focus-visible styles; buildFolderCrumbs has no unit tests."
     },
     {
       "task_id": "gap-7a-4-document-preview-ui",
