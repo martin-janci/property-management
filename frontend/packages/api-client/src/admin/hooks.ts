@@ -14,6 +14,7 @@ import {
   fetchHealthAlerts,
   fetchHealthDashboard,
   fetchMetricHistory,
+  fetchSupportData,
   getOAuthClient,
   getSystemAnnouncement,
   listAgencies,
@@ -56,6 +57,7 @@ export const adminKeys = {
   systemAnnouncementList: (params?: ListSystemAnnouncementsParams) =>
     [...adminKeys.systemAnnouncements(), 'list', params] as const,
   systemAnnouncement: (id: string) => [...adminKeys.systemAnnouncements(), id] as const,
+  supportData: () => [...adminKeys.all, 'support-data'] as const,
 };
 
 // ============================================
@@ -237,5 +239,24 @@ export function useDeleteSystemAnnouncement() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.systemAnnouncements() });
     },
+  });
+}
+
+// ============================================================
+// Support Data hooks (Epic 10B.5)
+// ============================================================
+
+/**
+ * Fetches platform-wide tenant diagnostics from
+ * `GET /api/v1/platform-admin/support-data`.
+ *
+ * Requires `audit_read` capability. Refreshes every 60 s.
+ */
+export function useSupportData() {
+  return useQuery({
+    queryKey: adminKeys.supportData(),
+    queryFn: ({ signal }) => fetchSupportData(signal),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
