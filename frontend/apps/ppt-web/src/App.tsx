@@ -37,18 +37,16 @@ import {
   useMarkReadAnnouncement,
   useOutage,
   useOutages,
-  usePauseSchedule,
   usePinAnnouncement,
   usePinnedAnnouncements,
   usePublishAnnouncement,
   useReportExecutionHistory,
   useResolveOutage,
-  useResumeSchedule,
   useRetryReportExecution,
   useStartOutage,
   useUpdateDisputeStatus,
   useUpdateOutage,
-  useUpdateSchedule,
+  useUpdateScheduleCron,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
 import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -2750,52 +2748,15 @@ function ReportsPageRoute() {
   const { user } = useAuth();
   const organizationId = user?.organizationId ?? '';
 
-  const pauseSchedule = usePauseSchedule();
-  const resumeSchedule = useResumeSchedule();
-  const updateSchedule = useUpdateSchedule();
-
-  const handlePauseSchedule = async (id: string) => {
-    try {
-      await pauseSchedule.mutateAsync(id);
-      showToast({
-        type: 'success',
-        title: t('common.success'),
-        message: t('reports.schedule.paused', 'Schedule paused successfully.'),
-      });
-    } catch (e) {
-      showToast({
-        type: 'error',
-        title: t('common.error'),
-        message: t('reports.schedule.pauseFailed', 'Failed to pause schedule.'),
-      });
-      throw e;
-    }
-  };
-
-  const handleResumeSchedule = async (id: string) => {
-    try {
-      await resumeSchedule.mutateAsync(id);
-      showToast({
-        type: 'success',
-        title: t('common.success'),
-        message: t('reports.schedule.resumed', 'Schedule resumed successfully.'),
-      });
-    } catch (e) {
-      showToast({
-        type: 'error',
-        title: t('common.error'),
-        message: t('reports.schedule.resumeFailed', 'Failed to resume schedule.'),
-      });
-      throw e;
-    }
-  };
+  // gap-81-1: cron-based update (cron_expression, recipients, enabled)
+  const updateScheduleCronMutation = useUpdateScheduleCron();
 
   const handleUpdateSchedule = async (
     id: string,
-    data: Partial<import('@ppt/api-client').CreateReportSchedule>
+    data: import('@ppt/api-client').CronScheduleUpdateRequest
   ) => {
     try {
-      await updateSchedule.mutateAsync({ id, data });
+      await updateScheduleCronMutation.mutateAsync({ id, data });
       showToast({
         type: 'success',
         title: t('common.success'),
@@ -2900,8 +2861,6 @@ function ReportsPageRoute() {
           difference_percentage: 0,
         } as import('@ppt/api-client').PeriodComparison
       }
-      onPauseSchedule={handlePauseSchedule}
-      onResumeSchedule={handleResumeSchedule}
       onUpdateSchedule={handleUpdateSchedule}
       executions={executions}
       executionsLoading={executionsLoading}
