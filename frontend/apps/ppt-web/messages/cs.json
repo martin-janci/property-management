@@ -190,7 +190,15 @@
     "fileSize": "Velikost souboru",
     "uploadedBy": "Nahrál",
     "uploadedAt": "Nahráno",
-    "notFound": "Dokument nebyl nalezen"
+    "notFound": "Dokument nebyl nalezen",
+    "folder": {
+      "renameError": "Přejmenování selhalo",
+      "renameErrorMessage": "Nepodařilo se přejmenovat složku",
+      "deleteError": "Smazání selhalo",
+      "deleteErrorMessage": "Nepodařilo se smazat složku",
+      "createError": "Vytvoření selhalo",
+      "createErrorMessage": "Nepodařilo se vytvořit složku"
+    }
   },
   "disputes": {
     "title": "Spory",

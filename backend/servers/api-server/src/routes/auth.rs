@@ -923,9 +923,17 @@ fn build_refresh_cookie(
         "refresh_token={value}; HttpOnly; Secure; SameSite={same_site}; Path=/api/v1/auth; Max-Age={max_age_seconds}"
     );
     if let Ok(domain) = std::env::var("PPT_AUTH_COOKIE_DOMAIN") {
-        if !domain.trim().is_empty() {
-            cookie.push_str("; Domain=");
-            cookie.push_str(domain.trim());
+        let domain = domain.trim();
+        if !domain.is_empty() {
+            if domain
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'.')
+            {
+                cookie.push_str("; Domain=");
+                cookie.push_str(domain);
+            } else {
+                tracing::warn!("PPT_AUTH_COOKIE_DOMAIN contains invalid characters — ignoring");
+            }
         }
     }
     Ok(cookie)

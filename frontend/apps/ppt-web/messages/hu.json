@@ -190,7 +190,15 @@
     "fileSize": "Fájlméret",
     "uploadedBy": "Feltöltötte",
     "uploadedAt": "Feltöltve",
-    "notFound": "A dokumentum nem található"
+    "notFound": "A dokumentum nem található",
+    "folder": {
+      "renameError": "Átnevezés sikertelen",
+      "renameErrorMessage": "A mappa átnevezése nem sikerült",
+      "deleteError": "Törlés sikertelen",
+      "deleteErrorMessage": "A mappa törlése nem sikerült",
+      "createError": "Létrehozás sikertelen",
+      "createErrorMessage": "A mappa létrehozása nem sikerült"
+    }
   },
   "disputes": {
     "title": "Viták",
