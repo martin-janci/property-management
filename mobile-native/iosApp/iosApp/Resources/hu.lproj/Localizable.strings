@@ -255,8 +255,8 @@
 "filter_listing_type" = "Hirdetés típusa";
 "filter_price_min" = "Min ár";
 "filter_price_max" = "Max ár";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Min.: %d";
+"filter_max_value" = "Max.: %d";
 "filter_bathrooms" = "Fürdőszobák";
 
 /* Account Screen - Additional */

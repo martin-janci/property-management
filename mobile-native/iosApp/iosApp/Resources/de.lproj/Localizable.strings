@@ -243,7 +243,7 @@
 /* Search - Near Me / Location (added Story 82.3) */
 "filter_near_me" = "In meiner Nähe";
 "filter_near_me_section" = "Standort";
-"filter_radius" = "Radius";
+"filter_radius" = "Umkreis";
 "radius_km_format" = "%d km";
 "location_detected_format" = "Standort: %.4f, %.4f";
 "locating" = "Standort wird ermittelt…";
@@ -255,8 +255,8 @@
 "filter_listing_type" = "Angebotstyp";
 "filter_price_min" = "Mindestpreis";
 "filter_price_max" = "Höchstpreis";
-"filter_min_value" = "Min: %d";
-"filter_max_value" = "Max: %d";
+"filter_min_value" = "Min.: %d";
+"filter_max_value" = "Max.: %d";
 "filter_bathrooms" = "Badezimmer";
 
 /* Account Screen - Additional */
