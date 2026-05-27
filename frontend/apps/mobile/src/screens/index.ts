@@ -1,7 +1,7 @@
 // Auth screens (UC-14)
 
 export type { Announcement, AnnouncementAttachment, AnnouncementCategory } from './announcements';
-export { AnnouncementsScreen } from './announcements';
+export { AnnouncementDetailScreen, AnnouncementsScreen } from './announcements';
 export {
   AuthFlow,
   ForgotPasswordScreen,

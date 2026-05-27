@@ -10,6 +10,7 @@ import { useOfflineSupport } from './hooks';
 import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
+  AnnouncementDetailScreen,
   AnnouncementsScreen,
   AuthFlow,
   BuildingsScreen,
@@ -57,6 +58,7 @@ type Screen =
   | 'Faults'
   | 'ReportFault'
   | 'Announcements'
+  | 'AnnouncementDetail'
   | 'Voting'
   | 'VoteDetail'
   | 'Documents'
@@ -132,6 +134,13 @@ function MainApp() {
         );
       case 'Announcements':
         return <AnnouncementsScreen onNavigate={handleNavigate} />;
+      case 'AnnouncementDetail':
+        return (
+          <AnnouncementDetailScreen
+            announcementId={(screenParams?.announcementId as string | undefined) ?? ''}
+            onBack={() => handleNavigate('Announcements')}
+          />
+        );
       case 'Voting':
         return <VotingScreen onNavigate={handleNavigate} />;
       case 'VoteDetail':
