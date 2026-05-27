@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T10:20:00Z",
+  "generated": "2026-05-27T10:45:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2499,6 +2499,29 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-85-2-build-config-eas-ci-fixes",
+      "branch": "auto-impl/pm-devops-merge-mobile-eas-ci-fixes",
+      "status": "review",
+      "specialist": "pm-devops",
+      "claimed_at": "2026-05-27T08:35:58Z",
+      "last_updated": "2026-05-27T10:45:00Z",
+      "status_changed_at": "2026-05-27T08:35:58Z",
+      "pr_number": 595,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/595",
+      "merged_at": null,
+      "implementer_summary": "pr=595 status=done specialist=pm-devops scope_drift=true note=Merge fix: downgraded action pins @v6->@v4 in eas-build-android.yml+eas-build-ios.yml; added eas-cli ^10.0.0 devDep; added Android+iOS EAS npm scripts; biome exclusions for prebuild native dirs; unblocks PR#535 and PR#536",
+      "reviewer_summary": "verdict=approve note=All action pins correct (checkout/setup-node/pnpm @v4, expo-github-action @v8, cache @v5); eas-cli devDep satisfies eas.json constraint; npm scripts correct; biome exclusions correct; scope drift justified; CI 14/14 green; non-blocking: android workflow missing lint step vs ios | head_oid=b48582e0f606b9730d921e3e0f5e7b165565e624",
+      "reviewer_verdict": "approve",
+      "last_reviewed_oid": "b48582e0f606b9730d921e3e0f5e7b165565e624",
+      "scope_drift": true,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
       "merge_attempted_at": null
     }
   ],
