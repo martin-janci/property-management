@@ -1,0 +1,16 @@
+# Cargo.lock — keep ours on merge to absorb the version-bump churn from
+# .github/workflows/version-bump.yml (runs on every push to dev; bumps
+# workspace.package.version and rewrites Cargo.lock each time, generating
+# noise on feature-branch rebases).
+#
+# REQUIRES the local driver `merge.ours.driver = true`. Without it git
+# silently falls back to the default merge and this attribute is a no-op.
+# `scripts/install-hooks.sh` registers it for you (one-time):
+#
+#   ./scripts/install-hooks.sh
+#
+# After a merge that picks "ours", run `cargo check` or `cargo update -w`
+# to regenerate the lockfile against the merged Cargo.toml. The
+# `ppt-pr-merge` skill already treats Cargo.lock as a mechanical conflict
+# and re-runs cargo, so this is consistent with established behavior.
+backend/Cargo.lock merge=ours
