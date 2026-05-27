@@ -70,6 +70,7 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now - Duration::minutes(2),
+            download_url: None, // populated by the handler layer
         }
     }
 
@@ -150,6 +151,7 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now - Duration::minutes(2),
+            download_url: None, // populated by the handler layer
         };
         Ok(Some(exec))
     }
@@ -192,7 +194,47 @@ impl ReportScheduleRepository {
             error_message: None,
             error_details: None,
             created_at: now,
+            download_url: None,
         };
         Ok(exec)
+    }
+
+    /// Update a schedule's cron expression, recipients, and/or enabled flag (gap-81-1).
+    ///
+    /// All parameters are optional; only non-`None` values are applied.
+    ///
+    /// TODO: UPDATE report_schedules
+    ///       SET time        = COALESCE($2, time),
+    ///           recipients  = COALESCE($3, recipients),
+    ///           is_active   = COALESCE($4, is_active),
+    ///           status      = COALESCE($5, status),
+    ///           updated_at  = NOW()
+    ///       WHERE id = $1
+    ///       RETURNING *
+    pub async fn update_schedule(
+        &self,
+        _id: Uuid,
+        cron_expression: Option<String>,
+        recipients: Option<Vec<String>>,
+        enabled: Option<bool>,
+        current: &mut ReportSchedule,
+    ) -> Result<ReportSchedule, AppError> {
+        if let Some(cron) = cron_expression {
+            // Stored in `time` until a dedicated column is added via migration.
+            current.time = cron;
+        }
+        if let Some(recips) = recipients {
+            current.recipients = recips;
+        }
+        if let Some(is_enabled) = enabled {
+            current.is_active = is_enabled;
+            current.status = if is_enabled {
+                report_schedule_status::ACTIVE.to_string()
+            } else {
+                report_schedule_status::PAUSED.to_string()
+            };
+        }
+        current.updated_at = Utc::now();
+        Ok(current.clone())
     }
 }
