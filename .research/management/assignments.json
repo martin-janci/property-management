@@ -1712,16 +1712,16 @@
     {
       "task_id": "pm-qa-inquiry-idor-tests-v2",
       "branch": "auto-impl/pm-qa-inquiry-idor-tests-v2",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:55:00Z",
-      "status_changed_at": "2026-05-27T01:42:00Z",
+      "last_updated": "2026-05-27T11:02:00Z",
+      "status_changed_at": "2026-05-27T11:02:00Z",
       "pr_number": 563,
       "pr_url": "https://github.com/martin-janci/property-management/pull/563",
-      "merged_at": null,
+      "merged_at": "2026-05-27T11:02:00Z",
       "implementer_summary": "pr=563 status=done specialist=rust-backend scope_drift=false note=inquiry IDOR regression tests C1/C2/C3 in reality-server tests; cargo check exit 0, --list shows 3 tests; pre-existed on dev as WIP; PR adds PR#508 cross-ref",
-      "reviewer_summary": "verdict=approve note=C1/C2/C3 logic correct; seed fidelity OK; test isolation OK; minor doc-comment inaccuracy noted (non-blocking \u2014 db-crate lacks standalone C3 and respond_to_inquiry IDOR not covered here but out-of-scope); overall approve"
+      "reviewer_summary": "verdict=approve note=C1/C2/C3 logic correct; seed fidelity OK; test isolation OK; minor doc-comment inaccuracy non-blocking; merged"
     },
     {
       "task_id": "gap-6-2-announcement-read-receipt-retry",
