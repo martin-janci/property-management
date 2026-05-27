@@ -130,11 +130,6 @@ export const ProfileEditPage = lazy(() =>
   import('../features/auth').then((m) => ({ default: m.ProfileEditPage }))
 );
 
-// OAuth callback handler (gap-79-2)
-export const OAuthCallbackPage = lazy(() =>
-  import('../features/auth').then((m) => ({ default: m.OAuthCallbackPage }))
-);
-
 // Announcements feature (UC-06)
 export const AnnouncementsPage = lazy(() =>
   import('../features/announcements').then((m) => ({ default: m.AnnouncementsPage }))

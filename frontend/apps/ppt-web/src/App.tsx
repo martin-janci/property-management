@@ -144,7 +144,6 @@ import {
   NewMessagePage,
   NewsListPage,
   NotFoundPage,
-  OAuthCallbackPage,
   OAuthGrantsPage,
   OutagesPage,
   PaymentManagementPage,
@@ -474,8 +473,6 @@ function App() {
                                 <Route path="/register" element={<RegisterPage />} />
                                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-                                {/* OAuth / SSO callback — public route (gap-79-2) */}
-                                <Route path="/auth/callback" element={<OAuthCallbackPage />} />
                                 <Route path="/settings/password" element={<ChangePasswordPage />} />
                                 <Route
                                   path="/settings/two-factor"

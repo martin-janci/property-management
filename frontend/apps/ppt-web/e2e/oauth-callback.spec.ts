@@ -1,17 +1,32 @@
 /**
  * OAuth Callback Flow — E2E Integration Tests
- * Story gap-79-2: ppt-web OAuth callback
+ * Story gap-79-2: ppt-web OAuth callback (AuthCallbackPage)
  *
- * Covers four scenarios:
- *   1. Happy path — /auth/callback?code=<valid> stores tokens and redirects to /dashboard.
- *   2. Logout — clears localStorage (ppt_access_token, ppt_refresh_token, ppt_user).
- *   3. Expired access token — triggers silent refresh when returned token is past exp claim.
- *   4. Error paths — redirects to /login on OAuth error, missing code, or API failure.
+ * Covers five scenarios:
+ *   1. Happy path — /auth/callback?code=<valid>&state=<valid> calls
+ *      POST /api/v1/auth/sso/callback, stores tokens and redirects to /dashboard.
+ *   2. State-nonce-mismatch — navigating with a tampered state (no prior
+ *      setSsoState()) aborts without any API call and renders an error.
+ *   3. Already-authenticated short-circuit — if isAuthenticated is true on
+ *      mount the page redirects without making an API call.
+ *   4. Missing code/state — renders an error banner, stays on /auth/callback.
+ *   5. API failure — renders an error banner, stays on /auth/callback.
  *
  * All API calls are mocked via page.route() — no backend required.
  */
 
 import { expect, test } from '@playwright/test';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** sessionStorage key used by @ppt/shared setSsoState / getAndClearSsoState */
+const SSO_STATE_KEY = 'sso_state';
+
+const ACCESS_TOKEN_KEY = 'ppt_access_token';
+const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
+const USER_KEY = 'ppt_user';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,16 +52,13 @@ const MOCK_USER = {
   role: 'manager',
 };
 
-const ACCESS_TOKEN_KEY = 'ppt_access_token';
-const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
-const USER_KEY = 'ppt_user';
-
 // ---------------------------------------------------------------------------
 // Suite
 // ---------------------------------------------------------------------------
 
-test.describe('OAuth Callback Flow', () => {
+test.describe('OAuth Callback Flow (AuthCallbackPage)', () => {
   test.beforeEach(async ({ page }) => {
+    // Navigate somewhere first so we can touch storage, then clear it.
     await page.goto('/login');
     await page.evaluate(() => {
       localStorage.clear();
@@ -55,7 +67,8 @@ test.describe('OAuth Callback Flow', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 1 — Happy path: stores tokens, redirects to /dashboard
+  // Scenario 1 — Happy path: valid state nonce + valid code → tokens stored,
+  //              redirect to /dashboard
   // -------------------------------------------------------------------------
 
   test('stores access + refresh tokens and redirects to /dashboard on success', async ({
@@ -63,8 +76,17 @@ test.describe('OAuth Callback Flow', () => {
   }) => {
     const validAccessToken = makeJwt({ sub: MOCK_USER.id, exp: nowPlus(900) });
     const validRefreshToken = 'refresh-token-abc123';
+    const validState = 'csrf-state-e2e-001';
 
-    await page.route('**/api/v1/auth/callback', async (route) => {
+    // Seed sessionStorage with the state nonce so AuthCallbackPage passes validation.
+    await page.evaluate(
+      ({ key, value }) => {
+        sessionStorage.setItem(key, value);
+      },
+      { key: SSO_STATE_KEY, value: validState }
+    );
+
+    await page.route('**/api/v1/auth/sso/callback', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -76,9 +98,9 @@ test.describe('OAuth Callback Flow', () => {
       });
     });
 
-    // Absorb all other API calls so the redirect settles without a real backend.
+    // Absorb any other API calls so the redirect settles without a real backend.
     await page.route('**/api/v1/**', async (route) => {
-      if (route.request().url().includes('/api/v1/auth/callback')) {
+      if (route.request().url().includes('/api/v1/auth/sso/callback')) {
         await route.continue();
       } else {
         await route.fulfill({
@@ -89,12 +111,12 @@ test.describe('OAuth Callback Flow', () => {
       }
     });
 
-    await page.goto('/auth/callback?code=auth-code-valid-001&state=csrf-state-001');
+    await page.goto(`/auth/callback?code=auth-code-valid-001&state=${validState}`);
 
-    // Should redirect to /dashboard (or /dashboard/manager after the Navigate redirect).
-    await page.waitForURL(/\/dashboard/, { timeout: 8000 });
+    // Should redirect to /dashboard (or a sub-route such as /dashboard/manager).
+    await page.waitForURL('**/dashboard', { timeout: 8000 });
 
-    // Verify tokens are persisted in localStorage.
+    // Verify tokens are persisted in localStorage by AuthContext.loginWithSsoCode().
     const storedAccess = await page.evaluate((key) => localStorage.getItem(key), ACCESS_TOKEN_KEY);
     const storedRefresh = await page.evaluate(
       (key) => localStorage.getItem(key),
@@ -112,165 +134,114 @@ test.describe('OAuth Callback Flow', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 2 — Logout clears session and storage
+  // Scenario 2 — State-nonce-mismatch: tampered state aborts without API call
   // -------------------------------------------------------------------------
 
-  test('logout clears access token, refresh token, and user from storage', async ({ page }) => {
-    const existingAccessToken = makeJwt({
-      sub: MOCK_USER.id,
-      exp: nowPlus(900),
-    });
-    const existingRefreshToken = 'refresh-token-existing-xyz';
+  test('shows error and makes no API call when state nonce is missing or mismatched', async ({
+    page,
+  }) => {
+    let apiCallMade = false;
 
-    // Pre-populate storage as if the user is already authenticated.
-    await page.goto('/login');
+    await page.route('**/api/v1/auth/sso/callback', async (route) => {
+      apiCallMade = true;
+      await route.fulfill({ status: 400, body: '{}' });
+    });
+
+    // Navigate WITHOUT seeding sessionStorage — simulates direct navigation,
+    // tab-napping, or a replay attempt (OIDC §3.1.2.7).
+    await page.goto('/auth/callback?code=auth-code-x&state=tampered-state');
+
+    // Page stays at /auth/callback (no redirect to /dashboard).
+    await page.waitForLoadState('networkidle');
+    expect(page.url()).toContain('/auth/callback');
+
+    // Error banner must be visible.
+    const errorBanner = page.locator('[role="alert"]');
+    await expect(errorBanner).toBeVisible({ timeout: 5000 });
+
+    // No API call should have been made.
+    expect(apiCallMade).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------
+  // Scenario 3 — Already authenticated: short-circuit without API call
+  // -------------------------------------------------------------------------
+
+  test('redirects without API call when user is already authenticated', async ({ page }) => {
+    const existingToken = makeJwt({ sub: MOCK_USER.id, exp: nowPlus(900) });
+
+    // Pre-populate localStorage to simulate an already-authenticated session.
     await page.evaluate(
-      ({ atKey, rtKey, uKey, at, rt, user }) => {
+      ({ atKey, rtKey, uKey, at, user }) => {
         localStorage.setItem(atKey, at);
-        localStorage.setItem(rtKey, rt);
+        localStorage.setItem(rtKey, 'refresh-existing');
         localStorage.setItem(uKey, JSON.stringify(user));
       },
       {
         atKey: ACCESS_TOKEN_KEY,
         rtKey: REFRESH_TOKEN_KEY,
         uKey: USER_KEY,
-        at: existingAccessToken,
-        rt: existingRefreshToken,
+        at: existingToken,
         user: MOCK_USER,
       }
     );
 
-    // Mock the server-side logout endpoint.
-    await page.route('**/api/v1/auth/logout', async (route) => {
-      await route.fulfill({ status: 204 });
+    let apiCallMade = false;
+    await page.route('**/api/v1/auth/sso/callback', async (route) => {
+      apiCallMade = true;
+      await route.fulfill({ status: 400, body: '{}' });
     });
-
-    // Simulate the client-side logout path mirroring AuthContext.logout():
-    //   1. Call server logout.
-    //   2. Clear localStorage keys.
-    await page.evaluate(
-      async ({ atKey, rtKey, uKey, rt }) => {
-        await fetch('/api/v1/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken: rt }),
-        }).catch(() => {});
-        localStorage.removeItem(atKey);
-        localStorage.removeItem(rtKey);
-        localStorage.removeItem(uKey);
-      },
-      {
-        atKey: ACCESS_TOKEN_KEY,
-        rtKey: REFRESH_TOKEN_KEY,
-        uKey: USER_KEY,
-        rt: existingRefreshToken,
-      }
-    );
-
-    // Verify all three keys have been cleared.
-    const afterAt = await page.evaluate((key) => localStorage.getItem(key), ACCESS_TOKEN_KEY);
-    const afterRt = await page.evaluate((key) => localStorage.getItem(key), REFRESH_TOKEN_KEY);
-    const afterUser = await page.evaluate((key) => localStorage.getItem(key), USER_KEY);
-
-    expect(afterAt).toBeNull();
-    expect(afterRt).toBeNull();
-    expect(afterUser).toBeNull();
-  });
-
-  // -------------------------------------------------------------------------
-  // Scenario 3 — Expired access token triggers silent refresh
-  // -------------------------------------------------------------------------
-
-  test('triggers silent token refresh when returned access token is already expired', async ({
-    page,
-  }) => {
-    // Token with exp in the past.
-    const expiredAccessToken = makeJwt({
-      sub: MOCK_USER.id,
-      exp: nowPlus(-60),
-    });
-    const refreshTokenValue = 'refresh-token-for-expired';
-    const freshAccessToken = makeJwt({
-      sub: MOCK_USER.id,
-      exp: nowPlus(900),
-    });
-
-    let refreshCalled = false;
-
-    await page.route('**/api/v1/auth/callback', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          accessToken: expiredAccessToken,
-          refreshToken: refreshTokenValue,
-          user: MOCK_USER,
-        }),
-      });
-    });
-
-    await page.route('**/api/v1/auth/refresh', async (route) => {
-      refreshCalled = true;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          accessToken: freshAccessToken,
-          refreshToken: 'refresh-token-fresh-456',
-        }),
-      });
-    });
-
     await page.route('**/api/v1/**', async (route) => {
-      const url = route.request().url();
-      if (url.includes('/api/v1/auth/callback') || url.includes('/api/v1/auth/refresh')) {
+      if (route.request().url().includes('/api/v1/auth/sso/callback')) {
         await route.continue();
       } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({}),
-        });
+        await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       }
     });
 
-    await page.goto('/auth/callback?code=auth-code-expired-test&state=state-exp');
+    await page.goto('/auth/callback?code=auth-code-duplicate&state=any-state');
 
-    // Should still reach /dashboard after the silent refresh.
-    await page.waitForURL(/\/dashboard/, { timeout: 8000 });
-
-    // The /auth/refresh endpoint must have been called.
-    expect(refreshCalled).toBe(true);
+    // Should redirect to /dashboard without exchanging the code.
+    await page.waitForURL('**/dashboard', { timeout: 8000 });
+    expect(apiCallMade).toBe(false);
   });
 
   // -------------------------------------------------------------------------
-  // Scenario 4 — Error paths
+  // Scenario 4 — Missing code/state params: error banner shown
   // -------------------------------------------------------------------------
 
-  test('redirects to /login with error param when OAuth server returns error', async ({ page }) => {
-    await page.goto('/auth/callback?error=access_denied&error_description=User+denied+access');
+  test('renders error banner when authorization code or state is missing', async ({ page }) => {
+    // Seed a valid state so the nonce check passes, but omit the code param.
+    await page.evaluate(
+      ({ key, value }) => {
+        sessionStorage.setItem(key, value);
+      },
+      { key: SSO_STATE_KEY, value: 'state-no-code' }
+    );
 
-    await page.waitForURL(/\/login/, { timeout: 5000 });
+    await page.goto('/auth/callback?state=state-no-code');
 
-    const url = new URL(page.url());
-    expect(url.pathname).toBe('/login');
-    expect(url.searchParams.get('error')).not.toBeNull();
+    await page.waitForLoadState('networkidle');
+
+    const errorBanner = page.locator('[role="alert"]');
+    await expect(errorBanner).toBeVisible({ timeout: 5000 });
   });
 
-  test('redirects to /login with error param when authorization code is missing', async ({
-    page,
-  }) => {
-    await page.goto('/auth/callback');
+  // -------------------------------------------------------------------------
+  // Scenario 5 — API failure: error banner shown, no tokens stored
+  // -------------------------------------------------------------------------
 
-    await page.waitForURL(/\/login/, { timeout: 5000 });
+  test('renders error banner and stores no tokens when API returns an error', async ({ page }) => {
+    const failState = 'csrf-state-fail-001';
 
-    const url = new URL(page.url());
-    expect(url.pathname).toBe('/login');
-    expect(url.searchParams.get('error')).not.toBeNull();
-  });
+    await page.evaluate(
+      ({ key, value }) => {
+        sessionStorage.setItem(key, value);
+      },
+      { key: SSO_STATE_KEY, value: failState }
+    );
 
-  test('redirects to /login when token-exchange API returns an error', async ({ page }) => {
-    await page.route('**/api/v1/auth/callback', async (route) => {
+    await page.route('**/api/v1/auth/sso/callback', async (route) => {
       await route.fulfill({
         status: 400,
         contentType: 'application/json',
@@ -278,13 +249,12 @@ test.describe('OAuth Callback Flow', () => {
       });
     });
 
-    await page.goto('/auth/callback?code=auth-code-bad-001&state=state-bad');
+    await page.goto(`/auth/callback?code=auth-code-bad-001&state=${failState}`);
 
-    await page.waitForURL(/\/login/, { timeout: 5000 });
+    await page.waitForLoadState('networkidle');
 
-    const url = new URL(page.url());
-    expect(url.pathname).toBe('/login');
-    expect(url.searchParams.get('error')).not.toBeNull();
+    const errorBanner = page.locator('[role="alert"]');
+    await expect(errorBanner).toBeVisible({ timeout: 5000 });
 
     // Tokens must NOT have been written.
     const storedAt = await page.evaluate((key) => localStorage.getItem(key), ACCESS_TOKEN_KEY);

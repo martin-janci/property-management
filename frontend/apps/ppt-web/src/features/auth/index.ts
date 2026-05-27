@@ -5,7 +5,6 @@
 
 export { ChangePasswordPage } from './pages/ChangePasswordPage';
 export { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-export { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 export { ProfileEditPage } from './pages/ProfileEditPage';
 export { RegisterPage } from './pages/RegisterPage';
 export { ResetPasswordPage } from './pages/ResetPasswordPage';
