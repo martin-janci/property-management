@@ -1,3 +1,4 @@
+export { AnnouncementDetailScreen } from './AnnouncementDetailScreen';
 export type {
   Announcement,
   AnnouncementAttachment,
