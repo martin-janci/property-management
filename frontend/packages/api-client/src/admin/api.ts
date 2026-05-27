@@ -5,18 +5,17 @@
  * `/api/v1/admin/*`. Auth via the shared token provider, identical to the
  * other api-client modules.
  *
- * # N9: MFA challenge interceptor
+ * # MFA challenge interceptor
  *
- * `apiRequest` is the choke point. When the api-server returns
+ * All API calls go through `authenticatedFetchJson` from `../lib/fetch`,
+ * which is the shared factory for all @ppt/api-client modules. It handles
  *   401 { error: "mfa_required" }
- * we hand off to the registered MFA handler (see `mfa-handler.ts`),
- * which is wired by the app shell to a modal. On success we retry the
- * original request once; on cancel / failure we surface the original
- * error so the calling hook reports it normally.
+ * by delegating to the registered MFA handler (see `mfa-handler.ts`),
+ * wired by the app shell to a modal. On success the request is retried once;
+ * on cancel / failure the original error surfaces to the calling hook.
  */
 
-import { getToken } from '../auth';
-import { requestMfaChallenge } from './mfa-handler';
+import { authenticatedFetchJson } from '../lib/fetch';
 import type {
   AdminPaginatedResponse,
   Agency,
@@ -43,57 +42,6 @@ const _win = typeof window !== 'undefined' ? (window as unknown as Record<string
 const API_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/admin`;
 const HEALTH_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin/health`;
 
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-/**
- * Single-request POST/GET/PUT/DELETE wrapper.
- *
- * The `_alreadyRetried` parameter is internal — it guards the
- * mfa_required retry loop so a server stuck in a 401 cycle cannot
- * spawn unbounded modals.
- */
-async function apiRequest<T>(
-  url: string,
-  options: RequestInit = {},
-  _alreadyRetried = false
-): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    // Read the body once — a 401 mfa_required carries the marker we need
-    // and we still want it for the error message in the fall-through case.
-    const error = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-    };
-
-    if (response.status === 401 && error?.error === 'mfa_required' && !_alreadyRetried) {
-      const ok = await requestMfaChallenge();
-      if (ok) {
-        return apiRequest<T>(url, options, true);
-      }
-    }
-
-    throw new Error(error.message || error.error || `HTTP error ${response.status}`);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json();
-}
-
 function buildQueryString(params: object): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -113,7 +61,7 @@ export async function listAgencies(
   signal?: AbortSignal
 ): Promise<AdminPaginatedResponse<Agency>> {
   const qs = buildQueryString(params || {});
-  return apiRequest<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, { signal });
+  return authenticatedFetchJson<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, { signal });
 }
 
 /**
@@ -123,7 +71,7 @@ export async function listAgencies(
  * handles the challenge and retry transparently.
  */
 export async function suspendAgency(agencyId: string): Promise<void> {
-  await apiRequest<void>(`${API_BASE}/agencies/${agencyId}/suspend`, {
+  await authenticatedFetchJson<void>(`${API_BASE}/agencies/${agencyId}/suspend`, {
     method: 'POST',
   });
 }
@@ -136,7 +84,7 @@ export async function suspendAgency(agencyId: string): Promise<void> {
  * GET /api/v1/admin/oauth/clients — list all registered OAuth clients.
  */
 export async function listOAuthClients(signal?: AbortSignal): Promise<OAuthClientSummary[]> {
-  return apiRequest<OAuthClientSummary[]>(`${API_BASE}/oauth/clients`, { signal });
+  return authenticatedFetchJson<OAuthClientSummary[]>(`${API_BASE}/oauth/clients`, { signal });
 }
 
 /**
@@ -146,7 +94,7 @@ export async function getOAuthClient(
   id: string,
   signal?: AbortSignal
 ): Promise<OAuthClientSummary> {
-  return apiRequest<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, { signal });
+  return authenticatedFetchJson<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, { signal });
 }
 
 /**
@@ -156,7 +104,7 @@ export async function getOAuthClient(
 export async function registerOAuthClient(
   request: RegisterOAuthClientRequest
 ): Promise<RegisterOAuthClientResponse> {
-  return apiRequest<RegisterOAuthClientResponse>(`${API_BASE}/oauth/clients`, {
+  return authenticatedFetchJson<RegisterOAuthClientResponse>(`${API_BASE}/oauth/clients`, {
     method: 'POST',
     body: JSON.stringify({
       name: request.name,
@@ -176,7 +124,7 @@ export async function updateOAuthClient(
   id: string,
   data: UpdateOAuthClientRequest
 ): Promise<OAuthClientSummary> {
-  return apiRequest<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, {
+  return authenticatedFetchJson<OAuthClientSummary>(`${API_BASE}/oauth/clients/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({
       name: data.name,
@@ -193,7 +141,7 @@ export async function updateOAuthClient(
  * DELETE /api/v1/admin/oauth/clients/{id} — revoke/deactivate an OAuth client.
  */
 export async function revokeOAuthClient(id: string): Promise<void> {
-  await apiRequest<void>(`${API_BASE}/oauth/clients/${id}`, {
+  await authenticatedFetchJson<void>(`${API_BASE}/oauth/clients/${id}`, {
     method: 'DELETE',
   });
 }
@@ -203,32 +151,37 @@ export async function revokeOAuthClient(id: string): Promise<void> {
  * Regenerates the client secret. Returns plaintext (shown only once).
  */
 export async function regenerateOAuthClientSecret(id: string): Promise<RegenerateSecretResponse> {
-  return apiRequest<RegenerateSecretResponse>(`${API_BASE}/oauth/clients/${id}/regenerate-secret`, {
-    method: 'POST',
-  });
+  return authenticatedFetchJson<RegenerateSecretResponse>(
+    `${API_BASE}/oauth/clients/${id}/regenerate-secret`,
+    { method: 'POST' }
+  );
 }
 
 // ============================================================
 // Platform Health Monitoring (Epic 10B.3)
-// All requests go through apiRequest, which carries the MFA
-// challenge-response interceptor.
+// All requests go through authenticatedFetchJson, which carries the MFA
+// challenge-response interceptor (401 mfa_required → modal → retry once).
 // ============================================================
 
 export async function fetchHealthDashboard(signal?: AbortSignal): Promise<HealthDashboard> {
-  return apiRequest<HealthDashboard>(`${HEALTH_BASE}/dashboard`, { signal });
+  return authenticatedFetchJson<HealthDashboard>(`${HEALTH_BASE}/dashboard`, { signal });
 }
 
 export async function fetchHealthAlerts(
   activeOnly: boolean,
   signal?: AbortSignal
 ): Promise<MetricAlert[]> {
-  return apiRequest<MetricAlert[]>(`${HEALTH_BASE}/alerts?active_only=${activeOnly}`, { signal });
+  return authenticatedFetchJson<MetricAlert[]>(
+    `${HEALTH_BASE}/alerts?active_only=${activeOnly}`,
+    { signal }
+  );
 }
 
 export async function acknowledgeHealthAlert(alertId: string): Promise<void> {
-  await apiRequest<void>(`${HEALTH_BASE}/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
-    method: 'POST',
-  });
+  await authenticatedFetchJson<void>(
+    `${HEALTH_BASE}/alerts/${encodeURIComponent(alertId)}/acknowledge`,
+    { method: 'POST' }
+  );
 }
 
 export async function fetchMetricHistory(
@@ -237,16 +190,17 @@ export async function fetchMetricHistory(
   signal?: AbortSignal
 ): Promise<MetricHistory> {
   const n = encodeURIComponent(metricName);
-  return apiRequest<MetricHistory>(`${HEALTH_BASE}/metrics/${n}/history?range=${range}`, {
-    signal,
-  });
+  return authenticatedFetchJson<MetricHistory>(
+    `${HEALTH_BASE}/metrics/${n}/history?range=${range}`,
+    { signal }
+  );
 }
 
 export async function updateHealthThreshold(
   metricName: string,
   data: UpdateThresholdRequest
 ): Promise<MetricThreshold> {
-  return apiRequest<MetricThreshold>(
+  return authenticatedFetchJson<MetricThreshold>(
     `${HEALTH_BASE}/thresholds/${encodeURIComponent(metricName)}`,
     { method: 'PUT', body: JSON.stringify(data) }
   );
@@ -263,20 +217,23 @@ export async function listSystemAnnouncements(
   signal?: AbortSignal
 ): Promise<SystemAnnouncement[]> {
   const qs = buildQueryString(params || {});
-  return apiRequest<SystemAnnouncement[]>(`${SYSANN_BASE}${qs}`, { signal });
+  return authenticatedFetchJson<SystemAnnouncement[]>(`${SYSANN_BASE}${qs}`, { signal });
 }
 
 export async function getSystemAnnouncement(
   id: string,
   signal?: AbortSignal
 ): Promise<SystemAnnouncement> {
-  return apiRequest<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, { signal });
+  return authenticatedFetchJson<SystemAnnouncement>(
+    `${SYSANN_BASE}/${encodeURIComponent(id)}`,
+    { signal }
+  );
 }
 
 export async function createSystemAnnouncement(
   data: CreateSystemAnnouncementRequest
 ): Promise<CreateSystemAnnouncementResponse> {
-  return apiRequest<CreateSystemAnnouncementResponse>(SYSANN_BASE, {
+  return authenticatedFetchJson<CreateSystemAnnouncementResponse>(SYSANN_BASE, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -286,12 +243,14 @@ export async function updateSystemAnnouncement(
   id: string,
   data: UpdateSystemAnnouncementRequest
 ): Promise<SystemAnnouncement> {
-  return apiRequest<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return authenticatedFetchJson<SystemAnnouncement>(
+    `${SYSANN_BASE}/${encodeURIComponent(id)}`,
+    { method: 'PUT', body: JSON.stringify(data) }
+  );
 }
 
 export async function deleteSystemAnnouncement(id: string): Promise<void> {
-  await apiRequest<void>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await authenticatedFetchJson<void>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
 }
