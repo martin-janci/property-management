@@ -9,11 +9,11 @@
  *    useUploadEvidence); this component is a pure presentational form.
  */
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
 import { EvidenceUploader, type PendingEvidence } from '../components/EvidenceUploader';
 
 // ============================================
@@ -128,7 +128,6 @@ export function FileDisputePage({
   // serialisable by zod; they are passed alongside the validated values).
   const [evidence, setEvidence] = React.useState<PendingEvidence[]>([]);
 
-  const selectedType = watch('type');
   const descriptionLength = watch('description')?.length ?? 0;
 
   const handleFormSubmit = handleSubmit((values) => {
@@ -230,10 +229,7 @@ export function FileDisputePage({
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="unitId"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="unitId" className="block text-sm font-medium text-gray-700 mb-1">
                 Unit <span className="text-red-500">*</span>
               </label>
               <select
@@ -292,10 +288,7 @@ export function FileDisputePage({
           <div className="space-y-4">
             {/* Subject */}
             <div>
-              <label
-                htmlFor="subject"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                 Subject <span className="text-red-500">*</span>
               </label>
               <input
@@ -319,10 +312,7 @@ export function FileDisputePage({
 
             {/* Description */}
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -362,11 +352,7 @@ export function FileDisputePage({
             Attach photos, documents, or recordings to support your dispute. Files are uploaded
             after the dispute is created.
           </p>
-          <EvidenceUploader
-            files={evidence}
-            onChange={setEvidence}
-            disabled={isSubmitting}
-          />
+          <EvidenceUploader files={evidence} onChange={setEvidence} disabled={isSubmitting} />
         </section>
 
         {/* ── Info box ── */}
@@ -413,4 +399,3 @@ export function FileDisputePage({
     </div>
   );
 }
-

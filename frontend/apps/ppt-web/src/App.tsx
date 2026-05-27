@@ -13,6 +13,7 @@ import type {
   OutageListQuery,
 } from '@ppt/api-client';
 import {
+  uploadEvidence as apiUploadEvidence,
   setMfaChallengeHandler,
   useAcknowledgeAnnouncement,
   useAnnouncement,
@@ -23,7 +24,6 @@ import {
   useBuildings,
   useCancelOutage,
   useCreateAnnouncementComment,
-  uploadEvidence as apiUploadEvidence,
   useCreateDispute,
   useCreateOutage,
   useDeleteAnnouncement,

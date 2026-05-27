@@ -210,6 +210,9 @@ importers:
 
   apps/ppt-web:
     dependencies:
+      '@hookform/resolvers':
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.76.1)
       '@ppt/admin-ui':
         specifier: workspace:*
         version: link:../../packages/admin-ui
@@ -249,6 +252,9 @@ importers:
       react-dom:
         specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
+      react-hook-form:
+        specifier: ^7.54.0
+        version: 7.76.1(react@19.2.0)
       react-i18next:
         specifier: ^16.5.1
         version: 16.6.6(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3)
@@ -258,6 +264,9 @@ importers:
       react-router-dom:
         specifier: ^6.21.0
         version: 6.30.3(react-dom@19.2.0)(react@19.2.0)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@axe-core/react':
         specifier: ^4.10.0
@@ -2501,6 +2510,14 @@ packages:
       hono: ^4
     dependencies:
       hono: 4.12.21
+    dev: false
+
+  /@hookform/resolvers@3.10.0(react-hook-form@7.76.1):
+    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+    dependencies:
+      react-hook-form: 7.76.1(react@19.2.0)
     dev: false
 
   /@img/colour@1.1.0:
@@ -8804,6 +8821,15 @@ packages:
     dependencies:
       react: 19.2.0
       scheduler: 0.27.0
+
+  /react-hook-form@7.76.1(react@19.2.0):
+    resolution: {integrity: sha512-rYM7tPiWlu3nZchkR/ex7piyzui2vFPyaLnXnI/RnblB/L4qfMmyses8llJVtF1NpE9WBBsJlGtcSZzPCXW1qQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: 19.2.0
+    dependencies:
+      react: 19.2.0
+    dev: false
 
   /react-i18next@16.6.6(i18next@25.10.10)(react-dom@19.2.0)(react@19.2.0)(typescript@5.9.3):
     resolution: {integrity: sha512-ZgL2HUoW34UKUkOV7uSQFE1CDnRPD+tCR3ywSuWH7u2iapnz86U8Bi3Vrs620qNDzCf1F47NxglCEkchCTDOHw==}

@@ -50,7 +50,7 @@ export function ChatInterface({
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []);
 
   // Notify parent of session changes
   useEffect(() => {
