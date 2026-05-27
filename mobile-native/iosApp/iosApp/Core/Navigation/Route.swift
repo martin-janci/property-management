@@ -118,12 +118,15 @@ struct SearchFilters: Hashable {
     var radiusKm: Double?
     var latitude: Double?
     var longitude: Double?
+    /// Sale/rent filter — maps to ListingType in the KMP layer.
+    var listingType: ListingKind?
 
     /// Whether any filters are active.
     var hasActiveFilters: Bool {
         priceMin != nil ||
         priceMax != nil ||
         !propertyTypes.isEmpty ||
+        listingType != nil ||
         bedroomsMin != nil ||
         bedroomsMax != nil ||
         bathroomsMin != nil ||
@@ -135,6 +138,7 @@ struct SearchFilters: Hashable {
         priceMin = nil
         priceMax = nil
         propertyTypes = []
+        listingType = nil
         bedroomsMin = nil
         bedroomsMax = nil
         bathroomsMin = nil
@@ -169,6 +173,22 @@ enum PropertyType: String, CaseIterable, Hashable {
         case .land: return "leaf"
         case .commercial: return "building"
         case .garage: return "car"
+        }
+    }
+}
+
+/// Sale or rent classification for a listing.
+///
+/// Mirrors the KMP ListingType enum but uses a Swift-idiomatic name to
+/// avoid clashing with the ListingType symbol exported from the shared framework.
+enum ListingKind: String, CaseIterable, Hashable {
+    case sale
+    case rent
+
+    var displayName: String {
+        switch self {
+        case .sale: return String(localized: "filter_for_sale")
+        case .rent: return String(localized: "filter_for_rent")
         }
     }
 }

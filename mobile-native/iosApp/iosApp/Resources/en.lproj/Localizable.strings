@@ -239,6 +239,26 @@
 "reset_filters" = "Reset Filters";
 "apply" = "Apply";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "Near Me";
+"filter_near_me_section" = "Location";
+"filter_radius" = "Radius";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Location: %.4f, %.4f";
+"locating" = "Locating…";
+"location_access_denied" = "Location access was denied. Enable it in Settings to use Near Me filters.";
+"location_unavailable" = "Location is unavailable.";
+"location_access_denied_title" = "Location Access Denied";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Listing Type";
+"filter_price_min" = "Min price";
+"filter_price_max" = "Max price";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Bathrooms";
+
 /* Account Screen - Additional */
 "quick_actions" = "Quick Actions";
 "saved_searches" = "Saved Searches";
