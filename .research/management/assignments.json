@@ -1729,14 +1729,14 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:42:00Z",
+      "last_updated": "2026-05-27T10:25:00Z",
       "status_changed_at": "2026-05-27T01:42:00Z",
       "pr_number": 564,
       "pr_url": "https://github.com/martin-janci/property-management/pull/564",
       "merged_at": null,
       "implementer_summary": "pr=564 status=done specialist=react-web scope_drift=false note=AnnouncementDetailScreen (mobile) added with auto-read+ack; ppt-web auto-mark-read on view; typecheck+biome clean; backend uses POST not PUT (spec mismatch noted in PR)",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 3 required issues resolved; publishedAt i18n added to 6 locales; announcementId guard in place; lists() cache invalidation present; CI all green; ready to merge (PR still draft \u2014 merge blocked until undrafted)"
     }
   ],
-  "assignments.generated": "2026-05-27T02:25:00Z"
+  "assignments.generated": "2026-05-27T10:25:00Z"
 }
