@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:24:45Z",
+  "generated": "2026-05-27T02:29:37Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1754,15 +1754,15 @@
     {
       "task_id": "gap-10b-3-health-ui-mfa-fix",
       "branch": "auto-impl/gap-10b-3-health-ui-mfa-fix",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-27T02:10:02Z",
-      "last_updated": "2026-05-27T02:10:02Z",
-      "status_changed_at": "2026-05-27T02:10:02Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T02:29:37Z",
+      "status_changed_at": "2026-05-27T02:29:37Z",
+      "pr_number": 567,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/567",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=567 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=created lib/mfa-handler.ts (canonical MFA registry), enhanced authenticatedFetchJson with 401 mfa_required intercept, refactored admin/api.ts to drop local apiRequest; admin-web typecheck+build+biome-lint clean; screen-map updated; scope_drift flag is pre-existing dispatcher VERSION/assignments.json commits on branch base",
       "reviewer_summary": null
     },
     {
