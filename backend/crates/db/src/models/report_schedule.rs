@@ -4,6 +4,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -32,10 +33,10 @@ pub mod report_execution_status {
 // Models
 // ============================================================================
 
-/// A report schedule (in-memory representation).
+/// A report schedule (API representation).
 ///
-/// When the `report_schedules` table is added via migration this struct maps
-/// to that table row. Until then the repository returns stub data.
+/// Maps to the `report_schedules` table created by migration
+/// `00159_create_report_schedules_executions.sql`.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ReportSchedule {
     pub id: Uuid,
@@ -58,8 +59,66 @@ pub struct ReportSchedule {
     pub updated_at: DateTime<Utc>,
 }
 
+/// Raw DB row for `report_schedules`.
+///
+/// `recipients` is stored as JSONB so we use `serde_json::Value` for
+/// `FromRow`, then map to `ReportSchedule` (which exposes `Vec<String>`).
+#[derive(Debug, Clone, FromRow)]
+pub struct ReportScheduleRow {
+    pub id: Uuid,
+    pub report_id: Uuid,
+    pub organization_id: Uuid,
+    pub name: String,
+    pub frequency: String,
+    pub day_of_week: Option<i32>,
+    pub day_of_month: Option<i32>,
+    pub time: String,
+    pub timezone: String,
+    pub format: String,
+    pub recipients: serde_json::Value,
+    pub is_active: bool,
+    pub status: String,
+    pub last_run_at: Option<DateTime<Utc>>,
+    pub next_run_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<ReportScheduleRow> for ReportSchedule {
+    fn from(row: ReportScheduleRow) -> Self {
+        let recipients: Vec<String> = row
+            .recipients
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+        Self {
+            id: row.id,
+            report_id: row.report_id,
+            organization_id: row.organization_id,
+            name: row.name,
+            frequency: row.frequency,
+            day_of_week: row.day_of_week,
+            day_of_month: row.day_of_month,
+            time: row.time,
+            timezone: row.timezone,
+            format: row.format,
+            recipients,
+            is_active: row.is_active,
+            status: row.status,
+            last_run_at: row.last_run_at,
+            next_run_at: row.next_run_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+        }
+    }
+}
+
 /// A single report execution record.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct ReportExecution {
     pub id: Uuid,
     pub schedule_id: Uuid,

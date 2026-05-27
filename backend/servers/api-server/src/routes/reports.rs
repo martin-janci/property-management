@@ -1402,7 +1402,7 @@ pub struct ListExecutionsParams {
     pub date_from: Option<chrono::DateTime<chrono::Utc>>,
     /// Filter executions started on or before this timestamp (RFC 3339).
     pub date_to: Option<chrono::DateTime<chrono::Utc>>,
-    /// Maximum number of executions to return (1-100, default 20).
+    /// Maximum number of executions to return (1–100, default 20).
     #[serde(default = "default_execution_limit")]
     pub limit: i64,
     /// Zero-based offset for pagination.
@@ -1425,6 +1425,10 @@ const VALID_EXECUTION_STATUSES: &[&str] = &[
 ];
 
 /// Build a per-execution download URL when the execution has a file ready.
+///
+/// The URL points to `GET /api/v1/reports/executions/{id}/download` which
+/// generates a presigned S3 URL. We only populate the field when `file_key`
+/// is set (i.e. the execution actually produced a file).
 fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -> Option<String> {
     if exec.file_key.is_some() {
         Some(format!("/api/v1/reports/executions/{}/download", exec.id))
@@ -1435,8 +1439,10 @@ fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -
 
 /// List execution history for a report schedule (Story 81.2).
 ///
-/// Returns paginated executions ordered by `started_at DESC`. Each completed
-/// execution that produced a file includes a `download_url` for file retrieval.
+/// Returns a paginated log of all past and current executions for the given
+/// schedule, ordered by `started_at` descending (most recent first). Each
+/// completed execution that produced a file includes a `download_url` pointing
+/// to the presigned file-download endpoint.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/schedules/{id}/executions",
@@ -1507,6 +1513,7 @@ pub async fn list_schedule_executions(
     }
 
     // Verify the schedule exists before querying executions.
+    // This prevents misleading "empty list" responses for non-existent schedules.
     let schedule = state
         .report_schedule_repo
         .get_by_id(id)

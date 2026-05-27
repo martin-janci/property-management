@@ -149,7 +149,8 @@ async fn get_audit_logs(
         .map(|log| AuditLogResponse {
             id: log.id,
             user_id: log.user_id,
-            action: format!("{:?}", log.action),
+            // P1-04: canonical_name() gives stable output, not Rust Debug repr.
+            action: log.action.canonical_name().to_string(),
             resource_type: log.resource_type,
             resource_id: log.resource_id,
             org_id: log.org_id,
@@ -247,7 +248,8 @@ async fn get_user_audit_logs(
         .map(|log| AuditLogResponse {
             id: log.id,
             user_id: log.user_id,
-            action: format!("{:?}", log.action),
+            // P1-04: canonical_name() gives stable output, not Rust Debug repr.
+            action: log.action.canonical_name().to_string(),
             resource_type: log.resource_type,
             resource_id: log.resource_id,
             org_id: log.org_id,

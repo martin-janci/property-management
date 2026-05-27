@@ -1,13 +1,12 @@
 //! Report schedule repository (Epic 81: Schedule Management & Execution History).
 //!
-//! Stub implementation — `report_schedules` and `report_executions` tables do
-//! not exist yet. The repository returns synthesised data so the routes compile
-//! and the API responds with 200 instead of 404. A follow-up migration will
-//! replace the stubs with real SQLx queries.
+//! Real SQLx implementation backed by the `report_schedules` and
+//! `report_executions` tables added in migration
+//! `00159_create_report_schedules_executions.sql`.
 
 use crate::models::report_schedule::{
     report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
-    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+    ExecutionHistoryResponse, ReportExecution, ReportSchedule, ReportScheduleRow,
 };
 use crate::DbPool;
 use chrono::{Duration, Utc};
@@ -17,7 +16,6 @@ use uuid::Uuid;
 /// Repository for report schedule and execution operations.
 #[derive(Clone)]
 pub struct ReportScheduleRepository {
-    #[allow(dead_code)]
     pool: DbPool,
 }
 
@@ -28,103 +26,157 @@ impl ReportScheduleRepository {
     }
 
     // ============================================================================
-    // Internal helpers
-    // ============================================================================
-
-    fn stub_schedule(id: Uuid) -> ReportSchedule {
-        let now = Utc::now();
-        ReportSchedule {
-            id,
-            report_id: Uuid::new_v4(),
-            organization_id: Uuid::new_v4(),
-            name: "Scheduled Report".to_string(),
-            frequency: "weekly".to_string(),
-            day_of_week: Some(1),
-            day_of_month: None,
-            time: "08:00".to_string(),
-            timezone: "Europe/Bratislava".to_string(),
-            format: "pdf".to_string(),
-            recipients: vec![],
-            is_active: true,
-            status: report_schedule_status::ACTIVE.to_string(),
-            last_run_at: None,
-            next_run_at: Some(now + Duration::days(7)),
-            created_at: now,
-            updated_at: now,
-        }
-    }
-
-    fn stub_execution(schedule_id: Uuid) -> ReportExecution {
-        let now = Utc::now();
-        ReportExecution {
-            id: Uuid::new_v4(),
-            schedule_id,
-            status: report_execution_status::COMPLETED.to_string(),
-            started_at: now - Duration::minutes(2),
-            completed_at: Some(now - Duration::minutes(1)),
-            duration_ms: Some(60_000),
-            file_key: Some(format!("reports/{}/{}.pdf", schedule_id, Uuid::new_v4())),
-            file_name: Some("report.pdf".to_string()),
-            file_size: Some(102_400),
-            error_code: None,
-            error_message: None,
-            error_details: None,
-            created_at: now - Duration::minutes(2),
-            download_url: None, // populated by the handler layer
-        }
-    }
-
-    // ============================================================================
     // Schedule operations
     // ============================================================================
 
     /// Get a schedule by ID.
-    ///
-    /// TODO: SELECT * FROM report_schedules WHERE id = $1
     pub async fn get_by_id(&self, id: Uuid) -> Result<Option<ReportSchedule>, AppError> {
-        Ok(Some(Self::stub_schedule(id)))
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            SELECT id, report_id, organization_id, name, frequency,
+                   day_of_week, day_of_month, time, timezone, format,
+                   recipients, is_active, status,
+                   last_run_at, next_run_at, created_at, updated_at
+            FROM report_schedules
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to get report schedule");
+            AppError::Database(e.to_string())
+        })?;
+
+        Ok(row.map(ReportSchedule::from))
     }
 
     /// Pause a schedule (Story 81.1).
     ///
-    /// TODO: UPDATE report_schedules SET is_active = false, status = 'paused',
-    ///       updated_at = NOW() WHERE id = $1 RETURNING *
+    /// Sets `is_active = false`, `status = 'paused'`.
     pub async fn pause(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
-        let mut sched = Self::stub_schedule(id);
-        sched.is_active = false;
-        sched.status = report_schedule_status::PAUSED.to_string();
-        sched.updated_at = Utc::now();
-        Ok(sched)
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            UPDATE report_schedules
+            SET is_active  = false,
+                status     = $1,
+                updated_at = NOW()
+            WHERE id = $2
+            RETURNING id, report_id, organization_id, name, frequency,
+                      day_of_week, day_of_month, time, timezone, format,
+                      recipients, is_active, status,
+                      last_run_at, next_run_at, created_at, updated_at
+            "#,
+        )
+        .bind(report_schedule_status::PAUSED)
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to pause report schedule");
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
+
+        Ok(ReportSchedule::from(row))
     }
 
     /// Resume a paused schedule (Story 81.1).
     ///
-    /// TODO: UPDATE report_schedules SET is_active = true, status = 'active',
-    ///       updated_at = NOW() WHERE id = $1 RETURNING *
+    /// Sets `is_active = true`, `status = 'active'`.
     pub async fn resume(&self, id: Uuid) -> Result<ReportSchedule, AppError> {
-        let mut sched = Self::stub_schedule(id);
-        sched.is_active = true;
-        sched.status = report_schedule_status::ACTIVE.to_string();
-        sched.updated_at = Utc::now();
-        Ok(sched)
+        let row = sqlx::query_as::<_, ReportScheduleRow>(
+            r#"
+            UPDATE report_schedules
+            SET is_active  = true,
+                status     = $1,
+                updated_at = NOW()
+            WHERE id = $2
+            RETURNING id, report_id, organization_id, name, frequency,
+                      day_of_week, day_of_month, time, timezone, format,
+                      recipients, is_active, status,
+                      last_run_at, next_run_at, created_at, updated_at
+            "#,
+        )
+        .bind(report_schedule_status::ACTIVE)
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to resume report schedule");
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| AppError::NotFound(format!("Report schedule {} not found", id)))?;
+
+        Ok(ReportSchedule::from(row))
     }
 
     // ============================================================================
-    // Execution history
+    // Execution history (Story 81.2)
     // ============================================================================
 
-    /// List execution history for a schedule (Story 81.2).
+    /// List execution history for a schedule, paginated.
     ///
-    /// TODO: SELECT * FROM report_executions WHERE schedule_id = $1
-    ///       AND ($2::text IS NULL OR status = $2) ... ORDER BY started_at DESC
+    /// Optionally filters by status. Results are ordered by `started_at DESC`
+    /// (newest execution first).
     pub async fn list_executions(
         &self,
         query: ExecutionHistoryQuery,
     ) -> Result<ExecutionHistoryResponse, AppError> {
-        let exec = Self::stub_execution(query.schedule_id);
-        let executions = vec![exec];
-        let total = executions.len() as i64;
+        // Count total matching rows for pagination metadata.
+        let total: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM report_executions
+            WHERE schedule_id = $1
+              AND ($2::text IS NULL OR status = $2)
+              AND ($3::timestamptz IS NULL OR started_at >= $3)
+              AND ($4::timestamptz IS NULL OR started_at <= $4)
+            "#,
+        )
+        .bind(query.schedule_id)
+        .bind(&query.status)
+        .bind(query.date_from)
+        .bind(query.date_to)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %query.schedule_id, "Failed to count executions");
+            AppError::Database(e.to_string())
+        })?;
+
+        let executions = sqlx::query_as::<_, ReportExecution>(
+            r#"
+            SELECT id, schedule_id, status,
+                   started_at, completed_at, duration_ms,
+                   file_key, file_name, file_size,
+                   error_code, error_message, error_details,
+                   created_at
+            FROM report_executions
+            WHERE schedule_id = $1
+              AND ($2::text IS NULL OR status = $2)
+              AND ($3::timestamptz IS NULL OR started_at >= $3)
+              AND ($4::timestamptz IS NULL OR started_at <= $4)
+            ORDER BY started_at DESC
+            LIMIT $5 OFFSET $6
+            "#,
+        )
+        .bind(query.schedule_id)
+        .bind(&query.status)
+        .bind(query.date_from)
+        .bind(query.date_to)
+        .bind(query.limit)
+        .bind(query.offset)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %query.schedule_id, "Failed to list executions");
+            AppError::Database(e.to_string())
+        })?;
+
         let has_more = (query.offset + query.limit) < total;
+
         Ok(ExecutionHistoryResponse {
             executions,
             total,
@@ -132,71 +184,112 @@ impl ReportScheduleRepository {
         })
     }
 
-    /// Get a single execution by ID (Story 81.2).
-    ///
-    /// TODO: SELECT * FROM report_executions WHERE id = $1
+    /// Get a single execution by ID.
     pub async fn get_execution(&self, id: Uuid) -> Result<Option<ReportExecution>, AppError> {
-        let now = Utc::now();
-        let exec = ReportExecution {
-            id,
-            schedule_id: Uuid::new_v4(),
-            status: report_execution_status::COMPLETED.to_string(),
-            started_at: now - Duration::minutes(2),
-            completed_at: Some(now - Duration::minutes(1)),
-            duration_ms: Some(60_000),
-            file_key: Some(format!("reports/executions/{}.pdf", id)),
-            file_name: Some("report.pdf".to_string()),
-            file_size: Some(102_400),
-            error_code: None,
-            error_message: None,
-            error_details: None,
-            created_at: now - Duration::minutes(2),
-            download_url: None, // populated by the handler layer
-        };
-        Ok(Some(exec))
+        sqlx::query_as::<_, ReportExecution>(
+            r#"
+            SELECT id, schedule_id, status,
+                   started_at, completed_at, duration_ms,
+                   file_key, file_name, file_size,
+                   error_code, error_message, error_details,
+                   created_at
+            FROM report_executions
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, execution_id = %id, "Failed to get execution");
+            AppError::Database(e.to_string())
+        })
     }
 
-    /// Get presigned download URL for a completed execution (Story 81.2).
+    /// Get presigned download URL for a completed execution.
     ///
-    /// TODO: look up file_key, generate S3 presigned URL
+    /// Generates a short-lived URL from the stored S3 `file_key`.
+    /// When `file_key` is NULL (execution not yet complete) returns an error.
     pub async fn get_download_url(
         &self,
         execution_id: Uuid,
     ) -> Result<ExecutionDownloadUrl, AppError> {
+        let execution = self
+            .get_execution(execution_id)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Execution {} not found", execution_id)))?;
+
+        let file_key = execution.file_key.ok_or_else(|| {
+            AppError::BadRequest("Execution does not have a completed file yet".into())
+        })?;
+
+        let file_name = execution
+            .file_name
+            .unwrap_or_else(|| "report.pdf".to_string());
+
+        // Derive MIME type from file extension.
+        let content_type = if file_name.ends_with(".pdf") {
+            "application/pdf"
+        } else if file_name.ends_with(".xlsx") {
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        } else {
+            "text/csv"
+        };
+
+        // Build a presigned-style URL. In production the S3 client would
+        // generate a short-lived signed URL; here we produce a stable
+        // API-gateway proxy path that the file-serving layer resolves.
+        let url = format!("/api/v1/reports/files/{}", file_key);
+        let expires_at = Utc::now() + Duration::hours(1);
+
         Ok(ExecutionDownloadUrl {
-            url: format!(
-                "/api/v1/reports/executions/{}/download/file.pdf",
-                execution_id
-            ),
-            expires_at: Utc::now() + Duration::hours(1),
-            file_name: "report.pdf".to_string(),
-            content_type: "application/pdf".to_string(),
+            url,
+            expires_at,
+            file_name,
+            content_type: content_type.to_string(),
         })
     }
 
-    /// Retry a failed execution (Story 81.2).
+    /// Retry a failed execution.
     ///
-    /// TODO: UPDATE report_executions SET status = 'pending', error_message = NULL,
-    ///       completed_at = NULL WHERE id = $1 AND status = 'failed' RETURNING *
+    /// Resets `status = 'pending'` and clears error fields so the
+    /// scheduler picks the job up again. Only allowed when the current
+    /// status is `'failed'`; all other statuses return a BadRequest error.
     pub async fn retry_execution(&self, id: Uuid) -> Result<ReportExecution, AppError> {
-        let now = Utc::now();
-        let exec = ReportExecution {
-            id,
-            schedule_id: Uuid::new_v4(),
-            status: report_execution_status::PENDING.to_string(),
-            started_at: now,
-            completed_at: None,
-            duration_ms: None,
-            file_key: None,
-            file_name: None,
-            file_size: None,
-            error_code: None,
-            error_message: None,
-            error_details: None,
-            created_at: now,
-            download_url: None,
-        };
-        Ok(exec)
+        let updated = sqlx::query_as::<_, ReportExecution>(
+            r#"
+            UPDATE report_executions
+            SET status        = $1,
+                completed_at  = NULL,
+                duration_ms   = NULL,
+                error_code    = NULL,
+                error_message = NULL,
+                error_details = NULL
+            WHERE id = $2
+              AND status = $3
+            RETURNING id, schedule_id, status,
+                      started_at, completed_at, duration_ms,
+                      file_key, file_name, file_size,
+                      error_code, error_message, error_details,
+                      created_at
+            "#,
+        )
+        .bind(report_execution_status::PENDING)
+        .bind(id)
+        .bind(report_execution_status::FAILED)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, execution_id = %id, "Failed to retry execution");
+            AppError::Database(e.to_string())
+        })?
+        .ok_or_else(|| {
+            AppError::BadRequest(
+                "Execution not found or not in 'failed' state; only failed executions can be retried".into(),
+            )
+        })?;
+
+        Ok(updated)
     }
 
     /// Update a schedule's cron expression, recipients, and/or enabled flag (gap-81-1).
@@ -204,11 +297,13 @@ impl ReportScheduleRepository {
     /// All parameters are optional; only non-`None` values are applied.
     ///
     /// TODO: UPDATE report_schedules
-    ///       SET time        = COALESCE($2, time),
-    ///           recipients  = COALESCE($3, recipients),
-    ///           is_active   = COALESCE($4, is_active),
-    ///           status      = COALESCE($5, status),
-    ///           updated_at  = NOW()
+    ///       SET cron_expression = COALESCE($2, cron_expression),
+    ///           recipients      = COALESCE($3, recipients),
+    ///           is_active       = COALESCE($4, is_active),
+    ///           status          = CASE WHEN $4 IS NOT NULL
+    ///                               THEN CASE WHEN $4 THEN 'active' ELSE 'paused' END
+    ///                               ELSE status END,
+    ///           updated_at      = NOW()
     ///       WHERE id = $1
     ///       RETURNING *
     pub async fn update_schedule(
@@ -220,7 +315,7 @@ impl ReportScheduleRepository {
         current: &mut ReportSchedule,
     ) -> Result<ReportSchedule, AppError> {
         if let Some(cron) = cron_expression {
-            // Stored in `time` until a dedicated column is added via migration.
+            // Stored in `time` until the dedicated column is added via migration.
             current.time = cron;
         }
         if let Some(recips) = recipients {

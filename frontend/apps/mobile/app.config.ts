@@ -2,24 +2,44 @@
  * Expo Dynamic App Configuration
  *
  * Epic 85 - Story 85.1: Environment Variable Setup
- * Epic 85 - Story 85.2: iOS Release Build Configuration
+ * Epic 85 - Story 85.2: Android + iOS Release Build Configuration
  *
  * Reads environment-specific .env files and injects variables into:
  *   - `extra` block (accessible via expo-constants: Constants.expoConfig.extra)
  *   - `ios.infoPlist` (native iOS app Info.plist keys)
+ *   - `android` block (package, permissions, adaptive icon, Google Services)
  *   - `EXPO_PUBLIC_*` env vars are handled automatically by the Expo build
  *     system when loaded via Metro (see metro.config.js)
  *
  * Environment selection:
- *   APP_ENV=development  →  .env.development  (default in __DEV__ mode)
- *   APP_ENV=staging      →  .env.staging
- *   APP_ENV=production   →  .env.production   (default in release builds)
+ *   APP_ENV=development  =>  .env.development  (default in __DEV__ mode)
+ *   APP_ENV=staging      =>  .env.staging
+ *   APP_ENV=production   =>  .env.production   (default in release builds)
  *
  * Usage:
- *   APP_ENV=staging expo start      # run with staging config
- *   APP_ENV=production expo build   # build with production config
+ *   APP_ENV=staging expo start                # run with staging config
+ *   APP_ENV=production expo start             # run with production config
+ *
+ * EAS Build:
+ *   eas build --platform android --profile staging
+ *   eas build --platform android --profile production
+ *   eas submit --platform android --profile production
+ *
+ * Android release signing:
+ *   Keystore credentials managed via EAS secrets (credentialsSource=remote in eas.json).
+ *   For local Gradle builds: set ANDROID_KEYSTORE_PATH, ANDROID_KEY_ALIAS,
+ *   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD in your shell or .env.local.
+ *   See scripts/setup-android-keystore.sh for keystore generation instructions.
+ *
+ * Android Google Services:
+ *   google-services.json must be at frontend/apps/mobile/google-services.json
+ *   for Firebase push notifications (FCM). Gitignored -- obtain from Firebase Console
+ *   (Project Settings > Android app > Download google-services.json).
+ *   EAS Cloud builds receive it via the GOOGLE_SERVICES_JSON secret (base64-encoded).
+ *   Template with placeholder values lives at google-services.json.template.
  */
 
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
@@ -46,6 +66,16 @@ function getAppEnv(): AppEnvironment {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
 
+/**
+ * Returns true when a real google-services.json exists beside this config file.
+ * EAS Cloud builds inject this via GOOGLE_SERVICES_JSON secret; local dev
+ * without Firebase falls back gracefully so `expo prebuild` does not fail.
+ */
+function hasGoogleServicesJson(): boolean {
+  const p = path.resolve(__dirname, 'google-services.json');
+  return fs.existsSync(p);
+}
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = getAppEnv();
   const envVars = loadEnvFile(appEnv);
@@ -61,6 +91,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   const debugMode =
     envVars.DEBUG_MODE === 'true' || envVars.DEBUG_MODE === '1' || appEnv === 'development';
+
+  // Google Services JSON path -- only set when real file is present.
+  // EAS Cloud injects via GOOGLE_SERVICES_JSON secret; omitted for plain local dev.
+  const googleServicesFile = hasGoogleServicesJson() ? './google-services.json' : undefined;
 
   return {
     ...config,
@@ -86,18 +120,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       buildNumber: config.ios?.buildNumber ?? '1',
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
-        // --------------- environment variable keys exposed natively ---------------
-        /**
-         * API base URL injected at build time.
-         * Readable via NativeModules or as an Info.plist lookup.
-         * Prefer reading via expo-constants (Constants.expoConfig.extra) in JS.
-         */
         API_BASE_URL: apiBaseUrl,
-        /**
-         * Current environment identifier: development | staging | production
-         */
         ENVIRONMENT: environment,
-        // --------------------------------------------------------------------------
         NSPhotoLibraryUsageDescription:
           'The app needs access to your photos to upload property images.',
         NSCameraUsageDescription:
@@ -118,17 +142,75 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       package: 'three.two.bit.ppt.management',
+
+      // -----------------------------------------------------------------------
+      // Epic 85 - Story 85.2: Android Release Build Configuration
+      // -----------------------------------------------------------------------
+
+      // versionCode: auto-incremented by EAS (autoIncrement:true in eas.json).
+      // JS-side fallback only; actual versionCode in APK/AAB managed by EAS.
+      versionCode: config.android?.versionCode ?? 1,
+
+      // Adaptive icon -- required for Android 8.0+ (API level 26+).
+      // Asset: assets/images/adaptive-icon.png (1024x1024, transparent bg).
+      adaptiveIcon: {
+        foregroundImage: './assets/images/adaptive-icon.png',
+        backgroundColor: '#1A73E8',
+      },
+
+      // Google Services JSON for FCM (Android push notifications).
+      // EAS Cloud: via GOOGLE_SERVICES_JSON secret (base64-encoded).
+      //   eas secret:create --scope project --name GOOGLE_SERVICES_JSON \
+      //       --value "$(base64 -w0 google-services.json)"
+      // Local: place google-services.json beside this file (gitignored).
+      ...(googleServicesFile !== undefined ? { googleServicesFile } : {}),
+
+      // Permissions declared in AndroidManifest.xml.
+      permissions: [
+        'android.permission.CAMERA',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.ACCESS_FINE_LOCATION',
+        'android.permission.ACCESS_COARSE_LOCATION',
+        'android.permission.RECEIVE_BOOT_COMPLETED',
+        'android.permission.VIBRATE',
+        'android.permission.POST_NOTIFICATIONS',
+        'android.permission.INTERNET',
+        'android.permission.ACCESS_NETWORK_STATE',
+        'android.permission.USE_BIOMETRIC',
+        'android.permission.USE_FINGERPRINT',
+        'android.permission.NFC',
+      ],
+
+      // Intent filters: ppt-management:// custom scheme + App Links.
+      // App Links require assetlinks.json on server with keystore SHA-256.
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [{ scheme: 'ppt-management' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [{ scheme: 'https', host: 'app.ppt.example.com', pathPrefix: '/' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
     },
 
-    plugins: ['expo-localization', 'expo-secure-store'],
+    plugins: [
+      'expo-localization',
+      'expo-secure-store',
+      // expo-notifications: FCM (Android) + APNs (iOS).
+      // Android: requires google-services.json (see googleServicesFile above).
+      [
+        'expo-notifications',
+        { icon: './assets/images/notification-icon.png', color: '#1A73E8', sounds: [] },
+      ],
+    ],
 
-    /**
-     * `extra` block — accessible anywhere in JS via:
-     *   import Constants from 'expo-constants';
-     *   Constants.expoConfig?.extra?.API_BASE_URL
-     *
-     * See src/config/api.ts which reads these values.
-     */
     extra: {
       ...config.extra,
       API_BASE_URL: apiBaseUrl,

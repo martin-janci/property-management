@@ -19,6 +19,8 @@ import type {
   RegisterResponse,
   RequestPasswordResetRequest,
   ResetPasswordRequest,
+  SsoCallbackRequest,
+  SsoCallbackResponse,
 } from './types';
 
 /**
@@ -218,6 +220,20 @@ export const createAuthApi = (config: ApiConfig) => {
       const response = await fetch(`${baseUrl}/me`, {
         method: 'GET',
         headers: buildHeaders(config, true),
+      });
+      return handleResponse(response);
+    },
+
+    /**
+     * Exchange an SSO/OAuth authorization code for PPT JWT tokens.
+     *
+     * Endpoint: POST /api/v1/auth/sso/callback
+     */
+    exchangeSsoCode: async (request: SsoCallbackRequest): Promise<SsoCallbackResponse> => {
+      const response = await fetch(`${baseUrl}/sso/callback`, {
+        method: 'POST',
+        headers: buildHeaders(config),
+        body: JSON.stringify(request),
       });
       return handleResponse(response);
     },
