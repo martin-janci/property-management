@@ -925,13 +925,14 @@ fn build_refresh_cookie(
     if let Ok(domain) = std::env::var("PPT_AUTH_COOKIE_DOMAIN") {
         let domain = domain.trim();
         if !domain.is_empty() {
-            if domain.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'.') {
+            if domain
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'.')
+            {
                 cookie.push_str("; Domain=");
                 cookie.push_str(domain);
             } else {
-                tracing::warn!(
-                    "PPT_AUTH_COOKIE_DOMAIN contains invalid characters — ignoring"
-                );
+                tracing::warn!("PPT_AUTH_COOKIE_DOMAIN contains invalid characters — ignoring");
             }
         }
     }

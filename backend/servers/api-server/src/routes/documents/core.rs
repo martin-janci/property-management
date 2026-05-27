@@ -1142,9 +1142,10 @@ async fn get_download_url(
         let allowed = document.created_by == user_id
             || document.access_scope == "organization"
             || (document.access_scope == "role"
-                && document.access_roles.as_array().is_some_and(|arr| {
-                    arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))
-                }))
+                && document
+                    .access_roles
+                    .as_array()
+                    .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))))
             || (document.access_scope == "users"
                 && document.access_target_ids.as_array().is_some_and(|arr| {
                     arr.iter()
@@ -1256,9 +1257,10 @@ async fn get_preview_url(
         let allowed = document.created_by == user_id
             || document.access_scope == "organization"
             || (document.access_scope == "role"
-                && document.access_roles.as_array().is_some_and(|arr| {
-                    arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))
-                }))
+                && document
+                    .access_roles
+                    .as_array()
+                    .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))))
             || (document.access_scope == "users"
                 && document.access_target_ids.as_array().is_some_and(|arr| {
                     arr.iter()
