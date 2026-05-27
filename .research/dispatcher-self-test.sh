@@ -117,12 +117,20 @@ fi
 echo
 
 # --- T7: branch naming convention ------------------------------------------
-echo "T7  branch starts with auto-impl/"
-BAD=$(jq -r '.assignments | map(select((.branch // "") | startswith("auto-impl/") | not)) | length' "$ASSIGN")
-if [ "$BAD" = "0" ]; then note "all branches use auto-impl/ prefix"
+# Only enforced for non-terminal rows. Merged/done/failed rows are historical
+# artifacts — if the dispatcher claimed under the auto-impl/ prefix but the
+# implementer used a manually-named branch (fix/…, feat/…) the merge already
+# happened and we don't rewrite history.
+echo "T7  non-terminal branch starts with auto-impl/"
+BAD=$(jq -r '
+  .assignments
+  | map(select(.status == "in-progress" or .status == "review"))
+  | map(select((.branch // "") | startswith("auto-impl/") | not))
+  | length' "$ASSIGN")
+if [ "$BAD" = "0" ]; then note "all non-terminal branches use auto-impl/ prefix"
 else
-  fail "$BAD rows with non-conforming branch"
-  jq -r '.assignments[] | select((.branch // "") | startswith("auto-impl/") | not) | "    \(.task_id) :: branch=\(.branch)"' "$ASSIGN" >&2
+  fail "$BAD non-terminal rows with non-conforming branch"
+  jq -r '.assignments[] | select((.status == "in-progress" or .status == "review") and ((.branch // "") | startswith("auto-impl/") | not)) | "    \(.task_id) :: branch=\(.branch) status=\(.status)"' "$ASSIGN" >&2
 fi
 echo
 
