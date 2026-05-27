@@ -98,6 +98,12 @@ pub struct Signer {
     /// External provider's signer ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider_signer_id: Option<String>,
+    /// When this signer was last sent a reminder email. Consulted by the
+    /// scheduler to enforce a minimum interval between reminders and avoid
+    /// duplicate sends on every tick. JSONB-backed — older rows that
+    /// pre-date this field decode with `None`.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_reminder_at: Option<DateTime<Utc>>,
 }
 
 impl Signer {
@@ -112,6 +118,7 @@ impl Signer {
             declined_at: None,
             declined_reason: None,
             provider_signer_id: None,
+            last_reminder_at: None,
         }
     }
 
