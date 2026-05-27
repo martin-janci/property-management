@@ -298,15 +298,18 @@ pub async fn sso_callback(
         None => "/".to_string(),
     };
 
-    // Set session cookie and redirect
+    // Set session cookie and redirect.
+    //
+    // P0-12 (gap-security-435-cookie-scope): Path scoped to /api/v1/sso so
+    // the cookie is only sent on SSO API endpoints, not on every request to
+    // the reality-server (listings, search, etc.).  SameSite=Strict is safe
+    // here: the cookie is freshly SET in this response after the browser has
+    // already completed the PM-OAuth redirect, so the SameSite attribute only
+    // governs future requests originating from the reality-web SPA (same site).
     Ok((
         [(
             axum::http::header::SET_COOKIE,
-            format!(
-                "portal_session={}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age={}",
-                session_token,
-                7 * 24 * 60 * 60 // 7 days
-            ),
+            build_portal_session_cookie(&session_token, 7 * 24 * 60 * 60),
         )],
         Redirect::temporary(&redirect_uri),
     ))
@@ -336,11 +339,12 @@ pub async fn sso_logout(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Clear session cookie
+    // Clear session cookie. Must use the same Path/SameSite attributes as the
+    // Set-Cookie that installed it so browsers actually expire the stored cookie.
     Ok((
         [(
             axum::http::header::SET_COOKIE,
-            "portal_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0".to_string(),
+            build_portal_session_cookie("", 0),
         )],
         StatusCode::OK,
     ))
@@ -1232,6 +1236,32 @@ pub async fn get_mapped_roles(State(_state): State<AppState>) -> impl IntoRespon
     })
 }
 
+// ==================== Cookie helpers ====================
+
+/// Build a `Set-Cookie` header value for the `portal_session` cookie.
+///
+/// Centralized so the SSO callback and logout handlers always use identical
+/// attributes.
+///
+/// ## Security attributes (P0-12 / gap-security-435-cookie-scope)
+///
+/// | Attribute      | Value              | Rationale                                  |
+/// |---------------|--------------------|--------------------------------------------|
+/// | `HttpOnly`    | always set         | Prevents JS access — XSS cannot steal the  |
+/// |               |                    | token even if script runs on the page.      |
+/// | `Secure`      | always set         | Cookie only sent over HTTPS.               |
+/// | `SameSite`    | `Strict`           | Only sent on same-site requests; stops     |
+/// |               |                    | CSRF via cross-site top-level navigations. |
+/// | `Path`        | `/api/v1/sso`      | Scoped to SSO endpoints only — the cookie  |
+/// |               |                    | is **not** sent on listing/search requests. |
+///
+/// Pass `max_age_seconds = 0` and `value = ""` to emit a clear-cookie header.
+fn build_portal_session_cookie(value: &str, max_age_seconds: i64) -> String {
+    format!(
+        "portal_session={value}; Path=/api/v1/sso; HttpOnly; Secure; SameSite=Strict; Max-Age={max_age_seconds}"
+    )
+}
+
 /// Extract roles from OAuth scope string.
 fn extract_roles_from_scope(scope: Option<&str>) -> Option<Vec<String>> {
     scope.map(|s| {
@@ -1240,4 +1270,73 @@ fn extract_roles_from_scope(scope: Option<&str>) -> Option<Vec<String>> {
             .map(|part| part.strip_prefix("role:").unwrap_or(part).to_string())
             .collect()
     })
+}
+
+// ==================== Cookie security unit tests (P0-12) ====================
+
+#[cfg(test)]
+mod cookie_security_tests {
+    use super::build_portal_session_cookie;
+
+    /// P0-12 / gap-security-435-cookie-scope: portal_session cookie must carry
+    /// SameSite=Strict (not Lax) and be scoped to /api/v1/sso (not /).
+    #[test]
+    fn portal_session_cookie_samesite_is_strict() {
+        let cookie = build_portal_session_cookie("my.session.token", 604800);
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Expected SameSite=Strict, got: {cookie}"
+        );
+    }
+
+    /// `HttpOnly` must always be present on the portal session cookie.
+    #[test]
+    fn portal_session_cookie_always_httponly() {
+        let cookie = build_portal_session_cookie("tok", 3600);
+        assert!(
+            cookie.contains("HttpOnly"),
+            "Missing HttpOnly flag: {cookie}"
+        );
+    }
+
+    /// `Secure` must always be present on the portal session cookie.
+    #[test]
+    fn portal_session_cookie_always_secure() {
+        let cookie = build_portal_session_cookie("tok", 3600);
+        assert!(cookie.contains("Secure"), "Missing Secure flag: {cookie}");
+    }
+
+    /// Path must be `/api/v1/sso`, not root `/`.
+    ///
+    /// A root path would send the portal session cookie on every request to
+    /// reality-server (listing searches, etc.) — unnecessary exposure.
+    #[test]
+    fn portal_session_cookie_path_scoped_to_sso() {
+        let cookie = build_portal_session_cookie("tok", 3600);
+        assert!(
+            cookie.contains("Path=/api/v1/sso"),
+            "Expected Path=/api/v1/sso, got: {cookie}"
+        );
+        assert!(
+            !cookie.contains("Path=/;") && !cookie.ends_with("Path=/"),
+            "Cookie path must not be root /: {cookie}"
+        );
+    }
+
+    /// Clear-cookie (Max-Age=0) must still carry all security attributes.
+    #[test]
+    fn clear_portal_session_cookie_has_all_security_flags() {
+        let cookie = build_portal_session_cookie("", 0);
+        assert!(cookie.contains("HttpOnly"), "Missing HttpOnly: {cookie}");
+        assert!(cookie.contains("Secure"), "Missing Secure: {cookie}");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Missing SameSite=Strict: {cookie}"
+        );
+        assert!(
+            cookie.contains("Path=/api/v1/sso"),
+            "Wrong path: {cookie}"
+        );
+        assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
+    }
 }
