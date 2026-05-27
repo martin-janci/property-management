@@ -1743,13 +1743,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-27T02:10:02Z",
-      "last_updated": "2026-05-27T02:35:42Z",
+      "last_updated": "2026-05-27T03:26:00Z",
       "status_changed_at": "2026-05-27T02:35:42Z",
       "pr_number": 568,
       "pr_url": "https://github.com/martin-janci/property-management/pull/568",
       "merged_at": null,
       "implementer_summary": "pr=568 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=wired AuthCallbackPage at /auth/callback + loginWithSsoCode in AuthContext + SsoCallbackRequest types in api-client; typecheck clean, biome 0 errors, vite build clean",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=3 blocking issues: (1) no client-side OIDC state nonce stored/verified before calling loginWithSsoCode (relies entirely on backend); (2) loginWithSsoCode missing catch block to clear partial token writes on error; (3) /auth/callback route has no screen-map entry per CLAUDE.md rule B; CI green, StrictMode guard correct, code structure clean otherwise"
     },
     {
       "task_id": "gap-10b-3-health-ui-mfa-fix",
@@ -1780,5 +1780,5 @@
       "reviewer_summary": "verdict=approve note=all 6 issues resolved: 1-5 pre-existing on dev (epic-83 megacommit), 6 i18n keys added in PR (17 keys in en+sk, naming consistent with leases.* namespace); CI all 12 checks green; posted as COMMENT (self-review restriction)"
     }
   ],
-  "assignments.generated": "2026-05-27T03:22:00Z"
+  "assignments.generated": "2026-05-27T03:26:00Z"
 }
