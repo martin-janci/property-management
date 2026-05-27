@@ -58,8 +58,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
         if (item.preview) URL.revokeObjectURL(item.preview);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [files]);
 
   const validate = useCallback((file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -198,8 +197,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
               </svg>
             </div>
             <p className="text-sm font-medium text-gray-700">
-              Drop files here or{' '}
-              <span className="text-blue-600 underline">browse</span>
+              Drop files here or <span className="text-blue-600 underline">browse</span>
             </p>
             <p className="text-xs text-gray-500">
               JPG, PNG, PDF, MP3, MP4 · max 50 MB per file · up to {MAX_FILES} files
@@ -216,9 +214,7 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
               key={item.id}
               className={[
                 'flex gap-3 p-3 rounded-lg border',
-                item.status === 'error'
-                  ? 'border-red-300 bg-red-50'
-                  : 'border-gray-200 bg-white',
+                item.status === 'error' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white',
               ].join(' ')}
             >
               {/* Thumbnail / icon */}

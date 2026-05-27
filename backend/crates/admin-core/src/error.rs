@@ -89,7 +89,8 @@ impl IntoResponse for AdminError {
                 StatusCode::FORBIDDEN,
                 Json(ErrorBody {
                     error: "missing_capability",
-                    message: format!("Missing capability: {:?}", cap),
+                    // P1-04: as_str() gives stable snake_case, not Rust Debug repr.
+                    message: format!("Missing capability: {}", cap.as_str()),
                 }),
             )
                 .into_response(),
