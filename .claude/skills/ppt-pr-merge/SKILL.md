@@ -92,6 +92,12 @@ if [ -n "$HAS_GATE" ]; then
 fi
 ```
 
+**Clearing the gate (human or automation):** Once a human reviewer has approved, remove the label manually:
+```bash
+gh pr edit "$PR" --repo martin-janci/property-management --remove-label needs-human-review
+```
+After the label is removed, `ppt-pr-merge` will proceed normally on the next invocation.
+
 Abort with `merged=false note=<reason>` if ANY of:
 
 | Check | Abort if |

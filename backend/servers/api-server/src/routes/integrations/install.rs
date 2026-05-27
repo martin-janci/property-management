@@ -21,6 +21,8 @@ use uuid::Uuid;
 use super::sync::{OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
 
+const MAX_BATCH_SIZE: usize = 500;
+
 // ==================== Airbnb Types ====================
 
 /// Airbnb connection status response.
@@ -1142,6 +1144,26 @@ pub async fn push_booking_availability(
         ));
     }
 
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BATCH_TOO_LARGE",
+                "A maximum of 500 updates per request is allowed",
+            )),
+        ));
+    }
+
+    if request.updates.iter().any(|u| u.available_count < 0) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_AVAILABLE_COUNT",
+                "available_count must be non-negative",
+            )),
+        ));
+    }
+
     let rental_repo = &state.rental_repo;
 
     let connection = rental_repo
@@ -1302,6 +1324,16 @@ pub async fn push_booking_rates(
             Json(ErrorResponse::new(
                 "NO_UPDATES",
                 "At least one rate update is required",
+            )),
+        ));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BATCH_TOO_LARGE",
+                "A maximum of 500 updates per request is allowed",
             )),
         ));
     }

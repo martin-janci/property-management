@@ -743,6 +743,19 @@
       "downloadFailed": "Nepodařilo se stáhnout zprávu.",
       "retryQueued": "Spuštění bylo zařazeno do fronty k opakování.",
       "retryFailed": "Nepodařilo se opakovat spuštění."
+    },
+    "filters": {
+      "allStatuses": "Všechny stavy",
+      "status": "Stav:",
+      "dateFrom": "Od:",
+      "dateTo": "Do:",
+      "clearFilters": "Vymazat filtry",
+      "statusCompleted": "Dokončeno",
+      "statusFailed": "Selhalo",
+      "statusRunning": "Probíhá",
+      "statusPending": "Čekající",
+      "statusCancelled": "Zrušeno",
+      "statusSkipped": "Přeskočeno"
     }
   }
 }

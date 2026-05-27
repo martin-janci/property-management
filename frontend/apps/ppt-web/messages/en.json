@@ -3055,6 +3055,19 @@
       "downloadFailed": "Failed to download report.",
       "retryQueued": "Execution queued for retry.",
       "retryFailed": "Failed to retry execution."
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "status": "Status:",
+      "dateFrom": "From:",
+      "dateTo": "To:",
+      "clearFilters": "Clear filters",
+      "statusCompleted": "Completed",
+      "statusFailed": "Failed",
+      "statusRunning": "Running",
+      "statusPending": "Pending",
+      "statusCancelled": "Cancelled",
+      "statusSkipped": "Skipped"
     }
   }
 }
