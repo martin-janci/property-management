@@ -38,8 +38,11 @@ impl CallerIdentity {
             Ok(())
         } else {
             Err(crate::DeployError::Forbidden(format!(
-                "missing required scope: {scope}; caller {}:{} has scopes {:?}",
-                self.kind, self.id, self.scopes
+                // P1-04: join() instead of {:?} to avoid Debug format in error strings.
+                "missing required scope: {scope}; caller {}:{} has scopes [{}]",
+                self.kind,
+                self.id,
+                self.scopes.join(", ")
             )))
         }
     }
