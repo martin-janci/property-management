@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T20:15:21Z",
+  "generated": "2026-05-27T20:15:39Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2614,13 +2614,13 @@
     {
       "task_id": "gap-81-1-report-schedule-edit-ui",
       "branch": "auto-impl/gap-81-1-report-schedule-edit-ui",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-27T16:04:00Z",
-      "last_updated": "2026-05-27T20:15:21Z",
-      "status_changed_at": "2026-05-27T20:07:48Z",
+      "last_updated": "2026-05-27T20:15:39Z",
+      "status_changed_at": "2026-05-27T20:15:39Z",
       "pr_number": 623,
       "pr_url": "https://github.com/martin-janci/property-management/pull/623",
-      "merged_at": null,
+      "merged_at": "2026-05-27T20:15:39Z",
       "specialist": "react-web",
       "implementer_summary": "pr=623 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=CronPicker + enabled toggle + CronScheduleUpdateRequest wired to PUT schedules/{id}; typecheck+build clean",
       "reviewer_summary": "verdict=approve head_oid=a5ff5599 note=all 3 required fixes resolved (isValidCron guard, htmlFor/id pairs, screen-map update); 14/14 CI green; posted as comment due to self-review restriction",
