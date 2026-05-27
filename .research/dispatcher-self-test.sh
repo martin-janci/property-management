@@ -289,6 +289,65 @@ else
 fi
 echo
 
+# --- T16: branch-prefix guard (issue #573) ---------------------------------
+# Hard fail for any non-terminal row (in-progress or review) that does NOT
+# carry an auto-impl/ prefix -- T7 already covers this but T16 also checks
+# newly-ingested terminal rows (merged/failed) claimed on/after the guard
+# cutoff, where the ingestion guard should have prevented the bad row from
+# ever being written.
+#
+# Terminal rows (merged/failed/done) with claimed_at < T16_GUARD_CUTOFF are
+# historical manual-PR rows added before the guard existed -- reported as info
+# but not a hard fail.
+#
+# T16_GUARD_CUTOFF is the date the ingestion guard was introduced (this PR,
+# 2026-05-27). Only rows claimed by the dispatcher AFTER this date are held
+# to the auto-impl/ contract.
+T16_GUARD_CUTOFF="${T16_GUARD_CUTOFF:-2026-05-27T18:00:00Z}"
+echo "T16 branch starts with auto-impl/ -- ingestion prefix guard (issue #573; guard cutoff=$T16_GUARD_CUTOFF)"
+# Hard fail: non-terminal rows with wrong prefix (all dates).
+BAD_NONTERMINAL=$(jq -r '
+  .assignments
+  | map(select(
+      (.status == "in-progress" or .status == "review")
+      and ((.branch // "") | startswith("auto-impl/") | not)
+    ))
+  | length' "$ASSIGN")
+if [ "$BAD_NONTERMINAL" = "0" ]; then
+  note "no non-terminal rows with non-auto-impl/ branch"
+else
+  fail "$BAD_NONTERMINAL non-terminal rows ingested with non-auto-impl/ branch (ingestion guard violated -- issue #573)"
+  jq -r '.assignments[] | select((.status == "in-progress" or .status == "review") and ((.branch // "") | startswith("auto-impl/") | not)) | "    \(.task_id) :: branch=\(.branch) status=\(.status)"' "$ASSIGN" >&2
+fi
+# Hard fail: terminal rows claimed on/after the guard cutoff with wrong prefix.
+BAD_TERMINAL=$(jq --arg d "$T16_GUARD_CUTOFF" '
+  .assignments
+  | map(select(
+      (.status | IN("merged","failed","done"))
+      and .claimed_at >= $d
+      and ((.branch // "") | startswith("auto-impl/") | not)
+    ))
+  | length' "$ASSIGN")
+if [ "$BAD_TERMINAL" = "0" ]; then
+  note "no post-guard-cutoff terminal rows with non-auto-impl/ branch"
+else
+  fail "$BAD_TERMINAL post-guard-cutoff terminal rows carry non-auto-impl/ branch (should have been blocked at ingestion)"
+  jq --arg d "$T16_GUARD_CUTOFF" -r '.assignments[] | select((.status | IN("merged","failed","done")) and .claimed_at >= $d and ((.branch // "") | startswith("auto-impl/") | not)) | "    \(.task_id) :: branch=\(.branch) status=\(.status) claimed_at=\(.claimed_at)"' "$ASSIGN" >&2
+fi
+# Informational: historical terminal rows (pre-guard-cutoff) with non-auto-impl/ branch.
+INFO_LEGACY=$(jq --arg d "$T16_GUARD_CUTOFF" '
+  .assignments
+  | map(select(
+      (.status | IN("merged","failed","done"))
+      and .claimed_at < $d
+      and ((.branch // "") | startswith("auto-impl/") | not)
+    ))
+  | length' "$ASSIGN")
+if [ "$INFO_LEGACY" -gt "0" ]; then
+  printf '  info  %s historical terminal rows carry non-auto-impl/ branch (pre-guard cutoff; manual PRs exempt)\n' "$INFO_LEGACY"
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
