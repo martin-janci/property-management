@@ -17,6 +17,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { apiRequest, useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { colors } from '../shared/screenStyles';
@@ -70,6 +71,7 @@ export function AnnouncementDetailScreen({
   onBack,
 }: AnnouncementDetailScreenProps) {
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
   const markReadFired = useRef(false);
 
   // Fetch announcement detail
@@ -87,7 +89,6 @@ export function AnnouncementDetailScreen({
 
   // Fire mark-read on first render.
   // Guard ref prevents double-fire on StrictMode or re-mount.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: markReadFired ref excluded intentionally
   useEffect(() => {
     if (!markReadFired.current) {
       markReadFired.current = true;
@@ -115,7 +116,7 @@ export function AnnouncementDetailScreen({
 
   const formatDate = (dateString?: string | null): string => {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(i18n.language, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -132,7 +133,7 @@ export function AnnouncementDetailScreen({
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={styles.loadingText}>Loading…</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -141,11 +142,11 @@ export function AnnouncementDetailScreen({
     return (
       <View style={styles.container}>
         <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>{t('announcements.detail.back')}</Text>
         </Pressable>
         <View style={styles.center}>
-          <Text style={styles.errorTitle}>Couldn't load announcement</Text>
-          <Text style={styles.errorText}>{error?.message ?? 'Unknown error'}</Text>
+          <Text style={styles.errorTitle}>{t('announcements.detail.loadError')}</Text>
+          <Text style={styles.errorText}>{error?.message ?? t('errors.unknown')}</Text>
         </View>
       </View>
     );
@@ -157,7 +158,7 @@ export function AnnouncementDetailScreen({
   return (
     <View style={styles.container}>
       <Pressable style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>← Announcements</Text>
+        <Text style={styles.backButtonText}>{t('announcements.detail.backToList')}</Text>
       </Pressable>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -166,7 +167,7 @@ export function AnnouncementDetailScreen({
           <View style={styles.badgeRow}>
             {announcement.pinned ? (
               <View style={styles.pinnedBadge}>
-                <Text style={styles.pinnedBadgeText}>Pinned</Text>
+                <Text style={styles.pinnedBadgeText}>{t('announcements.pinned')}</Text>
               </View>
             ) : null}
             <View style={[styles.statusPill, statusPillStyle(announcement.status)]}>
@@ -180,7 +181,9 @@ export function AnnouncementDetailScreen({
 
           <View style={styles.metaRow}>
             {announcement.author_name ? (
-              <Text style={styles.metaText}>By {announcement.author_name}</Text>
+              <Text style={styles.metaText}>
+                {t('announcements.by', { author: announcement.author_name })}
+              </Text>
             ) : null}
             {announcement.published_at ? (
               <Text style={styles.metaText}>
@@ -192,17 +195,19 @@ export function AnnouncementDetailScreen({
           {/* Stats row */}
           <View style={styles.statsRow}>
             <Text style={styles.statItem}>
-              <Text style={styles.statNumber}>{announcement.read_count}</Text> reads
+              <Text style={styles.statNumber}>{announcement.read_count}</Text>{' '}
+              {t('announcements.detail.reads')}
             </Text>
             {announcement.acknowledgment_required ? (
               <Text style={styles.statItem}>
                 <Text style={styles.statNumber}>{announcement.acknowledged_count}</Text>{' '}
-                acknowledged
+                {t('announcements.detail.acknowledged')}
               </Text>
             ) : null}
             {announcement.comments_enabled ? (
               <Text style={styles.statItem}>
-                <Text style={styles.statNumber}>{announcement.comment_count}</Text> comments
+                <Text style={styles.statNumber}>{announcement.comment_count}</Text>{' '}
+                {t('announcements.detail.comments')}
               </Text>
             ) : null}
           </View>
@@ -216,7 +221,7 @@ export function AnnouncementDetailScreen({
         {/* Attachments */}
         {attachments.length > 0 ? (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Attachments</Text>
+            <Text style={styles.sectionTitle}>{t('announcements.detail.attachments')}</Text>
             {attachments.map((att) => (
               <View key={att.id} style={styles.attachmentRow}>
                 <Text style={styles.attachmentName}>{att.file_name}</Text>
@@ -229,10 +234,10 @@ export function AnnouncementDetailScreen({
         {/* Acknowledge button */}
         {announcement.acknowledgment_required ? (
           <View style={styles.ackCard}>
-            <Text style={styles.ackLabel}>This announcement requires your acknowledgment.</Text>
+            <Text style={styles.ackLabel}>{t('announcements.detail.ackRequired')}</Text>
             {ackDone ? (
               <View style={styles.ackDoneBanner}>
-                <Text style={styles.ackDoneText}>You have acknowledged this announcement.</Text>
+                <Text style={styles.ackDoneText}>{t('announcements.detail.ackDone')}</Text>
               </View>
             ) : (
               <Pressable
@@ -243,13 +248,15 @@ export function AnnouncementDetailScreen({
                 {acknowledge.isPending ? (
                   <ActivityIndicator size="small" color={colors.surface} />
                 ) : (
-                  <Text style={styles.ackButtonText}>Acknowledge</Text>
+                  <Text style={styles.ackButtonText}>{t('announcements.detail.ackButton')}</Text>
                 )}
               </Pressable>
             )}
             {acknowledge.isError ? (
               <Text style={styles.ackError}>
-                Failed to acknowledge: {acknowledge.error?.message ?? 'Unknown error'}
+                {t('announcements.detail.ackError', {
+                  message: acknowledge.error?.message ?? t('errors.unknown'),
+                })}
               </Text>
             ) : null}
           </View>

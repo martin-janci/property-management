@@ -134,13 +134,19 @@ function MainApp() {
         );
       case 'Announcements':
         return <AnnouncementsScreen onNavigate={handleNavigate} />;
-      case 'AnnouncementDetail':
+      case 'AnnouncementDetail': {
+        const announcementId = screenParams?.announcementId as string | undefined;
+        if (!announcementId) {
+          handleNavigate('Announcements');
+          return null;
+        }
         return (
           <AnnouncementDetailScreen
-            announcementId={(screenParams?.announcementId as string | undefined) ?? ''}
+            announcementId={announcementId}
             onBack={() => handleNavigate('Announcements')}
           />
         );
+      }
       case 'Voting':
         return <VotingScreen onNavigate={handleNavigate} />;
       case 'VoteDetail':

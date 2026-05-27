@@ -313,7 +313,20 @@
     "empty": "Ziadne oznamenia",
     "emptyMessage": "Pozrite sa neskor pre aktuality",
     "pinned": "Pripnute",
-    "by": "Od {author}"
+    "by": "Od {author}",
+    "detail": {
+      "loadError": "Nepodarilo sa nacitat oznamenie",
+      "backToList": "← Oznamenia",
+      "back": "← Spat",
+      "attachments": "Prilohy",
+      "reads": "precitane",
+      "acknowledged": "potvrdene",
+      "comments": "komentare",
+      "ackRequired": "Toto oznamenie vyzaduje vas potvrdenie.",
+      "ackButton": "Potvrdit",
+      "ackDone": "Toto oznamenie ste potvrdili.",
+      "ackError": "Nepodarilo sa potvrdit: {{message}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget pridany",

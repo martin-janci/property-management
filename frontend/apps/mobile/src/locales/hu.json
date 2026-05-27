@@ -267,7 +267,20 @@
     "empty": "Nincsenek kozlemenyek",
     "emptyMessage": "Nezzen vissza kesobb a frissitesekert",
     "pinned": "Kituzott",
-    "by": "{author} altal"
+    "by": "{author} altal",
+    "detail": {
+      "loadError": "A kozlemeny nem toltheto be",
+      "backToList": "← Kozlemenyek",
+      "back": "← Vissza",
+      "attachments": "Mellekeletek",
+      "reads": "olvasva",
+      "acknowledged": "visszajelzett",
+      "comments": "hozzaszolasok",
+      "ackRequired": "Ez a kozlemeny visszaigazolast igenyel.",
+      "ackButton": "Visszaigazolas",
+      "ackDone": "Visszaigazolta ezt a kozlemenyt.",
+      "ackError": "A visszaigazolas sikertelen: {{message}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget hozzaadva",

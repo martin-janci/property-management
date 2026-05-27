@@ -267,7 +267,20 @@
     "empty": "Keine Ankundigungen",
     "emptyMessage": "Schauen Sie spater fur Updates vorbei",
     "pinned": "Angepinnt",
-    "by": "Von {author}"
+    "by": "Von {author}",
+    "detail": {
+      "loadError": "Ankundigung konnte nicht geladen werden",
+      "backToList": "← Ankundigungen",
+      "back": "← Zuruck",
+      "attachments": "Anhange",
+      "reads": "gelesen",
+      "acknowledged": "bestatigt",
+      "comments": "Kommentare",
+      "ackRequired": "Diese Ankundigung erfordert Ihre Bestatigung.",
+      "ackButton": "Bestatigen",
+      "ackDone": "Sie haben diese Ankundigung bestatigt.",
+      "ackError": "Bestatigung fehlgeschlagen: {{message}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",

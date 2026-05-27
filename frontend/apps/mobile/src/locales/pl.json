@@ -267,7 +267,20 @@
     "empty": "Brak ogloszen",
     "emptyMessage": "Sprawdz pozniej, czy sa aktualizacje",
     "pinned": "Przypiete",
-    "by": "Przez {author}"
+    "by": "Przez {author}",
+    "detail": {
+      "loadError": "Nie mozna zaladowac ogloszenia",
+      "backToList": "← Ogloszenia",
+      "back": "← Powrot",
+      "attachments": "Zalaczniki",
+      "reads": "odczytano",
+      "acknowledged": "potwierdzono",
+      "comments": "komentarze",
+      "ackRequired": "To ogloszenie wymaga potwierdzenia.",
+      "ackButton": "Potwierdz",
+      "ackDone": "Potwierdzono to ogloszenie.",
+      "ackError": "Blad potwierdzenia: {{message}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget dodany",
