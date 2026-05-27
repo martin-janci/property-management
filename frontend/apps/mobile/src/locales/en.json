@@ -325,7 +325,8 @@
       "ackRequired": "This announcement requires your acknowledgment.",
       "ackButton": "Acknowledge",
       "ackDone": "You have acknowledged this announcement.",
-      "ackError": "Failed to acknowledge: {{message}}"
+      "ackError": "Failed to acknowledge: {{message}}",
+      "publishedAt": "Published: {{date}}"
     }
   },
   "widgets": {

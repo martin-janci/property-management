@@ -187,7 +187,9 @@ export function AnnouncementDetailScreen({
             ) : null}
             {announcement.published_at ? (
               <Text style={styles.metaText}>
-                Published: {formatDate(announcement.published_at)}
+                {t('announcements.detail.publishedAt', {
+                  date: formatDate(announcement.published_at),
+                })}
               </Text>
             ) : null}
           </View>

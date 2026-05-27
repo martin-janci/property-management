@@ -325,7 +325,8 @@
       "ackRequired": "Toto oznamenie vyzaduje vas potvrdenie.",
       "ackButton": "Potvrdit",
       "ackDone": "Toto oznamenie ste potvrdili.",
-      "ackError": "Nepodarilo sa potvrdit: {{message}}"
+      "ackError": "Nepodarilo sa potvrdit: {{message}}",
+      "publishedAt": "Zverejnene: {{date}}"
     }
   },
   "widgets": {

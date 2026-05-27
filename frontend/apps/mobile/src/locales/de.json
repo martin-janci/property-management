@@ -279,7 +279,8 @@
       "ackRequired": "Diese Ankundigung erfordert Ihre Bestatigung.",
       "ackButton": "Bestatigen",
       "ackDone": "Sie haben diese Ankundigung bestatigt.",
-      "ackError": "Bestatigung fehlgeschlagen: {{message}}"
+      "ackError": "Bestatigung fehlgeschlagen: {{message}}",
+      "publishedAt": "Veroffentlicht: {{date}}"
     }
   },
   "widgets": {

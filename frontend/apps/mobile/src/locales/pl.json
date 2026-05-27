@@ -279,7 +279,8 @@
       "ackRequired": "To ogloszenie wymaga potwierdzenia.",
       "ackButton": "Potwierdz",
       "ackDone": "Potwierdzono to ogloszenie.",
-      "ackError": "Blad potwierdzenia: {{message}}"
+      "ackError": "Blad potwierdzenia: {{message}}",
+      "publishedAt": "Opublikowano: {{date}}"
     }
   },
   "widgets": {
