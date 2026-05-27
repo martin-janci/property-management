@@ -844,11 +844,11 @@
     },
     {
       "id": "gap-7a-2-folder-api",
-      "action": "Add CRUD endpoints for document folders: POST/GET /api/v1/documents/folders with folder_id FK on documents",
+      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add CRUD endpoints for document folders: POST/GET /api/v1/documents/folders with folder_id FK on documents",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -870,11 +870,11 @@
     },
     {
       "id": "gap-7a-4-document-download-api",
-      "action": "Add GET /api/v1/documents/{id}/download returning presigned S3 URL; add GET /api/v1/documents/{id}/preview for inline view",
+      "action": "[CASCADED-DROP: depends_on gap-7a-1-backend-multipart-upload terminal-failed] Add GET /api/v1/documents/{id}/download returning presigned S3 URL; add GET /api/v1/documents/{id}/preview for inline view",
       "owner_role": "pm-backend",
       "priority": "medium",
       "dependency": "gap-7a-1-backend-multipart-upload",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -920,11 +920,11 @@
     },
     {
       "id": "gap-10b-6-onboarding-tour-ui",
-      "action": "Build step-by-step onboarding tour overlay in admin-web using onboarding config API",
+      "action": "[CASCADED-DROP: depends_on gap-10b-6-onboarding-tour-api terminal-failed] Build step-by-step onboarding tour overlay in admin-web using onboarding config API",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "gap-10b-6-onboarding-tour-api",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -1030,11 +1030,11 @@
     },
     {
       "id": "gap-81-2-report-execution-history-ui",
-      "action": "Show execution history table in ppt-web report schedule detail page",
+      "action": "[CASCADED-DROP: depends_on gap-81-2-report-execution-history-api terminal-failed] Show execution history table in ppt-web report schedule detail page",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-81-2-report-execution-history-api",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -1155,11 +1155,11 @@
     },
     {
       "id": "gap-10b-5-support-data-ui",
-      "action": "Build Support Data page in admin-web calling /api/v1/platform-admin/support-data; show tenant diagnostics table",
+      "action": "[CASCADED-DROP: depends_on gap-10b-5-support-data-api terminal-failed] Build Support Data page in admin-web calling /api/v1/platform-admin/support-data; show tenant diagnostics table",
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-10b-5-support-data-api",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
@@ -1179,11 +1179,11 @@
     },
     {
       "id": "gap-82-7-kmp-android-detail",
-      "action": "Wire ListingDetailScreen and FavoritesScreen in KMP Android Compose UI to reality-server endpoints",
+      "action": "[CASCADED-DROP: depends_on gap-82-6-kmp-android-home terminal-failed] Wire ListingDetailScreen and FavoritesScreen in KMP Android Compose UI to reality-server endpoints",
       "owner_role": "pm-frontend",
       "priority": "low",
       "dependency": "gap-82-6-kmp-android-home",
-      "status": "open",
+      "status": "dropped",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
       "depends_on": [
