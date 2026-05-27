@@ -1868,7 +1868,7 @@
       "branch": "auto-impl/gap-85-2-build-config-ios",
       "status": "review",
       "claimed_at": "2026-05-26T00:11:44Z",
-      "last_updated": "2026-05-27T11:45:00Z",
+      "last_updated": "2026-05-27T11:00:00Z",
       "status_changed_at": "2026-05-26T00:26:42Z",
       "pr_number": 535,
       "pr_url": "https://github.com/martin-janci/property-management/pull/535",
@@ -1880,7 +1880,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 1,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
