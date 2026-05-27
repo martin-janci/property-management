@@ -1,3 +1,28 @@
 {
   "generated": "2026-05-27T12:00:00Z",
   "assignments": [
+    {
+      "task_id": "pm-scrum-master-review-decision-pr-435",
+      "branch": "auto-impl/pm-scrum-master-review-decision-pr-435",
+      "status": "done",
+      "specialist": "generic",
+      "claimed_at": "2026-05-23T21:43:59Z",
+      "last_updated": "2026-05-24T08:02:00Z",
+      "status_changed_at": "2026-05-23T21:43:59Z",
+      "pr_number": 435,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/435",
+      "merged_at": null,
+      "implementer_summary": "pr=435 status=done specialist=generic note=PR #435 reviewed, merged to dev at bddcbf46",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
+    }
+  ],
+  "assignments.generated": "2026-05-27T12:00:00Z"
+}
