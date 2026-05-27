@@ -16,6 +16,7 @@ use axum::{
 };
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
     ExecutionDownloadUrl, ExecutionHistoryResponse, FaultStatistics, FaultTrends, OccupancySummary,
@@ -1739,10 +1740,21 @@ fn validate_cron_expression(expr: &str) -> bool {
 )]
 pub async fn update_schedule(
     State(state): State<AppState>,
-    _auth: AuthUser,
+    auth: AuthUser,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateScheduleRequest>,
 ) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may mutate report schedules.
+    let role = auth.role.unwrap_or(TenantRole::Guest);
+    if !role.is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to modify report schedules",
+            )),
+        ));
+    }
     // At least one field must be supplied.
     if req.cron_expression.is_none() && req.recipients.is_none() && req.enabled.is_none() {
         return Err((
@@ -1829,4 +1841,102 @@ pub async fn update_schedule(
             )
         })?;
     Ok(Json(updated))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_cron_expression;
+
+    // --- valid expressions ---
+
+    #[test]
+    fn valid_every_minute() {
+        assert!(validate_cron_expression("* * * * *"));
+    }
+
+    #[test]
+    fn valid_specific_time() {
+        // Every Monday at 08:00
+        assert!(validate_cron_expression("0 8 * * 1"));
+    }
+
+    #[test]
+    fn valid_ranges_and_lists() {
+        assert!(validate_cron_expression("0,30 9-17 1-31 1-12 0-7"));
+    }
+
+    #[test]
+    fn valid_step_syntax() {
+        // Every 5 minutes
+        assert!(validate_cron_expression("*/5 * * * *"));
+    }
+
+    #[test]
+    fn valid_boundary_values() {
+        assert!(validate_cron_expression("59 23 31 12 7"));
+    }
+
+    // --- invalid expressions ---
+
+    #[test]
+    fn invalid_too_few_fields() {
+        assert!(!validate_cron_expression("* * * *"));
+    }
+
+    #[test]
+    fn invalid_too_many_fields() {
+        assert!(!validate_cron_expression("* * * * * *"));
+    }
+
+    #[test]
+    fn invalid_empty_string() {
+        assert!(!validate_cron_expression(""));
+    }
+
+    #[test]
+    fn invalid_minute_out_of_range() {
+        // minute must be 0-59
+        assert!(!validate_cron_expression("60 * * * *"));
+    }
+
+    #[test]
+    fn invalid_hour_out_of_range() {
+        // hour must be 0-23
+        assert!(!validate_cron_expression("* 24 * * *"));
+    }
+
+    #[test]
+    fn invalid_dom_zero() {
+        // day-of-month must be 1-31
+        assert!(!validate_cron_expression("* * 0 * *"));
+    }
+
+    #[test]
+    fn invalid_month_too_large() {
+        // month must be 1-12
+        assert!(!validate_cron_expression("* * * 13 *"));
+    }
+
+    #[test]
+    fn invalid_dow_out_of_range() {
+        // day-of-week must be 0-7
+        assert!(!validate_cron_expression("* * * * 8"));
+    }
+
+    #[test]
+    fn invalid_step_zero() {
+        // step of 0 is meaningless
+        assert!(!validate_cron_expression("*/0 * * * *"));
+    }
+
+    #[test]
+    fn invalid_non_numeric_field() {
+        assert!(!validate_cron_expression("foo * * * *"));
+    }
+
+    #[test]
+    fn invalid_reversed_range() {
+        // lo > hi in a range
+        assert!(!validate_cron_expression("* * 31-1 * *"));
+    }
 }
