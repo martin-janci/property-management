@@ -10,8 +10,8 @@
  */
 
 export {
-  type MfaChallengeHandler,
   hasMfaChallengeHandler,
+  type MfaChallengeHandler,
   requestMfaChallenge,
   setMfaChallengeHandler,
 } from '../lib/mfa-handler';

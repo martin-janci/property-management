@@ -61,7 +61,9 @@ export async function listAgencies(
   signal?: AbortSignal
 ): Promise<AdminPaginatedResponse<Agency>> {
   const qs = buildQueryString(params || {});
-  return authenticatedFetchJson<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, { signal });
+  return authenticatedFetchJson<AdminPaginatedResponse<Agency>>(`${API_BASE}/agencies${qs}`, {
+    signal,
+  });
 }
 
 /**
@@ -171,10 +173,9 @@ export async function fetchHealthAlerts(
   activeOnly: boolean,
   signal?: AbortSignal
 ): Promise<MetricAlert[]> {
-  return authenticatedFetchJson<MetricAlert[]>(
-    `${HEALTH_BASE}/alerts?active_only=${activeOnly}`,
-    { signal }
-  );
+  return authenticatedFetchJson<MetricAlert[]>(`${HEALTH_BASE}/alerts?active_only=${activeOnly}`, {
+    signal,
+  });
 }
 
 export async function acknowledgeHealthAlert(alertId: string): Promise<void> {
@@ -224,10 +225,9 @@ export async function getSystemAnnouncement(
   id: string,
   signal?: AbortSignal
 ): Promise<SystemAnnouncement> {
-  return authenticatedFetchJson<SystemAnnouncement>(
-    `${SYSANN_BASE}/${encodeURIComponent(id)}`,
-    { signal }
-  );
+  return authenticatedFetchJson<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
+    signal,
+  });
 }
 
 export async function createSystemAnnouncement(
@@ -243,10 +243,10 @@ export async function updateSystemAnnouncement(
   id: string,
   data: UpdateSystemAnnouncementRequest
 ): Promise<SystemAnnouncement> {
-  return authenticatedFetchJson<SystemAnnouncement>(
-    `${SYSANN_BASE}/${encodeURIComponent(id)}`,
-    { method: 'PUT', body: JSON.stringify(data) }
-  );
+  return authenticatedFetchJson<SystemAnnouncement>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function deleteSystemAnnouncement(id: string): Promise<void> {
