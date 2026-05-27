@@ -2748,7 +2748,7 @@
       "branch": "auto-impl/fix-579-helpsidebar-a11y",
       "status": "review",
       "claimed_at": "2026-05-27T20:07:48Z",
-      "last_updated": "2026-05-27T20:39:00Z",
+      "last_updated": "2026-05-27T20:53:00Z",
       "status_changed_at": "2026-05-27T20:39:00Z",
       "pr_number": 637,
       "pr_url": "https://github.com/martin-janci/property-management/pull/637",
@@ -2762,7 +2762,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 0,
+      "fix_rounds": 1,
       "merge_attempted_at": null
     },
     {
