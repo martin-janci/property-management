@@ -1729,14 +1729,14 @@
       "status": "in-progress",
       "specialist": null,
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T10:25:00Z",
       "status_changed_at": "2026-05-27T01:07:37Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 3 required issues resolved; publishedAt i18n added to 6 locales; announcementId guard in place; lists() cache invalidation present; CI all green; ready to merge (PR still draft \u2014 merge blocked until undrafted)"
     }
   ],
-  "assignments.generated": "2026-05-27T01:07:37Z"
+  "assignments.generated": "2026-05-27T10:25:00Z"
 }
