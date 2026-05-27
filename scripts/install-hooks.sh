@@ -49,6 +49,13 @@ cp "$SCRIPT_DIR/pre-commit" "$HOOKS_DIR/pre-commit"
 chmod +x "$HOOKS_DIR/pre-commit"
 
 echo -e "${GREEN}✓ Pre-commit hook installed${NC}"
+
+# Register the `merge=ours` driver used by .gitattributes for backend/Cargo.lock.
+# Without this, the per-file merge attribute is a no-op (git treats an unknown
+# driver name as the default merge). `true` is the conventional one-liner
+# driver: "the merge is already done — keep our version, exit 0".
+git config merge.ours.driver true
+echo -e "${GREEN}✓ Registered merge.ours.driver (Cargo.lock churn absorber)${NC}"
 echo ""
 echo -e "${CYAN}The following checks are now active:${NC}"
 echo ""

@@ -12,9 +12,11 @@ import {
   resumeSchedule,
   retryReportExecution,
   updateSchedule,
+  updateScheduleCron,
 } from './api';
 import type {
   CreateReportSchedule,
+  CronScheduleUpdateRequest,
   ReportExecutionHistoryParams,
   ReportExecutionStatus,
 } from './types';
@@ -44,6 +46,24 @@ export function useUpdateSchedule() {
       updateSchedule(id, data),
     onSuccess: (updatedSchedule) => {
       // Invalidate schedule-related queries
+      queryClient.invalidateQueries({ queryKey: reportKeys.schedules() });
+      queryClient.invalidateQueries({ queryKey: reportKeys.schedule(updatedSchedule.id) });
+    },
+  });
+}
+
+/**
+ * Hook to update a report schedule via the cron-based endpoint (gap-81-1).
+ *
+ * Sends cron_expression, recipients, and/or enabled to PUT /schedules/{id}.
+ */
+export function useUpdateScheduleCron() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CronScheduleUpdateRequest }) =>
+      updateScheduleCron(id, data),
+    onSuccess: (updatedSchedule) => {
       queryClient.invalidateQueries({ queryKey: reportKeys.schedules() });
       queryClient.invalidateQueries({ queryKey: reportKeys.schedule(updatedSchedule.id) });
     },
