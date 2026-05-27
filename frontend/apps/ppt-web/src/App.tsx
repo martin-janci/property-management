@@ -106,6 +106,7 @@ import {
   AccessibilitySettingsPage,
   AnnouncementsPage,
   ArticleDetailPage,
+  AuthCallbackPage,
   BudgetManagementPage,
   ChangePasswordPage,
   CreateAnnouncementPage,
@@ -464,6 +465,11 @@ function App() {
                               <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<LoginPage />} />
+                                {/* SSO / OAuth callback route (gap-79-2).
+                                    Handles provider redirect: reads ?code=…&state=…,
+                                    exchanges for PPT JWT tokens via tokenProvider,
+                                    then redirects to /dashboard or stored return URL. */}
+                                <Route path="/auth/callback" element={<AuthCallbackPage />} />
                                 <Route path="/register" element={<RegisterPage />} />
                                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                 <Route path="/reset-password" element={<ResetPasswordPage />} />
