@@ -3,6 +3,7 @@
 //! Repository for platform-wide administrative operations including
 //! organization management with cross-tenant queries.
 
+use crate::models::fault::StatusCount as FaultStatusCount;
 use crate::models::platform_admin::{
     AdminOrganizationDetail, OrganizationDetailMetrics, OrganizationMetrics,
 };
@@ -499,15 +500,6 @@ pub struct SupportActivityLog {
     pub resource_id: Option<String>,
     pub details: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
-}
-
-/// Fault statistics breakdown for a single status bucket.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-pub struct FaultStatusCount {
-    /// Fault status label (e.g. "new", "in_progress", "resolved").
-    pub status: String,
-    /// Number of faults with this status.
-    pub count: i64,
 }
 
 /// Tenant diagnostics returned by `GET /api/v1/platform-admin/support-data`.
