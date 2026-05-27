@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T07:25:00Z",
+  "generated": "2026-05-27T07:32:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1711,29 +1711,29 @@
     {
       "task_id": "gap-security-435-cookie-scope",
       "branch": "auto-impl/gap-security-435-cookie-scope",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "pm-security",
       "claimed_at": "2026-05-27T07:15:00Z",
-      "last_updated": "2026-05-27T07:15:00Z",
-      "status_changed_at": "2026-05-27T07:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T07:32:00Z",
+      "status_changed_at": "2026-05-27T07:32:00Z",
+      "pr_number": 565,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/565",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=565 status=done specialist=pm-security note=P0-12 cookie hardening: SameSite Lax\u2192Strict, Path=/api/v1/auth scoped; sso.rs build_portal_session_cookie() centralised with Path=/api/v1/sso; 13 unit tests; cargo check exit 0",
       "reviewer_summary": null
     },
     {
       "task_id": "pm-qa-inquiry-idor-tests-v2",
       "branch": "auto-impl/pm-qa-inquiry-idor-tests-v2",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-27T07:15:00Z",
-      "last_updated": "2026-05-27T07:15:00Z",
-      "status_changed_at": "2026-05-27T07:15:00Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T07:32:00Z",
+      "status_changed_at": "2026-05-27T07:32:00Z",
+      "pr_number": 563,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/563",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=563 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=PR#563 already open+approved; cargo check -p reality-server exit 0; 3 IDOR tests (C1/C2/C3) compile clean; mark_inquiry_read_for_realtor implemented in PR#497+#508",
       "reviewer_summary": null
     },
     {
