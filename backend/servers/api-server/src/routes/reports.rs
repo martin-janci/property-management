@@ -1795,7 +1795,7 @@ pub async fn update_schedule(
                     StatusCode::BAD_REQUEST,
                     Json(ErrorResponse::new(
                         "INVALID_RECIPIENT_EMAIL",
-                        &format!("Invalid recipient email address: {email}"),
+                        format!("Invalid recipient email address: {email}"),
                     )),
                 ));
             }
