@@ -21,9 +21,9 @@ use db::models::{
     ScheduledMaintenance, SystemAnnouncement, SystemAnnouncementAcknowledgment,
 };
 use db::repositories::{
-    ActiveAnnouncement, FaultStatusCount, FeatureFlagWithCount, FeatureFlagWithOverrides,
-    HealthDashboard, MetricHistory, OnboardingTour, PlatformStats, ResolvedFeatureFlag,
-    SupportActivityLog, SupportData, SupportUserInfo, SupportUserMembership, SupportUserSession,
+    ActiveAnnouncement, FeatureFlagWithCount, FeatureFlagWithOverrides, HealthDashboard,
+    MetricHistory, OnboardingTour, PlatformStats, ResolvedFeatureFlag, SupportActivityLog,
+    SupportData, SupportUserInfo, SupportUserMembership, SupportUserSession,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -2778,12 +2778,6 @@ pub struct SupportDataResponse {
     /// Platform-wide tenant diagnostics.
     pub data: SupportData,
 }
-
-// Silence unused-import warning — FaultStatusCount is re-exported for
-// utoipa schema generation even though the route handler doesn't name it
-// directly in its return type.
-#[allow(unused_imports)]
-use db::repositories::FaultStatusCount as _;
 
 /// Get platform tenant diagnostics (support data).
 ///
