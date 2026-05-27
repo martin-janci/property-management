@@ -1780,8 +1780,8 @@
       "status": "approved",
       "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-27T14:18:17Z",
-      "status_changed_at": "2026-05-27T14:18:17Z",
+      "last_updated": "2026-05-27T15:00:00Z",
+      "status_changed_at": "2026-05-27T15:00:00Z",
       "pr_number": 533,
       "pr_url": "https://github.com/martin-janci/property-management/pull/533",
       "merged_at": null,
@@ -1794,7 +1794,8 @@
       "rebase_attempts": null,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
-      "merge_attempted_at": "2026-05-27T12:15:00Z"
+      "merge_attempted_at": "2026-05-27T12:15:00Z",
+      "conflict_resolution_note": "2026-05-27 \u2014 conflict with PR#537 (gap-82-3-search-enhancements) manually resolved: HomeView.swift adopted dev's coordinator.navigate(to:.searchResults) pattern; SearchView.swift kept dev's location-alert chain, discarded obsolete .onAppear pendingSearchFilters (superseded by navigate pattern), resolved buildKMPFilters to use ListingKind + sortOption.kmpSortOption from PR#533's SortOption enum. Branch force-pushed as fix-533-v2 -> auto-impl/gap-82-3-swiftui-home-search."
     },
     {
       "task_id": "gap-83-1-airbnb-integration-backend",
