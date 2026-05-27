@@ -421,6 +421,15 @@ After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix
 
 For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
 
+**Branch-prefix guard (ingestion contract — issue #573):**
+Before appending any row to `assignments.json`, assert that `branch` starts
+with `"auto-impl/"`. If for any reason the computed branch does NOT match this
+prefix, log `SKIP ingestion: branch prefix guard failed for <task_id>
+(branch=<branch>)` and do NOT append the row -- treat it as unclaimed.
+Manual/hotfix branches (e.g. `fix/*`, `feat/*`) must never enter
+`assignments.json` via this path; they are tracked outside the dispatcher.
+This invariant is verified by the self-test (T16) and T7.
+
 Append to `assignments.json`:
 
 ```jsonc
