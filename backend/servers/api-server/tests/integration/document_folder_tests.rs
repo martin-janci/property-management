@@ -88,12 +88,12 @@ fn mint_jwt_with_role(user_id: Uuid, role_str: &str) -> String {
 }
 
 /// Insert document_folder row directly (bypasses HTTP + RLS).
-async fn seed_folder_f(pool: &PgPool, org: Uuid, parent: Option<Uuid>, name: &str) -> Uuid {
+async fn seed_folder_f(pool: &PgPool, org: Uuid, parent: Option<Uuid>, name: &str, created_by: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         "INSERT INTO document_folders (organization_id,parent_id,name,created_by) \
-         VALUES ($1,$2,$3,$1) RETURNING id",
+         VALUES ($1,$2,$3,$4) RETURNING id",
     )
-    .bind(org).bind(parent).bind(name)
+    .bind(org).bind(parent).bind(name).bind(created_by)
     .fetch_one(pool).await.expect("seed_folder_f")
 }
 
@@ -266,7 +266,8 @@ async fn test_cross_org_folder_idor_is_rejected(pool: PgPool) {
     let app = common::TestApp::new(pool.clone()).await;
     let org_a = seed_org_f(&pool, "idor-a").await;
     let org_b = seed_org_f(&pool, "idor-b").await;
-    let _ = seed_folder_f(&pool, org_a, None, "OrgA Folder").await;
+    let user_a = seed_user_f(&pool, "idor-user@folder-test.example").await;
+    let _ = seed_folder_f(&pool, org_a, None, "OrgA Folder", user_a).await;
 
     let count_before: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM document_folders WHERE organization_id = $1")
@@ -312,7 +313,7 @@ async fn test_folder_depth_limit_returns_bad_request(pool: PgPool) {
     // Seed levels 1-5 directly (bypasses HTTP; trigger fires at INSERT).
     let mut parent: Option<Uuid> = None;
     for i in 1u32..=5 {
-        let fid = seed_folder_f(&pool, org_id, parent, &format!("Level {i}")).await;
+        let fid = seed_folder_f(&pool, org_id, parent, &format!("Level {i}"), user_id).await;
         parent = Some(fid);
     }
     let depth5_parent = parent.unwrap();
