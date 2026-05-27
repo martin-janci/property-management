@@ -194,3 +194,34 @@ export interface CreateSystemAnnouncementResponse {
   message: string;
   announcement: SystemAnnouncement;
 }
+
+// ============================================================
+// Support Data (Epic 10B.5)
+// ============================================================
+
+/** Per-status fault count returned inside `SupportData`. */
+export interface FaultStatusCount {
+  status: string;
+  count: number;
+}
+
+/**
+ * Platform-wide tenant diagnostics returned by
+ * `GET /api/v1/platform-admin/support-data`.
+ */
+export interface SupportData {
+  total_users: number;
+  active_users: number;
+  pending_users: number;
+  suspended_users: number;
+  /** Non-expired, non-revoked refresh tokens — proxy for active sessions. */
+  active_sessions: number;
+  total_faults: number;
+  /** Per-status fault counts, ordered by count descending. */
+  fault_by_status: FaultStatusCount[];
+}
+
+/** Wrapper returned by the API route. */
+export interface SupportDataResponse {
+  data: SupportData;
+}

@@ -94,6 +94,7 @@ export function AdminLayout() {
   const canSiteSettingsWrite = useCapability('site_settings_write');
   const canMobileConfigWrite = useCapability('mobile_config_write');
   const canHealthRead = useCapability('audit_read');
+  const canSupportDataRead = useCapability('audit_read');
 
   // DEVELOPER
   const canOauthClientWrite = useCapability('oauth_client_write');
@@ -165,6 +166,12 @@ export function AdminLayout() {
               <NavItem
                 to="/platform/announcements"
                 label={t('admin.announcements.navLabel', 'Announcements')}
+              />
+            ) : null}
+            {canSupportDataRead ? (
+              <NavItem
+                to="/platform/support-data"
+                label={t('admin.supportData.navLabel', 'Support data')}
               />
             ) : null}
           </SidebarGroup>

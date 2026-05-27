@@ -124,6 +124,42 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 
 `action-list.json` should hold ≥ 36 open items (12 runs * 3 = 1 day of throughput).
 
+## Subagent workspace isolation (NEW — issue #7: branch displacement)
+
+The dispatcher runs from a single working tree on `dev`. Any subagent that
+does `git checkout <other-branch>` in that same working tree silently
+displaces the dispatcher off `dev` — Phase 6's `git add .research/management/`
+then stages files relative to the wrong branch, and Phase 1 of the next run
+pulls into the wrong branch. This bit the 2026-05-27 runs (stash-pop
+conflicts, assignments.json written against feature branches).
+
+Fix: **every subagent that needs a different branch MUST do its work in a
+dedicated `git worktree` under `/tmp/ppt-worktrees/<task_id>/`**, NEVER in
+the dispatcher's working tree.
+
+Standard preamble injected into every Phase 4 / 5.6 / 5.7 subagent brief:
+
+```bash
+WORKTREE_PATH="/tmp/ppt-worktrees/${TASK_ID:-${PR_NUMBER:-spawn-$$}}"
+mkdir -p "$(dirname "$WORKTREE_PATH")"
+# Fresh checkout off origin/dev; -B re-creates the branch if a previous
+# attempt left it behind.
+git worktree add -B "$BRANCH" "$WORKTREE_PATH" origin/dev 2>&1 \
+  || git worktree add "$WORKTREE_PATH" "$BRANCH"
+cd "$WORKTREE_PATH"
+trap 'cd / && git worktree remove --force "$WORKTREE_PATH" 2>/dev/null' EXIT
+```
+
+The trap removes the worktree on exit — `.gitignore` already excludes
+`.worktrees/` from the repo, and `/tmp/ppt-worktrees/` is outside the repo
+entirely, so no in-tree pollution either way.
+
+Phase 5.5 (merger) does NOT need worktree isolation — `gh pr merge` is a
+GitHub API call, no local checkout.
+
+Phase 2 (state reconciliation) is read-only against `gh` and read-only
+against `git rev-list/fetch`; no checkout needed.
+
 ---
 
 ## Phase 1 — Read state + preflight
@@ -170,6 +206,15 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
      du -sh ~/.cargo/registry/cache ~/.cargo/git/checkouts 2>/dev/null | tail -5 || true
      # Best-effort cleanup; never fail the run on this:
      (cd backend && cargo cache --autoclean 2>/dev/null) || true
+     # Prune stale Cargo incremental artifacts. backend/target/debug/incremental/
+     # accumulates per-branch fingerprints that thrash across subagent runs
+     # (observed 2026-05-27: 15 GB incremental dir on dev). Drop entries idle
+     # for >4h — current-run artifacts stay hot, only multi-branch debris goes.
+     find backend/target/debug/incremental -maxdepth 1 -mindepth 1 \
+          -mmin +240 -exec rm -rf {} + 2>/dev/null || true
+     # Same treatment for sub-agent worktrees from prior runs whose trap missed.
+     find /tmp/ppt-worktrees -maxdepth 1 -mindepth 1 -type d \
+          -mmin +360 -exec rm -rf {} + 2>/dev/null || true
      find /tmp -maxdepth 2 -mtime +1 -type f -delete 2>/dev/null || true
      FREE_PCT=$(df -P . | awk 'NR==2{ sub("%","",$5); print 100-$5 }')
      echo "disk_warning: free after cleanup = ${FREE_PCT}%"
@@ -500,6 +545,13 @@ Prompt:
 
 > You are an implementer. Invoke `.claude/skills/ppt-implement/SKILL.md`.
 > Inputs: `task_id`, `action`, `owner_role`, `priority`, `dependency` (legacy free-text), `depends_on` (gap 3 — structured array of task_ids), `branch`.
+>
+> **Workspace isolation (MANDATORY — issue #7).** Before invoking the skill,
+> run the standard worktree preamble from the "Subagent workspace isolation"
+> section above. Do all checkouts, commits, and verify-runs inside
+> `/tmp/ppt-worktrees/${task_id}/`. NEVER `git checkout <branch>` in the
+> dispatcher's working tree.
+>
 > The skill picks the specialist, runs the 3-band verify gate, runs the
 > NEW scope-drift + code-reuse pre-flight checks, opens a DRAFT PR vs `dev`
 > only if verify passes.
@@ -718,6 +770,12 @@ Spawn ONE Task subagent (cap 1 parallel — rebases serialize on the same base):
 > You are a PR rebaser for a stale approved PR. Inputs: `pr_number=<n>`,
 > `branch=<head_ref>`, `base=dev`. Do this exactly:
 >
+> 0. **Workspace isolation (MANDATORY — issue #7).** Run the standard
+>    worktree preamble from the "Subagent workspace isolation" section
+>    above (export `TASK_ID=pr-<n>`, `BRANCH=<head_ref>`). All subsequent
+>    git operations run inside `/tmp/ppt-worktrees/pr-<n>/`. NEVER
+>    `gh pr checkout` in the dispatcher's working tree — it displaces
+>    `dev` and breaks Phase 6 of this run.
 > 1. `gh pr checkout <n> --repo martin-janci/property-management`
 > 2. `git fetch origin dev`
 > 3. `git rebase origin/dev`
@@ -748,6 +806,13 @@ Spawn ONE Task subagent (cap 3 parallel — same as Phase 4's implementer cap):
 > You are the PR follow-up driver. Invoke
 > `.claude/skills/ppt-pr-followup/SKILL.md` in dispatcher mode for PR #<n>.
 >
+> 0. **Workspace isolation (MANDATORY — issue #7).** When step 2 below
+>    spawns the original specialist via Task, the brief you pass that
+>    specialist MUST include the standard worktree preamble from the
+>    "Subagent workspace isolation" section above (export
+>    `TASK_ID=<task_id>`, `BRANCH=<row.branch>`). The followup script
+>    itself runs read-only `gh` calls and is safe in the dispatcher's
+>    tree.
 > 1. Run `bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh --pr <n>`.
 > 2. If the script's stdout contains a `=== ppt-pr-followup respawn brief ===`
 >    block, take that brief and spawn the original specialist via the `Task`
@@ -778,6 +843,22 @@ fix rounds per row; subsequent calls return `failed`.
 Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Tier 1 refilled.
 
 ```bash
+# Row-count regression guard (NEW — issue #8). On 2026-05-27 commit 4def18ce
+# truncated assignments.json from 118 rows to 2 via stale-read → Edit-write
+# race ("1 insertion(+), 2570 deletions(-)" while the commit message claimed
+# a single reviewer-verdict update). Several similar recoveries since
+# (8d696633, 23fee3c7, 35c680a2). Abort the commit if the row count drops
+# by more than 2 vs the version we pulled in Phase 1.
+NEW_COUNT=$(jq '.assignments | length' .research/management/assignments.json)
+OLD_COUNT=$(git show HEAD:.research/management/assignments.json 2>/dev/null \
+            | jq '.assignments | length' 2>/dev/null || echo 0)
+if [ "$NEW_COUNT" -lt "$((OLD_COUNT - 2))" ]; then
+  echo "PHASE 6 ABORT: assignments.json row count ${OLD_COUNT} -> ${NEW_COUNT} (loss > 2)" >&2
+  echo "  Refusing to commit destructive write. Manual restore required:" >&2
+  echo "  git checkout HEAD -- .research/management/assignments.json" >&2
+  exit 0
+fi
+
 git add .research/management/assignments.json [.research/management/action-list.json if refilled]
 # Commit-scope guard (#526): before the dispatcher's self-commit, refuse
 # if `git diff --cached` strays outside `.research/management/`. Catches
@@ -864,6 +945,7 @@ Hang alerts:
 - **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
+- **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
 
 ---
 
