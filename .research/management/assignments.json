@@ -1711,7 +1711,7 @@
     {
       "task_id": "gap-80-2-dispute-filing-ui",
       "branch": "auto-impl/gap-80-2-dispute-filing-ui",
-      "status": "approved",
+      "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T20:10:00Z",
       "last_updated": "2026-05-27T14:40:00Z",
