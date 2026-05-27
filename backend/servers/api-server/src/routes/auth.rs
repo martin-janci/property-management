@@ -914,10 +914,11 @@ fn build_refresh_cookie(
     // running an OAuth/SSO redirect-back flow on the same origin can override to
     // Lax via PPT_AUTH_COOKIE_SAMESITE=Lax.  The previous default was Lax which
     // left an unnecessary CSRF surface for most deployments.
-    let same_site = match same_site_override {
-        Some(s @ ("Strict" | "Lax" | "None")) => s,
-        _ => "Strict",
-    };
+    // filter rejects any value that is not one of the three RFC 6265 SameSite tokens;
+    // invalid env values fall back to "Strict" rather than being forwarded verbatim.
+    let same_site = same_site_override
+        .filter(|s| matches!(*s, "Strict" | "Lax" | "None"))
+        .unwrap_or("Strict");
     let mut cookie = format!(
         "refresh_token={value}; HttpOnly; Secure; SameSite={same_site}; Path=/api/v1/auth; Max-Age={max_age_seconds}"
     );
