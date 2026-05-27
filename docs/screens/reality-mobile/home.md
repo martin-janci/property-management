@@ -10,7 +10,7 @@ implementations:
     route: Tab.home / Route.home
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: connected
+    apiStatus: complete
 endpoints:
   - listings_search
 relatedScreens:
