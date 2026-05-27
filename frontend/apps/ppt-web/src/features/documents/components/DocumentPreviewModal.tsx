@@ -8,20 +8,19 @@
  * Accessibility:
  *  - role="dialog" + aria-modal + aria-labelledby on the panel, not the backdrop (ARIA 1.2 §3.15)
  *  - useId() for collision-safe aria-labelledby across concurrent instances
- *  - Focus trap: Tab/Shift+Tab cycle within the panel
- *  - Auto-focus close button on mount; Escape key closes the modal
+ *  - Focus trap + Escape key + focus-restore via useFocusTrap (WCAG 2.4.3)
  *  - Backdrop click closes (click must target the backdrop itself)
  *  - Body scroll locked while open
+ *  - z-index: 1050 — above toasts (1000) and FolderTree overlay (1000),
+ *    below skip-nav (9999) and focus-visible outlines (10000-10001)
  */
 
 import { usePreviewUrl } from '@ppt/api-client';
 import type React from 'react';
 import { useCallback, useEffect, useId, useRef } from 'react';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 import { useDocumentDownload } from '../hooks/useDocumentDownload';
 import { PdfPreview } from './PdfPreview';
-
-const FOCUSABLE_SELECTOR =
-  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -152,12 +151,10 @@ export function DocumentPreviewModal({
   const titleId = useId();
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Auto-focus close button on mount for immediate dismiss via keyboard.
-  useEffect(() => {
-    closeBtnRef.current?.focus();
-  }, []);
+  // Focus trap: Tab/Shift+Tab cycle within the panel, Escape calls onClose,
+  // and focus is restored to the triggering element on unmount (WCAG 2.4.3).
+  useFocusTrap(panelRef, onClose);
 
   // Lock body scroll while the modal is open.
   useEffect(() => {
@@ -166,37 +163,6 @@ export function DocumentPreviewModal({
     return () => {
       document.body.style.overflow = prev;
     };
-  }, []);
-
-  // Escape key closes modal.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  // Focus trap: cycle Tab / Shift+Tab within the dialog panel.
-  const handlePanelKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab') return;
-    const panel = panelRef.current;
-    if (!panel) return;
-    const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else {
-      if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
   }, []);
 
   const handleBackdropClick = useCallback(
@@ -216,7 +182,6 @@ export function DocumentPreviewModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        onKeyDown={handlePanelKeyDown}
       >
         {/* Header */}
         <div className="doc-preview__header">
@@ -226,7 +191,6 @@ export function DocumentPreviewModal({
           <div className="doc-preview__header-actions">
             <DownloadButton documentId={documentId} fileName={fileName} />
             <button
-              ref={closeBtnRef}
               type="button"
               className="doc-preview__close-btn"
               onClick={onClose}
@@ -264,7 +228,7 @@ export function DocumentPreviewModal({
         .doc-preview-backdrop {
           position: fixed;
           inset: 0;
-          z-index: 1000;
+          z-index: 1050;
           background: rgba(0, 0, 0, 0.65);
           display: flex;
           align-items: center;

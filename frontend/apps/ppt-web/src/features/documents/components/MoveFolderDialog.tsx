@@ -16,11 +16,8 @@
  */
 
 import { type FolderTreeNode, useFolderTree } from '@ppt/api-client';
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-const FOCUSABLE_SELECTOR =
-  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+import { useRef, useState } from 'react';
+import { useFocusTrap } from '../../../hooks/useFocusTrap';
 
 // ─── FolderOption ─────────────────────────────────────────────────────────────
 
@@ -292,41 +289,9 @@ export function MoveFolderDialog({
   const [selectedId, setSelectedId] = useState<string | null>(currentFolderId);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Close on Escape
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onCancel]);
-
-  // Focus on mount so keyboard users can immediately Tab through the dialog.
-  useEffect(() => {
-    dialogRef.current?.focus();
-  }, []);
-
-  // Focus trap: cycle Tab / Shift+Tab within the dialog panel.
-  const handleDialogKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab') return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      }
-    } else {
-      if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  }, []);
+  // Focus trap: Tab/Shift+Tab cycle within the dialog, Escape calls onCancel,
+  // and focus is restored to the triggering element on unmount (WCAG 2.4.3).
+  useFocusTrap(dialogRef, onCancel);
 
   const tree = data?.tree ?? [];
   const crumbs = selectedId ? buildFolderCrumbs(tree, selectedId) : [];
@@ -349,7 +314,6 @@ export function MoveFolderDialog({
         aria-modal="true"
         aria-label="Presunúť dokumenty"
         tabIndex={-1}
-        onKeyDown={handleDialogKeyDown}
       >
         {/* Header */}
         <div className="mfd__header">
@@ -555,6 +519,11 @@ export function MoveFolderDialog({
           color: var(--ppt-fg-primary);
         }
 
+        .mfd__close:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+        }
+
         /* ── Document summary ─────────────────────────────── */
         .mfd__docs {
           padding: 0 1.25rem 0.5rem;
@@ -631,6 +600,11 @@ export function MoveFolderDialog({
         .mfd__root-option:hover {
           background: var(--ppt-bg-app);
           color: var(--ppt-fg-primary);
+        }
+
+        .mfd__root-option:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: -2px;
         }
 
         .mfd__root-option--selected {
@@ -718,6 +692,12 @@ export function MoveFolderDialog({
           line-height: 1.4;
         }
 
+        .mfd-option__name:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+          border-radius: 0.125rem;
+        }
+
         .mfd-option__row--selected .mfd-option__name {
           font-weight: 600;
           color: var(--ppt-brand-600, var(--ppt-brand-500));
@@ -793,6 +773,11 @@ export function MoveFolderDialog({
         }
 
         .mfd__btn:not(:disabled):hover { opacity: 0.85; }
+
+        .mfd__btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+        }
 
         .mfd__btn--secondary {
           background: var(--ppt-bg-app);
