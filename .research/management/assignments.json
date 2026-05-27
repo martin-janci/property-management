@@ -1720,7 +1720,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/530",
       "merged_at": null,
       "implementer_summary": "pr=530 status=done specialist=react-web note=round-1 fixes applied: explicit react-hook-form/zod/hookform-resolvers deps, i18n keys added to all 6 locales, Cancel/Back replaced with disabled buttons+navigate(), React import moved to top, useEffect URL cleanup on unmount; typecheck exit=0 biome warnings-only",
-      "reviewer_summary": "verdict=approve head_oid=280654ce3b2fe7bbb563efc6cbbcc5d9ec249649 note=approve with recommendations: remove unused selectedType var (biome CI failure), regenerate pnpm-lock.yaml with react-hook-form/zod/hookform deps; useEffect URL cleanup stale closure (low severity); core implementation correct — two-step dispute+evidence flow, zod validation, drag-drop uploader, i18n all 6 locales, no XSS, no any types",
+      "reviewer_summary": "verdict=approve head_oid=280654ce3b2fe7bbb563efc6cbbcc5d9ec249649 note=approve with recommendations: remove unused selectedType var (biome CI failure), regenerate pnpm-lock.yaml with react-hook-form/zod/hookform deps; useEffect URL cleanup stale closure (low severity); core implementation correct \u2014 two-step dispute+evidence flow, zod validation, drag-drop uploader, i18n all 6 locales, no XSS, no any types",
       "last_reviewed_oid": "280654ce3b2fe7bbb563efc6cbbcc5d9ec249649",
       "scope_drift": null,
       "code_reuse_warn": null,
@@ -2503,13 +2503,13 @@
     {
       "task_id": "gap-security-435-p1-debug-format",
       "branch": "auto-impl/gap-security-435-p1-debug-format",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-27T12:14:03Z",
-      "last_updated": "2026-05-27T13:15:00Z",
-      "status_changed_at": "2026-05-27T13:15:00Z",
+      "last_updated": "2026-05-27T13:37:53Z",
+      "status_changed_at": "2026-05-27T13:37:53Z",
       "pr_number": 612,
       "pr_url": "https://github.com/martin-janci/property-management/pull/612",
-      "merged_at": null,
+      "merged_at": "2026-05-27T13:37:53Z",
       "specialist": "pm-security",
       "implementer_summary": "pr=612 status=done specialist=pm-security note=P1-04 Debug-format fix: compliance.rs uses canonical_name(), admin-core error.rs uses as_str(), deploy-server audit.rs uses join",
       "reviewer_summary": "verdict=approve head_oid=3a68c91213ac81718422257ec8439d0433ab223a note=all three Debug-format leaks correctly removed; canonical_name()+as_str() methods verified; display-only change; thiserror attribute still uses {:?} for internal logs only (non-blocking follow-up)",
@@ -2520,7 +2520,7 @@
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
       "fix_rounds": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-05-27T13:37:53Z"
     },
     {
       "task_id": "gap-81-1-schedule-edit-rbac",
