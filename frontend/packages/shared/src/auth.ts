@@ -367,3 +367,62 @@ export function getAndClearReturnUrl(): string | null {
     return null;
   }
 }
+
+// ============================================
+// SSO State (CSRF / Open-Redirect Protection)
+// ============================================
+
+const SSO_STATE_KEY = 'sso_state';
+
+/**
+ * Store an SSO state nonce before initiating the SSO redirect.
+ *
+ * Call this immediately before `window.location.href = ssoRedirectUrl` in the
+ * SSO login initiation path. The nonce is verified in AuthCallbackPage before
+ * the code exchange is attempted, satisfying OIDC §3.1.2.7.
+ *
+ * @example
+ * const state = crypto.randomUUID();
+ * setSsoState(state);
+ * window.location.href = buildSsoRedirectUrl({ state });
+ */
+export function setSsoState(state: string): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.setItem(SSO_STATE_KEY, state);
+  } catch {
+    // Storage blocked or full
+  }
+}
+
+/**
+ * Read the stored SSO state nonce without clearing it.
+ *
+ * Prefer {@link getAndClearSsoState} in the callback handler so the nonce is
+ * consumed (cannot be replayed) regardless of whether it matched.
+ */
+export function getSsoState(): string | null {
+  if (typeof sessionStorage === 'undefined') return null;
+  try {
+    return sessionStorage.getItem(SSO_STATE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read AND remove the stored SSO state nonce in one atomic operation.
+ *
+ * Use this in AuthCallbackPage before comparing against the URL `state`
+ * parameter — clearing on read prevents replay even when the comparison fails.
+ */
+export function getAndClearSsoState(): string | null {
+  if (typeof sessionStorage === 'undefined') return null;
+  try {
+    const state = sessionStorage.getItem(SSO_STATE_KEY);
+    sessionStorage.removeItem(SSO_STATE_KEY);
+    return state;
+  } catch {
+    return null;
+  }
+}

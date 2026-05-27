@@ -445,6 +445,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       tokenStorage.setUser(userWithRole);
 
       setUser(userWithRole);
+    } catch (err) {
+      // Roll back any partial writes so state is never incoherent.
+      // Mirrors the cleanup pattern in logout() and refreshTokenInternal().
+      tokenStorage.clear();
+      setUser(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }

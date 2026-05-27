@@ -13,7 +13,7 @@
  * @see gap-79-2-auth-sso-completion
  */
 
-import { getAndClearReturnUrl } from '@ppt/shared';
+import { getAndClearReturnUrl, getAndClearSsoState } from '@ppt/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -100,6 +100,22 @@ export function AuthCallbackPage() {
       setErrorMessage(
         t('auth.callbackMissingParams', {
           defaultValue: 'Invalid callback URL: missing code or state parameters.',
+        })
+      );
+      return;
+    }
+
+    // OIDC §3.1.2.7 — verify client-side state nonce BEFORE any network call.
+    // getAndClearSsoState() atomically reads + removes the nonce so it cannot
+    // be replayed even when the comparison fails. If the stored nonce is absent
+    // (direct navigation, tab-napping, or replay attempt) we abort immediately.
+    const storedState = getAndClearSsoState();
+    if (!storedState || storedState !== state) {
+      setStatus('error');
+      setErrorMessage(
+        t('auth.stateValidationFailed', {
+          defaultValue:
+            'Authentication failed: state parameter mismatch. Please try signing in again.',
         })
       );
       return;
