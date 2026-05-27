@@ -223,7 +223,9 @@
     "selectUnit": "Kérjük, válasszon egységet ehhez a vitához.",
     "multipleRespondents": "Több alperes",
     "multipleRespondentsMsg": "Csak az első alperes kerül rögzítésre.",
-
+    "addEvidence": "Bizonyíték hozzáadása",
+    "filedWithEvidenceErrors": "Vita benyújtva (egyes fájlok sikertelenek)",
+    "evidenceUploadErrorsMsg": "Egy vagy több bizonyítékfájlt nem sikerült feltölteni. Próbálja meg újra a vita részletoldaláról.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -305,8 +307,7 @@
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
       "selectedType": "Selected: {{label}}"
-    },
-    "addEvidence": "Bizonyíték hozzáadása"
+    }
   },
   "packages": {
     "title": "Csomagkezelés",

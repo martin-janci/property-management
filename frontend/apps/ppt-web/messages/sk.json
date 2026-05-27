@@ -224,6 +224,9 @@
     "selectUnit": "Vyberte jednotku pre tento spor.",
     "multipleRespondents": "Viacerí odporcovia",
     "multipleRespondentsMsg": "Zaznamenaný bude iba prvý odporca.",
+    "addEvidence": "Pridať dôkaz",
+    "filedWithEvidenceErrors": "Spor podaný (niektoré súbory zlyhali)",
+    "evidenceUploadErrorsMsg": "Jeden alebo viac súborov s dôkazmi sa nepodarilo nahrať. Skúste to znova zo stránky detailov sporu.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -305,8 +308,7 @@
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
       "selectedType": "Selected: {{label}}"
-    },
-    "addEvidence": "Pridať dôkaz"
+    }
   },
   "packages": {
     "title": "Správa zásielok",

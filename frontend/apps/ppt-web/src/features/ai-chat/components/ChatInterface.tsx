@@ -48,7 +48,7 @@ export function ChatInterface({
   const sendMessage = useSendMessage(currentSessionId || '');
 
   // Scroll to bottom when messages change
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages used as trigger; messagesEndRef is stable
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messagesEndRef is stable; messages is the intended trigger
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

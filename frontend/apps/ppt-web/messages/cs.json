@@ -223,7 +223,9 @@
     "selectUnit": "Vyberte jednotku pro tento spor.",
     "multipleRespondents": "Více odpůrců",
     "multipleRespondentsMsg": "Zaznamenán bude pouze první odpůrce.",
-
+    "addEvidence": "Přidat důkaz",
+    "filedWithEvidenceErrors": "Spor podán (některé soubory selhaly)",
+    "evidenceUploadErrorsMsg": "Jeden nebo více souborů s důkazy se nepodařilo nahrát. Zkuste to znovu ze stránky podrobností sporu.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -305,8 +307,7 @@
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
       "selectedType": "Selected: {{label}}"
-    },
-    "addEvidence": "Přidat důkaz"
+    }
   },
   "packages": {
     "title": "Správa zásilek",

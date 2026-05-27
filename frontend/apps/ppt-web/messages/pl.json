@@ -223,7 +223,9 @@
     "selectUnit": "Wybierz lokal dla tego sporu.",
     "multipleRespondents": "Wielu pozwanych",
     "multipleRespondentsMsg": "Tylko pierwszy pozwany zostanie zarejestrowany.",
-
+    "addEvidence": "Dodaj dowód",
+    "filedWithEvidenceErrors": "Spór zgłoszony (niektóre pliki nie powiodły się)",
+    "evidenceUploadErrorsMsg": "Nie udało się przesłać jednego lub więcej plików dowodowych. Spróbuj ponownie ze strony szczegółów sporu.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -305,8 +307,7 @@
       "resolutionDismissed": "Dismissed",
       "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
       "selectedType": "Selected: {{label}}"
-    },
-    "addEvidence": "Dodaj dowód"
+    }
   },
   "packages": {
     "title": "Zarządzanie przesyłkami",

@@ -13,6 +13,7 @@ import type {
   OutageListQuery,
 } from '@ppt/api-client';
 import {
+  uploadEvidence as apiUploadEvidence,
   setMfaChallengeHandler,
   useAcknowledgeAnnouncement,
   useAnnouncement,
@@ -844,94 +845,90 @@ function DisputesPageRoute() {
 }
 
 /**
- * Route wrapper for file dispute page (Epic 77, Story 80.2).
+ * Route wrapper for file dispute page (Epic 80, Story 80.2).
  *
- * Uses useCreateDispute mutation from @ppt/api-client for creating disputes.
- * Implements real API integration with toast notifications.
- * Transforms UI form data to API CreateDisputeRequest format.
+ * Step sequence:
+ *  1. POST /api/v1/disputes/organizations/:orgId  → creates the dispute (returns id)
+ *  2. For each valid PendingEvidence file: POST /api/v1/disputes/:id/evidence
+ *  3. Navigate to /disputes/:id (detail page) on success.
+ *
+ * FileDisputePage is a pure presentational component; all API side-effects live here.
  */
 function FileDisputePageRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Require organization context for filing disputes
+  const organizationId = user?.organizationId ?? '';
+
+  const createDispute = useCreateDispute(organizationId);
+
   if (!user?.organizationId) {
     return <AuthRequiredGate />;
   }
 
-  const organizationId = user.organizationId;
-
-  const createDispute = useCreateDispute(organizationId);
-
-  // Handle form submission - transform UI data to API format
-  const handleSubmit = async (formData: {
-    category: DisputeCategory;
-    title: string;
-    description: string;
-    desiredResolution?: string;
-    respondentIds: string[];
-    buildingId?: string;
-    unitId?: string;
-  }) => {
-    // Validate unitId is provided before submission
-    if (!formData.unitId) {
-      showToast({
-        type: 'error',
-        title: t('disputes.unitRequired'),
-        message: t('disputes.selectUnit'),
-      });
-      return;
-    }
-
-    // Warn if multiple respondents selected (API only supports one)
-    if (formData.respondentIds.length > 1) {
-      showToast({
-        type: 'warning',
-        title: t('disputes.multipleRespondents'),
-        message: t('disputes.multipleRespondentsMsg'),
-      });
-    }
-
+  const handleSubmit = async (
+    payload: import('./features/disputes/pages/FileDisputePage').FileDisputeSubmitPayload
+  ) => {
+    setIsSubmitting(true);
     try {
-      // Transform UI form data to API CreateDisputeRequest
-      const apiRequest = {
-        type: mapCategoryToType(formData.category),
-        subject: formData.title,
-        // Combine description and desired resolution with clear delimiters
-        description: formData.desiredResolution
-          ? `Description:\n${formData.description}\n\n---\nDesired Resolution:\n${formData.desiredResolution}`
-          : formData.description,
-        unitId: formData.unitId,
-        respondentId: formData.respondentIds[0],
-      };
-
-      await createDispute.mutateAsync(apiRequest);
-      showToast({
-        type: 'success',
-        title: t('disputes.filedSuccessfully'),
-        message: t('disputes.submittedMsg'),
+      // Step 1 — create the dispute
+      const created = await createDispute.mutateAsync({
+        type: payload.values.type as ApiDisputeType,
+        subject: payload.values.subject,
+        description: payload.values.description,
+        unitId: payload.values.unitId,
+        respondentId: payload.values.respondentId || undefined,
       });
-      navigate('/disputes');
+
+      // Step 2 — upload evidence files sequentially; skip errored entries.
+      // We call the raw API function (not the hook) because the hook must be
+      // keyed to a disputeId at render time and we only know the id after step 1.
+      const validFiles = payload.evidence.filter((e) => e.status !== 'error');
+      let evidenceErrors = 0;
+      for (const item of validFiles) {
+        try {
+          await apiUploadEvidence(created.id, item.file, item.description || item.file.name);
+        } catch {
+          evidenceErrors++;
+        }
+      }
+
+      // Step 3 — toast + navigate to the new dispute detail
+      if (evidenceErrors > 0) {
+        showToast({
+          type: 'warning',
+          title: t('disputes.filedWithEvidenceErrors', 'Dispute filed (some files failed)'),
+          message: t(
+            'disputes.evidenceUploadErrorsMsg',
+            `${evidenceErrors} file(s) could not be uploaded. Retry from the dispute detail page.`
+          ),
+        });
+      } else {
+        showToast({
+          type: 'success',
+          title: t('disputes.filedSuccessfully', 'Dispute filed successfully'),
+          message: t('disputes.submittedMsg', 'Your dispute has been submitted for review.'),
+        });
+      }
+      navigate(`/disputes/${created.id}`);
     } catch (error) {
       showToast({
         type: 'error',
-        title: t('disputes.failedToFile'),
+        title: t('disputes.failedToFile', 'Failed to file dispute'),
         message: error instanceof Error ? error.message : t('auth.unexpectedError'),
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleCancel = () => {
-    navigate('/disputes');
   };
 
   return (
     <FileDisputePage
       onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      isSubmitting={createDispute.isPending}
+      isSubmitting={isSubmitting || createDispute.isPending}
     />
   );
 }

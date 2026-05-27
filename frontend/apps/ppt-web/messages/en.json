@@ -286,6 +286,8 @@
     "multipleRespondents": "Multiple respondents",
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
     "addEvidence": "Add Evidence",
+    "filedWithEvidenceErrors": "Dispute filed (some files failed)",
+    "evidenceUploadErrorsMsg": "One or more evidence files could not be uploaded. Retry from the dispute detail page.",
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
