@@ -1735,6 +1735,7 @@ fn validate_cron_expression(expr: &str) -> bool {
         (status = 200, description = "Updated schedule", body = ReportSchedule),
         (status = 400, description = "Validation error", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 403, description = "Forbidden - manager role required", body = ErrorResponse),
         (status = 404, description = "Schedule not found", body = ErrorResponse),
     )
 )]
