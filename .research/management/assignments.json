@@ -2313,7 +2313,8 @@
       "pr_number": 564,
       "pr_url": "https://github.com/martin-janci/property-management/pull/564",
       "merged_at": null,
-      "last_reviewed_oid": "a817ab72c2a495a0e8fa27ad2a06d316ecd9306a",
+      "last_reviewed_oid": "4f04b0c7a2429a041544ac86fc451d10253518f5",
+      "last_updated": "2026-05-27T08:50:00Z",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -2322,7 +2323,7 @@
       "reclaim_attempts": 0,
       "merge_attempted_at": null,
       "implementer_summary": "bootstrapped: existing open PR #564 detected, not previously tracked",
-      "reviewer_summary": "verdict=changes head_oid=a817ab72c2a495a0e8fa27ad2a06d316ecd9306a note=one-remaining-hardcoded-string-Published-in-AnnouncementDetailScreen-not-in-i18n; all-other-prior-review-issues-resolved"
+      "reviewer_summary": "verdict=approve head_oid=4f04b0c7a2429a041544ac86fc451d10253518f5 note=publishedAt-i18n-key-added-to-all-6-locales-hardcoded-Published-string-fully-replaced-all-prior-issues-resolved-ready-to-merge"
     },
     {
       "task_id": "gap-79-2-login-flow-impl-v2",
