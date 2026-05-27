@@ -22,6 +22,7 @@ import {
   type TenantMembership,
   type TenantRole,
 } from '@ppt/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import {
   createContext,
@@ -268,6 +269,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // TanStack Query client — used to clear the cache on logout so stale
+  // user-scoped data never leaks into the next session.
+  const queryClient = useQueryClient();
+
   // Track if a token refresh is in progress to prevent concurrent refreshes
   const isRefreshing = useRef(false);
   const refreshPromise = useRef<Promise<string | null> | null>(null);
@@ -458,15 +463,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Log out the current user using the API client.
+   *
+   * Session cleanup sequence:
+   *  1. Clear localStorage tokens (immediate — prevents any further API calls
+   *     from including a bearer token).
+   *  2. Reset React state so the UI reflects the unauthenticated state.
+   *  3. Purge the TanStack Query cache so user-scoped data never leaks into
+   *     the next session (e.g. a different user logging in on the same device).
+   *  4. Best-effort server-side token revocation (fire-and-forget).
    */
   const logout = useCallback(async (): Promise<void> => {
     const refreshTokenValue = tokenStorage.getRefreshToken();
 
-    // Clear local state first for immediate UI feedback
+    // 1 & 2 — Clear local state first for immediate UI feedback.
     tokenStorage.clear();
     setUser(null);
 
-    // Attempt to invalidate the refresh token on the server
+    // 3 — Purge all cached query data to prevent cross-session data leakage.
+    queryClient.clear();
+
+    // 4 — Attempt to invalidate the refresh token on the server.
     if (refreshTokenValue) {
       try {
         const authApi = getAuthApi();
@@ -475,7 +491,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Ignore errors - we've already cleared local state
       }
     }
-  }, []);
+  }, [queryClient]);
 
   /**
    * Update the in-memory user and persist to storage. Lets profile-edit
