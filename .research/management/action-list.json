@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T04:05:00Z",
+  "generated": "2026-05-27T11:39:07Z",
   "items": [
     {
       "id": "pm-backend-fix-ai-equipment-idor",
@@ -1638,6 +1638,83 @@
       "status": "open",
       "deadline": null,
       "source": "pm-analysis 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-579-helpsidebar-a11y",
+      "action": "HelpSidebar (PR #541): add focus-trap, dialog role + aria-modal, tooltips on remaining 11/13 pages, component tests, remove ensureStyles on every render, replace inline topbar button styles. Tracking issue #579.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-580-document-folder-tests",
+      "action": "document_folder tests (PR #551): add 7 missing test cases — PUT/DELETE 401, non-manager 403, cross-org IDOR, depth-limit trigger, GET-by-id 401. Tracking issue #580.",
+      "owner_role": "pm-backend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-581-reality-mobile-screen-maps",
+      "action": "reality-mobile screen-maps (PR #554): add missing agent log entries to 11 files and flag 2 dropped endpoint operationIds (GET /reality-api/v1/listings/{id}/similar, PUT /reality-api/v1/searches/{id}/alerts/{alertId}). Tracking issue #581.",
+      "owner_role": "pm-frontend",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-583-unparseable-dep-items",
+      "action": "dispatcher ingestion (PR #562): 3 action-list items with unparseable depends_on values are silently claimable — add a human-followup flag or validation on ingestion so unparseable deps block auto-claim. Tracking issue #583.",
+      "owner_role": "pm-devops",
+      "priority": "low",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-569-mediation-workspace-polish",
+      "action": "Mediation workspace (PR #555): migrate MediationWorkspacePage form to react-hook-form + zod, add i18n stubs to 5 locales (sk/cs/de/pl/hu), split 666-line MediationWorkspacePage into sub-components, add aria-label to 4 timeline icons, add component tests. Tracking issue #569.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-574-auth-refresh-derive-role",
+      "action": "AuthContext refresh path (PR #549): call deriveActiveRole in refreshTokenInternal for multi-tenant users so role promotions propagate without a full re-login. FolderTree i18n fixed in PR #604; notImplemented hook dedup remaining. Tracking issue #574.",
+      "owner_role": "pm-frontend",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "fix-573-ingestion-branch-prefix-guard",
+      "action": "dispatcher ingestion (PR #561): add branch-prefix guard so only auto-impl/* branches enter assignments.json; add T7-style self-test assertion for non-auto-impl rows. OID regression in assignments.json already patched on dev. Tracking issue #573.",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "post-merge-review 2026-05-27",
       "depends_on": []
     }
   ]
