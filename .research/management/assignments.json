@@ -1709,5 +1709,5 @@
       "reviewer_summary": "verdict=changes note=Two blocking issues: (1) inline focus trap duplicates existing `useFocusTrap` hook and critically omits focus-restore on close (WCAG 2.4.3 violation \u2014 replace with `useFocusTrap(panelRef, onClose)`); (2) backdrop z-index 1000 collides with Toast (also 1000) \u2014 bump to 1050 so download-error toasts are visible above the modal."
     }
   ],
-  "assignments.generated": "2026-05-26T13:45:00Z"
+  "assignments.generated": "2026-05-27T06:10:00Z"
 }
