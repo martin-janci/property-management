@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:35:42Z",
+  "generated": "2026-05-27T02:36:55Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1757,13 +1757,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-27T02:10:02Z",
-      "last_updated": "2026-05-27T02:29:37Z",
+      "last_updated": "2026-05-27T02:36:55Z",
       "status_changed_at": "2026-05-27T02:29:37Z",
       "pr_number": 567,
       "pr_url": "https://github.com/martin-janci/property-management/pull/567",
       "merged_at": null,
       "implementer_summary": "pr=567 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=created lib/mfa-handler.ts (canonical MFA registry), enhanced authenticatedFetchJson with 401 mfa_required intercept, refactored admin/api.ts to drop local apiRequest; admin-web typecheck+build+biome-lint clean; screen-map updated; scope_drift flag is pre-existing dispatcher VERSION/assignments.json commits on branch base",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=lib/mfa-handler.ts canonical (no layering violation); admin/mfa-handler.ts clean re-export shim; MFA intercept correct (401 check, _alreadyRetried guard, single retry); all admin/api.ts functions use authenticatedFetchJson; functional parity with old apiRequest confirmed; TypeScript types correct; screen-map updated; CI 13/13 green; posted as COMMENT (self-review restriction)"
     },
     {
       "task_id": "gap-84-2-esignature-ui-fixes",
