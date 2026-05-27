@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T07:32:00Z",
+  "generated": "2026-05-27T07:36:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1920,9 +1920,9 @@
       "task_id": "gap-security-435-cookie-scope",
       "branch": "auto-impl/gap-security-435-cookie-scope",
       "status": "review",
-      "specialist": "pm-security",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-27T07:15:00Z",
-      "last_updated": "2026-05-27T07:32:00Z",
+      "last_updated": "2026-05-27T07:36:00Z",
       "status_changed_at": "2026-05-27T07:32:00Z",
       "pr_number": 565,
       "pr_url": "https://github.com/martin-janci/property-management/pull/565",
