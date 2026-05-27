@@ -19,6 +19,8 @@ endpoints:
 relatedScreens:
   - id: ppt/home
     rel: child
+  - id: ppt/auth-callback
+    rel: child
 sharedComponents:
   - text-input
   - validation-patterns

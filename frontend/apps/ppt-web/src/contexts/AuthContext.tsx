@@ -17,6 +17,7 @@ import {
   type AuthUser,
   clearTokenProvider,
   createAuthApi,
+  type SsoCallbackRequest,
   setTokenProvider,
   type TenantMembership,
   type TenantRole,
@@ -60,6 +61,15 @@ export interface LoginCredentials {
 export interface AuthContextValue extends AuthState {
   /** Log in with email and password */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /**
+   * Complete an SSO / OAuth callback flow.
+   *
+   * Called by AuthCallbackPage (/auth/callback) after the provider redirects
+   * back with `?code=…&state=…`. Exchanges the code for PPT JWT tokens via
+   * POST /api/v1/auth/sso/callback, stores them via tokenProvider, and
+   * updates the authenticated user in state.
+   */
+  loginWithSsoCode: (request: SsoCallbackRequest) => Promise<void>;
   /** Log out the current user */
   logout: () => Promise<void>;
   /** Refresh the access token */
@@ -414,6 +424,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   /**
+   * Complete an SSO / OAuth callback flow.
+   *
+   * @param request - { code, state, redirectUri } from /auth/callback
+   */
+  const loginWithSsoCode = useCallback(async (request: SsoCallbackRequest): Promise<void> => {
+    setIsLoading(true);
+
+    try {
+      const authApi = getAuthApi();
+      const response = await authApi.exchangeSsoCode(request);
+
+      const derivedRole =
+        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
+      const userWithRole: AuthUser =
+        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+
+      tokenStorage.setAccessToken(response.accessToken);
+      tokenStorage.setRefreshToken(response.refreshToken);
+      tokenStorage.setUser(userWithRole);
+
+      setUser(userWithRole);
+    } catch (err) {
+      // Roll back any partial writes so state is never incoherent.
+      // Mirrors the cleanup pattern in logout() and refreshTokenInternal().
+      tokenStorage.clear();
+      setUser(null);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
    * Log out the current user using the API client.
    */
   const logout = useCallback(async (): Promise<void> => {
@@ -451,12 +494,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated,
       isLoading,
       login,
+      loginWithSsoCode,
       logout,
       refreshToken,
       getAccessToken,
       setUser: updateUser,
     }),
-    [user, isAuthenticated, isLoading, login, logout, refreshToken, getAccessToken, updateUser]
+    [
+      user,
+      isAuthenticated,
+      isLoading,
+      login,
+      loginWithSsoCode,
+      logout,
+      refreshToken,
+      getAccessToken,
+      updateUser,
+    ]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

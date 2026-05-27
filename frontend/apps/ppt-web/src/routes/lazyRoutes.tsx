@@ -105,6 +105,9 @@ export const SessionExpiredPage = lazy(() =>
 );
 
 // Auth pages (UC-14)
+export const AuthCallbackPage = lazy(() =>
+  import('../pages/AuthCallbackPage').then((m) => ({ default: m.AuthCallbackPage }))
+);
 export const LoginPage = lazy(() =>
   import('../pages/LoginPage').then((m) => ({ default: m.LoginPage }))
 );
