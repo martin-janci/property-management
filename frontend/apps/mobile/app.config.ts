@@ -68,9 +68,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // Fail fast if a production build is about to ship with a placeholder URL.
   if (appEnv === 'production' && (isPlaceholderUrl(apiBaseUrl) || isPlaceholderUrl(wsBaseUrl))) {
     throw new Error(
-      `[app.config.ts] Refusing to build production with placeholder API URL ` +
+      '[app.config.ts] Refusing to build production with placeholder API URL ' +
         `(API_BASE_URL=${apiBaseUrl}, WS_BASE_URL=${wsBaseUrl}). ` +
-        `Override via CI (e.g. eas.json env) before building.`
+        'Override via CI (e.g. eas.json env) before building.'
     );
   }
 
