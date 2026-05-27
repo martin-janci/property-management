@@ -292,7 +292,8 @@
       "deadline": null,
       "source": "gap-scan",
       "note": "Already implemented in feat(epic-10b) commit cf533ae4; all four handler groups have real sqlx SQL implementations in platform_admin.rs, help.rs, onboarding.rs \u2014 no stubs found. cargo check -p api-server exit 0.",
-      "depends_on": []
+      "depends_on": [],
+      "pr": 596
     },
     {
       "id": "pm-security-resolve-435-followups",
