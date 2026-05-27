@@ -87,7 +87,8 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     server: 'api-server',
     method: 'POST',
     path: '/api/v1/auth/sso/callback',
-    description: 'Exchange SSO authorization code for PPT JWT tokens (backend stub — not yet implemented)',
+    description:
+      'Exchange SSO authorization code for PPT JWT tokens (backend stub — not yet implemented)',
     tags: ['Authentication', 'SSO'],
     requestBody: {
       ref: 'Auth.SsoCallbackRequest',
