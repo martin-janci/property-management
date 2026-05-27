@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:10:02Z",
+  "generated": "2026-05-27T02:14:31Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1729,13 +1729,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T02:10:02Z",
+      "last_updated": "2026-05-27T02:14:31Z",
       "status_changed_at": "2026-05-27T02:10:02Z",
       "pr_number": 564,
       "pr_url": "https://github.com/martin-janci/property-management/pull/564",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=changes note=3 issues: (1) AnnouncementDetailScreen has ~15 hardcoded English strings \u2014 all mobile screens use useTranslation, this one must too; (2) announcementId='' empty-string fallback in App.tsx will fire requests to /announcements// on unexpected navigation \u2014 add a falsy guard; (3) useMarkReadAnnouncement in @ppt/api-client does not invalidate announcementKeys.lists() on success, so the unread badge in the list stays stale after auto-mark-read fires. POST-vs-PUT discrepancy, StrictMode ref guard, and fire-and-forget pattern are all correct."
     },
     {
       "task_id": "gap-79-2-login-flow-impl-v2",
