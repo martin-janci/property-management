@@ -2578,7 +2578,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/613",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=613 status=done specialist=rust-backend note=RBAC enforcement (is_manager() check, 403 FORBIDDEN) + UpdateScheduleRequest (partial-update, validate_cron_expression 5-field UNIX cron, email validation, 50-recipient limit) + 4 non-blocking notes from PR#531 addressed (date_from/date_to params, status validation, limit/offset bounds, 404 guard for missing schedule, download_url population) + 16 cron unit tests; cargo check -p api-server exit 0; disk-full prevented cargo test (not a code error)",
+      "implementer_summary": "conflict resolved: report_schedule.rs + reports.rs merged cleanly onto dev; new_head=3cc2ee4c3ebb",
       "reviewer_summary": "verdict=approve head_oid=01e1e154ee450fd3d0036c1063e6cb340e02cb5c note=RBAC via TenantRole::is_manager() correct (Guest-fallback deny); 16 cron unit tests pass; all PR#531 non-blocking fixes addressed (date_from/date_to, status validation, limit/offset bounds, 404 guard, download_url); test CI failure is standard flaky pattern (transient DB/timing issue unrelated to this PR code) \u2014 non-blocking; no security regressions; owner verdict APPROVE",
       "last_reviewed_oid": "01e1e154ee450fd3d0036c1063e6cb340e02cb5c",
       "scope_drift": false,
