@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T16:35:00Z",
+  "generated": "2026-05-27T18:13:51Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -900,7 +900,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -922,7 +922,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -944,7 +944,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -966,7 +966,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -989,7 +989,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1012,7 +1012,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1035,7 +1035,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1057,7 +1057,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1079,7 +1079,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1102,7 +1102,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1124,7 +1124,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1147,7 +1147,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1170,7 +1170,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1193,7 +1193,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1216,7 +1216,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1239,7 +1239,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1261,7 +1261,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1284,7 +1284,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1307,7 +1307,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1329,7 +1329,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1351,7 +1351,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1373,7 +1373,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1395,7 +1395,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1417,7 +1417,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1439,7 +1439,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1461,7 +1461,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1483,7 +1483,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1505,7 +1505,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1527,7 +1527,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1549,7 +1549,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1571,7 +1571,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": "2026-05-27T16:04:00Z"
@@ -1593,7 +1593,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1615,7 +1615,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1637,7 +1637,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1659,7 +1659,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1681,7 +1681,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1703,7 +1703,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1725,7 +1725,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 2,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1747,7 +1747,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": "2026-05-27T14:05:00Z"
@@ -1769,7 +1769,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1791,7 +1791,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": "2026-05-27T12:15:00Z",
@@ -1814,7 +1814,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1836,7 +1836,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1858,7 +1858,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 1,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1880,7 +1880,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1902,7 +1902,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1924,7 +1924,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": "2026-05-27T12:15:00Z"
@@ -1946,7 +1946,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1968,7 +1968,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -1990,7 +1990,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2012,7 +2012,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2034,7 +2034,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2056,7 +2056,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2144,7 +2144,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2166,7 +2166,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2188,7 +2188,7 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null,
+      "rebase_attempts": 0,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
       "merge_attempted_at": null
@@ -2616,15 +2616,15 @@
       "branch": "auto-impl/gap-81-1-report-schedule-edit-ui",
       "status": "review",
       "claimed_at": "2026-05-27T16:04:00Z",
-      "last_updated": "2026-05-27T16:35:00Z",
+      "last_updated": "2026-05-27T18:13:51Z",
       "status_changed_at": "2026-05-27T16:35:00Z",
       "pr_number": 623,
       "pr_url": "https://github.com/martin-janci/property-management/pull/623",
       "merged_at": null,
       "specialist": "react-web",
       "implementer_summary": "pr=623 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=CronPicker + enabled toggle + CronScheduleUpdateRequest wired to PUT schedules/{id}; typecheck+build clean",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=changes head_oid=a7d15586f17c09b8b745c52df0302f40daa374f7 note=3-required-fixes: stale-cron-submitted-in-custom-mode(bug), CronPicker-labels-missing-htmlFor(a11y), screen-map-reports.md-not-updated(protocol); non-blocking: no-unit-tests-for-pure-helpers, preset-tabs-missing-aria-pressed, react-hook-form-not-used",
+      "last_reviewed_oid": "a7d15586f17c09b8b745c52df0302f40daa374f7",
       "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
@@ -2667,6 +2667,72 @@
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=none status=done specialist=react-native scope_drift=false code_reuse_warn=none note=all fixes already landed in dev via PR#595 (checkout/setup-node/pnpm-action-setup @v4, eas-cli devDep ^10.0.0, Android build scripts); no diff to add",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "fix-569-mediation-workspace-polish",
+      "branch": "auto-impl/fix-569-mediation-workspace-polish",
+      "status": "in-progress",
+      "claimed_at": "2026-05-27T18:12:36Z",
+      "last_updated": "2026-05-27T18:12:36Z",
+      "status_changed_at": "2026-05-27T18:12:36Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "fix-573-ingestion-branch-prefix-guard",
+      "branch": "auto-impl/fix-573-ingestion-branch-prefix-guard",
+      "status": "in-progress",
+      "claimed_at": "2026-05-27T18:12:36Z",
+      "last_updated": "2026-05-27T18:12:36Z",
+      "status_changed_at": "2026-05-27T18:12:36Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "fix-574-auth-refresh-derive-role",
+      "branch": "auto-impl/fix-574-auth-refresh-derive-role",
+      "status": "in-progress",
+      "claimed_at": "2026-05-27T18:12:36Z",
+      "last_updated": "2026-05-27T18:12:36Z",
+      "status_changed_at": "2026-05-27T18:12:36Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
       "reviewer_summary": null,
       "last_reviewed_oid": null,
       "scope_drift": null,
