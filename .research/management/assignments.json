@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:29:37Z",
+  "generated": "2026-05-27T02:32:34Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1771,13 +1771,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-27T02:10:02Z",
-      "last_updated": "2026-05-27T02:24:45Z",
+      "last_updated": "2026-05-27T02:32:34Z",
       "status_changed_at": "2026-05-27T02:24:45Z",
       "pr_number": 566,
       "pr_url": "https://github.com/martin-janci/property-management/pull/566",
       "merged_at": null,
       "implementer_summary": "pr=566 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=issues 1-5 already on dev; added missing leases.esign i18n keys (en+sk) for issue 6; typecheck exit 0, biome exit 0",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=all 6 issues resolved: 1-5 pre-existing on dev (epic-83 megacommit), 6 i18n keys added in PR (17 keys in en+sk, naming consistent with leases.* namespace); CI all 12 checks green; posted as COMMENT (self-review restriction)"
     }
   ],
   "assignments.generated": "2026-05-27T01:07:37Z"
