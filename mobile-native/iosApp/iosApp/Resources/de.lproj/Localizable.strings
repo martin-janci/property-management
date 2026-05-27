@@ -252,12 +252,12 @@
 "location_access_denied_title" = "Standortzugriff verweigert";
 
 /* Search - Listing type / FilterSheet additions (Story 82.3) */
-"filter_listing_type" = "Listing Type";
-"filter_price_min" = "Min price";
-"filter_price_max" = "Max price";
+"filter_listing_type" = "Angebotstyp";
+"filter_price_min" = "Mindestpreis";
+"filter_price_max" = "Höchstpreis";
 "filter_min_value" = "Min: %d";
 "filter_max_value" = "Max: %d";
-"filter_bathrooms" = "Bathrooms";
+"filter_bathrooms" = "Badezimmer";
 
 /* Account Screen - Additional */
 "quick_actions" = "Schnellaktionen";

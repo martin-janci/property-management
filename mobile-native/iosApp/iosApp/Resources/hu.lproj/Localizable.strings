@@ -252,12 +252,12 @@
 "location_access_denied_title" = "Helymeghatározás megtagadva";
 
 /* Search - Listing type / FilterSheet additions (Story 82.3) */
-"filter_listing_type" = "Listing Type";
-"filter_price_min" = "Min price";
-"filter_price_max" = "Max price";
+"filter_listing_type" = "Hirdetés típusa";
+"filter_price_min" = "Min ár";
+"filter_price_max" = "Max ár";
 "filter_min_value" = "Min: %d";
 "filter_max_value" = "Max: %d";
-"filter_bathrooms" = "Bathrooms";
+"filter_bathrooms" = "Fürdőszobák";
 
 /* Account Screen - Additional */
 "quick_actions" = "Gyors műveletek";

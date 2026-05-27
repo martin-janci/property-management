@@ -252,12 +252,12 @@
 "location_access_denied_title" = "Prístup k polohe zamietnutý";
 
 /* Search - Listing type / FilterSheet additions (Story 82.3) */
-"filter_listing_type" = "Listing Type";
-"filter_price_min" = "Min price";
-"filter_price_max" = "Max price";
+"filter_listing_type" = "Typ ponuky";
+"filter_price_min" = "Min cena";
+"filter_price_max" = "Max cena";
 "filter_min_value" = "Min: %d";
 "filter_max_value" = "Max: %d";
-"filter_bathrooms" = "Bathrooms";
+"filter_bathrooms" = "Kúpeľne";
 
 /* Account Screen - Additional */
 "quick_actions" = "Rýchle akcie";

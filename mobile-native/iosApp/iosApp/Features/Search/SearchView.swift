@@ -26,6 +26,9 @@ struct SearchView: View {
     /// Cancellable token for the in-flight debounce task.
     @State private var debounceTask: Task<Void, Never>?
 
+    /// Drives the location-denied alert; set by .onChange(of: locationManager.locationError).
+    @State private var showLocationDeniedAlert = false
+
     private let listingRepository = DependencyContainer.shared.listingRepository
     private let debounceNs: UInt64 = 350_000_000 // 350 ms
 
@@ -47,7 +50,7 @@ struct SearchView: View {
         .navigationTitle(String(localized: "tab_search"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showFilters) {
-            FilterSheet(filters: $filters, locationManager: locationManager) {
+            FilterSheet(filters: $filters) {
                 Task { await performSearch() }
             }
         }
@@ -60,6 +63,26 @@ struct SearchView: View {
                 filters.longitude = coord.longitude
                 Task { await performSearch() }
             }
+        }
+        // Drive the location-denied alert from body-level state.
+        // The inline-Binding approach inside a @ViewBuilder var is unreliable
+        // on iOS 17+ with @Observable (dismiss can fail to reconcile).
+        .onChange(of: locationManager.locationError) { _, err in
+            if err != nil { showLocationDeniedAlert = true }
+        }
+        .onDisappear {
+            debounceTask?.cancel()
+        }
+        .alert(
+            String(localized: "location_access_denied_title"),
+            isPresented: $showLocationDeniedAlert
+        ) {
+            Button(String(localized: "ok")) {
+                showLocationDeniedAlert = false
+                locationManager.clearLocationError()
+            }
+        } message: {
+            if let err = locationManager.locationError { Text(err) }
         }
     }
 
@@ -171,19 +194,8 @@ struct SearchView: View {
             }
         }
         .buttonStyle(.plain)
-        .alert(
-            String(localized: "location_access_denied_title"),
-            isPresented: Binding(
-                get: { locationManager.locationError != nil },
-                set: { _ in locationManager.clearLocationError() }
-            )
-        ) {
-            Button(String(localized: "ok")) {
-                locationManager.clearLocationError()
-            }
-        } message: {
-            if let err = locationManager.locationError { Text(err) }
-        }
+        // Alert is handled at body level (showLocationDeniedAlert) to avoid
+        // iOS 17+ @Observable reconciliation issues with inline bindings.
     }
 
     private var loadingView: some View {
@@ -308,6 +320,7 @@ struct SearchView: View {
     private func loadMoreResults() async {
         guard currentPage < totalPages, !isLoading, !isLoadingMore else { return }
         isLoadingMore = true
+        let prevPage = currentPage
         currentPage += 1
         let request = ListingSearchRequest(
             query: searchText.isEmpty ? nil : searchText,
@@ -320,7 +333,7 @@ struct SearchView: View {
         if let response = result.getOrNull() {
             results.append(contentsOf: response.listings.map { KMPBridge.toListingPreview($0) })
         } else {
-            currentPage = max(1, currentPage - 1)
+            currentPage = prevPage
         }
         isLoadingMore = false
     }
@@ -451,8 +464,8 @@ private struct SearchResultCard: View {
 
 private struct FilterSheet: View {
     @Binding var filters: SearchFilters
-    let locationManager: LocationManager
     let onApply: () -> Void
+    @Environment(LocationManager.self) private var locationManager
     @Environment(\.dismiss) private var dismiss
     private let radiusOptions: [Double] = [1, 3, 5, 10, 20, 50]
 

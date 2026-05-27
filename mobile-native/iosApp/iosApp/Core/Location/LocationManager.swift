@@ -29,6 +29,11 @@ final class LocationManager: NSObject {
 
     private let manager: CLLocationManager
 
+    /// Set to true only when the user explicitly requests location (requestLocation()).
+    /// Guards the auto-fetch in locationManagerDidChangeAuthorization so we don't
+    /// eagerly fire a location fix on every app launch after permission is granted.
+    private var wantsLocation = false
+
     // MARK: - Init
 
     override init() {
@@ -45,14 +50,17 @@ final class LocationManager: NSObject {
     /// Request permission and start a one-shot location update.
     func requestLocation() {
         locationError = nil
+        wantsLocation = true
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             fetchLocation()
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
         case .denied, .restricted:
+            wantsLocation = false
             locationError = String(localized: "location_access_denied")
         @unknown default:
+            wantsLocation = false
             locationError = String(localized: "location_unavailable")
         }
     }
@@ -61,6 +69,7 @@ final class LocationManager: NSObject {
     func stopLocation() {
         manager.stopUpdatingLocation()
         isLocating = false
+        wantsLocation = false
     }
 
     /// Clear any outstanding location error (call from alert dismiss action).
@@ -84,6 +93,7 @@ extension LocationManager: CLLocationManagerDelegate {
         didUpdateLocations locations: [CLLocation]
     ) {
         isLocating = false
+        wantsLocation = false
         guard let loc = locations.last else { return }
         coordinate = loc.coordinate
     }
@@ -100,7 +110,9 @@ extension LocationManager: CLLocationManagerDelegate {
         authorizationStatus = manager.authorizationStatus
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            if !isLocating { fetchLocation() }
+            // Only auto-fetch if the user explicitly requested location — not on
+            // every app launch after permission was previously granted.
+            if !isLocating && wantsLocation { fetchLocation() }
         case .denied, .restricted:
             locationError = String(localized: "location_access_denied")
             isLocating = false
