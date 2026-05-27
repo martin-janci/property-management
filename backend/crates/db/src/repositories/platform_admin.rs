@@ -580,10 +580,9 @@ impl PlatformAdminRepository {
         .await?;
 
         // 3. Total fault count
-        let total_faults: i64 =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
-                .fetch_one(&self.pool)
-                .await?;
+        let total_faults: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
+            .fetch_one(&self.pool)
+            .await?;
 
         // 4. Fault counts per status
         let fault_rows = sqlx::query_as::<_, (String, i64)>(
