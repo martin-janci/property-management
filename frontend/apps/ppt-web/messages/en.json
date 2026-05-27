@@ -284,7 +284,9 @@
     "selectUnit": "Please select a unit for this dispute.",
     "multipleRespondents": "Multiple respondents",
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
-    "addEvidence": "Add Evidence"
+    "addEvidence": "Add Evidence",
+    "filedWithEvidenceErrors": "Dispute filed (some files failed)",
+    "evidenceUploadErrorsMsg": "One or more evidence files could not be uploaded. Retry from the dispute detail page."
   },
   "packages": {
     "title": "Package Management",

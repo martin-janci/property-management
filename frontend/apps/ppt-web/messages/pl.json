@@ -223,7 +223,9 @@
     "selectUnit": "Wybierz lokal dla tego sporu.",
     "multipleRespondents": "Wielu pozwanych",
     "multipleRespondentsMsg": "Tylko pierwszy pozwany zostanie zarejestrowany.",
-    "addEvidence": "Dodaj dowód"
+    "addEvidence": "Dodaj dowód",
+    "filedWithEvidenceErrors": "Spór zgłoszony (niektóre pliki nie powiodły się)",
+    "evidenceUploadErrorsMsg": "Nie udało się przesłać jednego lub więcej plików dowodowych. Spróbuj ponownie ze strony szczegółów sporu."
   },
   "packages": {
     "title": "Zarządzanie przesyłkami",

@@ -223,7 +223,9 @@
     "selectUnit": "Vyberte jednotku pro tento spor.",
     "multipleRespondents": "Více odpůrců",
     "multipleRespondentsMsg": "Zaznamenán bude pouze první odpůrce.",
-    "addEvidence": "Přidat důkaz"
+    "addEvidence": "Přidat důkaz",
+    "filedWithEvidenceErrors": "Spor podán (některé soubory selhaly)",
+    "evidenceUploadErrorsMsg": "Jeden nebo více souborů s důkazy se nepodařilo nahrát. Zkuste to znovu ze stránky podrobností sporu."
   },
   "packages": {
     "title": "Správa zásilek",

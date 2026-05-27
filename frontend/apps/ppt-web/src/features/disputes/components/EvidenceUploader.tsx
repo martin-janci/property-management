@@ -6,7 +6,7 @@
  * remove queued items before form submission.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface PendingEvidence {
   /** Unique stable ID generated client-side */
@@ -51,6 +51,15 @@ interface EvidenceUploaderProps {
 export function EvidenceUploader({ files, onChange, disabled = false }: EvidenceUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      for (const item of files) {
+        if (item.preview) URL.revokeObjectURL(item.preview);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validate = useCallback((file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type)) {

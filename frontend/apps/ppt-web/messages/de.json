@@ -223,7 +223,9 @@
     "selectUnit": "Bitte wählen Sie eine Einheit für diese Streitigkeit.",
     "multipleRespondents": "Mehrere Beklagte",
     "multipleRespondentsMsg": "Nur der erste Beklagte wird erfasst.",
-    "addEvidence": "Beweis hinzufügen"
+    "addEvidence": "Beweis hinzufügen",
+    "filedWithEvidenceErrors": "Streit eingereicht (einige Dateien fehlgeschlagen)",
+    "evidenceUploadErrorsMsg": "Eine oder mehrere Beweisdateien konnten nicht hochgeladen werden. Bitte erneut von der Detailseite des Streits versuchen."
   },
   "packages": {
     "title": "Paketverwaltung",

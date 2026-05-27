@@ -9,10 +9,11 @@
  *    useUploadEvidence); this component is a pure presentational form.
  */
 
+import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { EvidenceUploader, type PendingEvidence } from '../components/EvidenceUploader';
 
 // ============================================
@@ -105,6 +106,7 @@ export function FileDisputePage({
   isSubmitting = false,
   onSubmit,
 }: FileDisputePageProps) {
+  const navigate = useNavigate();
   const {
     register,
     control,
@@ -137,12 +139,13 @@ export function FileDisputePage({
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
-        <Link
-          to="/disputes"
+        <button
+          type="button"
+          onClick={() => navigate('/disputes')}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
           ← Back to Disputes
-        </Link>
+        </button>
         <h1 className="text-2xl font-bold text-gray-900">File a Dispute</h1>
         <p className="text-gray-500 mt-1">
           Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
@@ -380,14 +383,14 @@ export function FileDisputePage({
 
         {/* ── Actions ── */}
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Link
-            to="/disputes"
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
-            aria-disabled={isSubmitting}
-            tabIndex={isSubmitting ? -1 : undefined}
+          <button
+            type="button"
+            onClick={() => navigate('/disputes')}
+            disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
-          </Link>
+          </button>
           <button
             type="submit"
             disabled={isSubmitting}
@@ -411,5 +414,3 @@ export function FileDisputePage({
   );
 }
 
-// React import needed for useState in the component body
-import React from 'react';

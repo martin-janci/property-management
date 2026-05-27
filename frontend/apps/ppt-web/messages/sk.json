@@ -223,7 +223,9 @@
     "selectUnit": "Vyberte jednotku pre tento spor.",
     "multipleRespondents": "Viacerí odporcovia",
     "multipleRespondentsMsg": "Zaznamenaný bude iba prvý odporca.",
-    "addEvidence": "Pridať dôkaz"
+    "addEvidence": "Pridať dôkaz",
+    "filedWithEvidenceErrors": "Spor podaný (niektoré súbory zlyhali)",
+    "evidenceUploadErrorsMsg": "Jeden alebo viac súborov s dôkazmi sa nepodarilo nahrať. Skúste to znova zo stránky detailov sporu."
   },
   "packages": {
     "title": "Správa zásielok",
