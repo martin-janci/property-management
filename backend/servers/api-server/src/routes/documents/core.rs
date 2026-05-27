@@ -1657,4 +1657,5 @@ pub async fn upload_document(
 }
 
 #[cfg(test)]
+#[path = "document_access_test.rs"]
 mod document_access_test;
