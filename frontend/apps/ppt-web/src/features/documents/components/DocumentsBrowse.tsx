@@ -1,5 +1,5 @@
 /**
- * Documents Browse Panel (gap-7a-3).
+ * Documents Browse Panel (gap-7a-3 / gap-7a-4).
  *
  * RLS-aware document listing with audience and status filtering.
  * The backend's list endpoint enforces access_scope through PostgreSQL RLS —
@@ -9,6 +9,10 @@
  *
  * gap-7a-2-folder-ui: Added "Move to folder" action button per document row,
  * wired to MoveFolderDialog + useMoveDocument hook.
+ *
+ * gap-7a-4: Added inline preview (eye) and download buttons to each document
+ * row. Preview opens DocumentPreviewModal; download fetches a presigned URL
+ * via useDocumentDownload and triggers a programmatic anchor click.
  */
 
 import {
