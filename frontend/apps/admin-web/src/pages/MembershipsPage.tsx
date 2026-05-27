@@ -18,6 +18,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 interface MembershipRow {
   user_id: string;
@@ -168,9 +169,13 @@ export default function MembershipsPage() {
           fontWeight: 700,
           color: 'var(--ppt-fg-primary, #111827)',
           margin: '0 0 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
         }}
       >
         {t('admin.memberships.title', { defaultValue: 'Memberships' })}
+        <HelpTooltip text={t('admin.memberships.helpTooltip')} />
       </h1>
 
       {/* Org selector */}

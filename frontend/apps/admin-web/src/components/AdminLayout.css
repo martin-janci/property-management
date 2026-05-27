@@ -1,0 +1,31 @@
+/* -------------------------------------------------------------------------
+ * AdminLayout — topbar help-toggle button
+ *
+ * Moved out of AdminLayout.tsx inline styles (fix #579) so that the
+ * aria-expanded attribute drives open/closed appearance without JS.
+ * ------------------------------------------------------------------------- */
+
+.ppt-topbar-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--ppt-border-default, #e5e7eb);
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  color: var(--ppt-fg-muted, #6b7280);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 80ms,
+    background 80ms,
+    color 80ms;
+}
+
+.ppt-topbar-help-btn[aria-expanded="true"] {
+  border: 1.5px solid var(--ppt-brand-400, #60a5fa);
+  background: var(--ppt-brand-100, #dbeafe);
+  color: var(--ppt-brand-700, #1d4ed8);
+}

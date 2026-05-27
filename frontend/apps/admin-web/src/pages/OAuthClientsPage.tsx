@@ -40,6 +40,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { DestructiveConfirmDialog } from '../components/DestructiveConfirmDialog';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 // ============================================================
 // Utility helpers
@@ -899,7 +900,10 @@ export default function OAuthClientsPage() {
   return (
     <div className="ppt-oc-page">
       <div className="ppt-oc-header">
-        <h1 className="ppt-oc-title">{t('admin.oauthClients.title')}</h1>
+        <h1 className="ppt-oc-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.oauthClients.title')}
+          <HelpTooltip text={t('admin.oauthClients.helpTooltip')} />
+        </h1>
         <button
           type="button"
           className="ppt-oc-btn ppt-oc-btn--primary"

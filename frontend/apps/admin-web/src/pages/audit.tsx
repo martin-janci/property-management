@@ -11,9 +11,11 @@
 import { CAPABILITIES } from '@ppt/admin-ui';
 import { useQuery } from '@tanstack/react-query';
 import { type FC, Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -807,6 +809,7 @@ function FilterRail({ filters, onChange }: FilterRailProps) {
 // ---------------------------------------------------------------------------
 
 const AuditPage: FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { showToast } = useToast();
   const { token } = useAdminAuth();
@@ -985,9 +988,13 @@ const AuditPage: FC = () => {
                 fontWeight: 700,
                 color: 'var(--ppt-fg-primary)',
                 margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
               }}
             >
               Audit log
+              <HelpTooltip text={t('admin.audit.helpTooltip')} />
             </h1>
             <button
               type="button"
