@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T22:25:00Z",
+  "generated": "2026-05-27T22:28:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2834,18 +2834,18 @@
     {
       "task_id": "gap-82-3-search-enhancements-fix",
       "branch": "auto-impl/gap-82-3-search-enhancements-fix",
-      "status": "in-progress",
+      "status": "review",
       "claimed_at": "2026-05-27T22:08:18Z",
-      "last_updated": "2026-05-27T22:08:18Z",
-      "status_changed_at": "2026-05-27T22:08:18Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T22:28:00Z",
+      "status_changed_at": "2026-05-27T22:28:00Z",
+      "pr_number": 639,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/639",
       "merged_at": null,
-      "specialist": null,
-      "implementer_summary": null,
+      "specialist": "ios-swiftui",
+      "implementer_summary": "pr=639 status=done specialist=ios-swiftui scope_drift=false code_reuse_warn=none note=bug1(alert binding) already fixed in dev; bug2 fixed: translated filter_min_value/filter_max_value in SK/CS/PL/DE/HU plus filter_radius\u2192Umkreis in DE; all 16 Story 82.3 keys verified",
       "reviewer_summary": null,
       "last_reviewed_oid": null,
-      "scope_drift": null,
+      "scope_drift": false,
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": 0,
