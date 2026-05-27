@@ -215,14 +215,14 @@
       "task_id": "gap-7a-2-folder-tree-ui",
       "branch": "auto-impl/gap-7a-2-folder-tree-ui",
       "status": "merged",
-      "specialist": null,
+      "specialist": "react-web",
       "claimed_at": "2026-05-24T06:11:00Z",
-      "last_updated": "2026-05-24T12:30:00Z",
+      "last_updated": "2026-05-27T03:32:00Z",
       "status_changed_at": "2026-05-24T12:30:00Z",
       "pr_number": 451,
       "pr_url": "https://github.com/martin-janci/property-management/pull/451",
       "merged_at": "2026-05-24T10:13:04Z",
-      "implementer_summary": null,
+      "implementer_summary": "pr=none status=done specialist=react-web scope_drift=false code_reuse_warn=none note=already merged as PR#451; FolderTree+FolderTreePage+route+api-hooks in dev; typecheck+biome+build all exit 0",
       "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct"
     },
     {
@@ -1780,5 +1780,5 @@
       "reviewer_summary": "verdict=approve note=all 6 issues resolved: 1-5 pre-existing on dev (epic-83 megacommit), 6 i18n keys added in PR (17 keys in en+sk, naming consistent with leases.* namespace); CI all 12 checks green; posted as COMMENT (self-review restriction)"
     }
   ],
-  "assignments.generated": "2026-05-27T03:26:00Z"
+  "assignments.generated": "2026-05-27T03:32:00Z"
 }
