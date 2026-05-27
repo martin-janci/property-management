@@ -17,10 +17,10 @@ import {
   type DocumentListQuery,
   type DocumentStatus,
   type DocumentSummary,
-  getDownloadUrl,
   useDocuments,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useDocumentDownload } from '../hooks/useDocumentDownload';
 import { useMoveDocumentWithToast } from '../hooks/useMoveDocumentWithToast';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { MoveFolderDialog } from './MoveFolderDialog';
@@ -86,38 +86,16 @@ interface DocumentRowProps {
 }
 
 function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownload = useCallback(
-    async (e: { stopPropagation: () => void }) => {
-      e.stopPropagation();
-      if (isDownloading) return;
-      setIsDownloading(true);
-      try {
-        const { url } = await getDownloadUrl(doc.id);
-        // Fetch as blob to preserve filename: browsers ignore anchor.download for cross-origin URLs.
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = blobUrl;
-        anchor.download = doc.file_name;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(blobUrl);
-      } finally {
-        setIsDownloading(false);
-      }
-    },
-    [doc.id, doc.file_name, isDownloading]
-  );
+  const { download, isDownloading } = useDocumentDownload(doc.id, doc.file_name);
 
   return (
     <button
       type="button"
       className="doc-row__action-btn"
-      onClick={handleDownload}
+      onClick={(e) => {
+        e.stopPropagation();
+        download();
+      }}
       disabled={isDownloading}
       aria-label={`Stiahnuť ${doc.file_name}`}
       title="Stiahnuť"

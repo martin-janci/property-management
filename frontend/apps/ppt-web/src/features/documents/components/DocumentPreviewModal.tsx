@@ -14,9 +14,10 @@
  *  - Body scroll locked while open
  */
 
-import { getDownloadUrl, usePreviewUrl } from '@ppt/api-client';
+import { usePreviewUrl } from '@ppt/api-client';
 import type React from 'react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
+import { useDocumentDownload } from '../hooks/useDocumentDownload';
 import { PdfPreview } from './PdfPreview';
 
 const FOCUSABLE_SELECTOR =
@@ -106,35 +107,13 @@ function DownloadButton({
   fileName,
   className = 'doc-preview__download-btn',
 }: DownloadButtonProps) {
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownload = useCallback(async () => {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    try {
-      const { url } = await getDownloadUrl(documentId);
-      // Fetch as blob to preserve filename: browsers silently ignore anchor.download
-      // for cross-origin URLs (S3 presigned URLs are cross-origin).
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = blobUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(blobUrl);
-    } finally {
-      setIsDownloading(false);
-    }
-  }, [documentId, fileName, isDownloading]);
+  const { download, isDownloading } = useDocumentDownload(documentId, fileName);
 
   return (
     <button
       type="button"
       className={className}
-      onClick={handleDownload}
+      onClick={download}
       disabled={isDownloading}
       aria-label={`Stiahnuť ${fileName}`}
     >

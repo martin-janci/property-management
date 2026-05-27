@@ -105,7 +105,7 @@ UC-08 single-document detail. Manager-side full editing; resident-side filtered 
 
 <!-- newest entries on top -->
 
-- 2026-05-26 — agent: gap-7a-4 — added DocumentPreviewModal (PDF inline preview + image preview + download button); added preview eye + download action buttons to DocumentsBrowse document rows; useDownloadUrl + usePreviewUrl hooks from @ppt/api-client wired; modal accessible (Escape key, backdrop click, focus); apiStatus remains complete
+- 2026-05-27 — agent: gap-7a-2 review fixes — useDocumentDownload hook extracted; download error toast added; MoveFolderDialog focus trap completed; gap-7a-4 entries removed from this branch (belong to PR #557)
 - 2026-05-24 — agent: gap-7a-5 — added DocumentSharePanel (user/role/building/link share types) to DocumentDetail; Share toggle button; share hooks in @ppt/api-client; apiStatus remains complete
 
 - 2026-05-24 — agent: gap-7a-3 — added RLS-aware permission-denied state to DocumentDetail (403 → lock icon + Slovak message); promoted ppt-web.apiStatus partial→complete
