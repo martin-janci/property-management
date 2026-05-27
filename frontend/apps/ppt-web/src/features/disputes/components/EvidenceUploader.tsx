@@ -51,14 +51,18 @@ interface EvidenceUploaderProps {
 export function EvidenceUploader({ files, onChange, disabled = false }: EvidenceUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // Track all created object URLs so we can revoke them on unmount only.
+  // Using a ref avoids re-running the effect when files change.
+  const createdPreviewsRef = useRef<Set<string>>(new Set());
 
+  // Revoke all created object URLs only when the component unmounts.
   useEffect(() => {
     return () => {
-      for (const item of files) {
-        if (item.preview) URL.revokeObjectURL(item.preview);
+      for (const url of createdPreviewsRef.current) {
+        URL.revokeObjectURL(url);
       }
     };
-  }, [files]);
+  }, []);
 
   const validate = useCallback((file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -79,11 +83,16 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
       const next: PendingEvidence[] = [];
       for (const file of arr.slice(0, slots)) {
         const error = validate(file) ?? undefined;
+        let preview: string | undefined;
+        if (!error && isImage(file)) {
+          preview = URL.createObjectURL(file);
+          createdPreviewsRef.current.add(preview);
+        }
         next.push({
           id: generateId(),
           file,
           description: '',
-          preview: !error && isImage(file) ? URL.createObjectURL(file) : undefined,
+          preview,
           status: error ? 'error' : 'pending',
           error,
         });
@@ -124,7 +133,10 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
   const handleRemove = useCallback(
     (id: string) => {
       const item = files.find((f) => f.id === id);
-      if (item?.preview) URL.revokeObjectURL(item.preview);
+      if (item?.preview) {
+        URL.revokeObjectURL(item.preview);
+        createdPreviewsRef.current.delete(item.preview);
+      }
       onChange(files.filter((f) => f.id !== id));
     },
     [files, onChange]
