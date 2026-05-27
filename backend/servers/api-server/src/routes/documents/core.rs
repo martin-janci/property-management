@@ -1090,6 +1090,26 @@ async fn update_document_access(
 // ============================================================================
 
 /// Get download URL for a document.
+/// Returns `true` when a non-manager user is permitted to access `doc`.
+///
+/// Managers bypass this check entirely (their RLS policy already grants
+/// full org-wide access). For everyone else the caller's `user_id` and
+/// normalised `user_role` are matched against the document's `access_scope`.
+fn document_access_allowed(doc: &Document, user_id: Uuid, user_role: &str) -> bool {
+    doc.created_by == user_id
+        || doc.access_scope == "organization"
+        || (doc.access_scope == "role"
+            && doc
+                .access_roles
+                .as_array()
+                .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role))))
+        || (doc.access_scope == "users"
+            && doc.access_target_ids.as_array().is_some_and(|arr| {
+                arr.iter()
+                    .any(|id| id.as_str() == Some(&user_id.to_string()))
+            }))
+}
+
 #[utoipa::path(
     get,
     path = "/api/v1/documents/{id}/download",
@@ -1134,24 +1154,9 @@ async fn get_download_url(
         }
     };
 
-    // Enforce access_scope for non-managers (mirrors list_documents simple path).
-    // Return 404 to avoid leaking document existence to unauthorized users.
     if !tenant.role.is_manager() {
-        let user_id = auth.user_id;
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
-        let allowed = document.created_by == user_id
-            || document.access_scope == "organization"
-            || (document.access_scope == "role"
-                && document
-                    .access_roles
-                    .as_array()
-                    .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))))
-            || (document.access_scope == "users"
-                && document.access_target_ids.as_array().is_some_and(|arr| {
-                    arr.iter()
-                        .any(|id| id.as_str() == Some(&user_id.to_string()))
-                }));
-        if !allowed {
+        if !document_access_allowed(&document, auth.user_id, &user_role) {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
@@ -1249,24 +1254,9 @@ async fn get_preview_url(
         }
     };
 
-    // Enforce access_scope for non-managers (mirrors list_documents simple path).
-    // Return 404 to avoid leaking document existence to unauthorized users.
     if !tenant.role.is_manager() {
-        let user_id = auth.user_id;
         let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
-        let allowed = document.created_by == user_id
-            || document.access_scope == "organization"
-            || (document.access_scope == "role"
-                && document
-                    .access_roles
-                    .as_array()
-                    .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))))
-            || (document.access_scope == "users"
-                && document.access_target_ids.as_array().is_some_and(|arr| {
-                    arr.iter()
-                        .any(|id| id.as_str() == Some(&user_id.to_string()))
-                }));
-        if !allowed {
+        if !document_access_allowed(&document, auth.user_id, &user_role) {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
@@ -1665,3 +1655,6 @@ pub async fn upload_document(
         }
     }
 }
+
+#[cfg(test)]
+mod document_access_test;
