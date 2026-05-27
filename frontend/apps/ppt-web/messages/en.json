@@ -52,7 +52,8 @@
     "selectOrganization": "Please select an organization",
     "unknown": "Unknown",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "unknownError": "An error occurred. Please try again."
   },
   "nav": {
     "home": "Home",
@@ -2568,6 +2569,30 @@
           "dateInFuture": "Violation date cannot be in the future"
         }
       }
+    },
+    "esign": {
+      "requestSignature": "Request Signature",
+      "modal": {
+        "title": "Request Signature",
+        "selectSigners": "Select signers",
+        "subject": "Subject (optional)",
+        "subjectPlaceholder": "e.g. Lease Agreement Signing",
+        "message": "Message to signers (optional)",
+        "messagePlaceholder": "Please review and sign the attached lease agreement.",
+        "sending": "Sending…",
+        "send": "Send for Signature"
+      },
+      "role": {
+        "tenant": "Tenant"
+      },
+      "status": {
+        "pending": "Pending Signature",
+        "in_progress": "Signing In Progress",
+        "completed": "Signed",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "help": {
@@ -3030,6 +3055,19 @@
       "downloadFailed": "Failed to download report.",
       "retryQueued": "Execution queued for retry.",
       "retryFailed": "Failed to retry execution."
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "status": "Status:",
+      "dateFrom": "From:",
+      "dateTo": "To:",
+      "clearFilters": "Clear filters",
+      "statusCompleted": "Completed",
+      "statusFailed": "Failed",
+      "statusRunning": "Running",
+      "statusPending": "Pending",
+      "statusCancelled": "Cancelled",
+      "statusSkipped": "Skipped"
     }
   }
 }

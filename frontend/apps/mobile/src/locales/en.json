@@ -313,7 +313,21 @@
     "empty": "No announcements",
     "emptyMessage": "Check back later for updates",
     "pinned": "Pinned",
-    "by": "By {author}"
+    "by": "By {author}",
+    "detail": {
+      "loadError": "Couldn't load announcement",
+      "backToList": "← Announcements",
+      "back": "← Back",
+      "attachments": "Attachments",
+      "reads": "reads",
+      "acknowledged": "acknowledged",
+      "comments": "comments",
+      "ackRequired": "This announcement requires your acknowledgment.",
+      "ackButton": "Acknowledge",
+      "ackDone": "You have acknowledged this announcement.",
+      "ackError": "Failed to acknowledge: {{message}}",
+      "publishedAt": "Published: {{date}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget Added",

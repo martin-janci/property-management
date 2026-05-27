@@ -468,6 +468,8 @@ export function useMarkReadAnnouncement() {
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: announcementKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: announcementKeys.unreadCount() });
+      // Invalidate list cache so unread badges update immediately (Story 6.2 fix)
+      queryClient.invalidateQueries({ queryKey: announcementKeys.lists() });
     },
   });
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-26T16:02:20Z",
+  "generated": "2026-05-27T10:13:52Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -13,7 +13,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/435",
       "merged_at": null,
       "implementer_summary": "pr=435 status=done specialist=generic note=PR #435 reviewed, merged to dev at bddcbf46",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-scrum-master-review-epic-8a",
@@ -27,7 +35,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/436",
       "merged_at": null,
       "implementer_summary": "pr=436 status=done specialist=generic note=code review complete; sprint-status.yaml epic-8a promoted to done (3/3 stories)",
-      "reviewer_summary": "verdict=approve note=epic-8a marked done (3/3), handler mod refs fully cleaned, check+security+deny CI pass"
+      "reviewer_summary": "verdict=approve note=epic-8a marked done (3/3), handler mod refs fully cleaned, check+security+deny CI pass",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-tech-lead-remove-dead-handler-modules",
@@ -41,7 +57,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/437",
       "merged_at": null,
       "implementer_summary": "pr=437 status=done specialist=rust-backend note=deleted dead AuthHandler/BuildingHandler modules (2495 lines)",
-      "reviewer_summary": "verdict=approve note=dead handler modules removed cleanly; cargo-deny green"
+      "reviewer_summary": "verdict=approve note=dead handler modules removed cleanly; cargo-deny green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-scrum-master-review-story-6-1",
@@ -55,7 +79,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/440",
       "merged_at": null,
       "implementer_summary": "pr=440 status=done specialist=rust-backend note=story 6.1 already merged (PR #5, 74bd194b)",
-      "reviewer_summary": "verdict=approve note=tracking-file PR clean; LGTM"
+      "reviewer_summary": "verdict=approve note=tracking-file PR clean; LGTM",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-tech-lead-decide-2b-build-order",
@@ -69,7 +101,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/442",
       "merged_at": "2026-05-24T06:25:35Z",
       "implementer_summary": "pr=442 status=done specialist=generic note=DEC-001 recorded in decisions.md",
-      "reviewer_summary": "verdict=approve note=DEC-001 sound and complete; all 12 CI checks green"
+      "reviewer_summary": "verdict=approve note=DEC-001 sound and complete; all 12 CI checks green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-9-1-mfa-frontend-integration",
@@ -83,7 +123,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/441",
       "merged_at": "2026-05-24T06:26:10Z",
       "implementer_summary": "pr=441 status=done specialist=react-web note=wired useMfa hooks to @ppt/api-client; TwoFactorAuthPage rewritten",
-      "reviewer_summary": "verdict=approve note=both blocking issues resolved; CI all green"
+      "reviewer_summary": "verdict=approve note=both blocking issues resolved; CI all green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-3-frontend-api-integration",
@@ -97,7 +145,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/443",
       "merged_at": "2026-05-24T06:26:20Z",
       "implementer_summary": "pr=443 status=done specialist=react-web note=wired DocumentsBrowse to RLS-aware GET; screen apiStatus partial->complete",
-      "reviewer_summary": "verdict=approve note=all 3 original bugs resolved; CI all green"
+      "reviewer_summary": "verdict=approve note=all 3 original bugs resolved; CI all green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-79-2-login-flow-wiring",
@@ -111,7 +167,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/444",
       "merged_at": "2026-05-24T06:26:30Z",
       "implementer_summary": "pr=444 status=done specialist=react-web note=wired logout button to AuthContext",
-      "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present; CI clean"
+      "reviewer_summary": "verdict=approve note=screen-map Agent Log entries present; CI clean",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-1-mobile-document-upload",
@@ -125,7 +189,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/447",
       "merged_at": "2026-05-24T02:56:00Z",
       "implementer_summary": "pr=447 status=done specialist=react-native note=DocumentUploadScreen wired; multipart POST",
-      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct; CI green"
+      "reviewer_summary": "verdict=approve note=LGTM; multipart upload correct; CI green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-5-mobile-share-ui",
@@ -139,7 +211,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/445",
       "merged_at": "2026-05-24T02:59:00Z",
       "implementer_summary": "pr=445 status=done specialist=react-native note=DocumentShareSheet bottom-sheet; 6 locales",
-      "reviewer_summary": "verdict=approve note=all 4 share types covered; CI all green"
+      "reviewer_summary": "verdict=approve note=all 4 share types covered; CI all green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-4-pdf-preview",
@@ -153,7 +233,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/446",
       "merged_at": "2026-05-24T02:51:00Z",
       "implementer_summary": "pr=446 status=done specialist=react-web note=PdfPreview component (react-pdf/pdfjs-dist v5)",
-      "reviewer_summary": "verdict=approve note=pdfjs worker uses import.meta.url; CI green"
+      "reviewer_summary": "verdict=approve note=pdfjs worker uses import.meta.url; CI green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-security-resolve-435-followups",
@@ -167,7 +255,15 @@
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": "pr=none status=partial specialist=pm-security note=agent aborted mid-run: disk full",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-backend-fix-ssrf-outbound",
@@ -181,7 +277,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/450",
       "merged_at": "2026-05-24T06:52:00Z",
       "implementer_summary": "pr=450 status=done specialist=rust-backend note=validate_external_url (19 tests); SSRF gate applied",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-backend-implement-81-schedule-endpoints",
@@ -195,7 +299,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/448",
       "merged_at": "2026-05-24T06:53:00Z",
       "implementer_summary": "pr=448 status=done specialist=rust-backend note=6 Epic 81 endpoints",
-      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated; CI all-green"
+      "reviewer_summary": "verdict=approve note=all 6 handlers auth-gated; CI all-green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-6-5-direct-messaging-apistatus",
@@ -209,7 +321,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/449",
       "merged_at": "2026-05-24T10:14:11Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=messaging hooks use @ppt/api-client factory pattern correctly"
+      "reviewer_summary": "verdict=approve note=messaging hooks use @ppt/api-client factory pattern correctly",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-2-folder-tree-ui",
@@ -223,21 +343,37 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/451",
       "merged_at": "2026-05-24T10:13:04Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct"
+      "reviewer_summary": "verdict=approve note=depth-guard/fetchApi/invalidation/types/a11y/security all correct",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-stub-handlers",
       "branch": "auto-impl/gap-10b-stub-handlers",
-      "status": "failed",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-24T06:11:00Z",
       "last_updated": "2026-05-24T10:06:00Z",
       "status_changed_at": "2026-05-24T10:06:00Z",
-      "pr_number": null,
+      "pr_number": 596,
       "pr_url": null,
-      "merged_at": null,
+      "merged_at": "2026-05-27T10:51:29Z",
       "implementer_summary": "no branch pushed within 2h",
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve; stub endpoints already correctly implemented since cf533ae4; PR merged squash into dev",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-tech-lead-split-churn-hot-routes",
@@ -251,7 +387,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/456",
       "merged_at": "2026-05-24T11:23:14Z",
       "implementer_summary": "pr=456 status=done specialist=rust-backend note=split integrations.rs/organizations.rs/documents.rs into directory-based modules",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-tech-lead-define-oauth-provider-design",
@@ -265,7 +409,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/455",
       "merged_at": "2026-05-24T10:13:06Z",
       "implementer_summary": "pr=455 status=done specialist=generic note=created docs/oauth-provider-design.md (360 lines)",
-      "reviewer_summary": "verdict=approve note=design doc correct on all security-critical decisions; CI green"
+      "reviewer_summary": "verdict=approve note=design doc correct on all security-critical decisions; CI green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-frontend-protectedroute-failopen",
@@ -279,7 +431,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/459",
       "merged_at": "2026-05-24T20:52:38Z",
       "implementer_summary": "pr=459 status=done specialist=pm-frontend note=ProtectedRoute fail-open fixed (deny-on-missing-role)",
-      "reviewer_summary": "verdict=changes note=Core fail-closed logic correct and CI green; changes: (1) tenants/expiresIn should be required; (2) initializeAuth() missing tenants[0].role fallback; (3) no tests for deny-on-missing-role paths"
+      "reviewer_summary": "verdict=changes note=Core fail-closed logic correct and CI green; changes: (1) tenants/expiresIn should be required; (2) initializeAuth() missing tenants[0].role fallback; (3) no tests for deny-on-missing-role paths",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-scrum-master-sequence-epic-2b",
@@ -293,7 +453,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/458",
       "merged_at": "2026-05-25T01:35:24Z",
       "implementer_summary": "pr=458 status=done specialist=pm-scrum-master note=sprint-status.yaml sequenced (Epic 2B first)",
-      "reviewer_summary": "verdict=approve note=all planning docs valid and internally consistent; Epic 2B correctly sequenced; PR draft+dirty needs rebase before merge"
+      "reviewer_summary": "verdict=approve note=all planning docs valid and internally consistent; Epic 2B correctly sequenced; PR draft+dirty needs rebase before merge",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "pm-scrum-master-land-voice-device-idor",
@@ -307,7 +475,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/461",
       "merged_at": "2026-05-24T17:45:00Z",
       "implementer_summary": null,
-      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green"
+      "reviewer_summary": "verdict=changes note=SQL repo fix correct; handler fix not pushed \u2014 IDOR unfixed in both handlers; merge blocked until handler pushed and CI green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-2b-notification-pipeline",
@@ -321,7 +497,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/463",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=463 status=done specialist=rust-backend note=Epic 2B notification pipeline: TransportAdapter traits (Email/Push/InApp)",
-      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge"
+      "reviewer_summary": "verdict=approve note=CI fully green post-fmt-fix; no unwrap abuse, no RLS bypass \u2014 ready to merge",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-6-6-neighbor-listing-verify",
@@ -335,7 +519,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/464",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=464 status=done specialist=react-web note=useNeighbors hooks; NeighborsPage lazy route; mobile integration; sprint-status 6-6 -> done",
-      "reviewer_summary": "verdict=approve note=All 12 CI checks green; TanStack Query patterns correct, privacy-aware filtering sound; sprint status promoted to done"
+      "reviewer_summary": "verdict=approve note=All 12 CI checks green; TanStack Query patterns correct, privacy-aware filtering sound; sprint status promoted to done",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-4-mobile-preview",
@@ -349,7 +541,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/462",
       "merged_at": "2026-05-24T15:20:00Z",
       "implementer_summary": "pr=462 status=done specialist=react-native note=DocumentPreviewScreen added",
-      "reviewer_summary": "verdict=approve note=all 10 CI checks green; i18n complete across 6 locales"
+      "reviewer_summary": "verdict=approve note=all 10 CI checks green; i18n complete across 6 locales",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-5-web-share-ui",
@@ -363,7 +563,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/467",
       "merged_at": "2026-05-24T17:30:00Z",
       "implementer_summary": "pr=467 status=done specialist=react-web note=DocumentSharePanel (user/role/building/link) added to DocumentDetail",
-      "reviewer_summary": "verdict=approve note=revokeDocumentShare raw-fetch fix confirmed via fetchApi; all 21 CI checks green; no auth bypasses"
+      "reviewer_summary": "verdict=approve note=revokeDocumentShare raw-fetch fix confirmed via fetchApi; all 21 CI checks green; no auth bypasses",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-7a-3-mobile-rls-ui",
@@ -377,7 +585,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/465",
       "merged_at": "2026-05-24T15:40:00Z",
       "implementer_summary": "pr=465 status=done specialist=react-native note=DocumentPermissionsScreen + access_scope filter chips",
-      "reviewer_summary": "verdict=approve note=All 5 CI checks green; cache key includes scope for correct isolation"
+      "reviewer_summary": "verdict=approve note=All 5 CI checks green; cache key includes scope for correct isolation",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-79-1-announcements-page-wiring",
@@ -391,7 +607,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/466",
       "merged_at": "2026-05-24T15:35:00Z",
       "implementer_summary": "pr=466 status=done specialist=react-web note=wired AnnouncementsPage + FaultsPage to @ppt/api-client query hooks",
-      "reviewer_summary": "verdict=changes note=BLOCKING fetchJson fix APPLIED in c2d2e3b3; screen-maps updated apiStatus stub->partial"
+      "reviewer_summary": "verdict=changes note=BLOCKING fetchJson fix APPLIED in c2d2e3b3; screen-maps updated apiStatus stub->partial",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10a-1-oauth-tests",
@@ -405,7 +629,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/470",
       "merged_at": "2026-05-25T00:45:13Z",
       "implementer_summary": "pr=470 status=done specialist=rust-backend note=18 OAuth integration tests (PKCE S256 flow, consent/revoke, refresh rotation + family reuse detection, audit trail); cargo check and cargo check --tests both exit 0",
-      "reviewer_summary": "verdict=approve note=All 4 post-review commits are targeted fixes (migration adding oauth_* ENUM values, sqlx rename attributes fixing o_auth_* vs oauth_* mismatch, removing revoked_at IS NULL for RFC 9700 replay detection, audit count cast + missing client_secret in test); no regressions; previous minor observations unchanged and non-blocking."
+      "reviewer_summary": "verdict=approve note=All 4 post-review commits are targeted fixes (migration adding oauth_* ENUM values, sqlx rename attributes fixing o_auth_* vs oauth_* mismatch, removing revoked_at IS NULL for RFC 9700 replay detection, audit count cast + missing client_secret in test); no regressions; previous minor observations unchanged and non-blocking.",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10a-2-oauth-admin-ui",
@@ -419,7 +651,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/469",
       "merged_at": "2026-05-24T17:55:00Z",
       "implementer_summary": "pr=469 status=done specialist=react-web note=OAuthClientsPage full CRUD UI (register/edit/revoke/regenerate); api-client OAuth types+hooks+api; capabilities+route+sidebar+i18n wired; Band A typecheck+biome clean, Band B vite build exit 0",
-      "reviewer_summary": "verdict=changes+fixed note=3 bugs fixed: handleRevoke try/catch, useRegenerateOAuthClientSecret cache invalidation, OAuthClientSummary.redirectUris field; CI green; merged sha=41504ec4"
+      "reviewer_summary": "verdict=changes+fixed note=3 bugs fixed: handleRevoke try/catch, useRegenerateOAuthClientSecret cache invalidation, OAuthClientSummary.redirectUris field; CI green; merged sha=41504ec4",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10a-3-user-grants-ui",
@@ -433,7 +673,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/468",
       "merged_at": null,
       "implementer_summary": "pr=468 status=done specialist=react-web note=OAuthGrantsPage at /settings/oauth-grants; useUserGrants+useRevokeUserGrant wired; api-client oauth-grants module added; typecheck+biome+build clean",
-      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key \u2014 all green"
+      "reviewer_summary": "verdict=approve note=endpoints correct (GET/DELETE /api/v1/oauth/grants); cache invalidation present; no IDOR (JWT-scoped backend query); ProtectedRoute gating; all 3 empty/load/error states handled; screen-map uses object relatedScreens and ppt-web impl key \u2014 all green",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-8a-3-websocket-realtime-sync",
@@ -447,7 +695,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/472",
       "merged_at": "2026-05-25T01:35:09Z",
       "implementer_summary": "pr=472 status=done specialist=rust-backend note=WebSocket endpoint ws_notifications.rs; Redis pub/sub fan-out; axum ws feature added",
-      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db \u2014 user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER \u2014 fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes."
+      "reviewer_summary": "verdict=changes note=2 blockers: (1) mfa.rs drops RlsConnection on all 5 MFA handlers replacing rls.conn() with &state.db \u2014 user_2fa has ENABLE ROW LEVEL SECURITY keyed on app.current_user_id so all MFA ops break silently; these changes are unrelated to 8A.3 and must be reverted; (2) ws_notifications.rs creates private OnceLock WsVerifier duplicating api_core::extractors::auth JWT_VERIFIER \u2014 fix by exporting validate_access_token helper from api-core and delegating. Non-blocking: wrong endpoint path in PR body, idle-timeout double-sleep gap, 4h ceiling vs 15min JWT exp not enforced, missing cargo check exit codes.",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-3-admin-health-ui",
@@ -461,7 +717,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/471",
       "merged_at": "2026-05-24T20:51:57Z",
       "implementer_summary": "pr=471 status=done specialist=react-web note=wired health dashboard/metric-history/alerts/thresholds to /platform/health; 7 unit tests; Band A skipped \u2014 node_modules not installed in environment",
-      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() \u2014 raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files."
+      "reviewer_summary": "verdict=changes note=Two MUST issues: (1) all health API calls bypass the project's MFA interceptor in @ppt/api-client by using a bespoke inline fetchJson() \u2014 raw 401 mfa_required responses will error instead of triggering the MFA modal; (2) no screen-map file created for the new platform/health route (CLAUDE.md rule B). Also SHOULD: ~20 hardcoded English strings not covered by the i18n keys added to the locale files.",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-9-1-mfa-e2e-verify",
@@ -475,7 +739,15 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/473",
       "merged_at": "2026-05-25T01:35:17Z",
       "implementer_summary": "pr=473 status=done specialist=rust-backend note=600-line MFA e2e integration tests; mod.rs declared",
-      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] \u2014 every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge."
+      "reviewer_summary": "verdict=changes note=All new test logic/TOTP params/auth-guard/RLS is correct, but tests/common/mod.rs reads json[\"access_token\"] (snake_case) while LoginResponse is #[serde(rename_all=\"camelCase\")] \u2014 every test that calls create_authenticated_user will panic before reaching any MFA assertion; fix json[\"accessToken\"]/json[\"refreshToken\"] required before merge.",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-4-system-announcements-impl",
@@ -489,7 +761,15 @@
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": "no branch pushed within 2h",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-5-support-data-impl",
@@ -503,7 +783,15 @@
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": "no branch pushed within 2h",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-6-onboarding-impl",
@@ -517,7 +805,15 @@
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": "branch pushed but no commits ahead of dev; cannot create PR",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-10b-7-help-impl",
@@ -531,7 +827,15 @@
       "pr_url": null,
       "merged_at": null,
       "implementer_summary": "no branch pushed within 2h",
-      "reviewer_summary": null
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-6-2-announcement-web-ui",
@@ -546,7 +850,15 @@
       "merged_at": null,
       "implementer_summary": "pr=474 status=done specialist=react-web note=ViewAnnouncementPage wired to mark_read/acknowledge/get_acknowledgments APIs; AnnouncementComments wired (6.3 bonus); typecheck+biome+build clean",
       "reviewer_summary": "verdict=approve note=auth/query-keys/invalidation/IDOR all correct; ~10 hardcoded strings in AnnouncementComments.tsx not i18n-wrapped (SHOULD, non-blocking); ready to merge",
-      "reviewer_verdict": "approve"
+      "reviewer_verdict": "approve",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-6-3-comments-web-ui",
@@ -561,7 +873,15 @@
       "merged_at": "2026-05-25T07:21:12Z",
       "implementer_summary": "pr=475 status=done specialist=react-web note=AnnouncementComments component + 3 hooks wired; depth-3 reply cap; typecheck+biome+build clean",
       "reviewer_summary": "verdict=approve note=all three issues fixed: i18n complete (12 comment keys + toast keys), isManager includes technical_manager+property_manager, sitemap+screen-map updated with all 6 comment endpoints; no new issues",
-      "reviewer_verdict": "approve"
+      "reviewer_verdict": "approve",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "merge_attempted_at": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0
     },
     {
       "task_id": "gap-6-4-pin-web-ui",
@@ -580,7 +900,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-2-dispute-verify",
@@ -599,7 +922,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-3-mediation-verify",
@@ -618,7 +944,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-81-1-schedule-e2e-verify",
@@ -637,7 +966,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-81-2-execution-history-verify",
@@ -657,7 +989,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-8a-3-mobile-push",
@@ -677,7 +1012,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-backend-fix-ai-equipment-idor",
@@ -697,7 +1035,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-frontend-sequence-epic6-announcement-drafts",
@@ -716,7 +1057,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-frontend-schedule-followup-test-batch",
@@ -735,7 +1079,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-tech-lead-split-ai-platform-announcements-monoliths",
@@ -755,7 +1102,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-frontend-verify-epic81-schedule-execution",
@@ -774,7 +1124,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-84-2-esignature-impl",
@@ -794,7 +1147,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-tech-lead-confirm-websocket-infra-ownership",
@@ -814,7 +1170,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-85-1-rn-env-config",
@@ -834,7 +1193,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-85-2-ios-build-config",
@@ -854,7 +1216,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "security-inquiry-read-idor",
@@ -874,7 +1239,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-1-upload-verify",
@@ -893,7 +1261,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-1-swiftui-audit",
@@ -913,7 +1284,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-2-deep-linking",
@@ -933,7 +1307,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-10b-4-sysannounce-admin-impl",
@@ -952,7 +1329,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-6-2-announcement-read-receipt",
@@ -971,7 +1351,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-79-1-api-client-core-wiring",
@@ -990,7 +1373,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-79-2-auth-sso-completion",
@@ -1009,7 +1395,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-1-backend-multipart-upload",
@@ -1028,7 +1417,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-10b-5-support-data-api",
@@ -1047,7 +1439,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-6-3-announcement-comments-api",
@@ -1066,7 +1461,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-6-4-pinned-announcements-api",
@@ -1085,7 +1483,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-2-dispute-filing-api",
@@ -1104,7 +1505,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-qa-create-backend-servers-reality-server",
@@ -1123,7 +1527,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-qa-verify-respond-to-inquiry-post-api-v1",
@@ -1142,7 +1549,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-scrum-master-implement-post-api-v1-documents-upload",
@@ -1150,7 +1560,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T16:10:00Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-25T18:11:00Z",
       "pr_number": 509,
       "pr_url": "https://github.com/martin-janci/property-management/pull/509",
@@ -1161,7 +1571,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-scrum-master-wire-app-tsx-dispute-routes-replace-in",
@@ -1180,7 +1593,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-qa-establish-pr-merge-policy-requiring-a",
@@ -1199,7 +1615,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-6-4-pinned-announcements-ui",
@@ -1218,7 +1637,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-8a-3-push-fanout-delivery",
@@ -1237,7 +1659,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-3-mediation-api",
@@ -1256,7 +1681,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-84-2-esignature-email-ui",
@@ -1275,7 +1703,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-2-dispute-filing-ui",
@@ -1283,7 +1714,7 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-25T20:10:00Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-25T20:21:00Z",
       "pr_number": 530,
       "pr_url": "https://github.com/martin-janci/property-management/pull/530",
@@ -1294,7 +1725,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-81-1-report-schedule-edit-api",
@@ -1302,7 +1736,7 @@
       "status": "review",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-25T20:10:00Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-25T20:22:00Z",
       "pr_number": 531,
       "pr_url": "https://github.com/martin-janci/property-management/pull/531",
@@ -1313,7 +1747,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-81-2-report-execution-history-api",
@@ -1332,7 +1769,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-3-swiftui-home-search",
@@ -1340,7 +1780,7 @@
       "status": "review",
       "specialist": "ios-swiftui",
       "claimed_at": "2026-05-25T22:10:38Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-25T22:28:00Z",
       "pr_number": 533,
       "pr_url": "https://github.com/martin-janci/property-management/pull/533",
@@ -1351,7 +1791,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-83-1-airbnb-integration-backend",
@@ -1370,7 +1813,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-83-2-booking-integration-backend",
@@ -1389,14 +1835,17 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-85-2-build-config-android",
       "branch": "auto-impl/gap-85-2-build-config-android",
       "status": "review",
       "claimed_at": "2026-05-26T00:11:44Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-26T00:34:40Z",
       "pr_number": 536,
       "pr_url": "https://github.com/martin-janci/property-management/pull/536",
@@ -1408,33 +1857,39 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-85-2-build-config-ios",
       "branch": "auto-impl/gap-85-2-build-config-ios",
       "status": "review",
       "claimed_at": "2026-05-26T00:11:44Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T11:10:00Z",
       "status_changed_at": "2026-05-26T00:26:42Z",
       "pr_number": 535,
       "pr_url": "https://github.com/martin-janci/property-management/pull/535",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=535 status=done specialist=react-native scope_drift=true note=eas.json+app.config.ts iOS build config (bundleId,ATS,buildNumber,OTA)+eas-build-ios.yml workflow; typecheck+lint clean",
-      "reviewer_summary": "verdict=changes note=Blocking: workflow uses actions/checkout@v6, setup-node@v6, pnpm/action-setup@v6 which dont exist (latest are v4); fix version pins before merge; Non-blocking: remove unused submit.staging, guard updates.url against missing EXPO_PROJECT_ID",
+      "reviewer_summary": "verdict=approve head_oid=b097d9e8fd9c70dc28efca51099d4ee6de9febe6 note=clean rebase squash; branch contamination (stale Cargo.toml, version bumps) removed; PR now 2 files changed (eas.json+app.config.ts), eas-build-ios.yml already in dev via #595; CI re-triggered; awaiting green",
       "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-3-search-enhancements",
       "branch": "auto-impl/gap-82-3-search-enhancements",
       "status": "review",
       "claimed_at": "2026-05-26T00:11:44Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-26T00:34:59Z",
       "pr_number": 537,
       "pr_url": "https://github.com/martin-janci/property-management/pull/537",
@@ -1446,14 +1901,17 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-4-photo-gallery",
       "branch": "auto-impl/gap-82-4-photo-gallery",
       "status": "review",
       "claimed_at": "2026-05-26T02:15:36Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-26T02:21:42Z",
       "pr_number": 540,
       "pr_url": "https://github.com/martin-janci/property-management/pull/540",
@@ -1465,14 +1923,17 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-5-ios-push-keychain",
       "branch": "auto-impl/gap-82-5-ios-push-keychain",
       "status": "review",
       "claimed_at": "2026-05-26T02:15:36Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
       "status_changed_at": "2026-05-26T04:43:00Z",
       "pr_number": 539,
       "pr_url": "https://github.com/martin-janci/property-management/pull/539",
@@ -1484,7 +1945,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-83-1-airbnb-oauth",
@@ -1503,7 +1967,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-10b-6-onboarding-tour-api",
@@ -1522,7 +1989,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-10b-7-contextual-help-ui",
@@ -1541,7 +2011,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-82-6-kmp-android-home",
@@ -1560,7 +2033,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-83-2-booking-ota",
@@ -1579,7 +2055,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-2-folder-api",
@@ -1598,7 +2077,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-4-document-download-api",
@@ -1617,7 +2099,10 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-81-2-report-execution-history-ui",
@@ -1636,7 +2121,54 @@
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "fix-issue-queue-backend",
+      "branch": "fix/issue-queue-backend",
+      "status": "merged",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-26T10:46:00Z",
+      "last_updated": "2026-05-26T12:50:00Z",
+      "status_changed_at": "2026-05-26T12:50:00Z",
+      "pr_number": 548,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/548",
+      "merged_at": "2026-05-26T12:50:00Z",
+      "implementer_summary": "pr=548 status=done specialist=rust-backend note=12 backend follow-up fixes: OAuth revoke, IDOR, TOCTOU, cross-tenant dispute, WS JWT, e-sig HMAC, audit, cookie; B-1 org from JWT; B-2 e-sig fail-closed; commit c6226600",
+      "reviewer_summary": "verdict=approve note=B-1 confirmed: organization_id from user.tenant_id not body; B-2 confirmed: ok_or_else+? returns 503 not unsigned URL; cargo check exit 0; all advisories non-blocking",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "fix-issue-queue-ppt-web",
+      "branch": "fix/issue-queue-ppt-web",
+      "status": "merged",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-26T11:12:00Z",
+      "last_updated": "2026-05-26T13:07:00Z",
+      "status_changed_at": "2026-05-26T13:07:00Z",
+      "pr_number": 549,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/549",
+      "merged_at": "2026-05-26T13:07:00Z",
+      "implementer_summary": "pr=549 status=done specialist=react-web note=7 frontend fixes: FolderTree toasts, VITE_API_DEFAULT, ProtectedRoute JWT role, UUID validation, authenticatedFetchJson, notImplemented toasts, SystemAnnouncementsPage split",
+      "reviewer_summary": "verdict=approve note=all 7 fixes verified correct; 9 Vitest tests + 12 unit tests; merged squash ef07641a",
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-80-3-mediation-ui",
@@ -1644,18 +2176,21 @@
       "status": "merged",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T13:30:00Z",
-      "last_updated": "2026-05-27T01:07:37Z",
-      "status_changed_at": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T05:08:00Z",
+      "status_changed_at": "2026-05-27T05:08:00Z",
       "pr_number": 555,
       "pr_url": "https://github.com/martin-janci/property-management/pull/555",
       "merged_at": "2026-05-27T00:12:08Z",
       "implementer_summary": "pr=555 status=done specialist=react-web note=MediationWorkspacePage 3-panel layout (sidebar/tabbed/header rail); MediationChatThread; MediationResolutionForm; App.tsx DisputeMediationRoute wired; lazyRoutes updated; dispute-detail screen-map agent log entry added",
-      "reviewer_summary": "verdict=approve note=both blocking issues resolved \u2014 CI/test job green across all checks, TS7006 implicit-any delta zeroed (all new components fully typed with explicit interfaces); non-blocking items improved (aria-label on spinners added, dialogs now have role=dialog+aria-modal+auto-focus+Escape handler, all 6 locales have mediation keys though non-EN strings still in English \u2014 acceptable non-blocking follow-up)",
-      "last_reviewed_oid": "32eb0fb853d6a21c1410b2bfda0807e4727999ab",
+      "reviewer_summary": "verdict=changes note=5 blocking issues: zero i18n in all 3 new files, MediationChatThread silently drops send errors (mutateAsync try/catch bypasses global boundary), dead disputeId prop in MediationResolutionForm, isActive=true when dispute undefined (shows action buttons on fetch error), biome-ignore suppressant removed from admin-web window.confirm without fixing violation; 4 non-blocking: formatTime duplicated, raw useState instead of react-hook-form+zod, dialogs missing role=dialog/focus-trap, workspace 646 lines with 4 inline sub-components",
+      "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": null,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-7a-2-folder-ui",
@@ -1663,18 +2198,21 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T10:13:52Z",
       "status_changed_at": "2026-05-26T14:30:00Z",
       "pr_number": 556,
       "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
       "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
-      "reviewer_summary": "verdict=approve note=all 3 previous blocking issues fixed: role=dialog/aria-modal now on panel div (not backdrop), useMoveDocumentWithToast hook extracted (deduplication resolved), query invalidation confirmed via useMoveDocument onSuccess in api-client; minor non-blocking carry-forwards only",
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=All 13 CI checks green; no blocking issues found \u2014 correct ARIA usage, proper focus trap, blob-URL download pattern, full unit test coverage for buildFolderCrumbs, no auth/RLS regressions",
+      "last_reviewed_oid": "4edfefa905fddd9605329a91d6a251866b1c0a9c",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": "2026-05-27T10:13:52Z"
     },
     {
       "task_id": "gap-7a-4-document-preview-ui",
@@ -1682,61 +2220,286 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T10:57:00Z",
       "status_changed_at": "2026-05-26T14:35:00Z",
       "pr_number": 557,
       "pr_url": "https://github.com/martin-janci/property-management/pull/557",
       "merged_at": null,
       "implementer_summary": "pr=557 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=DocumentPreviewModal (PDF/image/fallback inline preview + download button); per-row preview+download buttons in DocumentsBrowse; usePreviewUrl+useDownloadUrl wired; modal accessible (Escape, backdrop, focus, aria-modal)",
-      "reviewer_summary": "verdict=approve note=all 4 previous blockers fixed: role=dialog on panel with ARIA 1.2 comment, working focus trap via handlePanelKeyDown, lazy download URL (fetch only on click, zero on list render), fetch\u2192blob\u2192createObjectURL for cross-origin S3 bypass; non-blocking: RowDownloadButton still duplicates DownloadButton, UI strings not i18n-wrapped",
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve note=All CI green; rebase clean \u2014 gap-7a-2 move-folder + gap-7a-4 preview/download both intact in DocumentsBrowse.tsx; no duplicate code, no missing imports; all prior blockers resolved",
+      "last_reviewed_oid": "9f750673b935fc4b501f005e1480c0d3ba134d7f",
       "scope_drift": null,
       "code_reuse_warn": null,
       "empty_branch": null,
-      "rebase_attempts": null
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": "2026-05-27T10:13:52Z"
     },
     {
       "task_id": "gap-security-435-cookie-scope",
       "branch": "auto-impl/gap-security-435-cookie-scope",
-      "status": "in-progress",
-      "specialist": null,
-      "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:07:37Z",
-      "status_changed_at": "2026-05-27T01:07:37Z",
-      "pr_number": null,
-      "pr_url": null,
+      "status": "review",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T11:05:00Z",
+      "status_changed_at": "2026-05-27T07:32:00Z",
+      "pr_number": 565,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/565",
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=565 status=done specialist=pm-security note=P0-12 cookie hardening: SameSite Lax\u2192Strict, Path=/api/v1/auth scoped; sso.rs build_portal_session_cookie() centralised with Path=/api/v1/sso; 13 unit tests; cargo check exit 0",
+      "reviewer_summary": "verdict=approve head_oid=00ad1dd0138feba53399e1fd106c8efa9f659845 note=style/clippy commits only; filter+unwrap_or functionally equiv to prior match; security attrs unchanged; CI green; ready to merge",
+      "last_reviewed_oid": "00ad1dd0138feba53399e1fd106c8efa9f659845",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 1,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "pm-qa-inquiry-idor-tests-v2",
       "branch": "auto-impl/pm-qa-inquiry-idor-tests-v2",
-      "status": "in-progress",
-      "specialist": null,
-      "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:07:37Z",
-      "status_changed_at": "2026-05-27T01:07:37Z",
+      "status": "review",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T08:32:24Z",
+      "status_changed_at": "2026-05-27T07:32:00Z",
+      "pr_number": 563,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/563",
+      "merged_at": null,
+      "implementer_summary": "pr=563 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=PR#563 already open+approved; cargo check -p reality-server exit 0; 3 IDOR tests (C1/C2/C3) compile clean; mark_inquiry_read_for_realtor implemented in PR#497+#508",
+      "reviewer_summary": "verdict=approve head_oid=7fec1e10afe9209b517e4e02208ecda413b78da9 note=dedup-existing-review-at-2026-05-27T02:15:06Z",
+      "last_reviewed_oid": "7fec1e10afe9209b517e4e02208ecda413b78da9",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "pm-scrum-master-promote-approved-drafts-566-567",
+      "branch": "auto-impl/pm-scrum-master-promote-approved-drafts-",
+      "status": "failed",
+      "specialist": "pm-scrum-master",
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T07:25:00Z",
+      "status_changed_at": "2026-05-27T07:25:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": null,
-      "reviewer_summary": null
+      "implementer_summary": "pr=none status=done specialist=pm-scrum-master note=promoted #566 and #567 from draft\u2192ready then squash-merged both to dev; #566 sha=22672563 #567 sha=05f44b93 [meta-task succeeded; failed per pr=none rule]",
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null
     },
     {
       "task_id": "gap-6-2-announcement-read-receipt-retry",
       "branch": "auto-impl/gap-6-2-announcement-read-receipt-retry",
-      "status": "in-progress",
+      "status": "review",
       "specialist": null,
-      "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T10:25:00Z",
-      "status_changed_at": "2026-05-27T01:07:37Z",
-      "pr_number": null,
-      "pr_url": null,
+      "claimed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T08:41:00Z",
+      "status_changed_at": "2026-05-27T08:29:08Z",
+      "pr_number": 564,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/564",
       "merged_at": null,
+      "last_reviewed_oid": "a817ab72c2a495a0e8fa27ad2a06d316ecd9306a",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 1,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": "bootstrapped: existing open PR #564 detected, not previously tracked",
+      "reviewer_summary": "verdict=changes head_oid=a817ab72c2a495a0e8fa27ad2a06d316ecd9306a note=one-remaining-hardcoded-string-Published-in-AnnouncementDetailScreen-not-in-i18n; all-other-prior-review-issues-resolved"
+    },
+    {
+      "task_id": "gap-79-2-login-flow-impl-v2",
+      "branch": "auto-impl/gap-79-2-login-flow-impl-v2",
+      "status": "review",
+      "specialist": null,
+      "claimed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T08:41:00Z",
+      "status_changed_at": "2026-05-27T08:29:08Z",
+      "pr_number": 568,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/568",
+      "merged_at": null,
+      "last_reviewed_oid": "493493e2e7694cc2fab173febe385dccdfcba4b2",
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": "bootstrapped: existing open PR #568 detected, not previously tracked",
+      "reviewer_summary": "verdict=approve head_oid=493493e2e7694cc2fab173febe385dccdfcba4b2 note=SSO callback all 3 issues fixed, CI 13/13 green"
+    },
+    {
+      "task_id": "pm-devops-merge-mobile-eas-ci-fixes",
+      "branch": "auto-impl/pm-devops-merge-mobile-eas-ci-fixes",
+      "status": "review",
+      "specialist": null,
+      "claimed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T08:41:00Z",
+      "status_changed_at": "2026-05-27T08:41:00Z",
+      "pr_number": 595,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/595",
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": "pr=595 status=done specialist=react-native scope_drift=true code_reuse_warn=none note=EAS workflow @v6->@v4 fixed in both YAMLs; eas-cli devDep + Android build scripts added to package.json; drift=package.json justified by task (explicitly required)",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-3-health-ui-mfa-fix",
+      "branch": "auto-impl/gap-10b-3-health-ui-mfa-fix",
+      "status": "merged",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T10:13:52Z",
+      "status_changed_at": "2026-05-27T10:13:52Z",
+      "pr_number": 567,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/567",
+      "merged_at": "2026-05-27T07:16:26Z",
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": "pr=567 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=already merged; authenticatedFetchJson carries MFA intercept; admin/api.ts apiRequest removed; screen-map updated",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-4-system-announcements-backend",
+      "branch": "auto-impl/gap-10b-4-system-announcements-backend",
+      "status": "review",
+      "specialist": null,
+      "claimed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T10:13:52Z",
+      "status_changed_at": "2026-05-27T10:13:52Z",
+      "pr_number": 601,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/601",
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
       "implementer_summary": null,
-      "reviewer_summary": "verdict=approve note=all 3 required issues resolved; publishedAt i18n added to 6 locales; announcementId guard in place; lists() cache invalidation present; CI all green; ready to merge (PR still draft \u2014 merge blocked until undrafted)"
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-stub-handlers-backend",
+      "branch": "auto-impl/gap-10b-stub-handlers",
+      "status": "review",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-27T08:41:00Z",
+      "last_updated": "2026-05-27T08:41:00Z",
+      "status_changed_at": "2026-05-27T08:41:00Z",
+      "pr_number": 596,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/596",
+      "merged_at": null,
+      "last_reviewed_oid": null,
+      "scope_drift": false,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "fix_rounds": 0,
+      "reclaim_attempts": 0,
+      "merge_attempted_at": null,
+      "implementer_summary": "pr=596 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=handlers already fully implemented since cf533ae4 (2025-12-22); stale coverage scan flagged them as stubs; cargo check -p api-server exit 0; PR updates coverage metadata only",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-10b-5-support-data-api-retry",
+      "branch": "auto-impl/gap-10b-5-support-data-api-retry",
+      "status": "review",
+      "claimed_at": "2026-05-27T10:13:52Z",
+      "last_updated": "2026-05-27T11:00:00Z",
+      "status_changed_at": "2026-05-27T10:13:52Z",
+      "pr_number": 608,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/608",
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-79-2-auth-callback-e2e",
+      "branch": "auto-impl/gap-79-2-auth-callback-e2e",
+      "status": "review",
+      "claimed_at": "2026-05-27T10:13:52Z",
+      "last_updated": "2026-05-27T11:01:00Z",
+      "status_changed_at": "2026-05-27T10:13:52Z",
+      "pr_number": 609,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/609",
+      "merged_at": null,
+      "specialist": null,
+      "implementer_summary": null,
+      "reviewer_summary": null,
+      "last_reviewed_oid": null,
+      "scope_drift": null,
+      "code_reuse_warn": null,
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
+    },
+    {
+      "task_id": "gap-7a-1-upload-backend-tests",
+      "branch": "auto-impl/gap-7a-1-upload-backend-tests",
+      "status": "review",
+      "claimed_at": "2026-05-27T10:13:52Z",
+      "last_updated": "2026-05-27T11:13:00Z",
+      "status_changed_at": "2026-05-27T11:08:00Z",
+      "pr_number": 610,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/610",
+      "merged_at": null,
+      "specialist": "rust-backend",
+      "implementer_summary": "pr=610 status=partial specialist=rust-backend scope_drift=true code_reuse_warn=none note=10 upload tests committed; Band A blocked by build lock + pre-existing compile errors in notification_pipeline.rs+platform_admin.rs; test file rustfmt-clean; assignments.json accidentally in commit (scope drift)",
+      "reviewer_summary": "verdict=changes note=CI `check` job failed in 20s \u2014 `cargo fmt --all -- --check` is failing. Fix: (1) run `cd backend && cargo fmt --all` to auto-format the test file `backend/servers/api-server/tests/document_upload_tests.rs`, then verify with `cargo fmt --all -- --check` (must produce no output); (2) squash out or reset the `.research/management/assignments.json` change accidentally included in commit f62d9917e (scope drift noted in PR body) \u2014 reset that file to the dev HEAD value before force-pushing; (3) force-push the clean commit to the branch using `git -c commit.gpgsign=false -c tag.gpgsign=false`. PR is draft \u2014 that is fine. Just get fmt clean so CI can proceed.",
+      "last_reviewed_oid": null,
+      "scope_drift": true,
+      "code_reuse_warn": "none",
+      "empty_branch": null,
+      "rebase_attempts": 0,
+      "reclaim_attempts": 0,
+      "fix_rounds": 0,
+      "merge_attempted_at": null
     }
   ],
-  "assignments.generated": "2026-05-27T10:25:00Z"
+  "assignments.generated": "2026-05-27T11:03:00Z"
 }

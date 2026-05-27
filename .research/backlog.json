@@ -608,19 +608,21 @@
         "PR #489",
         "PR #511",
         "PR #547",
-        "PR #549"
+        "PR #549",
+        "PR #555"
       ],
       "evidence": [
         "frontend/apps/ppt-web/src/App.tsx churned 367 lines across 3 PRs this run (#474 +289, #489 +72, #475 +6)",
         "pm-scrum-master flagged triple-conflict rebase risk across #503/#500/80-3 wiring on the central router",
         "repeated-churn 2026-05-26: PR #511 added +253/-65 (318 lines) wiring DisputeDetailPage + DisputeMediationRoute + pinned-band props through the central router; runs_seen=2 — App.tsx keeps absorbing per-feature route + data-mapping logic that belongs in route modules",
-        "PR #547 (report execution-history route) and PR #549 (useCallback route wrappers) both touched App.tsx again on 2026-05-26 — aggregator coupling persists"
+        "PR #547 (report execution-history route) and PR #549 (useCallback route wrappers) both touched App.tsx again on 2026-05-26 — aggregator coupling persists",
+        "repeated-churn 2026-05-27: PR #555 (mediation workspace UI) replaced the DisputeMediationRoute stub with MediationWorkspacePage and added +122 lines to App.tsx; runs_seen=3 — aggregator keeps absorbing per-feature route + callback wiring"
       ],
       "files": [
         "frontend/apps/ppt-web/src/App.tsx"
       ],
       "created_at": "2026-05-25",
-      "updated_at": "2026-05-26",
+      "updated_at": "2026-05-27",
       "plan": null
     },
     {
@@ -746,6 +748,70 @@
       ],
       "created_at": "2026-05-26",
       "updated_at": "2026-05-26",
+      "plan": null
+    },
+    {
+      "id": "bug-mediation-page-no-error-state",
+      "title": "MediationWorkspacePage shows empty/unknown state instead of error UI on dispute fetch failure",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #555",
+        "code-review 2026-05-27"
+      ],
+      "evidence": [
+        "MediationWorkspacePage.tsx:313 destructures only {data,isLoading} from useDispute and guards only loading at :369; on 404/403/network failure the page falls through to render referenceNumber=disputeId, status \"unknown\", empty parties, and a dead resolve tab with no error message or retry (useDispute exposes isError/error but the page never consumes them)"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "refactor-mediation-ref-number-full-uuid",
+      "title": "Mediation reference number uppercases full UUID (DSP-<uuid>) instead of a short code",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #555",
+        "code-review 2026-05-27"
+      ],
+      "evidence": [
+        "MediationWorkspacePage.tsx:382 sets referenceNumber = DSP-${dispute.id.toUpperCase()} — renders the full uppercased UUID as the human-facing reference (e.g. DSP-3F2A1B9C-...) rather than a short code"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "refactor-mediation-duplicated-spinner",
+      "title": "Duplicated animate-spin spinner markup across mediation page + chat thread (no shared Spinner)",
+      "vector": "refactor",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "PR #555",
+        "code-review 2026-05-27"
+      ],
+      "evidence": [
+        "Identical role=status animate-spin spinner block duplicated at MediationWorkspacePage.tsx:91 and :375 and MediationChatThread.tsx — no shared Spinner component in ui-kit; should be extracted"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
+        "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
       "plan": null
     }
   ]

@@ -129,7 +129,39 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 ## Phase 1 — Read state + preflight
 
 1. `git fetch origin && git checkout dev && git pull --ff-only`
-2. **Disk preflight** (item #7 — runner ran out of disk on 2026-05-24 mid-implementer):
+2. **Recent-run skip-gate** (NEW — issue #1, prevents the `assignments.json` rebase-race
+   observed on 2026-05-27 when two cron runs ~1h apart both wrote `assignments.generated`):
+
+   ```bash
+   # Read assignments.generated from the freshly-pulled file.
+   GEN_AT=$(jq -r '.generated // empty' .research/management/assignments.json 2>/dev/null)
+   if [ -n "$GEN_AT" ]; then
+     GEN_EPOCH=$(date -u -d "$GEN_AT" +%s 2>/dev/null || echo 0)
+     NOW_EPOCH=$(date -u +%s)
+     AGE_MIN=$(( (NOW_EPOCH - GEN_EPOCH) / 60 ))
+     if [ "$AGE_MIN" -lt 30 ] && [ "$GEN_EPOCH" -gt 0 ]; then
+       echo "skip-gate: assignments.generated=$GEN_AT (age=${AGE_MIN}m < 30m); another run is in flight"
+       echo "  → Phase 2 (GH reconciliation, idempotent) WILL run; Phases 3/4/5/5.5/5.6/5.7 SKIP."
+       echo "  → Phase 6 will commit only if Phase 2 produced status transitions."
+       export DISPATCHER_SKIP_MUTATING=1
+     fi
+   fi
+   ```
+
+   When `DISPATCHER_SKIP_MUTATING=1`:
+   - Phase 2 (state reconciliation from GH) runs normally — it is idempotent and safe.
+   - Phase 2.5 / 2.6 / 2.7 / 3 / 4 / 5 / 5.5 / 5.6 / 5.7 SKIP. Each phase header
+     MUST check `$DISPATCHER_SKIP_MUTATING` before doing work.
+   - Phase 6 still commits + pushes IFF Phase 2 produced at least one transition
+     (otherwise nothing to write).
+   - Phase 7 prints summary as usual with `skip_reason=recent-run` in the header line.
+
+   This is a soft lock based on a repo-level timestamp, not a filesystem lock —
+   it survives cross-host parallel runs. Two runs within the same 30-min window
+   will see the same `assignments.generated` and both skip mutating phases on
+   their second pass; one of them already did the work.
+
+3. **Disk preflight** (item #7 — runner ran out of disk on 2026-05-24 mid-implementer):
 
    ```bash
    FREE_PCT=$(df -P . | awk 'NR==2{ sub("%","",$5); print 100-$5 }')
@@ -148,8 +180,8 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
    fi
    ```
 
-3. Read `action-list.json`, `assignments.json`, `coverage.json`.
-4. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
+4. Read `action-list.json`, `assignments.json`, `coverage.json`.
+5. Backfill any row missing `status_changed_at` = `claimed_at`. Backfill any
    row missing the new fields (`last_reviewed_oid`, `scope_drift`,
    `code_reuse_warn`, `empty_branch`, `rebase_attempts`, `fix_rounds`,
    `reclaim_attempts`, `merge_attempted_at`) to `null` / `0`.
@@ -169,11 +201,11 @@ global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrenc
 
    Once Phase 5 runs and writes the new `last_reviewed_oid`, the forcing
    condition self-clears on subsequent cycles.
-5. Confirm `.claude/skills/ppt-implement/SKILL.md`,
+6. Confirm `.claude/skills/ppt-implement/SKILL.md`,
    `.claude/skills/ppt-review-merged/SKILL.md`,
    `.claude/skills/ppt-pr-merge/SKILL.md`, AND
    `.claude/skills/ppt-pr-followup/SKILL.md` exist. If any missing, ABORT.
-6. **Ensure gating labels exist** (P6) — idempotent:
+7. **Ensure gating labels exist** (P6) — idempotent:
 
    ```bash
    bash .claude/skills/ppt-pr-followup/scripts/ensure-labels.sh \
@@ -225,7 +257,8 @@ fi
 - **no branch + in-progress** → run the **sandbox-reclaim helper** (P3):
 
   ```bash
-  MODE_TAG=$(grep -oE '^Mode:[[:space:]]*[a-z-]+' .research/plans/<slug>.md 2>/dev/null | head -1 | awk '{print $2}')
+  PLAN_FILE=".research/plans/${TASK_ID}.md"
+  MODE_TAG=$(grep -oE '^Mode:[[:space:]]*[a-z-]+' "$PLAN_FILE" 2>/dev/null | head -1 | awk '{print $2}')
   bash .claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh
   # honours BRANCH, STATUS_CHANGED_AT, MODE_TAG, RECLAIM_ATTEMPTS env vars;
   # prints one line: `action=<wait|reclaim|fail> reason=<short> branch_state=<…>`
@@ -235,7 +268,7 @@ fi
 
   Apply the helper's verdict:
   - `action=wait` → keep `prev_status`; do not touch `status_changed_at`. Another run's implementer may still be working.
-  - `action=reclaim` (only when `reclaim_attempts < 1`) → re-spawn the SAME specialist with the SAME brief via Phase 4's machinery (mirror followup-skill respawn pattern). On respawn: bump `reclaim_attempts += 1`, set `status_changed_at = now` so the next grace window restarts. Status stays `in-progress`.
+  - `action=reclaim` → re-spawn the SAME specialist with the SAME brief via Phase 4's machinery (mirror followup-skill respawn pattern). On respawn: bump `reclaim_attempts += 1`, set `status_changed_at = now` so the next grace window restarts. Status stays `in-progress`. (Reclaim cap is enforced by `sandbox-reclaim.sh` — that script returns `action=fail` when `RECLAIM_ATTEMPTS >= 1`.)
   - `action=fail` → `new_status="failed"`, append the helper's `reason=<…>` to `implementer_summary` (e.g. `'sandbox-failure-after-reclaim'` or `'empty-branch'`).
 
 Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=new_status`, `status_changed_at=now`.
@@ -243,6 +276,8 @@ Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=ne
 ---
 
 ## Phase 2.5 — Post-merge review (24h cadence)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 If `.research/management/last-merged-review.txt` missing OR mtime > 24h:
 spawn ONE Task subagent invoking `.claude/skills/ppt-review-merged/SKILL.md`.
@@ -257,6 +292,8 @@ Return EXACTLY: `scanned=<N> clean=<K> issues=<M> note=<short>`.
 ---
 
 ## Phase 2.6 — Buffer guard
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 ```python
 open_count = count(action-list.json items where status=="open" AND id NOT in assignments)
@@ -278,7 +315,23 @@ open_claimable_count = open_count - dep_blocked_count
 ```
 
 - **Tier 1 (self-refill):** if `open_claimable_count < 18` (half of the 36 target) AND `coverage.json` has stories → refill from coverage using rubric, append top `(36 - open_claimable_count)`. Log `Tier 1: <old_claimable> → <new_claimable> (+N)`.
-- **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`, fire-and-forget. Log `Tier 2: <http-code or skipped>`.
+- **Tier 2 (upstream kick):** if `open_claimable_count` still `< 12` OR coverage missing → `curl POST $DISPATCHER_URL` with `Bearer $DISPATCHER_TOKEN`, `--max-time 10`. **Capture the response code AND first 200 chars of body** (NEW — issue #5: HTTP 400 from the planner used to vanish into fire-and-forget; now we see it):
+
+  ```bash
+  T2_TMP=$(mktemp)
+  T2_CODE=$(curl -sS -X POST "$DISPATCHER_URL" \
+    -H "Authorization: Bearer $DISPATCHER_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"reason":"buffer-low","claimable":'"$open_claimable_count"'}' \
+    -o "$T2_TMP" -w '%{http_code}' --max-time 10 2>/dev/null || echo "curl-error")
+  T2_BODY=$(head -c 200 "$T2_TMP" 2>/dev/null | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
+  rm -f "$T2_TMP"
+  echo "Tier 2: http=$T2_CODE body=\"${T2_BODY:-<empty>}\""
+  ```
+
+  Still semantically fire-and-forget (we don't retry on non-2xx), but the body
+  surfaces in the dispatcher commit log so a stuck/broken planner endpoint is
+  visible without grepping the trigger's run history.
 - Else: SKIP, log `buffer OK: claimable=<open_claimable_count>/36 (open=<open_count>, dep_blocked=<dep_blocked_count>)`.
 
 The Phase 6 commit message MUST surface both counts:
@@ -290,7 +343,50 @@ X merged-now, F failed, A active, B <claimable>/<open> dep-blocked=<n>, RB rebas
 
 ---
 
+## Phase 2.7 — Failed-dependency cascade (NEW — issue #6)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
+Problem: an open action-list item whose `depends_on` points at a row that has
+gone terminal-`failed` will never become claimable on its own. It sits in the
+buffer forever, eating a `dep_blocked_count` slot and pushing Tier-1/Tier-2
+into refill-loops for items that should be re-planned, not retried.
+
+For each `action-list.json` item with `status=="open"` and non-empty
+`depends_on`:
+
+```python
+for dep_id in item.depends_on:
+    dep_row = assignments.find(task_id=dep_id)
+    if dep_row is not None and dep_row.status == "failed":
+        # Terminal dependency. Cascade.
+        item.status = "dropped"
+        item.action = f"[CASCADED-DROP: depends_on {dep_id} terminal-failed] " + item.action
+        cascade_log.append((item.id, dep_id))
+        break  # one failed dep is enough to drop
+```
+
+Cap: process at most 20 cascades per run (defensive — avoids a runaway sweep if
+a single failed item has dozens of dependents). If more than 20 are eligible,
+process the first 20 by sort order (priority desc, id asc) and surface the
+remainder count in Phase 7.
+
+This phase modifies `action-list.json` (`status=open → status=dropped`). When
+any cascade happened, include `action-list.json` in Phase 6's commit.
+
+Re-planning is upstream: the dropped items show up in Phase 7
+(`Failed-dep cascades:`) and Tier 2 can be kicked manually
+(`curl -X POST $DISPATCHER_URL`) once the operator has decided how to unblock
+the failed parent (re-spec it, split it, or accept that the dependent work
+is also dead). The dispatcher does NOT auto-respawn failed work.
+
+Idempotency: items already `status=="dropped"` are skipped.
+
+---
+
 ## Phase 3 — Claim new (PER-RUN cap of 3) — with same-epic guard (item #2)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 ```python
 free_slots = 3   # constant per run
@@ -357,6 +453,8 @@ If fewer than 3 candidates available (buffer drained), claim what's there — do
 ---
 
 ## Phase 4 — Spawn implementer subagents (PARALLEL via Task)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 One per newly-claimed task IN THIS RUN. Hard cap 3.
 
@@ -431,11 +529,32 @@ if new_status != prev_status:
 
 ## Phase 5 — Spawn reviewer subagents (PARALLEL via Task)
 
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
 For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.headRefOid != row.last_reviewed_oid`):
 
 > You are a code reviewer for PR #<n>. Task: `<task_id>: <action>`. Specialist:
 > `<sp>`. Owner: `<role>`. The implementer flagged: `scope_drift=<bool>`,
 > `code_reuse_warn=<short|none>`.
+>
+> 0. **Dedup guard (NEW — issue #3: prevents duplicate bot reviews when two
+>    dispatcher runs overlap before the Phase 1 skip-gate kicks in).** Before
+>    posting anything, check existing reviews on this PR:
+>
+>    ```bash
+>    HEAD_OID=$(gh pr view <n> --repo martin-janci/property-management --json headRefOid --jq .headRefOid)
+>    EXISTING=$(gh api repos/martin-janci/property-management/pulls/<n>/reviews \
+>      --jq '[.[] | select(.user.type=="Bot" or (.user.login|test("^claude|^github-actions"))) | {sha:.commit_id, state, at:.submitted_at}] | sort_by(.at) | last')
+>    EX_SHA=$(echo "$EXISTING" | jq -r '.sha // empty')
+>    EX_STATE=$(echo "$EXISTING" | jq -r '.state // empty')
+>    EX_AT=$(echo "$EXISTING" | jq -r '.at // empty')
+>    ```
+>
+>    If `$EX_SHA == $HEAD_OID` AND `$EX_STATE` in `{APPROVED, CHANGES_REQUESTED}`
+>    AND `(now - $EX_AT) < 2h`: a bot review for this exact SHA already exists.
+>    SKIP posting a new review. Map state → verdict (`APPROVED→approve`,
+>    `CHANGES_REQUESTED→changes`) and return:
+>    `verdict=<v> head_oid=$HEAD_OID note=dedup-existing-review-at-$EX_AT`.
 >
 > 1. `gh pr diff <n>`
 > 2. `gh pr view <n> --json title,body,files,checks,headRefOid`
@@ -523,6 +642,8 @@ No cap on reviewer subagents — review every pending review row in parallel.
 
 ## Phase 5.5 — Attempt merge for approved + green PRs
 
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
 For each row `status=="review"` where `reviewer_summary` starts with `"verdict=approve"`:
 
 **Pre-flight:**
@@ -575,6 +696,8 @@ Phase 2 of the next cycle catches the GH `MERGED` state authoritatively.
 
 ## Phase 5.6 — Auto-rebase stale-approved PRs (NEW — item #6)
 
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
+
 For each row `status == "review"` where:
 - `reviewer_summary` starts with `"verdict=approve"`, AND
 - the PR's `mergeable == "CONFLICTING"`, AND
@@ -605,6 +728,8 @@ Phase 5.5 next run will pick up the now-clean PR via the standard path.
 ---
 
 ## Phase 5.7 — Respawn implementer on `verdict=changes` (NEW)
+
+SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
 For each row `status == "review"` where `reviewer_summary` starts with
 `"verdict=changes"`:
@@ -679,6 +804,10 @@ Approved+CI-pending:      [PR#<n> task=<id> attempted=<iso8601> wait=<h>, …]  
 Rebase attempts (this run):[PR#<n> rebased=<true|false> <note>, …]  (item #6; [] if none)
 Sandbox reclaims (this run):[<task_id> branch=<branch> reason=sandbox-timeout, …]  (P3; [] if none)
 Empty branches deleted:   [<branch>, …]                             (item #1; [] if none)
+Failed-dep cascades:      [<id> blocked-by=<dep_id>, …]             (issue #6; [] if none)
+Skip-gate:                <none | "recent-run age=<m>m; mutating phases SKIPPED">  (issue #1)
+Tier 2 response:          <http=<code> body="<truncated>" | not-fired>          (issue #5)
+Review dedup-skipped:     [PR#<n> existing-at=<iso>, …]             (issue #3; [] if none)
 Scope-drift flagged:      [PR#<n> task=<id> note=<paths>, …]        (item #3; [] if none)
 Code-reuse warnings:      [PR#<n> task=<id> note=<helper>, …]       (item #4; [] if none)
 Disk warning:             <none | "free=N%; cleaned to M%">         (item #7)
@@ -722,6 +851,10 @@ Hang alerts:
 - **auto-rebase** (item #6) is bounded at 3 attempts per row; after that a human must intervene
 - **sandbox-reclaim** (P3) is bounded at 1 attempt per row; the helper at `.claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh` picks the timeout (60m for `Mode: cloud-ok`, 120m otherwise) and classifies the row as wait/reclaim/fail. Reclaim re-spawns the same specialist with the same brief and bumps `reclaim_attempts`; a second sandbox-timeout becomes `failed` with `reason: sandbox-failure-after-reclaim`
 - **disk preflight** (item #7) aborts the run gracefully at <5% free; never crashes mid-subagent
+- **recent-run skip-gate** (issue #1) — if `assignments.generated` is < 30min old, set `DISPATCHER_SKIP_MUTATING=1` and SKIP every mutating phase (2.5, 2.6, 2.7, 3, 4, 5, 5.5, 5.6, 5.7). Phase 2 (GH reconciliation) and Phase 7 (summary) still run. Prevents the `assignments.json` rebase races seen on 2026-05-27.
+- **failed-dep cascade** (issue #6) — open action-list items whose `depends_on` points at a terminal-`failed` row are dropped (`status=open → status=dropped`) in Phase 2.7 with an audit prefix; max 20 cascades/run. Re-planning is upstream (operator-driven).
+- **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
+- **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 
 ---
 
