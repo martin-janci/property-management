@@ -811,8 +811,9 @@ pub use disputes::{
     DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
     MediationSession, MediationSessionWithAttendance, PartyActionsDashboard, PartySubmission,
     PriorityCount as DisputePriorityCount, ProposeResolution, RecordSessionNotes, ResolutionTerm,
-    ResolutionVote, ResolutionWithVotes, ResolveEscalation, ScheduleSession, SessionAttendance,
-    StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus, VoteOnResolution,
+    ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation, ScheduleSession,
+    SessionAttendance, StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus,
+    UpdateMediationNotes, VoteOnResolution,
 };
 
 // Epic 108: Feature Packages & Bundles

@@ -1,11 +1,18 @@
 /**
- * Documents Browse Panel (gap-7a-3).
+ * Documents Browse Panel (gap-7a-3 / gap-7a-4).
  *
  * RLS-aware document listing with audience and status filtering.
  * The backend's list endpoint enforces access_scope through PostgreSQL RLS —
  * managers see all documents, non-managers only see documents accessible to
  * their role/unit. This component surfaces those permission boundaries in the
  * UI via the audience filter chips and status segmented control.
+ *
+ * gap-7a-2-folder-ui: Added "Move to folder" action button per document row,
+ * wired to MoveFolderDialog + useMoveDocument hook.
+ *
+ * gap-7a-4: Added inline preview (eye) and download buttons to each document
+ * row. Preview opens DocumentPreviewModal; download fetches a presigned URL
+ * via useDocumentDownload and triggers a programmatic anchor click.
  */
 
 import {
@@ -17,6 +24,10 @@ import {
   useDocuments,
 } from '@ppt/api-client';
 import { useCallback, useMemo, useState } from 'react';
+import { useDocumentDownload } from '../hooks/useDocumentDownload';
+import { useMoveDocumentWithToast } from '../hooks/useMoveDocumentWithToast';
+import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { MoveFolderDialog } from './MoveFolderDialog';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,16 +84,60 @@ function audienceMod(scope: string | undefined): string {
 interface DocumentRowProps {
   doc: DocumentSummary;
   onSelect: (id: string) => void;
+  onPreview: (doc: DocumentSummary) => void;
+  onMoveRequest: (doc: DocumentSummary) => void;
   selected: boolean;
 }
 
-function DocumentRow({ doc, onSelect, selected }: DocumentRowProps) {
-  const ext = doc.file_name.split('.').pop()?.toUpperCase() ?? 'DOC';
+function RowDownloadButton({ doc }: { doc: DocumentSummary }) {
+  const { download, isDownloading } = useDocumentDownload(doc.id, doc.file_name);
+
   return (
     <button
       type="button"
+      className="doc-row__action-btn"
+      onClick={(e) => {
+        e.stopPropagation();
+        download();
+      }}
+      disabled={isDownloading}
+      aria-label={`Stiahnuť ${doc.file_name}`}
+      title="Stiahnuť"
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden="true"
+      >
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+    </button>
+  );
+}
+
+function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: DocumentRowProps) {
+  const ext = doc.file_name.split('.').pop()?.toUpperCase() ?? 'DOC';
+
+  // Use div+role="button" to avoid invalid interactive-in-interactive nesting (HTML spec §4.10.6).
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={doc.title}
       className={`doc-row${selected ? ' doc-row--selected' : ''}`}
       onClick={() => onSelect(doc.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(doc.id);
+        }
+      }}
     >
       <span className="doc-row__icon" aria-hidden="true">
         {ext.slice(0, 3)}
@@ -101,7 +156,58 @@ function DocumentRow({ doc, onSelect, selected }: DocumentRowProps) {
           {doc.status === 'draft' ? 'Návrh' : 'Archivované'}
         </span>
       )}
-    </button>
+      {/* Row action buttons (gap-7a-4: preview + download; gap-7a-2: move) */}
+      <span className="doc-row__actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="doc-row__action-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview(doc);
+          }}
+          aria-label={`Náhľad ${doc.file_name}`}
+          title="Náhľad"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+        <RowDownloadButton doc={doc} />
+        <button
+          type="button"
+          className="doc-row__action-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveRequest(doc);
+          }}
+          aria-label={`Presunúť ${doc.file_name} do priečinka`}
+          title="Presunúť do priečinka"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+            <line x1="12" y1="11" x2="12" y2="17" />
+            <line x1="9" y1="14" x2="15" y2="14" />
+          </svg>
+        </button>
+      </span>
+    </div>
   );
 }
 
@@ -130,7 +236,7 @@ export interface DocumentsBrowseProps {
 
 export function DocumentsBrowse({
   organizationId: _organizationId,
-  buildingId: _buildingId,
+  buildingId,
   onSelectDocument,
 }: DocumentsBrowseProps) {
   const [selectedStatus, setSelectedStatus] = useState<DocumentStatus | undefined>(undefined);
@@ -139,6 +245,14 @@ export function DocumentsBrowse({
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  /** Document currently open in the inline preview modal (gap-7a-4). */
+  const [previewDoc, setPreviewDoc] = useState<DocumentSummary | null>(null);
+  // Move-to-folder state
+  const [moveTarget, setMoveTarget] = useState<DocumentSummary | null>(null);
+
+  // useMoveDocumentWithToast wraps useMoveDocument; query invalidation for
+  // documentKeys.lists() and documentKeys.folders() happens inside useMoveDocument.onSuccess.
+  const { executeMoveWithToast, isPending: isMovePending } = useMoveDocumentWithToast();
 
   const PAGE_SIZE = 20;
 
@@ -162,6 +276,27 @@ export function DocumentsBrowse({
       onSelectDocument?.(id);
     },
     [onSelectDocument]
+  );
+
+  const handlePreview = useCallback((doc: DocumentSummary) => {
+    setPreviewDoc(doc);
+  }, []);
+
+  const handleClosePreview = useCallback(() => {
+    setPreviewDoc(null);
+  }, []);
+
+  const handleMoveRequest = useCallback((doc: DocumentSummary) => {
+    setMoveTarget(doc);
+  }, []);
+
+  const handleMoveConfirm = useCallback(
+    async (folderId: string | null) => {
+      if (!moveTarget) return;
+      const success = await executeMoveWithToast(moveTarget, folderId);
+      if (success) setMoveTarget(null);
+    },
+    [moveTarget, executeMoveWithToast]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -214,7 +349,7 @@ export function DocumentsBrowse({
           <input
             type="search"
             value={search}
-            onChange={(e) => {
+            onChange={(e: { target: { value: string } }) => {
               setSearch(e.target.value);
               setPage(0);
             }}
@@ -249,7 +384,7 @@ export function DocumentsBrowse({
         <fieldset className="docs-browse__fieldset">
           <legend className="docs-browse__legend">Kategória</legend>
           <div className="docs-browse__chips">
-            {DOCUMENT_CATEGORIES.map((cat) => (
+            {DOCUMENT_CATEGORIES.map((cat: string) => (
               <button
                 key={cat}
                 type="button"
@@ -316,7 +451,13 @@ export function DocumentsBrowse({
             <ul className="docs-browse__list">
               {data.documents.map((doc: DocumentSummary) => (
                 <li key={doc.id}>
-                  <DocumentRow doc={doc} selected={selectedId === doc.id} onSelect={handleSelect} />
+                  <DocumentRow
+                    doc={doc}
+                    selected={selectedId === doc.id}
+                    onSelect={handleSelect}
+                    onPreview={handlePreview}
+                    onMoveRequest={handleMoveRequest}
+                  />
                 </li>
               ))}
             </ul>
@@ -328,7 +469,7 @@ export function DocumentsBrowse({
                   type="button"
                   disabled={page === 0}
                   className="docs-browse__page-btn"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  onClick={() => setPage((p: number) => Math.max(0, p - 1))}
                   aria-label="Predchádzajúca strana"
                 >
                   ‹ Predch.
@@ -340,7 +481,7 @@ export function DocumentsBrowse({
                   type="button"
                   disabled={(page + 1) * PAGE_SIZE >= data.total}
                   className="docs-browse__page-btn"
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => setPage((p: number) => p + 1)}
                   aria-label="Nasledujúca strana"
                 >
                   Ďalšia ›
@@ -350,6 +491,29 @@ export function DocumentsBrowse({
           </>
         )}
       </div>
+
+      {/* Inline preview modal (gap-7a-4) */}
+      {previewDoc && (
+        <DocumentPreviewModal
+          documentId={previewDoc.id}
+          title={previewDoc.title}
+          fileName={previewDoc.file_name}
+          mimeType={previewDoc.mime_type}
+          onClose={handleClosePreview}
+        />
+      )}
+
+      {/* Move-to-folder dialog */}
+      {moveTarget && (
+        <MoveFolderDialog
+          documentTitles={[moveTarget.title]}
+          buildingId={buildingId}
+          currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */
+          onConfirm={handleMoveConfirm}
+          onCancel={() => setMoveTarget(null)}
+          isPending={isMovePending}
+        />
+      )}
 
       <style>{`
         .docs-browse {
@@ -625,6 +789,46 @@ export function DocumentsBrowse({
         .doc-row__status--archived {
           background: var(--ppt-bg-app);
           color: var(--ppt-fg-subtle);
+        }
+
+        /* Action buttons */
+        .doc-row__actions {
+          display: flex;
+          align-items: center;
+          gap: 0.125rem;
+          flex-shrink: 0;
+          opacity: 0;
+          transition: opacity 0.12s;
+        }
+
+        .doc-row:hover .doc-row__actions,
+        .doc-row--selected .doc-row__actions,
+        .doc-row:focus-within .doc-row__actions {
+          opacity: 1;
+        }
+
+        .doc-row__action-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 1.625rem;
+          height: 1.625rem;
+          border: none;
+          border-radius: 0.25rem;
+          background: transparent;
+          color: var(--ppt-fg-muted);
+          cursor: pointer;
+          transition: all 0.1s;
+        }
+
+        .doc-row__action-btn:hover {
+          background: var(--ppt-border-default);
+          color: var(--ppt-brand-500);
+        }
+
+        .doc-row__action-btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
         }
 
         /* Loading skeleton */

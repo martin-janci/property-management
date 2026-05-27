@@ -40,6 +40,8 @@ pub struct SigningToken {
     pub signer_email: String,
     /// The signature request UUID.
     pub request_id: String,
+    /// The owning organization UUID (issue #527 (c): tenancy binding).
+    pub org_id: String,
     /// Unix timestamp when this token expires.
     pub expires_at: u64,
     /// Raw HMAC-SHA256 bytes (32 bytes).
@@ -47,10 +49,15 @@ pub struct SigningToken {
 }
 
 impl SigningToken {
-    /// Create and sign a new token.  must be the raw secret bytes.
+    /// Create and sign a new token. `secret` must be the raw secret bytes.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC input so a token
+    /// minted for org A cannot be replayed against a request in org B,
+    /// even if a signer email collides across tenants.
     pub fn new(
         signer_email: &str,
         request_id: &str,
+        org_id: &str,
         ttl: Duration,
         secret: &[u8],
     ) -> Result<Self, ESignatureError> {
@@ -60,7 +67,7 @@ impl SigningToken {
             .as_secs()
             + ttl.as_secs();
 
-        let message = format!("{}|{}|{}", signer_email, request_id, expires_at);
+        let message = format!("{signer_email}|{request_id}|{org_id}|{expires_at}");
         let mut mac = HmacSha256::new_from_slice(secret)
             .map_err(|e| ESignatureError::HmacError(e.to_string()))?;
         mac.update(message.as_bytes());
@@ -69,6 +76,7 @@ impl SigningToken {
         Ok(Self {
             signer_email: signer_email.to_string(),
             request_id: request_id.to_string(),
+            org_id: org_id.to_string(),
             expires_at,
             mac_bytes,
         })
@@ -86,8 +94,8 @@ impl SigningToken {
         }
 
         let message = format!(
-            "{}|{}|{}",
-            self.signer_email, self.request_id, self.expires_at
+            "{}|{}|{}|{}",
+            self.signer_email, self.request_id, self.org_id, self.expires_at
         );
         let mut mac = HmacSha256::new_from_slice(secret)
             .map_err(|e| ESignatureError::HmacError(e.to_string()))?;
@@ -97,17 +105,17 @@ impl SigningToken {
             .map_err(|_| ESignatureError::InvalidToken)
     }
 
-    /// Encode the token to a URL-safe base64 string: .
+    /// Encode the token to a URL-safe base64 string.
     pub fn encode(&self) -> String {
         let mac_hex = hex::encode(&self.mac_bytes);
         let raw = format!(
-            "{}|{}|{}|{}",
-            self.signer_email, self.request_id, self.expires_at, mac_hex
+            "{}|{}|{}|{}|{}",
+            self.signer_email, self.request_id, self.org_id, self.expires_at, mac_hex
         );
         URL_SAFE_NO_PAD.encode(raw.as_bytes())
     }
 
-    /// Decode a URL-safe base64 token string back to a .
+    /// Decode a URL-safe base64 token string back to a `SigningToken`.
     pub fn decode(encoded: &str) -> Result<Self, ESignatureError> {
         let raw_bytes = URL_SAFE_NO_PAD
             .decode(encoded)
@@ -115,21 +123,23 @@ impl SigningToken {
         let raw = String::from_utf8(raw_bytes)
             .map_err(|e| ESignatureError::DecodeError(e.to_string()))?;
 
-        let parts: Vec<&str> = raw.splitn(4, '|').collect();
-        if parts.len() != 4 {
+        let parts: Vec<&str> = raw.splitn(5, '|').collect();
+        if parts.len() != 5 {
             return Err(ESignatureError::InvalidToken);
         }
 
         let signer_email = parts[0].to_string();
         let request_id = parts[1].to_string();
-        let expires_at = parts[2]
+        let org_id = parts[2].to_string();
+        let expires_at = parts[3]
             .parse::<u64>()
             .map_err(|_| ESignatureError::InvalidToken)?;
-        let mac_bytes = hex::decode(parts[3]).map_err(|_| ESignatureError::InvalidToken)?;
+        let mac_bytes = hex::decode(parts[4]).map_err(|_| ESignatureError::InvalidToken)?;
 
         Ok(Self {
             signer_email,
             request_id,
+            org_id,
             expires_at,
             mac_bytes,
         })
@@ -149,17 +159,55 @@ pub struct LightweightConfig {
     pub token_ttl_secs: u64,
 }
 
+/// Minimum byte length required for `ESIGN_TOKEN_SECRET`.
+///
+/// Matches the 32-char floor enforced for `JWT_SECRET` in `api-server::main`
+/// — both are HMAC-SHA256 keys, so the same security floor applies.
+pub const MIN_TOKEN_SECRET_LEN: usize = 32;
+
 impl LightweightConfig {
     /// Load configuration from environment variables.
     ///
-    /// -  - hex-encoded secret (required, falls back to a dev default)
-    /// -  - base URL for signing links (required)
-    /// -  - optional webhook URL
-    /// -  - TTL in seconds (default 604800 = 7 days)
-    pub fn from_env() -> Self {
-        let token_secret = std::env::var("ESIGN_TOKEN_SECRET")
-            .map(|s| s.into_bytes())
-            .unwrap_or_else(|_| b"dev-esign-secret-key-32bytes-pad!".to_vec());
+    /// - `ESIGN_TOKEN_SECRET` — raw secret bytes used as the HMAC-SHA256 key.
+    ///   Required in production. When `RUST_ENV=development` is set the
+    ///   loader falls back to a clearly-marked development default and emits
+    ///   a `warn!`; in any other environment a missing or too-short secret
+    ///   is a hard error (the binary refuses to start). This mirrors the
+    ///   handling of `JWT_SECRET`.
+    /// - `BASE_URL` — base URL for signing links (default `http://localhost:3000`).
+    /// - `ESIGN_WEBHOOK_URL` — optional outbound webhook URL.
+    /// - `ESIGN_TOKEN_TTL` — TTL in seconds (default 604800 = 7 days).
+    ///
+    /// # Errors
+    /// Returns `ESignatureError::ConfigError` if `ESIGN_TOKEN_SECRET` is
+    /// missing in a non-development environment, or if it is shorter than
+    /// [`MIN_TOKEN_SECRET_LEN`] bytes.
+    pub fn from_env() -> Result<Self, ESignatureError> {
+        let is_development = std::env::var("RUST_ENV").unwrap_or_default() == "development";
+
+        let token_secret = match std::env::var("ESIGN_TOKEN_SECRET") {
+            Ok(s) => s.into_bytes(),
+            Err(_) if is_development => {
+                tracing::warn!(
+                    "ESIGN_TOKEN_SECRET not set, using development default (DEVELOPMENT MODE ONLY)"
+                );
+                b"DEV_ONLY-esign-token-secret-do-not-use-in-prod".to_vec()
+            }
+            Err(_) => {
+                return Err(ESignatureError::ConfigError(
+                    "ESIGN_TOKEN_SECRET environment variable is required. \
+                     Set RUST_ENV=development to use dev defaults."
+                        .into(),
+                ));
+            }
+        };
+
+        if token_secret.len() < MIN_TOKEN_SECRET_LEN {
+            return Err(ESignatureError::ConfigError(format!(
+                "ESIGN_TOKEN_SECRET must be at least {MIN_TOKEN_SECRET_LEN} bytes long for minimum security",
+            )));
+        }
+
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
         let webhook_url = std::env::var("ESIGN_WEBHOOK_URL").ok();
@@ -168,12 +216,12 @@ impl LightweightConfig {
             .and_then(|v| v.parse().ok())
             .unwrap_or(604_800);
 
-        Self {
+        Ok(Self {
             token_secret,
             base_url,
             webhook_url,
             token_ttl_secs,
-        }
+        })
     }
 }
 
@@ -189,19 +237,27 @@ impl LightweightProvider {
     }
 
     /// Instantiate from environment variables.
-    pub fn from_env() -> Self {
-        Self::new(LightweightConfig::from_env())
+    ///
+    /// # Errors
+    /// Propagates errors from [`LightweightConfig::from_env`] (e.g. missing
+    /// `ESIGN_TOKEN_SECRET` outside of development).
+    pub fn from_env() -> Result<Self, ESignatureError> {
+        Ok(Self::new(LightweightConfig::from_env()?))
     }
 
     /// Generate a signed signing URL for the given signer and request.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC.
     pub fn build_signing_url(
         &self,
         signer_email: &str,
         request_id: &str,
+        org_id: &str,
     ) -> Result<String, ESignatureError> {
         let token = SigningToken::new(
             signer_email,
             request_id,
+            org_id,
             Duration::from_secs(self.config.token_ttl_secs),
             &self.config.token_secret,
         )?;
@@ -214,9 +270,22 @@ impl LightweightProvider {
     }
 
     /// Decode and verify an inbound signing token from a URL query parameter.
-    pub fn verify_token(&self, encoded: &str) -> Result<SigningToken, ESignatureError> {
+    ///
+    /// Issue #527 (c): caller MUST pass the org_id from the
+    /// in-database signature_request to confirm the token was minted for
+    /// the same tenant.
+    pub fn verify_token(
+        &self,
+        encoded: &str,
+        expected_org_id: &str,
+    ) -> Result<SigningToken, ESignatureError> {
         let token = SigningToken::decode(encoded)?;
         token.verify(&self.config.token_secret)?;
+        // Constant-time-ish org binding check (orgs are UUIDs so length
+        // is fixed — a plain `!=` is acceptable here).
+        if token.org_id != expected_org_id {
+            return Err(ESignatureError::InvalidToken);
+        }
         Ok(token)
     }
 
@@ -279,12 +348,14 @@ mod tests {
     use super::*;
 
     const SECRET: &[u8] = b"test-secret-key-that-is-32-bytes!";
+    const ORG: &str = "00000000-0000-0000-0000-000000000123";
 
     #[test]
     fn test_signing_token_roundtrip() {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -295,6 +366,7 @@ mod tests {
 
         assert_eq!(decoded.signer_email, "alice@example.com");
         assert_eq!(decoded.request_id, "req-uuid-1234");
+        assert_eq!(decoded.org_id, ORG);
         assert_eq!(decoded.expires_at, token.expires_at);
     }
 
@@ -303,6 +375,7 @@ mod tests {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -316,6 +389,7 @@ mod tests {
         let token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -334,6 +408,7 @@ mod tests {
         let mut token = SigningToken::new(
             "alice@example.com",
             "req-uuid-1234",
+            ORG,
             Duration::from_secs(3600),
             SECRET,
         )
@@ -344,8 +419,8 @@ mod tests {
 
         // Re-sign with the past expiry so MAC matches
         let message = format!(
-            "{}|{}|{}",
-            token.signer_email, token.request_id, token.expires_at
+            "{}|{}|{}|{}",
+            token.signer_email, token.request_id, token.org_id, token.expires_at
         );
         let mut mac = HmacSha256::new_from_slice(SECRET).unwrap();
         mac.update(message.as_bytes());
@@ -368,7 +443,7 @@ mod tests {
         };
         let provider = LightweightProvider::new(config);
         let url = provider
-            .build_signing_url("alice@example.com", "req-1")
+            .build_signing_url("alice@example.com", "req-1", ORG)
             .expect("build url");
 
         assert!(url.starts_with("https://app.example.com/sign?token="));
@@ -384,15 +459,131 @@ mod tests {
         };
         let provider = LightweightProvider::new(config);
         let url = provider
-            .build_signing_url("alice@example.com", "req-1")
+            .build_signing_url("alice@example.com", "req-1", ORG)
             .expect("build url");
 
         let token_str = url.split("token=").nth(1).unwrap();
         let verified = provider
-            .verify_token(token_str)
+            .verify_token(token_str, ORG)
             .expect("verify_token should succeed");
 
         assert_eq!(verified.signer_email, "alice@example.com");
         assert_eq!(verified.request_id, "req-1");
+        assert_eq!(verified.org_id, ORG);
+    }
+
+    #[test]
+    fn test_lightweight_provider_verify_token_wrong_org_rejected() {
+        let config = LightweightConfig {
+            token_secret: SECRET.to_vec(),
+            base_url: "https://app.example.com".to_string(),
+            webhook_url: None,
+            token_ttl_secs: 3600,
+        };
+        let provider = LightweightProvider::new(config);
+        let url = provider
+            .build_signing_url("alice@example.com", "req-1", ORG)
+            .expect("build url");
+
+        let token_str = url.split("token=").nth(1).unwrap();
+        let other_org = "00000000-0000-0000-0000-000000000999";
+        let result = provider.verify_token(token_str, other_org);
+        assert!(
+            matches!(result, Err(ESignatureError::InvalidToken)),
+            "Should reject token bound to a different org"
+        );
+    }
+
+    // ---------------------------------------------------------------------------
+    // from_env() tests for #527 / Bucket A
+    //
+    // These tests mutate process-global env vars and must not run in parallel
+    // with each other or with any other env-touching test in this crate.
+    // A static mutex serialises them; we restore prior env state on drop.
+    // ---------------------------------------------------------------------------
+
+    use std::sync::Mutex;
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    struct EnvGuard {
+        keys: Vec<(&'static str, Option<String>)>,
+    }
+    impl EnvGuard {
+        fn capture(keys: &[&'static str]) -> Self {
+            let snap = keys
+                .iter()
+                .map(|k| (*k, std::env::var(k).ok()))
+                .collect::<Vec<_>>();
+            for k in keys {
+                std::env::remove_var(k);
+            }
+            Self { keys: snap }
+        }
+    }
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            for (k, v) in &self.keys {
+                match v {
+                    Some(val) => std::env::set_var(k, val),
+                    None => std::env::remove_var(k),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn from_env_fails_when_token_secret_missing_in_prod() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        // RUST_ENV is not "development" (it's unset), so missing secret => error.
+
+        let result = LightweightConfig::from_env();
+        assert!(
+            matches!(result, Err(ESignatureError::ConfigError(_))),
+            "Expected ConfigError for missing ESIGN_TOKEN_SECRET outside dev, got {result:?}"
+        );
+    }
+
+    #[test]
+    fn from_env_fails_when_token_secret_too_short() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var("ESIGN_TOKEN_SECRET", "tooshort"); // 8 bytes — below floor
+
+        let result = LightweightConfig::from_env();
+        let msg = match result {
+            Err(ESignatureError::ConfigError(m)) => m,
+            other => panic!("Expected ConfigError for too-short secret, got {other:?}"),
+        };
+        assert!(
+            msg.contains("at least"),
+            "Error message should reference the length floor, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn from_env_allows_dev_default_when_rust_env_development() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var("RUST_ENV", "development");
+
+        let cfg = LightweightConfig::from_env().expect("dev default should succeed");
+        assert!(cfg.token_secret.len() >= MIN_TOKEN_SECRET_LEN);
+    }
+
+    #[test]
+    fn from_env_accepts_valid_secret_in_prod() {
+        let _g = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _env = EnvGuard::capture(&["ESIGN_TOKEN_SECRET", "RUST_ENV"]);
+        std::env::set_var(
+            "ESIGN_TOKEN_SECRET",
+            "this-is-a-valid-32-byte-or-longer-secret",
+        );
+
+        let cfg = LightweightConfig::from_env().expect("valid secret should succeed");
+        assert_eq!(
+            cfg.token_secret,
+            b"this-is-a-valid-32-byte-or-longer-secret"
+        );
     }
 }

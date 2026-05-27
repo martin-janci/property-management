@@ -190,6 +190,8 @@ pub async fn setup_app(target_names: &[&str]) -> TestApp {
         "ppt-frontend-dev:local".into(),
         "dev.ppt.rlt.sk".into(),
         "dev.rlt.sk".into(),
+        "api-server:8080".into(),
+        "reality-server:8081".into(),
         webhook_cfg,
         cfg,
         release_svc,

@@ -826,7 +826,16 @@ impl Scheduler {
             "Processing signature requests approaching expiry for reminders"
         );
 
-        let provider = LightweightProvider::from_env();
+        let provider = match LightweightProvider::from_env() {
+            Ok(p) => p,
+            Err(e) => {
+                // Refuse to mint reminder URLs when the HMAC secret is
+                // missing — startup validation ensures this should never
+                // fire in production.
+                tracing::error!(error = %e, "Skipping signature-reminder tick — e-signature provider misconfigured");
+                return Ok(());
+            }
+        };
         let base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
@@ -851,7 +860,11 @@ impl Scheduler {
 
             for signer in pending_signers {
                 let sign_url = provider
-                    .build_signing_url(&signer.email, &sig_req.id.to_string())
+                    .build_signing_url(
+                        &signer.email,
+                        &sig_req.id.to_string(),
+                        &sig_req.organization_id.to_string(),
+                    )
                     .unwrap_or_else(|_| {
                         format!(
                             "{}/sign?request_id={}&email={}",

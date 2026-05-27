@@ -502,11 +502,14 @@ impl OAuthService {
         refresh_token_str: &str,
         client_id: &str,
     ) -> Result<TokenResponse, OAuthServiceError> {
-        // Find refresh token
+        // Find refresh token — include revoked rows so the family-reuse
+        // detection branch below is reachable when a previously-revoked
+        // token is replayed. Production grant decisions still go through
+        // is_revoked() / is_expired() guards a few lines down.
         let token_hash = self.hash_token(refresh_token_str);
         let refresh_token = self
             .repo
-            .find_refresh_token_by_hash(&token_hash)
+            .find_refresh_token_by_hash_including_revoked(&token_hash)
             .await?
             .ok_or_else(|| OAuthServiceError::InvalidGrant)?;
 

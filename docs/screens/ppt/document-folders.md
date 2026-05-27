@@ -28,7 +28,7 @@ owner: pm-frontend
 ### Layout
 - [x] [w] Left sidebar: FolderTree (15rem fixed) with all-documents root entry
 - [x] [w] Right content panel: document list scoped to selected folder (DocumentsBrowse for root, FolderDocuments for folder)
-- [x] [w] Breadcrumb: Dokumenty / Priečinky
+- [x] [w] Breadcrumb: Dokumenty / Priečinky (page nav); FolderBreadcrumb in content header (folder path)
 - [x] [w] Responsive: sidebar collapses to 12rem max-height on mobile, stacks vertically
 
 ### FolderTree
@@ -48,6 +48,14 @@ owner: pm-frontend
 - [x] [w] Empty state with link to /documents/upload
 - [x] [w] Document rows: file icon + title + category + size
 - [x] [w] "Show all N documents →" link when folder has >50 docs
+- [x] [w] FolderBreadcrumb: shows ancestor path of selected folder; each crumb navigates
+- [x] [w] Move-to-folder button (folder icon) on each document row (hover-visible)
+- [x] [w] MoveFolderDialog: inline tree picker, destination label, confirm/cancel buttons
+
+### Move documents
+- [x] [w] useMoveDocument hook from @ppt/api-client wired to POST /api/v1/documents/{id}/move
+- [x] [w] Success/error toast after move; folder tree + document lists invalidated on success
+- [x] [w] Available from DocumentsBrowse (root view) and FolderDocuments (folder-scoped view)
 
 ### Backend constraints respected
 - [x] [w] Circular reference prevention: handled by backend 409 (UI shows api error)
@@ -75,4 +83,5 @@ owner: pm-frontend
 
 <!-- newest entries on top -->
 
+- 2026-05-26 — agent: gap-7a-2-folder-ui — added MoveFolderDialog (folder picker modal), FolderBreadcrumb (path navigation), buildFolderCrumbs helper; wired move-documents action in DocumentsBrowse and FolderTreePage; success/error toasts on move; breadcrumb in content-panel header shows selected folder path; apiStatus remains complete
 - 2026-05-24 — agent: gap-7a-2 — created FolderTree component (5-level expand/collapse, inline rename, delete dialog, new-folder inline input, document count badges); created FolderTreePage with left sidebar + right document panel; wired /documents/folders route; added Priečinky button to DocumentsPage header; created this screen-map

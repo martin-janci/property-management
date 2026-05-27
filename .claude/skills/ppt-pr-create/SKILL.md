@@ -45,9 +45,28 @@ plan* commands all exited 0. You're about to open the PR.
 2. **Body** — paste the template below; fill verification + IG3 evidence.
    The literal line `Closes plan: .research/plans/<slug>.md` is required
    for IG8.
-3. **Create**:
+3. **Pick the base branch.** Default base is `dev`. The only other allowed
+   base is `main` (release flow), and only when you explicitly intend a
+   release PR. **Refuse any other base unless `--allow-stacked` is set.**
+
    ```bash
-   gh pr create --base main --head "impl/$SLUG" \
+   BASE="${BASE:-dev}"
+   ALLOW_STACKED="${ALLOW_STACKED:-0}"
+   case "$BASE" in
+     dev|main) ;;
+     *)
+       if [ "$ALLOW_STACKED" != "1" ]; then
+         echo "refusing non-dev/main base '$BASE' — pass ALLOW_STACKED=1 to override (stacked PRs aren't tracked by the dispatcher's assignments.json and can't be merged bottom-up by ppt-pr-merge's mechanical-conflict resolver)" >&2
+         exit 2
+       fi
+       echo "stacked-PR base accepted via ALLOW_STACKED=1 — make sure you understand the implications (see 'Stacked PRs' below)" >&2
+       ;;
+   esac
+   ```
+
+4. **Create**:
+   ```bash
+   gh pr create --base "$BASE" --head "impl/$SLUG" \
      --title "<vector>(<area>): <title>" \
      --body "$(cat <<'EOF'
    ## Summary
@@ -115,6 +134,32 @@ A `.research/`-only commit will still trip `ci.yml` but the area-gated jobs
 (`backend.yml`, `frontend.yml`, `mobile-native.yml`) skip — that's why the
 research routine commits keep landing fast.
 
+## Stacked PRs (non-default; opt-in)
+
+By default this skill refuses any `--base` other than `dev` or `main`. Stacked
+PRs (PR-on-PR, where the base is another in-flight feature branch) are
+intentionally not supported in the normal flow because:
+
+- The dispatcher's `.research/management/assignments.json` only tracks rows
+  whose PR targets `dev`. A stacked PR is invisible to claim/review/merge
+  accounting and can be silently lost.
+- `ppt-pr-merge` resolves mechanical conflicts against `base` (default `dev`).
+  When base is a moving feature branch, the resolver's known patterns
+  (`sqlx`, `Cargo.lock`, generated openapi/api-client, lockfiles) don't apply
+  the same way and the merger can't unstick bottom-up automatically.
+- The nightly auto-rebase workflow only rebases onto `dev`; stacked PRs would
+  be force-pushed against a stale base.
+
+If you really need a stacked PR — e.g. splitting one large refactor into a
+review-friendly chain — pass `ALLOW_STACKED=1` to opt in. **You then own**
+the merge order manually: merge the bottom of the stack first, retarget the
+next PR to `dev`, repeat. Do not invoke `ppt-pr-merge` on a stacked PR
+without first retargeting its base to `dev`.
+
+```bash
+BASE=feature/foo-bar ALLOW_STACKED=1 ./ppt-pr-create …   # opt-in form
+```
+
 ## Draft / WIP handling
 
 If any of these are true → open as draft with `[WIP]` prefix and document
@@ -141,8 +186,8 @@ gh auth status >/dev/null 2>&1 && gh api user --jq .login
 gh repo view martin-janci/property-management --json id --jq .id >/dev/null
 # expected: exit 0 (repo is reachable from this token)
 
-# 3. base branch main exists on origin
-git ls-remote --heads origin main | grep -q refs/heads/main && echo OK
+# 3. base branch dev exists on origin (default PR base)
+git ls-remote --heads origin dev | grep -q refs/heads/dev && echo OK
 # expected: OK
 ```
 

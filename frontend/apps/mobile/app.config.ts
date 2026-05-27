@@ -2,6 +2,7 @@
  * Expo Dynamic App Configuration
  *
  * Epic 85 - Story 85.1: Environment Variable Setup
+ * Epic 85 - Story 85.2: iOS Release Build Configuration
  *
  * Reads environment-specific .env files and injects variables into:
  *   - `extra` block (accessible via expo-constants: Constants.expoConfig.extra)
@@ -73,6 +74,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       ...config.ios,
       bundleIdentifier: 'three.two.bit.ppt.management',
+      /**
+       * EAS 85.2: iOS build number (CFBundleVersion).
+       * Auto-incremented by EAS (autoIncrement in eas.json production profile).
+       * JS-side baseline only; actual value in .ipa is managed by EAS Build.
+       * iOS provisioning (distribution cert + provisioning profile) stored in
+       * EAS remote credential store — never committed. Manage via:
+       *   eas credentials --platform ios
+       * App Store Connect API key set once in EAS (Key ID + Issuer ID + p8).
+       */
+      buildNumber: config.ios?.buildNumber ?? '1',
       infoPlist: {
         ...(config.ios?.infoPlist ?? {}),
         // --------------- environment variable keys exposed natively ---------------
@@ -93,6 +104,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           'The app needs access to your camera to take photos of properties.',
         NSLocationWhenInUseUsageDescription:
           'The app needs your location to show nearby properties.',
+        /**
+         * EAS 85.2: App Transport Security (ATS).
+         * Production enforces HTTPS; debug/staging allows arbitrary loads for
+         * internal HTTP endpoints without signed TLS certificates.
+         */
+        NSAppTransportSecurity: debugMode
+          ? { NSAllowsArbitraryLoads: true }
+          : { NSAllowsArbitraryLoads: false },
       },
     },
 
@@ -116,6 +135,37 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       WS_BASE_URL: wsBaseUrl,
       ENVIRONMENT: environment,
       DEBUG_MODE: debugMode,
+      /**
+       * EAS 85.2: EAS project ID at runtime for update channel routing.
+       * Populated from EXPO_PROJECT_ID env var (set in CI via GitHub secret).
+       */
+      eas: {
+        projectId: process.env.EXPO_PROJECT_ID ?? '',
+      },
+    },
+
+    /**
+     * EAS 85.2: OTA update policy.
+     * Builds sharing the same appVersion receive OTA updates from the same channel.
+     * Channel is set per-build via `channel` in eas.json profiles.
+     * Updates disabled for local development to avoid stale bundle issues.
+     */
+    runtimeVersion: {
+      policy: 'appVersion',
+    },
+
+    updates: {
+      url: (() => {
+        const id = process.env.EXPO_PROJECT_ID;
+        if (!id && environment !== 'development') {
+          console.warn(
+            '[app.config.ts] EXPO_PROJECT_ID is unset — OTA updates will not work in this build'
+          );
+        }
+        return `https://u.expo.dev/${id ?? ''}`;
+      })(),
+      fallbackToCacheTimeout: 0,
+      enabled: environment !== 'development',
     },
   };
 };

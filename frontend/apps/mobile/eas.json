@@ -1,0 +1,85 @@
+{
+  "$schema": "https://raw.githubusercontent.com/expo/eas-cli/main/packages/eas-cli/schema/eas.schema.json",
+  "cli": {
+    "version": ">= 10.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "image": "latest",
+        "buildConfiguration": "Debug",
+        "bundleIdentifier": "three.two.bit.ppt.management"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "development"
+      }
+    },
+    "simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "image": "latest",
+        "buildConfiguration": "Debug",
+        "bundleIdentifier": "three.two.bit.ppt.management"
+      },
+      "env": {
+        "APP_ENV": "development"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging",
+      "ios": {
+        "simulator": false,
+        "image": "latest",
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "three.two.bit.ppt.management",
+        "credentialsSource": "remote"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "staging"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "ios": {
+        "simulator": false,
+        "image": "latest",
+        "buildConfiguration": "Release",
+        "bundleIdentifier": "three.two.bit.ppt.management",
+        "credentialsSource": "remote"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "APP_ENV": "production"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "APPLE_ID_PLACEHOLDER",
+        "ascAppId": "ASC_APP_ID_PLACEHOLDER",
+        "appleTeamId": "APPLE_TEAM_ID_PLACEHOLDER",
+        "language": "en-US",
+        "sku": "three-two-bit-ppt-management",
+        "companyName": "32bit s.r.o.",
+        "metadataPath": "./store-metadata/ios"
+      }
+    }
+  }
+}

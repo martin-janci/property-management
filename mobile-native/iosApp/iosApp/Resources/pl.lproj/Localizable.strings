@@ -239,6 +239,26 @@
 "reset_filters" = "Zresetuj filtry";
 "apply" = "Zastosuj";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "W pobliżu";
+"filter_near_me_section" = "Lokalizacja";
+"filter_radius" = "Promień";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Lokalizacja: %.4f, %.4f";
+"locating" = "Wyznaczam lokalizację…";
+"location_access_denied" = "Dostęp do lokalizacji został odmówiony. Włącz go w Ustawieniach, aby korzystać z filtrów W pobliżu.";
+"location_unavailable" = "Lokalizacja jest niedostępna.";
+"location_access_denied_title" = "Odmowa dostępu do lokalizacji";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Typ ogłoszenia";
+"filter_price_min" = "Min cena";
+"filter_price_max" = "Max cena";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Łazienki";
+
 /* Account Screen - Additional */
 "quick_actions" = "Szybkie akcje";
 "saved_searches" = "Zapisane wyszukiwania";

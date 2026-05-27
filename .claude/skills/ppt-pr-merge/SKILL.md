@@ -20,10 +20,16 @@ the loop by getting a green, approved PR actually merged.
 - You manually want to "land PR #N".
 
 **Do NOT invoke for:**
-- PRs still in `draft` state
 - PRs with CI failures (run `ppt-pr-followup` first)
 - PRs with unresolved review threads (run `ppt-pr-followup` first)
 - PRs blocked by branch protection rules a human must override
+
+**Drafts:** this skill **auto-promotes** a draft PR to ready (`gh pr ready <pr>`)
+**iff** the PR has reviewer approval (either `reviewDecision == APPROVED` on
+GitHub, or `reviewer_summary.verdict == "approve"` in
+`.research/management/assignments.json`) AND all required CI checks are green.
+Otherwise the skill refuses to touch a draft and points the caller at
+`ppt-pr-followup` (dispatcher mode) for the next step.
 
 ## Inputs
 
@@ -37,6 +43,30 @@ the loop by getting a green, approved PR actually merged.
 | `dry_run`      | `false`                            | Run preconditions + conflict resolve, skip the merge call |
 | `mode`         | `merge`                            | `merge` (default — full flow) or `rebase-only` (run Step 2 conflict-resolver + push, then return without merging — used by dispatcher Phase 5.6 to unstick stale-approved PRs) |
 
+## Stacked PRs — refused unless opt-in
+
+If the PR's `baseRefName` is anything other than `dev` or `main`, this is a
+stacked PR (PR-on-PR). The mechanical-conflict resolver in Step 2 only knows
+how to rebase onto `dev`/`main`, and the dispatcher's `assignments.json` only
+tracks PRs targeting `dev`. By default this skill refuses to merge such PRs.
+
+```bash
+BASE_REF=$(gh pr view "$PR" --repo "$REPO" --json baseRefName -q .baseRefName)
+case "$BASE_REF" in
+  dev|main) ;;
+  *)
+    if [ "${ALLOW_STACKED:-0}" != "1" ]; then
+      echo "merged=false pr=$PR note=this PR is stacked (base=$BASE_REF); refusing to merge until base is dev/main"
+      exit 0
+    fi
+    ;;
+esac
+```
+
+Resolution: the PR author should merge the bottom of the stack first, then
+retarget this PR's base to `dev` via `gh pr edit "$PR" --base dev`, then
+re-invoke `ppt-pr-merge`.
+
 ## Step 1 — Preconditions (HARD GATES — abort if any fail)
 
 ```bash
@@ -45,18 +75,78 @@ REPO=<repo>
 
 # Read full PR state
 gh pr view "$PR" --repo "$REPO" --json \
-  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName
+  number,state,isDraft,mergeable,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName,labels
 ```
+
+**Human-gate label check (P6).** If the PR carries the `needs-human-review`
+label, refuse regardless of approval / CI status. This overrides any
+auto-promote-from-draft behavior — an approve + green CI is not enough when
+a human gate is set.
+
+```bash
+HAS_GATE=$(gh pr view "$PR" --repo "$REPO" --json labels \
+  --jq '[.labels[].name] | index("needs-human-review") // empty')
+if [ -n "$HAS_GATE" ]; then
+  echo "merged=false pr=$PR note=blocked-by-needs-human-review-label"
+  exit 0
+fi
+```
+
+**Clearing the gate (human or automation):** Once a human reviewer has approved, remove the label manually:
+```bash
+gh pr edit "$PR" --repo martin-janci/property-management --remove-label needs-human-review
+```
+After the label is removed, `ppt-pr-merge` will proceed normally on the next invocation.
 
 Abort with `merged=false note=<reason>` if ANY of:
 
 | Check | Abort if |
 |---|---|
 | `state` | != `"OPEN"` (already merged or closed) |
-| `isDraft` | `true` |
-| `reviewDecision` | != `"APPROVED"` (allow `null` ONLY when repo has no required reviews) |
+| `reviewDecision` | != `"APPROVED"` (see "approval source" below; allow `null` ONLY when repo has no required reviews) |
 | `statusCheckRollup[].conclusion` | any of `"FAILURE"`, `"CANCELLED"`, `"TIMED_OUT"`, `"ACTION_REQUIRED"` |
 | `statusCheckRollup[].status` | any `"IN_PROGRESS"`/`"QUEUED"` → return `merged=false note=ci-pending` (caller can retry later) |
+
+### Approval source (GH `reviewDecision` OR dispatcher verdict)
+
+`reviewDecision` is the primary signal. If it is missing/`null` (the dispatcher's
+reviewer agents review via `gh pr review --approve` so this is usually populated,
+but some repos / draft PRs return `null`), fall back to the dispatcher's
+`reviewer_summary` in `.research/management/assignments.json`:
+
+```bash
+# Read dispatcher verdict for the row whose pr_number == <PR>
+VERDICT=$(jq -r --argjson n "$PR" '
+  .assignments[]
+  | select(.pr_number == $n)
+  | .reviewer_summary
+  | tostring
+  | capture("^verdict=(?<v>approve|changes|block|reject)").v // empty
+' .research/management/assignments.json 2>/dev/null)
+```
+
+Treat `VERDICT == "approve"` as approval-equivalent. Any other value (or
+missing assignments.json row) is **not** approval.
+
+### Draft handling — auto-promote on approve, otherwise refuse
+
+If `isDraft == true`:
+
+1. Compute the approval state using both sources above:
+   `APPROVED = (reviewDecision == "APPROVED") OR (VERDICT == "approve")`.
+2. If `APPROVED` AND CI is green per the table above: promote the PR.
+   ```bash
+   gh pr ready "$PR" --repo "$REPO"
+   # Re-read PR state once; isDraft should now be false.
+   ```
+   Then continue with the rest of Step 1 (unresolved-threads check) and the
+   normal merge flow.
+3. If NOT approved (no verdict, or verdict ∈ `{changes, block, reject}`):
+   abort with
+   `merged=false note=draft-unapproved (call ppt-pr-followup to drive the review loop)`.
+4. If CI is not green: abort via the standard CI path
+   (`merged=false note=ci-pending|ci-failed`). **Never promote a draft whose
+   CI isn't green.**
 
 Also check unresolved review threads via GraphQL (the REST `reviewDecision` doesn't catch comments-only threads):
 
@@ -188,9 +278,11 @@ skill never touches assignments.json directly.
 
 ## Hard rules
 
-- Never merge a draft PR.
+- Drafts are auto-promoted on approve; otherwise refuse. Never merge a draft
+  that has not been promoted to ready via the auto-promote path in Step 1.
 - Never merge a PR with failing or in-progress CI.
 - Never merge a PR with unresolved review threads.
+- Never merge a PR carrying the `needs-human-review` label, even if approved + green (P6).
 - Auto-resolve ONLY the mechanical patterns listed in Step 2; real code conflicts always abort.
 - Always verify the auto-resolved branch with a quick per-stack check before pushing.
 - Never bypass branch protection (no `--admin` flag from this skill — humans only).

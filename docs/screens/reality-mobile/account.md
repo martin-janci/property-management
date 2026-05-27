@@ -1,9 +1,8 @@
 ---
 id: reality-mobile/account
 name: Account (iOS SwiftUI)
-product: reality
-sitemapRefs:
-  reality-web: reality-account
+product: reality-mobile
+sitemapRefs: {}
 implementations:
   ios-swiftui:
     component: AccountView
@@ -11,18 +10,13 @@ implementations:
     buildStatus: in-progress
     redesignStatus: not-started
     apiStatus: partial
-endpoints:
-  - GET /api/v1/auth/me
+endpoints: []
 relatedScreens:
   - id: reality/account
     rel: web-counterpart
   - id: reality-mobile/auth-login
     rel: child
   - id: reality-mobile/saved-searches
-    rel: child
-  - id: reality-mobile/profile
-    rel: child
-  - id: reality-mobile/settings
     rel: child
 sharedComponents: []
 diagrams: []

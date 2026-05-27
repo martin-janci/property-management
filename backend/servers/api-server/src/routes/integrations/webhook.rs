@@ -17,12 +17,13 @@ use axum::{
     Json, Router,
 };
 use db::models::{
-    esignature_provider, CreateWebhookSubscription, TestWebhookRequest, TestWebhookResponse,
-    UpdateWebhookSubscription, WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics,
-    WebhookSubscription,
+    esignature_provider,
+    infrastructure::{job_type, queue, CreateBackgroundJob},
+    CreateWebhookSubscription, TestWebhookRequest, TestWebhookResponse, UpdateWebhookSubscription,
+    WebhookDeliveryLog, WebhookDeliveryQuery, WebhookStatistics, WebhookSubscription,
 };
 use hmac::{Hmac, KeyInit, Mac};
-use integrations::BookingClient;
+use integrations::{AirbnbClient, AirbnbWebhookEventType, BookingClient};
 use serde::Deserialize;
 use sha2::Sha256;
 use uuid::Uuid;
@@ -85,6 +86,8 @@ pub fn router() -> Router<AppState> {
             "/webhooks/portal/{connection_id}",
             post(handle_portal_webhook),
         )
+        // Gap 83-1: Airbnb inbound webhook
+        .route("/airbnb/webhook", post(handle_airbnb_webhook))
 }
 
 // ==================== Outbound Webhook Subscriptions (Story 61.5) ====================
@@ -909,4 +912,313 @@ pub async fn handle_portal_webhook(
     }
 
     Ok(StatusCode::OK)
+}
+
+// ==================== Gap 83-1: Airbnb Inbound Webhook ====================
+
+/// Receive and dispatch an inbound Airbnb webhook event.
+///
+/// Airbnb signs every delivery with HMAC-SHA256 over the raw body using the
+/// shared secret from `AIRBNB_WEBHOOK_SECRET`. The signature is verified
+/// before the payload is parsed to reject unauthenticated callers.
+///
+/// Raw `Bytes` are used so the HMAC is computed over the exact bytes Airbnb
+/// signed — UTF-8 decoding happens after signature verification.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/airbnb/webhook",
+    request_body(content = String, content_type = "application/json", description = "Airbnb webhook event payload"),
+    responses(
+        (status = 200, description = "Webhook processed"),
+        (status = 401, description = "Invalid signature"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Integrations - Airbnb"
+)]
+pub async fn handle_airbnb_webhook(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    // 1. Load the shared secret.
+    let secret = std::env::var("AIRBNB_WEBHOOK_SECRET").unwrap_or_default();
+    if secret.is_empty() {
+        tracing::error!("AIRBNB_WEBHOOK_SECRET is not configured");
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Airbnb webhook secret is not configured",
+            )),
+        ));
+    }
+
+    // 2. Verify HMAC-SHA256 signature over raw bytes.
+    let signature = headers
+        .get("X-Airbnb-Signature")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default();
+
+    let body_str = std::str::from_utf8(&body).map_err(|_| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_ENCODING",
+                "Request body is not valid UTF-8",
+            )),
+        )
+    })?;
+
+    if !AirbnbClient::verify_webhook_signature(signature, body_str, &secret) {
+        tracing::warn!("Airbnb webhook signature verification failed");
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new(
+                "INVALID_SIGNATURE",
+                "Webhook signature verification failed",
+            )),
+        ));
+    }
+
+    // 3. Parse the event.
+    let event = AirbnbClient::parse_webhook_event(body_str).map_err(|e| {
+        tracing::warn!(error = %e, "Failed to parse Airbnb webhook event");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("PARSE_ERROR", "Invalid webhook payload")),
+        )
+    })?;
+
+    // 4. Best-effort deduplication via Airbnb event_id.
+    //
+    // Airbnb guarantees at-least-once delivery, so duplicate events are possible.
+    // The canonical fix is a persistent `airbnb_webhook_events` table with a
+    // UNIQUE constraint on `event_id`; until that migration lands we log the
+    // event_id so that duplicate deliveries are visible in the trace and the
+    // ReservationCancelled branch below guards against double-cancellation.
+    //
+    // TODO(gap-83-1): add `airbnb_webhook_events(event_id TEXT PRIMARY KEY, …)`
+    // migration, insert here with ON CONFLICT DO NOTHING, and return 200 early
+    // on conflict to fully suppress duplicate processing.
+    if let Some(ref eid) = event.event_id {
+        tracing::debug!(
+            event_id = %eid,
+            event_type = ?event.event_type,
+            "Airbnb webhook: received event_id for deduplication tracking"
+        );
+    }
+
+    // 5. Dispatch by event type.
+    match event.event_type {
+        AirbnbWebhookEventType::ReservationCreated | AirbnbWebhookEventType::ReservationUpdated => {
+            if let Some(listing_id) = &event.listing_id {
+                match state
+                    .rental_repo
+                    .find_airbnb_connection_by_listing_id(listing_id)
+                    .await
+                {
+                    Ok(Some(conn)) => {
+                        let payload = serde_json::json!({
+                            "org_id": conn.organization_id,
+                            "connection_id": conn.id,
+                            "sync_type": "reservations",
+                            "trigger": "webhook",
+                            "event_id": event.event_id,
+                        });
+                        // TODO: Airbnb delivers webhooks at-least-once; a rapid sequence of
+                        // events for the same listing will enqueue duplicate sync jobs.
+                        // Deduplication should be handled at the worker level (idempotent
+                        // upsert) or by checking for an already-queued SYNC_EXTERNAL job
+                        // for this (org_id, connection_id) before inserting.
+                        let job_data = CreateBackgroundJob {
+                            job_type: job_type::SYNC_EXTERNAL.to_string(),
+                            priority: Some(1),
+                            payload,
+                            scheduled_at: None,
+                            queue: Some(queue::LOW_PRIORITY.to_string()),
+                            max_attempts: Some(3),
+                            org_id: Some(conn.organization_id),
+                        };
+                        if let Err(e) = state.background_job_repo.create(job_data, None).await {
+                            tracing::error!(
+                                error = %e,
+                                listing_id = %listing_id,
+                                event_type = ?event.event_type,
+                                "Failed to enqueue Airbnb reservation sync job from webhook"
+                            );
+                        } else {
+                            tracing::info!(
+                                listing_id = %listing_id,
+                                org_id = %conn.organization_id,
+                                event_type = ?event.event_type,
+                                "Airbnb webhook: enqueued reservation sync job"
+                            );
+                        }
+                    }
+                    Ok(None) => {
+                        tracing::warn!(
+                            listing_id = %listing_id,
+                            "Airbnb webhook: no active connection found for listing, ignoring"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            listing_id = %listing_id,
+                            "Airbnb webhook: DB error looking up connection"
+                        );
+                    }
+                }
+            }
+        }
+        AirbnbWebhookEventType::ReservationCancelled => {
+            if let Some(code) = &event.confirmation_code {
+                match state
+                    .rental_repo
+                    .find_booking_by_external_id("airbnb", code)
+                    .await
+                {
+                    Ok(Some(booking)) => {
+                        if booking.status == db::models::rental::booking_status::CANCELLED {
+                            tracing::warn!(
+                                booking_id = %booking.id,
+                                confirmation_code = %code,
+                                event_id = ?event.event_id,
+                                "Airbnb webhook: ReservationCancelled for already-cancelled booking, likely duplicate delivery — ignoring"
+                            );
+                        } else {
+                            let cancel_data = db::models::rental::UpdateBookingStatus {
+                                status: db::models::rental::booking_status::CANCELLED.to_string(),
+                                cancellation_reason: Some(
+                                    "Cancelled via Airbnb webhook".to_string(),
+                                ),
+                            };
+                            if let Err(e) = state
+                                .rental_repo
+                                .update_booking_status(booking.id, cancel_data)
+                                .await
+                            {
+                                tracing::error!(
+                                    error = %e,
+                                    booking_id = %booking.id,
+                                    confirmation_code = %code,
+                                    "Airbnb webhook: failed to cancel booking"
+                                );
+                            } else {
+                                tracing::info!(
+                                    booking_id = %booking.id,
+                                    confirmation_code = %code,
+                                    "Airbnb webhook: booking cancelled"
+                                );
+                            }
+                        }
+                    }
+                    Ok(None) => {
+                        tracing::warn!(
+                            confirmation_code = %code,
+                            "Airbnb webhook: ReservationCancelled for unknown booking, ignoring"
+                        );
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            confirmation_code = %code,
+                            "Airbnb webhook: DB error looking up booking for cancellation"
+                        );
+                    }
+                }
+            }
+        }
+        AirbnbWebhookEventType::ListingUpdated => {
+            tracing::info!(listing_id = ?event.listing_id, "Airbnb webhook: ListingUpdated (not yet handled)");
+        }
+        AirbnbWebhookEventType::MessageReceived => {
+            tracing::info!(listing_id = ?event.listing_id, "Airbnb webhook: MessageReceived (not yet handled)");
+        }
+        AirbnbWebhookEventType::ReviewReceived => {
+            tracing::info!(listing_id = ?event.listing_id, "Airbnb webhook: ReviewReceived (not yet handled)");
+        }
+    }
+
+    Ok(StatusCode::OK)
+}
+
+// ==================== Gap 83-1 Unit Tests ====================
+
+#[cfg(test)]
+mod airbnb_webhook_tests {
+    use integrations::AirbnbClient;
+
+    #[test]
+    fn test_signature_valid() {
+        use hmac::{Hmac, KeyInit, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+
+        let secret = "test_secret_key";
+        let body = r#"{"event_type":"reservation_created","listing_id":"123","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+
+        let mut mac =
+            HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts any key length");
+        mac.update(body.as_bytes());
+        let signature = hex::encode(mac.finalize().into_bytes());
+
+        assert!(AirbnbClient::verify_webhook_signature(
+            &signature, body, secret
+        ));
+    }
+
+    #[test]
+    fn test_signature_invalid() {
+        assert!(!AirbnbClient::verify_webhook_signature(
+            "deadbeef",
+            r#"{"event_type":"listing_updated","listing_id":"42","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#,
+            "some_secret",
+        ));
+    }
+
+    #[test]
+    fn test_event_parse_valid() {
+        let body = r#"{"event_type":"listing_updated","listing_id":"abc123","timestamp":"2026-01-01T00:00:00Z","payload":{}}"#;
+        let event = AirbnbClient::parse_webhook_event(body);
+        assert!(event.is_ok(), "parse failed: {:?}", event.err());
+        let ev = event.unwrap();
+        assert_eq!(ev.listing_id.as_deref(), Some("abc123"));
+    }
+
+    #[test]
+    fn test_event_parse_invalid() {
+        let result = AirbnbClient::parse_webhook_event("not json at all");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_event_parse_with_event_id() {
+        let body = r#"{
+            "event_type": "reservation_created",
+            "event_id": "evt_abc123",
+            "listing_id": "listing_42",
+            "timestamp": "2026-01-01T00:00:00Z",
+            "payload": {}
+        }"#;
+        let event = AirbnbClient::parse_webhook_event(body);
+        assert!(event.is_ok(), "parse failed: {:?}", event.err());
+        let ev = event.unwrap();
+        assert_eq!(ev.event_id.as_deref(), Some("evt_abc123"));
+        assert_eq!(ev.listing_id.as_deref(), Some("listing_42"));
+    }
+
+    #[test]
+    fn test_event_parse_without_event_id() {
+        let body = r#"{
+            "event_type": "listing_updated",
+            "listing_id": "listing_99",
+            "timestamp": "2026-01-01T00:00:00Z",
+            "payload": {}
+        }"#;
+        let event = AirbnbClient::parse_webhook_event(body);
+        assert!(event.is_ok(), "parse failed: {:?}", event.err());
+        let ev = event.unwrap();
+        assert!(ev.event_id.is_none());
+    }
 }

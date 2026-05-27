@@ -1,0 +1,224 @@
+{
+  "date": "2026-05-26",
+  "trigger": "",
+  "_note": "Same-day incremental rerun. The 03:12Z run covered merged PRs #503–#511; this run (≈22:31Z) processes the rest of the day's merges #513–#562. seen_signals is cumulative, so only this increment's new signal IDs appear here (G4: none collide with the committed seen_signals).",
+  "run_window": {
+    "since_iso": "2026-05-26T03:12:00Z",
+    "last_pr_seen_in": 511,
+    "last_pr_seen_out": 562
+  },
+  "signals": [
+    {
+      "id": "fixme-in-merged-code-pr-538-webhook-rs",
+      "type": "fixme-in-merged-code",
+      "source": "PR #538",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/servers/api-server/src/routes/integrations/webhook.rs:1028 — TODO: Airbnb at-least-once webhook delivery enqueues duplicate SYNC_EXTERNAL jobs for the same listing; needs idempotent upsert or already-queued-job check. Verified by reading the diff/file this run."
+    },
+    {
+      "id": "fixme-in-merged-code-pr-515-push-fanout-rs",
+      "type": "fixme-in-merged-code",
+      "source": "PR #515",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "backend/servers/api-server/src/services/push_fanout.rs:621 — TODO: BLPOP queue-drain deferred to a follow-up PR; the Redis branch of process_pending_jobs only logs a heartbeat. Delivery works synchronously via FcmHttpAdapter::send today, so this is deferred plumbing not a live outage."
+    },
+    {
+      "id": "screen-map-drift-pr-547-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #547",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #547 (report execution-history UI) touched frontend/apps/ppt-web/src/App.tsx + routes/lazyRoutes.tsx without updating any docs/screens/ppt/*.md. Best-effort drift heuristic — review candidate."
+    },
+    {
+      "id": "screen-map-drift-pr-549-ppt",
+      "type": "screen-map-drift",
+      "source": "PR #549",
+      "score_delta": 0,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #549 touched App.tsx but the diff is useCallback route wrappers around existing routes (per PR body), not new screens. Heuristic false-positive — score suppressed, no backlog item."
+    },
+    {
+      "id": "hotfix-no-test-pr-532",
+      "type": "hotfix-no-test",
+      "source": "PR #532",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "fix(security) e-signature config fail-closed has no *test* file path, but the PR body + esignature.rs carry 4 new inline #[cfg(test)] unit tests (from_env failure modes, IG3). Verified — score suppressed."
+    },
+    {
+      "id": "hotfix-no-test-pr-553",
+      "type": "hotfix-no-test",
+      "source": "PR #553",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "fix(mobile) ships only iOS/RN config + Swift (Info.plist, .env, AuthManager/DeepLinkHandler) with no unit test; PR body defers Xcode/Swift compile verification to CI. Native config — score suppressed, noted in brief."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
+      "type": "churn-hotspot",
+      "source": "PRs #534, #538, #544",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "877 lines this run — new integrations install module built out across the Booking.com/Airbnb channel-sync epics (83.1/83.2). One-time feature build-out, runs_seen=1; recorded in hotspot_history, no backlog item."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #549",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "869 lines this run — #549 split the 867-LoC SystemAnnouncementsPage into orchestrator + 5 components + 3 lib files (issue #521). One-time refactor, runs_seen=1; no backlog item."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+      "type": "churn-hotspot",
+      "source": "PR #515",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "689 lines this run — new push-notification fanout worker (Epic 8A-3). One-time feature add, runs_seen=1; the deferred BLPOP plumbing is tracked separately as dx-push-fanout-blpop-drain."
+    },
+    {
+      "id": "code-review-mobile-native-kmp-ios-deeplink-sso",
+      "type": "code-review-finding",
+      "source": "Phase 1.5 rotating review — segment mobile-native-kmp (PR #553/#522 freshly landed, never reviewed)",
+      "score_delta": 0,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "Reviewed iOS deep-link/SSO hardening (AuthManager.beginSsoFlow/consumeSsoState, DeepLinkHandler.allowedUniversalLinkHosts). Solid: 32-byte SecRandomCopyBytes CSRF nonce, single-use defer-clear, empty-state rejection, universal-link host allow-list, Route.requiresAuth gating. No actionable finding — recorded for cursor advance, no backlog item."
+    }
+  ],
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-26.md && head -1 | grep '# 2026-05-26'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq unique ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq signals vs prev seen_signals",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap<=8; no open item >14d so decay n/a",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "no new plans this run",
+      "observed": "0 new plans",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached -A plans/ md count",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v ^.research/ | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames grep",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md /tmp/backlog.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "no failed phases; cursors advanced",
+      "observed": "none failed",
+      "expected": "none failed"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "both archived slugs in _archive/",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now>=HEAD",
+      "observed": "7>=5",
+      "expected": "ge"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md /tmp/ideas-triage.regen.md",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix_actions empty; no PR/issue/comment",
+      "observed": "[]",
+      "expected": "<=3 with caps"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "Phase 1.6 skipped this run — no-op",
+      "observed": "skipped",
+      "expected": "no-op"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token value grep",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

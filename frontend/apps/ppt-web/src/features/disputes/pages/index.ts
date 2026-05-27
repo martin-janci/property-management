@@ -8,3 +8,4 @@ export { DisputeDetailPage } from './DisputeDetailPage';
 export { DisputesPage } from './DisputesPage';
 export { FileDisputePage } from './FileDisputePage';
 export { MediationPage } from './MediationPage';
+export { MediationWorkspacePage } from './MediationWorkspacePage';
