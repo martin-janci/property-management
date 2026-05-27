@@ -125,6 +125,7 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
     <div
       role="button"
       tabIndex={0}
+      aria-label={doc.title}
       className={`doc-row${selected ? ' doc-row--selected' : ''}`}
       onClick={() => onSelect(doc.id)}
       onKeyDown={(e) => {
@@ -152,10 +153,7 @@ function DocumentRow({ doc, onSelect, onPreview, onMoveRequest, selected }: Docu
         </span>
       )}
       {/* Row action buttons (gap-7a-4: preview + download; gap-7a-2: move) */}
-      <span
-        className="doc-row__actions"
-        onClick={(e: { stopPropagation: () => void }) => e.stopPropagation()}
-      >
+      <span className="doc-row__actions" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
           className="doc-row__action-btn"
@@ -291,8 +289,8 @@ export function DocumentsBrowse({
   const handleMoveConfirm = useCallback(
     async (folderId: string | null) => {
       if (!moveTarget) return;
-      await executeMoveWithToast(moveTarget, folderId);
-      setMoveTarget(null);
+      const success = await executeMoveWithToast(moveTarget, folderId);
+      if (success) setMoveTarget(null);
     },
     [moveTarget, executeMoveWithToast]
   );
@@ -822,6 +820,11 @@ export function DocumentsBrowse({
         .doc-row__action-btn:hover {
           background: var(--ppt-border-default);
           color: var(--ppt-brand-500);
+        }
+
+        .doc-row__action-btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
         }
 
         /* Loading skeleton */

@@ -223,6 +223,11 @@ export function FolderBreadcrumb({ crumbs, onNavigate, className = '' }: FolderB
         .folder-bc__crumb--link:hover {
           text-decoration: underline;
         }
+        .folder-bc__crumb--link:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+          border-radius: 0.125rem;
+        }
         .folder-bc__crumb--current {
           color: var(--ppt-fg-primary);
           font-weight: 600;

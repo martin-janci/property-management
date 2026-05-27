@@ -201,8 +201,8 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
   const handleMoveConfirm = useCallback(
     async (folderId: string | null) => {
       if (!moveTarget) return;
-      await executeMoveWithToast(moveTarget, folderId);
-      setMoveTarget(null);
+      const success = await executeMoveWithToast(moveTarget, folderId);
+      if (success) setMoveTarget(null);
     },
     [moveTarget, executeMoveWithToast]
   );
@@ -615,6 +615,12 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
         .fd__move-btn:hover {
           background: var(--ppt-border-default);
           color: var(--ppt-brand-500);
+        }
+
+        .fd__move-btn:focus-visible {
+          outline: 2px solid var(--ppt-brand-500);
+          outline-offset: 2px;
+          opacity: 1;
         }
 
         .fd__icon {

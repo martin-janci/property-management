@@ -10,18 +10,23 @@
  * Note: getDownloadUrl uses the same fetchApi transport as every other function
  * in @ppt/api-client (listDocuments, moveDocument, getPreviewUrl, etc.) — auth
  * handling is consistent across the entire api-client package.
+ *
+ * The in-flight guard uses a ref so the `download` callback is stable across
+ * renders — no recreation on every isDownloading state change.
  */
 
 import { getDownloadUrl } from '@ppt/api-client';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useToast } from '../../../components/Toast';
 
 export function useDocumentDownload(documentId: string, fileName: string) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const isDownloadingRef = useRef(false);
   const { showToast } = useToast();
 
   const download = useCallback(async () => {
-    if (isDownloading) return;
+    if (isDownloadingRef.current) return;
+    isDownloadingRef.current = true;
     setIsDownloading(true);
     try {
       const { url } = await getDownloadUrl(documentId);
@@ -43,9 +48,10 @@ export function useDocumentDownload(documentId: string, fileName: string) {
         message: err instanceof Error ? err.message : 'Dokument sa nepodarilo stiahnuť.',
       });
     } finally {
+      isDownloadingRef.current = false;
       setIsDownloading(false);
     }
-  }, [documentId, fileName, isDownloading, showToast]);
+  }, [documentId, fileName, showToast]);
 
   return { download, isDownloading };
 }

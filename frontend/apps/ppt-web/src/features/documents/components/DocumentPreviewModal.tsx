@@ -134,8 +134,6 @@ function DownloadButton({
   );
 }
 
-export { DownloadButton as DocumentDownloadButton };
-
 // ─── main component ───────────────────────────────────────────────────────────
 
 const isPdf = (mimeType: string) => mimeType === 'application/pdf';
