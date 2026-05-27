@@ -31,6 +31,7 @@ import type {
   RegenerateSecretResponse,
   RegisterOAuthClientRequest,
   RegisterOAuthClientResponse,
+  SupportDataResponse,
   SystemAnnouncement,
   TimeRange,
   UpdateOAuthClientRequest,
@@ -252,5 +253,22 @@ export async function updateSystemAnnouncement(
 export async function deleteSystemAnnouncement(id: string): Promise<void> {
   await authenticatedFetchJson<void>(`${SYSANN_BASE}/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+  });
+}
+
+// ============================================================
+// Support Data (Epic 10B.5)
+// ============================================================
+
+const SUPPORT_DATA_BASE = `${_win.__API_BASE_URL__ ? String(_win.__API_BASE_URL__) : ''}/api/v1/platform-admin`;
+
+/**
+ * GET /api/v1/platform-admin/support-data
+ * Returns platform-wide tenant diagnostics (user counts, active sessions,
+ * fault summary). Requires `audit_read` capability.
+ */
+export async function fetchSupportData(signal?: AbortSignal): Promise<SupportDataResponse> {
+  return authenticatedFetchJson<SupportDataResponse>(`${SUPPORT_DATA_BASE}/support-data`, {
+    signal,
   });
 }

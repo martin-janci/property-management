@@ -39,6 +39,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DestructiveConfirmDialog } from '../../components/DestructiveConfirmDialog';
 import { useToast } from '../../components/Toast';
+import { HelpTooltip } from '../help';
 import { AnnForm, type AnnFormValues, annToForm } from './components/AnnForm';
 import { AnnouncementsTable } from './components/AnnouncementsTable';
 import { toIso } from './lib/formatters';
@@ -239,8 +240,18 @@ export default function SystemAnnouncementsPage() {
   return (
     <div style={containerStyle}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20, gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20, flex: 1 }}>
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 20,
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           {t('admin.announcements.heading', 'System Announcements')}
+          <HelpTooltip text={t('admin.announcements.helpTooltip')} />
         </h2>
         <label
           style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}

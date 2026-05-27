@@ -21,10 +21,12 @@
 import { CAPABILITIES, useCapability, useMfaChallenge } from '@ppt/admin-ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
+import { HelpTooltip } from '../features/help';
 
 // ---------------------------------------------------------------------------
 // Constants & helpers
@@ -1201,6 +1203,7 @@ function GrantDrawer({ userId, token, onClose, onSuccess }: GrantDrawerProps) {
 export default function CapabilitiesAdminPage() {
   ensureStyles();
 
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get('view') ?? 'registry';
   const userId = searchParams.get('id') ?? 'me';
@@ -1229,7 +1232,10 @@ export default function CapabilitiesAdminPage() {
     <div className="cap-page">
       <div className="cap-page__header">
         <div>
-          <h1 className="cap-page__title">Capabilities registry</h1>
+          <h1 className="cap-page__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Capabilities registry
+            <HelpTooltip text={t('admin.capabilities.helpTooltip')} />
+          </h1>
           <p className="cap-page__subtitle">
             All {CAPABILITIES.length} platform capability strings. Click "View holders" to inspect
             grants for a specific user.

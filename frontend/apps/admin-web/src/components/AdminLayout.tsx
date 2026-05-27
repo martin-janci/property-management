@@ -6,6 +6,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { HelpSidebar, useContextualHelp } from '../features/help';
+import './AdminLayout.css';
 import { ConnectedMfaWindowChip } from './MfaWindowChip';
 
 interface SidebarGroupProps {
@@ -94,6 +95,7 @@ export function AdminLayout() {
   const canSiteSettingsWrite = useCapability('site_settings_write');
   const canMobileConfigWrite = useCapability('mobile_config_write');
   const canHealthRead = useCapability('audit_read');
+  const canSupportDataRead = useCapability('audit_read');
 
   // DEVELOPER
   const canOauthClientWrite = useCapability('oauth_client_write');
@@ -167,6 +169,12 @@ export function AdminLayout() {
                 label={t('admin.announcements.navLabel', 'Announcements')}
               />
             ) : null}
+            {canSupportDataRead ? (
+              <NavItem
+                to="/platform/support-data"
+                label={t('admin.supportData.navLabel', 'Support data')}
+              />
+            ) : null}
           </SidebarGroup>
 
           <SidebarGroup label="DEVELOPER">
@@ -196,29 +204,13 @@ export function AdminLayout() {
         >
           <span style={{ flex: 1 }} />
           <ConnectedMfaWindowChip />
+          {/* Help toggle — styles live in AdminLayout.css (.ppt-topbar-help-btn) */}
           <button
             type="button"
             onClick={help.toggle}
             aria-expanded={help.isOpen}
             aria-label={t('admin.help.openHelp', 'Open contextual help')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              border: help.isOpen
-                ? '1.5px solid var(--ppt-brand-400, #60a5fa)'
-                : '1px solid var(--ppt-border-default, #e5e7eb)',
-              background: help.isOpen
-                ? 'var(--ppt-brand-100, #dbeafe)'
-                : 'var(--ppt-bg-subtle, #f3f4f6)',
-              color: help.isOpen ? 'var(--ppt-brand-700, #1d4ed8)' : 'var(--ppt-fg-muted, #6b7280)',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
+            className="ppt-topbar-help-btn"
           >
             ?
           </button>

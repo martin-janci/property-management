@@ -8,9 +8,9 @@ implementations:
   ios-swiftui:
     component: SearchView
     route: Tab.search / Route.search
-    buildStatus: in-progress
+    buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: partial
+    apiStatus: complete
 endpoints:
   - listings_search
 relatedScreens:
@@ -47,9 +47,9 @@ owner: reality-frontend
 - [x] [m] Empty results state ("no_results" + "try_different_search")
 - [x] [m] Search prompt state when no query entered
 - [x] [m] Tap card → navigate to Route.listingDetail(id:)
-- [ ] [m] Horizontal scroll categories on search screen (mentioned in comments, not implemented)
-- [ ] [m] Sort order selector (not yet implemented)
-- [ ] [m] Map view toggle (Route.listingMap mentioned in Route enum but SearchView has no map toggle)
+- [x] [m] PropertyType quick-filter chips in horizontal scroll filter bar
+- [x] [m] Sort order selector (toolbar button → confirmationDialog with all 7 SortOptions)
+- [ ] [m] Map view toggle — Route.listingMap defined but SearchView has no map UI (future task)
 
 ## States
 
@@ -73,3 +73,4 @@ Search tab root. Calls `listingRepository.searchListings(request:)` via KMP. Pag
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Search/SearchView.swift (epic-82 story 82.3). Sort and map-toggle gaps noted.
+- 2026-05-25 — agent: added SortOption enum (7 cases) with toolbar button; added onAppear to consume pendingSearchFilters from HomeView; mapped ListingTypeFilter to KMP ListingType in buildKMPFilters. buildStatus → shipped. Map toggle remains future work.

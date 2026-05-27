@@ -34,6 +34,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -733,8 +734,18 @@ const PlatformHealthPage: React.FC = () => {
   return (
     <section style={{ padding: '24px 28px', maxWidth: 1200 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+        <h1
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           {t('admin.health.title', 'Platform Health')}
+          <HelpTooltip text={t('admin.health.helpTooltip')} />
         </h1>
         <button
           type="button"

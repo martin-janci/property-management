@@ -5,21 +5,34 @@
  * The panel renders the article body as pre-formatted text (no external
  * markdown parser required — keeps the bundle lean). Section headings
  * (`**bold**`) and bullet lists (lines starting with `-`) are styled inline.
+ *
+ * Accessibility:
+ *   - role="dialog" + aria-modal="true" marks the panel as a modal dialog.
+ *   - Focus is trapped inside the panel while it is open (via useFocusTrap).
+ *   - Escape closes the panel and returns focus to the trigger button.
+ *   - aria-labelledby links the panel to its visible title heading.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFocusTrap } from '../../components/useFocusTrap';
 import type { HelpArticle } from '../../help/articles';
 
 // ---------------------------------------------------------------------------
-// Styles (injected once)
+// Styles (injected once at module load — not on every render)
 // ---------------------------------------------------------------------------
 
 const STYLE_ID = 'ppt-help-sidebar-styles';
 
+let _stylesInjected = false;
+
 function ensureStyles() {
+  if (_stylesInjected) return;
   if (typeof document === 'undefined') return;
-  if (document.getElementById(STYLE_ID)) return;
+  if (document.getElementById(STYLE_ID)) {
+    _stylesInjected = true;
+    return;
+  }
   const el = document.createElement('style');
   el.id = STYLE_ID;
   el.textContent = `
@@ -174,6 +187,7 @@ function ensureStyles() {
     }
   `;
   document.head.appendChild(el);
+  _stylesInjected = true;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,39 +319,41 @@ interface HelpSidebarProps {
 }
 
 export function HelpSidebar({ article, onClose }: HelpSidebarProps) {
+  // Styles injected once on first mount (the flag prevents re-injection on
+  // subsequent mounts or HMR refreshes).
   ensureStyles();
+
   const { t } = useTranslation();
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
-  // Focus the close button on mount for keyboard accessibility
-  useEffect(() => {
-    closeRef.current?.focus();
-  }, []);
-
-  // Close on Escape
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  // Focus-trap: Tab/Shift-Tab cycle within the panel; Escape calls onClose.
+  // Returns focus to the element that was focused before the panel opened.
+  useFocusTrap(panelRef, onClose);
 
   return (
     <>
       {/* Backdrop */}
       <div className="ppt-help-backdrop" onClick={onClose} aria-hidden="true" />
 
-      {/* Panel */}
-      <aside className="ppt-help-panel" aria-label={t('admin.help.panelLabel', 'Contextual help')}>
+      {/* Panel — role="dialog" + aria-modal confines assistive tech to this element */}
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="ppt-help-panel"
+        tabIndex={-1}
+      >
         {/* Header */}
         <div className="ppt-help-header">
           <div className="ppt-help-header__icon" aria-hidden="true">
             ?
           </div>
-          <h2 className="ppt-help-header__title">{article.title}</h2>
+          <h2 id={titleId} className="ppt-help-header__title">
+            {article.title}
+          </h2>
           <button
-            ref={closeRef}
             type="button"
             className="ppt-help-header__close"
             onClick={onClose}
@@ -365,7 +381,7 @@ export function HelpSidebar({ article, onClose }: HelpSidebarProps) {
             </a>
           </div>
         )}
-      </aside>
+      </div>
     </>
   );
 }
