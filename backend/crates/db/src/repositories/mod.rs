@@ -109,8 +109,8 @@ pub use organization_member::OrganizationMemberRepository;
 pub use password_reset::PasswordResetRepository;
 pub use person_month::PersonMonthRepository;
 pub use platform_admin::{
-    PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportUserInfo,
-    SupportUserMembership, SupportUserSession,
+    FaultStatusCount, PlatformAdminRepository, PlatformStats, SupportActivityLog, SupportData,
+    SupportUserInfo, SupportUserMembership, SupportUserSession,
 };
 pub use portal_password_reset::PortalPasswordResetRepository;
 pub use role::RoleRepository;
