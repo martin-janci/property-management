@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:14:31Z",
+  "generated": "2026-05-27T02:16:31Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1715,13 +1715,13 @@
       "status": "review",
       "specialist": null,
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T02:10:02Z",
+      "last_updated": "2026-05-27T02:16:31Z",
       "status_changed_at": "2026-05-27T02:10:02Z",
       "pr_number": 563,
       "pr_url": "https://github.com/martin-janci/property-management/pull/563",
       "merged_at": null,
       "implementer_summary": null,
-      "reviewer_summary": null
+      "reviewer_summary": "verdict=approve note=C1/C2/C3 tests correct and well-isolated; sqlx::test(migrator=db::MIGRATOR) right harness; seed fidelity good; one non-blocking doc inaccuracy \u2014 added comment overstates db-crate coverage; posted as COMMENT due to self-review restriction"
     },
     {
       "task_id": "gap-6-2-announcement-read-receipt-retry",
