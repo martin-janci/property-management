@@ -17,8 +17,9 @@ use db::models::{
     DisputeActivity, DisputeEvidence, DisputeParty, DisputeQuery, DisputeResolution,
     DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
     MediationSession, PartyActionsDashboard, PartySubmission, ProposeResolution,
-    RecordSessionNotes, ResolutionVote, ResolutionWithVotes, ResolveEscalation, ScheduleSession,
-    SessionAttendance, SubmitResponse, UpdateDisputeStatus, VoteOnResolution,
+    RecordSessionNotes, ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation,
+    ScheduleSession, SessionAttendance, SubmitResponse, UpdateDisputeStatus, UpdateMediationNotes,
+    VoteOnResolution,
 };
 use db::repositories::{UpdateAttendanceData, UpdateSessionData};
 use serde::Deserialize;
@@ -37,6 +38,8 @@ pub fn router() -> Router<AppState> {
         .route("/{id}", get(get_dispute))
         .route("/{id}", patch(update_dispute_status))
         .route("/{id}", delete(withdraw_dispute))
+        .route("/{id}/resolve", patch(resolve_dispute))
+        .route("/{id}/mediation-notes", patch(update_mediation_notes))
         .route("/{id}/parties", get(list_parties))
         .route("/{id}/parties", post(add_party))
         .route("/{id}/evidence", get(list_evidence))
@@ -265,6 +268,18 @@ pub struct ResolveEscalationRequest {
     pub resolution_notes: String,
 }
 
+/// Resolve dispute request.
+#[derive(Debug, Deserialize)]
+pub struct ResolveDisputeRequest {
+    pub resolution_notes: String,
+}
+
+/// Update mediation notes request.
+#[derive(Debug, Deserialize)]
+pub struct UpdateMediationNotesRequest {
+    pub notes: String,
+}
+
 /// Pagination query.
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct PaginationQuery {
@@ -365,33 +380,249 @@ async fn get_dispute(
         })
 }
 
-/// Update dispute status.
+/// Update dispute status — enforces the state machine.
+///
+/// Returns 422 Unprocessable Entity when the requested transition is not
+/// permitted from the current status (`filed` → `under_review` → `resolved`).
 async fn update_dispute_status(
     State(state): State<AppState>,
     user: AuthUser,
     Path(id): Path<Uuid>,
     Json(data): Json<UpdateStatusRequest>,
 ) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
-    state
+    if !user.role.as_ref().is_some_and(|r| r.is_manager()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
+        ));
+    }
+    // Issue #520: derive org from the authenticated JWT, not from the request
+    // body, so a caller cannot bypass the tenancy guard by supplying a
+    // different org_id in the payload.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+    let result = state
         .dispute_repo
         .update_status(UpdateDisputeStatus {
             dispute_id: id,
+            organization_id,
             status: data.status,
             reason: data.reason,
             updated_by: user.user_id,
         })
-        .await
-        .map(Json)
-        .map_err(|e| {
+        .await;
+    match result {
+        Ok(d) => Ok(Json(d)),
+        Err(common::errors::AppError::BadRequest(msg)) => {
+            tracing::warn!("Invalid dispute status transition: {}", msg);
+            Err((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(ErrorResponse::new(
+                    "INVALID_TRANSITION",
+                    "Invalid status transition",
+                )),
+            ))
+        }
+        // Issue #520: a `NotFound` here can mean either "no such dispute"
+        // or "dispute belongs to a different org" — surface both as 404
+        // so the response shape is not an existence oracle for
+        // cross-tenant probes.
+        Err(common::errors::AppError::NotFound(_)) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", "Dispute not found")),
+        )),
+        Err(e) => {
             tracing::error!("Failed to update dispute status: {:?}", e);
-            (
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new(
                     "DB_ERROR",
                     "Failed to update dispute status",
                 )),
-            )
+            ))
+        }
+    }
+}
+
+/// Resolve a dispute — sets status to `resolved`, records `resolved_at` and `resolution_notes`.
+///
+/// Only managers or admins may call this endpoint.
+/// Returns 422 Unprocessable Entity when the current dispute status does not permit a transition
+/// to `resolved` (e.g. `filed`, already `resolved`, `withdrawn`, or `closed`).
+async fn resolve_dispute(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(data): Json<ResolveDisputeRequest>,
+) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
+    // RequireCapability is not used here: the mediator path in update_mediation_notes
+    // already requires a DB lookup that cannot be expressed as a static capability,
+    // and keeping both handlers consistent avoids a mixed RBAC pattern in the same
+    // router.  The manual check below enforces the same policy.
+    if !user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin())
+    {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Insufficient role")),
+        ));
+    }
+
+    // Guard: resolution_notes must not be blank.
+    if data.resolution_notes.trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "resolution_notes must not be empty",
+            )),
+        ));
+    }
+
+    // Require an organization context from the JWT so we can scope the UPDATE.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
+    let result = state
+        .dispute_repo
+        .resolve_dispute(ResolveDispute {
+            dispute_id: id,
+            resolution_notes: data.resolution_notes,
+            resolved_by: user.user_id,
+            organization_id,
         })
+        .await;
+
+    match result {
+        Ok(dispute) => Ok(Json(dispute)),
+        Err(common::errors::AppError::BadRequest(msg)) => {
+            tracing::warn!("Invalid dispute resolve attempt: {}", msg);
+            Err((
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(ErrorResponse::new(
+                    "INVALID_TRANSITION",
+                    "Dispute cannot be resolved from its current status",
+                )),
+            ))
+        }
+        Err(common::errors::AppError::NotFound(msg)) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", msg.as_str())),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to resolve dispute: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to resolve dispute")),
+            ))
+        }
+    }
+}
+
+/// Update mediation notes on a dispute.
+///
+/// Accessible by the assigned mediator or any manager/admin.
+/// Does not change the dispute status.
+async fn update_mediation_notes(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(data): Json<UpdateMediationNotesRequest>,
+) -> Result<Json<Dispute>, (StatusCode, Json<ErrorResponse>)> {
+    // Guard: mediation notes must not be blank.
+    if data.notes.trim().is_empty() {
+        return Err((
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse::new(
+                "VALIDATION_ERROR",
+                "notes must not be empty",
+            )),
+        ));
+    }
+
+    // RequireCapability is not used here because access involves two distinct
+    // paths: static role check (manager/admin) AND a dynamic DB lookup to
+    // verify mediator-party membership.  Neither path can be expressed as a
+    // single static capability constant, so the check is performed inline.
+    let is_manager = user
+        .role
+        .as_ref()
+        .is_some_and(|r| r.is_manager() || r.is_admin());
+
+    if !is_manager {
+        // Check whether the caller is the assigned mediator for this dispute.
+        let party = state
+            .dispute_repo
+            .find_party_by_user(id, user.user_id)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to find party: {:?}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new("DB_ERROR", "Failed to verify access")),
+                )
+            })?;
+
+        let is_mediator = party
+            .as_ref()
+            .is_some_and(|p| p.role == db::models::disputes::party_role::MEDIATOR);
+
+        if !is_mediator {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(ErrorResponse::new(
+                    "FORBIDDEN",
+                    "Only the assigned mediator or a manager may update mediation notes",
+                )),
+            ));
+        }
+    }
+
+    // Require an organization context from the JWT so we can scope the UPDATE.
+    let organization_id = user.tenant_id.ok_or_else(|| {
+        (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "No organization context")),
+        )
+    })?;
+
+    let result = state
+        .dispute_repo
+        .update_mediation_notes(UpdateMediationNotes {
+            dispute_id: id,
+            notes: data.notes,
+            updated_by: user.user_id,
+            organization_id,
+        })
+        .await;
+
+    match result {
+        Ok(dispute) => Ok(Json(dispute)),
+        Err(common::errors::AppError::NotFound(msg)) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("NOT_FOUND", msg.as_str())),
+        )),
+        Err(e) => {
+            tracing::error!("Failed to update mediation notes: {:?}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DB_ERROR",
+                    "Failed to update mediation notes",
+                )),
+            ))
+        }
+    }
 }
 
 /// Withdraw a dispute.

@@ -54,12 +54,12 @@ class MainActivity : ComponentActivity() {
             RealityPortalTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     RealityPortalApp(
                         ssoService = ssoService,
                         pendingDeepLink = pendingDeepLink.value,
-                        onDeepLinkHandled = { pendingDeepLink.value = null }
+                        onDeepLinkHandled = { pendingDeepLink.value = null },
                     )
                 }
             }
@@ -123,7 +123,7 @@ sealed class DeepLinkTarget {
 fun RealityPortalApp(
     ssoService: SsoService,
     pendingDeepLink: DeepLinkTarget? = null,
-    onDeepLinkHandled: () -> Unit = {}
+    onDeepLinkHandled: () -> Unit = {},
 ) {
     val navController = rememberNavController()
 

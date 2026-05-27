@@ -77,6 +77,7 @@ jobs:
           build-args: |
             VITE_API_URL=/api
             VITE_WS_URL=/ws
+            VITE_API_DEFAULT=worktree
 
       - name: Image size
         if: github.event_name != 'pull_request'

@@ -1,0 +1,257 @@
+/* AnnouncementComments — Story 6.3 */
+
+.ann-comments {
+  padding: var(--ppt-space-6);
+  border-top: 1px solid var(--ppt-border-subtle);
+}
+
+.ann-comments__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  font-size: var(--ppt-font-size-lg);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary);
+  margin: 0 0 var(--ppt-space-4);
+}
+
+.ann-comments__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 var(--ppt-space-1);
+  border-radius: var(--ppt-radius-full);
+  background: var(--ppt-bg-subtle, #f3f4f6);
+  color: var(--ppt-fg-muted);
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+}
+
+/* Compose area */
+.ann-comments__compose {
+  margin-bottom: var(--ppt-space-6);
+}
+
+.ann-comments__compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--ppt-space-2);
+}
+
+.ann-comments__char-count {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted);
+}
+
+/* Shared textarea */
+.ann-comment__textarea {
+  width: 100%;
+  padding: var(--ppt-space-3) var(--ppt-space-4);
+  border: 1px solid var(--ppt-border-default);
+  border-radius: var(--ppt-radius-md);
+  font-size: var(--ppt-font-size-sm);
+  font-family: var(--ppt-font-family);
+  color: var(--ppt-fg-primary);
+  background: var(--ppt-bg-surface);
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color var(--ppt-transition-fast);
+}
+
+.ann-comment__textarea:focus {
+  outline: none;
+  border-color: var(--ppt-color-primary);
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.ann-comment__textarea:disabled {
+  background: var(--ppt-bg-subtle, #f9fafb);
+  color: var(--ppt-fg-muted);
+  cursor: not-allowed;
+}
+
+/* Shared submit / cancel buttons */
+.ann-comment__submit-btn {
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  font-family: var(--ppt-font-family);
+  border-radius: var(--ppt-radius-md);
+  border: none;
+  background: var(--ppt-color-primary);
+  color: var(--ppt-fg-on-accent);
+  cursor: pointer;
+  transition: background var(--ppt-transition-fast);
+}
+
+.ann-comment__submit-btn:hover:not(:disabled) {
+  background: var(--ppt-color-primary-hover);
+}
+
+.ann-comment__submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ann-comment__submit-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+}
+
+.ann-comment__cancel-btn {
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+  font-size: var(--ppt-font-size-sm);
+  font-family: var(--ppt-font-family);
+  border-radius: var(--ppt-radius-md);
+  border: 1px solid var(--ppt-border-default);
+  background: var(--ppt-bg-surface);
+  color: var(--ppt-fg-secondary);
+  cursor: pointer;
+}
+
+.ann-comment__cancel-btn:hover {
+  background: var(--ppt-bg-subtle, #f3f4f6);
+}
+
+/* Loading + empty states */
+.ann-comments__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--ppt-space-8) 0;
+}
+
+.ann-comments__empty {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-muted);
+  text-align: center;
+  padding: var(--ppt-space-8) 0;
+}
+
+/* Comment list */
+.ann-comments__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Individual comment */
+.ann-comment {
+  display: flex;
+  gap: var(--ppt-space-3);
+  padding: var(--ppt-space-4) 0;
+  border-bottom: 1px solid var(--ppt-border-subtle);
+}
+
+.ann-comment:last-child {
+  border-bottom: none;
+}
+
+.ann-comment--deleted {
+  padding: var(--ppt-space-2) 0;
+}
+
+.ann-comment__deleted-text {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-muted);
+  font-style: italic;
+}
+
+.ann-comment__avatar {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--ppt-radius-full);
+  background: var(--ppt-bg-subtle, #e5e7eb);
+  color: var(--ppt-fg-secondary);
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-semibold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ann-comment__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ann-comment__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ppt-space-2);
+  margin-bottom: var(--ppt-space-1);
+}
+
+.ann-comment__author {
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-fg-primary);
+}
+
+.ann-comment__date {
+  font-size: var(--ppt-font-size-xs);
+  color: var(--ppt-fg-muted);
+}
+
+.ann-comment__content {
+  font-size: var(--ppt-font-size-sm);
+  color: var(--ppt-fg-secondary);
+  line-height: var(--ppt-line-height-relaxed, 1.625);
+  white-space: pre-wrap;
+  margin: 0 0 var(--ppt-space-2);
+}
+
+/* Inline action row */
+.ann-comment__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+}
+
+.ann-comment__action-btn {
+  font-size: var(--ppt-font-size-xs);
+  font-family: var(--ppt-font-family);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-fg-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--ppt-transition-fast);
+}
+
+.ann-comment__action-btn:hover {
+  color: var(--ppt-color-primary);
+}
+
+.ann-comment__action-btn--danger:hover {
+  color: var(--ppt-color-danger);
+}
+
+.ann-comment__action-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+  border-radius: var(--ppt-radius-sm);
+}
+
+/* Reply form */
+.ann-comment__reply-form {
+  margin-top: var(--ppt-space-3);
+}
+
+.ann-comment__reply-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  margin-top: var(--ppt-space-2);
+}
+
+/* Nested replies */
+.ann-comment__replies {
+  margin-top: var(--ppt-space-2);
+  padding-top: var(--ppt-space-2);
+  border-left: 2px solid var(--ppt-border-subtle);
+}

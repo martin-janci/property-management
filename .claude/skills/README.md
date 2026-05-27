@@ -29,6 +29,7 @@ match the plan's *Required capabilities* section and area.
 | [`ppt-bridge-mcp`](ppt-bridge-mcp/SKILL.md) | cloud-ok | infra, workflow | Use the ppt-bridge MCP from cloud routines |
 | [`ppt-tests`](ppt-tests/SKILL.md) | both | workflow | Pick the right test command per change |
 | [`ppt-pr-create`](ppt-pr-create/SKILL.md) | both | workflow | Open a PR in this project's style |
+| [`ppt-pr-followup`](ppt-pr-followup/SKILL.md) | both | workflow, ci, review | After push: monitor CI + review comments, fix in a loop until green |
 | [`ppt-rust-backend`](ppt-rust-backend/SKILL.md) | both | backend | Cargo workspace navigation |
 | [`ppt-frontend`](ppt-frontend/SKILL.md) | both | frontend | pnpm workspace + Vite/Next apps |
 | [`ppt-screens`](ppt-screens/SKILL.md) | both | frontend, workflow | screen-map docs ↔ routes sync + Chrome MCP / Playwright smoke |

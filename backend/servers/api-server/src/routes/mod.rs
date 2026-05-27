@@ -37,6 +37,8 @@ pub mod meters;
 pub mod mfa;
 pub mod neighbors;
 pub mod notification_preferences;
+pub mod push_tokens;
+// Epic 8A, Story 8A.3 — WebSocket realtime notification sync
 pub mod oauth;
 pub mod onboarding;
 pub mod organizations;
@@ -50,6 +52,7 @@ pub mod unit_residents;
 pub mod vendors;
 pub mod voting;
 pub mod work_orders;
+pub mod ws_notifications;
 
 // Epic 23: Emergency Management
 pub mod emergency;

@@ -170,20 +170,29 @@ impl ApiCallExecutor {
             return Err(format!("Blocked host: {}", host));
         }
 
-        // Check for private IP ranges
+        // Check for private IP ranges. P1-06: the IPv6 branch previously
+        // accepted unique-local (fc00::/7), link-local (fe80::/10), and
+        // IPv4-mapped IPv6 (::ffff:10.0.0.1) — all of which let
+        // cloud-metadata / internal-network exfiltration through. Mirror
+        // the IPv4 checks for IPv6 too, and unwrap IPv4-mapped addresses
+        // before checking.
         if let Ok(ip) = host.parse::<std::net::IpAddr>() {
             let is_private = match ip {
-                std::net::IpAddr::V4(ipv4) => {
-                    ipv4.is_private()
-                        || ipv4.is_loopback()
-                        || ipv4.is_link_local()
-                        || ipv4.is_broadcast()
-                        || ipv4.is_documentation()
-                        || ipv4.is_unspecified()
-                        // 169.254.x.x link-local
-                        || (ipv4.octets()[0] == 169 && ipv4.octets()[1] == 254)
+                std::net::IpAddr::V4(ipv4) => is_blocked_v4(ipv4),
+                std::net::IpAddr::V6(ipv6) => {
+                    if let Some(v4) = ipv6.to_ipv4_mapped() {
+                        is_blocked_v4(v4)
+                    } else {
+                        // unique-local fc00::/7
+                        let segs = ipv6.segments();
+                        let is_ula = (segs[0] & 0xfe00) == 0xfc00;
+                        // link-local fe80::/10
+                        let is_ll = (segs[0] & 0xffc0) == 0xfe80;
+                        // multicast
+                        let is_mc = (segs[0] & 0xff00) == 0xff00;
+                        ipv6.is_loopback() || ipv6.is_unspecified() || is_ula || is_ll || is_mc
+                    }
                 }
-                std::net::IpAddr::V6(ipv6) => ipv6.is_loopback() || ipv6.is_unspecified(),
             };
 
             if is_private {
@@ -198,6 +207,21 @@ impl ApiCallExecutor {
 
         Ok(())
     }
+}
+
+fn is_blocked_v4(ipv4: std::net::Ipv4Addr) -> bool {
+    ipv4.is_private()
+        || ipv4.is_loopback()
+        || ipv4.is_link_local()
+        || ipv4.is_broadcast()
+        || ipv4.is_documentation()
+        || ipv4.is_unspecified()
+        // 169.254.x.x link-local (incl. cloud-metadata 169.254.169.254)
+        || (ipv4.octets()[0] == 169 && ipv4.octets()[1] == 254)
+        // 0.0.0.0/8
+        || ipv4.octets()[0] == 0
+        // CGNAT 100.64.0.0/10
+        || (ipv4.octets()[0] == 100 && (ipv4.octets()[1] & 0xc0) == 0x40)
 }
 
 #[async_trait]

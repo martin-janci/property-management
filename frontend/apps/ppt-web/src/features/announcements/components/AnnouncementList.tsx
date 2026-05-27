@@ -5,6 +5,7 @@ import type {
 } from '@ppt/api-client';
 import { useState } from 'react';
 import { AnnouncementCard } from './AnnouncementCard';
+import { PinnedAnnouncementsBand } from './PinnedAnnouncementsBand';
 
 interface AnnouncementListProps {
   announcements: AnnouncementSummary[];
@@ -12,6 +13,8 @@ interface AnnouncementListProps {
   page: number;
   pageSize: number;
   isLoading?: boolean;
+  /** Pinned published announcements shown in the sticky band above the list (Story 6.4) */
+  pinnedAnnouncements?: AnnouncementSummary[];
   onPageChange: (page: number) => void;
   onStatusFilter: (status?: AnnouncementStatus) => void;
   onTargetTypeFilter: (targetType?: AnnouncementTargetType) => void;
@@ -30,6 +33,7 @@ export function AnnouncementList({
   page,
   pageSize,
   isLoading,
+  pinnedAnnouncements = [],
   onPageChange,
   onStatusFilter,
   onTargetTypeFilter,
@@ -58,6 +62,9 @@ export function AnnouncementList({
 
   return (
     <div>
+      {/* Pinned announcements sticky band (Story 6.4) */}
+      <PinnedAnnouncementsBand announcements={pinnedAnnouncements} onView={onView} />
+
       {/* Header with filters */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Announcements</h1>

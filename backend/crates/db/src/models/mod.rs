@@ -14,6 +14,7 @@ pub mod facility;
 pub mod fault;
 pub mod financial;
 
+pub mod device_push_token;
 pub mod granular_notification;
 pub mod membership;
 pub mod messaging;
@@ -128,6 +129,9 @@ pub use delegation::{
     delegation_scope, delegation_status, AcceptDelegation, CreateDelegation, DeclineDelegation,
     Delegation, DelegationAuditLog, DelegationSummary, DelegationWithUsers, RevokeDelegation,
     UpdateDelegation,
+};
+pub use device_push_token::{
+    DevicePushToken, PushPlatform, PushTokenResponse, RegisterPushTokenRequest,
 };
 pub use document::{
     access_scope, document_category, ocr_status, share_type, ClassificationFeedback,
@@ -534,6 +538,14 @@ pub use reports::{
     UtilityTypeConsumption, VoteParticipationDetail, VotingParticipationSummary, YearComparison,
 };
 
+// Epic 81: Report Schedule Management & Execution History
+pub mod report_schedule;
+
+pub use report_schedule::{
+    report_execution_status, report_schedule_status, ExecutionDownloadUrl, ExecutionHistoryQuery,
+    ExecutionHistoryResponse, ReportExecution, ReportSchedule,
+};
+
 // Epic 58: Package & Visitor Management
 pub use package_visitor::{
     package_carrier, package_status, visitor_purpose, visitor_status, AccessCodeVerification,
@@ -791,16 +803,17 @@ pub mod feature_package;
 pub mod feature_analytics;
 
 pub use disputes::{
-    action_status, activity_type, dispute_category, dispute_priority, dispute_status,
-    escalation_severity, party_role, resolution_status, session_status, session_type, ActionItem,
-    AddEvidence, CategoryCount as DisputeCategoryCount, CompleteActionItem, CreateActionItem,
-    CreateEscalation, Dispute, DisputeActivity, DisputeEvidence, DisputeParty,
-    DisputePartyWithUser, DisputeQuery, DisputeResolution, DisputeStatistics, DisputeSummary,
-    DisputeWithDetails, Escalation, FileDispute, MediationCase, MediationSession,
-    MediationSessionWithAttendance, PartyActionsDashboard, PartySubmission,
+    action_status, activity_type, dispute_category, dispute_priority, dispute_state_machine,
+    dispute_status, escalation_severity, party_role, resolution_status, session_status,
+    session_type, ActionItem, AddEvidence, CategoryCount as DisputeCategoryCount,
+    CompleteActionItem, CreateActionItem, CreateEscalation, Dispute, DisputeActivity,
+    DisputeEvidence, DisputeParty, DisputePartyWithUser, DisputeQuery, DisputeResolution,
+    DisputeStatistics, DisputeSummary, DisputeWithDetails, Escalation, FileDispute, MediationCase,
+    MediationSession, MediationSessionWithAttendance, PartyActionsDashboard, PartySubmission,
     PriorityCount as DisputePriorityCount, ProposeResolution, RecordSessionNotes, ResolutionTerm,
-    ResolutionVote, ResolutionWithVotes, ResolveEscalation, ScheduleSession, SessionAttendance,
-    StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus, VoteOnResolution,
+    ResolutionVote, ResolutionWithVotes, ResolveDispute, ResolveEscalation, ScheduleSession,
+    SessionAttendance, StatusCount as DisputeStatusCount, SubmitResponse, UpdateDisputeStatus,
+    UpdateMediationNotes, VoteOnResolution,
 };
 
 // Epic 108: Feature Packages & Bundles

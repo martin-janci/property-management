@@ -1,0 +1,116 @@
+name: Land research routine output on dev
+
+# Why this exists
+# ---------------
+# The ppt-research routine runs as a claude.ai scheduled agent (cloud CCR).
+# Cloud CCR sessions CANNOT push directly to a shared branch: a `git push`
+# from inside the sandbox always lands on a per-run session branch named
+# `claude/<codename>-<suffix>`, never on dev. (Verified across ppt-research and
+# plex-sync — see ~/.claude memory `reference-claude-ai-routines`.)
+#
+# This workflow lands that output on dev automatically. It does NOT require a
+# fast-forward: this repo bumps the version on every push to dev, so dev almost
+# always advances during the ~20-min run. Since research commits touch only
+# `.research/` and the version-bump / feature commits never do, we can simply
+# REPLAY the research commits onto the current dev tip with zero conflicts.
+#
+# Safety guards (any failure => no-op, never a force-push):
+#   1. every new commit (merge-base..pushed) touches nothing outside .research/
+#   2. every new commit subject starts with `research:`
+# Unrelated `claude/*` branches (manual experiments, security-audit work) fail
+# guard 1 or 2 and are ignored. A cherry-pick conflict (only possible if dev's
+# own .research/ diverged, e.g. two runs racing) is treated as "skip, let the
+# next run reconcile" rather than forced.
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+concurrency:
+  # Serialize landings so two runs don't both try to move dev at once.
+  group: research-land-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  land-on-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # GITHUB_TOKEN can push to dev (unprotected — ruleset 11341260 covers
+          # only main + release/*). Its push does NOT re-trigger push workflows,
+          # so there is no self-loop. fetch-depth: 0 for full history.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Replay .research/ commits onto dev
+        env:
+          PUSHED_SHA: ${{ github.sha }}
+          PUSHED_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin dev
+          BASE="$(git merge-base origin/dev "$PUSHED_SHA")"
+
+          if [ "$BASE" = "$PUSHED_SHA" ]; then
+            echo "::notice::$PUSHED_REF has no commits beyond dev's history. Nothing to land."
+            exit 0
+          fi
+
+          # Guard 1 — scope: only .research/ may change.
+          NON_RESEARCH="$(git diff --name-only "$BASE" "$PUSHED_SHA" | grep -v '^\.research/' || true)"
+          if [ -n "$NON_RESEARCH" ]; then
+            echo "::notice::$PUSHED_REF changes paths outside .research/ — not a research-routine push. Skipping."
+            echo "$NON_RESEARCH" | sed 's/^/  outside-scope: /'
+            exit 0
+          fi
+
+          # Guard 2 — subjects: every new commit must be a research: commit.
+          BAD_SUBJECTS="$(git log --format=%s "$BASE..$PUSHED_SHA" | grep -vE '^research:' || true)"
+          if [ -n "$BAD_SUBJECTS" ]; then
+            echo "::notice::$PUSHED_REF has a non-research commit subject — skipping to be safe."
+            echo "$BAD_SUBJECTS" | sed 's/^/  non-research-subject: /'
+            exit 0
+          fi
+
+          echo "Candidate research commit(s) on $PUSHED_REF:"
+          git log --format='  %h %s' "$BASE..$PUSHED_SHA"
+
+          # Replay onto the live dev tip, retrying if another push moves dev
+          # between our fetch and our push (version bumps, feature merges).
+          for attempt in 1 2 3 4 5; do
+            git fetch origin dev
+            git checkout -B __dev_landing origin/dev
+            if ! git cherry-pick --empty=drop "$BASE..$PUSHED_SHA"; then
+              git cherry-pick --abort 2>/dev/null || true
+              echo "::warning::cherry-pick hit a conflict (dev's .research/ diverged). Skipping; the next run will reconcile."
+              exit 0
+            fi
+            if [ "$(git rev-parse __dev_landing)" = "$(git rev-parse origin/dev)" ]; then
+              echo "::notice::Replay produced no net change (idempotent rerun). Nothing to push."
+              exit 0
+            fi
+            if git push origin __dev_landing:refs/heads/dev; then
+              echo "::notice::Landed research output onto dev (attempt $attempt)."
+              # The session branch's content is now on dev; delete it so it
+              # doesn't linger as an "unmerged" branch. Best-effort, non-fatal.
+              SRC_BRANCH="${PUSHED_REF#refs/heads/}"
+              if git push origin --delete "$SRC_BRANCH"; then
+                echo "::notice::Deleted replayed session branch $SRC_BRANCH."
+              else
+                echo "::warning::Could not delete $SRC_BRANCH (non-fatal)."
+              fi
+              exit 0
+            fi
+            echo "dev moved under us — retrying ($attempt/5)…"
+          done
+
+          echo "::error::Could not land on dev after 5 attempts (dev is unusually busy). The commit remains on $PUSHED_REF; a later run or manual fast-forward will pick it up."
+          exit 1

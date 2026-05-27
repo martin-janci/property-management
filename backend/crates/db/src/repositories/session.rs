@@ -62,6 +62,29 @@ impl SessionRepository {
         Ok(token)
     }
 
+    /// Find refresh token by hash *regardless of revocation status*.
+    /// Used by the refresh handler to detect replay of an already-revoked
+    /// token (P1-01 / RFC 9700 family invalidation). `find_by_token_hash`
+    /// hides revoked rows, which prevented the caller from distinguishing
+    /// "never existed" from "was revoked"; the latter case should trigger
+    /// a security response, not just a 401.
+    pub async fn find_by_token_hash_any_status(
+        &self,
+        token_hash: &str,
+    ) -> Result<Option<RefreshToken>, SqlxError> {
+        let token = sqlx::query_as::<_, RefreshToken>(
+            r#"
+            SELECT * FROM refresh_tokens
+            WHERE token_hash = $1
+            "#,
+        )
+        .bind(token_hash)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(token)
+    }
+
     /// Find all active sessions for a user.
     pub async fn find_user_sessions(&self, user_id: Uuid) -> Result<Vec<RefreshToken>, SqlxError> {
         let tokens = sqlx::query_as::<_, RefreshToken>(

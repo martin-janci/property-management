@@ -7,18 +7,13 @@
  * @see Story 79.2 - Authentication Flow Implementation
  */
 
+import { getAndClearReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AuthError, useAuth } from '../contexts/AuthContext';
 import './LoginPage.css';
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const RETURN_URL_KEY = 'ppt_return_url';
 
 // ============================================================================
 // Types
@@ -115,20 +110,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  /**
-   * Gets the stored return URL and clears it from storage.
-   */
-  const getAndClearReturnUrl = useCallback((): string | null => {
-    try {
-      const returnUrl = sessionStorage.getItem(RETURN_URL_KEY);
-      if (returnUrl) {
-        sessionStorage.removeItem(RETURN_URL_KEY);
-      }
-      return returnUrl;
-    } catch {
-      return null;
-    }
-  }, []);
+  // getAndClearReturnUrl is imported from @ppt/shared (stable reference, no need to wrap in useCallback)
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -136,7 +118,8 @@ export function LoginPage() {
       const returnUrl = getAndClearReturnUrl();
       navigate(returnUrl || '/', { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate, getAndClearReturnUrl]);
+    // getAndClearReturnUrl is a module-level stable import — not listed as dep
+  }, [isAuthenticated, authLoading, navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Handles email input change.
@@ -208,7 +191,8 @@ export function LoginPage() {
         setIsSubmitting(false);
       }
     },
-    [email, password, login, navigate, getAndClearReturnUrl, t]
+    // getAndClearReturnUrl is a stable module-level import
+    [email, password, login, navigate, t] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Show loading state while checking auth

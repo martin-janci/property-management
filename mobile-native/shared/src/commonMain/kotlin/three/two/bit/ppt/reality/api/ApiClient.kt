@@ -27,7 +27,7 @@ import three.two.bit.ppt.reality.listing.ListingSearchResponse
 class ApiClient(
     private val baseUrl: String = ApiConfig.requireBaseUrl(),
     private val accessToken: String? = null,
-    private val tenantId: String? = null
+    private val tenantId: String? = null,
 ) {
     private val client = HttpClientProvider.client
 

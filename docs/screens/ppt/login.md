@@ -19,6 +19,8 @@ endpoints:
 relatedScreens:
   - id: ppt/home
     rel: child
+  - id: ppt/auth-callback
+    rel: child
 sharedComponents:
   - text-input
   - validation-patterns
@@ -136,5 +138,6 @@ UC-14 single sign-in entry point. Email + password is primary; magic-link, TOTP,
 
 <!-- newest entries on top -->
 
+- 2026-05-24 — agent: gap-79-2 login-flow-wiring — removed local RETURN_URL_KEY constant and inline getAndClearReturnUrl; now imports getAndClearReturnUrl from @ppt/shared for consistent return-URL handling across auth flows
 - 2026-05-09 — agent: design analyzed (pages/ppt-login.html — 4 rows: loaded+magic / TOTP+SMS / loading+empty / 3 errors); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (12 sections covering 6 distinct UI states), all states with full variants, design-specific notes; declared 6 sharedComponents; added 1 relatedScreen
 - 2026-05-08 — init: created from scan (source: sitemap)

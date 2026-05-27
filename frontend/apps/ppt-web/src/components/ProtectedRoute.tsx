@@ -8,6 +8,7 @@
  * @see Story 79.2 - Authentication Flow Implementation
  */
 
+import { setReturnUrl } from '@ppt/shared';
 import type React from 'react';
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -18,7 +19,6 @@ import './ProtectedRoute.css';
 // Constants
 // ============================================================================
 
-const RETURN_URL_KEY = 'ppt_return_url';
 const LOGIN_PATH = '/login';
 
 // ============================================================================
@@ -39,17 +39,13 @@ export interface ProtectedRouteProps {
 // ============================================================================
 
 /**
- * Stores the current location as the return URL in sessionStorage.
+ * Stores the current location as the return URL via @ppt/shared setReturnUrl.
  */
 function storeReturnUrl(pathname: string, search: string): void {
-  try {
-    const returnUrl = `${pathname}${search}`;
-    // Don't store the login page as return URL
-    if (returnUrl !== LOGIN_PATH && !returnUrl.startsWith(`${LOGIN_PATH}?`)) {
-      sessionStorage.setItem(RETURN_URL_KEY, returnUrl);
-    }
-  } catch {
-    // Session storage unavailable
+  const returnUrl = `${pathname}${search}`;
+  // Don't store the login page as return URL
+  if (returnUrl !== LOGIN_PATH && !returnUrl.startsWith(`${LOGIN_PATH}?`)) {
+    setReturnUrl(returnUrl);
   }
 }
 
@@ -117,12 +113,13 @@ export function ProtectedRoute({
     return <Navigate to={redirectTo} replace />;
   }
 
-  // Check role requirements if specified
-  if (requiredRoles && requiredRoles.length > 0 && user?.role) {
-    const hasRequiredRole = requiredRoles.includes(user.role);
+  // Check role requirements if specified.
+  // Deny-on-missing-role: if requiredRoles is set we MUST have a role to compare
+  // against. Skipping when user.role is absent would be fail-open.
+  if (requiredRoles && requiredRoles.length > 0) {
+    const hasRequiredRole = user?.role != null && requiredRoles.includes(user.role);
     if (!hasRequiredRole) {
-      // User is authenticated but lacks required role
-      // Redirect to unauthorized page or show error
+      // User is authenticated but lacks required role (or role not yet populated).
       return (
         <div className="protected-route-unauthorized">
           <h1>Access Denied</h1>

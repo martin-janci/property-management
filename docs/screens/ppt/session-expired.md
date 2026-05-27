@@ -36,4 +36,8 @@ Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, e
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:544`.
 
 ## Agent Log
+
+<!-- newest entries on top -->
+
+- 2026-05-24 — agent: gap-79-2 login-flow-wiring — removed local RETURN_URL_KEY constant; now imports setReturnUrl from @ppt/shared to align return-URL storage with LoginPage and prevent key drift
 - 2026-05-18 — agent: created stub for unmapped route.

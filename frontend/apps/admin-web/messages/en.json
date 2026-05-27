@@ -84,6 +84,7 @@
         "buildingDisabled": "Disable this building (kill switch)",
         "newListingsSearch": "New listings search (beta)"
       },
+      "helpTooltip": "Feature flags take effect immediately for all users in the affected tenant. Use the kill switch with caution.",
       "title": "Feature Flags",
       "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
     },
@@ -111,6 +112,46 @@
       "verify": "Verify",
       "verifying": "Verifying…"
     },
+    "oauthClients": {
+      "actions": {
+        "edit": "Edit",
+        "regenerateSecret": "Regenerate secret",
+        "register": "Register client",
+        "registerFirst": "Register the first client",
+        "revoke": "Revoke"
+      },
+      "description": "Manage third-party OAuth 2.0 clients that can obtain tokens on behalf of your users. Capability required: oauth_client_write.",
+      "empty": "No OAuth clients registered yet.",
+      "loadError": "Failed to load OAuth clients: {{message}}",
+      "navLabel": "OAuth Clients",
+      "revokeDialog": {
+        "body": "This will permanently deactivate client {{name}}. Active tokens issued to this client will continue to work until they expire, but no new tokens can be obtained.",
+        "confirmLabel": "Type the client name to confirm:",
+        "title": "Revoke OAuth client"
+      },
+      "title": "OAuth Clients",
+      "toast": {
+        "regenerateFailedTitle": "Regeneration failed",
+        "registeredMessage": "Save the client secret now — it won't be shown again.",
+        "registeredTitle": "Client registered",
+        "revokeFailedTitle": "Revoke failed",
+        "revokedMessage": "{{name}} has been revoked.",
+        "revokedTitle": "Client revoked",
+        "secretRegeneratedMessage": "Save the new secret now — it won't be shown again.",
+        "secretRegeneratedTitle": "Secret regenerated"
+      }
+    },
+    "health": {
+      "activeOnly": "Active only",
+      "allAlerts": "All alerts",
+      "alertsTitle": "Alerts",
+      "loadError": "Failed to load health dashboard. Check your connection and try again.",
+      "metricsTitle": "Current Metrics",
+      "navLabel": "Health",
+      "noMetrics": "No metrics recorded yet.",
+      "thresholdsTitle": "Metric Thresholds",
+      "title": "Platform Health"
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Maintenance mode",
@@ -118,7 +159,15 @@
         "supportEmail": "Support email",
         "supportEmailPlaceholder": "support@example.com"
       },
+      "helpTooltip": "Maintenance mode returns 503 to all non-admin requests. Enabling it requires an audit reason.",
       "title": "Platform Settings"
+    },
+    "help": {
+      "openHelp": "Open contextual help",
+      "panelLabel": "Contextual help",
+      "close": "Close help",
+      "openDocs": "Open full documentation",
+      "tooltip": "Help"
     },
     "users": {
       "actions": {

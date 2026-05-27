@@ -178,7 +178,6 @@ export function AiSuggestionBadge({
                 className={`h-full ${colors.bar} transition-all duration-500`}
                 style={{ width: `${confidencePercent}%` }}
                 role="progressbar"
-                tabIndex={0}
                 aria-valuenow={confidencePercent}
                 aria-valuemin={0}
                 aria-valuemax={100}

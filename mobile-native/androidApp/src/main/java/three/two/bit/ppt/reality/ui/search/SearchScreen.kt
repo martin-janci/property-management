@@ -146,10 +146,7 @@ fun SearchScreen(
                 (if (minPrice.isNotBlank() || maxPrice.isNotBlank()) 1 else 0)
         }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 ListingsTopBar(
@@ -267,12 +264,12 @@ fun SearchScreen(
             // FAB — Save search
             if (searchResults.isNotEmpty()) {
                 ExtendedFloatingActionButton(
-                    onClick = { /* save search — opens KmpSaveSearchModal (deferred) */},
+                    onClick = { /* save search — opens KmpSaveSearchModal (deferred) */ },
                     modifier =
                         Modifier.align(Alignment.BottomEnd)
                             .padding(
                                 end = 16.dp,
-                                bottom = if (viewMode == ViewMode.MAP) 100.dp else 96.dp
+                                bottom = if (viewMode == ViewMode.MAP) 100.dp else 96.dp,
                             ),
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -286,7 +283,7 @@ fun SearchScreen(
 
 private enum class ViewMode {
     LIST,
-    MAP
+    MAP,
 }
 
 // ─── Top bar ─────────────────────────────────────────────────────────────────
@@ -356,12 +353,7 @@ private fun ListingsTopBar(
 }
 
 @Composable
-private fun SegmentChip(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun SegmentChip(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(999.dp),
@@ -416,7 +408,7 @@ private fun SearchInputRow(
                 IconButton(onClick = onClear) {
                     Icon(
                         Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.cd_clear)
+                        contentDescription = stringResource(R.string.cd_clear),
                     )
                 }
             }
@@ -430,11 +422,7 @@ private fun SearchInputRow(
 // ─── Rooms chip strip ────────────────────────────────────────────────────────
 
 @Composable
-private fun RoomsChipStrip(
-    selected: Int?,
-    onSelect: (Int?) -> Unit,
-    totalResults: Int,
-) {
+private fun RoomsChipStrip(selected: Int?, onSelect: (Int?) -> Unit, totalResults: Int) {
     val chips =
         listOf<Pair<Int?, String>>(
             null to stringResource(R.string.filter_all),
@@ -501,7 +489,7 @@ private fun AdvancedFilterPanel(
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(16.dp),
+                .padding(16.dp)
     ) {
         // Type
         Text(
@@ -584,7 +572,7 @@ private fun AdvancedFilterPanel(
             IconButton(onClick = onApplyPrice) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = stringResource(R.string.filter_apply)
+                    contentDescription = stringResource(R.string.filter_apply),
                 )
             }
         }
@@ -624,16 +612,10 @@ private fun AdvancedFilterPanel(
 private fun ErrorBanner(error: String) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-            ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
         shape = RoundedCornerShape(12.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Default.Error,
                 contentDescription = null,
@@ -715,9 +697,7 @@ fun ListingCard(
     ) {
         Column {
             // Hero — 16:9 photo with badges and heart pill
-            Box(
-                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
                 AsyncImage(
                     model =
                         ImageRequest.Builder(LocalContext.current)
@@ -822,18 +802,9 @@ fun ListingCard(
 
             // Body — price + location row, title, meta
             Column(
-                modifier =
-                    Modifier.padding(
-                        start = 14.dp,
-                        end = 14.dp,
-                        top = 12.dp,
-                        bottom = 14.dp,
-                    ),
+                modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 14.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = FormatUtils.formatPrice(listing.price, listing.currency),
                         style = MaterialTheme.typography.titleLarge,
@@ -878,10 +849,7 @@ fun ListingCard(
 
 @Composable
 private fun UppercaseBadge(text: String, bg: Color, ink: Color) {
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = bg,
-    ) {
+    Surface(shape = RoundedCornerShape(6.dp), color = bg) {
         Text(
             text = text.uppercase(),
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp),

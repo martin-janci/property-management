@@ -146,7 +146,42 @@
     "categories": "Kategorien",
     "download": "Herunterladen",
     "view": "Anzeigen",
-    "noDocuments": "Keine Dokumente verfugbar"
+    "noDocuments": "Keine Dokumente verfugbar",
+    "share": "Teilen",
+    "searchPlaceholder": "Search documents…",
+    "filter": {
+      "all": "All",
+      "audience": "Audience"
+    },
+    "permissions": {
+      "title": "Document Permissions",
+      "audience": "Audience",
+      "status": "Status",
+      "metadata": "Details",
+      "category": "Category",
+      "created": "Created",
+      "updated": "Last updated",
+      "loadError": "Could not load document details",
+      "draftNote": "This document is a draft and is only visible to the author and managers.",
+      "archivedNote": "This document has been archived and is no longer actively shared.",
+      "rlsTitle": "Row-Level Security",
+      "rlsBody": "Access to this document is enforced by the server. The audience shown above reflects who can see it."
+    },
+    "preview": {
+      "fetching": "Vorschau wird vorbereitet…",
+      "urlReady": "Dokument bereit",
+      "expiresAt": "Link lauft ab um",
+      "updated": "Aktualisiert",
+      "openAction": "Dokument offnen",
+      "downloadAction": "Dokument herunterladen",
+      "fallbackNotice": "Vorschau ist fur diesen Dateityp nicht verfugbar. Sie konnen es herunterladen.",
+      "errorTitle": "Dokument konnte nicht geladen werden",
+      "cannotOpenTitle": "Kann nicht geoffnet werden",
+      "cannotOpenMessage": "Keine Anwendung auf diesem Gerat kann diesen Dateityp offnen.",
+      "openFailed": "Dokument konnte nicht geoffnet werden.",
+      "sharingUnavailableTitle": "Teilen nicht verfugbar",
+      "shareFailed": "Dokument konnte nicht geteilt werden."
+    }
   },
   "settings": {
     "title": "Einstellungen",
@@ -232,7 +267,21 @@
     "empty": "Keine Ankundigungen",
     "emptyMessage": "Schauen Sie spater fur Updates vorbei",
     "pinned": "Angepinnt",
-    "by": "Von {author}"
+    "by": "Von {author}",
+    "detail": {
+      "loadError": "Ankundigung konnte nicht geladen werden",
+      "backToList": "← Ankundigungen",
+      "back": "← Zuruck",
+      "attachments": "Anhange",
+      "reads": "gelesen",
+      "acknowledged": "bestatigt",
+      "comments": "Kommentare",
+      "ackRequired": "Diese Ankundigung erfordert Ihre Bestatigung.",
+      "ackButton": "Bestatigen",
+      "ackDone": "Sie haben diese Ankundigung bestatigt.",
+      "ackError": "Bestatigung fehlgeschlagen: {{message}}",
+      "publishedAt": "Veroffentlicht: {{date}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget hinzugefugt",
@@ -263,5 +312,42 @@
     "willSyncWhenOnline": "Ihr Stand wird gesendet wenn Sie wieder online sind",
     "offlineMode": "Sie sind offline. Stande werden lokal gespeichert.",
     "pendingReadings": "Ausstehende Stande"
+  },
+  "documentShare": {
+    "title": "Dokument teilen",
+    "newShare": "Neue Freigabe erstellen",
+    "shareType": "Freigabetyp",
+    "typeUser": "Benutzer",
+    "typeRole": "Rolle",
+    "typeBuilding": "Gebaude",
+    "typeLink": "Offentlicher Link",
+    "userId": "Benutzer-ID",
+    "userIdPlaceholder": "UUID des Benutzers einfugen...",
+    "roleName": "Rollenname",
+    "rolePlaceholder": "z.B. manager",
+    "passwordProtect": "Mit Passwort schutzen",
+    "passwordPlaceholder": "Passwort festlegen...",
+    "setExpiry": "Ablaufdatum festlegen",
+    "days": "Tage",
+    "createShare": "Freigabe erstellen",
+    "shareCreated": "Freigabe erstellt",
+    "shareCreatedMessage": "Die Freigabe wurde erfolgreich erstellt.",
+    "linkReady": "Offentlicher Link ist bereit. Kopieren Sie ihn zum Teilen.",
+    "copyLink": "Link kopieren",
+    "copied": "Kopiert",
+    "linkCopied": "Freigabe-Link in die Zwischenablage kopiert.",
+    "activeShares": "Aktive Freigaben",
+    "noShares": "Keine aktiven Freigaben",
+    "role": "Rolle",
+    "expires": "Ablauft am",
+    "revoke": "Widerrufen",
+    "revokeTitle": "Freigabe widerrufen",
+    "revokeConfirm": "Sind Sie sicher, dass Sie diese Freigabe widerrufen mochten? Der Empfanger verliert sofort den Zugriff.",
+    "revokeAction": "Widerrufen",
+    "errorTitle": "Fehler",
+    "errorUserIdRequired": "Bitte geben Sie eine Benutzer-ID ein.",
+    "errorRoleRequired": "Bitte geben Sie einen Rollennamen ein.",
+    "errorPasswordTooShort": "Das Passwort muss mindestens 4 Zeichen lang sein.",
+    "errorInvalidDays": "Bitte geben Sie eine gultige Anzahl von Tagen ein."
   }
 }

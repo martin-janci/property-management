@@ -48,14 +48,84 @@ pub enum AuditAction {
     ResourceUpdated,
     ResourceDeleted,
     ResourceAccessed,
-    // OAuth actions (Epic 10A)
+    // OAuth actions (Epic 10A) — explicit rename: `OAuth` snake_cases to
+    // `o_auth`, but the Postgres enum values were defined as `oauth_*`.
+    #[sqlx(rename = "oauth_authorize")]
     OAuthAuthorize,
+    #[sqlx(rename = "oauth_revoke")]
     OAuthRevoke,
+    #[sqlx(rename = "oauth_client_create")]
     OAuthClientCreate,
+    #[sqlx(rename = "oauth_client_revoke")]
     OAuthClientRevoke,
+    #[sqlx(rename = "oauth_client_secret_regenerate")]
     OAuthClientSecretRegenerate,
     // Phase 6 C17: principal_kind enforcement at token issuance
+    #[sqlx(rename = "oauth_token_denied_principal_kind")]
     OAuthTokenDeniedPrincipalKind,
+    // Dev-team review P1-01: RFC 9700 refresh-token replay detection.
+    // Emitted when a refresh token whose hash matches an already-revoked
+    // row is replayed; on emit, every active refresh token for the
+    // affected user is revoked.
+    RefreshTokenReplayDetected,
+}
+
+impl AuditAction {
+    /// Stable canonical name used in the audit-chain integrity hash.
+    ///
+    /// `format!("{:?}", action)` is **not** a stable serialization — it
+    /// changes when variants are renamed, reordered, or when the Rust
+    /// toolchain bumps its Debug formatting rules — which would silently
+    /// break the integrity chain for every row written after the change
+    /// (issue #439 P1-04). This method exhausts the enum so a future
+    /// variant addition is a compile error rather than a silent drift.
+    ///
+    /// The returned strings deliberately match the historical
+    /// `format!("{:?}", action)` output (PascalCase) so existing rows
+    /// keep their integrity hashes — this fix decouples the hash from
+    /// the `Debug` derive WITHOUT breaking the existing chain.
+    pub fn canonical_name(&self) -> &'static str {
+        match self {
+            Self::Login => "Login",
+            Self::Logout => "Logout",
+            Self::LoginFailed => "LoginFailed",
+            Self::PasswordChanged => "PasswordChanged",
+            Self::PasswordResetRequested => "PasswordResetRequested",
+            Self::PasswordResetCompleted => "PasswordResetCompleted",
+            Self::MfaEnabled => "MfaEnabled",
+            Self::MfaDisabled => "MfaDisabled",
+            Self::MfaBackupCodeUsed => "MfaBackupCodeUsed",
+            Self::MfaBackupCodesRegenerated => "MfaBackupCodesRegenerated",
+            Self::AccountCreated => "AccountCreated",
+            Self::AccountUpdated => "AccountUpdated",
+            Self::AccountSuspended => "AccountSuspended",
+            Self::AccountReactivated => "AccountReactivated",
+            Self::AccountDeleted => "AccountDeleted",
+            Self::DataExportRequested => "DataExportRequested",
+            Self::DataExportDownloaded => "DataExportDownloaded",
+            Self::DataDeletionRequested => "DataDeletionRequested",
+            Self::DataDeletionCancelled => "DataDeletionCancelled",
+            Self::DataDeletionCompleted => "DataDeletionCompleted",
+            Self::PrivacySettingsUpdated => "PrivacySettingsUpdated",
+            Self::RoleAssigned => "RoleAssigned",
+            Self::RoleRemoved => "RoleRemoved",
+            Self::PermissionsChanged => "PermissionsChanged",
+            Self::OrgMemberAdded => "OrgMemberAdded",
+            Self::OrgMemberRemoved => "OrgMemberRemoved",
+            Self::OrgSettingsChanged => "OrgSettingsChanged",
+            Self::ResourceCreated => "ResourceCreated",
+            Self::ResourceUpdated => "ResourceUpdated",
+            Self::ResourceDeleted => "ResourceDeleted",
+            Self::ResourceAccessed => "ResourceAccessed",
+            Self::OAuthAuthorize => "OAuthAuthorize",
+            Self::OAuthRevoke => "OAuthRevoke",
+            Self::OAuthClientCreate => "OAuthClientCreate",
+            Self::OAuthClientRevoke => "OAuthClientRevoke",
+            Self::OAuthClientSecretRegenerate => "OAuthClientSecretRegenerate",
+            Self::OAuthTokenDeniedPrincipalKind => "OAuthTokenDeniedPrincipalKind",
+            Self::RefreshTokenReplayDetected => "RefreshTokenReplayDetected",
+        }
+    }
 }
 
 /// An audit log entry.

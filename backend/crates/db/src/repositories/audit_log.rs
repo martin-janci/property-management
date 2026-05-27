@@ -19,23 +19,74 @@ impl AuditLogRepository {
     }
 
     /// Create a new audit log entry.
-    /// Automatically computes integrity hash and links to previous entry.
+    ///
+    /// P1-04 (dev-team review): integrity_hash is precomputed client-side
+    /// and supplied to a single INSERT inside a serializable transaction
+    /// — the old two-statement INSERT+UPDATE pattern meant any actor
+    /// with `UPDATE audit_logs` on the application role could rewrite the
+    /// hash after insertion, undermining the immutability claim. The
+    /// companion migration revokes UPDATE on `integrity_hash` from the
+    /// app role; the application path only writes the hash exactly once,
+    /// at INSERT time.
     pub async fn create(&self, data: CreateAuditLog) -> Result<AuditLog, SqlxError> {
-        // Get the previous entry hash for chain linking
-        let previous_hash = self.get_latest_hash().await.ok().flatten();
+        // Pre-generate the id + timestamp so we can hash before INSERT.
+        let id = Uuid::new_v4();
+        let created_at = chrono::Utc::now();
 
-        // Create the entry first to get its ID and timestamp
+        // SERIALIZABLE so the (read latest hash → write new row) sequence
+        // is consistent: two concurrent writers can't both read the same
+        // previous_hash and break the chain.
+        let mut tx = self.pool.begin().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+            .execute(&mut *tx)
+            .await?;
+
+        let previous_hash: Option<String> = sqlx::query_scalar(
+            r#"
+            SELECT integrity_hash FROM audit_logs
+            ORDER BY created_at DESC
+            LIMIT 1
+            "#,
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .flatten();
+
+        // Build the to-be-stored row in memory so we can hash its
+        // canonical representation before persistence. The hash domain
+        // matches `compute_integrity_hash` so `verify_integrity`
+        // recomputes the same digest.
+        let mut hasher = Sha256::new();
+        hasher.update(id.to_string().as_bytes());
+        if let Some(user_id) = data.user_id {
+            hasher.update(user_id.to_string().as_bytes());
+        }
+        // Issue #439 P1-04: stable canonical name instead of Debug format.
+        hasher.update(data.action.canonical_name().as_bytes());
+        if let Some(ref resource_type) = data.resource_type {
+            hasher.update(resource_type.as_bytes());
+        }
+        if let Some(resource_id) = data.resource_id {
+            hasher.update(resource_id.to_string().as_bytes());
+        }
+        hasher.update(created_at.to_rfc3339().as_bytes());
+        if let Some(ref previous_hash) = previous_hash {
+            hasher.update(previous_hash.as_bytes());
+        }
+        let integrity_hash = hex::encode(hasher.finalize());
+
         let log = sqlx::query_as::<_, AuditLog>(
             r#"
             INSERT INTO audit_logs (
-                user_id, action, resource_type, resource_id, org_id,
+                id, user_id, action, resource_type, resource_id, org_id,
                 details, old_values, new_values, ip_address, user_agent,
-                previous_hash
+                previous_hash, integrity_hash, created_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *
             "#,
         )
+        .bind(id)
         .bind(data.user_id)
         .bind(&data.action)
         .bind(&data.resource_type)
@@ -47,40 +98,13 @@ impl AuditLogRepository {
         .bind(&data.ip_address)
         .bind(&data.user_agent)
         .bind(&previous_hash)
-        .fetch_one(&self.pool)
-        .await?;
-
-        // Compute and update the integrity hash
-        let integrity_hash = self.compute_integrity_hash(&log);
-        sqlx::query(
-            r#"
-            UPDATE audit_logs SET integrity_hash = $1 WHERE id = $2
-            "#,
-        )
         .bind(&integrity_hash)
-        .bind(log.id)
-        .execute(&self.pool)
+        .bind(created_at)
+        .fetch_one(&mut *tx)
         .await?;
 
-        Ok(AuditLog {
-            integrity_hash: Some(integrity_hash),
-            ..log
-        })
-    }
-
-    /// Get the latest audit log hash for chain linking.
-    async fn get_latest_hash(&self) -> Result<Option<String>, SqlxError> {
-        let result: Option<(Option<String>,)> = sqlx::query_as(
-            r#"
-            SELECT integrity_hash FROM audit_logs
-            ORDER BY created_at DESC
-            LIMIT 1
-            "#,
-        )
-        .fetch_optional(&self.pool)
-        .await?;
-
-        Ok(result.and_then(|(hash,)| hash))
+        tx.commit().await?;
+        Ok(log)
     }
 
     /// Compute integrity hash for an audit log entry.
@@ -92,7 +116,8 @@ impl AuditLogRepository {
         if let Some(user_id) = log.user_id {
             hasher.update(user_id.to_string().as_bytes());
         }
-        hasher.update(format!("{:?}", log.action).as_bytes());
+        // Issue #439 P1-04: stable canonical name instead of Debug format.
+        hasher.update(log.action.canonical_name().as_bytes());
         if let Some(ref resource_type) = log.resource_type {
             hasher.update(resource_type.as_bytes());
         }

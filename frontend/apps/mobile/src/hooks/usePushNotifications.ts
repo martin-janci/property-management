@@ -2,9 +2,10 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { createDeepLink } from '../qrcode/DeepLinkHandler';
 import { colors } from '../screens/shared/screenStyles';
+import { apiRequest } from './useApi';
 
 // Configure notification handling
 Notifications.setNotificationHandler({
@@ -15,8 +16,28 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// -- Types matching backend RegisterPushTokenRequest / PushTokenResponse -------
+
+interface RegisterPushTokenRequest {
+  token: string;
+  platform: 'fcm' | 'apns';
+  appId?: string;
+  deviceName?: string;
+}
+
+interface PushTokenResponse {
+  id: string;
+  platform: 'fcm' | 'apns';
+  appId?: string;
+  deviceName?: string;
+  lastSeenAt: string;
+  createdAt: string;
+}
+
 export interface PushNotificationState {
   expoPushToken: string | null;
+  /** Native FCM/APNs token registered with the backend. */
+  nativePushToken: string | null;
   notification: Notifications.Notification | null;
   isRegistered: boolean;
   error: string | null;
@@ -37,6 +58,7 @@ export interface UsePushNotificationsReturn extends PushNotificationState {
 
 export function usePushNotifications(): UsePushNotificationsReturn {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const [nativePushToken, setNativePushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notifications.Notification | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +66,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run-once-on-mount; handlers are stable after first render
   useEffect(() => {
     // Listen for incoming notifications
     notificationListener.current = Notifications.addNotificationReceivedListener(
@@ -116,10 +139,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         deepLinkUrl = createDeepLink('Dashboard');
     }
 
-    // Use the deep link manager to navigate (handles auth state)
-    // The deep link will be processed by DeepLinkManager which
-    // dispatches to registered handlers
-    const { Linking } = require('react-native');
     Linking.openURL(deepLinkUrl);
   };
 
@@ -146,7 +165,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         return null;
       }
 
-      // Configure Android channel
+      // Configure Android notification channels
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
           name: 'Default',
@@ -169,19 +188,22 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         });
       }
 
-      // Get Expo push token
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId,
-      });
+      // 1. Obtain the native FCM/APNs token for direct backend delivery.
+      const nativeToken = await Notifications.getDevicePushTokenAsync();
+      setNativePushToken(nativeToken.data);
 
-      setExpoPushToken(token.data);
+      // 2. Also obtain the Expo push token for Expo-proxy compatibility.
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      const expoToken = await Notifications.getExpoPushTokenAsync({ projectId });
+      setExpoPushToken(expoToken.data);
+
       setIsRegistered(true);
 
-      // In a real app, you would send this token to your backend
-      await sendTokenToBackend(token.data);
+      // 3. Register the native token with the backend so the notification
+      //    pipeline can deliver FCM/APNs pushes directly to this device.
+      await sendTokenToBackend(nativeToken.data);
 
-      return token.data;
+      return expoToken.data;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to register';
       setError(message);
@@ -189,26 +211,47 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }
   };
 
-  const sendTokenToBackend = async (_token: string): Promise<void> => {
-    // This would call your API to register the device token.
-    // NOTE: never log the token itself — it grants push-send authority for this device.
+  const sendTokenToBackend = async (token: string): Promise<void> => {
+    // SECURITY: never log the raw token -- it grants push-send authority for this device.
     if (__DEV__) {
-      console.log('[push] registering device token with backend');
+      console.log('[push] registering native device token with backend');
     }
-    // await api.registerPushToken(_token, Platform.OS);
+
+    const platform: 'fcm' | 'apns' = Platform.OS === 'android' ? 'fcm' : 'apns';
+    // app_id helps the backend fan-out to the right FCM project / APNs topic.
+    const appId =
+      Platform.OS === 'android'
+        ? (Constants.expoConfig?.android as { package?: string })?.package
+        : (Constants.expoConfig?.ios as { bundleIdentifier?: string })?.bundleIdentifier;
+
+    const body: RegisterPushTokenRequest = {
+      token,
+      platform,
+      appId,
+      deviceName: Device.deviceName ?? undefined,
+    };
+
+    await apiRequest<PushTokenResponse>('/api/v1/users/me/push-tokens', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
   };
 
   const unregisterPushNotifications = async (): Promise<void> => {
     try {
-      if (expoPushToken) {
-        // Remove token from backend
+      if (nativePushToken) {
+        // SECURITY: never log the raw token value.
         if (__DEV__) {
-          console.log('[push] unregistering device token with backend');
+          console.log('[push] unregistering native device token with backend');
         }
-        // await api.unregisterPushToken(expoPushToken);
+        const encodedToken = encodeURIComponent(nativePushToken);
+        await apiRequest<void>(`/api/v1/users/me/push-tokens/${encodedToken}`, {
+          method: 'DELETE',
+        });
       }
 
       setExpoPushToken(null);
+      setNativePushToken(null);
       setIsRegistered(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to unregister';
@@ -245,6 +288,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
   return {
     expoPushToken,
+    nativePushToken,
     notification,
     isRegistered,
     error,

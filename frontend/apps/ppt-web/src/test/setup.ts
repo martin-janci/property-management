@@ -43,9 +43,17 @@ i18n.use(initReactI18next).init({
   },
 });
 
-// Cleanup after each test to prevent memory leaks
+// Cleanup after each test to prevent memory leaks.
+// TEST-203: also clear localStorage/sessionStorage so token-storage tests
+// (`shared-auth.test.ts`) can't leak state into the next test.
 afterEach(() => {
   cleanup();
+  try {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  } catch {
+    // jsdom may not have storage in some environments; ignore.
+  }
 });
 
 // Mock window.matchMedia for components using media queries

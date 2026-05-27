@@ -216,23 +216,29 @@ declare module 'expo-notifications' {
   export function cancelAllScheduledNotificationsAsync(): Promise<void>;
   export function getBadgeCountAsync(): Promise<number>;
   export function setBadgeCountAsync(count: number): Promise<void>;
+
+  export interface DevicePushToken {
+    type: 'ios' | 'android' | 'web';
+    data: string;
+  }
+  export function getDevicePushTokenAsync(): Promise<DevicePushToken>;
 }
 
 declare module '@react-native-async-storage/async-storage' {
-  interface AsyncStorageStatic {
+  // Scoped storage API introduced in async-storage v3.
+  interface AsyncStorage {
     getItem(key: string): Promise<string | null>;
     setItem(key: string, value: string): Promise<void>;
     removeItem(key: string): Promise<void>;
-    mergeItem(key: string, value: string): Promise<void>;
+    getMany(keys: string[]): Promise<Record<string, string | null>>;
+    setMany(entries: Record<string, string>): Promise<void>;
+    removeMany(keys: string[]): Promise<void>;
+    getAllKeys(): Promise<string[]>;
     clear(): Promise<void>;
-    getAllKeys(): Promise<readonly string[]>;
-    multiGet(keys: readonly string[]): Promise<readonly [string, string | null][]>;
-    multiSet(keyValuePairs: readonly [string, string][]): Promise<void>;
-    multiRemove(keys: readonly string[]): Promise<void>;
-    multiMerge(keyValuePairs: readonly [string, string][]): Promise<void>;
   }
 
-  const AsyncStorage: AsyncStorageStatic;
+  export function createAsyncStorage(databaseName: string): AsyncStorage;
+  const AsyncStorage: AsyncStorage;
   export default AsyncStorage;
 }
 

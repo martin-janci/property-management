@@ -9,7 +9,7 @@ implementations:
     component: DocumentDetailPage
     buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     component: DocumentDetailScreen
     buildStatus: planned
@@ -105,5 +105,11 @@ UC-08 single-document detail. Manager-side full editing; resident-side filtered 
 
 <!-- newest entries on top -->
 
+- 2026-05-27 — agent: gap-7a-4 review fixes — useDocumentDownload hook extracted and wired into DownloadButton; download errors now surface via toast; getDownloadUrl imperative call retained (same fetchApi transport as all api-client ops)
+- 2026-05-27 — agent: gap-7a-4 — added DocumentPreviewModal (PDF inline preview via PdfPreview + image preview via <img> + fallback + download button in header); preview eye + download action buttons added to each document row in DocumentsBrowse; useDownloadUrl + usePreviewUrl presigned-URL hooks wired; modal is accessible (Escape key close, backdrop click, auto-focus close button, role=dialog aria-modal); apiStatus remains complete
+- 2026-05-27 — agent: gap-7a-2 review fixes — useDocumentDownload hook extracted; download error toast added; MoveFolderDialog focus trap completed
+- 2026-05-24 — agent: gap-7a-5 — added DocumentSharePanel (user/role/building/link share types) to DocumentDetail; Share toggle button; share hooks in @ppt/api-client; apiStatus remains complete
+
+- 2026-05-24 — agent: gap-7a-3 — added RLS-aware permission-denied state to DocumentDetail (403 → lock icon + Slovak message); promoted ppt-web.apiStatus partial→complete
 - 2026-05-09 — agent: design analyzed (pages/ppt-document-detail.html — single artboard: loaded-v3-published with PDF preview + metadata + 5 actions + 4-version timeline); flipped ppt-web redesignStatus → in-progress; attached designSource; populated functionality checklist (5 sections), 5 states (recommended where not depicted), design-specific notes (PDF.js lazy-load + version-immutability + cross-screen attach + archive flow); declared 6 sharedComponents; added 1 relatedScreen (upload-document sibling)
 - 2026-05-08 — init: created from scan (source: sitemap)

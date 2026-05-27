@@ -14,7 +14,7 @@ import three.two.bit.ppt.reality.api.HttpClientProvider
 class InquiryRepository(
     private val baseUrl: String,
     private val sessionToken: String? = null,
-    private val client: HttpClient = HttpClientProvider.client
+    private val client: HttpClient = HttpClientProvider.client,
 ) {
 
     private fun HttpRequestBuilder.configureRequest() {
@@ -50,7 +50,7 @@ class InquiryRepository(
     suspend fun getInquiries(
         page: Int = 1,
         pageSize: Int = 20,
-        status: InquiryStatus? = null
+        status: InquiryStatus? = null,
     ): Result<InquiriesResponse> {
         return try {
             val response =

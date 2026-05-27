@@ -1,0 +1,95 @@
+/* PinnedAnnouncementsBand — sticky strip above the announcement list */
+
+.pinned-band {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-3);
+  padding: var(--ppt-space-2) var(--ppt-space-4);
+  background: var(--ppt-color-warning-bg, #fef3c7);
+  border-bottom: 1px solid var(--ppt-color-warning-border, #fcd34d);
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+
+.pinned-band__label {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-1);
+  font-size: var(--ppt-font-size-xs);
+  font-weight: var(--ppt-font-weight-semibold);
+  color: var(--ppt-color-warning-ink, #92400e);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pinned-band__pin-icon {
+  color: var(--ppt-color-warning-hover, #f59e0b);
+  flex-shrink: 0;
+}
+
+.pinned-band__chips {
+  display: flex;
+  align-items: center;
+  gap: var(--ppt-space-2);
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.pinned-band__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ppt-space-1);
+  padding: 4px var(--ppt-space-3);
+  border-radius: var(--ppt-radius-full, 9999px);
+  background: var(--ppt-color-warning-chip-bg, rgba(245, 158, 11, 0.15));
+  border: 1px solid var(--ppt-color-warning-border, #fcd34d);
+  cursor: pointer;
+  font-size: var(--ppt-font-size-sm);
+  font-weight: var(--ppt-font-weight-medium);
+  color: var(--ppt-color-warning-ink, #92400e);
+  font-family: var(--ppt-font-family);
+  text-align: left;
+  white-space: nowrap;
+  max-width: 280px;
+  transition:
+    background var(--ppt-transition-fast),
+    border-color var(--ppt-transition-fast);
+}
+
+.pinned-band__chip:hover {
+  background: var(--ppt-color-warning-chip-hover-bg, rgba(245, 158, 11, 0.25));
+  border-color: var(--ppt-color-warning-hover, #f59e0b);
+}
+
+.pinned-band__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ppt-focus-ring-shadow);
+  border-radius: var(--ppt-radius-full, 9999px);
+}
+
+.pinned-band__chip-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pinned-band__chip-ack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ppt-color-warning-hover, #f59e0b);
+  color: var(--ppt-bg-base, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+}

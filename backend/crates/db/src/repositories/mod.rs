@@ -9,6 +9,7 @@ pub mod building;
 pub mod critical_notification;
 pub mod data_export;
 pub mod delegation;
+pub mod device_push_token;
 pub mod document;
 pub mod document_template;
 pub mod facility;
@@ -80,6 +81,7 @@ pub use building::BuildingRepository;
 pub use critical_notification::CriticalNotificationRepository;
 pub use data_export::DataExportRepository;
 pub use delegation::DelegationRepository;
+pub use device_push_token::DevicePushTokenRepository;
 pub use document::DocumentRepository;
 pub use document_template::DocumentTemplateRepository;
 pub use facility::FacilityRepository;
@@ -379,3 +381,8 @@ pub use tenant_feature_flag::TenantFeatureFlagRepository;
 pub mod unified_portal_user;
 
 pub use unified_portal_user::{UnifiedPortalError, UnifiedPortalUserRepo, UpdateProfile};
+
+// Epic 81: Report Schedule Management & Execution History
+pub mod report_schedule;
+
+pub use report_schedule::ReportScheduleRepository;

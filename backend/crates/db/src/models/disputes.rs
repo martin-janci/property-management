@@ -64,6 +64,44 @@ pub mod dispute_status {
     ];
 }
 
+/// Dispute state machine — valid status transitions.
+///
+/// Lifecycle: `filed` (open) → `under_review` (in-review) → `resolved`
+pub mod dispute_state_machine {
+    /// Returns `true` when the `from` → `to` status transition is permitted.
+    pub fn is_valid_transition(from: &str, to: &str) -> bool {
+        match from {
+            "filed" => matches!(to, "under_review" | "awaiting_response" | "withdrawn"),
+            "under_review" => {
+                matches!(
+                    to,
+                    "mediation" | "awaiting_response" | "resolved" | "escalated"
+                )
+            }
+            "awaiting_response" => {
+                matches!(to, "under_review" | "mediation" | "resolved" | "withdrawn")
+            }
+            "mediation" => matches!(to, "under_review" | "resolved" | "escalated"),
+            "escalated" => matches!(to, "under_review" | "resolved" | "closed"),
+            "resolved" => to == "closed",
+            _ => false,
+        }
+    }
+
+    /// Returns the allowed next statuses from `from`, or an empty slice for terminals.
+    pub fn allowed_transitions(from: &str) -> &'static [&'static str] {
+        match from {
+            "filed" => &["under_review", "awaiting_response", "withdrawn"],
+            "under_review" => &["mediation", "awaiting_response", "resolved", "escalated"],
+            "awaiting_response" => &["under_review", "mediation", "resolved", "withdrawn"],
+            "mediation" => &["under_review", "resolved", "escalated"],
+            "escalated" => &["under_review", "resolved", "closed"],
+            "resolved" => &["closed"],
+            _ => &[],
+        }
+    }
+}
+
 /// Dispute priority constants.
 pub mod dispute_priority {
     pub const LOW: &str = "low";
@@ -100,6 +138,9 @@ pub struct Dispute {
     pub priority: String,
     pub filed_by: Uuid,
     pub assigned_to: Option<Uuid>,
+    pub resolved_at: Option<DateTime<Utc>>,
+    pub resolution_notes: Option<String>,
+    pub mediation_notes: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -385,9 +426,33 @@ pub struct VoteOnResolution {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateDisputeStatus {
     pub dispute_id: Uuid,
+    /// Tenancy scope — `update_status` MUST filter by this so a manager in
+    /// org A cannot drive a dispute in org B (issue #520).
+    pub organization_id: Uuid,
     pub status: String,
     pub reason: Option<String>,
     pub updated_by: Uuid,
+}
+
+/// Request to resolve a dispute with resolution notes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResolveDispute {
+    pub dispute_id: Uuid,
+    pub resolution_notes: String,
+    pub resolved_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
+}
+
+/// Request to update mediation notes on a dispute.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateMediationNotes {
+    pub dispute_id: Uuid,
+    pub notes: String,
+    /// User performing the update — recorded in the audit trail.
+    pub updated_by: Uuid,
+    /// Organization the caller belongs to — prevents cross-org IDOR.
+    pub organization_id: Uuid,
 }
 
 // =============================================================================

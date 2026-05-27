@@ -1,13 +1,49 @@
 /**
- * Admin Module — Super-admin Control Plane (Phase 5).
+ * Admin Module — Super-admin Control Plane (Phase 5 / Epic 10A-2).
  *
- * API client + hooks for `/api/v1/admin/*` endpoints. Currently surfaces
- * the agency list; will grow to cover users, audit, feature flags, and
- * platform settings as those endpoints land.
+ * API client + hooks for `/api/v1/admin/*` endpoints.
  */
 
-export { listAgencies, suspendAgency } from './api';
-export { adminKeys, useAgencies } from './hooks';
+export {
+  acknowledgeHealthAlert,
+  createSystemAnnouncement,
+  deleteSystemAnnouncement,
+  fetchHealthAlerts,
+  fetchHealthDashboard,
+  fetchMetricHistory,
+  getOAuthClient,
+  getSystemAnnouncement,
+  listAgencies,
+  listOAuthClients,
+  listSystemAnnouncements,
+  regenerateOAuthClientSecret,
+  registerOAuthClient,
+  revokeOAuthClient,
+  suspendAgency,
+  updateHealthThreshold,
+  updateOAuthClient,
+  updateSystemAnnouncement,
+} from './api';
+export {
+  adminKeys,
+  useAcknowledgeAlert,
+  useAgencies,
+  useCreateSystemAnnouncement,
+  useDeleteSystemAnnouncement,
+  useHealthAlerts,
+  useHealthDashboard,
+  useMetricHistory,
+  useOAuthClient,
+  useOAuthClients,
+  useRegenerateOAuthClientSecret,
+  useRegisterOAuthClient,
+  useRevokeOAuthClient,
+  useSystemAnnouncement,
+  useSystemAnnouncements,
+  useUpdateHealthThreshold,
+  useUpdateOAuthClient,
+  useUpdateSystemAnnouncement,
+} from './hooks';
 export {
   hasMfaChallengeHandler,
   type MfaChallengeHandler,
@@ -17,5 +53,28 @@ export type {
   AdminPaginatedResponse,
   Agency,
   AgencyStatus,
+  CreateSystemAnnouncementRequest,
+  CreateSystemAnnouncementResponse,
+  CurrentMetric,
+  HealthDashboard,
+  KnownOAuthScope,
   ListAgenciesParams,
+  ListSystemAnnouncementsParams,
+  MetricAlert,
+  MetricDataPoint,
+  MetricHistory,
+  MetricStats,
+  MetricStatus,
+  MetricThreshold,
+  OAuthClientSummary,
+  RegenerateSecretResponse,
+  RegisterOAuthClientRequest,
+  RegisterOAuthClientResponse,
+  SystemAnnouncement,
+  SystemAnnouncementSeverity,
+  TimeRange,
+  UpdateOAuthClientRequest,
+  UpdateSystemAnnouncementRequest,
+  UpdateThresholdRequest,
 } from './types';
+export { KNOWN_OAUTH_SCOPES } from './types';

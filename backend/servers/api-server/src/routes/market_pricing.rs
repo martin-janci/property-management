@@ -3,7 +3,7 @@
 //! Story 132.2: AI Pricing Model Integration using LLM for intelligent pricing.
 
 use crate::state::AppState;
-use api_core::extractors::AuthUser;
+use api_core::extractors::{AuthUser, RlsConnection};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -396,6 +396,7 @@ async fn list_recommendations(
 async fn request_recommendation(
     State(s): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Json(req): Json<RequestPricingRecommendation>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -409,15 +410,17 @@ async fn request_recommendation(
     let ai_pricing_enabled =
         std::env::var("LLM_PRICING_ENABLED").unwrap_or_else(|_| "true".to_string()) == "true";
 
-    // Fetch unit details to analyze characteristics
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let unit = s.unit_repo.find_by_id(req.unit_id).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::internal_error(&e.to_string())),
-        )
-    })?;
+    // Fetch unit details to analyze characteristics (RLS-scoped to tenant).
+    let unit = s
+        .unit_repo
+        .find_by_id_rls(&mut **rls.conn(), req.unit_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::internal_error(&e.to_string())),
+            )
+        })?;
 
     let unit = unit.ok_or_else(|| {
         (
@@ -426,12 +429,10 @@ async fn request_recommendation(
         )
     })?;
 
-    // Fetch building details for location context
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
+    // Fetch building details for location context (RLS-scoped to tenant).
     let building = s
         .building_repo
-        .find_by_id(unit.building_id)
+        .find_by_id_rls(&mut **rls.conn(), unit.building_id)
         .await
         .map_err(|e| {
             (
@@ -439,6 +440,9 @@ async fn request_recommendation(
                 Json(ErrorResponse::internal_error(&e.to_string())),
             )
         })?;
+
+    // RLS lookups complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     let building = building.ok_or_else(|| {
         (
@@ -860,6 +864,7 @@ async fn get_recommendation(
 async fn get_recommendation_details(
     State(s): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let org_id = user.tenant_id.ok_or_else(|| {
@@ -898,10 +903,12 @@ async fn get_recommendation_details(
             .get_market_statistics_by_id(stats_id)
             .await
         {
-            // Get unit to determine property type
-            // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-            #[allow(deprecated)]
-            if let Ok(Some(unit)) = s.unit_repo.find_by_id(rec.unit_id).await {
+            // Get unit to determine property type (RLS-scoped to tenant).
+            if let Ok(Some(unit)) = s
+                .unit_repo
+                .find_by_id_rls(&mut **rls.conn(), rec.unit_id)
+                .await
+            {
                 let size = unit.size_sqm.unwrap_or(Decimal::new(50, 0));
                 s.market_pricing_repo
                     .get_market_comparables(stats.region_id, &unit.unit_type, size, 5, None)
@@ -916,6 +923,9 @@ async fn get_recommendation_details(
     } else {
         vec![]
     };
+
+    // RLS lookups complete — clear context and return the connection to the pool.
+    rls.release().await;
 
     // Build the detailed response
     let response = json!({
@@ -1169,6 +1179,7 @@ async fn get_pricing_history(
 async fn record_price_change(
     State(s): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(unit_id): Path<Uuid>,
     Json(mut req): Json<RecordPriceChange>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -1181,26 +1192,10 @@ async fn record_price_change(
     })?;
     let user_id = user.user_id;
 
-    // Verify unit belongs to org via building
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let unit = s.unit_repo.find_by_id(unit_id).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::internal_error(&e.to_string())),
-        )
-    })?;
-    let unit = unit.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::not_found("Unit not found")),
-        )
-    })?;
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let building = s
-        .building_repo
-        .find_by_id(unit.building_id)
+    // Verify unit belongs to org via building (RLS-scoped to tenant).
+    let unit = s
+        .unit_repo
+        .find_by_id_rls(&mut **rls.conn(), unit_id)
         .await
         .map_err(|e| {
             (
@@ -1208,6 +1203,26 @@ async fn record_price_change(
                 Json(ErrorResponse::internal_error(&e.to_string())),
             )
         })?;
+    let unit = unit.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::not_found("Unit not found")),
+        )
+    })?;
+    let building = s
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), unit.building_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::internal_error(&e.to_string())),
+            )
+        })?;
+
+    // RLS lookups complete — clear context and return the connection to the pool.
+    rls.release().await;
+
     let building = building.ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -1241,6 +1256,7 @@ async fn record_price_change(
 async fn get_current_rent(
     State(s): State<AppState>,
     user: AuthUser,
+    mut rls: RlsConnection,
     Path(unit_id): Path<Uuid>,
 ) -> ApiResult<Json<serde_json::Value>> {
     // Validate unit belongs to user's organization
@@ -1251,26 +1267,10 @@ async fn get_current_rent(
         )
     })?;
 
-    // Verify unit belongs to org via building
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let unit = s.unit_repo.find_by_id(unit_id).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::internal_error(&e.to_string())),
-        )
-    })?;
-    let unit = unit.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse::not_found("Unit not found")),
-        )
-    })?;
-    // TODO: Migrate to find_by_id_rls when RlsConnection is added to this handler
-    #[allow(deprecated)]
-    let building = s
-        .building_repo
-        .find_by_id(unit.building_id)
+    // Verify unit belongs to org via building (RLS-scoped to tenant).
+    let unit = s
+        .unit_repo
+        .find_by_id_rls(&mut **rls.conn(), unit_id)
         .await
         .map_err(|e| {
             (
@@ -1278,6 +1278,26 @@ async fn get_current_rent(
                 Json(ErrorResponse::internal_error(&e.to_string())),
             )
         })?;
+    let unit = unit.ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::not_found("Unit not found")),
+        )
+    })?;
+    let building = s
+        .building_repo
+        .find_by_id_rls(&mut **rls.conn(), unit.building_id)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::internal_error(&e.to_string())),
+            )
+        })?;
+
+    // RLS lookups complete — clear context and return the connection to the pool.
+    rls.release().await;
+
     let building = building.ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,

@@ -8,7 +8,9 @@ pub mod email;
 pub mod feature_service;
 pub mod jwt;
 pub mod notification;
+pub mod notification_pipeline;
 pub mod oauth;
+pub mod push_fanout;
 pub mod scheduler;
 pub mod syndication;
 pub mod totp;
@@ -24,7 +26,13 @@ pub use feature_service::FeatureService;
 pub use jwt::JwtService;
 #[allow(unused_imports)]
 pub use notification::{NotificationService, NotificationServiceConfig};
+#[allow(unused_imports)]
+pub use notification_pipeline::{
+    FcmPushAdapter, NotificationPipeline, PipelineConfig, PreferenceRouter, SmtpEmailAdapter,
+};
 pub use oauth::{OAuthService, OAuthServiceError};
+#[allow(unused_imports)]
+pub use push_fanout::{FcmConfig, FcmHttpAdapter, PushFanoutConfig, PushFanoutWorker};
 pub use scheduler::{Scheduler, SchedulerConfig};
 pub use syndication::SyndicationService;
 pub use totp::TotpService;

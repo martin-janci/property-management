@@ -10,11 +10,11 @@ use db::{
         AuditLogRepository, AutomationRepository, BackgroundJobRepository, BoardMeetingRepository,
         BudgetRepository, BuildingCertificationRepository, BuildingRepository, CommunityRepository,
         ComplianceRepository, CriticalNotificationRepository, DataExportRepository,
-        DelegationRepository, DisputeRepository, DocumentRepository, DocumentTemplateRepository,
-        EddRepository, EmergencyRepository, EnergyRepository, EnhancedTenantScreeningRepository,
-        EquipmentRepository, EsgReportingRepository, FacilityRepository, FaultRepository,
-        FeatureAnalyticsRepository, FeatureFlagRepository, FeaturePackageRepository,
-        FinancialRepository, FormRepository, GovernmentPortalRepository,
+        DelegationRepository, DevicePushTokenRepository, DisputeRepository, DocumentRepository,
+        DocumentTemplateRepository, EddRepository, EmergencyRepository, EnergyRepository,
+        EnhancedTenantScreeningRepository, EquipmentRepository, EsgReportingRepository,
+        FacilityRepository, FaultRepository, FeatureAnalyticsRepository, FeatureFlagRepository,
+        FeaturePackageRepository, FinancialRepository, FormRepository, GovernmentPortalRepository,
         GranularNotificationRepository, HealthMonitoringRepository, HelpRepository,
         InfrastructureRepository, InsuranceRepository, IntegrationRepository,
         InvestorPortalRepository, LeaseAbstractionRepository, LeaseRepository, LegalRepository,
@@ -25,11 +25,11 @@ use db::{
         PackageVisitorRepository, PasswordResetRepository, PersonMonthRepository,
         PlatformAdminRepository, PortfolioAnalyticsRepository, PortfolioPerformanceRepository,
         PredictiveMaintenanceRepository, PropertyValuationRepository, RegistryRepository,
-        RentalRepository, ReserveFundRepository, RoleRepository, SensorRepository,
-        SentimentRepository, SessionRepository, SignatureRequestRepository, SubscriptionRepository,
-        SystemAnnouncementRepository, TwoFactorAuthRepository, UnitRepository,
-        UnitResidentRepository, UserRepository, VendorRepository, ViolationRepository,
-        VoteRepository, WorkOrderRepository, WorkflowRepository,
+        RentalRepository, ReportScheduleRepository, ReserveFundRepository, RoleRepository,
+        SensorRepository, SentimentRepository, SessionRepository, SignatureRequestRepository,
+        SubscriptionRepository, SystemAnnouncementRepository, TwoFactorAuthRepository,
+        UnitRepository, UnitResidentRepository, UserRepository, VendorRepository,
+        ViolationRepository, VoteRepository, WorkOrderRepository, WorkflowRepository,
     },
     DbPool,
 };
@@ -59,6 +59,7 @@ pub struct AppState {
     pub document_repo: DocumentRepository,
     pub document_template_repo: DocumentTemplateRepository,
     pub notification_pref_repo: NotificationPreferenceRepository,
+    pub device_push_token_repo: DevicePushTokenRepository,
     pub critical_notification_repo: CriticalNotificationRepository,
     pub two_factor_repo: TwoFactorAuthRepository,
     pub audit_log_repo: AuditLogRepository,
@@ -171,6 +172,8 @@ pub struct AppState {
     // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
     pub edd_repo: EddRepository,
     pub compliance_repo: ComplianceRepository,
+    // Epic 81: Report Schedule Management & Execution History
+    pub report_schedule_repo: ReportScheduleRepository,
     // Epic 91: AI Chat LLM Integration
     pub llm_client: LlmClient,
     pub auth_service: AuthService,
@@ -222,6 +225,7 @@ impl AppState {
         let document_repo = DocumentRepository::new(db.clone());
         let document_template_repo = DocumentTemplateRepository::new(db.clone());
         let notification_pref_repo = NotificationPreferenceRepository::new(db.clone());
+        let device_push_token_repo = DevicePushTokenRepository::new(db.clone());
         let critical_notification_repo = CriticalNotificationRepository::new(db.clone());
         let two_factor_repo = TwoFactorAuthRepository::new(db.clone());
         let audit_log_repo = AuditLogRepository::new(db.clone());
@@ -334,6 +338,8 @@ impl AppState {
         // Epic 67/100: AML/DSA Compliance & Enhanced Due Diligence
         let edd_repo = EddRepository::new(db.clone());
         let compliance_repo = ComplianceRepository::new(db.clone());
+        // Epic 81: Report Schedule Management & Execution History
+        let report_schedule_repo = ReportScheduleRepository::new(db.clone());
         // Epic 91: AI Chat LLM Integration
         let llm_client = LlmClient::new();
         let auth_service = AuthService::new();
@@ -362,6 +368,7 @@ impl AppState {
             document_repo,
             document_template_repo,
             notification_pref_repo,
+            device_push_token_repo,
             critical_notification_repo,
             two_factor_repo,
             audit_log_repo,
@@ -428,6 +435,7 @@ impl AppState {
             api_ecosystem_repo,
             edd_repo,
             compliance_repo,
+            report_schedule_repo,
             llm_client,
             auth_service,
             email_service,

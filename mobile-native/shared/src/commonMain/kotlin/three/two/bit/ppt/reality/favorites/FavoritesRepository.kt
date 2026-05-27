@@ -14,7 +14,7 @@ import three.two.bit.ppt.reality.api.HttpClientProvider
 class FavoritesRepository(
     private val baseUrl: String,
     private val sessionToken: String? = null,
-    private val client: HttpClient = HttpClientProvider.client
+    private val client: HttpClient = HttpClientProvider.client,
 ) {
 
     private fun HttpRequestBuilder.configureRequest() {
@@ -148,7 +148,7 @@ class FavoritesRepository(
     /** Update a saved search. */
     suspend fun updateSavedSearch(
         searchId: String,
-        request: UpdateSavedSearchRequest
+        request: UpdateSavedSearchRequest,
     ): Result<SavedSearch> {
         return try {
             val response =

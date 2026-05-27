@@ -39,7 +39,8 @@
     "copied": "Skopírované",
     "copyErrorMessage": "Kopírovať chybovú správu",
     "dismissNotification": "Zavrieť oznámenie",
-    "notifications": "Oznámenia"
+    "notifications": "Oznámenia",
+    "unknownError": "Nastala chyba. Prosím skúste znova."
   },
   "nav": {
     "home": "Domov",
@@ -190,7 +191,15 @@
     "fileSize": "Veľkosť súboru",
     "uploadedBy": "Nahral",
     "uploadedAt": "Nahrané",
-    "notFound": "Dokument nebol nájdený"
+    "notFound": "Dokument nebol nájdený",
+    "folder": {
+      "renameError": "Premenovanie zlyhalo",
+      "renameErrorMessage": "Nepodarilo sa premenovať priečinok",
+      "deleteError": "Vymazanie zlyhalo",
+      "deleteErrorMessage": "Nepodarilo sa vymazať priečinok",
+      "createError": "Vytvorenie zlyhalo",
+      "createErrorMessage": "Nepodarilo sa vytvoriť priečinok"
+    }
   },
   "disputes": {
     "title": "Spory",
@@ -223,7 +232,91 @@
     "selectUnit": "Vyberte jednotku pre tento spor.",
     "multipleRespondents": "Viacerí odporcovia",
     "multipleRespondentsMsg": "Zaznamenaný bude iba prvý odporca.",
-    "addEvidence": "Pridať dôkaz"
+    "addEvidence": "Pridať dôkaz",
+    "filedWithEvidenceErrors": "Spor podaný (niektoré súbory zlyhali)",
+    "evidenceUploadErrorsMsg": "Jeden alebo viac súborov s dôkazmi sa nepodarilo nahrať. Skúste to znova zo stránky detailov sporu.",
+    "mediation": {
+      "title": "Mediation Workspace",
+      "backToDispute": "← Back to Dispute",
+      "assignMediator": "Assign Mediator",
+      "escalate": "Escalate",
+      "resolveDispute": "Resolve Dispute",
+      "disputePanel": "Dispute",
+      "filedBy": "Filed by",
+      "respondent": "Respondent",
+      "mediator": "Mediator",
+      "filed": "Filed",
+      "deadline": "Deadline",
+      "parties": "Parties",
+      "filer": "Filer",
+      "partyDetailsUnavailable": "Party details unavailable.",
+      "guidelines": "Guidelines",
+      "guideline1": "Be respectful and constructive",
+      "guideline2": "Focus on interests, not positions",
+      "guideline3": "Discussions are confidential",
+      "guideline4": "Work towards a shared solution",
+      "tabTimeline": "Timeline",
+      "tabDiscussion": "Discussion",
+      "tabResolution": "Resolution",
+      "noTimelineEvents": "No timeline events yet.",
+      "mustBeParty": "You must be a party or manager to participate in this discussion.",
+      "noLongerActive": "This dispute is no longer active.",
+      "recordResolution": "Record Resolution",
+      "onlyManagersCanResolve": "Only managers and mediators can record a resolution.",
+      "escalateTitle": "Escalate Dispute",
+      "escalateDescription": "Escalation moves this dispute to a higher authority. Please provide a reason.",
+      "reasonForEscalation": "Reason for escalation",
+      "reasonPlaceholder": "Describe why this dispute needs to be escalated…",
+      "cancel": "Cancel",
+      "escalatingBtn": "Escalating…",
+      "escalateBtn": "Escalate",
+      "assignMediatorTitle": "Assign Mediator",
+      "assignMediatorDescription": "Enter the user ID of the staff member to assign as mediator.",
+      "mediatorUserId": "Mediator user ID",
+      "userPickerNote": "A user-picker will be wired once the staff directory endpoint is available.",
+      "assigning": "Assigning…",
+      "assign": "Assign",
+      "resolvedSuccess": "Dispute resolved",
+      "resolvedMsg": "The dispute has been marked as resolved.",
+      "resolveError": "Failed to resolve dispute",
+      "escalatedSuccess": "Dispute escalated",
+      "escalatedMsg": "The dispute has been escalated.",
+      "escalateError": "Failed to escalate dispute",
+      "assignedSuccess": "Mediator assigned",
+      "assignedMsg": "The mediator has been assigned to this dispute.",
+      "assignError": "Failed to assign mediator",
+      "noMessages": "No messages yet. Start the conversation below.",
+      "privateLabel": "Private",
+      "typePlaceholder": "Type a message… (Ctrl+Enter to send)",
+      "privateSend": "Private (mediator only)",
+      "sending": "Sending…",
+      "send": "Send",
+      "sendingAs": "Sending as {{name}}",
+      "sendError": "Failed to send message",
+      "sendErrorDesc": "Your message could not be sent. Please try again.",
+      "resolutionType": "Resolution Type",
+      "resolutionDetails": "Resolution Details",
+      "resolutionDetailsPlaceholder": "Describe the full resolution, including what was agreed and any conditions…",
+      "charMinimum": "{{count}} chars (10 minimum)",
+      "termsConditions": "Terms / Conditions",
+      "optional": "optional",
+      "termsPlaceholder": "List any specific terms, deadlines, or follow-up actions…",
+      "requiresConfirmation": "Requires party confirmation",
+      "requiresConfirmationDesc": "Both parties must acknowledge the resolution before it is finalised.",
+      "recording": "Recording resolution…",
+      "recordResolutionBtn": "Record Resolution",
+      "resolutionMutualAgreement": "Mutual Agreement",
+      "resolutionMutualAgreementDesc": "Both parties reached a mutually acceptable agreement",
+      "resolutionFavorFiler": "In Favour of Filer",
+      "resolutionFavorFilerDesc": "Resolution decided in favour of the party who filed the dispute",
+      "resolutionFavorRespondent": "In Favour of Respondent",
+      "resolutionFavorRespondentDesc": "Resolution decided in favour of the responding party",
+      "resolutionWithdrawn": "Withdrawn",
+      "resolutionWithdrawnDesc": "The filer has withdrawn the dispute",
+      "resolutionDismissed": "Dismissed",
+      "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
+      "selectedType": "Selected: {{label}}"
+    }
   },
   "packages": {
     "title": "Správa zásielok",
@@ -605,6 +698,99 @@
       "requiredToast": {
         "title": "Vyžaduje sa dvojfaktorové potvrdenie",
         "message": "Pre pokračovanie potvrďte v autentifikačnej aplikácii."
+      }
+    }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "História spustení plánu",
+      "scheduleDetails": "Podrobnosti plánu",
+      "executionHistory": "História spustení",
+      "executionCount": "{{filtered}} z {{total}} spustení",
+      "backToSchedules": "Späť na plány",
+      "frequency": {
+        "label": "Frekvencia",
+        "daily": "Denne",
+        "weekly": "Týždenne",
+        "monthly": "Mesačne",
+        "quarterly": "Štvrťročne",
+        "yearly": "Ročne"
+      },
+      "format": "Formát",
+      "statusLabel": "Stav",
+      "active": "Aktívny",
+      "inactive": "Neaktívny",
+      "recipients": "Príjemcovia",
+      "lastRun": "Posledné spustenie",
+      "nextRun": "Ďalšie spustenie",
+      "status": {
+        "pending": "Čaká",
+        "running": "Beží",
+        "completed": "Dokončené",
+        "failed": "Zlyhalo",
+        "cancelled": "Zrušené",
+        "skipped": "Preskočené"
+      },
+      "colStatus": "Stav",
+      "colStartedAt": "Začaté",
+      "colDuration": "Trvanie",
+      "colFile": "Súbor",
+      "colSize": "Veľkosť",
+      "colActions": "Akcie",
+      "download": "Stiahnuť",
+      "downloadExecution": "Stiahnuť správu zo dňa {{date}}",
+      "retry": "Opakovať",
+      "retrying": "Opakuje sa...",
+      "retryExecution": "Opakovať spustenie zo dňa {{date}}",
+      "noExecutions": "Nenašli sa žiadne spustenia",
+      "clearFilters": "Zrušiť filtre",
+      "loadMore": "Načítať viac",
+      "loading": "Načítava sa...",
+      "errorTitle": "Nepodarilo sa načítať spustenia",
+      "errorMessage": "Skúste to prosím neskôr."
+    },
+    "execution": {
+      "downloadFailed": "Nepodarilo sa stiahnuť správu.",
+      "retryQueued": "Spustenie bolo zaradené do frontu na opakovanie.",
+      "retryFailed": "Nepodarilo sa opakovať spustenie."
+    },
+    "filters": {
+      "allStatuses": "Všetky stavy",
+      "status": "Stav:",
+      "dateFrom": "Od:",
+      "dateTo": "Do:",
+      "clearFilters": "Vymazať filtre",
+      "statusCompleted": "Dokončené",
+      "statusFailed": "Zlyhalo",
+      "statusRunning": "Prebieha",
+      "statusPending": "Čakajúce",
+      "statusCancelled": "Zrušené",
+      "statusSkipped": "Preskočené"
+    }
+  },
+  "leases": {
+    "esign": {
+      "requestSignature": "Žiadosť o podpis",
+      "modal": {
+        "title": "Žiadosť o podpis",
+        "selectSigners": "Vyberte podpisovateľov",
+        "subject": "Predmet (voliťeľné)",
+        "subjectPlaceholder": "napr. Podpis nájomnej zmluvy",
+        "message": "Správa pre podpisovateľov (voliťeľné)",
+        "messagePlaceholder": "Prosím, prečítajte si a podpíšte priloženú nájomnú zmluvu.",
+        "sending": "Odosiela sa…",
+        "send": "Odoslať na podpis"
+      },
+      "role": {
+        "tenant": "Nájomník"
+      },
+      "status": {
+        "pending": "Čaká na podpis",
+        "in_progress": "Prebíha podpisovanie",
+        "completed": "Podpísané",
+        "declined": "Odmietnuté",
+        "expired": "Vypršané",
+        "cancelled": "Zrušené"
       }
     }
   }

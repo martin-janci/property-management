@@ -1,260 +1,398 @@
 /**
- * FileDisputePage - page for filing a new dispute.
- * Epic 77: Dispute Resolution (Story 77.1)
+ * FileDisputePage — dispute filing form (Epic 80, Story 80.2).
+ *
+ * Provides:
+ *  - Dispute type / reason selector (radio-card grid)
+ *  - Subject + description fields (zod-validated via react-hook-form)
+ *  - Evidence uploader (EvidenceUploader component — AC-2)
+ *  - API wiring delegated to the route wrapper in App.tsx (useCreateDispute +
+ *    useUploadEvidence); this component is a pure presentational form.
  */
 
-import { useState } from 'react';
-import { categoryLabels, type DisputeCategory } from '../components/DisputeCard';
+import { zodResolver } from '@hookform/resolvers/zod';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { EvidenceUploader, type PendingEvidence } from '../components/EvidenceUploader';
 
-/** Form data for creating a dispute */
-export interface DisputeFormData {
-  category: DisputeCategory;
-  title: string;
-  description: string;
-  desiredResolution?: string;
-  respondentIds: string[];
-  buildingId?: string;
-  unitId?: string;
+// ============================================
+// Validation schema
+// ============================================
+
+const DISPUTE_TYPES = ['noise', 'damage', 'payment', 'lease', 'maintenance', 'other'] as const;
+export type DisputeTypeValue = (typeof DISPUTE_TYPES)[number];
+
+const disputeSchema = z.object({
+  type: z.enum(DISPUTE_TYPES, { required_error: 'Please select a dispute type.' }),
+  subject: z
+    .string()
+    .min(5, 'Subject must be at least 5 characters.')
+    .max(200, 'Subject must be at most 200 characters.'),
+  description: z
+    .string()
+    .min(30, 'Description must be at least 30 characters.')
+    .max(5000, 'Description must be at most 5000 characters.'),
+  unitId: z.string().min(1, 'Please select a unit.'),
+  respondentId: z.string().optional(),
+});
+
+export type DisputeFormValues = z.infer<typeof disputeSchema>;
+
+// ============================================
+// Type metadata
+// ============================================
+
+const TYPE_META: Record<DisputeTypeValue, { label: string; description: string; icon: string }> = {
+  noise: {
+    label: 'Noise',
+    description: 'Excessive noise, disturbances, quiet hours violations',
+    icon: '🔊',
+  },
+  damage: {
+    label: 'Property Damage',
+    description: 'Physical damage to property, equipment, or common areas',
+    icon: '🔨',
+  },
+  payment: {
+    label: 'Payment / Fees',
+    description: 'Disputed charges, unpaid fees, billing disagreements',
+    icon: '💶',
+  },
+  lease: {
+    label: 'Lease Terms',
+    description: 'Violations or disagreements about lease conditions',
+    icon: '📄',
+  },
+  maintenance: {
+    label: 'Maintenance',
+    description: 'Unresolved maintenance issues, neglect of repairs',
+    icon: '🔧',
+  },
+  other: {
+    label: 'Other',
+    description: 'Any other dispute not covered by the categories above',
+    icon: '⚙️',
+  },
+};
+
+// ============================================
+// Props
+// ============================================
+
+export interface FileDisputeSubmitPayload {
+  values: DisputeFormValues;
+  evidence: PendingEvidence[];
 }
 
 interface FileDisputePageProps {
-  buildings?: Array<{ id: string; name: string }>;
-  units?: Array<{ id: string; designation: string; buildingId: string }>;
-  residents?: Array<{ id: string; name: string; unitId?: string }>;
-  /** Loading state managed by parent - set to true while form is submitting */
+  /** Available units for the selector (fetched by the route wrapper) */
+  units?: Array<{ id: string; label: string }>;
+  /** Available respondents / other residents */
+  respondents?: Array<{ id: string; name: string }>;
+  /** True while the mutation is in flight */
   isSubmitting?: boolean;
-  /** Supports async handlers - parent manages loading state via isSubmitting prop */
-  onSubmit: (data: DisputeFormData) => void | Promise<void>;
-  onCancel: () => void;
+  /** Called when the user submits the complete form */
+  onSubmit: (payload: FileDisputeSubmitPayload) => void | Promise<void>;
 }
 
+// ============================================
+// Component
+// ============================================
+
 export function FileDisputePage({
-  buildings,
-  units,
-  residents,
-  isSubmitting,
+  units = [],
+  respondents = [],
+  isSubmitting = false,
   onSubmit,
-  onCancel,
 }: FileDisputePageProps) {
-  const [category, setCategory] = useState<DisputeCategory>('other');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [desiredResolution, setDesiredResolution] = useState('');
-  const [selectedRespondents, setSelectedRespondents] = useState<string[]>([]);
-  const [buildingId, setBuildingId] = useState<string>('');
-  const [unitId, setUnitId] = useState<string>('');
+  const navigate = useNavigate();
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<DisputeFormValues>({
+    resolver: zodResolver(disputeSchema),
+    defaultValues: {
+      type: undefined,
+      subject: '',
+      description: '',
+      unitId: '',
+      respondentId: '',
+    },
+  });
 
-  const filteredUnits = units?.filter((u) => !buildingId || u.buildingId === buildingId);
-  const filteredResidents = residents?.filter((r) => !unitId || r.unitId === unitId);
+  // Evidence state is managed outside react-hook-form (files are not
+  // serialisable by zod; they are passed alongside the validated values).
+  const [evidence, setEvidence] = React.useState<PendingEvidence[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      category,
-      title,
-      description,
-      desiredResolution: desiredResolution || undefined,
-      respondentIds: selectedRespondents,
-      buildingId: buildingId || undefined,
-      unitId: unitId || undefined,
-    });
-  };
+  const descriptionLength = watch('description')?.length ?? 0;
 
-  const handleRespondentToggle = (id: string) => {
-    setSelectedRespondents((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
-    );
-  };
+  const handleFormSubmit = handleSubmit((values) => {
+    onSubmit({ values, evidence });
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Header */}
       <div className="mb-6">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => navigate('/disputes')}
           className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
         >
-          Back to Disputes
+          ← Back to Disputes
         </button>
         <h1 className="text-2xl font-bold text-gray-900">File a Dispute</h1>
         <p className="text-gray-500 mt-1">
-          Submit a formal dispute for resolution through proper channels.
+          Submit a formal dispute. All fields marked <span className="text-red-500">*</span> are
+          required.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-        {/* Category */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as DisputeCategory)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            {Object.entries(categoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-500 mt-1">
-            Select the category that best describes your dispute.
-          </p>
-        </div>
-
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Brief summary of the dispute"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-            maxLength={200}
+      <form onSubmit={handleFormSubmit} noValidate className="space-y-8">
+        {/* ── Section 1: Dispute type ── */}
+        <section aria-labelledby="type-heading">
+          <h2 id="type-heading" className="text-base font-semibold text-gray-800 mb-3">
+            Dispute type <span className="text-red-500">*</span>
+          </h2>
+          <Controller
+            name="type"
+            control={control}
+            render={({ field }) => (
+              <div
+                role="radiogroup"
+                aria-required="true"
+                aria-label="Dispute type"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+              >
+                {DISPUTE_TYPES.map((t) => {
+                  const meta = TYPE_META[t];
+                  const checked = field.value === t;
+                  return (
+                    <label
+                      key={t}
+                      className={[
+                        'relative flex items-start gap-3 rounded-lg border p-4 cursor-pointer',
+                        'transition-colors duration-150',
+                        checked
+                          ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                          : 'border-gray-200 bg-white hover:border-gray-300',
+                      ].join(' ')}
+                    >
+                      <input
+                        type="radio"
+                        value={t}
+                        checked={checked}
+                        onChange={() => field.onChange(t)}
+                        className="sr-only"
+                        aria-label={meta.label}
+                      />
+                      <span className="text-2xl leading-none" aria-hidden="true">
+                        {meta.icon}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{meta.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{meta.description}</p>
+                      </div>
+                      {checked && (
+                        <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center">
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            fill="currentColor"
+                            viewBox="0 0 8 8"
+                            aria-hidden="true"
+                          >
+                            <circle cx="4" cy="4" r="3" />
+                          </svg>
+                        </div>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           />
-          <p className="text-sm text-gray-500 mt-1">
-            A clear, concise title for your dispute (max 200 characters).
-          </p>
-        </div>
-
-        {/* Location */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Building (optional)
-            </label>
-            <select
-              value={buildingId}
-              onChange={(e) => {
-                setBuildingId(e.target.value);
-                setUnitId('');
-              }}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select building...</option>
-              {buildings?.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Unit (optional)</label>
-            <select
-              value={unitId}
-              onChange={(e) => setUnitId(e.target.value)}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={!buildingId}
-            >
-              <option value="">Select unit...</option>
-              {filteredUnits?.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.designation}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description of Issue *
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the issue in detail. Include dates, times, and specific incidents."
-            rows={6}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            Provide as much detail as possible about the dispute.
-          </p>
-        </div>
-
-        {/* Desired Resolution */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Desired Resolution (optional)
-          </label>
-          <textarea
-            value={desiredResolution}
-            onChange={(e) => setDesiredResolution(e.target.value)}
-            placeholder="What outcome would you like to see?"
-            rows={3}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            Describe how you would like this dispute to be resolved.
-          </p>
-        </div>
-
-        {/* Respondents */}
-        {residents && residents.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Other Party/Parties Involved
-            </label>
-            <div className="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto space-y-2">
-              {filteredResidents?.map((resident) => (
-                <label key={resident.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedRespondents.includes(resident.id)}
-                    onChange={() => handleRespondentToggle(resident.id)}
-                    className="rounded border-gray-300"
-                  />
-                  <span className="text-sm text-gray-700">{resident.name}</span>
-                </label>
-              ))}
-            </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Select the other party or parties involved in this dispute.
+          {errors.type && (
+            <p className="mt-1 text-sm text-red-600" role="alert">
+              {errors.type.message}
             </p>
-          </div>
-        )}
+          )}
+        </section>
 
-        {/* Info Box */}
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-          <h3 className="font-medium text-blue-900 mb-2">What happens next?</h3>
-          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Your dispute will be assigned a reference number</li>
-            <li>The other party will be notified and can respond</li>
-            <li>A manager or mediator will review the case</li>
+        {/* ── Section 2: Location (unit) ── */}
+        <section aria-labelledby="location-heading">
+          <h2 id="location-heading" className="text-base font-semibold text-gray-800 mb-3">
+            Location <span className="text-red-500">*</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="unitId" className="block text-sm font-medium text-gray-700 mb-1">
+                Unit <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="unitId"
+                {...register('unitId')}
+                className={[
+                  'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.unitId ? 'border-red-400' : 'border-gray-300',
+                ].join(' ')}
+              >
+                <option value="">Select unit…</option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+              {errors.unitId && (
+                <p className="mt-1 text-xs text-red-600" role="alert">
+                  {errors.unitId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Other party (optional) */}
+            {respondents.length > 0 && (
+              <div>
+                <label
+                  htmlFor="respondentId"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Other party (optional)
+                </label>
+                <select
+                  id="respondentId"
+                  {...register('respondentId')}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Not specified</option>
+                  {respondents.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── Section 3: Details ── */}
+        <section aria-labelledby="details-heading">
+          <h2 id="details-heading" className="text-base font-semibold text-gray-800 mb-3">
+            Details
+          </h2>
+          <div className="space-y-4">
+            {/* Subject */}
+            <div>
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                Subject <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="subject"
+                type="text"
+                maxLength={200}
+                placeholder="Brief summary of the dispute"
+                {...register('subject')}
+                aria-describedby={errors.subject ? 'subject-error' : undefined}
+                className={[
+                  'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.subject ? 'border-red-400' : 'border-gray-300',
+                ].join(' ')}
+              />
+              {errors.subject && (
+                <p id="subject-error" className="mt-1 text-xs text-red-600" role="alert">
+                  {errors.subject.message}
+                </p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="description"
+                rows={6}
+                maxLength={5000}
+                placeholder="Describe the dispute in detail. Include dates, times, and specific incidents (minimum 30 characters)."
+                {...register('description')}
+                aria-describedby={errors.description ? 'description-error' : 'description-hint'}
+                className={[
+                  'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                  errors.description ? 'border-red-400' : 'border-gray-300',
+                ].join(' ')}
+              />
+              <div className="mt-1 flex justify-between">
+                {errors.description ? (
+                  <p id="description-error" className="text-xs text-red-600" role="alert">
+                    {errors.description.message}
+                  </p>
+                ) : (
+                  <span id="description-hint" className="text-xs text-gray-400">
+                    Min 30 characters
+                  </span>
+                )}
+                <span className="text-xs text-gray-400">{descriptionLength} / 5000</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Section 4: Evidence ── */}
+        <section aria-labelledby="evidence-heading">
+          <h2 id="evidence-heading" className="text-base font-semibold text-gray-800 mb-1">
+            Evidence (optional)
+          </h2>
+          <p className="text-sm text-gray-500 mb-3">
+            Attach photos, documents, or recordings to support your dispute. Files are uploaded
+            after the dispute is created.
+          </p>
+          <EvidenceUploader files={evidence} onChange={setEvidence} disabled={isSubmitting} />
+        </section>
+
+        {/* ── Info box ── */}
+        <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
+          <h3 className="text-sm font-semibold text-blue-900 mb-1">What happens next?</h3>
+          <ol className="text-sm text-blue-800 list-decimal list-inside space-y-0.5">
+            <li>Your dispute receives a reference number</li>
+            <li>The other party is notified and can respond</li>
+            <li>A manager or mediator reviews the case</li>
             <li>Mediation sessions may be scheduled if needed</li>
             <li>A resolution will be proposed and tracked</li>
           </ol>
         </div>
 
-        {/* Evidence Notice */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">
-            You can add supporting evidence (photos, documents) after filing the dispute.
-          </p>
-        </div>
-
-        {/* Actions */}
+        {/* ── Actions ── */}
         <div className="flex justify-end gap-3 pt-4 border-t">
           <button
             type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            onClick={() => navigate('/disputes')}
             disabled={isSubmitting}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={!title.trim() || !description.trim() || isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            disabled={isSubmitting}
+            className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Filing...' : 'File Dispute'}
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <span
+                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                  aria-hidden="true"
+                />
+                Filing…
+              </span>
+            ) : (
+              'File Dispute'
+            )}
           </button>
         </div>
       </form>

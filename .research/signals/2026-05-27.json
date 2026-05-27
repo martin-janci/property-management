@@ -1,0 +1,204 @@
+{
+  "date": "2026-05-27",
+  "run_mode": "incremental",
+  "notes": [
+    "Near-quiet run: one merged PR this run (#555 gap-80-3 mediation UI), no new/updated issues, no reverts, no closed-unmerged PRs, no new FIXMEs in merged code.",
+    "Cursor edge case: PR #555 merged 2026-05-27T00:12Z (after last run) but its number (555) is below last_pr_seen (562) because it merged late. The number-based merged-PR filter would skip it; detected via mergedAt > SINCE_ISO. Processed by mergedAt. last_pr_seen stays 562 (max number); #555 will not re-fire next run (number<562 and mergedAt<next window)."
+  ],
+  "signals": [
+    {
+      "id": "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+      "type": "repeated-churn",
+      "source": "PR #555",
+      "score_delta": 0,
+      "evidence": "App.tsx +122 lines this run (PR #555 mediation workspace replaced the DisputeMediationRoute stub with MediationWorkspacePage + callback wiring); hotspot runs_seen=3. Cumulative re-emit — score NOT re-applied (already counted on refactor-app-tsx-route-coupling).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #555",
+      "score_delta": 0,
+      "evidence": "New 666-line file created by PR #555 (mediation workspace). Top raw churn this run, but a brand-new, tested feature file — instability, not phantom refactor work. Recorded in hotspot_history (runs_seen=1) for future repeated-churn detection; not scored and no backlog item created (same handling as dep-update-noise).",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #555",
+      "score_delta": 0,
+      "evidence": "New 185-line file created by PR #555. New-feature file — recorded in hotspot_history (runs_seen=1) for future churn detection, not scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
+      "type": "churn-hotspot",
+      "source": "PR #555",
+      "score_delta": 0,
+      "evidence": "New 164-line file created by PR #555. New-feature file — recorded in hotspot_history (runs_seen=1) for future churn detection, not scored.",
+      "confidence": "high",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-page-no-error-state",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:313",
+      "score_delta": 2,
+      "evidence": "useDispute exposes isError/error but MediationWorkspacePage destructures only {data,isLoading} (line 313) and guards only loading (line 369); on 404/403/network failure the page falls through to render referenceNumber=disputeId, status 'unknown', empty parties, and a dead resolve tab — no error message or retry UI. Confirmed by reading the file.",
+      "confidence": "high",
+      "candidate_vector": "bug"
+    },
+    {
+      "id": "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:382",
+      "score_delta": 1,
+      "evidence": "referenceNumber = `DSP-${dispute.id.toUpperCase()}` uppercases the full UUID, rendering an unwieldy human-facing reference (e.g. DSP-3F2A1B9C-...) instead of a short code. Confirmed at line 382.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    },
+    {
+      "id": "code-review-ppt-web-ui-duplicated-spinner-markup",
+      "type": "code-review-finding",
+      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:91",
+      "score_delta": 1,
+      "evidence": "Identical role=status animate-spin spinner block duplicated at MediationWorkspacePage.tsx:91 and :375 and MediationChatThread.tsx:58; no shared Spinner in ui-kit. Confirmed via grep.",
+      "confidence": "medium",
+      "candidate_vector": "refactor"
+    }
+  ],
+  "phase_1_5": {
+    "segment_reviewed": "ppt-web-ui",
+    "selection_reason": "churn-aligned (all PR #555 churn files live under frontend/apps/ppt-web/src/features/disputes/{pages,components}); 0 open code-review-finding items so not saturated",
+    "experts": [
+      "frontend",
+      "completeness"
+    ],
+    "findings": 3
+  },
+  "auto_fix_actions": [],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f brief && head -1 matches",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq slurpfile prev vs staged",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "unique backlog ids",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative double-count",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "cap<=8 + decay (no open item >14d)",
+      "observed": "max=6, 0 decay-due",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "new plans have adversarial annotation",
+      "observed": "no new plans this run",
+      "expected": "n/a"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "<=2 new plans, gates",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "only .research/ staged",
+      "observed": "0 non-research",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "no secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md byte-identity",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "placeholder rot grep on brief",
+      "observed": "no match",
+      "expected": "no match"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans present in plans/ or _archive/",
+      "observed": "p0-10 + 6 archived intact",
+      "expected": "true"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive only grows",
+      "observed": "6>=6",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md byte-identity",
+      "observed": "diff exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto_fix caps + idempotency",
+      "observed": "0 actions",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "management artifacts valid",
+      "observed": "action-list+risks parse, project-state non-empty, pm_next=5",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "no telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

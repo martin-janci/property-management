@@ -400,6 +400,9 @@ impl OAuthRepository {
     }
 
     /// Find refresh token by hash.
+    ///
+    /// Production lookup — filters out revoked tokens so a revoked refresh
+    /// token cannot be exchanged for new access tokens (RFC 9700).
     pub async fn find_refresh_token_by_hash(
         &self,
         token_hash: &str,
@@ -407,7 +410,32 @@ impl OAuthRepository {
         let token = sqlx::query_as::<_, OAuthRefreshToken>(
             r#"
             SELECT * FROM oauth_refresh_tokens
-            WHERE token_hash = $1 AND revoked_at IS NULL
+            WHERE token_hash = $1
+              AND revoked_at IS NULL
+            "#,
+        )
+        .bind(token_hash)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(token)
+    }
+
+    /// Find refresh token by hash, INCLUDING revoked tokens.
+    ///
+    /// Used exclusively by the family-reuse detection path in
+    /// `refresh_tokens`: if a caller presents a token we previously revoked,
+    /// we must still see it so we can flag replay and burn the entire token
+    /// family. Do not use this in any other code path — it bypasses the
+    /// revoked filter that protects the production grant flow.
+    pub async fn find_refresh_token_by_hash_including_revoked(
+        &self,
+        token_hash: &str,
+    ) -> Result<Option<OAuthRefreshToken>, SqlxError> {
+        let token = sqlx::query_as::<_, OAuthRefreshToken>(
+            r#"
+            SELECT * FROM oauth_refresh_tokens
+            WHERE token_hash = $1
             "#,
         )
         .bind(token_hash)

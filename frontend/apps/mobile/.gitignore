@@ -1,0 +1,25 @@
+# Epic 85 - Story 85.2: Android Release Build Configuration
+#
+# Secrets that must NEVER be committed to git.
+# These are managed via EAS secrets / secure vaults in CI.
+
+# Android keystore file -- losing this means you can't update a published app.
+# Back up securely (1Password, Bitwarden, etc.) before using in production.
+android-keystore/
+*.keystore
+*.jks
+
+# Google Services JSON -- contains Firebase API keys.
+# Template (with placeholder values) is tracked as google-services.json.template.
+google-services.json
+
+# Google Play service account JSON -- grants publish access to Play Console.
+store-metadata/android/google-play-service-account.json
+
+# iOS signing secrets (also excluded here for completeness)
+*.p12
+*.mobileprovision
+
+# Local env overrides (never commit)
+.env.local
+.env.*.local

@@ -22,8 +22,8 @@ use db::models::{
 };
 use db::repositories::{
     ActiveAnnouncement, FeatureFlagWithCount, FeatureFlagWithOverrides, HealthDashboard,
-    MetricHistory, PlatformStats, ResolvedFeatureFlag, SupportActivityLog, SupportUserInfo,
-    SupportUserMembership, SupportUserSession,
+    MetricHistory, OnboardingTour, PlatformStats, ResolvedFeatureFlag, SupportActivityLog,
+    SupportUserInfo, SupportUserMembership, SupportUserSession,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -182,6 +182,11 @@ pub fn router() -> Router<AppState> {
         .route(
             "/support/users/{id}/activity",
             get(get_user_activity).layer(require_capability(Capability::AuditRead)),
+        )
+        // Onboarding config (Story 10B.6)
+        .route(
+            "/onboarding-config",
+            get(get_onboarding_config).layer(require_capability(Capability::SiteSettingsRead)),
         )
         // Agency provisioning (Phase 1: Tenant Resolution).
         // Merged in from `agency_provisioning` so the new
@@ -2759,4 +2764,66 @@ pub async fn get_user_activity(
         })?;
 
     Ok(Json(activity))
+}
+
+// ==================== Onboarding Config Handler (Story 10B.6) ====================
+
+/// Response for the onboarding config endpoint.
+///
+/// Returns all onboarding tour step definitions so that the platform admin
+/// can review what tours and steps are configured across the platform.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct OnboardingConfigResponse {
+    /// All tour definitions (active and inactive).
+    pub tours: Vec<OnboardingTour>,
+    /// Total number of tours.
+    pub total: usize,
+}
+
+/// Get onboarding tour configuration (platform admin view).
+///
+/// Returns all onboarding tour definitions including step definitions,
+/// target roles, and active status. Useful for platform admins to audit
+/// the onboarding experience and ensure tours are correctly configured.
+///
+/// User progress is tracked in the `user_onboarding_progress` table
+/// which is persisted per-user per-tour via the onboarding repository.
+#[utoipa::path(
+    get,
+    path = "/api/v1/platform-admin/onboarding-config",
+    responses(
+        (status = 200, description = "Onboarding configuration retrieved", body = OnboardingConfigResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - requires SuperAdmin role"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Platform Admin - Onboarding"
+)]
+pub async fn get_onboarding_config(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<OnboardingConfigResponse>, (StatusCode, Json<ErrorResponse>)> {
+    extract_super_admin_token(&headers, &state)?;
+
+    let tours = state.onboarding_repo.list_all_tours().await.map_err(|e| {
+        tracing::error!(error = %e, "Failed to list onboarding tours");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "DATABASE_ERROR",
+                "Failed to retrieve onboarding configuration",
+            )),
+        )
+    })?;
+
+    let total = tours.len();
+
+    tracing::info!(
+        total_tours = total,
+        "Platform admin retrieved onboarding config"
+    );
+
+    Ok(Json(OnboardingConfigResponse { tours, total }))
 }

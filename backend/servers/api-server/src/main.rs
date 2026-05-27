@@ -11,7 +11,7 @@
 // Allow dead code for stub implementations during development
 #![allow(dead_code)]
 
-use axum::{http, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http, routing::get, Router};
 use http::HeaderValue;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -19,14 +19,15 @@ use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-mod handlers;
 mod observability;
 mod routes;
 mod services;
 mod state;
 
 use db::repositories::AnnouncementRepository;
-use services::{EmailService, JwtService, Scheduler, SchedulerConfig};
+use services::{
+    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, Scheduler, SchedulerConfig,
+};
 use state::AppState;
 
 // Phase 5 — admin extension wiring helpers (B7). Both `main.rs` (production
@@ -347,6 +348,33 @@ async fn main() -> anyhow::Result<()> {
 
     let jwt_service = JwtService::new(&jwt_secret).expect("Failed to create JWT service");
 
+    // SECURITY (#527 findings #1 & #4): Validate e-signature secrets at
+    // startup so the binary refuses to boot in production without them,
+    // instead of falling back to a hardcoded dev token secret or silently
+    // disabling the webhook auth check on first use. Mirrors the JWT_SECRET
+    // handling above.
+    if let Err(e) = integrations::LightweightProvider::from_env() {
+        panic!(
+            "E-signature config invalid: {e}. \
+             Set RUST_ENV=development to use dev defaults."
+        );
+    }
+    let webhook_secret_set = std::env::var("ESIGN_WEBHOOK_SECRET")
+        .map(|s| !s.is_empty())
+        .unwrap_or(false);
+    if !webhook_secret_set {
+        if is_development {
+            tracing::warn!(
+                "ESIGN_WEBHOOK_SECRET not set, webhook receiver will reject all events (DEVELOPMENT MODE ONLY)"
+            );
+        } else {
+            panic!(
+                "ESIGN_WEBHOOK_SECRET environment variable is required (got missing or empty). \
+                 Set RUST_ENV=development to use dev defaults."
+            );
+        }
+    }
+
     // Phase 1: Build the host-resolution config + shared tenant-resolution
     // cache ONCE, then clone the `Arc` into both the middleware config and the
     // AppState so domain-management handlers can invalidate cache entries via
@@ -360,10 +388,11 @@ async fn main() -> anyhow::Result<()> {
     let tenant_resolution_cache = host_tenant_config.cache.clone();
     let tenant_rate_limiters = host_tenant_config.rate_limiters.clone();
 
-    // Create application state
+    // Create application state. Clone the EmailService into AppState so the
+    // scheduler (built below) can also receive it via `.with_email_service`.
     let state = AppState::new(
         db_pool.clone(),
-        email_service,
+        email_service.clone(),
         jwt_service,
         tenant_resolution_cache,
         tenant_rate_limiters,
@@ -391,11 +420,33 @@ async fn main() -> anyhow::Result<()> {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(7),
+        signature_reminder_days_before: std::env::var("SIGNATURE_REMINDER_DAYS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(3),
     };
     let scheduler_pool = state.db.clone();
     let announcement_repo = AnnouncementRepository::new(scheduler_pool.clone());
-    let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config);
+    // SECURITY (#527 finding #9): Wire the real EmailService into the
+    // scheduler. Without this, `Scheduler::new` defaulted to
+    // `EmailService::development()` (enabled=false, base_url=localhost:3000),
+    // which silently logged signature reminders instead of sending them and
+    // baked localhost links into any URL the scheduler generated.
+    let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config)
+        .with_email_service(email_service.clone());
     let _scheduler_handle = scheduler.start();
+
+    // Epic 8A-3: start the push notification fanout background worker.
+    // The worker fans out pending push notifications to FCM/APNs device tokens.
+    // If FCM credentials are not configured it runs in heartbeat-only mode and
+    // does NOT crash the server.
+    let push_fanout_config = PushFanoutConfig::from_env();
+    let push_fanout_worker = PushFanoutWorker::new(
+        db_pool.clone(),
+        state.pubsub_service.clone(),
+        push_fanout_config,
+    );
+    let _push_fanout_handle = push_fanout_worker.start();
 
     // Phase 5 — admin dependency injection (B7).
     //
@@ -452,6 +503,11 @@ async fn main() -> anyhow::Result<()> {
         .nest(
             "/api/v1/users/me/notification-preferences",
             routes::notification_preferences::router(),
+        )
+        // WebSocket realtime notification sync (Epic 8A, Story 8A.3)
+        .nest(
+            "/api/v1/users/me/notifications",
+            routes::ws_notifications::router(),
         )
         // Granular notification preferences routes (Epic 8B)
         .nest(
@@ -687,6 +743,13 @@ async fn main() -> anyhow::Result<()> {
     // `lib.rs::create_router` exactly via the shared `attach_admin_extensions`
     // helper so production and tests cannot drift.
     let app = attach_admin_extensions(app, &admin_ext)
+        // P0-15: global request body cap. Default Axum limit is 2 MiB which
+        // is fine for JSON but exposes every multipart handler to memory
+        // abuse when the handler itself forgets to limit. Upload routes
+        // that legitimately need more (restore, migration import) raise
+        // this per-route via `DefaultBodyLimit::max(...)` and stream
+        // chunks instead of buffering full payloads. Cap here: 16 MiB.
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
         // Middleware
         .layer(TraceLayer::new_for_http())
         // Phase 1: Host-resolution (tenant-resolution) middleware. Runs FIRST

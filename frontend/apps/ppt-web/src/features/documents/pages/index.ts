@@ -6,3 +6,4 @@ export { DocumentDetail } from './DocumentDetail';
 export { DocumentDetailPage } from './DocumentDetailPage';
 export { DocumentsPage } from './DocumentsPage';
 export { DocumentUploadPage } from './DocumentUploadPage';
+export { FolderTreePage } from './FolderTreePage';

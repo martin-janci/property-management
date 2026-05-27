@@ -48,10 +48,7 @@ fun AgencyInquiriesScreen(
     onInquiryClick: (id: String) -> Unit,
 ) {
     var statusFilter by remember { mutableStateOf<String?>(null) }
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 AgencyInquiriesHeader(onBackClick = onBackClick)
@@ -90,7 +87,7 @@ fun AgencyInquiriesScreen(
                 }
             }
             ExtendedFloatingActionButton(
-                onClick = { /* batch reply */},
+                onClick = { /* batch reply */ },
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 24.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
@@ -111,7 +108,7 @@ private fun AgencyInquiriesHeader(onBackClick: () -> Unit) {
         IconButton(onClick = onBackClick) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.cd_back)
+                contentDescription = stringResource(R.string.cd_back),
             )
         }
         Text(
@@ -121,7 +118,7 @@ private fun AgencyInquiriesHeader(onBackClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        IconButton(onClick = { /* search */}) {
+        IconButton(onClick = { /* search */ }) {
             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
         }
     }
@@ -160,23 +157,14 @@ private fun StatusChips(
 }
 
 @Composable
-private fun FilterChipPill(
-    label: String,
-    count: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun FilterChipPill(label: String, count: Int, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
         border =
             if (selected) null
-            else
-                androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outline,
-                ),
+            else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
         Row(modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)) {
             Text(
@@ -207,7 +195,7 @@ private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
         modifier =
             Modifier.fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -231,7 +219,7 @@ private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
                                     colors = listOf(Brand800, Brand500),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, size.height),
-                                ),
+                                )
                         )
                     },
                 contentAlignment = Alignment.Center,
@@ -281,10 +269,7 @@ private fun InquiryRow(inquiry: AgencyInquiry, onClick: () -> Unit) {
 
 @Composable
 private fun StatusPill(label: String) {
-    Surface(
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
+    Surface(shape = RoundedCornerShape(999.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
         Text(
             text = label.uppercase(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),

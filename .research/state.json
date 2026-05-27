@@ -1,42 +1,185 @@
 {
   "version": 3,
-  "last_run_iso": "2026-05-20T10:53:33Z",
-  "last_run_ms": 1779274413000,
-  "last_pr_seen": 343,
-  "last_issue_seen": 160,
-  "last_commit_sha": "fc8af0a584f18233ee5115ae1b64f0ab9f87c863",
+  "_pointer": {
+    "dispatcher_state_at": ".research/management/assignments.json (on planning branch)",
+    "routine_state_at": ".research/state.json (this file, on dev/main)",
+    "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
+  },
+  "last_run_iso": "2026-05-27T03:15:46Z",
+  "last_run_ms": 600000,
+  "last_pr_seen": 562,
+  "last_issue_seen": 528,
+  "last_commit_sha": "eae8a53707bc83acccfa1ea5f686d5bbf33eafac",
+  "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12977
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4327
     },
     "backend/servers/api-server/src/routes/organizations.rs": {
-      "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 12060
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 4018
     },
     "backend/servers/api-server/src/routes/documents.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-23",
+      "recent_churn": 3553
+    },
+    "backend/servers/api-server/src/routes/ai.rs": {
       "runs_seen": 1,
-      "last_seen": "2026-05-20",
-      "recent_churn": 10659
+      "last_seen": "2026-05-25",
+      "recent_churn": 3142
+    },
+    "backend/servers/api-server/src/routes/platform_admin.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-25",
+      "recent_churn": 2762
+    },
+    "backend/servers/api-server/src/routes/announcements.rs": {
+      "runs_seen": 2,
+      "last_seen": "2026-05-26",
+      "recent_churn": 167
+    },
+    "frontend/apps/ppt-web/src/App.tsx": {
+      "runs_seen": 3,
+      "last_seen": "2026-05-27",
+      "recent_churn": 122
+    },
+    "frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 139
+    },
+    "backend/servers/api-server/src/routes/integrations/install.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 877
+    },
+    "frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 869
+    },
+    "backend/servers/api-server/src/services/push_fanout.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-26",
+      "recent_churn": 689
+    },
+    "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 666
+    },
+    "frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 185
+    },
+    "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 164
     }
   },
   "seen_signals": [
-    "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
-    "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/ai.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/announcements.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/documents.rs",
-    "unchecked-todo-rls-migration-residual",
+    "churn-hotspot-backend/servers/api-server/src/routes/integrations.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/integrations/install.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
+    "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
+    "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
+    "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
+    "closed-not-merged-pr-507",
+    "closed-not-merged-pr-512",
+    "code-review-api-core-dispute-fsm-no-tests",
+    "code-review-api-core-equipment-idor",
+    "code-review-api-core-ssrf-outbound-fetch",
+    "code-review-api-core-voice-device-idor",
+    "code-review-api-handlers-dead-dup-auth-bldg-handlers",
+    "code-review-mobile-native-kmp-ios-deeplink-sso",
+    "code-review-ppt-web-core-hardcoded-dispute-strings",
+    "code-review-ppt-web-ui-announcer-stale-msg",
+    "code-review-ppt-web-ui-duplicated-spinner-markup",
+    "code-review-ppt-web-ui-mediation-page-no-error-state",
+    "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
+    "code-review-ppt-web-ui-role-gate-fail-open",
+    "code-review-ppt-web-ui-untranslated-strings",
+    "code-review-reality-server-inquiry-read-idor",
+    "code-review-reality-server-realtors-mark-inquiry-read-idor",
+    "dep-update-noise-2026-05-20",
+    "dep-update-noise-2026-05-23",
+    "fixme-in-merged-code-pr-515-push-fanout-rs",
+    "fixme-in-merged-code-pr-538-webhook-rs",
+    "hotfix-no-test-pr-497",
+    "hotfix-no-test-pr-532",
+    "hotfix-no-test-pr-553",
+    "lag-warning-2026-05-23",
+    "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/integrations.rs",
+    "repeated-churn-backend/servers/api-server/src/routes/organizations.rs",
+    "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
+    "screen-map-drift-pr-460-reality",
+    "screen-map-drift-pr-464-ppt",
+    "screen-map-drift-pr-547-ppt",
+    "screen-map-drift-pr-549-ppt",
     "unchecked-todo-integration-marketplace-stubs",
     "unchecked-todo-portfolio-dashboard-stubs",
-    "dep-update-noise-2026-05-20"
+    "unchecked-todo-pr-476",
+    "unchecked-todo-pr-497",
+    "unchecked-todo-rls-migration-residual"
   ],
   "auto_fix_history": {},
+  "review_cursor": {
+    "api-handlers": "2026-05-23",
+    "api-core": "2026-05-25",
+    "reality-server": "2026-05-26",
+    "ppt-web-ui": "2026-05-27",
+    "ppt-web-core": "2026-05-25",
+    "reality-web": null,
+    "mobile-rn": null,
+    "mobile-native-kmp": "2026-05-26"
+  },
   "stats": {
-    "runs": 1,
-    "vectors_created": 6,
-    "plans_created": 0,
+    "runs": 10,
+    "vectors_created": 29,
+    "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0
+  },
+  "pm_cursor": {
+    "rotation": [
+      "pm-tech-lead",
+      "pm-backend",
+      "pm-frontend",
+      "pm-qa",
+      "pm-devops",
+      "pm-security",
+      "pm-data",
+      "pm-integration"
+    ],
+    "next_index": 5,
+    "role_last_run": {
+      "pm-tech-lead": "2026-05-23",
+      "pm-backend": "2026-05-24",
+      "pm-frontend": "2026-05-25",
+      "pm-qa": "2026-05-25",
+      "pm-devops": "2026-05-27",
+      "pm-security": null,
+      "pm-data": null,
+      "pm-integration": null
+    }
+  },
+  "coverage_cursor": {
+    "next_index": 4
   }
 }
