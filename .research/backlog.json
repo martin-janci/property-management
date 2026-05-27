@@ -733,21 +733,23 @@
       "title": "Screen-map drift: report execution-history route (PR #547) added without a ppt screen doc",
       "vector": "test-gap",
       "score": 2,
-      "status": "open",
+      "status": "done",
       "confidence": "medium",
       "sources": [
         "PR #547",
-        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx"
+        "frontend/apps/ppt-web/src/routes/lazyRoutes.tsx",
+        "PR #623"
       ],
       "evidence": [
         "PR #547 added the report execution-history table to ScheduleDetailPage and wired it via frontend/apps/ppt-web/src/{App.tsx,routes/lazyRoutes.tsx} without touching any docs/screens/ppt/*.md",
-        "best-effort drift heuristic (route-basename match) — review candidate, may already be covered by an existing reports screen doc under a different slug"
+        "best-effort drift heuristic (route-basename match) — review candidate, may already be covered by an existing reports screen doc under a different slug",
+        "resolved: docs/screens/ppt/reports.md was updated this run alongside the report schedule editor (PR #623) + exec-history API (PR #611) — the reports screen doc now covers the execution-history surface; drift heuristic cleared"
       ],
       "files": [
         "frontend/apps/ppt-web/src/features/reports/pages/ScheduleDetailPage.tsx"
       ],
       "created_at": "2026-05-26",
-      "updated_at": "2026-05-26",
+      "updated_at": "2026-05-27",
       "plan": null
     },
     {
@@ -809,6 +811,136 @@
       "files": [
         "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
         "frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "test-gap-booking-push-validation-untested",
+      "title": "Booking push availability/rates endpoints add batch-cap + non-negative guards with no regression test",
+      "vector": "test-gap",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #607",
+        "issue #572"
+      ],
+      "evidence": [
+        "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 and available_count<0 guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (BATCH_TOO_LARGE / INVALID_AVAILABLE_COUNT 400s) with no test file in the diff",
+        "classic hotfix-no-test: input validation on two reachable Airbnb push endpoints shipped without a regression test that would 400 on >500 updates or a negative count",
+        "test plan: a backend integration test posting 501 updates -> 400 BATCH_TOO_LARGE and one update with available_count=-1 -> 400 INVALID_AVAILABLE_COUNT, mirroring backend/servers/api-server/tests/document_upload_tests.rs structure"
+      ],
+      "files": [
+        "backend/servers/api-server/src/routes/integrations/install.rs"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "bug-report-schedule-update-no-sql",
+      "title": "ReportSchedule.update_schedule stores cron in `time` workaround; documented UPDATE never runs (missing cron_expression column)",
+      "vector": "bug",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #611",
+        "issue #616"
+      ],
+      "evidence": [
+        "backend/crates/db/src/repositories/report_schedule.rs:299 — update_schedule carries a `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describing the SQL it should run, but the body instead stores the cron string in `current.time` because the dedicated cron_expression column does not exist yet",
+        "ties to open issue #616 (migration number comment wrong; cron_expression column missing from schema; no sqlx prepare --check) — surfaced by post-merge review of PR #611",
+        "real fix is a SQLx migration adding report_schedules.cron_expression + rewriting update_schedule to the documented UPDATE; until then cron edits round-trip through the overloaded `time` field"
+      ],
+      "files": [
+        "backend/crates/db/src/repositories/report_schedule.rs"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "dx-documentsbrowse-folder-preselect",
+      "title": "DocumentsBrowse MoveFolderDialog cannot pre-select current folder (DocumentSummary lacks folder_id)",
+      "vector": "dx",
+      "confidence": "high",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "PR #623"
+      ],
+      "evidence": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx:511 — `currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */` hardwires null, so the move-folder dialog never pre-selects the document's current folder",
+        "blocked on the DocumentSummary API type exposing folder_id; minor UX gap on the new MoveFolderDialog surface"
+      ],
+      "files": [
+        "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "bug-mobile-voting-unsafe-cast",
+      "title": "Mobile VotingScreen double-casts API result across boundary — render-time crash on unexpected shape",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 2,
+      "status": "open",
+      "sources": [
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:108 — `data as unknown as ApiVoteSummary[]` double-casts the typed useApiQuery<ApiVoteListResponse> result; if the backend returns any shape that is neither an array nor {votes:[...]}, the subsequent apiVotes.map(toUiVote) at :110 throws an unhandled render-time crash with no isError guard on that path"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "bug-mobile-voting-hardcoded-locale",
+      "title": "Mobile VotingScreen hardcodes en-US in toLocaleDateString — vote dates never localize",
+      "vector": "bug",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes the en-US locale so vote dates never localize for sk/cs/de users; sibling AnnouncementDetailScreen.tsx:119 correctly passes i18n.language for the same call"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
+      ],
+      "created_at": "2026-05-27",
+      "updated_at": "2026-05-27",
+      "plan": null
+    },
+    {
+      "id": "test-gap-mobile-voting-transforms",
+      "title": "Mobile VotingScreen pure transforms toUiStatus/toUiVote have no tests",
+      "vector": "test-gap",
+      "confidence": "medium",
+      "score": 1,
+      "status": "open",
+      "sources": [
+        "code-review mobile-rn 2026-05-27",
+        "rotating-expert-review"
+      ],
+      "evidence": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:48,64 — exported pure transforms toUiStatus/toUiVote (status-string mapping + null-coalescing of participation/eligible counts) have no test file anywhere in the repo; the mobile app has only 3 test files total (LanguageSwitcher + 2 integration), none covering voting or announcements logic"
+      ],
+      "files": [
+        "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx"
       ],
       "created_at": "2026-05-27",
       "updated_at": "2026-05-27",

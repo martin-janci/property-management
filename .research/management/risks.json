@@ -1,9 +1,9 @@
 {
-  "generated": "2026-05-27T04:05:00Z",
+  "generated": "2026-05-27T23:40:00Z",
   "items": [
     {
       "id": "pm-backend-ai-equipment-cross-tenant-idor",
-      "risk": "Cross-tenant IDOR cluster in ai.rs equipment endpoints: update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), and update_maintenance (ai.rs:1192) all bind `_principal: RequestPrincipal` and discard it, then call equipment_repo.update/delete/update_maintenance with only the Path id — no tenant scoping. An authenticated user in any org can DELETE FROM equipment WHERE id=$1 / mutate any other org's equipment + maintenance rows. List/predictions siblings DO call require_tenant_id, confirming the omission is a bug not a design choice.",
+      "risk": "Cross-tenant IDOR cluster in ai.rs equipment endpoints: update_equipment (ai.rs:1113), delete_equipment (ai.rs:1131), and update_maintenance (ai.rs:1192) all bind `_principal: RequestPrincipal` and discard it, then call equipment_repo.update/delete/update_maintenance with only the Path id \u2014 no tenant scoping. An authenticated user in any org can DELETE FROM equipment WHERE id=$1 / mutate any other org's equipment + maintenance rows. List/predictions siblings DO call require_tenant_id, confirming the omission is a bug not a design choice.",
       "probability": "high",
       "impact": "high",
       "mitigation": "Thread the principal's tenant_id into equipment_repo.update/delete/update_maintenance and add `AND tenant_id = $tenant` to the WHERE clauses (or use the RLS connection so the policy enforces scope). Add a cross-tenant regression test asserting 404/forbidden for foreign ids.",
@@ -13,10 +13,10 @@
     },
     {
       "id": "pm-frontend-epic6-announcement-web-ui-in-draft",
-      "risk": "Epic 6 announcement web UI (viewing/ack 6-2, comments 6-3, pin 6-4) is split across three draft PRs (#474/#475/#479) that have not merged. Backend + notification pipeline (PR #463) and WebSocket sync (PR #472) are now live, so the only thing gating story closure is the web UI landing — but a stalled three-PR draft cluster is a review-queue risk that can leave 6-2/6-3/6-4 stuck at partial.",
+      "risk": "Epic 6 announcement web UI (viewing/ack 6-2, comments 6-3, pin 6-4) is split across three draft PRs (#474/#475/#479) that have not merged. Backend + notification pipeline (PR #463) and WebSocket sync (PR #472) are now live, so the only thing gating story closure is the web UI landing \u2014 but a stalled three-PR draft cluster is a review-queue risk that can leave 6-2/6-3/6-4 stuck at partial.",
       "probability": "medium",
       "impact": "medium",
-      "mitigation": "Sequence the three drafts (#474 viewing → #475 comments → #479 pin) so they merge in dependency order without conflicting on the shared AnnouncementsPage; promote out of draft once apiStatus wiring is verified.",
+      "mitigation": "Sequence the three drafts (#474 viewing \u2192 #475 comments \u2192 #479 pin) so they merge in dependency order without conflicting on the shared AnnouncementsPage; promote out of draft once apiStatus wiring is verified.",
       "owner_role": "pm-frontend",
       "trigger": null,
       "status": "open"
@@ -33,7 +33,7 @@
     },
     {
       "id": "pm-tech-lead-ai-platform-announcements-route-monoliths",
-      "risk": "Three route monoliths on hot paths this run: ai.rs (3142 lines), platform_admin.rs (2762), announcements.rs (2722). ai.rs already harbors the cross-tenant IDOR cluster above — exactly the failure mode predicted for oversized route files (a handler silently skips the tenant scope and reviewers miss it in a 3k-line file). Same risk surface as the integrations/organizations/documents.rs split already actioned.",
+      "risk": "Three route monoliths on hot paths this run: ai.rs (3142 lines), platform_admin.rs (2762), announcements.rs (2722). ai.rs already harbors the cross-tenant IDOR cluster above \u2014 exactly the failure mode predicted for oversized route files (a handler silently skips the tenant scope and reviewers miss it in a 3k-line file). Same risk surface as the integrations/organizations/documents.rs split already actioned.",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Add ai.rs/platform_admin.rs/announcements.rs to the module-split backlog; add a CI grep/clippy lint that flags handlers binding `_principal` (discarded principal) on mutating routes.",
@@ -53,7 +53,7 @@
     },
     {
       "id": "pm-backend-webhook-signature-ssrf",
-      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issued requests to unvalidated user/provider URLs — SSRF to 169.254.169.254 / internal services.",
+      "risk": "Two outbound-request sinks (signatures.rs:628 signed_url fetch, integrations.rs:2743 webhook-test POST) issued requests to unvalidated user/provider URLs \u2014 SSRF to 169.254.169.254 / internal services.",
       "probability": "low",
       "impact": "high",
       "mitigation": "validate_external_url extracted to shared module and applied at the outbound sinks (PR #450).",
@@ -64,7 +64,7 @@
     },
     {
       "id": "pm-frontend-protectedroute-fail-open",
-      "risk": "ProtectedRoute.tsx:117 role gate was fail-open: when user.role was falsy the role check was skipped and access granted — would silently no-op the first role-gated route.",
+      "risk": "ProtectedRoute.tsx:117 role gate was fail-open: when user.role was falsy the role check was skipped and access granted \u2014 would silently no-op the first role-gated route.",
       "probability": "low",
       "impact": "medium",
       "mitigation": "Now denies on missing role; user.role populated in AuthContext (PR #459).",
@@ -75,7 +75,7 @@
     },
     {
       "id": "pm-security-voice-device-idor",
-      "risk": "Voice device endpoints permitted cross-tenant device access (IDOR) — a principal could address another org's voice device by id.",
+      "risk": "Voice device endpoints permitted cross-tenant device access (IDOR) \u2014 a principal could address another org's voice device by id.",
       "probability": "low",
       "impact": "high",
       "mitigation": "Tenant scoping added to voice device lookups (PR #461).",
@@ -89,15 +89,15 @@
       "risk": "Epic 6/8A blocked on un-built Epic 2B notification infra; deferred dispatch + WS sync (8A.2/8A.3)",
       "probability": "low",
       "impact": "high",
-      "mitigation": "Epic 2B notification pipeline (PR #463) + WebSocket realtime sync (PR #472) merged — the blocking infra is now live; 6-2/6-3/6-4 web UI and 8a-3 WS half are unblocked.",
+      "mitigation": "Epic 2B notification pipeline (PR #463) + WebSocket realtime sync (PR #472) merged \u2014 the blocking infra is now live; 6-2/6-3/6-4 web UI and 8a-3 WS half are unblocked.",
       "owner_role": "pm-scrum-master",
       "trigger": null,
       "status": "resolved",
-      "mitigated_by": "PR #463 (Epic 2B notification pipeline) + PR #472 (WebSocket realtime sync) merged 2026-05-25 — DEC-001 unblock triggers fired"
+      "mitigated_by": "PR #463 (Epic 2B notification pipeline) + PR #472 (WebSocket realtime sync) merged 2026-05-25 \u2014 DEC-001 unblock triggers fired"
     },
     {
       "id": "pm-backend-81-missing-endpoints",
-      "risk": "Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist — 404 in production",
+      "risk": "Epic 81 frontend calls backend report-schedule endpoints (/schedules/{id}/pause|resume, /executions) that do not exist \u2014 404 in production",
       "probability": "medium",
       "impact": "medium",
       "mitigation": "Implement the missing endpoints or feature-flag the frontend calls until they exist; Epic 81 schedule/execution verify PRs (#488/#489) in flight.",
@@ -107,7 +107,7 @@
     },
     {
       "id": "pm-backend-10b-silent-stub-handlers",
-      "risk": "10B handler stubs (10b-4/5/6/7) are mounted routes returning success with no business logic — callers get 200/204 for operations that never happened (silent data loss / incorrect UI state)",
+      "risk": "10B handler stubs (10b-4/5/6/7) are mounted routes returning success with no business logic \u2014 callers get 200/204 for operations that never happened (silent data loss / incorrect UI state)",
       "probability": "high",
       "impact": "medium",
       "mitigation": "Return 501 Not Implemented with a documented timeline until real handlers ship, so callers fail loudly",
@@ -127,7 +127,7 @@
     },
     {
       "id": "pm-qa-inquiry-idor-no-regression-test",
-      "risk": "PR #497 inquiry IDOR fix shipped with zero regression tests; mark_inquiry_read_for_realtor does an ownership EXISTS check then a separate UPDATE — a future refactor could silently reintroduce the IDOR with no CI signal.",
+      "risk": "PR #497 inquiry IDOR fix shipped with zero regression tests; mark_inquiry_read_for_realtor does an ownership EXISTS check then a separate UPDATE \u2014 a future refactor could silently reintroduce the IDOR with no CI signal.",
       "probability": "medium",
       "impact": "high",
       "mitigation": "Add reality-server/tests/inquiry_idor_tests.rs immediately; require a test file on security-fix PRs.",
@@ -147,7 +147,7 @@
     },
     {
       "id": "pm-qa-jwt-token-in-ws-logs-open",
-      "risk": "Issue #480 (JWT access token in WebSocket query-param access logs) is high-severity and open; story 8a-3 has a WS dependency — shipping it leaks tokens via logs.",
+      "risk": "Issue #480 (JWT access token in WebSocket query-param access logs) is high-severity and open; story 8a-3 has a WS dependency \u2014 shipping it leaks tokens via logs.",
       "probability": "high",
       "impact": "high",
       "mitigation": "Block 8a-3 promotion; strip token from log line and re-validate JWT on session before any WS story ships.",
@@ -202,6 +202,46 @@
       "impact": "medium",
       "mitigation": "Serialize App.tsx-touching PRs via a merge queue / auto-rebase ordering so concurrent route-wiring drafts do not collide.",
       "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-update-schedule-cross-tenant-idor",
+      "risk": "update_schedule (report_schedule.rs) missing RBAC (#614) and missing tenant/org scope (#624): an authenticated user can mutate another tenant's report schedule and/or mutate schedules without the required capability. Same omission class as the prior ai.rs equipment IDOR cluster.",
+      "probability": "high",
+      "impact": "high",
+      "mitigation": "Add RequireCapability extractor + thread principal tenant/org into the WHERE clause; cross-tenant regression test; block Epic 81 promotion until both close.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-cookie-path-breaking-565",
+      "risk": "Cookie Path breaking change (#617) from PR #565 session-cookie scope hardening: if mis-scoped it either silently logs users out or leaks the session cookie to unintended paths / breaks the SSO auth-callback read.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Verify cookie set/clear across / and the API prefix and the SSO callback flow before merging the change to dev; document the migration.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-audit-hash-debug-format-p1-04",
+      "risk": "P1-04 residual (PR #435): internal type internals may reach audit-trail log lines via Debug ({:?}) formatting.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Replace {:?} with Display/structured fields on internal types in audit records.",
+      "owner_role": "pm-security",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-security-oauth-10a-untested-security-contract",
+      "risk": "OAuth provider stories 10a-1/10a-2/10a-3 shipped with no introspection/refresh-rotation/PKCE security tests; a refactor could silently reintroduce revoked-token acceptance or replay.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Add the OAuth security test suite (revoked-token, family-reuse, PKCE S256) before any further OAuth-provider change merges.",
+      "owner_role": "pm-security",
       "trigger": null,
       "status": "open"
     }

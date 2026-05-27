@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T04:05:00Z",
+  "generated": "2026-05-27T23:40:00Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -169,10 +169,10 @@
         "mobile document upload UI with metadata shipped (PR #447, merged 2026-05-25)"
       ],
       "gaps": [
-        "sprint-status ready-for-dev \u2014 promote to done after verify",
-        "upload test coverage tracked in follow-up issue (#480-#487 cluster)"
+        "sprint-status ready-for-dev \u2014 promote to done after verify"
       ],
-      "last_checked": "2026-05-25"
+      "notes": "Document upload backend tests merged this window (PR #610) \u2014 upload test-coverage gap closing; multipart/RLS isolation tests landing. Remains partial pending full web+mobile verify sweep.",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-7a",
@@ -193,10 +193,10 @@
       ],
       "gaps": [
         "sprint-status ready-for-dev",
-        "no dedicated folder-tree UI page",
         "mobile implementation pending"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "FolderTree UI landed with i18n security-label fix merged this window (PR #604) — web folder-tree page now exists; mobile slice still pending. Advanced toward done; remains partial on mobile gap.",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-7a",
@@ -394,7 +394,8 @@
         "admin consent page UI not in admin-web (only reality-web callback)",
         "authorization audit trail tests missing"
       ],
-      "last_checked": "2026-05-24"
+      "last_checked": "2026-05-27",
+      "recheck_note": "Rotating coverage re-check 2026-05-27 (epic-10a, cursor idx 4): no new OAuth-provider code churn this window (#563-#634). #568/#609 SSO auth-callback wiring is the consumer/79-2 side, not provider (10a-1) regression. pm-security read confirms provider PKCE/token-rotation paths unchanged. Integration/security test gap persists — tracked as gap-10a-1-oauth-tests + pm-qa-oauth-security-tests (open). Remains done; test-debt unchanged. Cursor advanced 4->5 (epic-10b next)."
     },
     {
       "epic": "epic-10a",
@@ -660,10 +661,10 @@
       ],
       "gaps": [
         "story Status: pending",
-        "login form/page not wired to context",
-        "logout + session cleanup not integrated"
+        "logout + session cleanup verification pending"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "SSO auth-callback wiring merged this window (PRs #568/#609) — /auth/callback token storage + refresh flow landed; login/logout context wiring progressing. Remains partial pending full e2e verification (gap-79-2-auth-callback-e2e open).",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-79",
@@ -798,11 +799,11 @@
         "merged PR #93"
       ],
       "gaps": [
-        "backend pause/resume route handlers not found in reports.rs",
-        "no DB column/RLS for is_active/paused status",
-        "frontend calls 404 against missing endpoints"
+        "schedule update_schedule handler missing RBAC (follow-up #614) + tenant/org scope (follow-up #624)",
+        "backend pause/resume route handlers still to be confirmed in reports.rs/report_schedule.rs"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "Report schedule editor UI merged this window (PR #623) + backend report_schedule.rs in churn. Open security follow-ups: #614 update_schedule missing RBAC, #624 missing tenant/org scope — must close before promotion. Remains partial.",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-81",
@@ -823,11 +824,11 @@
         "merged PR #93"
       ],
       "gaps": [
-        "backend GET /schedules/{id}/executions not implemented",
-        "backend GET /executions/{id}/download (presigned) missing",
-        "no execution history table or retry logic in backend"
+        "backend GET /executions/{id}/download (presigned) still to confirm",
+        "retry logic end-to-end verify pending"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "report_executions table migration merged this window (PR #611) — execution-history backend persistence now exists; GET /schedules/{id}/executions backing store landed. Advanced toward done; remains partial pending download/retry verify.",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-82",
@@ -988,10 +989,10 @@
       ],
       "gaps": [
         "no OTA XML parsing/generation code",
-        "push notification endpoint not implemented",
-        "rate/availability push (AC-5) missing"
+        "rate/availability push (AC-5) full flow incomplete"
       ],
-      "last_checked": "2026-05-23"
+      "notes": "Booking-push validation guards merged this window (PR #607) — push endpoint input validation/guards landed; OTA XML transport still missing. Remains partial.",
+      "last_checked": "2026-05-27"
     },
     {
       "epic": "epic-83",

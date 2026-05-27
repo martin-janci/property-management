@@ -2,7 +2,9 @@
 
 _Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-27 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
 
-_Upkeep 2026-05-27: 1 PR merged since last run — #555 (gap-80-3 mediation workspace UI, +1612/-137 with tests). Story **80-3 advanced partial → done**: the mediation timeline/resolution-form/chat-thread shipped, the 4 critical App.tsx dispute-route wiring gaps closed, and the missing `docs/screens/ppt/dispute-detail.md` mediation screen-map landed. Rotating epic re-checked: **epic-9** (cursor idx 3) — no MFA regression churn this window; gap-10b-3-health-ui-mfa-fix (#567, approved) is an admin-health MFA-modal wiring fix, not a 9-1 regression — 9-1 remains done. DevOps run: mobile EAS release workflows live only in draft PRs (broken @v6 pins) — no merged mobile build path; security-test-gate enforcement unconfirmed after PR #497._
+_Upkeep 2026-05-27 (late): 25 PRs merged since last run (#563–#634) — gap-* feature delivery + security/i18n fixes (notably #565 cookie-scope hardening, #604 FolderTree i18n, #610 doc-upload tests, #611 report_executions table, #623 report-schedule editor, #607 booking-push guards, #568/#609 SSO auth-callback). No story promotions — partials 7a-1/7a-2/79-2/81-2 advanced but each carries a verify or open security follow-up. ~30 new `from-merged-review` follow-ups (#569–#629) accruing. Rotating epic re-checked: **epic-10a** (cursor idx 4 → 5/epic-10b) — no OAuth-provider churn this window; SSO #568/#609 is the consumer (79-2) side, not a 10a-1 regression; OAuth integration/security test gap persists. Security run (pm-security, idx 5): #614 + #624 cross-tenant report-schedule IDOR (Epic 81 blocker), #617 cookie-Path regression from #565, residual P1-04 audit Debug-format leak, untested 10a security contract._
+
+_Prior upkeep 2026-05-27: 1 PR merged — #555 (gap-80-3 mediation workspace UI). Story **80-3 advanced partial → done**; rotating epic re-checked: **epic-9** (idx 3) — no MFA regression._
 
 _Prior upkeep 2026-05-25: 30 PRs merged (#441–#473). Epic 2B notification pipeline (#463) + WebSocket realtime sync (#472) cleared the DEC-001 blockers. Stories advanced to **done**: 9-1 (MFA frontend #441 + e2e #473). Already-done stories enriched with UI evidence: 7a-3/7a-5, 6-5, 6-6 (#464), 10a-2/10a-3 (#468/#469/#471). 8a-3 WS half cleared by #472 (mobile-push leg remains)._
 
@@ -71,4 +73,4 @@ _Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 
 - Epic 82 iOS stories scored "partial" with low confidence — the implementation files exist but story-to-code mapping is uncertain (epic numbering conflict with `epics-007.md`). Worth a 30-minute alignment pass before further planning.
 - 7a-* sprint-status shows `ready-for-dev` despite merged PRs. Sprint-status is stale here — update once apiStatus is verified.
 
-Buffer: 100/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep advanced 80-3 → done from PR #555, re-checked epic-9, added 3 pm-devops risks)
+Buffer: 102/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep re-checked epic-10a, marked gap-81-1-report-schedule-edit-ui done from PR #623, added 5 pm-security actions + 4 pm-security risks)

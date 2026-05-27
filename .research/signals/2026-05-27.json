@@ -1,202 +1,243 @@
 {
   "date": "2026-05-27",
   "run_mode": "incremental",
-  "notes": [
-    "Near-quiet run: one merged PR this run (#555 gap-80-3 mediation UI), no new/updated issues, no reverts, no closed-unmerged PRs, no new FIXMEs in merged code.",
-    "Cursor edge case: PR #555 merged 2026-05-27T00:12Z (after last run) but its number (555) is below last_pr_seen (562) because it merged late. The number-based merged-PR filter would skip it; detected via mergedAt > SINCE_ISO. Processed by mergedAt. last_pr_seen stays 562 (max number); #555 will not re-fire next run (number<562 and mergedAt<next window)."
-  ],
+  "generated": "2026-05-27T23:39:00Z",
+  "run_note": "Second same-day run, ~20h after the 03:15Z run. Overwrites the earlier same-day file (convergence). Covers activity since last_run_iso 2026-05-27T03:15:46Z: 25 merged PRs #563-#634, ~30 labeled follow-up issues, 14 closed-unmerged PRs (mostly dispatcher supersede sweep). Earlier-run signals remain recorded in state.seen_signals so they are not re-scored.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible allowlist signal met confidence=high AND backlog score>=3 this run (the two fixme-in-merged-code signals are score 2; report-schedule one already tracked by issue #616)",
   "signals": [
     {
-      "id": "repeated-churn-frontend/apps/ppt-web/src/App.tsx",
-      "type": "repeated-churn",
-      "source": "PR #555",
-      "score_delta": 0,
-      "evidence": "App.tsx +122 lines this run (PR #555 mediation workspace replaced the DisputeMediationRoute stub with MediationWorkspacePage + callback wiring); hotspot runs_seen=3. Cumulative re-emit — score NOT re-applied (already counted on refactor-app-tsx-route-coupling).",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
-      "type": "churn-hotspot",
-      "source": "PR #555",
-      "score_delta": 0,
-      "evidence": "New 666-line file created by PR #555 (mediation workspace). Top raw churn this run, but a brand-new, tested feature file — instability, not phantom refactor work. Recorded in hotspot_history (runs_seen=1) for future repeated-churn detection; not scored and no backlog item created (same handling as dep-update-noise).",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
-      "type": "churn-hotspot",
-      "source": "PR #555",
-      "score_delta": 0,
-      "evidence": "New 185-line file created by PR #555. New-feature file — recorded in hotspot_history (runs_seen=1) for future churn detection, not scored.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
-      "type": "churn-hotspot",
-      "source": "PR #555",
-      "score_delta": 0,
-      "evidence": "New 164-line file created by PR #555. New-feature file — recorded in hotspot_history (runs_seen=1) for future churn detection, not scored.",
-      "confidence": "high",
-      "candidate_vector": "refactor"
-    },
-    {
-      "id": "code-review-ppt-web-ui-mediation-page-no-error-state",
-      "type": "code-review-finding",
-      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:313",
+      "id": "hotfix-no-test-pr-607",
+      "type": "hotfix-no-test",
+      "source": "PR #607",
       "score_delta": 2,
-      "evidence": "useDispute exposes isError/error but MediationWorkspacePage destructures only {data,isLoading} (line 313) and guards only loading (line 369); on 404/403/network failure the page falls through to render referenceNumber=disputeId, status 'unknown', empty parties, and a dead resolve tab — no error message or retry UI. Confirmed by reading the file.",
       "confidence": "high",
-      "candidate_vector": "bug"
+      "candidate_vector": "test-gap",
+      "evidence": "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 + available_count<0 validation guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (verified via gh pr diff) with no test file in the 2-file diff. Created backlog item test-gap-booking-push-validation-untested."
     },
     {
-      "id": "code-review-ppt-web-ui-mediation-ref-number-full-uuid",
-      "type": "code-review-finding",
-      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:382",
-      "score_delta": 1,
-      "evidence": "referenceNumber = `DSP-${dispute.id.toUpperCase()}` uppercases the full UUID, rendering an unwieldy human-facing reference (e.g. DSP-3F2A1B9C-...) instead of a short code. Confirmed at line 382.",
-      "confidence": "medium",
-      "candidate_vector": "refactor"
+      "id": "fixme-in-merged-code-report-schedule-update",
+      "type": "fixme-in-merged-code",
+      "source": "PR #611",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/db/src/repositories/report_schedule.rs:299 — `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describes SQL the body does not run; cron is stored in the overloaded `time` field pending a missing cron_expression column. Ties to open issue #616. Created backlog item bug-report-schedule-update-no-sql."
     },
     {
-      "id": "code-review-ppt-web-ui-duplicated-spinner-markup",
-      "type": "code-review-finding",
-      "source": "frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx:91",
+      "id": "fixme-in-merged-code-documentsbrowse-folder-preselect",
+      "type": "fixme-in-merged-code",
+      "source": "PR #623",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx:511 — `currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */`; move-folder dialog cannot pre-select current folder. Created backlog item dx-documentsbrowse-folder-preselect."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
       "score_delta": 1,
-      "evidence": "Identical role=status animate-spin spinner block duplicated at MediationWorkspacePage.tsx:91 and :375 and MediationChatThread.tsx:58; no shared Spinner in ui-kit. Confirmed via grep.",
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-1 app-code churn this run: 802 lines. git name-status = A (brand-new file, single commit). No backlog item created — one-shot feature addition, instability not established; tracked in hotspot_history for repeated-churn detection."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-2 app-code churn this run: 796 lines. git name-status = A — brand-new integration test file (PR #610, healthy test delivery). No backlog item created — one-shot addition."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 app-code churn this run: 546 lines. git name-status = M, single commit. No backlog item created — one-shot modification, instability not established; tracked in hotspot_history."
+    },
+    {
+      "id": "closed-not-merged-pr-602",
+      "type": "closed-not-merged-pr",
+      "source": "PR #602",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "PR #602 (fix(security): document download/preview bypassed access_scope — intra-org IDOR, issue #582) closed UNMERGED. VERIFIED RESOLVED IN CURRENT CODE: backend/servers/api-server/src/routes/documents/core.rs get_download_url + get_preview_url now both call document_access_allowed() for non-managers (returns NOT_FOUND on denial). Fix landed via reimplementation; PR #602 was superseded. No backlog item."
+    },
+    {
+      "id": "closed-not-merged-pr-603",
+      "type": "closed-not-merged-pr",
+      "source": "PR #603",
+      "score_delta": 1,
       "confidence": "medium",
-      "candidate_vector": "refactor"
+      "candidate_vector": "security",
+      "evidence": "PR #603 (fix(security): scheduler signs URLs fail-closed + cookie domain injection guard, issue #571) closed UNMERGED while issue #571 stays OPEN. Underlying concerns (unsigned e-signature URL fallback; PPT_AUTH_COOKIE_DOMAIN injection) NOT independently re-verified in current code this run — surfaced in brief Watch as a possible dropped fix. No backlog item created pending code verification."
+    },
+    {
+      "id": "closed-not-merged-pr-599",
+      "type": "closed-not-merged-pr",
+      "source": "PR #599",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "PR #599 (fix(ios): SSO login broken — beginSsoFlow() never called before deep link, issue #578) closed UNMERGED; issue #578 stays OPEN. iOS LoginView SSO regression possibly still live; surfaced in brief Watch. No backlog item (mobile-native iOS, outside current drift scope)."
+    },
+    {
+      "id": "code-review-mobile-rn-vote-list-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:108 — `data as unknown as ApiVoteSummary[]` double-casts the typed useApiQuery result; an unexpected backend shape crashes apiVotes.map(toUiVote) at :110 with no isError guard. Created backlog item bug-mobile-voting-unsafe-cast.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes en-US; vote dates never localize for sk/cs/de (sibling AnnouncementDetailScreen.tsx:119 uses i18n.language). Created backlog item bug-mobile-voting-hardcoded-locale.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-xform-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:48,64 — exported pure transforms toUiStatus/toUiVote have no test anywhere; mobile app has only 3 test files, none for voting/announcements logic. Created backlog item test-gap-mobile-voting-transforms.",
+      "expert": "tester"
     }
   ],
-  "phase_1_5": {
-    "segment_reviewed": "ppt-web-ui",
-    "selection_reason": "churn-aligned (all PR #555 churn files live under frontend/apps/ppt-web/src/features/disputes/{pages,components}); 0 open code-review-finding items so not saturated",
-    "experts": [
-      "frontend",
-      "completeness"
-    ],
-    "findings": 3
-  },
-  "auto_fix_actions": [],
   "goal_checks": [
     {
       "goal": "G1",
       "passed": true,
-      "command": "test -f brief && head -1 matches",
+      "command": "test -f briefs/<today>.md && head -1 matches header",
       "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G2",
       "passed": true,
-      "command": "jq slurpfile prev vs staged",
+      "command": "state advanced vs HEAD",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G3",
       "passed": true,
-      "command": "unique backlog ids",
+      "command": "backlog ids unique",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G4",
       "passed": true,
-      "command": "no non-cumulative double-count",
+      "command": "no non-cumulative signal re-counted",
       "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G5",
       "passed": true,
-      "command": "cap<=8 + decay (no open item >14d)",
-      "observed": "max=6, 0 decay-due",
+      "command": "score cap<=8; decay n/a (no item >14d)",
+      "observed": "true",
       "expected": "true"
     },
     {
       "goal": "G6",
       "passed": true,
-      "command": "new plans have adversarial annotation",
-      "observed": "no new plans this run",
-      "expected": "n/a"
+      "command": "adversarial pass annotations for new plans",
+      "observed": "0 new plans",
+      "expected": "all annotated"
     },
     {
       "goal": "G7",
       "passed": true,
-      "command": "<=2 new plans, gates",
-      "observed": "0 new plans",
+      "command": "new plans this run",
+      "observed": "0",
       "expected": "<=2"
     },
     {
       "goal": "G8",
       "passed": true,
-      "command": "only .research/ staged",
-      "observed": "0 non-research",
+      "command": "non-.research staged",
+      "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G9",
       "passed": true,
-      "command": "no secrets/hostnames",
+      "command": "secrets/hostnames scan",
       "observed": "0",
       "expected": "0"
     },
     {
       "goal": "G10",
       "passed": true,
-      "command": "backlog.md byte-identity",
-      "observed": "diff exit 0",
-      "expected": "exit 0"
+      "command": "backlog.md == regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G11",
       "passed": true,
-      "command": "placeholder rot grep on brief",
-      "observed": "no match",
-      "expected": "no match"
+      "command": "failed phases recorded + cursors held",
+      "observed": "no failed phases",
+      "expected": "consistent"
     },
     {
       "goal": "G12",
       "passed": true,
-      "command": "prior plans present in plans/ or _archive/",
-      "observed": "p0-10 + 6 archived intact",
-      "expected": "true"
+      "command": "prior plans still present",
+      "observed": "unchanged",
+      "expected": "present"
     },
     {
       "goal": "G13",
       "passed": true,
-      "command": "archive only grows",
-      "observed": "6>=6",
-      "expected": "exit 0"
+      "command": "archive count now>=HEAD",
+      "observed": "7>=7",
+      "expected": ">="
     },
     {
       "goal": "G14",
       "passed": true,
-      "command": "IDEAS_TRIAGE.md byte-identity",
-      "observed": "diff exit 0",
-      "expected": "exit 0"
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "identical",
+      "expected": "identical"
     },
     {
       "goal": "G15",
       "passed": true,
-      "command": "auto_fix caps + idempotency",
-      "observed": "0 actions",
-      "expected": "true"
+      "command": "auto-fix discipline",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=1 each"
     },
     {
       "goal": "G16",
       "passed": true,
-      "command": "management artifacts valid",
-      "observed": "action-list+risks parse, project-state non-empty, pm_next=5",
+      "command": "mgmt artifacts valid + pm_cursor in 0..7",
+      "observed": "exit 0",
       "expected": "exit 0"
     },
     {
       "goal": "G17",
       "passed": true,
-      "command": "no telegram token value",
+      "command": "telegram token scan",
       "observed": "0",
       "expected": "0"
     }

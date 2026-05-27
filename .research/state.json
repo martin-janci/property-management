@@ -5,11 +5,11 @@
     "routine_state_at": ".research/state.json (this file, on dev/main)",
     "note": "state.json is the daily routine's cursor file and is rewritten only by routine-prompt.md. The autonomous dispatcher loop writes its own state to assignments.json on a separate planning branch and never touches this file. See .research/README.md > Routine vs dispatcher state."
   },
-  "last_run_iso": "2026-05-27T03:15:46Z",
-  "last_run_ms": 600000,
-  "last_pr_seen": 562,
-  "last_issue_seen": 528,
-  "last_commit_sha": "eae8a53707bc83acccfa1ea5f686d5bbf33eafac",
+  "last_run_iso": "2026-05-27T23:41:49Z",
+  "last_run_ms": 420000,
+  "last_pr_seen": 634,
+  "last_issue_seen": 629,
+  "last_commit_sha": "4f2f9b43a46e32722a89d8e1649fdf2e87cea782",
   "paused": false,
   "hotspot_history": {
     "backend/servers/api-server/src/routes/integrations.rs": {
@@ -81,6 +81,21 @@
       "runs_seen": 1,
       "last_seen": "2026-05-27",
       "recent_churn": 164
+    },
+    "frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 802
+    },
+    "backend/servers/api-server/tests/document_upload_tests.rs": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 796
+    },
+    "frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx": {
+      "runs_seen": 1,
+      "last_seen": "2026-05-27",
+      "recent_churn": 546
     }
   },
   "seen_signals": [
@@ -92,20 +107,29 @@
     "churn-hotspot-backend/servers/api-server/src/routes/organizations.rs",
     "churn-hotspot-backend/servers/api-server/src/routes/platform_admin.rs",
     "churn-hotspot-backend/servers/api-server/src/services/push_fanout.rs",
+    "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
     "churn-hotspot-frontend/apps/admin-web/src/pages/SystemAnnouncementsPage.tsx",
     "churn-hotspot-frontend/apps/mobile/src/screens/announcements/AnnouncementsScreen.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/App.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationChatThread.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/components/MediationResolutionForm.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
     "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/MediationWorkspacePage.tsx",
+    "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
     "closed-not-merged-pr-507",
     "closed-not-merged-pr-512",
+    "closed-not-merged-pr-599",
+    "closed-not-merged-pr-602",
+    "closed-not-merged-pr-603",
     "code-review-api-core-dispute-fsm-no-tests",
     "code-review-api-core-equipment-idor",
     "code-review-api-core-ssrf-outbound-fetch",
     "code-review-api-core-voice-device-idor",
     "code-review-api-handlers-dead-dup-auth-bldg-handlers",
     "code-review-mobile-native-kmp-ios-deeplink-sso",
+    "code-review-mobile-rn-hardcoded-locale",
+    "code-review-mobile-rn-vote-list-cast",
+    "code-review-mobile-rn-vote-xform-untested",
     "code-review-ppt-web-core-hardcoded-dispute-strings",
     "code-review-ppt-web-ui-announcer-stale-msg",
     "code-review-ppt-web-ui-duplicated-spinner-markup",
@@ -117,11 +141,14 @@
     "code-review-reality-server-realtors-mark-inquiry-read-idor",
     "dep-update-noise-2026-05-20",
     "dep-update-noise-2026-05-23",
+    "fixme-in-merged-code-documentsbrowse-folder-preselect",
     "fixme-in-merged-code-pr-515-push-fanout-rs",
     "fixme-in-merged-code-pr-538-webhook-rs",
+    "fixme-in-merged-code-report-schedule-update",
     "hotfix-no-test-pr-497",
     "hotfix-no-test-pr-532",
     "hotfix-no-test-pr-553",
+    "hotfix-no-test-pr-607",
     "lag-warning-2026-05-23",
     "repeated-churn-backend/servers/api-server/src/routes/announcements.rs",
     "repeated-churn-backend/servers/api-server/src/routes/documents.rs",
@@ -146,12 +173,12 @@
     "ppt-web-ui": "2026-05-27",
     "ppt-web-core": "2026-05-25",
     "reality-web": null,
-    "mobile-rn": null,
+    "mobile-rn": "2026-05-27",
     "mobile-native-kmp": "2026-05-26"
   },
   "stats": {
-    "runs": 10,
-    "vectors_created": 29,
+    "runs": 11,
+    "vectors_created": 35,
     "plans_created": 6,
     "quiet_days": 0,
     "auto_fix_count": 0
@@ -167,19 +194,19 @@
       "pm-data",
       "pm-integration"
     ],
-    "next_index": 5,
+    "next_index": 6,
     "role_last_run": {
       "pm-tech-lead": "2026-05-23",
       "pm-backend": "2026-05-24",
       "pm-frontend": "2026-05-25",
       "pm-qa": "2026-05-25",
       "pm-devops": "2026-05-27",
-      "pm-security": null,
+      "pm-security": "2026-05-27",
       "pm-data": null,
       "pm-integration": null
     }
   },
   "coverage_cursor": {
-    "next_index": 4
+    "next_index": 5
   }
 }
