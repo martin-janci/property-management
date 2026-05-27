@@ -607,7 +607,8 @@ export function FolderTreePage({ organizationId, buildingId }: FolderTreePagePro
           opacity: 0;
         }
 
-        .fd__row-wrap:hover .fd__move-btn {
+        .fd__row-wrap:hover .fd__move-btn,
+        .fd__row-wrap:focus-within .fd__move-btn {
           opacity: 1;
         }
 

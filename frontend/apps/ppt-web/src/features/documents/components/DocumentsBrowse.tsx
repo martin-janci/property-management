@@ -800,7 +800,8 @@ export function DocumentsBrowse({
         }
 
         .doc-row:hover .doc-row__actions,
-        .doc-row--selected .doc-row__actions {
+        .doc-row--selected .doc-row__actions,
+        .doc-row:focus-within .doc-row__actions {
           opacity: 1;
         }
 
