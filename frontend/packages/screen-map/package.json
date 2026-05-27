@@ -1,7 +1,7 @@
 {
   "name": "@ppt/screen-map",
   "private": true,
-  "version": "0.2.781",
+  "version": "0.2.782",
   "description": "Project-management screen-map: types, parse/write, validate, CLI",
   "type": "module",
   "main": "./src/index.ts",
