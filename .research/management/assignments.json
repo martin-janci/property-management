@@ -2394,7 +2394,7 @@
     {
       "task_id": "gap-10b-4-system-announcements-backend",
       "branch": "auto-impl/gap-10b-4-system-announcements-backend",
-      "status": "review",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-27T08:29:08Z",
       "last_updated": "2026-05-27T13:24:00Z",
