@@ -836,7 +836,7 @@ impl Scheduler {
                 return Ok(());
             }
         };
-        let base_url =
+        let _base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
         let mut total_reminders = 0u64;
@@ -859,20 +859,22 @@ impl Scheduler {
                 .unwrap_or_else(|| "Document".to_string());
 
             for signer in pending_signers {
-                let sign_url = provider
-                    .build_signing_url(
-                        &signer.email,
-                        &sig_req.id.to_string(),
-                        &sig_req.organization_id.to_string(),
-                    )
-                    .unwrap_or_else(|_| {
-                        format!(
-                            "{}/sign?request_id={}&email={}",
-                            base_url.trim_end_matches('/'),
-                            sig_req.id,
-                            signer.email
-                        )
-                    });
+                let sign_url = match provider.build_signing_url(
+                    &signer.email,
+                    &sig_req.id.to_string(),
+                    &sig_req.organization_id.to_string(),
+                ) {
+                    Ok(url) => url,
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            signature_request_id = %sig_req.id,
+                            signer_email = %signer.email,
+                            "Failed to build signing URL — skipping reminder for this signer"
+                        );
+                        continue;
+                    }
+                };
 
                 match self
                     .email_service
