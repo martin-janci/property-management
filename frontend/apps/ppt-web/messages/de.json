@@ -739,6 +739,19 @@
       "downloadFailed": "Bericht konnte nicht heruntergeladen werden.",
       "retryQueued": "Ausführung zur Wiederholung in die Warteschlange gestellt.",
       "retryFailed": "Ausführung konnte nicht wiederholt werden."
+    },
+    "filters": {
+      "allStatuses": "Alle Status",
+      "status": "Status:",
+      "dateFrom": "Von:",
+      "dateTo": "Bis:",
+      "clearFilters": "Filter löschen",
+      "statusCompleted": "Abgeschlossen",
+      "statusFailed": "Fehlgeschlagen",
+      "statusRunning": "Läuft",
+      "statusPending": "Ausstehend",
+      "statusCancelled": "Abgebrochen",
+      "statusSkipped": "Übersprungen"
     }
   }
 }
