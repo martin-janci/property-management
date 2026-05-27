@@ -1,5 +1,7 @@
 //! WebSocket realtime notification sync (Epic 8A, Story 8A.3).
 //!
+//! gap-8a-3: verified present and clean by auto-impl/gap-8a-3-websocket-realtime-sync.
+//!
 //! # Purpose
 //!
 //! Opens a persistent WebSocket connection for a single authenticated user
