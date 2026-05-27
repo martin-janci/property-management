@@ -1694,7 +1694,49 @@
       "code_reuse_warn": null,
       "empty_branch": null,
       "rebase_attempts": null
+    },
+    {
+      "task_id": "gap-security-435-cookie-scope",
+      "branch": "auto-impl/gap-security-435-cookie-scope",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T01:07:37Z",
+      "status_changed_at": "2026-05-27T01:07:37Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-qa-inquiry-idor-tests-v2",
+      "branch": "auto-impl/pm-qa-inquiry-idor-tests-v2",
+      "status": "review",
+      "specialist": "rust-backend",
+      "claimed_at": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T01:42:00Z",
+      "status_changed_at": "2026-05-27T01:42:00Z",
+      "pr_number": 563,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/563",
+      "merged_at": null,
+      "implementer_summary": "pr=563 status=done specialist=rust-backend scope_drift=false note=inquiry IDOR regression tests C1/C2/C3 in reality-server tests; cargo check exit 0, --list shows 3 tests; pre-existed on dev as WIP; PR adds PR#508 cross-ref",
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "gap-6-2-announcement-read-receipt-retry",
+      "branch": "auto-impl/gap-6-2-announcement-read-receipt-retry",
+      "status": "review",
+      "specialist": "react-web",
+      "claimed_at": "2026-05-27T01:07:37Z",
+      "last_updated": "2026-05-27T01:42:00Z",
+      "status_changed_at": "2026-05-27T01:42:00Z",
+      "pr_number": 564,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/564",
+      "merged_at": null,
+      "implementer_summary": "pr=564 status=done specialist=react-web scope_drift=false note=AnnouncementDetailScreen (mobile) added with auto-read+ack; ppt-web auto-mark-read on view; typecheck+biome clean; backend uses POST not PUT (spec mismatch noted in PR)",
+      "reviewer_summary": null
     }
   ],
-  "assignments.generated": "2026-05-27T00:13:24Z"
+  "assignments.generated": "2026-05-27T01:42:00Z"
 }
