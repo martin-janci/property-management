@@ -39,7 +39,8 @@
     "copied": "Skopírované",
     "copyErrorMessage": "Kopírovať chybovú správu",
     "dismissNotification": "Zavrieť oznámenie",
-    "notifications": "Oznámenia"
+    "notifications": "Oznámenia",
+    "unknownError": "Nastala chyba. Prosím skúste znova."
   },
   "nav": {
     "home": "Domov",
@@ -223,7 +224,6 @@
     "selectUnit": "Vyberte jednotku pre tento spor.",
     "multipleRespondents": "Viacerí odporcovia",
     "multipleRespondentsMsg": "Zaznamenaný bude iba prvý odporca.",
-
     "mediation": {
       "title": "Mediation Workspace",
       "backToDispute": "← Back to Dispute",
@@ -743,6 +743,32 @@
       "downloadFailed": "Nepodarilo sa stiahnuť správu.",
       "retryQueued": "Spustenie bolo zaradené do frontu na opakovanie.",
       "retryFailed": "Nepodarilo sa opakovať spustenie."
+    }
+  },
+  "leases": {
+    "esign": {
+      "requestSignature": "Žiadosť o podpis",
+      "modal": {
+        "title": "Žiadosť o podpis",
+        "selectSigners": "Vyberte podpisovateľov",
+        "subject": "Predmet (voliťeľné)",
+        "subjectPlaceholder": "napr. Podpis nájomnej zmluvy",
+        "message": "Správa pre podpisovateľov (voliťeľné)",
+        "messagePlaceholder": "Prosím, prečítajte si a podpíšte priloženú nájomnú zmluvu.",
+        "sending": "Odosiela sa…",
+        "send": "Odoslať na podpis"
+      },
+      "role": {
+        "tenant": "Nájomník"
+      },
+      "status": {
+        "pending": "Čaká na podpis",
+        "in_progress": "Prebíha podpisovanie",
+        "completed": "Podpísané",
+        "declined": "Odmietnuté",
+        "expired": "Vypršané",
+        "cancelled": "Zrušené"
+      }
     }
   }
 }
