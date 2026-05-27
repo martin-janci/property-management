@@ -6,14 +6,22 @@
     "start": "expo start",
     "start:staging": "APP_ENV=staging expo start",
     "start:production": "APP_ENV=production expo start",
-    "android": "expo run:android",
+    "android": "expo start --android",
     "android:staging": "APP_ENV=staging expo start --android",
-    "ios": "expo run:ios",
+    "android:build": "expo run:android",
+    "ios": "expo start --ios",
     "ios:staging": "APP_ENV=staging expo start --ios",
+    "ios:build": "expo run:ios",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "build:android:staging": "eas build --platform android --profile staging",
+    "build:android:production": "eas build --platform android --profile production",
+    "submit:android": "eas submit --platform android --profile production",
+    "build:ios:staging": "eas build --platform ios --profile staging",
+    "build:ios:production": "eas build --platform ios --profile production",
+    "submit:ios": "eas submit --platform ios --profile production"
   },
   "dependencies": {
     "@ppt/api-client": "workspace:*",
@@ -49,10 +57,11 @@
     "@types/jest": "^29.5.12",
     "@types/react": "~19.2.15",
     "dotenv": "^17.0.0",
+    "eas-cli": "^10.0.0",
     "jest": "^29.7.0",
     "jest-expo": "^56.0.4",
     "react-test-renderer": "^19.2.6",
     "typescript": "^5.3.0"
   },
-  "version": "0.2.703"
+  "version": "0.2.859"
 }

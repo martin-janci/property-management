@@ -1,0 +1,140 @@
+name: EAS iOS Build
+
+# Epic 85 - Story 85.2: iOS Release Build Configuration
+#
+# Triggers:
+#   - Manual dispatch (all profiles)
+#   - Push to dev touching mobile code → staging build (ad-hoc distribution)
+#
+# Required GitHub secrets (repo/org level):
+#   EXPO_TOKEN       — EAS Personal Access Token (expo.dev → Account → Access Tokens)
+#   EXPO_PROJECT_ID  — EAS project UUID from expo.dev project settings
+#
+# EAS credentials (stored in Expo, NOT in GitHub secrets):
+#   Managed via: eas credentials --platform ios
+#   - Distribution certificate (Apple Developer Program)
+#   - Provisioning profile (App Store for production; Ad Hoc for staging/internal)
+#   - App Store Connect API key (Key ID + Issuer ID + p8; set once in EAS)
+#
+# One-time setup checklist:
+#   1. expo login  (or set EXPO_TOKEN)
+#   2. eas build:configure   (eas.json already present from Story 85.2)
+#   3. eas credentials --platform ios  (register dist cert + provisioning profile)
+#   4. Add EXPO_TOKEN and EXPO_PROJECT_ID to GitHub repository secrets
+#   5. Fill placeholder values in eas.json submit.production.ios:
+#        appleId, ascAppId, appleTeamId
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - simulator
+          - staging
+          - production
+      submit:
+        description: 'Submit to App Store after build (production profile only)'
+        required: false
+        default: false
+        type: boolean
+
+  push:
+    branches:
+      - dev
+    paths:
+      - 'frontend/apps/mobile/**'
+      - '.github/workflows/eas-build-ios.yml'
+
+  # Production builds are triggered manually via workflow_dispatch.
+  # The release workflow may also call this workflow after tagging.
+
+jobs:
+  build-ios:
+    name: EAS iOS Build (${{ github.event.inputs.profile || 'staging' }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-mobile-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-mobile-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Typecheck mobile
+        working-directory: frontend/apps/mobile
+        run: pnpm typecheck
+
+      - name: Lint mobile
+        working-directory: frontend
+        run: pnpm lint
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Determine build profile
+        id: profile
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "profile=${{ github.event.inputs.profile }}" >> $GITHUB_OUTPUT
+          else
+            # Push to dev → staging build
+            echo "profile=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run EAS build (iOS)
+        working-directory: frontend/apps/mobile
+        env:
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          eas build \
+            --platform ios \
+            --profile ${{ steps.profile.outputs.profile }} \
+            --non-interactive \
+            --no-wait
+
+      - name: Submit to App Store
+        # Only submit when: manual dispatch + submit=true + production profile
+        if: |
+          github.event_name == 'workflow_dispatch' &&
+          github.event.inputs.submit == 'true' &&
+          steps.profile.outputs.profile == 'production'
+        working-directory: frontend/apps/mobile
+        env:
+          EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+        run: |
+          eas submit \
+            --platform ios \
+            --profile production \
+            --non-interactive \
+            --latest

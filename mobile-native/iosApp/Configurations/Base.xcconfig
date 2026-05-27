@@ -10,3 +10,9 @@ ARCHS = arm64
 VALID_ARCHS = arm64
 CODE_SIGN_STYLE = Automatic
 DEVELOPMENT_TEAM = $(DEVELOPMENT_TEAM)
+
+// Version info — driven by the repo-root VERSION file via scripts/bump-version.sh.
+// These are referenced from Info.plist as $(MARKETING_VERSION) / $(CURRENT_PROJECT_VERSION).
+// `$(inherited)` lets per-env xcconfigs / xcodebuild overrides win at build time.
+MARKETING_VERSION = $(inherited)
+CURRENT_PROJECT_VERSION = $(inherited)

@@ -13,7 +13,12 @@
 //! `totp_rs` (same library used by api-server). This avoids clock-skew issues
 //! and lets us exercise the real validation path.
 
-mod common;
+// Issue #487: `mod common;` was duplicated here even though the parent
+// `integration/mod.rs` already declares the test module. Redeclaring it
+// inside a sub-file links a second instance of `common` into the test
+// binary, which breaks any `OnceLock`-cached state shared via `common`.
+// We reuse the crate-root `common` module (declared by every top-level
+// test file) via `crate::common::*`.
 
 use axum::{
     body::Body,
@@ -23,7 +28,7 @@ use serde_json::{Value, json};
 use sqlx::PgPool;
 use totp_rs::{Algorithm, Secret, TOTP};
 
-use common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
+use crate::common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -595,6 +600,46 @@ async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
     resp.assert_status(StatusCode::CONFLICT);
     let body = resp.json_value();
     assert_eq!(body["code"], json!("MFA_ALREADY_ENABLED"));
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+/// Issue #487: brute-force protection on the MFA verify endpoint.
+///
+/// A 6-digit TOTP code has 10⁶ possibilities; without per-account rate
+/// limiting an attacker can enumerate all of them in under a minute.
+/// This test is `#[ignore]`d until rate-limiting middleware lands on
+/// `/api/v1/auth/mfa/verify` — at which point flip the assertion to
+/// expect 429 (or whatever the chosen lockout response is).
+#[sqlx::test]
+#[ignore = "Awaiting rate-limit middleware on /auth/mfa/verify — issue #487"]
+async fn test_mfa_verify_rate_limited(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+
+    let (access_token, _) = create_authenticated_user(&app, &user).await;
+    setup_and_enable_mfa(&app, &access_token).await;
+
+    // Hammer the verify endpoint with wrong codes.
+    let mut final_status: StatusCode = StatusCode::OK;
+    for _ in 0..11 {
+        let req = Request::builder()
+            .method(Method::POST)
+            .uri("/api/v1/auth/mfa/verify")
+            .header(header::AUTHORIZATION, format!("Bearer {}", access_token))
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(json!({"code": "000000"}).to_string()))
+            .unwrap();
+        let resp = app.execute(req).await;
+        final_status = resp.status;
+    }
+
+    assert_eq!(
+        final_status,
+        StatusCode::TOO_MANY_REQUESTS,
+        "11th invalid TOTP code should trip rate limiting"
+    );
 
     cleanup_test_user(&pool, &user.email).await;
 }

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T13:57:14Z",
+  "generated": "2026-05-27T04:05:00Z",
   "items": [
     {
       "id": "pm-backend-ai-equipment-cross-tenant-idor",
@@ -172,6 +172,36 @@
       "impact": "high",
       "mitigation": "Immediate backend task; critical-path blocker for Epic 7A completion.",
       "owner_role": "pm-scrum-master",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-mobile-eas-no-merged-pipeline",
+      "risk": "Mobile release pipeline has no merged path: EAS Android/iOS build workflows exist only in draft PRs (#566 cluster) with broken @v6 action pins (checkout/setup-node/pnpm-action-setup @v6 do not exist); no mobile artifact can be cut until they land and the pins are corrected.",
+      "probability": "high",
+      "impact": "medium",
+      "mitigation": "Land gap-85-2-android-ci-fix + gap-85-2-ios-ci-fix together; downgrade pins to @v4, add eas-cli devDependency + missing Android npm scripts; verify green on a no-op push.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-security-test-gate-advisory-only",
+      "risk": "security-test-gate.yml may be advisory only (not a required status check): PR #497 shipped a security IDOR fix with zero tests despite the gate existing, suggesting it does not block merges.",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "Make the gate a required status check on dev branch protection; re-run against a synthetic test-less security PR to confirm it blocks.",
+      "owner_role": "pm-devops",
+      "trigger": null,
+      "status": "open"
+    },
+    {
+      "id": "pm-devops-app-tsx-churn-concurrent-drafts",
+      "risk": "App.tsx router-file churn + 6 concurrent dispatcher drafts (#563-#568) risk repeated triple-conflict rebases, stalling the merge queue.",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "Serialize App.tsx-touching PRs via a merge queue / auto-rebase ordering so concurrent route-wiring drafts do not collide.",
+      "owner_role": "pm-devops",
       "trigger": null,
       "status": "open"
     }

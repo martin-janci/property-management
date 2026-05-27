@@ -249,11 +249,14 @@ pub async fn list_inquiries(
 )]
 pub async fn mark_inquiry_read(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, (axum::http::StatusCode, String)> {
-    state
+    // Issue #519 — was IDOR-able. Scoped to the calling realtor so realtor B
+    // cannot flip realtor A's inquiries to 'read' (information manipulation).
+    let updated = state
         .reality_portal_repo
-        .mark_inquiry_read(id)
+        .mark_inquiry_read_for_realtor(id, principal.user_id)
         .await
         .map_err(|e| {
             (
@@ -261,6 +264,13 @@ pub async fn mark_inquiry_read(
                 format!("Failed to mark inquiry read: {}", e),
             )
         })?;
+
+    if !updated {
+        return Err((
+            axum::http::StatusCode::NOT_FOUND,
+            "Inquiry not found".to_string(),
+        ));
+    }
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

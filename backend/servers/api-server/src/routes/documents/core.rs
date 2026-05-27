@@ -1090,6 +1090,26 @@ async fn update_document_access(
 // ============================================================================
 
 /// Get download URL for a document.
+/// Returns `true` when a non-manager user is permitted to access `doc`.
+///
+/// Managers bypass this check entirely (their RLS policy already grants
+/// full org-wide access). For everyone else the caller's `user_id` and
+/// normalised `user_role` are matched against the document's `access_scope`.
+fn document_access_allowed(doc: &Document, user_id: Uuid, user_role: &str) -> bool {
+    doc.created_by == user_id
+        || doc.access_scope == "organization"
+        || (doc.access_scope == "role"
+            && doc
+                .access_roles
+                .as_array()
+                .is_some_and(|arr| arr.iter().any(|r| r.as_str() == Some(user_role))))
+        || (doc.access_scope == "users"
+            && doc.access_target_ids.as_array().is_some_and(|arr| {
+                arr.iter()
+                    .any(|id| id.as_str() == Some(&user_id.to_string()))
+            }))
+}
+
 #[utoipa::path(
     get,
     path = "/api/v1/documents/{id}/download",
@@ -1105,8 +1125,8 @@ async fn update_document_access(
 )]
 async fn get_download_url(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    _tenant: TenantExtractor,
+    auth: AuthUser,
+    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1134,53 +1154,59 @@ async fn get_download_url(
         }
     };
 
-    // Story 84.1: Generate S3 presigned URL for download
-    // Security: Storage service must be configured to serve documents
-    let (url, expires_at) = match integrations::StorageService::from_env() {
-        Ok(storage) => {
-            match storage
-                .generate_download_url(
-                    &document.file_key,
-                    &document.file_name,
-                    &document.mime_type,
-                    None, // Use default 15 minute expiration
-                )
-                .await
-            {
-                Ok(presigned) => (presigned.url, presigned.expires_at),
-                Err(e) => {
-                    tracing::error!(
-                        error = %e,
-                        file_key = %document.file_key,
-                        "Failed to generate presigned URL"
-                    );
-                    return Err((
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "STORAGE_ERROR",
-                            "Unable to generate download URL. Please try again later.",
-                        )),
-                    ));
-                }
-            }
-        }
-        Err(e) => {
-            tracing::error!(
-                error = %e,
-                "Storage service not configured - document downloads unavailable"
-            );
+    if !tenant.role.is_manager() {
+        let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        if !document_access_allowed(&document, auth.user_id, &user_role) {
             return Err((
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(ErrorResponse::new(
-                    "STORAGE_NOT_CONFIGURED",
-                    "Document storage is not configured. Please contact support.",
-                )),
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
             ));
         }
-    };
+    }
+
+    // Story 7A.4: Generate presigned S3 URL with Content-Disposition: attachment.
+    // Use state.storage_service (initialised at startup with the real S3 client).
+    // StorageService::from_env() is sync and does NOT set up the S3 client, so
+    // presigning would always fail — that was the bug in the original stub.
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — document downloads unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+
+    let presigned = storage
+        .generate_download_url(
+            &document.file_key,
+            &document.file_name,
+            &document.mime_type,
+            None, // Default: 15-minute expiration
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                error = %e,
+                file_key = %document.file_key,
+                "Failed to generate presigned download URL"
+            );
+            (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(ErrorResponse::new(
+                    "STORAGE_ERROR",
+                    "Unable to generate download URL. Please try again later.",
+                )),
+            )
+        })?;
 
     rls.release().await;
-    Ok(Json(UrlResponse { url, expires_at }))
+    Ok(Json(UrlResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 /// Get preview URL for a document.
@@ -1199,8 +1225,8 @@ async fn get_download_url(
 )]
 async fn get_preview_url(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    _tenant: TenantExtractor,
+    auth: AuthUser,
+    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1228,6 +1254,16 @@ async fn get_preview_url(
         }
     };
 
+    if !tenant.role.is_manager() {
+        let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        if !document_access_allowed(&document, auth.user_id, &user_role) {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            ));
+        }
+    }
+
     if !document.supports_preview() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -1238,54 +1274,48 @@ async fn get_preview_url(
         ));
     }
 
-    // Story 84.1: Generate S3 presigned URL for inline preview
-    // Security: Storage service must be configured to serve previews
-    let (url, expires_at) = match integrations::StorageService::from_env() {
-        Ok(storage) => {
-            // For preview, we use a longer expiration time
-            match storage
-                .generate_download_url(
-                    &document.file_key,
-                    &document.file_name,
-                    &document.mime_type,
-                    Some(3600), // 1 hour for preview
-                )
-                .await
-            {
-                Ok(presigned) => (presigned.url, presigned.expires_at),
-                Err(e) => {
-                    tracing::error!(
-                        error = %e,
-                        file_key = %document.file_key,
-                        "Failed to generate presigned preview URL"
-                    );
-                    return Err((
-                        StatusCode::SERVICE_UNAVAILABLE,
-                        Json(ErrorResponse::new(
-                            "STORAGE_ERROR",
-                            "Unable to generate preview URL. Please try again later.",
-                        )),
-                    ));
-                }
-            }
-        }
-        Err(e) => {
+    // Story 7A.4: Generate presigned S3 URL with Content-Disposition: inline.
+    // generate_preview_url (new method) sets inline disposition so the browser
+    // renders the file rather than downloading it.
+    // Use state.storage_service (same reason as get_download_url).
+    let storage = state.storage_service.as_ref().ok_or_else(|| {
+        tracing::error!("Storage service not configured — document previews unavailable");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "STORAGE_NOT_CONFIGURED",
+                "Document storage is not configured. Please contact support.",
+            )),
+        )
+    })?;
+
+    let presigned = storage
+        .generate_preview_url(
+            &document.file_key,
+            &document.mime_type,
+            None, // Default: 1-hour expiration for inline preview
+        )
+        .await
+        .map_err(|e| {
             tracing::error!(
                 error = %e,
-                "Storage service not configured - document previews unavailable"
+                file_key = %document.file_key,
+                "Failed to generate presigned preview URL"
             );
-            return Err((
+            (
                 StatusCode::SERVICE_UNAVAILABLE,
                 Json(ErrorResponse::new(
-                    "STORAGE_NOT_CONFIGURED",
-                    "Document storage is not configured. Please contact support.",
+                    "STORAGE_ERROR",
+                    "Unable to generate preview URL. Please try again later.",
                 )),
-            ));
-        }
-    };
+            )
+        })?;
 
     rls.release().await;
-    Ok(Json(UrlResponse { url, expires_at }))
+    Ok(Json(UrlResponse {
+        url: presigned.url,
+        expires_at: presigned.expires_at,
+    }))
 }
 
 // ============================================================================
@@ -1625,3 +1655,6 @@ pub async fn upload_document(
         }
     }
 }
+
+#[cfg(test)]
+mod document_access_test;

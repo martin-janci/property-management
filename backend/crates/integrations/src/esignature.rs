@@ -103,6 +103,10 @@ impl SigningToken {
     /// `secret` must be the raw secret bytes (at least
     /// [`MIN_TOKEN_SECRET_LEN`] bytes — enforced by [`LightweightConfig::from_env`]).
     /// A fresh `nonce` is generated for every call.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC input so a token
+    /// minted for org A cannot be replayed against a request in org B,
+    /// even if a signer email collides across tenants.
     pub fn new(
         signer_email: &str,
         request_id: &str,
@@ -368,6 +372,8 @@ impl LightweightProvider {
     /// The returned [`SignedUrl`] also carries the `nonce` that was embedded
     /// in the token; callers should persist it on the signer record so the
     /// future `/sign` consumer can reject replays.
+    ///
+    /// Issue #527 (c): `org_id` is bound into the HMAC.
     pub fn build_signing_url(
         &self,
         signer_email: &str,
@@ -402,20 +408,36 @@ impl LightweightProvider {
     /// new key as `ESIGN_TOKEN_SECRET`, move the old value to
     /// `ESIGN_PREVIOUS_TOKEN_SECRET`, wait for outstanding URLs to expire
     /// (≤ `ESIGN_TOKEN_TTL`), then clear the previous secret.
-    pub fn verify_token(&self, encoded: &str) -> Result<SigningToken, ESignatureError> {
+    ///
+    /// Issue #527 (c): caller MAY pass `expected_org_id` to additionally
+    /// confirm the token was minted for the same tenant. Pass `None` to skip
+    /// the explicit org check (the HMAC already binds org_id; this is an
+    /// extra defence-in-depth layer for callers that have the org available).
+    pub fn verify_token(
+        &self,
+        encoded: &str,
+        expected_org_id: Option<&str>,
+    ) -> Result<SigningToken, ESignatureError> {
         let token = SigningToken::decode(encoded)?;
         match token.verify(&self.config.token_secret) {
-            Ok(()) => Ok(token),
+            Ok(()) => {}
             Err(ESignatureError::InvalidToken) => {
                 if let Some(prev) = &self.config.previous_token_secret {
                     token.verify(prev)?;
-                    Ok(token)
                 } else {
-                    Err(ESignatureError::InvalidToken)
+                    return Err(ESignatureError::InvalidToken);
                 }
             }
-            Err(e) => Err(e),
+            Err(e) => return Err(e),
         }
+        // Constant-time-ish org binding check (orgs are UUIDs so length
+        // is fixed — a plain `!=` is acceptable here).
+        if let Some(expected) = expected_org_id {
+            if token.org_id != expected {
+                return Err(ESignatureError::InvalidToken);
+            }
+        }
+        Ok(token)
     }
 
     /// Return the configured base URL.
@@ -660,7 +682,7 @@ mod tests {
 
         let token_str = signed.url.split("token=").nth(1).unwrap();
         let verified = provider
-            .verify_token(token_str)
+            .verify_token(token_str, Some(ORG_ID))
             .expect("verify_token should succeed");
 
         assert_eq!(verified.signer_email, "alice@example.com");
@@ -668,6 +690,22 @@ mod tests {
         assert_eq!(verified.org_id, ORG_ID);
         assert_eq!(verified.signer_status_at_issue, "pending");
         assert_eq!(verified.nonce, signed.nonce);
+    }
+
+    #[test]
+    fn test_lightweight_provider_verify_token_wrong_org_rejected() {
+        let provider = LightweightProvider::new(mk_config(SECRET, None));
+        let signed = provider
+            .build_signing_url("alice@example.com", "req-1", ORG_ID, "pending")
+            .expect("build url");
+
+        let token_str = signed.url.split("token=").nth(1).unwrap();
+        let other_org = "00000000-0000-0000-0000-000000000999";
+        let result = provider.verify_token(token_str, Some(other_org));
+        assert!(
+            matches!(result, Err(ESignatureError::InvalidToken)),
+            "Should reject token bound to a different org"
+        );
     }
 
     #[test]
@@ -684,13 +722,13 @@ mod tests {
 
         let post_rotation = LightweightProvider::new(mk_config(ALT_SECRET, Some(SECRET)));
         let verified = post_rotation
-            .verify_token(token_str)
+            .verify_token(token_str, Some(ORG_ID))
             .expect("fallback to previous key should accept old token");
         assert_eq!(verified.nonce, signed.nonce);
 
         // Without the previous-key fallback, the same token must fail.
         let no_fallback = LightweightProvider::new(mk_config(ALT_SECRET, None));
-        let result = no_fallback.verify_token(token_str);
+        let result = no_fallback.verify_token(token_str, Some(ORG_ID));
         assert!(
             matches!(result, Err(ESignatureError::InvalidToken)),
             "Without previous-key fallback, post-rotation token must fail"

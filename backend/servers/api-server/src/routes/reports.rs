@@ -16,6 +16,7 @@ use axum::{
 };
 use chrono::NaiveDate;
 use common::errors::ErrorResponse;
+use common::TenantRole;
 use db::models::{
     report_schedule::ExecutionHistoryQuery, ConsumptionAnomaly, ConsumptionSummary, DateRange,
     ExecutionDownloadUrl, ExecutionHistoryResponse, FaultStatistics, FaultTrends, OccupancySummary,
@@ -210,6 +211,8 @@ pub fn router() -> Router<AppState> {
         // Story 55.5: Export Reports (Story 84.1: Background job implementation)
         .route("/export", axum::routing::post(export_report))
         .route("/export/{job_id}/status", get(get_export_job_status))
+        // gap-81-1: Update schedule (cron expression, recipients, enabled flag)
+        .route("/schedules/{id}", axum::routing::put(update_schedule))
         // Epic 81: Story 81.1 — Schedule pause/resume
         .route("/schedules/{id}/pause", axum::routing::put(pause_schedule))
         .route(
@@ -1393,9 +1396,16 @@ pub async fn resume_schedule(
 /// Query parameters for listing execution history (Story 81.2).
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListExecutionsParams {
+    /// Filter by execution status (pending, running, completed, failed, cancelled, skipped).
     pub status: Option<String>,
+    /// Filter executions started on or after this timestamp (RFC 3339).
+    pub date_from: Option<chrono::DateTime<chrono::Utc>>,
+    /// Filter executions started on or before this timestamp (RFC 3339).
+    pub date_to: Option<chrono::DateTime<chrono::Utc>>,
+    /// Maximum number of executions to return (1–100, default 20).
     #[serde(default = "default_execution_limit")]
     pub limit: i64,
+    /// Zero-based offset for pagination.
     #[serde(default)]
     pub offset: i64,
 }
@@ -1404,7 +1414,35 @@ fn default_execution_limit() -> i64 {
     20
 }
 
+/// Valid execution status values for query filtering.
+const VALID_EXECUTION_STATUSES: &[&str] = &[
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "cancelled",
+    "skipped",
+];
+
+/// Build a per-execution download URL when the execution has a file ready.
+///
+/// The URL points to `GET /api/v1/reports/executions/{id}/download` which
+/// generates a presigned S3 URL. We only populate the field when `file_key`
+/// is set (i.e. the execution actually produced a file).
+fn execution_download_url(exec: &db::models::report_schedule::ReportExecution) -> Option<String> {
+    if exec.file_key.is_some() {
+        Some(format!("/api/v1/reports/executions/{}/download", exec.id))
+    } else {
+        None
+    }
+}
+
 /// List execution history for a report schedule (Story 81.2).
+///
+/// Returns a paginated log of all past and current executions for the given
+/// schedule, ordered by `started_at` descending (most recent first). Each
+/// completed execution that produced a file includes a `download_url` pointing
+/// to the presigned file-download endpoint.
 #[utoipa::path(
     get,
     path = "/api/v1/reports/schedules/{id}/executions",
@@ -1414,8 +1452,10 @@ fn default_execution_limit() -> i64 {
         ListExecutionsParams,
     ),
     responses(
-        (status = 200, description = "Execution history", body = ExecutionHistoryResponse),
-        (status = 401, description = "Unauthorized"),
+        (status = 200, description = "Paginated execution history", body = ExecutionHistoryResponse),
+        (status = 400, description = "Invalid query parameters", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
     )
 )]
 pub async fn list_schedule_executions(
@@ -1424,25 +1464,106 @@ pub async fn list_schedule_executions(
     Path(id): Path<Uuid>,
     Query(params): Query<ListExecutionsParams>,
 ) -> Result<Json<ExecutionHistoryResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Validate status filter
+    if let Some(ref s) = params.status {
+        if !VALID_EXECUTION_STATUSES.contains(&s.to_lowercase().as_str()) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_STATUS",
+                    "status must be one of: pending, running, completed, failed, cancelled, skipped",
+                )),
+            ));
+        }
+    }
+
+    // Validate limit bounds
+    if !(1_i64..=100).contains(&params.limit) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_LIMIT",
+                "limit must be between 1 and 100",
+            )),
+        ));
+    }
+
+    // Validate offset
+    if params.offset < 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_OFFSET",
+                "offset must be non-negative",
+            )),
+        ));
+    }
+
+    // Validate date range when both are provided
+    if let (Some(from), Some(to)) = (params.date_from, params.date_to) {
+        if from > to {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_DATE_RANGE",
+                    "date_from must be before or equal to date_to",
+                )),
+            ));
+        }
+    }
+
+    // Verify the schedule exists before querying executions.
+    // This prevents misleading "empty list" responses for non-existent schedules.
+    let schedule = state
+        .report_schedule_repo
+        .get_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to look up report schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to look up schedule")),
+            )
+        })?;
+
+    if schedule.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new(
+                "SCHEDULE_NOT_FOUND",
+                "Report schedule not found",
+            )),
+        ));
+    }
+
     let query = ExecutionHistoryQuery {
         schedule_id: id,
-        status: params.status,
-        date_from: None,
-        date_to: None,
+        status: params.status.map(|s| s.to_lowercase()),
+        date_from: params.date_from,
+        date_to: params.date_to,
         limit: params.limit,
         offset: params.offset,
     };
-    state
+
+    let mut response = state
         .report_schedule_repo
         .list_executions(query)
         .await
-        .map(Json)
-        .map_err(|_| {
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to list execution history");
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse::new("DB_ERROR", "Failed to list executions")),
             )
-        })
+        })?;
+
+    // Populate download_url for each execution that produced a file.
+    for exec in &mut response.executions {
+        let url = execution_download_url(exec);
+        exec.download_url = url;
+    }
+
+    Ok(Json(response))
 }
 
 /// Get a single report execution by ID (Story 81.2).
@@ -1540,4 +1661,282 @@ pub async fn retry_execution(
                 Json(ErrorResponse::new("DB_ERROR", "Failed to retry execution")),
             )
         })
+}
+
+// ============================================================================
+// gap-81-1: Update report schedule (cron_expression, recipients, enabled)
+// ============================================================================
+
+/// Request body for `PUT /api/v1/reports/schedules/{id}`.
+///
+/// All fields are optional — omit a field to leave the current value unchanged.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateScheduleRequest {
+    /// Cron expression (5-field UNIX syntax, e.g. `"0 8 * * 1"` = every Monday at 08:00).
+    pub cron_expression: Option<String>,
+    /// Recipient email addresses (max 50). Replaces the existing list.
+    pub recipients: Option<Vec<String>>,
+    /// `true` activates the schedule; `false` pauses it.
+    pub enabled: Option<bool>,
+}
+
+/// Validate a 5-field UNIX cron expression (minute hour dom month dow).
+fn validate_cron_expression(expr: &str) -> bool {
+    let fields: Vec<&str> = expr.split_whitespace().collect();
+    if fields.len() != 5 {
+        return false;
+    }
+    fn valid_field(field: &str, min: u32, max: u32) -> bool {
+        for part in field.split(',') {
+            let (base, step) = if let Some((b, s)) = part.split_once('/') {
+                (b, Some(s))
+            } else {
+                (part, None)
+            };
+            if let Some(s) = step {
+                if s.parse::<u32>().map_or(true, |v| v == 0) {
+                    return false;
+                }
+            }
+            if base != "*" {
+                if let Some((lo, hi)) = base.split_once('-') {
+                    match (lo.parse::<u32>(), hi.parse::<u32>()) {
+                        (Ok(l), Ok(h)) if l >= min && h <= max && l <= h => {}
+                        _ => return false,
+                    }
+                } else {
+                    match base.parse::<u32>() {
+                        Ok(v) if (min..=max).contains(&v) => {}
+                        _ => return false,
+                    }
+                }
+            }
+        }
+        true
+    }
+    // minute(0-59) hour(0-23) dom(1-31) month(1-12) dow(0-7)
+    valid_field(fields[0], 0, 59)
+        && valid_field(fields[1], 0, 23)
+        && valid_field(fields[2], 1, 31)
+        && valid_field(fields[3], 1, 12)
+        && valid_field(fields[4], 0, 7)
+}
+
+/// Update a report schedule (gap-81-1).
+///
+/// Partial-update semantics: any field omitted from the request body is left unchanged.
+#[utoipa::path(
+    put,
+    path = "/api/v1/reports/schedules/{id}",
+    tag = "reports",
+    params(("id" = Uuid, Path, description = "Schedule ID")),
+    request_body = UpdateScheduleRequest,
+    responses(
+        (status = 200, description = "Updated schedule", body = ReportSchedule),
+        (status = 400, description = "Validation error", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Schedule not found", body = ErrorResponse),
+    )
+)]
+pub async fn update_schedule(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateScheduleRequest>,
+) -> Result<Json<ReportSchedule>, (StatusCode, Json<ErrorResponse>)> {
+    // RBAC: only manager-tier roles may mutate report schedules.
+    let role = auth.role.unwrap_or(TenantRole::Guest);
+    if !role.is_manager() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Manager role or above required to modify report schedules",
+            )),
+        ));
+    }
+    // At least one field must be supplied.
+    if req.cron_expression.is_none() && req.recipients.is_none() && req.enabled.is_none() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "EMPTY_UPDATE",
+                "At least one of cron_expression, recipients, or enabled must be provided",
+            )),
+        ));
+    }
+    // Validate cron expression when present.
+    if let Some(ref cron) = req.cron_expression {
+        if !validate_cron_expression(cron) {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_CRON_EXPRESSION",
+                    "cron_expression must be a valid 5-field UNIX cron expression \
+                     (e.g. \"0 8 * * 1\")",
+                )),
+            ));
+        }
+    }
+    // Validate recipient email addresses when present.
+    if let Some(ref recipients) = req.recipients {
+        if recipients.len() > 50 {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "TOO_MANY_RECIPIENTS",
+                    "A schedule may have at most 50 recipients",
+                )),
+            ));
+        }
+        for email in recipients {
+            if !crate::services::auth::AuthService::validate_email(email) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "INVALID_RECIPIENT_EMAIL",
+                        format!("Invalid recipient email address: {email}"),
+                    )),
+                ));
+            }
+        }
+    }
+    // Load current schedule (returns 404 when absent).
+    let mut schedule = state
+        .report_schedule_repo
+        .get_by_id(id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to fetch schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to fetch schedule")),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "SCHEDULE_NOT_FOUND",
+                    "Report schedule not found",
+                )),
+            )
+        })?;
+    // Apply updates and persist.
+    let updated = state
+        .report_schedule_repo
+        .update_schedule(
+            id,
+            req.cron_expression,
+            req.recipients,
+            req.enabled,
+            &mut schedule,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, schedule_id = %id, "Failed to update schedule");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("DB_ERROR", "Failed to update schedule")),
+            )
+        })?;
+    Ok(Json(updated))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_cron_expression;
+
+    // --- valid expressions ---
+
+    #[test]
+    fn valid_every_minute() {
+        assert!(validate_cron_expression("* * * * *"));
+    }
+
+    #[test]
+    fn valid_specific_time() {
+        // Every Monday at 08:00
+        assert!(validate_cron_expression("0 8 * * 1"));
+    }
+
+    #[test]
+    fn valid_ranges_and_lists() {
+        assert!(validate_cron_expression("0,30 9-17 1-31 1-12 0-7"));
+    }
+
+    #[test]
+    fn valid_step_syntax() {
+        // Every 5 minutes
+        assert!(validate_cron_expression("*/5 * * * *"));
+    }
+
+    #[test]
+    fn valid_boundary_values() {
+        assert!(validate_cron_expression("59 23 31 12 7"));
+    }
+
+    // --- invalid expressions ---
+
+    #[test]
+    fn invalid_too_few_fields() {
+        assert!(!validate_cron_expression("* * * *"));
+    }
+
+    #[test]
+    fn invalid_too_many_fields() {
+        assert!(!validate_cron_expression("* * * * * *"));
+    }
+
+    #[test]
+    fn invalid_empty_string() {
+        assert!(!validate_cron_expression(""));
+    }
+
+    #[test]
+    fn invalid_minute_out_of_range() {
+        // minute must be 0-59
+        assert!(!validate_cron_expression("60 * * * *"));
+    }
+
+    #[test]
+    fn invalid_hour_out_of_range() {
+        // hour must be 0-23
+        assert!(!validate_cron_expression("* 24 * * *"));
+    }
+
+    #[test]
+    fn invalid_dom_zero() {
+        // day-of-month must be 1-31
+        assert!(!validate_cron_expression("* * 0 * *"));
+    }
+
+    #[test]
+    fn invalid_month_too_large() {
+        // month must be 1-12
+        assert!(!validate_cron_expression("* * * 13 *"));
+    }
+
+    #[test]
+    fn invalid_dow_out_of_range() {
+        // day-of-week must be 0-7
+        assert!(!validate_cron_expression("* * * * 8"));
+    }
+
+    #[test]
+    fn invalid_step_zero() {
+        // step of 0 is meaningless
+        assert!(!validate_cron_expression("*/0 * * * *"));
+    }
+
+    #[test]
+    fn invalid_non_numeric_field() {
+        assert!(!validate_cron_expression("foo * * * *"));
+    }
+
+    #[test]
+    fn invalid_reversed_range() {
+        // lo > hi in a range
+        assert!(!validate_cron_expression("* * 31-1 * *"));
+    }
 }

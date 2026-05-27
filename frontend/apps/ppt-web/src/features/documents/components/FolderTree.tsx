@@ -15,6 +15,8 @@ import {
   useUpdateFolder,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../../../components/Toast';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -421,6 +423,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
   const createFolder = useCreateFolder();
   const updateFolder = useUpdateFolder();
   const deleteFolder = useDeleteFolder();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
 
   // inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -446,11 +450,18 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
     async (id: string, name: string) => {
       try {
         await updateFolder.mutateAsync({ id, data: { name } });
-      } catch {
-        // mutation will surface error through TanStack Query; toast on consuming page
+      } catch (err) {
+        showToast({
+          type: 'error',
+          title: t('documents.folder.renameError', 'Rename failed'),
+          message:
+            err instanceof Error
+              ? err.message
+              : t('documents.folder.renameErrorMessage', 'Failed to rename folder'),
+        });
       }
     },
-    [updateFolder]
+    [updateFolder, showToast]
   );
 
   const handleDeleteRequest = useCallback((id: string, name: string) => {
@@ -463,13 +474,20 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       try {
         await deleteFolder.mutateAsync({ id: deleteTarget.id, cascade });
         if (selectedFolderId === deleteTarget.id) onSelectFolder(null);
-      } catch {
-        // noop – surface via refetch / toast on parent
+      } catch (err) {
+        showToast({
+          type: 'error',
+          title: t('documents.folder.deleteError', 'Delete failed'),
+          message:
+            err instanceof Error
+              ? err.message
+              : t('documents.folder.deleteErrorMessage', 'Failed to delete folder'),
+        });
       } finally {
         setDeleteTarget(null);
       }
     },
-    [deleteTarget, deleteFolder, selectedFolderId, onSelectFolder]
+    [deleteTarget, deleteFolder, selectedFolderId, onSelectFolder, showToast]
   );
 
   const handleAddChild = useCallback((parentId: string, depth: number) => {
@@ -485,13 +503,20 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
           parent_id: newFolder.parentId ?? undefined,
           building_id: buildingId,
         });
-      } catch {
-        // surface via invalidation re-render
+      } catch (err) {
+        showToast({
+          type: 'error',
+          title: t('documents.folder.createError', 'Create failed'),
+          message:
+            err instanceof Error
+              ? err.message
+              : t('documents.folder.createErrorMessage', 'Failed to create folder'),
+        });
       } finally {
         setNewFolder(null);
       }
     },
-    [newFolder, createFolder, buildingId]
+    [newFolder, createFolder, buildingId, showToast]
   );
 
   const tree = data?.tree ?? [];

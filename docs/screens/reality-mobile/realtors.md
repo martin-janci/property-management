@@ -1,9 +1,8 @@
 ---
 id: reality-mobile/realtors
 name: Realtors Directory (iOS SwiftUI)
-product: reality
-sitemapRefs:
-  reality-web: reality-realtor
+product: reality-mobile
+sitemapRefs: {}
 implementations:
   ios-swiftui:
     component: RealtorsView
@@ -11,8 +10,7 @@ implementations:
     buildStatus: in-progress
     redesignStatus: not-started
     apiStatus: partial
-endpoints:
-  - GET /api/v1/agencies (derived list via AgencyRepository)
+endpoints: []
 relatedScreens:
   - id: reality/realtor
     rel: web-counterpart

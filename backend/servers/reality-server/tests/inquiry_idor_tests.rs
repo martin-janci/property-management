@@ -15,6 +15,12 @@
 //!
 //! …and only updates when the caller is the owner.
 //!
+//! A companion IDOR in `respond_to_inquiry` (same handler file) was fixed in
+//! PR #508: the repo now returns `Option<InquiryMessage>` and the handler maps
+//! `None → 404`. Both IDOR fixes are exercised by the `db` crate tests in
+//! `backend/crates/db/tests/inquiry_mark_read_idor_tests.rs`; this file covers
+//! the repository-layer contracts that the route handlers depend on.
+//!
 //! # Test strategy
 //!
 //! We test the repository layer directly via [`RealityPortalRepository`],

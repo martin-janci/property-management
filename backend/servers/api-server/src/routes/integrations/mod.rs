@@ -6,7 +6,9 @@
 //! | oauth   | `oauth`   | OAuth callback flows (Airbnb OAuth callback) |
 //! | sync    | `sync`    | calendar, accounting, e-signature, video CRUD + sync |
 //! | webhook | `webhook` | webhook subscriptions CRUD + incoming webhook receivers |
+//! | booking_channel | `booking_channel` | Booking.com listing push + conflict detection (Gap 83-2) |
 
+pub mod booking_channel;
 pub mod install;
 pub mod oauth;
 pub mod sync;
@@ -23,4 +25,5 @@ pub fn router() -> Router<AppState> {
         .merge(install::router())
         .merge(oauth::router())
         .merge(webhook::router())
+        .merge(booking_channel::router())
 }

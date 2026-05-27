@@ -300,6 +300,13 @@ if [ "$LAG_HOURS" -gt 36 ]; then
   echo "lag_warning: routine has not run in ${LAG_DAYS}d ${LAG_HOURS}h — surface in brief Since last run"
 fi
 
+# Stale-routine alert (P4) — if state.json hasn't advanced in 3+ days the
+# cloud cron is likely broken even if the dispatcher (separate loop, separate
+# branch) is still ticking. Flag in the brief so the operator notices.
+if [ "$LAG_DAYS" -ge 3 ]; then
+  echo "stale_routine_alert: state.json last_run_iso=${SINCE_ISO} is ${LAG_DAYS}d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."
+fi
+
 # Merged PRs since last_pr_seen
 gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
@@ -929,6 +936,31 @@ Run these and verify each passes:
 - Stalled review: #<num> — <days idle>, <author>
 - Reverted: #<num> reverted #<orig> — <hypothesis>
 - Churn hotspots: <file> (<additions+deletions> lines this run, runs_seen=<N>)
+
+## PRs stuck in draft despite approval
+<!-- Query: PRs where isDraft==true AND reviewDecision==APPROVED AND updatedAt < now-24h.
+     Example:
+       gh pr list --repo martin-janci/property-management --state open --draft \
+         --json number,title,updatedAt,reviewDecision,isDraft \
+         --jq '.[] | select(.reviewDecision=="APPROVED" and .isDraft==true)'
+     Compute age-in-hours from updatedAt. If none: emit a single line "- none".
+     This catches the merge-gate bug class (#539-style): PR approved, CI green,
+     but stuck in draft because a human gate wasn't cleared. -->
+- #<num> <title> — last update <Nh> ago (age=<dd:hh>)
+- none
+
+## PRs with verdict=changes, no fix-round progress in 24h
+<!-- Query: rows in .research/management/assignments.json (planning branch) where
+     reviewer_summary starts with "verdict=changes" AND
+     (now - last_updated) > 24h AND status == "review".
+     Example (read planning's assignments via gh):
+       gh api repos/martin-janci/property-management/contents/.research/management/assignments.json?ref=planning \
+         --jq '.content' | base64 -d | jq '.assignments[]
+         | select(.status=="review" and (.reviewer_summary // "" | startswith("verdict=changes")))
+         | {task_id, pr_number, last_updated, reviewer_summary}'
+     If none: emit "- none". -->
+- <task_id> PR#<num> — last_updated <Nh> ago, reviewer note: <short>
+- none
 
 ## Code review slice
 - Segment reviewed: <SEGMENT> (reason: churn-aligned | oldest-unreviewed | fallback)

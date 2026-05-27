@@ -1259,29 +1259,35 @@ async fn pin_announcement(
             }));
         }
 
-        // Check pinned count (max 3 per org)
-        let pinned_count = state
+        // Atomically check the max-3 cap and pin in a single tx with
+        // SELECT ... FOR UPDATE on the org's pinned rows. Defends issue
+        // #518 (TOCTOU race that let two concurrent PATCHes both pass the
+        // guard). Also surfaces DB errors instead of masking them with
+        // `.unwrap_or(0)`.
+        match state
             .announcement_repo
-            .count_pinned_rls(&mut **rls.conn(), announcement.organization_id)
+            .pin_with_cap_rls(
+                rls.conn(),
+                id,
+                announcement.organization_id,
+                user_id,
+                db::repositories::AnnouncementRepository::MAX_PINNED_PER_ORG,
+            )
             .await
-            .unwrap_or(0);
-
-        if pinned_count >= 3 {
-            rls.release().await;
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse::new(
-                    "PINNED_LIMIT_REACHED",
-                    "Maximum of 3 pinned announcements reached",
-                )),
-            ));
+        {
+            Ok(Ok(pinned)) => Ok(pinned),
+            Ok(Err(_actual_count)) => {
+                rls.release().await;
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new(
+                        "PINNED_LIMIT_REACHED",
+                        "Maximum of 3 pinned announcements reached",
+                    )),
+                ));
+            }
+            Err(e) => Err(e),
         }
-
-        // Pin the announcement
-        state
-            .announcement_repo
-            .pin_rls(&mut **rls.conn(), id, user_id)
-            .await
     } else {
         state
             .announcement_repo

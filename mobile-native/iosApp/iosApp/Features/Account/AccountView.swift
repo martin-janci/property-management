@@ -3,11 +3,14 @@ import SwiftUI
 /// Account screen for Reality Portal iOS app.
 ///
 /// Displays user profile, settings, and sign in/out options.
+/// Notification toggles are backed by `PushNotificationManager` which persists
+/// preferences and manages APNs authorization.
 ///
 /// Epic 82 - Story 82.5: Inquiries and Account
 struct AccountView: View {
     @Environment(NavigationCoordinator.self) private var coordinator
     @Environment(AuthManager.self) private var authManager
+    @Environment(PushNotificationManager.self) private var pushManager
 
     @State private var showLogoutConfirmation = false
 
@@ -94,21 +97,33 @@ struct AccountView: View {
 
             // Notifications section
             Section(String(localized: "notifications")) {
-                Toggle(isOn: .constant(true)) {
-                    Label(String(localized: "notification_new_listings"), systemImage: "bell.badge.fill")
-                }
+                NotificationToggle(
+                    labelKey: "notification_new_listings",
+                    systemImage: "bell.badge.fill",
+                    preferenceKey: .newListings,
+                    pushManager: pushManager
+                )
 
-                Toggle(isOn: .constant(true)) {
-                    Label(String(localized: "notification_price_drops"), systemImage: "tag.fill")
-                }
+                NotificationToggle(
+                    labelKey: "notification_price_drops",
+                    systemImage: "tag.fill",
+                    preferenceKey: .priceDrops,
+                    pushManager: pushManager
+                )
 
-                Toggle(isOn: .constant(true)) {
-                    Label(String(localized: "notification_inquiry_responses"), systemImage: "message.fill")
-                }
+                NotificationToggle(
+                    labelKey: "notification_inquiry_responses",
+                    systemImage: "message.fill",
+                    preferenceKey: .inquiryResponses,
+                    pushManager: pushManager
+                )
 
-                Toggle(isOn: .constant(false)) {
-                    Label(String(localized: "notification_marketing"), systemImage: "megaphone.fill")
-                }
+                NotificationToggle(
+                    labelKey: "notification_marketing",
+                    systemImage: "megaphone.fill",
+                    preferenceKey: .marketing,
+                    pushManager: pushManager
+                )
             }
 
             // App settings section
@@ -287,6 +302,37 @@ struct AccountView: View {
     }
 }
 
+// MARK: - NotificationToggle
+
+/// A toggle row in the notifications section of `AccountView`.
+///
+/// Bridges SwiftUI's `Toggle` (which requires a `Binding`) with
+/// `PushNotificationManager`'s async `setEnabled(_:for:)` call.
+/// The toggle updates optimistically and requests APNs authorization
+/// on the first enabled toggle if not yet granted.
+///
+/// Epic 82 - Story 82.5: Inquiries and Account
+private struct NotificationToggle: View {
+    let labelKey: String.LocalizationValue
+    let systemImage: String
+    let preferenceKey: NotificationPreferenceKey
+    let pushManager: PushNotificationManager
+
+    var body: some View {
+        Toggle(isOn: Binding(
+            get: { pushManager.isEnabled(preferenceKey) },
+            set: { newValue in
+                Task {
+                    await pushManager.setEnabled(newValue, for: preferenceKey)
+                }
+            }
+        )) {
+            Label(String(localized: labelKey), systemImage: systemImage)
+        }
+        .disabled(pushManager.isRequestingPermission)
+    }
+}
+
 // MARK: - Preview
 
 #Preview("Authenticated") {
@@ -299,6 +345,9 @@ struct AccountView: View {
         // Note: In real implementation, we would set up test user
         return auth
     }())
+    .environment(PushNotificationManager(
+        keychainService: KeychainService(service: "three.two.bit.ppt.reality.preview")
+    ))
 }
 
 #Preview("Not Authenticated") {
@@ -307,4 +356,7 @@ struct AccountView: View {
     }
     .environment(NavigationCoordinator())
     .environment(AuthManager())
+    .environment(PushNotificationManager(
+        keychainService: KeychainService(service: "three.two.bit.ppt.reality.preview")
+    ))
 }

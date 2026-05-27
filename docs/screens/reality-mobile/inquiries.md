@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/inquiries
 name: Inquiries (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-inquiries
 implementations:
@@ -12,9 +12,8 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/inquiries
-  - GET /api/v1/inquiries/{id}
-  - POST /api/v1/inquiries
+  - inquiries_list
+  - inquiries_contact
 relatedScreens:
   - id: reality/inquiries
     rel: web-counterpart

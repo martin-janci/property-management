@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
 # check-discarded-principal CI lint
 # =============================================================================
@@ -105,13 +105,20 @@ ALLOWLIST=(
     # "servers/api-server/src/routes/health.rs:health_check"
 )
 
-# Directories to scan (route/handler code only).
-SCAN_DIRS=(
-    "servers/api-server/src/routes"
-    "servers/reality-server/src/routes"
-    "servers/api-server/src/handlers"
-    "servers/reality-server/src/handlers"
-)
+# Directories to scan (route/handler code only).  Override with
+# CHECK_DISCARDED_SCAN_DIRS (space-separated) to point the lint at a
+# fixture tree from the self-test harness (issue #528).
+if [[ -n "${CHECK_DISCARDED_SCAN_DIRS:-}" ]]; then
+    # shellcheck disable=SC2206
+    SCAN_DIRS=( ${CHECK_DISCARDED_SCAN_DIRS} )
+else
+    SCAN_DIRS=(
+        "servers/api-server/src/routes"
+        "servers/reality-server/src/routes"
+        "servers/api-server/src/handlers"
+        "servers/reality-server/src/handlers"
+    )
+fi
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -145,12 +152,62 @@ nearest_fn_name() {
     local file="$1"
     local target_line="$2"
     local fn_name
+    # Issue #528 (5): anchor the `fn` match so a `// fn old_name` doc
+    # comment above the real signature does not poison the extraction.
     fn_name=$(sed -n "1,${target_line}p" "$file" 2>/dev/null \
         | grep -nE '^[[:space:]]*(pub )?(pub\(crate\) )?(async )?fn [a-zA-Z_][a-zA-Z0-9_]*' \
         | tail -1 \
-        | sed -E 's/.*fn ([a-zA-Z_][a-zA-Z0-9_]*).*/\1/' \
+        | sed -E 's/^[^/]*\bfn[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*).*/\1/' \
         || true)
     echo "$fn_name"
+}
+
+# Issue #528 (3): honour inline `// lint-allow: discarded-principal — <reason>`
+# on the violating line or the immediately-preceding line.
+has_inline_allow() {
+    local file="$1"
+    local line_num="$2"
+    local prev=$((line_num - 1))
+    if sed -n "${prev}p;${line_num}p" "$file" 2>/dev/null \
+        | grep -qE 'lint-allow:[[:space:]]*discarded-principal'; then
+        return 0
+    fi
+    return 1
+}
+
+# Issue #528 (1): detect "principal: RequestPrincipal" (no underscore)
+# where the body never references the binding — same discard shape as
+# `_principal: RequestPrincipal`. Returns 0 (truthy) when the binding is
+# discarded.
+principal_unused_in_body() {
+    local file="$1"
+    local sig_line="$2"
+    # Find the closing brace of the enclosing function by walking forward
+    # and tracking brace depth from the first `{` after the signature.
+    awk -v start="$sig_line" '
+        NR < start { next }
+        {
+            for (i = 1; i <= length($0); i++) {
+                c = substr($0, i, 1)
+                if (c == "{") { depth++; in_fn = 1 }
+                else if (c == "}") {
+                    depth--
+                    if (in_fn && depth == 0) { print NR; exit }
+                }
+            }
+        }
+    ' "$file" > /tmp/.cd-end-line.$$
+    local end_line
+    end_line=$(cat /tmp/.cd-end-line.$$ 2>/dev/null || true)
+    rm -f /tmp/.cd-end-line.$$
+    [[ -n "$end_line" ]] || return 1
+    local body_start=$((sig_line + 1))
+    # principal must appear as identifier (word-bounded) somewhere in the body.
+    if sed -n "${body_start},${end_line}p" "$file" \
+        | grep -qE '\bprincipal\b'; then
+        return 1
+    fi
+    return 0
 }
 
 # ---------------------------------------------------------------------------
@@ -174,15 +231,32 @@ for scan_dir in "${SCAN_DIRS[@]}"; do
             continue
         fi
 
+        # Issue #528 (1): match underscore-prefixed, bare-underscore, and
+        # plain `principal: RequestPrincipal` (the last only counted as a
+        # violation if the body never references `principal`).
         while IFS= read -r match; do
             [[ -n "$match" ]] || continue
             line_num=$(echo "$match" | cut -d: -f1)
             line_text=$(echo "$match" | cut -d: -f2-)
 
-            # Skip comment lines.
+            # Skip comment lines (single-line and `*` continuation).
             trimmed="${line_text#"${line_text%%[![:space:]]*}"}"
             if [[ "$trimmed" == //* || "$trimmed" == \** ]]; then
                 continue
+            fi
+
+            # Issue #528 (3): inline allow marker.
+            if has_inline_allow "$rs_file" "$line_num"; then
+                continue
+            fi
+
+            # For the plain `principal: RequestPrincipal` form, only count
+            # as a violation if the binding is never referenced in the
+            # function body.
+            if echo "$trimmed" | grep -qE '^principal[[:space:]]*:[[:space:]]*RequestPrincipal'; then
+                if ! principal_unused_in_body "$rs_file" "$line_num"; then
+                    continue
+                fi
             fi
 
             fn_name=$(nearest_fn_name "$rs_file" "$line_num")
@@ -198,12 +272,12 @@ for scan_dir in "${SCAN_DIRS[@]}"; do
 
             VIOLATIONS=$((VIOLATIONS + 1))
             if [[ $VIOLATIONS -eq 1 ]]; then
-                echo -e "${RED}Mutating handlers with discarded _principal (potential IDOR):${NC}"
+                echo -e "${RED}Mutating handlers with discarded principal (potential IDOR):${NC}"
                 echo ""
             fi
             echo "  ${rel_file}:${line_num}  fn ${fn_name}"
             echo "    ${trimmed}"
-        done < <(grep -n '_principal: RequestPrincipal' "$rs_file" 2>/dev/null || true)
+        done < <(grep -nE '(_principal|_|principal):[[:space:]]*RequestPrincipal' "$rs_file" 2>/dev/null || true)
     done < <(find "$scan_dir" -name '*.rs' -type f -print0 2>/dev/null)
 done
 

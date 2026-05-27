@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/search
 name: Search (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-listings
 implementations:
@@ -12,7 +12,7 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - POST /api/v1/listings/search
+  - listings_search
 relatedScreens:
   - id: reality/listings
     rel: web-counterpart

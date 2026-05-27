@@ -350,6 +350,31 @@ impl StorageService {
         Ok(PresignedUrl { url, expires_at })
     }
 
+    /// Generate a presigned URL for inline (in-browser) preview of a file.
+    ///
+    /// Like `generate_download_url` but sets `Content-Disposition: inline`
+    /// so browsers render the file in-place rather than triggering a download
+    /// dialog. Only meaningful for MIME types browsers can display natively
+    /// (PDF, images, plain text). Callers should check `supports_inline_preview`
+    /// before calling.
+    ///
+    /// Default expiration: 1 hour (longer than download so embedded viewers
+    /// can reload sub-resources without needing a fresh URL immediately).
+    pub async fn generate_preview_url(
+        &self,
+        key: &str,
+        content_type: &str,
+        expires_in_secs: Option<i64>,
+    ) -> Result<PresignedUrl, StorageError> {
+        const DEFAULT_PREVIEW_EXPIRATION_SECS: i64 = 60 * 60; // 1 hour
+        let expires_in = expires_in_secs.unwrap_or(DEFAULT_PREVIEW_EXPIRATION_SECS);
+        let expires_at = Utc::now() + Duration::seconds(expires_in);
+        let url = self
+            .build_presigned_inline_url(key, content_type, expires_in)
+            .await?;
+        Ok(PresignedUrl { url, expires_at })
+    }
+
     /// Generate a presigned URL for uploading a file.
     ///
     /// # Arguments
@@ -421,6 +446,38 @@ impl StorageService {
             "Generated presigned download URL"
         );
 
+        Ok(presigned.uri().to_string())
+    }
+
+    /// Build a presigned GET URL with `Content-Disposition: inline`.
+    ///
+    /// Same as `build_presigned_get_url` but omits attachment filename so
+    /// the browser treats the response as an inline resource.
+    async fn build_presigned_inline_url(
+        &self,
+        key: &str,
+        content_type: &str,
+        expires_in: i64,
+    ) -> Result<String, StorageError> {
+        let client = self.get_s3_client()?;
+        let expires = std::time::Duration::from_secs(expires_in.max(1) as u64);
+        let presign_cfg = PresigningConfig::expires_in(expires)
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
+        let presigned = client
+            .get_object()
+            .bucket(&self.config.bucket)
+            .key(key)
+            .response_content_disposition("inline")
+            .response_content_type(content_type)
+            .presigned(presign_cfg)
+            .await
+            .map_err(|e| StorageError::PresignError(e.to_string()))?;
+        tracing::debug!(
+            key = %key,
+            content_type = %content_type,
+            expires_in = %expires_in,
+            "Generated presigned inline preview URL"
+        );
         Ok(presigned.uri().to_string())
     }
 
@@ -916,5 +973,39 @@ mod tests {
         let config = StorageConfig::new("my-bucket", "us-west-2", "key", "secret")
             .with_endpoint("http://localhost:9000");
         assert_eq!(config.endpoint, Some("http://localhost:9000".to_string()));
+    }
+
+    #[test]
+    fn test_storage_service_no_s3_client_by_default() {
+        let config = StorageConfig::new("test-bucket", "us-east-1", "key", "secret");
+        let service = StorageService::new(config);
+        assert!(!service.has_s3_client());
+        assert!(service.get_s3_client().is_err());
+    }
+
+    #[test]
+    fn test_supports_inline_preview_exhaustive() {
+        for ct in &[
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "image/webp",
+            "text/plain",
+        ] {
+            assert!(supports_inline_preview(ct), "{ct} should support preview");
+        }
+        for ct in &[
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/octet-stream",
+            "text/csv",
+        ] {
+            assert!(
+                !supports_inline_preview(ct),
+                "{ct} should not support preview"
+            );
+        }
     }
 }

@@ -125,3 +125,31 @@ export interface AuthErrorResponse {
   message: string;
   details?: Record<string, unknown>;
 }
+
+// ============================================================================
+// SSO / OAuth Callback
+// ============================================================================
+
+/**
+ * Request to exchange an OAuth authorization code for PPT JWT tokens.
+ *
+ * Sent by the frontend /auth/callback page after the SSO provider redirects
+ * back with `?code=<code>&state=<state>`.
+ */
+export interface SsoCallbackRequest {
+  /** OAuth authorization code from the SSO provider redirect. */
+  code: string;
+  /** CSRF / state value from the redirect (echoed back to the server). */
+  state: string;
+  /** Redirect URI that was registered with the SSO provider (must match). */
+  redirectUri: string;
+}
+
+/**
+ * Response from the SSO callback endpoint.
+ *
+ * On success the backend has exchanged the code with the SSO provider,
+ * resolved / created the local PPT user, and returns the same JWT pair as
+ * /api/v1/auth/login.
+ */
+export type SsoCallbackResponse = LoginResponse;

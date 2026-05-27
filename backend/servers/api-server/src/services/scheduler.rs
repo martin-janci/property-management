@@ -826,9 +826,17 @@ impl Scheduler {
             "Processing signature requests approaching expiry for reminders"
         );
 
-        let provider = LightweightProvider::from_env()
-            .expect("ESIGN_TOKEN_SECRET must be configured (validated at startup)");
-        let base_url =
+        let provider = match LightweightProvider::from_env() {
+            Ok(p) => p,
+            Err(e) => {
+                // Refuse to mint reminder URLs when the HMAC secret is
+                // missing — startup validation ensures this should never
+                // fire in production.
+                tracing::error!(error = %e, "Skipping signature-reminder tick — e-signature provider misconfigured");
+                return Ok(());
+            }
+        };
+        let _base_url =
             std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
         let mut total_reminders = 0u64;
@@ -853,22 +861,23 @@ impl Scheduler {
             let org_id_str = sig_req.organization_id.to_string();
             for signer in pending_signers {
                 let signer_status = signer.status.to_string();
-                let sign_url = provider
-                    .build_signing_url(
-                        &signer.email,
-                        &sig_req.id.to_string(),
-                        &org_id_str,
-                        &signer_status,
-                    )
-                    .map(|s| s.url)
-                    .unwrap_or_else(|_| {
-                        format!(
-                            "{}/sign?request_id={}&email={}",
-                            base_url.trim_end_matches('/'),
-                            sig_req.id,
-                            signer.email
-                        )
-                    });
+                let sign_url = match provider.build_signing_url(
+                    &signer.email,
+                    &sig_req.id.to_string(),
+                    &org_id_str,
+                    &signer_status,
+                ) {
+                    Ok(s) => s.url,
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            signature_request_id = %sig_req.id,
+                            signer_email = %signer.email,
+                            "Failed to build signing URL — skipping reminder for this signer"
+                        );
+                        continue;
+                    }
+                };
 
                 match self
                     .email_service

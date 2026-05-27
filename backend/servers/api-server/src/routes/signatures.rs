@@ -177,6 +177,7 @@ pub async fn create_signature_request(
         // The token binds signer email, request id, organisation, and the
         // signer's current status; the embedded nonce is exposed on
         // `SignedUrl.nonce` for the future `/sign` consumer to persist.
+        // Issue #527 (c): org_id bound into HMAC prevents cross-tenant replay.
         let signer_status = signer.status.to_string();
         let sign_url = ESIGN_PROVIDER
             .build_signing_url(
@@ -560,31 +561,50 @@ pub async fn handle_webhook(
     // hitting this branch in production indicates the env was cleared
     // post-start — still better to refuse than to forge-complete signature
     // requests.
-    let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
-    if expected_secret.is_empty() {
-        error!(
-            provider = %provider,
-            "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
-        );
-        return Err((
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ErrorResponse::new(
-                "WEBHOOK_NOT_CONFIGURED",
-                "Webhook receiver is not configured",
-            )),
-        ));
-    }
-    let provided = headers
-        .get("x-webhook-secret")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    // Constant-time compare to avoid leaking the secret via timing.
-    if !bool::from(provided.as_bytes().ct_eq(expected_secret.as_bytes())) {
-        warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
-        ));
+    // Issue #527 (d): fail CLOSED in non-debug builds; debug builds log a
+    // warning and pass through to ease local development.
+    // Issue #527 (e): constant-time comparison via subtle to defeat timing
+    // side channels on the webhook secret.
+    let expected_secret = match std::env::var("ESIGN_WEBHOOK_SECRET") {
+        Ok(s) if !s.is_empty() => s,
+        _ => {
+            if cfg!(debug_assertions) {
+                warn!(
+                    provider = %provider,
+                    "ESIGN_WEBHOOK_SECRET unset — accepting webhook (debug build only)"
+                );
+                String::new()
+            } else {
+                error!(
+                    provider = %provider,
+                    "Webhook rejected: ESIGN_WEBHOOK_SECRET unset at runtime"
+                );
+                return Err((
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "WEBHOOK_NOT_CONFIGURED",
+                        "Webhook receiver is not configured",
+                    )),
+                ));
+            }
+        }
+    };
+    if !expected_secret.is_empty() {
+        let provided = headers
+            .get("x-webhook-secret")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        let provided_b = provided.as_bytes();
+        let expected_b = expected_secret.as_bytes();
+        let matches = provided_b.len() == expected_b.len()
+            && bool::from(provided_b.ct_eq(expected_b));
+        if !matches {
+            warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorResponse::new("UNAUTHORIZED", "Invalid webhook secret")),
+            ));
+        }
     }
 
     info!(

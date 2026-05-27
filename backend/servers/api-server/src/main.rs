@@ -25,7 +25,9 @@ mod services;
 mod state;
 
 use db::repositories::AnnouncementRepository;
-use services::{EmailService, JwtService, Scheduler, SchedulerConfig};
+use services::{
+    EmailService, JwtService, PushFanoutConfig, PushFanoutWorker, Scheduler, SchedulerConfig,
+};
 use state::AppState;
 
 // Phase 5 — admin extension wiring helpers (B7). Both `main.rs` (production
@@ -433,6 +435,18 @@ async fn main() -> anyhow::Result<()> {
     let scheduler = Scheduler::new(scheduler_pool, announcement_repo, scheduler_config)
         .with_email_service(email_service.clone());
     let _scheduler_handle = scheduler.start();
+
+    // Epic 8A-3: start the push notification fanout background worker.
+    // The worker fans out pending push notifications to FCM/APNs device tokens.
+    // If FCM credentials are not configured it runs in heartbeat-only mode and
+    // does NOT crash the server.
+    let push_fanout_config = PushFanoutConfig::from_env();
+    let push_fanout_worker = PushFanoutWorker::new(
+        db_pool.clone(),
+        state.pubsub_service.clone(),
+        push_fanout_config,
+    );
+    let _push_fanout_handle = push_fanout_worker.start();
 
     // Phase 5 — admin dependency injection (B7).
     //
