@@ -239,6 +239,26 @@
 "reset_filters" = "Obnovit filtry";
 "apply" = "Použít";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "V okolí";
+"filter_near_me_section" = "Poloha";
+"filter_radius" = "Poloměr";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Poloha: %.4f, %.4f";
+"locating" = "Zjišťuji polohu…";
+"location_access_denied" = "Přístup k poloze byl odepřen. Povolte ho v Nastavení, abyste mohli používat filtry V okolí.";
+"location_unavailable" = "Poloha není dostupná.";
+"location_access_denied_title" = "Přístup k poloze odepřen";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Typ nabídky";
+"filter_price_min" = "Min cena";
+"filter_price_max" = "Max cena";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Koupelny";
+
 /* Account Screen - Additional */
 "quick_actions" = "Rychlé akce";
 "saved_searches" = "Uložená vyhledávání";

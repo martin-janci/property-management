@@ -58,7 +58,6 @@ export function EvidenceUploader({ files, onChange, disabled = false }: Evidence
         if (item.preview) URL.revokeObjectURL(item.preview);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files]);
 
   const validate = useCallback((file: File): string | null => {

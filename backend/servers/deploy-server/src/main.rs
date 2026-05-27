@@ -156,6 +156,13 @@ async fn main() -> anyhow::Result<()> {
                 .strip_prefix("staging.")
                 .unwrap_or(&staging.reality_apex)
         ),
+        // Shared-mode `/api/*` upstreams for worktrees (fix for #453).
+        // Defaults match the Caddyfile's Docker DNS names; override per
+        // host via env when the dev shared backend runs under different
+        // container names (e.g. `dev-api-blue:8080` under blue_green).
+        std::env::var("PPT_SHARED_API_UPSTREAM_PPT").unwrap_or_else(|_| "api-server:8080".into()),
+        std::env::var("PPT_SHARED_API_UPSTREAM_REALITY")
+            .unwrap_or_else(|_| "reality-server:8081".into()),
         webhook_cfg,
         cfg_arc,
         release_svc,

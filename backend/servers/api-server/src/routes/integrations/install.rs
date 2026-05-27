@@ -9,13 +9,19 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
-use integrations::{AirbnbClient, AirbnbOAuthConfig, BookingClient, PortalType};
+use db::models::infrastructure::{job_type, queue, CreateBackgroundJob};
+use integrations::{
+    AirbnbClient, AirbnbOAuthConfig, AvailabilityUpdate, BookingClient, BookingCredentials,
+    IntegrationCrypto, PortalType, PropertyMapping, RateUpdate, RoomTypeMapping,
+};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use super::sync::{OrgIdPath, ResourceIdPath};
 use common::errors::ErrorResponse;
+
+const MAX_BATCH_SIZE: usize = 500;
 
 // ==================== Airbnb Types ====================
 
@@ -89,6 +95,89 @@ pub struct BookingConnectRequest {
     pub password: String,
 }
 
+/// Room-type mapping entry in a push request.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PushRoomTypeMapping {
+    /// Internal unit UUID.
+    pub internal_unit_id: Uuid,
+    /// Booking.com room-type code.
+    pub external_room_type_id: String,
+    /// Human-readable name (optional).
+    pub external_room_type_name: Option<String>,
+}
+
+/// Single availability update DTO (mirrors integrations::AvailabilityUpdate).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AvailabilityUpdateDto {
+    /// Room type ID.
+    pub room_type_id: String,
+    /// Date for the update (YYYY-MM-DD).
+    pub date: chrono::NaiveDate,
+    /// Number of available rooms.
+    pub available_count: i32,
+    /// Stop-sell flag.
+    #[serde(default)]
+    pub stop_sell: bool,
+    /// Closed to arrival.
+    #[serde(default)]
+    pub cta: bool,
+    /// Closed to departure.
+    #[serde(default)]
+    pub ctd: bool,
+    /// Minimum length of stay.
+    pub min_los: Option<i32>,
+    /// Maximum length of stay.
+    pub max_los: Option<i32>,
+}
+
+/// Single rate update DTO (mirrors integrations::RateUpdate).
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RateUpdateDto {
+    /// Room type ID.
+    pub room_type_id: String,
+    /// Rate plan code.
+    pub rate_plan_code: String,
+    /// Date for the rate (YYYY-MM-DD).
+    pub date: chrono::NaiveDate,
+    /// Base rate amount (decimal string, e.g. "129.00").
+    pub base_rate: rust_decimal::Decimal,
+    /// Currency code (ISO 4217, e.g. "EUR").
+    pub currency: String,
+    /// Extra person rate.
+    pub extra_person_rate: Option<rust_decimal::Decimal>,
+    /// Extra child rate.
+    pub extra_child_rate: Option<rust_decimal::Decimal>,
+}
+
+/// Request body for pushing availability to Booking.com.
+///
+/// Sends OTA_HotelAvailNotifRQ to the Booking.com Supply XML API.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BookingPushAvailabilityRequest {
+    /// Room-type mappings (internal unit → Booking.com room type).
+    pub room_mappings: Vec<PushRoomTypeMapping>,
+    /// Availability updates to push.
+    pub updates: Vec<AvailabilityUpdateDto>,
+}
+
+/// Request body for pushing rates to Booking.com.
+///
+/// Sends OTA_HotelRateAmountNotifRQ to the Booking.com Supply XML API.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BookingPushRatesRequest {
+    /// Rate updates to push.
+    pub updates: Vec<RateUpdateDto>,
+}
+
+/// Push result response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct BookingPushResponse {
+    pub success: bool,
+    pub items_pushed: i32,
+    pub pushed_at: chrono::DateTime<chrono::Utc>,
+    pub error: Option<String>,
+}
+
 // ==================== Portal Types ====================
 
 /// Portal connection response.
@@ -143,6 +232,39 @@ pub struct ConnectionIdPath {
     pub connection_id: Uuid,
 }
 
+// ==================== Gap 83-1 Types ====================
+
+/// Direct-connect request (supply pre-obtained tokens instead of OAuth redirect).
+///
+/// The `org_id` is taken from the URL path (`/organizations/{org_id}/airbnb/direct-connect`)
+/// to prevent IDOR — callers cannot influence which organisation they connect to.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AirbnbDirectConnectRequest {
+    /// Airbnb access token obtained outside the OAuth flow.
+    pub access_token: String,
+    /// Optional refresh token.
+    pub refresh_token: Option<String>,
+    /// Optional Airbnb account / listing ID to associate.
+    pub airbnb_account_id: Option<String>,
+}
+
+/// Direct-connect response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AirbnbDirectConnectResponse {
+    pub success: bool,
+    pub connection_id: Uuid,
+    pub listings_count: Option<i32>,
+    pub message: String,
+}
+
+/// Availability-sync enqueue response.
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct AirbnbAvailabilitySyncResponse {
+    pub job_id: Uuid,
+    pub queued: bool,
+    pub message: String,
+}
+
 // ==================== Router ====================
 
 /// Create install-surface router.
@@ -159,6 +281,15 @@ pub fn router() -> Router<crate::state::AppState> {
         )
         .route("/organizations/{org_id}/airbnb/sync", post(sync_airbnb))
         .route("/organizations/{org_id}/airbnb", delete(disconnect_airbnb))
+        // Gap 83-1: direct token connect + availability-sync enqueue
+        .route(
+            "/organizations/{org_id}/airbnb/direct-connect",
+            post(direct_connect_airbnb),
+        )
+        .route(
+            "/organizations/{org_id}/airbnb/availability-sync",
+            post(enqueue_airbnb_availability_sync),
+        )
         // Booking.com Install (Story 83.2 — install/status/disconnect)
         .route(
             "/organizations/{org_id}/booking/status",
@@ -169,6 +300,14 @@ pub fn router() -> Router<crate::state::AppState> {
             post(connect_booking),
         )
         .route("/organizations/{org_id}/booking/sync", post(sync_booking))
+        .route(
+            "/organizations/{org_id}/booking/push-availability",
+            post(push_booking_availability),
+        )
+        .route(
+            "/organizations/{org_id}/booking/push-rates",
+            post(push_booking_rates),
+        )
         .route(
             "/organizations/{org_id}/booking",
             delete(disconnect_booking),
@@ -750,7 +889,117 @@ pub async fn sync_booking(
         )
     })?;
 
-    let items_synced = reservations.len() as i32;
+    let pulled_count = reservations.len() as i32;
+    let mut persisted_count = 0i32;
+
+    // Attempt to persist reservations when a unit-level connection exists for the
+    // room_type_id.  Org-level connections (unit_id = nil UUID) cannot satisfy the
+    // rental_bookings.unit_id NOT NULL FK, so those are counted but not stored —
+    // the operator must map room types via the listing-push / room-mapping API.
+    for reservation in &reservations {
+        // Try to parse the Booking.com room_type_id as a UUID (set by the operator
+        // during room-type mapping).  String IDs like "DBL" won't parse and result
+        // in Uuid::nil(), which matches the org-level connection → we skip.
+        let room_uuid = reservation
+            .room_type_id
+            .parse::<uuid::Uuid>()
+            .ok()
+            .unwrap_or(uuid::Uuid::nil());
+
+        if room_uuid == uuid::Uuid::nil() {
+            tracing::debug!(
+                reservation_id = %reservation.reservation_id,
+                room_type_id = %reservation.room_type_id,
+                "Skipping reservation: room_type_id is not a UUID (room mapping not configured)"
+            );
+            continue;
+        }
+
+        let unit_conn = rental_repo
+            .find_connection_by_unit_platform(room_uuid, "booking")
+            .await
+            .ok()
+            .flatten();
+
+        let unit_id = match unit_conn {
+            Some(ref conn) if conn.unit_id != uuid::Uuid::nil() => conn.unit_id,
+            _ => continue,
+        };
+
+        // Skip if already persisted.
+        let already_exists = rental_repo
+            .find_booking_by_external_id("booking", &reservation.reservation_id)
+            .await
+            .ok()
+            .flatten()
+            .is_some();
+
+        if already_exists {
+            continue;
+        }
+
+        // Conflict gate: check the calendar before inserting.
+        // Fail-safe: on DB error treat as unavailable to avoid double-booking.
+        let is_available = rental_repo
+            .check_availability(unit_id, reservation.check_in, reservation.check_out)
+            .await
+            .unwrap_or(false);
+
+        if !is_available {
+            tracing::warn!(
+                reservation_id = %reservation.reservation_id,
+                unit_id = %unit_id,
+                check_in = %reservation.check_in,
+                check_out = %reservation.check_out,
+                "Booking.com reservation conflicts with existing calendar block — skipping"
+            );
+            continue;
+        }
+
+        let guest_name = format!(
+            "{} {}",
+            reservation.guest.first_name.trim(),
+            reservation.guest.last_name.trim()
+        );
+
+        let create = db::models::CreateBooking {
+            unit_id,
+            platform: "booking".to_string(),
+            external_booking_id: Some(reservation.reservation_id.clone()),
+            guest_name,
+            guest_email: reservation.guest.email.clone(),
+            guest_phone: reservation.guest.phone.clone(),
+            guest_count: reservation.adults + reservation.children,
+            check_in: reservation.check_in,
+            check_out: reservation.check_out,
+            check_in_time: None,
+            check_out_time: None,
+            total_amount: Some(reservation.total_price),
+            currency: Some(reservation.currency.clone()),
+            platform_fee: Some(reservation.commission),
+            cleaning_fee: None,
+            guest_notes: reservation.special_requests.clone(),
+            internal_notes: None,
+        };
+
+        match rental_repo.create_booking(path.org_id, create).await {
+            Ok(_) => {
+                persisted_count += 1;
+                tracing::info!(
+                    reservation_id = %reservation.reservation_id,
+                    unit_id = %unit_id,
+                    "Persisted Booking.com reservation"
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    reservation_id = %reservation.reservation_id,
+                    error = %e,
+                    "Failed to persist Booking.com reservation"
+                );
+            }
+        }
+    }
 
     let _ = rental_repo
         .update_connection_last_sync(connection.id, chrono::Utc::now())
@@ -759,13 +1008,14 @@ pub async fn sync_booking(
     tracing::info!(
         org_id = %path.org_id,
         hotel_id = %hotel_id,
-        reservations_count = items_synced,
+        pulled_count = pulled_count,
+        persisted_count = persisted_count,
         "Booking.com sync completed"
     );
 
     Ok(Json(SyncResponse {
         success: true,
-        items_synced,
+        items_synced: pulled_count,
         synced_at: chrono::Utc::now(),
         error: None,
     }))
@@ -839,6 +1089,344 @@ pub async fn disconnect_booking(
     );
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ==================== Booking.com Push Handlers ====================
+
+/// Push availability updates to Booking.com.
+///
+/// Sends OTA_HotelAvailNotifRQ to the Booking.com Supply XML API for the
+/// connected property.  Requires an active Booking.com connection with stored
+/// credentials.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/booking/push-availability",
+    params(OrgIdPath),
+    request_body = BookingPushAvailabilityRequest,
+    responses(
+        (status = 200, description = "Availability pushed", body = BookingPushResponse),
+        (status = 400, description = "No updates provided or connection not configured"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Booking.com connection found"),
+        (status = 500, description = "Internal server error"),
+        (status = 502, description = "Booking.com upstream API failure")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Booking.com"
+)]
+pub async fn push_booking_availability(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<BookingPushAvailabilityRequest>,
+) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        update_count = request.updates.len(),
+        "Pushing availability to Booking.com"
+    );
+
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
+        ));
+    }
+
+    if request.updates.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NO_UPDATES",
+                "At least one availability update is required",
+            )),
+        ));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BATCH_TOO_LARGE",
+                "A maximum of 500 updates per request is allowed",
+            )),
+        ));
+    }
+
+    if request.updates.iter().any(|u| u.available_count < 0) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_AVAILABLE_COUNT",
+                "available_count must be non-negative",
+            )),
+        ));
+    }
+
+    let rental_repo = &state.rental_repo;
+
+    let connection = rental_repo
+        .find_booking_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find Booking.com connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Booking.com connection found",
+                )),
+            )
+        })?;
+
+    let hotel_id = connection.external_property_id.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Hotel ID not configured for this connection",
+            )),
+        )
+    })?;
+
+    let username = connection.access_token.clone().unwrap_or_default();
+    let password = connection.refresh_token.clone().unwrap_or_default();
+
+    let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
+    let client = BookingClient::new(credentials);
+
+    // Build property mapping from the request room mappings
+    let mapping = PropertyMapping {
+        internal_property_id: path.org_id,
+        external_property_id: hotel_id.clone(),
+        external_property_name: None,
+        room_mappings: request
+            .room_mappings
+            .iter()
+            .map(|rm| RoomTypeMapping {
+                internal_unit_id: rm.internal_unit_id,
+                external_room_type_id: rm.external_room_type_id.clone(),
+                external_room_type_name: rm.external_room_type_name.clone(),
+            })
+            .collect(),
+        sync_enabled: true,
+        last_sync_at: None,
+    };
+
+    let items_count = request.updates.len() as i32;
+
+    // Convert DTOs to integration types
+    let availability_updates: Vec<AvailabilityUpdate> = request
+        .updates
+        .into_iter()
+        .map(|u| AvailabilityUpdate {
+            room_type_id: u.room_type_id,
+            date: u.date,
+            available_count: u.available_count,
+            stop_sell: u.stop_sell,
+            cta: u.cta,
+            ctd: u.ctd,
+            min_los: u.min_los,
+            max_los: u.max_los,
+        })
+        .collect();
+
+    match client
+        .push_availability(&mapping, availability_updates)
+        .await
+    {
+        Ok(()) => {
+            tracing::info!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                items_pushed = items_count,
+                "Booking.com availability push succeeded"
+            );
+            Ok(Json(BookingPushResponse {
+                success: true,
+                items_pushed: items_count,
+                pushed_at: chrono::Utc::now(),
+                error: None,
+            }))
+        }
+        Err(e) => {
+            tracing::error!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                error = %e,
+                "Booking.com availability push failed"
+            );
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "UPSTREAM_FAILURE",
+                    format!("Booking.com push failed: {e}"),
+                )),
+            ))
+        }
+    }
+}
+
+/// Push rate updates to Booking.com.
+///
+/// Sends OTA_HotelRateAmountNotifRQ to the Booking.com Supply XML API for the
+/// connected property.  Requires an active Booking.com connection with stored
+/// credentials.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/booking/push-rates",
+    params(OrgIdPath),
+    request_body = BookingPushRatesRequest,
+    responses(
+        (status = 200, description = "Rates pushed", body = BookingPushResponse),
+        (status = 400, description = "No updates provided or connection not configured"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Booking.com connection found"),
+        (status = 500, description = "Internal server error"),
+        (status = 502, description = "Booking.com upstream API failure")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Booking.com"
+)]
+pub async fn push_booking_rates(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<BookingPushRatesRequest>,
+) -> Result<Json<BookingPushResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        update_count = request.updates.len(),
+        "Pushing rates to Booking.com"
+    );
+
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("FORBIDDEN", "Access denied")),
+        ));
+    }
+
+    if request.updates.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NO_UPDATES",
+                "At least one rate update is required",
+            )),
+        ));
+    }
+
+    if request.updates.len() > MAX_BATCH_SIZE {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "BATCH_TOO_LARGE",
+                "A maximum of 500 updates per request is allowed",
+            )),
+        ));
+    }
+
+    let rental_repo = &state.rental_repo;
+
+    let connection = rental_repo
+        .find_booking_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to find Booking.com connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Booking.com connection found",
+                )),
+            )
+        })?;
+
+    let hotel_id = connection.external_property_id.clone().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Hotel ID not configured for this connection",
+            )),
+        )
+    })?;
+
+    let username = connection.access_token.clone().unwrap_or_default();
+    let password = connection.refresh_token.clone().unwrap_or_default();
+
+    let credentials = BookingCredentials::new(hotel_id.clone(), username, password);
+    let client = BookingClient::new(credentials);
+
+    let items_count = request.updates.len() as i32;
+
+    // Convert DTOs to integration types
+    let rate_updates: Vec<RateUpdate> = request
+        .updates
+        .into_iter()
+        .map(|u| RateUpdate {
+            room_type_id: u.room_type_id,
+            rate_plan_code: u.rate_plan_code,
+            date: u.date,
+            base_rate: u.base_rate,
+            currency: u.currency,
+            extra_person_rate: u.extra_person_rate,
+            extra_child_rate: u.extra_child_rate,
+        })
+        .collect();
+
+    match client.push_rates(&hotel_id, rate_updates).await {
+        Ok(()) => {
+            tracing::info!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                items_pushed = items_count,
+                "Booking.com rates push succeeded"
+            );
+            Ok(Json(BookingPushResponse {
+                success: true,
+                items_pushed: items_count,
+                pushed_at: chrono::Utc::now(),
+                error: None,
+            }))
+        }
+        Err(e) => {
+            tracing::error!(
+                org_id = %path.org_id,
+                hotel_id = %hotel_id,
+                error = %e,
+                "Booking.com rates push failed"
+            );
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse::new(
+                    "UPSTREAM_FAILURE",
+                    format!("Booking.com push failed: {e}"),
+                )),
+            ))
+        }
+    }
 }
 
 // ==================== Portal Connection Handlers ====================
@@ -1086,5 +1674,316 @@ pub async fn archive_inquiry(
     Err((
         StatusCode::NOT_FOUND,
         Json(ErrorResponse::new("NOT_FOUND", "Portal inquiry not found")),
+    ))
+}
+
+// ==================== Gap 83-1 Handlers ====================
+
+/// Direct-connect Airbnb using a pre-obtained access token (no OAuth redirect).
+///
+/// The caller supplies a valid Airbnb access token. This handler verifies the
+/// token by fetching listings, encrypts the tokens at rest (if
+/// `INTEGRATION_ENCRYPTION_KEY` is set), and upserts the connection record.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/airbnb/direct-connect",
+    params(OrgIdPath),
+    request_body = AirbnbDirectConnectRequest,
+    responses(
+        (status = 200, description = "Airbnb connected", body = AirbnbDirectConnectResponse),
+        (status = 400, description = "Invalid or expired token"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Airbnb"
+)]
+pub async fn direct_connect_airbnb(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+    Json(request): Json<AirbnbDirectConnectRequest>,
+) -> Result<Json<AirbnbDirectConnectResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Org ownership guard — prevent IDOR.
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    if !matches!(
+        role,
+        common::TenantRole::SuperAdmin
+            | common::TenantRole::PlatformAdmin
+            | common::TenantRole::OrgAdmin
+            | common::TenantRole::Manager
+    ) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
+
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        "Direct-connecting Airbnb with pre-obtained token"
+    );
+
+    let org_id = path.org_id;
+
+    // Validate required env vars before making any external calls.
+    let client_id = std::env::var("AIRBNB_CLIENT_ID").map_err(|_| {
+        tracing::error!("AIRBNB_CLIENT_ID is not configured");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Airbnb integration is not configured",
+            )),
+        )
+    })?;
+    let client_secret = std::env::var("AIRBNB_CLIENT_SECRET").map_err(|_| {
+        tracing::error!("AIRBNB_CLIENT_SECRET is not configured");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new(
+                "NOT_CONFIGURED",
+                "Airbnb integration is not configured",
+            )),
+        )
+    })?;
+    let redirect_uri = std::env::var("AIRBNB_REDIRECT_URI").unwrap_or_default();
+
+    // Verify the token is valid by fetching listings.
+    let oauth_config = AirbnbOAuthConfig {
+        client_id,
+        client_secret,
+        redirect_uri,
+    };
+    let client = AirbnbClient::new(oauth_config);
+
+    let listings = client
+        .fetch_listings(&request.access_token)
+        .await
+        .map_err(|e| {
+            tracing::warn!(error = %e, "Airbnb token validation failed");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new(
+                    "INVALID_TOKEN",
+                    "Airbnb access token is invalid or expired",
+                )),
+            )
+        })?;
+
+    let listings_count = listings.len() as i32;
+
+    // Optionally encrypt tokens before storage.
+    let (stored_access, stored_refresh) = match IntegrationCrypto::try_from_env() {
+        Some(crypto) => {
+            let encrypted_access = crypto.encrypt(&request.access_token).map_err(|e| {
+                tracing::error!(error = %e, "Failed to encrypt Airbnb access token");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse::new(
+                        "CRYPTO_ERROR",
+                        "Failed to encrypt token",
+                    )),
+                )
+            })?;
+            let encrypted_refresh = request
+                .refresh_token
+                .as_deref()
+                .map(|rt| crypto.encrypt(rt))
+                .transpose()
+                .map_err(|e| {
+                    tracing::error!(error = %e, "Failed to encrypt Airbnb refresh token");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse::new(
+                            "CRYPTO_ERROR",
+                            "Failed to encrypt refresh token",
+                        )),
+                    )
+                })?;
+            (encrypted_access, encrypted_refresh)
+        }
+        None => {
+            tracing::warn!(
+                "INTEGRATION_ENCRYPTION_KEY is not set; Airbnb tokens will be stored in plaintext"
+            );
+            (request.access_token.clone(), request.refresh_token.clone())
+        }
+    };
+
+    let connection = state
+        .rental_repo
+        .upsert_airbnb_connection(
+            org_id,
+            None,
+            &stored_access,
+            stored_refresh.as_deref(),
+            None,
+            request.airbnb_account_id.as_deref(),
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to upsert Airbnb connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to store Airbnb connection",
+                )),
+            )
+        })?;
+
+    tracing::info!(
+        connection_id = %connection.id,
+        listings = listings_count,
+        "Airbnb direct connect succeeded"
+    );
+
+    Ok(Json(AirbnbDirectConnectResponse {
+        success: true,
+        connection_id: connection.id,
+        listings_count: Some(listings_count),
+        message: format!(
+            "Airbnb connected successfully. {} listing(s) found.",
+            listings_count
+        ),
+    }))
+}
+
+/// Enqueue an Airbnb availability-sync background job for an organisation.
+///
+/// Returns HTTP 202 Accepted with the job ID so the caller can poll for
+/// completion via the background-jobs API.
+#[utoipa::path(
+    post,
+    path = "/api/v1/integrations/organizations/{org_id}/airbnb/availability-sync",
+    params(OrgIdPath),
+    responses(
+        (status = 202, description = "Availability sync job queued", body = AirbnbAvailabilitySyncResponse),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "No Airbnb connection found for organisation"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Integrations - Airbnb"
+)]
+pub async fn enqueue_airbnb_availability_sync(
+    State(state): State<crate::state::AppState>,
+    auth: api_core::AuthUser,
+    Path(path): Path<OrgIdPath>,
+) -> Result<(StatusCode, Json<AirbnbAvailabilitySyncResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // Org ownership guard.
+    if auth.tenant_id != Some(path.org_id) && !auth.is_platform_admin() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "You do not have access to this organization",
+            )),
+        ));
+    }
+    let role = auth.role.unwrap_or(common::TenantRole::Guest);
+    if !matches!(
+        role,
+        common::TenantRole::SuperAdmin
+            | common::TenantRole::PlatformAdmin
+            | common::TenantRole::OrgAdmin
+            | common::TenantRole::Manager
+    ) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "FORBIDDEN",
+                "Insufficient permissions to manage integrations",
+            )),
+        ));
+    }
+
+    tracing::info!(
+        user_id = %auth.user_id,
+        org_id = %path.org_id,
+        "Enqueueing Airbnb availability sync"
+    );
+
+    // Verify that a connection exists before queueing work.
+    let connection = state
+        .rental_repo
+        .find_airbnb_connection_by_org(path.org_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to look up Airbnb connection");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to check Airbnb connection",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "NOT_FOUND",
+                    "No Airbnb connection found for this organisation",
+                )),
+            )
+        })?;
+
+    let payload = serde_json::json!({
+        "org_id": path.org_id,
+        "connection_id": connection.id,
+        "sync_type": "availability",
+    });
+
+    let job_data = CreateBackgroundJob {
+        job_type: job_type::SYNC_EXTERNAL.to_string(),
+        priority: Some(1),
+        payload,
+        scheduled_at: None,
+        queue: Some(queue::LOW_PRIORITY.to_string()),
+        max_attempts: Some(3),
+        org_id: Some(path.org_id),
+    };
+
+    let job = state
+        .background_job_repo
+        .create(job_data, Some(auth.user_id))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to create availability sync job");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to enqueue availability sync job",
+                )),
+            )
+        })?;
+
+    tracing::info!(job_id = %job.id, org_id = %path.org_id, "Airbnb availability sync job queued");
+
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(AirbnbAvailabilitySyncResponse {
+            job_id: job.id,
+            queued: true,
+            message: "Availability sync job queued successfully".to_string(),
+        }),
     ))
 }

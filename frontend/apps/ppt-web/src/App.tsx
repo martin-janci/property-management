@@ -39,6 +39,7 @@ import {
   useOutages,
   usePauseSchedule,
   usePinAnnouncement,
+  usePinnedAnnouncements,
   usePublishAnnouncement,
   useReportExecutionHistory,
   useResolveOutage,
@@ -50,7 +51,7 @@ import {
   useUpdateSchedule,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
@@ -106,6 +107,7 @@ import {
   AccessibilitySettingsPage,
   AnnouncementsPage,
   ArticleDetailPage,
+  AuthCallbackPage,
   BudgetManagementPage,
   ChangePasswordPage,
   CreateAnnouncementPage,
@@ -135,7 +137,7 @@ import {
   InvoiceManagementPage,
   LoginPage,
   MarketplacePage,
-  MediationPage,
+  MediationWorkspacePage,
   MessagesPage,
   NeighborDetailPage,
   NeighborsPage,
@@ -151,6 +153,7 @@ import {
   RegisterPage,
   ReportsPage,
   ResetPasswordPage,
+  ScheduleDetailPage,
   ServerErrorPage,
   SessionExpiredPage,
   ThreadDetailPage,
@@ -463,6 +466,11 @@ function App() {
                               <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<LoginPage />} />
+                                {/* SSO / OAuth callback route (gap-79-2).
+                                    Handles provider redirect: reads ?code=…&state=…,
+                                    exchanges for PPT JWT tokens via tokenProvider,
+                                    then redirects to /dashboard or stored return URL. */}
+                                <Route path="/auth/callback" element={<AuthCallbackPage />} />
                                 <Route path="/register" element={<RegisterPage />} />
                                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                 <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -666,6 +674,15 @@ function App() {
                                   element={
                                     <ProtectedRoute>
                                       <ReportsPageRoute />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                {/* Story 81.2: Schedule detail with inline execution history table */}
+                                <Route
+                                  path="/reports/schedules/:scheduleId"
+                                  element={
+                                    <ProtectedRoute>
+                                      <ScheduleDetailPageRoute />
                                     </ProtectedRoute>
                                   }
                                 />
@@ -1030,6 +1047,24 @@ function DisputeDetailRoute() {
     user?.role === 'technical_manager' ||
     user?.role === 'property_manager';
 
+  // #516 — these dispute actions are not yet wired to a backend mutation.
+  // Render-time `() => {}` no-ops silently swallowed clicks (user clicks,
+  // nothing happens). Until the API surface lands, surface a toast so the
+  // user knows the action exists but is pending implementation.
+  const notImplemented = useCallback(
+    (label: string) => () => {
+      showToast({
+        type: 'info',
+        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
+        message: t('disputes.actionPendingImpl', {
+          defaultValue: '{{action}} will be available in a future release.',
+          action: label,
+        }),
+      });
+    },
+    [showToast, t]
+  );
+
   const handleUpdateStatus = async (status: UiDisputeStatus, reason?: string) => {
     const apiStatus = mapUiStatusToApiStatus(status);
     if (!apiStatus || !disputeId) return;
@@ -1062,29 +1097,36 @@ function DisputeDetailRoute() {
       currentUserId={user?.id}
       onBack={() => navigate('/disputes')}
       onUpdateStatus={handleUpdateStatus}
-      onAddEvidence={() => {}}
-      onDeleteEvidence={() => {}}
-      onProposeResolution={() => {}}
-      onVoteResolution={() => {}}
-      onAcceptResolution={() => {}}
-      onImplementResolution={() => {}}
-      onCompleteResolutionTerm={() => {}}
-      onCreateAction={() => {}}
-      onCompleteAction={() => {}}
-      onSendReminder={() => {}}
-      onEscalate={() => {}}
+      onAddEvidence={notImplemented('Add evidence')}
+      onDeleteEvidence={notImplemented('Delete evidence')}
+      onProposeResolution={notImplemented('Propose resolution')}
+      onVoteResolution={notImplemented('Vote on resolution')}
+      onAcceptResolution={notImplemented('Accept resolution')}
+      onImplementResolution={notImplemented('Implement resolution')}
+      onCompleteResolutionTerm={notImplemented('Complete resolution term')}
+      onCreateAction={notImplemented('Create action')}
+      onCompleteAction={notImplemented('Complete action')}
+      onSendReminder={notImplemented('Send reminder')}
+      onEscalate={notImplemented('Escalate')}
       onNavigateToMediation={() => navigate(`/disputes/${disputeId}/mediation`)}
     />
   );
 }
 
 /**
- * Route wrapper for dispute mediation page (Epic 77, Story 80-3).
+ * Route wrapper for dispute mediation workspace (Epic 80, Story 80-3).
  *
- * New route: /disputes/:disputeId/mediation
- * Renders MediationPage for the given dispute.
- * Sessions/submissions data is deferred until the mediation backend sessions
- * API is wired; the page renders with empty lists and shows the schedule UI.
+ * Route: /disputes/:disputeId/mediation
+ *
+ * Replaces the previous MediationPage stub with the full MediationWorkspacePage:
+ *   - Dispute timeline wired to useDisputeTimeline (real API)
+ *   - Manager/tenant chat thread via useMediationNotes + useAddMediationNote
+ *   - Resolution form using useResolveDispute
+ *   - Escalate dialog using useEscalateDispute
+ *   - Assign mediator dialog using useAssignMediator
+ *
+ * The legacy MediationPage (sessions/submissions) remains in the codebase for
+ * the session-scheduling sub-feature pending a future backend endpoint.
  */
 function DisputeMediationRoute() {
   const { t } = useTranslation();
@@ -1092,9 +1134,6 @@ function DisputeMediationRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
-
-  const { data: dispute, isLoading } = useDispute(disputeId ?? '');
-  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
 
   if (!disputeId) {
     return (
@@ -1106,74 +1145,35 @@ function DisputeMediationRoute() {
     );
   }
 
-  // Map API dispute → UI DisputeDetail for MediationPage
-  const uiDispute: UiDisputeDetail | undefined = dispute
-    ? {
-        id: dispute.id,
-        organizationId: dispute.organizationId,
-        unitId: dispute.unitId,
-        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
-        category: mapTypeToCategory(dispute.type),
-        title: dispute.subject,
-        description: dispute.description,
-        status: mapApiStatusToUiStatus(dispute.status),
-        priority: 'medium' as DisputePriority,
-        filedBy: dispute.filedBy,
-        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
-        assignedTo: dispute.assignedMediatorId,
-        assignedToName: dispute.assignedMediator,
-        createdAt: dispute.createdAt,
-        updatedAt: dispute.updatedAt,
-      }
-    : undefined;
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
 
-  const isMediator = !!dispute && dispute.assignedMediatorId === user?.id;
-  const isParty = !!dispute && (dispute.filedBy === user?.id || dispute.respondentId === user?.id);
+  const organizationId = user.organizationId;
 
-  const handleCompleteSession = async (_sessionId: string, notes: string) => {
-    if (!disputeId) return;
-    try {
-      await updateStatus.mutateAsync({ disputeId, data: { status: 'resolved', reason: notes } });
-      showToast({
-        type: 'success',
-        title: t('disputes.sessionCompleted', 'Session completed'),
-        message: '',
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('disputes.sessionCompleteFailed', 'Failed to complete session'),
-        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
-      });
-    }
-  };
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
 
   return (
-    <MediationPage
-      dispute={uiDispute!}
-      parties={[]}
-      sessions={[]}
-      submissions={[]}
-      isMediator={isMediator}
-      isParty={isParty}
+    <MediationWorkspacePage
+      disputeId={disputeId}
       currentUserId={user?.id}
-      isLoading={isLoading}
+      currentUserName={
+        user ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email : undefined
+      }
+      organizationId={organizationId}
+      isManager={isManager}
       onBack={() => navigate(`/disputes/${disputeId}`)}
-      onScheduleSession={() => {
-        showToast({
-          type: 'info',
-          title: t('disputes.mediationSessionScheduled', 'Session scheduling'),
-          message: t(
-            'disputes.mediationSessionScheduledMsg',
-            'Session scheduling will be available once the mediation backend is wired.'
-          ),
-        });
-      }}
-      onCancelSession={() => {}}
-      onCompleteSession={handleCompleteSession}
-      onConfirmAttendance={() => {}}
-      onRecordAttendance={() => {}}
-      onSubmitResponse={() => {}}
+      onToastSuccess={(title, message) =>
+        showToast({ type: 'success', title, message: message ?? '' })
+      }
+      onToastError={(title, message) =>
+        showToast({ type: 'error', title, message: message ?? t('auth.unexpectedError') })
+      }
     />
   );
 }
@@ -1532,12 +1532,10 @@ function AnnouncementsPageRoute() {
   });
 
   const { data, isLoading, error } = useAnnouncements(listParams);
-  // Story 6.4 — separate query for the sticky pinned band; immune to list filters
-  const { data: pinnedData } = useAnnouncements({
-    pinned: true,
-    status: 'published',
-    pageSize: 20,
-  });
+  // Story 6.4 — separate query for the sticky pinned band; immune to list filters.
+  // Routes through the shared hook (#486 / #516) so the URL + staleTime + pageSize
+  // can't drift between this callsite and other consumers (mobile).
+  const { data: pinnedData } = usePinnedAnnouncements();
   const deleteAnnouncement = useDeleteAnnouncement();
   const publishAnnouncement = usePublishAnnouncement();
   const archiveAnnouncement = useArchiveAnnouncement();
@@ -1608,6 +1606,12 @@ function AnnouncementsPageRoute() {
     }
   };
 
+  const handleAnnouncementsFilterChange = useCallback(
+    (params: Partial<import('@ppt/api-client').ListAnnouncementsParams>) =>
+      setListParams((prev) => ({ ...prev, ...params })),
+    []
+  );
+
   const handlePin = async (id: string, pinned: boolean) => {
     try {
       await pinAnnouncement.mutateAsync({ id, pinned });
@@ -1640,7 +1644,7 @@ function AnnouncementsPageRoute() {
       onPublish={handlePublish}
       onArchive={handleArchive}
       onPin={handlePin}
-      onFilterChange={(params) => setListParams({ ...listParams, ...params })}
+      onFilterChange={handleAnnouncementsFilterChange}
     />
   );
 }
@@ -1682,6 +1686,9 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
   const { t } = useTranslation();
   const { user } = useAuth();
 
+  // Guard ref: fire mark-read exactly once per announcement view, even in StrictMode.
+  const autoMarkReadFired = useRef(false);
+
   const { data, isLoading, error } = useAnnouncement(announcementId);
   const markRead = useMarkReadAnnouncement();
   const acknowledge = useAcknowledgeAnnouncement();
@@ -1715,6 +1722,21 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
       });
     }
   }, [error, showToast, t]);
+
+  // Story 6.2: auto-fire read-receipt when announcement loads.
+  // Fire-and-forget — the user shouldn't have to click "Mark as Read".
+  // The mutation is idempotent (upsert on server), so double-firing is safe.
+  // Retry is handled by TanStack Mutation default (3 attempts, exponential back-off).
+  // markRead.mutate is intentionally excluded from deps — including a new mutate
+  // instance on each render would cause an infinite loop; the ref guard ensures
+  // the call fires exactly once per viewed announcement.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: markRead.mutate excluded intentionally (see comment)
+  useEffect(() => {
+    if (data?.announcement && !autoMarkReadFired.current) {
+      autoMarkReadFired.current = true;
+      markRead.mutate(announcementId);
+    }
+  }, [data?.announcement, announcementId]);
 
   const announcement = data?.announcement;
   const attachments = data?.attachments ?? [];
@@ -2150,6 +2172,24 @@ function mapApiFaultStatusToUi(
   return mapping[status] ?? 'new';
 }
 
+/**
+ * Map UI fault status (used by FaultCard) to the API status enum.
+ * Module-level (#486) so the route wrapper doesn't recreate it per call.
+ */
+const UI_FAULT_STATUS_TO_API: Record<
+  import('./features/faults/components/FaultCard').FaultStatus,
+  ApiFaultSummary['status'] | undefined
+> = {
+  new: 'reported',
+  triaged: 'triaged',
+  in_progress: 'in_progress',
+  waiting_parts: 'on_hold',
+  scheduled: 'scheduled',
+  resolved: 'resolved',
+  closed: 'closed',
+  reopened: 'reopened',
+};
+
 /** Transform API FaultSummary (snake_case) → UI FaultSummary (camelCase) */
 function transformApiFaultToUi(
   fault: ApiFaultSummary
@@ -2194,6 +2234,29 @@ function FaultsPageRoute() {
   const faults = (data?.faults ?? []).map(transformApiFaultToUi);
   const total = data?.count ?? 0;
 
+  // useCallback so child FaultsPage doesn't re-render on every parent render
+  // (#486). Status mapping uses the module-level UI_FAULT_STATUS_TO_API.
+  const handleFaultsFilterChange = useCallback(
+    (params: {
+      status?: import('./features/faults/components/FaultCard').FaultStatus;
+      category?: ApiFaultSummary['category'];
+      priority?: ApiFaultSummary['priority'];
+      search?: string;
+      page?: number;
+      pageSize?: number;
+    }) => {
+      setFaultQuery({
+        status: params.status ? UI_FAULT_STATUS_TO_API[params.status] : undefined,
+        category: params.category,
+        priority: params.priority,
+        search: params.search,
+        page: params.page,
+        limit: params.pageSize,
+      });
+    },
+    []
+  );
+
   return (
     <FaultsPage
       faults={faults}
@@ -2203,33 +2266,7 @@ function FaultsPageRoute() {
       onNavigateToView={(id) => navigate(`/faults/${id}`)}
       onNavigateToEdit={(id) => navigate(`/faults/${id}/edit`)}
       onNavigateToTriage={(id) => navigate(`/faults/${id}`)}
-      onFilterChange={(params) => {
-        setFaultQuery({
-          status: params.status
-            ? (() => {
-                const statusMap: Record<
-                  import('./features/faults/components/FaultCard').FaultStatus,
-                  ApiFaultSummary['status'] | undefined
-                > = {
-                  new: 'reported',
-                  triaged: 'triaged',
-                  in_progress: 'in_progress',
-                  waiting_parts: 'on_hold',
-                  scheduled: 'scheduled',
-                  resolved: 'resolved',
-                  closed: 'closed',
-                  reopened: 'reopened',
-                };
-                return statusMap[params.status];
-              })()
-            : undefined,
-          category: params.category,
-          priority: params.priority,
-          search: params.search,
-          page: params.page,
-          limit: params.pageSize,
-        });
-      }}
+      onFilterChange={handleFaultsFilterChange}
     />
   );
 }
@@ -2873,6 +2910,106 @@ function ReportsPageRoute() {
       onLoadMoreExecutions={handleLoadMoreExecutions}
       onDownloadReport={handleDownloadReport}
       onRetryExecution={handleRetryExecution}
+    />
+  );
+}
+
+/**
+ * Schedule detail page route — renders execution history table inline (Story 81.2).
+ *
+ * Route: /reports/schedules/:scheduleId
+ * Uses useReportExecutionHistory to fetch paginated executions and renders them
+ * via ScheduleDetailPage. Falls back to MSW stub data when api-server is absent.
+ */
+function ScheduleDetailPageRoute() {
+  const { scheduleId = '' } = useParams<{ scheduleId: string }>();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { t } = useTranslation();
+
+  const EXECUTION_PAGE_SIZE = 20;
+  const [executionOffset, setExecutionOffset] = useState(0);
+
+  const {
+    data: executionHistoryData,
+    isLoading: executionsLoading,
+    isError: executionsError,
+  } = useReportExecutionHistory(
+    { scheduleId },
+    {
+      limit: EXECUTION_PAGE_SIZE,
+      offset: executionOffset,
+      enabled: !!scheduleId,
+      refetchInterval: 10_000,
+    }
+  );
+
+  const downloadReport = useDownloadReport();
+  const retryExecution = useRetryReportExecution();
+
+  const executions = executionHistoryData?.executions ?? [];
+  const hasMore = executionHistoryData?.hasMore ?? false;
+
+  const handleLoadMore = () => setExecutionOffset((prev) => prev + EXECUTION_PAGE_SIZE);
+
+  const handleDownloadReport = (executionId: string) => {
+    downloadReport.mutate(executionId, {
+      onError: () => {
+        showToast({
+          type: 'error',
+          title: t('common.error'),
+          message: t('reports.execution.downloadFailed', 'Failed to download report.'),
+        });
+      },
+    });
+  };
+
+  const handleRetryExecution = async (executionId: string) => {
+    try {
+      await retryExecution.mutateAsync(executionId);
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('reports.execution.retryQueued', 'Execution queued for retry.'),
+      });
+    } catch {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('reports.execution.retryFailed', 'Failed to retry execution.'),
+      });
+      throw new Error('retry failed');
+    }
+  };
+
+  // Stub schedule object — schedule metadata will be enriched once the
+  // GET /api/v1/reports/schedules/:id endpoint is wired in a future story.
+  const stubSchedule: import('@ppt/api-client').ReportSchedule = {
+    id: scheduleId,
+    report_id: '',
+    organization_id: '',
+    name: `Schedule ${scheduleId}`,
+    frequency: 'monthly',
+    time: '08:00',
+    timezone: 'UTC',
+    format: 'pdf',
+    recipients: [],
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  return (
+    <ScheduleDetailPage
+      schedule={stubSchedule}
+      executions={executions}
+      isLoading={executionsLoading}
+      isError={executionsError}
+      hasMore={hasMore}
+      onLoadMore={handleLoadMore}
+      onDownload={handleDownloadReport}
+      onRetry={handleRetryExecution}
+      onBack={() => navigate('/reports')}
     />
   );
 }

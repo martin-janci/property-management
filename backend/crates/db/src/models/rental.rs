@@ -337,6 +337,8 @@ pub struct BookingSummary {
     pub unit_name: String,
     pub building_name: String,
     pub platform: String,
+    /// External platform reservation ID (e.g. Booking.com reservation ID).
+    pub external_booking_id: Option<String>,
     pub guest_name: String,
     pub guest_count: i32,
     pub check_in: NaiveDate,

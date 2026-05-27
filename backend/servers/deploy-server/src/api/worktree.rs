@@ -27,6 +27,21 @@ pub struct WorktreeService {
     pub frontend_image: String,
     pub domain_dev_ppt: String,     // "dev.ppt.rlt.sk"
     pub domain_dev_reality: String, // "dev.rlt.sk"
+    /// Upstream `host:port` that shared-mode worktrees route `/api/*` to
+    /// on the ppt-web host (`wt-<name>.<domain_dev_ppt>/api/*`). Defaults
+    /// to the Caddyfile's `api-server:8080` Docker DNS name; can be
+    /// overridden per-host via `PPT_SHARED_API_UPSTREAM_PPT` (e.g.
+    /// `dev-api-blue:8080` when the dev shared backend runs under the
+    /// blue_green naming scheme). See #453 — without this route every
+    /// ppt-web SPA API call to a shared worktree 502'd because ppt-web's
+    /// Vite bundle has the API base URL baked in at build time and so
+    /// makes same-origin `/api/*` calls.
+    pub shared_api_upstream_ppt: String,
+    /// Upstream `host:port` that shared-mode worktrees route `/api/*` to
+    /// on the reality-web host (`wt-<name>.<domain_dev_reality>/api/*`).
+    /// Defaults to `reality-server:8081` (matching infra/caddy/Caddyfile).
+    /// Override via `PPT_SHARED_API_UPSTREAM_REALITY`.
+    pub shared_api_upstream_reality: String,
     pub postgres: Arc<PostgresOps>,
     pub gh: Arc<GhClient>,
     pub backend_image_prefix: String,
@@ -207,6 +222,26 @@ pub async fn open_handler(
             .docker
             .bridge_ip_with_retry(&reality_container, BRIDGE_IP_TIMEOUT)
             .await?;
+        // Shared mode: register the `/api/*` reverse-proxy entries FIRST,
+        // before the host-only frontend routes (fix for #453). Caddy
+        // dispatches routes in array order and does not auto-sort by
+        // matcher specificity, so a more-specific host+path matcher must
+        // be earlier in the array than a host-only matcher on the same
+        // host. Dedicated mode uses a separate `api.wt-<name>.<domain>`
+        // host (registered later in section 5) and doesn't need this.
+        if matches!(req.backend, BackendMode::Shared) {
+            svc.caddy
+                .register_path_route(&host_ppt, "/api/*", &svc.shared_api_upstream_ppt, "api")
+                .await?;
+            svc.caddy
+                .register_path_route(
+                    &host_reality,
+                    "/api/*",
+                    &svc.shared_api_upstream_reality,
+                    "api",
+                )
+                .await?;
+        }
         svc.caddy
             .register_route(&host_ppt, &format!("{ppt_bridge_ip}:5173"))
             .await?;
@@ -235,6 +270,17 @@ pub async fn open_handler(
         }
         if let Err(unreg_err) = svc.caddy.unregister_route(&host_reality).await {
             tracing::warn!(host = %host_reality, error = %unreg_err, "caddy unregister failed during open-rollback");
+        }
+        // Shared-mode `/api/*` path routes (fix for #453). No-op (404) for
+        // dedicated mode or when the partial open never reached the
+        // path-route registration step — best-effort.
+        if matches!(req.backend, BackendMode::Shared) {
+            if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_ppt, "api").await {
+                tracing::warn!(host = %host_ppt, error = %unreg_err, "caddy unregister path-route failed during open-rollback");
+            }
+            if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_reality, "api").await {
+                tracing::warn!(host = %host_reality, error = %unreg_err, "caddy unregister path-route failed during open-rollback");
+            }
         }
         return Err(e);
     }
@@ -583,6 +629,20 @@ pub async fn close_handler(
         let host_reality_api = format!("api.wt-{}.{}", wt.name, svc.domain_dev_reality);
         if let Err(unreg_err) = svc.caddy.unregister_route(&host_reality_api).await {
             tracing::warn!(host = %host_reality_api, error = %unreg_err, "caddy unregister (reality-api) failed during worktree close");
+        }
+    }
+
+    // Shared mode has path-matched `/api/*` routes on the two frontend
+    // hosts (fix for #453). 404 (route absent) is a normal no-op for
+    // worktrees opened before this fix shipped — best-effort.
+    if matches!(wt.backend_mode, BackendMode::Shared) {
+        let host_ppt = format!("wt-{}.{}", wt.name, svc.domain_dev_ppt);
+        let host_reality = format!("wt-{}.{}", wt.name, svc.domain_dev_reality);
+        if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_ppt, "api").await {
+            tracing::warn!(host = %host_ppt, error = %unreg_err, "caddy unregister path-route (ppt /api/*) failed during worktree close");
+        }
+        if let Err(unreg_err) = svc.caddy.unregister_path_route(&host_reality, "api").await {
+            tracing::warn!(host = %host_reality, error = %unreg_err, "caddy unregister path-route (reality /api/*) failed during worktree close");
         }
     }
 

@@ -239,6 +239,26 @@
 "reset_filters" = "Szűrők visszaállítása";
 "apply" = "Alkalmaz";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "A közelemben";
+"filter_near_me_section" = "Helyszín";
+"filter_radius" = "Sugár";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Helyszín: %.4f, %.4f";
+"locating" = "Helyszín meghatározása…";
+"location_access_denied" = "A helymeghatározáshoz való hozzáférés megtagadva. Engedélyezze a Beállításokban a Közeli szűrők használatához.";
+"location_unavailable" = "A helymeghatározás nem elérhető.";
+"location_access_denied_title" = "Helymeghatározás megtagadva";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Hirdetés típusa";
+"filter_price_min" = "Min ár";
+"filter_price_max" = "Max ár";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Fürdőszobák";
+
 /* Account Screen - Additional */
 "quick_actions" = "Gyors műveletek";
 "saved_searches" = "Mentett keresések";

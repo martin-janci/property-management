@@ -79,6 +79,28 @@ enum Route: Hashable {
 
     /// Agency directory (UC-51.1).
     case agencies
+
+    /// Whether this route requires the user to be authenticated before it
+    /// can be navigated to. Used by the deep-link entry point to gate
+    /// universal/custom-scheme links: unauthenticated users are bounced
+    /// to `.login` (with the intended destination stored on the coordinator
+    /// as `pendingDestination`) instead of landing inside a protected view.
+    var requiresAuth: Bool {
+        switch self {
+        case .favorites,
+             .inquiries, .inquiryDetail, .newInquiry,
+             .account, .profile, .settings,
+             .savedSearches:
+            return true
+        case .home, .featuredListings,
+             .search, .searchResults,
+             .listingDetail, .listingGallery, .listingMap,
+             .login, .register,
+             .compareListings,
+             .realtors, .agencies:
+            return false
+        }
+    }
 }
 
 // MARK: - Search Filters
@@ -96,12 +118,15 @@ struct SearchFilters: Hashable {
     var radiusKm: Double?
     var latitude: Double?
     var longitude: Double?
+    /// Sale/rent filter — maps to ListingType in the KMP layer.
+    var listingType: ListingKind?
 
     /// Whether any filters are active.
     var hasActiveFilters: Bool {
         priceMin != nil ||
         priceMax != nil ||
         !propertyTypes.isEmpty ||
+        listingType != nil ||
         bedroomsMin != nil ||
         bedroomsMax != nil ||
         bathroomsMin != nil ||
@@ -113,6 +138,7 @@ struct SearchFilters: Hashable {
         priceMin = nil
         priceMax = nil
         propertyTypes = []
+        listingType = nil
         bedroomsMin = nil
         bedroomsMax = nil
         bathroomsMin = nil
@@ -147,6 +173,22 @@ enum PropertyType: String, CaseIterable, Hashable {
         case .land: return "leaf"
         case .commercial: return "building"
         case .garage: return "car"
+        }
+    }
+}
+
+/// Sale or rent classification for a listing.
+///
+/// Mirrors the KMP ListingType enum but uses a Swift-idiomatic name to
+/// avoid clashing with the ListingType symbol exported from the shared framework.
+enum ListingKind: String, CaseIterable, Hashable {
+    case sale
+    case rent
+
+    var displayName: String {
+        switch self {
+        case .sale: return String(localized: "filter_for_sale")
+        case .rent: return String(localized: "filter_for_rent")
         }
     }
 }

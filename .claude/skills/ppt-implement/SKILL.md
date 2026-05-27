@@ -87,6 +87,53 @@ Exit codes:
 - `1` — unrecognised owner_role (script does not know how to map it).
   `scope_drift=false` (we can't judge) — log the unknown owner and continue.
 
+## Step 2.5b — Commit-scope guard (MANDATORY for stop-hook / auto-commit paths)
+
+The scope-drift check above is **advisory** — it tags off-area changes but
+lets the implementer keep going (the reviewer adjudicates). That contract
+is right for the normal interactive commit path but wrong for the
+**automated** commit path: when the dispatcher's stop hook fires while
+parallel agents share a worktree, an "advisory" tag isn't enough — the
+hook will go ahead and bundle the off-area files into whichever branch
+happens to be checked out. PR #496 (2026-05-25) auto-committed 1088
+lines of gap-85-1 + gap-85-2 work onto an ADR-008 doc-edit branch
+exactly this way (see #526).
+
+The fix is `commit-scope-guard.sh`, a fail-closed sibling of the
+advisory `scope-check.sh`:
+
+```bash
+# Stop-hook style (before `git add`, includes untracked):
+bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
+  --owner "<owner_role>" --worktree
+# OR for tasks that don't map cleanly to an owner role, pass an
+# explicit allow-list:
+bash .claude/skills/ppt-implement/scripts/commit-scope-guard.sh \
+  --allow 'docs/architecture.md' \
+  --allow '.research/management/**'
+```
+
+Exit codes:
+- `0` — every changed path is inside the allow-list. Safe to commit.
+- `1` — unknown owner_role. **Fail-closed**: an automated codepath
+  with no human in the loop should NOT guess scope. Skip the
+  auto-commit and surface the work for human resolution.
+- `2` — at least one path is outside scope. The guard prints the
+  offending paths plus a remediation hint (`git stash push -- <path>`
+  or `git reset HEAD <path>`) on stderr. The caller MUST NOT commit
+  — instead, stash the off-scope paths, commit the rest, and surface
+  the stash ref in the dispatcher log so the next agent picks them up.
+- `64` — usage error.
+
+The companion `test-commit-scope-guard.sh` covers the PR #496
+regression scenario (ADR doc edit + parallel-agent mobile env-config
++ iOS xcscheme — expected: REFUSE) plus four other fixtures. Run it
+locally after any change to the guard or owner-areas.json:
+
+```bash
+bash .claude/skills/ppt-implement/scripts/test-commit-scope-guard.sh
+```
+
 ## Step 2.6 — Code-reuse pre-flight (deterministic, advisory)
 
 The same PR #472 also re-implemented `JWT_VERIFIER` as a private `OnceLock`

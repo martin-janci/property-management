@@ -49,7 +49,8 @@ impl DisputeRepository {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
-                      assigned_to, created_at, updated_at
+                      assigned_to, resolved_at, resolution_notes, mediation_notes,
+                      created_at, updated_at
             "#,
         )
         .bind(req.organization_id)
@@ -148,7 +149,8 @@ impl DisputeRepository {
             r#"
             SELECT id, organization_id, building_id, unit_id, reference_number, category,
                    title, description, desired_resolution, status, priority, filed_by,
-                   assigned_to, created_at, updated_at
+                   assigned_to, resolved_at, resolution_notes, mediation_notes,
+                   created_at, updated_at
             FROM disputes
             WHERE id = $1
             "#,
@@ -269,13 +271,20 @@ impl DisputeRepository {
             )));
         }
 
-        // Load current status so we can enforce the state machine.
-        let current_status: Option<String> =
-            sqlx::query_scalar("SELECT status FROM disputes WHERE id = $1")
-                .bind(req.dispute_id)
-                .fetch_optional(&self.pool)
-                .await
-                .map_err(|e| AppError::Database(e.to_string()))?;
+        // Issue #520: enforce tenancy on the SELECT so a manager in org A
+        // cannot drive a dispute in org B by guessing its UUID. The
+        // organization_id filter mirrors the `file_dispute` / `list` /
+        // `get_statistics` handlers, which all scope by org. Map "no row"
+        // to 404 so the response shape cannot be used as a cross-tenant
+        // existence oracle.
+        let current_status: Option<String> = sqlx::query_scalar(
+            "SELECT status FROM disputes WHERE id = $1 AND organization_id = $2",
+        )
+        .bind(req.dispute_id)
+        .bind(req.organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
         let current_status = current_status
             .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
@@ -296,14 +305,16 @@ impl DisputeRepository {
             r#"
             UPDATE disputes
             SET status = $1
-            WHERE id = $2 AND status = $3
+            WHERE id = $2 AND organization_id = $3 AND status = $4
             RETURNING id, organization_id, building_id, unit_id, reference_number, category,
                       title, description, desired_resolution, status, priority, filed_by,
-                      assigned_to, created_at, updated_at
+                      assigned_to, resolved_at, resolution_notes, mediation_notes,
+                      created_at, updated_at
             "#,
         )
         .bind(&req.status)
         .bind(req.dispute_id)
+        .bind(req.organization_id)
         .bind(&current_status)
         .fetch_optional(&self.pool)
         .await
@@ -326,6 +337,112 @@ impl DisputeRepository {
             req.updated_by,
             activity_type::STATUS_CHANGED,
             description,
+            None,
+        )
+        .await?;
+
+        Ok(dispute)
+    }
+
+    /// Resolve a dispute — transitions status to `resolved`, sets `resolved_at` and
+    /// `resolution_notes`. Only permitted from `under_review`, `mediation`,
+    /// `awaiting_response`, or `escalated` states (anything that can reach `resolved`
+    /// in the state machine). Note: `filed` cannot transition directly to `resolved`.
+    pub async fn resolve_dispute(&self, req: ResolveDispute) -> Result<Dispute, AppError> {
+        let now = Utc::now();
+
+        // Load current status to enforce state machine.
+        let current_status: Option<String> =
+            sqlx::query_scalar("SELECT status FROM disputes WHERE id = $1")
+                .bind(req.dispute_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
+
+        let current_status = current_status
+            .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
+
+        if !dispute_state_machine::is_valid_transition(&current_status, dispute_status::RESOLVED) {
+            let allowed = dispute_state_machine::allowed_transitions(&current_status);
+            return Err(AppError::BadRequest(format!(
+                "Cannot resolve dispute from status '{}'. Allowed transitions from '{}': [{}]",
+                current_status,
+                current_status,
+                allowed.join(", ")
+            )));
+        }
+
+        let dispute = sqlx::query_as::<_, Dispute>(
+            r#"
+            UPDATE disputes
+            SET status = 'resolved',
+                resolved_at = $1,
+                resolution_notes = $2,
+                updated_at = NOW()
+            WHERE id = $3 AND status = $4 AND organization_id = $5
+            RETURNING id, organization_id, building_id, unit_id, reference_number, category,
+                      title, description, desired_resolution, status, priority, filed_by,
+                      assigned_to, resolved_at, resolution_notes, mediation_notes,
+                      created_at, updated_at
+            "#,
+        )
+        .bind(now)
+        .bind(&req.resolution_notes)
+        .bind(req.dispute_id)
+        .bind(&current_status)
+        .bind(req.organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| {
+            AppError::BadRequest("Concurrent status change prevented resolve".to_string())
+        })?;
+
+        self.record_activity(
+            req.dispute_id,
+            req.resolved_by,
+            activity_type::STATUS_CHANGED,
+            format!(
+                "Dispute resolved: {}",
+                req.resolution_notes.chars().take(100).collect::<String>()
+            ),
+            None,
+        )
+        .await?;
+
+        Ok(dispute)
+    }
+
+    /// Update mediation notes on a dispute (does not change status).
+    pub async fn update_mediation_notes(
+        &self,
+        req: UpdateMediationNotes,
+    ) -> Result<Dispute, AppError> {
+        let dispute = sqlx::query_as::<_, Dispute>(
+            r#"
+            UPDATE disputes
+            SET mediation_notes = $1,
+                updated_at = NOW()
+            WHERE id = $2 AND organization_id = $3
+            RETURNING id, organization_id, building_id, unit_id, reference_number, category,
+                      title, description, desired_resolution, status, priority, filed_by,
+                      assigned_to, resolved_at, resolution_notes, mediation_notes,
+                      created_at, updated_at
+            "#,
+        )
+        .bind(&req.notes)
+        .bind(req.dispute_id)
+        .bind(req.organization_id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound(format!("Dispute {} not found", req.dispute_id)))?;
+
+        self.record_activity(
+            req.dispute_id,
+            req.updated_by,
+            activity_type::COMMENT_ADDED,
+            "Mediation notes updated".to_string(),
             None,
         )
         .await?;
@@ -884,7 +1001,8 @@ impl DisputeRepository {
             r#"
             SELECT id, organization_id, building_id, unit_id, reference_number, category,
                    title, description, desired_resolution, status, priority, filed_by,
-                   assigned_to, created_at, updated_at
+                   assigned_to, resolved_at, resolution_notes, mediation_notes,
+                   created_at, updated_at
             FROM disputes
             WHERE id = $1
             "#,

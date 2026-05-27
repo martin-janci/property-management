@@ -84,6 +84,7 @@
         "buildingDisabled": "Vypnout tuto budovu (nouzový vypínač)",
         "newListingsSearch": "Nové vyhledávání inzerátů (beta)"
       },
+      "helpTooltip": "Feature flagy se okamžitě projeví u všech uživatelů daného nájemníka. Nouzový vypínač používejte opatrně.",
       "title": "Feature flagy",
       "warning": "Nouzový vypínač pro nájemníka — změny se okamžitě projeví u všech uživatelů tohoto nájemníka."
     },
@@ -158,7 +159,15 @@
         "supportEmail": "E-mail podpory",
         "supportEmailPlaceholder": "podpora@example.com"
       },
+      "helpTooltip": "Režim údržby vrací odpověď 503 na všechny požadavky mimo administrátorů. Jeho aktivace vyžaduje důvod auditu.",
       "title": "Nastavení platformy"
+    },
+    "help": {
+      "openHelp": "Otevřít kontextovou nápovědu",
+      "panelLabel": "Kontextová nápověda",
+      "close": "Zavřít nápovědu",
+      "openDocs": "Otevřít úplnou dokumentaci",
+      "tooltip": "Nápověda"
     },
     "users": {
       "actions": {

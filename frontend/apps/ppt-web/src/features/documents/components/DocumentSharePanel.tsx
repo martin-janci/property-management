@@ -16,7 +16,10 @@ import {
   useRevokeDocumentShare,
 } from '@ppt/api-client';
 import { useCallback, useState } from 'react';
+import { ConfirmationDialog } from '../../../components/ConfirmationDialog';
 import { useToast } from '../../../components/Toast';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function shareTypeLabel(type: ShareType): string {
   switch (type) {
@@ -54,6 +57,7 @@ function CreateShareForm({
 }) {
   const [shareType, setShareType] = useState<ShareType>(SHARE_TYPE.LINK);
   const [targetId, setTargetId] = useState('');
+  const [targetIdTouched, setTargetIdTouched] = useState(false);
   const [targetRole, setTargetRole] = useState('');
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -64,9 +68,16 @@ function CreateShareForm({
 
   const handleCreate = useCallback(async () => {
     setFormError(null);
-    if (shareType === SHARE_TYPE.USER && !targetId.trim()) {
-      setFormError('User ID is required.');
-      return;
+    if (shareType === SHARE_TYPE.USER) {
+      const trimmed = targetId.trim();
+      if (!trimmed) {
+        setFormError('User ID is required.');
+        return;
+      }
+      if (!UUID_RE.test(trimmed)) {
+        setFormError('User ID must be a valid UUID.');
+        return;
+      }
     }
     if (shareType === SHARE_TYPE.ROLE && !targetRole.trim()) {
       setFormError('Role name is required.');
@@ -143,8 +154,18 @@ function CreateShareForm({
             placeholder="uuid-of-user"
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
+            onBlur={() => setTargetIdTouched(true)}
             autoComplete="off"
+            aria-invalid={
+              targetIdTouched && targetId.trim() !== '' && !UUID_RE.test(targetId.trim())
+            }
+            aria-describedby="sp-user-id-hint"
           />
+          {targetIdTouched && targetId.trim() !== '' && !UUID_RE.test(targetId.trim()) && (
+            <span id="sp-user-id-hint" className="sp-error" role="alert">
+              Must be a valid UUID.
+            </span>
+          )}
         </div>
       )}
       {shareType === SHARE_TYPE.ROLE && (
@@ -222,7 +243,11 @@ function CreateShareForm({
         type="button"
         className="sp-create-btn"
         onClick={handleCreate}
-        disabled={createMutation.isPending}
+        disabled={
+          createMutation.isPending ||
+          (shareType === SHARE_TYPE.USER &&
+            (targetId.trim() === '' || !UUID_RE.test(targetId.trim())))
+        }
       >
         {createMutation.isPending ? 'Creating…' : 'Create share'}
       </button>
@@ -233,6 +258,7 @@ function CreateShareForm({
 function ShareList({ documentId, shares }: { documentId: string; shares: ShareWithDocument[] }) {
   const { showToast } = useToast();
   const revokeMutation = useRevokeDocumentShare(documentId);
+  const [confirmingRevokeId, setConfirmingRevokeId] = useState<string | null>(null);
 
   const handleCopyLink = useCallback(
     (token: string) => {
@@ -253,22 +279,26 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
     [showToast]
   );
 
-  const handleRevoke = useCallback(
-    async (shareId: string) => {
-      if (!window.confirm('Revoke this share? Recipients will lose access.')) return;
-      try {
-        await revokeMutation.mutateAsync(shareId);
-        showToast({ type: 'success', title: 'Share revoked', duration: 3000 });
-      } catch (err) {
-        showToast({
-          type: 'error',
-          title: 'Revoke failed',
-          message: err instanceof Error ? err.message : 'Failed.',
-        });
-      }
-    },
-    [revokeMutation, showToast]
-  );
+  const handleRevokeRequest = useCallback((shareId: string) => {
+    setConfirmingRevokeId(shareId);
+  }, []);
+
+  const handleRevokeConfirm = useCallback(async () => {
+    const shareId = confirmingRevokeId;
+    if (!shareId) return;
+    try {
+      await revokeMutation.mutateAsync(shareId);
+      showToast({ type: 'success', title: 'Share revoked', duration: 3000 });
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Revoke failed',
+        message: err instanceof Error ? err.message : 'Failed.',
+      });
+    } finally {
+      setConfirmingRevokeId(null);
+    }
+  }, [confirmingRevokeId, revokeMutation, showToast]);
 
   const active = shares.filter(isActiveShare);
   if (active.length === 0) return <p className="sp-empty">No active shares yet.</p>;
@@ -302,13 +332,24 @@ function ShareList({ documentId, shares }: { documentId: string; shares: ShareWi
           <button
             type="button"
             className="sp-revoke-btn"
-            onClick={() => handleRevoke(share.id)}
+            onClick={() => handleRevokeRequest(share.id)}
             disabled={revokeMutation.isPending && revokeMutation.variables === share.id}
           >
             Revoke
           </button>
         </div>
       ))}
+      <ConfirmationDialog
+        isOpen={confirmingRevokeId !== null}
+        title="Revoke share?"
+        message="Recipients will immediately lose access. This action cannot be undone."
+        confirmLabel="Revoke"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={revokeMutation.isPending}
+        onConfirm={handleRevokeConfirm}
+        onCancel={() => setConfirmingRevokeId(null)}
+      />
     </div>
   );
 }

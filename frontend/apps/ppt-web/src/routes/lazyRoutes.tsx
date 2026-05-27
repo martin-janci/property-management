@@ -48,6 +48,9 @@ export const DisputeDetailPage = lazy(() =>
 export const MediationPage = lazy(() =>
   import('../features/disputes').then((m) => ({ default: m.MediationPage }))
 );
+export const MediationWorkspacePage = lazy(() =>
+  import('../features/disputes').then((m) => ({ default: m.MediationWorkspacePage }))
+);
 
 // Outages feature (UC-12)
 export const OutagesPage = lazy(() =>
@@ -102,6 +105,9 @@ export const SessionExpiredPage = lazy(() =>
 );
 
 // Auth pages (UC-14)
+export const AuthCallbackPage = lazy(() =>
+  import('../pages/AuthCallbackPage').then((m) => ({ default: m.AuthCallbackPage }))
+);
 export const LoginPage = lazy(() =>
   import('../pages/LoginPage').then((m) => ({ default: m.LoginPage }))
 );
@@ -200,6 +206,10 @@ export const BudgetManagementPage = lazy(() =>
 // Reports feature (Epic 81)
 export const ReportsPage = lazy(() =>
   import('../features/reports').then((m) => ({ default: m.ReportsPage }))
+);
+// Story 81.2 - Schedule detail with execution history table
+export const ScheduleDetailPage = lazy(() =>
+  import('../features/reports').then((m) => ({ default: m.ScheduleDetailPage }))
 );
 
 // Command Palette (Epic 129) - loaded eagerly since it's used globally

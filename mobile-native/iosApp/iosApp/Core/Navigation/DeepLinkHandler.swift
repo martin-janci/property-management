@@ -38,10 +38,28 @@ final class DeepLinkHandler {
         /// A navigation route was extracted — navigate to it.
         case route(Route)
         /// An SSO callback was received — caller should process the token.
+        ///
+        /// `state` is the CSRF nonce returned by the SSO server. Callers MUST
+        /// compare it against the value that was minted and stored locally
+        /// before the SSO browser flow opened. A mismatch (or missing value)
+        /// must reject the callback.
         case ssoCallback(token: String, state: String?)
         /// The URL could not be parsed; ignore it.
         case unrecognized
     }
+
+    // MARK: - Universal-link allow-list
+
+    /// Hosts permitted for `https://` / `http://` universal links.
+    ///
+    /// Defence-in-depth: iOS only routes hosts present in the AASA / app
+    /// entitlement to `onOpenURL`, but the parser still rejects unknown
+    /// hosts so a stray `https://attacker.example/listing/1` from a
+    /// share-sheet or paste never reaches the router.
+    static let allowedUniversalLinkHosts: Set<String> = [
+        "reality.example.com",        // production (placeholder until AASA wired)
+        "staging-reality.example.com" // staging (placeholder until AASA wired)
+    ]
 
     /// Parse any incoming URL into a ``ParseResult``.
     ///
@@ -56,6 +74,14 @@ final class DeepLinkHandler {
         // host is "sso", which doesn't fit the path-component model.
         if components.host == "sso" {
             return parseSsoCallback(components)
+        }
+
+        // For universal links (http/https), enforce a host allow-list.
+        if let scheme = components.scheme?.lowercased(), scheme == "http" || scheme == "https" {
+            guard let host = components.host?.lowercased(),
+                  Self.allowedUniversalLinkHosts.contains(host) else {
+                return .unrecognized
+            }
         }
 
         let pathSegments = components.path

@@ -124,4 +124,32 @@ impl DevicePushTokenRepository {
 
         Ok(result.rows_affected())
     }
+
+    /// Delete a single push token by its raw token string (service-role, no RLS).
+    ///
+    /// Used by the push fanout worker to evict tokens that FCM/APNs has reported
+    /// as `NOT_REGISTERED` / stale.  Only deletes the token if it belongs to the
+    /// given `user_id`, providing an extra guard against cross-user eviction bugs.
+    ///
+    /// # Caller contract
+    /// Service-role pool only — `app.current_user_id` must not be set on the
+    /// connection.  Do not call from a request handler; use `delete_token_rls` there.
+    pub async fn delete_stale_token(
+        &self,
+        user_id: Uuid,
+        token: &str,
+    ) -> Result<bool, sqlx::Error> {
+        // sqlx::query (runtime) rather than sqlx::query! (compile-time) is intentional:
+        // this DELETE returns no rows, so there is no return type for the macro to verify,
+        // and keeping it consistent with the other service-role methods in this file lets
+        // the crate compile without a live DATABASE_URL (SQLX_OFFLINE = true).
+        let result =
+            sqlx::query("DELETE FROM device_push_tokens WHERE user_id = $1 AND token = $2")
+                .bind(user_id)
+                .bind(token)
+                .execute(&self.pool)
+                .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
 }

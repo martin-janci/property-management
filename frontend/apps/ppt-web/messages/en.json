@@ -52,7 +52,8 @@
     "selectOrganization": "Please select an organization",
     "unknown": "Unknown",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "unknownError": "An error occurred. Please try again."
   },
   "nav": {
     "home": "Home",
@@ -286,7 +287,89 @@
     "multipleRespondentsMsg": "Only the first respondent will be recorded.",
     "addEvidence": "Add Evidence",
     "filedWithEvidenceErrors": "Dispute filed (some files failed)",
-    "evidenceUploadErrorsMsg": "One or more evidence files could not be uploaded. Retry from the dispute detail page."
+    "evidenceUploadErrorsMsg": "One or more evidence files could not be uploaded. Retry from the dispute detail page.",
+    "mediation": {
+      "title": "Mediation Workspace",
+      "backToDispute": "← Back to Dispute",
+      "assignMediator": "Assign Mediator",
+      "escalate": "Escalate",
+      "resolveDispute": "Resolve Dispute",
+      "disputePanel": "Dispute",
+      "filedBy": "Filed by",
+      "respondent": "Respondent",
+      "mediator": "Mediator",
+      "filed": "Filed",
+      "deadline": "Deadline",
+      "parties": "Parties",
+      "filer": "Filer",
+      "partyDetailsUnavailable": "Party details unavailable.",
+      "guidelines": "Guidelines",
+      "guideline1": "Be respectful and constructive",
+      "guideline2": "Focus on interests, not positions",
+      "guideline3": "Discussions are confidential",
+      "guideline4": "Work towards a shared solution",
+      "tabTimeline": "Timeline",
+      "tabDiscussion": "Discussion",
+      "tabResolution": "Resolution",
+      "noTimelineEvents": "No timeline events yet.",
+      "mustBeParty": "You must be a party or manager to participate in this discussion.",
+      "noLongerActive": "This dispute is no longer active.",
+      "recordResolution": "Record Resolution",
+      "onlyManagersCanResolve": "Only managers and mediators can record a resolution.",
+      "escalateTitle": "Escalate Dispute",
+      "escalateDescription": "Escalation moves this dispute to a higher authority. Please provide a reason.",
+      "reasonForEscalation": "Reason for escalation",
+      "reasonPlaceholder": "Describe why this dispute needs to be escalated…",
+      "cancel": "Cancel",
+      "escalatingBtn": "Escalating…",
+      "escalateBtn": "Escalate",
+      "assignMediatorTitle": "Assign Mediator",
+      "assignMediatorDescription": "Enter the user ID of the staff member to assign as mediator.",
+      "mediatorUserId": "Mediator user ID",
+      "userPickerNote": "A user-picker will be wired once the staff directory endpoint is available.",
+      "assigning": "Assigning…",
+      "assign": "Assign",
+      "resolvedSuccess": "Dispute resolved",
+      "resolvedMsg": "The dispute has been marked as resolved.",
+      "resolveError": "Failed to resolve dispute",
+      "escalatedSuccess": "Dispute escalated",
+      "escalatedMsg": "The dispute has been escalated.",
+      "escalateError": "Failed to escalate dispute",
+      "assignedSuccess": "Mediator assigned",
+      "assignedMsg": "The mediator has been assigned to this dispute.",
+      "assignError": "Failed to assign mediator",
+      "noMessages": "No messages yet. Start the conversation below.",
+      "privateLabel": "Private",
+      "typePlaceholder": "Type a message… (Ctrl+Enter to send)",
+      "privateSend": "Private (mediator only)",
+      "sending": "Sending…",
+      "send": "Send",
+      "sendingAs": "Sending as {{name}}",
+      "sendError": "Failed to send message",
+      "sendErrorDesc": "Your message could not be sent. Please try again.",
+      "resolutionType": "Resolution Type",
+      "resolutionDetails": "Resolution Details",
+      "resolutionDetailsPlaceholder": "Describe the full resolution, including what was agreed and any conditions…",
+      "charMinimum": "{{count}} chars (10 minimum)",
+      "termsConditions": "Terms / Conditions",
+      "optional": "optional",
+      "termsPlaceholder": "List any specific terms, deadlines, or follow-up actions…",
+      "requiresConfirmation": "Requires party confirmation",
+      "requiresConfirmationDesc": "Both parties must acknowledge the resolution before it is finalised.",
+      "recording": "Recording resolution…",
+      "recordResolutionBtn": "Record Resolution",
+      "resolutionMutualAgreement": "Mutual Agreement",
+      "resolutionMutualAgreementDesc": "Both parties reached a mutually acceptable agreement",
+      "resolutionFavorFiler": "In Favour of Filer",
+      "resolutionFavorFilerDesc": "Resolution decided in favour of the party who filed the dispute",
+      "resolutionFavorRespondent": "In Favour of Respondent",
+      "resolutionFavorRespondentDesc": "Resolution decided in favour of the responding party",
+      "resolutionWithdrawn": "Withdrawn",
+      "resolutionWithdrawnDesc": "The filer has withdrawn the dispute",
+      "resolutionDismissed": "Dismissed",
+      "resolutionDismissedDesc": "Dispute dismissed — insufficient grounds or procedural issue",
+      "selectedType": "Selected: {{label}}"
+    }
   },
   "packages": {
     "title": "Package Management",
@@ -2488,6 +2571,30 @@
           "dateInFuture": "Violation date cannot be in the future"
         }
       }
+    },
+    "esign": {
+      "requestSignature": "Request Signature",
+      "modal": {
+        "title": "Request Signature",
+        "selectSigners": "Select signers",
+        "subject": "Subject (optional)",
+        "subjectPlaceholder": "e.g. Lease Agreement Signing",
+        "message": "Message to signers (optional)",
+        "messagePlaceholder": "Please review and sign the attached lease agreement.",
+        "sending": "Sending…",
+        "send": "Send for Signature"
+      },
+      "role": {
+        "tenant": "Tenant"
+      },
+      "status": {
+        "pending": "Pending Signature",
+        "in_progress": "Signing In Progress",
+        "completed": "Signed",
+        "declined": "Declined",
+        "expired": "Expired",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "help": {
@@ -2896,6 +3003,73 @@
         "title": "Two-factor confirmation required",
         "message": "Please confirm with your authenticator app to continue."
       }
+    }
+  },
+  "reports": {
+    "detail": {
+      "subtitle": "Schedule execution history",
+      "scheduleDetails": "Schedule details",
+      "executionHistory": "Execution history",
+      "executionCount": "{{filtered}} of {{total}} executions",
+      "backToSchedules": "Back to schedules",
+      "frequency": {
+        "label": "Frequency",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      },
+      "format": "Format",
+      "statusLabel": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "recipients": "Recipients",
+      "lastRun": "Last run",
+      "nextRun": "Next run",
+      "status": {
+        "pending": "Pending",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "skipped": "Skipped"
+      },
+      "colStatus": "Status",
+      "colStartedAt": "Started at",
+      "colDuration": "Duration",
+      "colFile": "File",
+      "colSize": "Size",
+      "colActions": "Actions",
+      "download": "Download",
+      "downloadExecution": "Download report from {{date}}",
+      "retry": "Retry",
+      "retrying": "Retrying...",
+      "retryExecution": "Retry execution from {{date}}",
+      "noExecutions": "No executions found",
+      "clearFilters": "Clear filters",
+      "loadMore": "Load more",
+      "loading": "Loading...",
+      "errorTitle": "Failed to load executions",
+      "errorMessage": "Please try again later."
+    },
+    "execution": {
+      "downloadFailed": "Failed to download report.",
+      "retryQueued": "Execution queued for retry.",
+      "retryFailed": "Failed to retry execution."
+    },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "status": "Status:",
+      "dateFrom": "From:",
+      "dateTo": "To:",
+      "clearFilters": "Clear filters",
+      "statusCompleted": "Completed",
+      "statusFailed": "Failed",
+      "statusRunning": "Running",
+      "statusPending": "Pending",
+      "statusCancelled": "Cancelled",
+      "statusSkipped": "Skipped"
     }
   }
 }

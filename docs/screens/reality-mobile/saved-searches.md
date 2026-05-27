@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/saved-searches
 name: Saved Searches (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-saved-searches
 implementations:
@@ -12,9 +12,8 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/saved-searches (via FavoritesRepository.getSavedSearches)
-  - PATCH /api/v1/saved-searches/{id} (toggle alerts)
-  - DELETE /api/v1/saved-searches/{id}
+  - saved_searches_list
+  - saved_searches_delete
 relatedScreens:
   - id: reality/saved-searches
     rel: web-counterpart

@@ -34,7 +34,18 @@ static BASE_URL: LazyLock<String> =
     LazyLock::new(|| std::env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string()));
 
 /// Lightweight e-signature provider, initialised once from env.
-static ESIGN_PROVIDER: LazyLock<LightweightProvider> = LazyLock::new(LightweightProvider::from_env);
+///
+/// Issue #527 (a): if the secret is missing the provider is `None` and every
+/// `build_signing_url` call returns 503 SERVICE_UNAVAILABLE (fail-closed).
+static ESIGN_PROVIDER: LazyLock<Option<LightweightProvider>> = LazyLock::new(|| {
+    match LightweightProvider::from_env() {
+        Ok(p) => Some(p),
+        Err(e) => {
+            tracing::error!(error = %e, "E-signature provider failed to initialise — signing URLs will fail closed");
+            None
+        }
+    }
+});
 
 /// Create router for signature endpoints.
 pub fn router() -> Router<AppState> {
@@ -165,14 +176,36 @@ pub async fn create_signature_request(
 
     for signer in &signature_request.signers {
         // Build a HMAC-secured signing URL via the lightweight provider.
+        // Issue #527 (c): bind the token to the request's org so a
+        // cross-tenant replay (same signer email in two orgs) cannot
+        // mint signature for the wrong org.
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(&signer.email, &signature_request.id.to_string())
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
+            .as_ref()
+            .ok_or_else(|| {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "MISCONFIGURED",
+                        "E-signature provider not configured",
+                    )),
                 )
-            });
+            })
+            .and_then(|p| {
+                p.build_signing_url(
+                    &signer.email,
+                    &signature_request.id.to_string(),
+                    &signature_request.organization_id.to_string(),
+                )
+                .map_err(|_| {
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "MISCONFIGURED",
+                            "E-signature provider not configured",
+                        )),
+                    )
+                })
+            })?;
 
         if let Err(e) = state
             .email_service
@@ -369,13 +402,32 @@ pub async fn send_reminder(
 
     for signer in pending_signers {
         let sign_url = ESIGN_PROVIDER
-            .build_signing_url(&signer.email, &signature_request.id.to_string())
-            .unwrap_or_else(|_| {
-                format!(
-                    "{}/sign?request_id={}&email={}",
-                    *BASE_URL, signature_request.id, signer.email
+            .as_ref()
+            .ok_or_else(|| {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "MISCONFIGURED",
+                        "E-signature provider not configured",
+                    )),
                 )
-            });
+            })
+            .and_then(|p| {
+                p.build_signing_url(
+                    &signer.email,
+                    &signature_request.id.to_string(),
+                    &signature_request.organization_id.to_string(),
+                )
+                .map_err(|_| {
+                    (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(ErrorResponse::new(
+                            "MISCONFIGURED",
+                            "E-signature provider not configured",
+                        )),
+                    )
+                })
+            })?;
 
         if let Err(e) = state
             .email_service
@@ -525,14 +577,45 @@ pub async fn handle_webhook(
     Path(provider): Path<String>,
     Json(event): Json<SignatureWebhookEvent>,
 ) -> Result<Json<WebhookResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // Verify the webhook secret header to prevent forged events.
-    let expected_secret = std::env::var("ESIGN_WEBHOOK_SECRET").unwrap_or_default();
+    // Issue #527 (d): fail CLOSED when ESIGN_WEBHOOK_SECRET is missing in
+    // a non-debug build. Previous behaviour silently disabled the check,
+    // letting an attacker force-complete any signature request.
+    let expected_secret = match std::env::var("ESIGN_WEBHOOK_SECRET") {
+        Ok(s) if !s.is_empty() => s,
+        _ => {
+            if cfg!(debug_assertions) {
+                warn!(
+                    provider = %provider,
+                    "ESIGN_WEBHOOK_SECRET unset — accepting webhook (debug build only)"
+                );
+                String::new()
+            } else {
+                warn!(
+                    provider = %provider,
+                    "Webhook rejected: ESIGN_WEBHOOK_SECRET not configured"
+                );
+                return Err((
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    Json(ErrorResponse::new(
+                        "MISCONFIGURED",
+                        "Webhook secret not configured",
+                    )),
+                ));
+            }
+        }
+    };
     if !expected_secret.is_empty() {
         let provided = headers
             .get("x-webhook-secret")
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
-        if provided != expected_secret {
+        // Issue #527 (e): constant-time comparison via subtle to defeat
+        // timing side channels on the webhook secret.
+        let provided_b = provided.as_bytes();
+        let expected_b = expected_secret.as_bytes();
+        let matches = provided_b.len() == expected_b.len()
+            && bool::from(subtle::ConstantTimeEq::ct_eq(provided_b, expected_b));
+        if !matches {
             warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
             return Err((
                 StatusCode::UNAUTHORIZED,

@@ -37,7 +37,7 @@
 
 use std::time::Duration;
 
-use api_core::extractors::validate_access_token;
+use api_core::extractors::validate_access_token_with_exp;
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
@@ -109,9 +109,14 @@ pub async fn ws_handler(
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     // --- JWT validation ---
-    let user_id = match validate_ws_token(&params.token) {
-        Ok(uid) => uid,
+    // Issue #480: also extract the `exp` so the session loop can close
+    // the socket once the access token expires; otherwise a logged-out
+    // user retains a live channel for up to WS_MAX_SESSION_SECS.
+    let (user_id, exp) = match validate_ws_token_with_exp(&params.token) {
+        Ok(t) => t,
         Err(msg) => {
+            // Never log `params.token` — it is a bearer JWT and a single
+            // log line is enough to give an attacker session takeover.
             tracing::warn!(msg = %msg, "WebSocket connection rejected: invalid token");
             return (StatusCode::UNAUTHORIZED, msg).into_response();
         }
@@ -120,7 +125,13 @@ pub async fn ws_handler(
     // Clone the pubsub service before moving into the closure.
     let pubsub_service = state.pubsub_service.clone();
 
-    ws.on_upgrade(move |socket| handle_ws_session(socket, user_id, pubsub_service))
+    // Issue #438: echo the `ppt.v1` subprotocol so browsers that send
+    // `new WebSocket(url, ['bearer.<jwt>', 'ppt.v1'])` complete the
+    // handshake. The spec requires the server to echo at least one of
+    // the offered subprotocols or the browser aborts with a silent
+    // network error — not a 401.
+    ws.protocols(["ppt.v1"])
+        .on_upgrade(move |socket| handle_ws_session(socket, user_id, exp, pubsub_service))
         .into_response()
 }
 
@@ -136,6 +147,7 @@ pub async fn ws_handler(
 async fn handle_ws_session(
     mut socket: WebSocket,
     user_id: Uuid,
+    jwt_exp_unix: i64,
     pubsub_service: Option<integrations::PubSubService>,
 ) {
     tracing::info!(
@@ -178,6 +190,14 @@ async fn handle_ws_session(
         // Check global session deadline.
         if tokio::time::Instant::now() >= session_deadline {
             tracing::info!(user_id = %user_id, "WebSocket session max-lifetime reached; closing");
+            break;
+        }
+
+        // Issue #480: close the session as soon as the JWT access token
+        // expires so a logged-out user does not retain a live channel.
+        // Clients are expected to reconnect with a fresh token.
+        if chrono::Utc::now().timestamp() >= jwt_exp_unix {
+            tracing::info!(user_id = %user_id, "WebSocket session JWT expired; closing");
             break;
         }
 
@@ -255,7 +275,13 @@ async fn handle_ws_session(
 /// `JWT_VERIFIER` (with its `leeway`, algorithm, and future `iss`/`aud`
 /// hardening) applies uniformly to WebSocket auth and HTTP extractors alike.
 fn validate_ws_token(token: &str) -> Result<Uuid, &'static str> {
-    validate_access_token(token)
+    validate_access_token_with_exp(token).map(|(uid, _)| uid)
+}
+
+/// Validate a JWT access token supplied as a query parameter and return the
+/// subject user ID together with its `exp` Unix timestamp. Issue #480.
+fn validate_ws_token_with_exp(token: &str) -> Result<(Uuid, i64), &'static str> {
+    validate_access_token_with_exp(token)
 }
 
 // ============================================================================

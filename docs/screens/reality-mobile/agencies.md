@@ -1,9 +1,9 @@
 ---
 id: reality-mobile/agencies
 name: Agencies Directory (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
-  reality-web: reality-agent-profile
+  reality-web: reality-agency
 implementations:
   ios-swiftui:
     component: AgenciesView
@@ -11,8 +11,7 @@ implementations:
     buildStatus: in-progress
     redesignStatus: not-started
     apiStatus: partial
-endpoints:
-  - GET /api/v1/agencies (via AgencyRepository.listAgencies)
+endpoints: []
 relatedScreens:
   - id: reality/agent-profile
     rel: web-counterpart

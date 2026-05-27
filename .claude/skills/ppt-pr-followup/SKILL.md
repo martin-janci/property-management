@@ -1,30 +1,158 @@
 ---
 name: ppt-pr-followup
-description: After a PR is pushed, monitor its CI checks and review comments, then fix and address them in a loop until the PR is green and uncontested. Triggers on phrases like "follow up on the PR", "fix the CI", "address review comments", or runs automatically right after `ppt-pr-create`.
-when_to_use: A PR has been opened on the current branch (or one you specify) and you want to close out the post-push loop — CI failures resolved, reviewer comments answered, branch ready to merge. Sister skill: `ppt-pr-create` (opens the PR; this skill closes it out).
+description: Close out a PR's post-push loop. Two modes — (a) `dispatcher` — read the dispatcher's reviewer verdict in assignments.json and respawn the original implementer on `verdict=changes` (called by ppt-research-dispatcher after Phase 5 returns changes); (b) `manual` — implementer-driven CI + review-comment loop on the current branch (called right after ppt-pr-create or by a human). Triggers on "follow up on the PR", "fix the CI", "address review comments", "respawn implementer".
+when_to_use: Dispatcher mode — a `status=review` row in `.research/management/assignments.json` has a `reviewer_summary.verdict=changes` and you want to respawn the original specialist to address the blocking findings. Manual mode — a PR you authored is open and you want to drive CI failures + reviewer comments to green. Sister skills: `ppt-pr-create` (opens the PR), `ppt-pr-merge` (lands a green, approved PR).
 mode: both
 capabilities: [C6]
-tags: [workflow, ci, review]
+tags: [workflow, ci, review, dispatcher]
 ---
 
 # PPT PR Follow-up
 
-End-to-end choreography for the post-push portion of the PR lifecycle. Assumes
-the branch is already pushed (typically by `ppt-pr-create`); this skill drives
-the iterative loop until the PR is mergeable.
+End-to-end choreography for the post-push portion of the PR lifecycle. Two
+distinct entry points share this skill:
+
+- **`mode=dispatcher`** — the `ppt-research-dispatcher` routine calls this
+  after Phase 5 when a reviewer subagent returns `verdict=changes`. The skill
+  reads `.research/management/assignments.json`, picks up the original task
+  context, and re-spawns the same specialist with the reviewer's blocking
+  notes as the new brief. Hard-capped at 3 fix rounds per task.
+- **`mode=manual`** — a human or `ppt-pr-create` invokes this on a fresh
+  PR to drive CI failures + reviewer comments to green via in-place fixes
+  on the PR branch.
+
+Default is `manual` for backward compatibility; the dispatcher passes
+`mode=dispatcher`.
 
 ## When to invoke
 
-- Right after `gh pr create` returns a URL
-- A reviewer left comments and you want them addressed
-- CI has gone red and you want the loop to diagnose + fix + push
+- **Dispatcher mode** — `assignments.json` row has
+  `status=review` AND `reviewer_summary` starts with `verdict=changes`; the
+  dispatcher calls this after Phase 5 to drive the fix loop.
+- Right after `gh pr create` returns a URL (manual mode)
+- A reviewer left comments and you want them addressed (manual mode)
+- CI has gone red and you want the loop to diagnose + fix + push (manual mode)
 - The user says: *"check on the PR"*, *"fix the CI"*, *"address the review"*,
-  *"work the PR queue"*
+  *"work the PR queue"*, *"respawn implementer"*
 
 **Do not** invoke for one-off questions ("did CI pass?"). For a single status
 check use `gh pr checks` directly.
 
-## What it does
+## Inputs
+
+| Input        | Default     | Notes                                                  |
+| ---          | ---         | ---                                                    |
+| `mode`       | `manual`    | `dispatcher` \| `manual`                               |
+| `pr_number`  | (required for `dispatcher`; derived from branch in `manual`) | The PR to follow up on |
+| `repo`       | `martin-janci/property-management` | Full GH slug                         |
+| `MAX_ITERS`  | `10` (manual only) | Safety cap on manual loop                       |
+| `SCOPE`      | `both`      | `ci-only` \| `reviews-only` \| `both` (manual mode)    |
+
+## Dispatcher mode — state machine
+
+The dispatcher hands this skill a `pr_number` (or branch) and expects a
+one-line return contract. The skill MUST NOT loop or interact — it reads
+state, decides one action, mutates `assignments.json` once, optionally
+respawns the implementer once, then returns.
+
+### State source
+
+`.research/management/assignments.json` — find the row whose `pr_number`
+equals the input (fall back to matching `branch`). Read:
+
+- `task_id`, `specialist`, `branch`, `pr_number`
+- `reviewer_summary` (string, parsed for `verdict=...` and `note=...`)
+- `fix_rounds` (int; default 0 if absent — backfill on first read)
+- the task's original `action` text from `.research/management/action-list.json`
+  matched by `task_id` (the dispatcher's Phase 4 implementer prompt uses
+  this; we reuse it for re-spawn).
+
+### Decision table
+
+| Reviewer state                                  | Action                                                                 | Return line                                                |
+| ---                                             | ---                                                                    | ---                                                        |
+| `reviewer_summary` is `null`                    | No-op. Wait for next reviewer pass.                                    | `followup=skip pr=<n> note=no-verdict-yet`                 |
+| `verdict=approve`                               | No-op (the next Phase 5.5 picks it up; `ppt-pr-merge` handles drafts). | `followup=skip pr=<n> note=approved-call-pr-merge`         |
+| `verdict=changes` AND `fix_rounds >= 3`         | Mark row `status=failed`, `reason=fix-rounds-exhausted`.               | `followup=failed pr=<n> note=fix-rounds-exhausted`         |
+| `verdict=changes` AND `fix_rounds < 3` AND row already `status=in-progress` | No-op — guard against double-spawn (idempotency).         | `followup=skip pr=<n> note=in-progress-already`            |
+| `verdict=changes` AND `fix_rounds < 3`          | Increment `fix_rounds`, set `status=in-progress`, spawn original specialist via the same `Task` channel `ppt-research-dispatcher` uses in Phase 4. After the spawn returns, set `status=review`, clear `reviewer_summary` so the next reviewer pass picks it up fresh. | `followup=respawned pr=<n> specialist=<sp> round=<k>` |
+| `verdict=block` or `verdict=reject`             | Mark row `status=failed`, `reason=reviewer-rejected`.                  | `followup=failed pr=<n> note=reviewer-rejected`            |
+
+### Respawn brief
+
+The respawn does NOT re-do the whole task. Pass the spawned implementer:
+
+- `task_id`, `branch`, `pr_number` — unchanged from the original row.
+- `specialist` — same as the original row (deterministic; do not re-pick).
+- `brief` — the **reviewer's blocking findings** (`reviewer_summary.note`),
+  NOT the original `action` text. The implementer pushes commits onto the
+  existing PR branch and does **not** open a new PR.
+- `base_branch` — `dev`.
+
+Spawn template (mirrors the dispatcher's Phase 4 prompt, with `brief`
+swapped for the reviewer note):
+
+> You are a `<specialist>` implementer addressing reviewer fix-round
+> `<k>/3` on PR #`<n>` (branch `<branch>`). Do NOT open a new PR.
+> Check out `<branch>` and push commits on top.
+>
+> Reviewer's blocking findings (must be addressed):
+>
+>     <reviewer_summary.note>
+>
+> Original task context for reference only: `<task_id>: <action>`.
+>
+> Follow `.claude/skills/ppt-implement/agents/<specialist>.md`. Verify per
+> the specialist's verify command before pushing. Return EXACTLY:
+> `pr=<n> status=<done|blocked> specialist=<sp> note=<short>`.
+
+### Idempotency
+
+`fix_rounds` + `status=in-progress` together prevent double-spawn:
+
+- Running the skill once on a `verdict=changes` row: bumps `fix_rounds`
+  to N+1, flips `status` to `in-progress`, spawns.
+- Running it again before the spawn returns: row is now `in-progress`,
+  the table's penultimate row matches → `followup=skip`.
+- Running it after the spawn returned and bumped `status=review` but
+  before the next reviewer pass: `reviewer_summary` is cleared
+  (`null`) → first row matches → `followup=skip note=no-verdict-yet`.
+
+### Round cap
+
+Hard cap of **3 fix rounds**. After 3 unsuccessful respawns the row is
+terminal `failed`. This is the same shape as `Phase 5.6`'s
+`rebase_attempts < 3` guard.
+
+### Return contract (one line — dispatcher parses this)
+
+```
+followup=<respawned|skip|failed> pr=<n> [specialist=<sp>] [round=<k>] note=<short>
+```
+
+The dispatcher reads this verbatim into a Phase 5.7 log row.
+
+### Reference script
+
+`scripts/dispatcher-followup.sh` implements the decision table above. It is
+the canonical source; the SKILL.md describes the semantics for agents that
+need to reason about edge cases, but the script is what runs.
+
+```bash
+bash .claude/skills/ppt-pr-followup/scripts/dispatcher-followup.sh \
+  --pr <n> [--dry-run]
+```
+
+The script:
+- reads `.research/management/assignments.json`,
+- decides the action per the table above,
+- writes the mutation back (atomic temp-file + rename),
+- prints the spawn brief to stdout when action is `respawned` (the
+  dispatcher then feeds that brief into the `Task` tool — the script
+  itself does not call any Claude tools),
+- exits non-zero on `failed` so the dispatcher logs it.
+
+## What it does (manual mode)
 
 A single iteration:
 
@@ -44,14 +172,14 @@ A single iteration:
 
 Then surface a short status report.
 
-## Inputs
+## Manual-mode inputs (legacy detail; see top-level Inputs table for canonical names)
 
 - `PR` — PR number (optional). If omitted, derive from the current branch via
   `gh pr view --json number,headRefName`.
 - `MAX_ITERS` — safety cap (default 10). Stops runaway loops.
 - `SCOPE` — `ci-only` | `reviews-only` | `both` (default `both`).
 
-## Iteration recipe
+## Iteration recipe (manual mode)
 
 ### Step 1 — Identify the PR
 

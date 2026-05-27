@@ -1,14 +1,21 @@
 import { z } from 'zod';
 
-export const ProductSchema = z.enum(['ppt', 'reality']);
+export const ProductSchema = z.enum(['ppt', 'reality', 'reality-mobile']);
 
-export const PlatformSchema = z.enum(['ppt-web', 'reality-web', 'mobile', 'mobile-native']);
+export const PlatformSchema = z.enum([
+  'ppt-web',
+  'reality-web',
+  'mobile',
+  'mobile-native',
+  'ios-swiftui',
+  'android-kmp',
+]);
 
 export const BuildStatusSchema = z.enum(['planned', 'in-progress', 'shipped', 'n/a']);
 export const RedesignStatusSchema = z.enum(['not-started', 'in-progress', 'applied', 'n/a']);
 export const ApiStatusSchema = z.enum(['stub', 'partial', 'complete', 'n/a']);
 
-export const RelatedRelSchema = z.enum(['parent', 'child', 'action', 'sibling']);
+export const RelatedRelSchema = z.enum(['parent', 'child', 'action', 'sibling', 'web-counterpart']);
 export const DiagramKindSchema = z.enum(['sequence', 'flow', 'state', 'class']);
 
 export const ImplementationSchema = z.object({
@@ -21,7 +28,7 @@ export const ImplementationSchema = z.object({
 });
 
 export const RelatedScreenSchema = z.object({
-  id: z.string().regex(/^[a-z]+\/[a-z0-9-]+$/, {
+  id: z.string().regex(/^[a-z][a-z0-9-]*\/[a-z0-9-]+$/, {
     message: 'related screen id must match <product>/<slug>',
   }),
   rel: RelatedRelSchema,
@@ -40,7 +47,7 @@ export const DesignSourceRefSchema = z
   })
   .passthrough();
 
-const IdSchema = z.string().regex(/^(ppt|reality)\/[a-z0-9-]+$/, {
+const IdSchema = z.string().regex(/^(ppt|reality|reality-mobile)\/[a-z0-9-]+$/, {
   message: 'id must match <product>/<slug> using kebab-case',
 });
 

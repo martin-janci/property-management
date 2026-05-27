@@ -1,7 +1,7 @@
 ---
 id: reality-mobile/home
 name: Home (iOS SwiftUI)
-product: reality
+product: reality-mobile
 sitemapRefs:
   reality-web: reality-home
 implementations:
@@ -12,8 +12,7 @@ implementations:
     redesignStatus: not-started
     apiStatus: partial
 endpoints:
-  - GET /api/v1/listings/featured
-  - GET /api/v1/listings/recent
+  - listings_search
 relatedScreens:
   - id: reality/home
     rel: web-counterpart
