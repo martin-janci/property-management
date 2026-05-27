@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 interface ActiveSession {
   token_id: string;
@@ -109,9 +110,13 @@ export default function ImpersonationListPage() {
           fontWeight: 700,
           color: 'var(--ppt-fg-primary, #111827)',
           margin: '0 0 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
         }}
       >
         {t('admin.impersonation.title', { defaultValue: 'Active Impersonation Sessions' })}
+        <HelpTooltip text={t('admin.impersonation.helpTooltip')} />
       </h1>
 
       {isLoading && (

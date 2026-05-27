@@ -19,6 +19,7 @@ import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
+import { HelpTooltip } from '../features/help';
 
 interface UserRow {
   id: string;
@@ -315,7 +316,10 @@ const UsersPage: React.FC = () => {
         />
       )}
       <section>
-        <h1>{t('admin.users.title')}</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.users.title')}
+          <HelpTooltip text={t('admin.users.helpTooltip')} />
+        </h1>
         <div style={{ marginBottom: 16 }}>
           <input
             type="search"

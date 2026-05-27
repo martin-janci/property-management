@@ -13,6 +13,7 @@
         "status": "Status"
       },
       "empty": "No agencies found.",
+      "helpTooltip": "Agencies group users and buildings under a single tenant organisation. Suspend an agency to block all logins immediately.",
       "loadError": "Failed to load agencies: {{message}}",
       "loading": "Loading agencies…",
       "title": "Agencies",
@@ -26,6 +27,9 @@
       },
       "unknownError": "Unknown error"
     },
+    "announcements": {
+      "helpTooltip": "System-wide banners shown to all Property Management users. Set a start/end time to schedule announcements automatically."
+    },
     "audit": {
       "columns": {
         "action": "Action",
@@ -36,6 +40,7 @@
         "time": "Time"
       },
       "empty": "No audit events match the current filters.",
+      "helpTooltip": "Every significant platform action is recorded here. High-severity events (purge, escalate, impersonation) also appear on the Dashboard.",
       "filters": {
         "action": "Action",
         "actor": "Actor",
@@ -66,6 +71,10 @@
       },
       "title": "Audit Log"
     },
+    "capabilities": {
+      "helpTooltip": "Capabilities are named permission flags. Grant carefully — some (tenant_purge, principal_kind_escalate) are irreversible and require MFA.",
+      "title": "Capabilities"
+    },
     "common": {
       "actions": "Actions",
       "cancel": "Cancel",
@@ -88,12 +97,24 @@
       "title": "Feature Flags",
       "warning": "Per-tenant kill switch — changes take effect immediately for every user in this tenant."
     },
+    "dashboard": {
+      "helpTooltip": "Live overview of platform health, high-risk events, and active impersonation sessions. Refresh the page to update stats."
+    },
     "impersonation": {
       "asUser": "as {{name}}",
       "expires": "expires {{time}}",
+      "helpTooltip": "Active impersonation sessions are listed here. Every session start and stop is recorded in the audit log. Sessions expire after 1 hour.",
       "label": "IMPERSONATING",
       "stop": "End impersonation",
+      "title": "Active Impersonation Sessions",
       "youAreImpersonating": "You are impersonating {{name}}"
+    },
+    "memberships": {
+      "helpTooltip": "Memberships link a user to an agency or building with a specific role. Revoking a membership takes effect on the user's next API request.",
+      "title": "Memberships"
+    },
+    "mobile": {
+      "helpTooltip": "Remote config delivered to the mobile app on startup. Set min_version to force older builds to update before connecting."
     },
     "mfa": {
       "cancel": "Cancel",
@@ -122,6 +143,7 @@
       },
       "description": "Manage third-party OAuth 2.0 clients that can obtain tokens on behalf of your users. Capability required: oauth_client_write.",
       "empty": "No OAuth clients registered yet.",
+      "helpTooltip": "OAuth clients allow third-party apps to obtain access tokens. Regenerate the secret immediately if it is compromised — old secrets are invalidated at once.",
       "loadError": "Failed to load OAuth clients: {{message}}",
       "navLabel": "OAuth Clients",
       "revokeDialog": {
@@ -143,6 +165,7 @@
     },
     "health": {
       "activeOnly": "Active only",
+      "helpTooltip": "Real-time API server metrics and alerts. Auto-refreshes every 60 seconds. Acknowledge alerts to record your review in the audit log.",
       "allAlerts": "All alerts",
       "alertsTitle": "Alerts",
       "loadError": "Failed to load health dashboard. Check your connection and try again.",
@@ -181,6 +204,7 @@
         "principalKind": "Principal kind"
       },
       "empty": "Search to load users.",
+      "helpTooltip": "Search by email or name. Use Change kind with care — it permanently alters how the user authenticates.",
       "principalKinds": {
         "agency": "Agency",
         "platform": "Platform",

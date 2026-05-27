@@ -21,6 +21,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useToast } from '../components/Toast';
+import { HelpTooltip } from '../features/help';
 
 const AgenciesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -128,7 +129,10 @@ const AgenciesPage: React.FC = () => {
     // and would be overkill for a sub-route partial fetch.
     return (
       <section>
-        <h1>{t('admin.agencies.title')}</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.agencies.title')}
+          <HelpTooltip text={t('admin.agencies.helpTooltip')} />
+        </h1>
         <div role="status" aria-live="polite">
           {t('admin.agencies.loading')}
         </div>
@@ -141,7 +145,10 @@ const AgenciesPage: React.FC = () => {
       query.error instanceof Error ? query.error.message : t('admin.agencies.unknownError');
     return (
       <section>
-        <h1>{t('admin.agencies.title')}</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {t('admin.agencies.title')}
+          <HelpTooltip text={t('admin.agencies.helpTooltip')} />
+        </h1>
         <div role="alert" className="ppt-admin-error">
           <p>{t('admin.agencies.loadError', { message })}</p>
           <button type="button" onClick={() => query.refetch()}>
@@ -156,7 +163,10 @@ const AgenciesPage: React.FC = () => {
 
   return (
     <section>
-      <h1>{t('admin.agencies.title')}</h1>
+      <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {t('admin.agencies.title')}
+        <HelpTooltip text={t('admin.agencies.helpTooltip')} />
+      </h1>
       <ResourceTable<Agency>
         columns={columns}
         data={items}

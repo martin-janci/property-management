@@ -16,10 +16,12 @@
 
 import { useCapability } from '@ppt/admin-ui';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
 import { useMfaWindow } from '../components/MfaWindowChip';
+import { HelpTooltip } from '../features/help';
 
 // ---------------------------------------------------------------------------
 // Styles (injected once)
@@ -424,6 +426,7 @@ function formatTime(iso: string): string {
 export function Dashboard() {
   ensureStyles();
 
+  const { t } = useTranslation();
   const { token } = useAdminAuth();
   const navigate = useNavigate();
   const { state: mfaState, msRemaining } = useMfaWindow();
@@ -519,8 +522,9 @@ export function Dashboard() {
   return (
     <div className="ppt-dash">
       {/* Greeting */}
-      <h1 className="ppt-dash__title">
+      <h1 className="ppt-dash__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {greeting}, {firstName}.
+        <HelpTooltip text={t('admin.dashboard.helpTooltip')} />
       </h1>
       <p className="ppt-dash__sub">
         {attentionCount > 0

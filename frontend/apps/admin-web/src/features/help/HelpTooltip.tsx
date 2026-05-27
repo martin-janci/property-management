@@ -10,14 +10,20 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ---------------------------------------------------------------------------
-// Styles (injected once)
+// Styles (injected once — guarded by a module-level flag so subsequent mounts
+// or HMR refreshes do not re-inject).
 // ---------------------------------------------------------------------------
 
 const STYLE_ID = 'ppt-help-tooltip-styles';
+let _stylesInjected = false;
 
 function ensureStyles() {
+  if (_stylesInjected) return;
   if (typeof document === 'undefined') return;
-  if (document.getElementById(STYLE_ID)) return;
+  if (document.getElementById(STYLE_ID)) {
+    _stylesInjected = true;
+    return;
+  }
   const el = document.createElement('style');
   el.id = STYLE_ID;
   el.textContent = `
@@ -82,6 +88,7 @@ function ensureStyles() {
     }
   `;
   document.head.appendChild(el);
+  _stylesInjected = true;
 }
 
 // ---------------------------------------------------------------------------
