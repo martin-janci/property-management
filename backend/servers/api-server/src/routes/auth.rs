@@ -2319,8 +2319,8 @@ mod cookie_security_tests {
         // SAFETY: test-only; env mutation is acceptable in single-threaded unit tests.
         std::env::remove_var("PPT_AUTH_COOKIE_SAMESITE");
 
-        let cookie = build_refresh_cookie("tok.en_VALUE-test", 3600)
-            .expect("valid token should not error");
+        let cookie =
+            build_refresh_cookie("tok.en_VALUE-test", 3600).expect("valid token should not error");
 
         assert!(
             cookie.contains("SameSite=Strict"),
@@ -2398,10 +2398,7 @@ mod cookie_security_tests {
             cookie.contains("SameSite=Strict"),
             "Missing SameSite=Strict: {cookie}"
         );
-        assert!(
-            cookie.contains("Path=/api/v1/auth"),
-            "Wrong path: {cookie}"
-        );
+        assert!(cookie.contains("Path=/api/v1/auth"), "Wrong path: {cookie}");
         assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
     }
 

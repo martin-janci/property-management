@@ -1333,10 +1333,7 @@ mod cookie_security_tests {
             cookie.contains("SameSite=Strict"),
             "Missing SameSite=Strict: {cookie}"
         );
-        assert!(
-            cookie.contains("Path=/api/v1/sso"),
-            "Wrong path: {cookie}"
-        );
+        assert!(cookie.contains("Path=/api/v1/sso"), "Wrong path: {cookie}");
         assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
     }
 }
