@@ -76,6 +76,18 @@ impl TestApp {
             }
         });
 
+        // `TotpService::new` (called inside `AppState::new`) panics when
+        // `TOTP_ENCRYPTION_KEY` is absent unless `RUST_ENV=development`.
+        // CI sets this via the workflow env block; local runs do not.
+        // Guard it once here so all tests that create a TestApp survive in
+        // both environments without requiring callers to remember to set it.
+        static RUST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        RUST_ENV_ONCE.call_once(|| {
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
+        });
+
         let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
         let jwt_service =
             JwtService::new(&config.jwt_secret).expect("Failed to create JWT service for tests");

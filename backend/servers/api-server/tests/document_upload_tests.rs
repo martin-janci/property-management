@@ -119,8 +119,9 @@ async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
 
 async fn add_org_member(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
     sqlx::query(
-        "INSERT INTO organization_members (id, organization_id, user_id, role, created_at) \
-         VALUES ($1, $2, $3, 'admin', NOW()) ON CONFLICT DO NOTHING",
+        "INSERT INTO organization_members \
+             (id, organization_id, user_id, role_type, status, created_at) \
+         VALUES ($1, $2, $3, 'admin', 'active', NOW()) ON CONFLICT DO NOTHING",
     )
     .bind(Uuid::new_v4())
     .bind(org_id)
