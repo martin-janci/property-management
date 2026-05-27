@@ -306,11 +306,19 @@ pub async fn sso_callback(
     // here: the cookie is freshly SET in this response after the browser has
     // already completed the PM-OAuth redirect, so the SameSite attribute only
     // governs future requests originating from the reality-web SPA (same site).
+    let session_cookie =
+        build_portal_session_cookie(&session_token, 7 * 24 * 60 * 60).map_err(|e| {
+            tracing::error!(error = e, "session token failed injection guard");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(SsoError::new(
+                    "internal_error",
+                    "Failed to build session cookie",
+                )),
+            )
+        })?;
     Ok((
-        [(
-            axum::http::header::SET_COOKIE,
-            build_portal_session_cookie(&session_token, 7 * 24 * 60 * 60),
-        )],
+        [(axum::http::header::SET_COOKIE, session_cookie)],
         Redirect::temporary(&redirect_uri),
     ))
 }
@@ -341,11 +349,10 @@ pub async fn sso_logout(
 
     // Clear session cookie. Must use the same Path/SameSite attributes as the
     // Set-Cookie that installed it so browsers actually expire the stored cookie.
+    let clear_cookie =
+        build_portal_session_cookie("", 0).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok((
-        [(
-            axum::http::header::SET_COOKIE,
-            build_portal_session_cookie("", 0),
-        )],
+        [(axum::http::header::SET_COOKIE, clear_cookie)],
         StatusCode::OK,
     ))
 }
@@ -1256,10 +1263,25 @@ pub async fn get_mapped_roles(State(_state): State<AppState>) -> impl IntoRespon
 /// |               |                    | is **not** sent on listing/search requests. |
 ///
 /// Pass `max_age_seconds = 0` and `value = ""` to emit a clear-cookie header.
-fn build_portal_session_cookie(value: &str, max_age_seconds: i64) -> String {
-    format!(
+/// Build a `Set-Cookie` value for the `portal_session` cookie.
+///
+/// Returns `Err` if `value` contains characters that would allow cookie-header
+/// injection (semicolons, CRLF, non-ASCII, etc.).  Empty value is allowed —
+/// the clear-cookie path uses `value=""` with `max_age_seconds=0`.
+fn build_portal_session_cookie(value: &str, max_age_seconds: i64) -> Result<String, &'static str> {
+    // RFC 6265 cookie-octet allowlist: visible US-ASCII except `;` `,` `"` `\`
+    // and whitespace.  Mirrors the guard in api-server's build_refresh_cookie so
+    // both helpers are architecturally equivalent (P0-12 parity fix).
+    if !value.is_empty()
+        && !value.bytes().all(|b| {
+            (0x21..=0x7E).contains(&b) && b != b';' && b != b',' && b != b'"' && b != b'\\'
+        })
+    {
+        return Err("invalid session-token characters for Set-Cookie");
+    }
+    Ok(format!(
         "portal_session={value}; Path=/api/v1/sso; HttpOnly; Secure; SameSite=Strict; Max-Age={max_age_seconds}"
-    )
+    ))
 }
 
 /// Extract roles from OAuth scope string.
@@ -1282,7 +1304,7 @@ mod cookie_security_tests {
     /// SameSite=Strict (not Lax) and be scoped to /api/v1/sso (not /).
     #[test]
     fn portal_session_cookie_samesite_is_strict() {
-        let cookie = build_portal_session_cookie("my.session.token", 604800);
+        let cookie = build_portal_session_cookie("my.session.token", 604800).expect("valid token");
         assert!(
             cookie.contains("SameSite=Strict"),
             "Expected SameSite=Strict, got: {cookie}"
@@ -1292,7 +1314,7 @@ mod cookie_security_tests {
     /// `HttpOnly` must always be present on the portal session cookie.
     #[test]
     fn portal_session_cookie_always_httponly() {
-        let cookie = build_portal_session_cookie("tok", 3600);
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
         assert!(
             cookie.contains("HttpOnly"),
             "Missing HttpOnly flag: {cookie}"
@@ -1302,7 +1324,7 @@ mod cookie_security_tests {
     /// `Secure` must always be present on the portal session cookie.
     #[test]
     fn portal_session_cookie_always_secure() {
-        let cookie = build_portal_session_cookie("tok", 3600);
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
         assert!(cookie.contains("Secure"), "Missing Secure flag: {cookie}");
     }
 
@@ -1312,7 +1334,7 @@ mod cookie_security_tests {
     /// reality-server (listing searches, etc.) — unnecessary exposure.
     #[test]
     fn portal_session_cookie_path_scoped_to_sso() {
-        let cookie = build_portal_session_cookie("tok", 3600);
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
         assert!(
             cookie.contains("Path=/api/v1/sso"),
             "Expected Path=/api/v1/sso, got: {cookie}"
@@ -1326,7 +1348,7 @@ mod cookie_security_tests {
     /// Clear-cookie (Max-Age=0) must still carry all security attributes.
     #[test]
     fn clear_portal_session_cookie_has_all_security_flags() {
-        let cookie = build_portal_session_cookie("", 0);
+        let cookie = build_portal_session_cookie("", 0).expect("valid");
         assert!(cookie.contains("HttpOnly"), "Missing HttpOnly: {cookie}");
         assert!(cookie.contains("Secure"), "Missing Secure: {cookie}");
         assert!(
@@ -1335,5 +1357,13 @@ mod cookie_security_tests {
         );
         assert!(cookie.contains("Path=/api/v1/sso"), "Wrong path: {cookie}");
         assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
+    }
+
+    /// Session tokens with injection characters must be rejected (RFC 6265 parity
+    /// with the equivalent guard in api-server's `build_refresh_cookie`).
+    #[test]
+    fn portal_session_cookie_rejects_semicolon_injection() {
+        let result = build_portal_session_cookie("valid; Expires=0", 3600);
+        assert!(result.is_err(), "Should reject semicolon in session token");
     }
 }
