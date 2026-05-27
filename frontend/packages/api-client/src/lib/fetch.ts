@@ -8,13 +8,17 @@
  *     (which was the criticism in #486),
  *   - normalises HTTP error → `Error` with a human-readable message,
  *   - handles 204 No Content uniformly,
- *   - gives us a single seam to add 401-refresh / retry / telemetry later
- *     without revisiting every callsite.
+ *   - intercepts `401 { error: "mfa_required" }` and delegates to the
+ *     registered MFA challenge handler (see `./mfa-handler.ts`); on success
+ *     the original request is retried exactly once — matching the behaviour
+ *     of the former `admin/api.ts::apiRequest` so any module using this
+ *     factory benefits from the same MFA flow without re-implementing it.
  *
  * Hooks should import { authenticatedFetchJson } from '../lib/fetch'.
  */
 
 import { getToken } from '../auth';
+import { requestMfaChallenge } from './mfa-handler';
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
@@ -27,8 +31,19 @@ function getAuthHeaders(): HeadersInit {
  *
  * Throws `Error` (with the server-provided `message` if any) on non-2xx
  * responses. Returns `undefined as unknown as T` for 204.
+ *
+ * When the server responds `401 { error: "mfa_required" }` and a handler has
+ * been registered via `setMfaChallengeHandler`, the MFA modal is shown and
+ * the request is retried once on success.
+ *
+ * The `_alreadyRetried` parameter is internal — it prevents unbounded modal
+ * loops if the server keeps returning 401 after a successful MFA round-trip.
  */
-export async function authenticatedFetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+export async function authenticatedFetchJson<T>(
+  url: string,
+  init?: RequestInit,
+  _alreadyRetried = false
+): Promise<T> {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -38,8 +53,21 @@ export async function authenticatedFetchJson<T>(url: string, init?: RequestInit)
     },
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error((err as { message?: string }).message || `HTTP ${response.status}`);
+    // Read the body once — a 401 mfa_required carries the marker we need and
+    // we still want it for the error message in the fall-through case.
+    const err = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      message?: string;
+    };
+
+    if (response.status === 401 && err?.error === 'mfa_required' && !_alreadyRetried) {
+      const ok = await requestMfaChallenge();
+      if (ok) {
+        return authenticatedFetchJson<T>(url, init, true);
+      }
+    }
+
+    throw new Error(err.message || err.error || `HTTP ${response.status}`);
   }
   if (response.status === 204) return undefined as unknown as T;
   return response.json() as Promise<T>;
