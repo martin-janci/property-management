@@ -229,9 +229,9 @@ struct LoginView: View {
     // MARK: - Actions
 
     private func loginWithSso() {
-        // Open Property Management app for SSO
-        // The app will redirect back with a token via deep link
-        if let url = URL(string: "propertymanagement://sso?callback=realityportal://sso") {
+        let state = authManager.beginSsoFlow()
+        let urlString = "propertymanagement://sso?callback=realityportal://sso&state=\(state)"
+        if let url = URL(string: urlString) {
             UIApplication.shared.open(url)
         }
     }
