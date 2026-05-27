@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T07:17:20Z",
+  "generated": "2026-05-27T07:25:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1739,15 +1739,15 @@
     {
       "task_id": "pm-scrum-master-promote-approved-drafts-566-567",
       "branch": "auto-impl/pm-scrum-master-promote-approved-drafts-",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "failed",
+      "specialist": "pm-scrum-master",
       "claimed_at": "2026-05-27T07:15:00Z",
-      "last_updated": "2026-05-27T07:15:00Z",
-      "status_changed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T07:25:00Z",
+      "status_changed_at": "2026-05-27T07:25:00Z",
       "pr_number": null,
       "pr_url": null,
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=none status=done specialist=pm-scrum-master note=promoted #566 and #567 from draft\u2192ready then squash-merged both to dev; #566 sha=22672563 #567 sha=05f44b93 [meta-task succeeded; failed per pr=none rule]",
       "reviewer_summary": null
     }
   ],
