@@ -24,7 +24,7 @@
     color 80ms;
 }
 
-.ppt-topbar-help-btn[aria-expanded='true'] {
+.ppt-topbar-help-btn[aria-expanded="true"] {
   border: 1.5px solid var(--ppt-brand-400, #60a5fa);
   background: var(--ppt-brand-100, #dbeafe);
   color: var(--ppt-brand-700, #1d4ed8);
