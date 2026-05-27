@@ -11,7 +11,7 @@
 
 import type { CronScheduleUpdateRequest, ReportSchedule } from '@ppt/api-client';
 import { useCallback, useEffect, useState } from 'react';
-import { CronPicker } from './CronPicker';
+import { CronPicker, isValidCron } from './CronPicker';
 import { RecipientManager } from './RecipientManager';
 
 interface EditScheduleModalProps {
@@ -85,11 +85,13 @@ export function EditScheduleModal({
   const validate = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
-    // A cron expression must be present — the picker only calls onChange with
-    // valid expressions, but the user may have switched to "custom" mode and
-    // typed an incomplete expression.
-    if (!cronExpression.trim()) {
-      newErrors.cronExpression = 'A cron schedule expression is required';
+    // A cron expression must be present AND valid. The picker only calls
+    // onChange with valid expressions in simple mode, but in custom mode
+    // the user may type an invalid string; cronExpression retains the
+    // previously-valid value while the input shows the invalid text.
+    // isValidCron guards against that stale-value submission.
+    if (!cronExpression.trim() || !isValidCron(cronExpression)) {
+      newErrors.cronExpression = 'A valid cron expression is required';
     }
 
     if (recipients.length === 0) {

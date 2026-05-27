@@ -68,7 +68,7 @@ const MINUTES = [
 // ─────────────────────────────────────────────────────────────
 
 /** Validate a 5-field UNIX cron expression — mirrors backend logic. */
-function isValidCron(expr: string): boolean {
+export function isValidCron(expr: string): boolean {
   const fields = expr.trim().split(/\s+/);
   if (fields.length !== 5) return false;
 
@@ -304,8 +304,11 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
         <div className="grid grid-cols-2 gap-4">
           {/* Hour */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Hour</label>
+            <label htmlFor="cron-hour" className="block text-xs font-medium text-gray-700 mb-1">
+              Hour
+            </label>
             <select
+              id="cron-hour"
               value={hour}
               onChange={(e) => handleHourChange(e.target.value)}
               disabled={disabled}
@@ -321,8 +324,11 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
 
           {/* Minute */}
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Minute</label>
+            <label htmlFor="cron-minute" className="block text-xs font-medium text-gray-700 mb-1">
+              Minute
+            </label>
             <select
+              id="cron-minute"
               value={minute}
               onChange={(e) => handleMinuteChange(e.target.value)}
               disabled={disabled}
@@ -339,8 +345,11 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
           {/* Day of week (weekly only) */}
           {preset === 'weekly' && (
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Day of week</label>
+              <label htmlFor="cron-dow" className="block text-xs font-medium text-gray-700 mb-1">
+                Day of week
+              </label>
               <select
+                id="cron-dow"
                 value={dow}
                 onChange={(e) => handleDowChange(e.target.value)}
                 disabled={disabled}
@@ -358,10 +367,11 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
           {/* Day of month (monthly only) */}
           {preset === 'monthly' && (
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label htmlFor="cron-dom" className="block text-xs font-medium text-gray-700 mb-1">
                 Day of month (1 – 31)
               </label>
               <input
+                id="cron-dom"
                 type="number"
                 min="1"
                 max="31"
@@ -381,13 +391,17 @@ export function CronPicker({ value, onChange, error, disabled }: CronPickerProps
       {/* Custom cron input */}
       {preset === 'custom' && (
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="cron-custom-expr"
+            className="block text-xs font-medium text-gray-700 mb-1"
+          >
             Cron expression{' '}
             <span className="text-gray-400 font-normal">
               (minute hour day-of-month month day-of-week)
             </span>
           </label>
           <input
+            id="cron-custom-expr"
             type="text"
             value={customExpr}
             onChange={(e) => handleCustomChange(e.target.value)}
