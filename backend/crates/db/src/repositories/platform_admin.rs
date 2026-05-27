@@ -3,6 +3,7 @@
 //! Repository for platform-wide administrative operations including
 //! organization management with cross-tenant queries.
 
+use crate::models::fault::StatusCount as FaultStatusCount;
 use crate::models::platform_admin::{
     AdminOrganizationDetail, OrganizationDetailMetrics, OrganizationMetrics,
 };
@@ -499,6 +500,109 @@ pub struct SupportActivityLog {
     pub resource_id: Option<String>,
     pub details: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
+}
+
+/// Tenant diagnostics returned by `GET /api/v1/platform-admin/support-data`.
+///
+/// Aggregates user counts, active-session count, and fault status breakdown
+/// across the entire platform (cross-tenant, bypasses RLS).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct SupportData {
+    /// Total number of users in the system.
+    pub total_users: i64,
+    /// Number of users with status `'active'`.
+    pub active_users: i64,
+    /// Number of users with status `'pending'` (email not yet verified).
+    pub pending_users: i64,
+    /// Number of users with status `'suspended'`.
+    pub suspended_users: i64,
+    /// Non-expired, non-revoked refresh tokens — proxy for active sessions.
+    pub active_sessions: i64,
+    /// Total faults across all organisations.
+    pub total_faults: i64,
+    /// Per-status fault counts, ordered by count descending.
+    pub fault_by_status: Vec<FaultStatusCount>,
+}
+
+impl PlatformAdminRepository {
+    /// Get platform tenant diagnostics for the support-data endpoint.
+    ///
+    /// Runs four focused cross-tenant queries:
+    ///   1. User counts grouped by `status`.
+    ///   2. Active session count (refresh tokens neither revoked nor expired).
+    ///   3. Total fault count.
+    ///   4. Fault counts per `status` enum value.
+    ///
+    /// All queries bypass RLS — caller must hold `AuditRead` capability.
+    pub async fn get_support_data(&self) -> Result<SupportData, SqlxError> {
+        // 1. User counts per status
+        let user_rows = sqlx::query_as::<_, (String, i64)>(
+            r#"
+            SELECT status, COUNT(*) AS cnt
+            FROM users
+            GROUP BY status
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut total_users: i64 = 0;
+        let mut active_users: i64 = 0;
+        let mut pending_users: i64 = 0;
+        let mut suspended_users: i64 = 0;
+        for (status, cnt) in &user_rows {
+            total_users += cnt;
+            match status.as_str() {
+                "active" => active_users = *cnt,
+                "pending" => pending_users = *cnt,
+                "suspended" => suspended_users = *cnt,
+                _ => {}
+            }
+        }
+
+        // 2. Active sessions — non-revoked, non-expired refresh tokens
+        let active_sessions: i64 = sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*)
+            FROM refresh_tokens
+            WHERE is_revoked = false AND expires_at > NOW()
+            "#,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        // 3. Total fault count
+        let total_faults: i64 = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM faults")
+            .fetch_one(&self.pool)
+            .await?;
+
+        // 4. Fault counts per status
+        let fault_rows = sqlx::query_as::<_, (String, i64)>(
+            r#"
+            SELECT status::text, COUNT(*) AS cnt
+            FROM faults
+            GROUP BY status
+            ORDER BY cnt DESC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let fault_by_status = fault_rows
+            .into_iter()
+            .map(|(status, count)| FaultStatusCount { status, count })
+            .collect();
+
+        Ok(SupportData {
+            total_users,
+            active_users,
+            pending_users,
+            suspended_users,
+            active_sessions,
+            total_faults,
+            fault_by_status,
+        })
+    }
 }
 
 #[cfg(test)]

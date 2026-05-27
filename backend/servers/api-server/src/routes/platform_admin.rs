@@ -23,7 +23,7 @@ use db::models::{
 use db::repositories::{
     ActiveAnnouncement, FeatureFlagWithCount, FeatureFlagWithOverrides, HealthDashboard,
     MetricHistory, OnboardingTour, PlatformStats, ResolvedFeatureFlag, SupportActivityLog,
-    SupportUserInfo, SupportUserMembership, SupportUserSession,
+    SupportData, SupportUserInfo, SupportUserMembership, SupportUserSession,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -159,6 +159,10 @@ pub fn router() -> Router<AppState> {
                 .layer(require_capability(Capability::SiteSettingsWrite)),
         )
         // Support data access (Story 10B.5)
+        .route(
+            "/support-data",
+            get(get_support_data).layer(require_capability(Capability::AuditRead)),
+        )
         .route(
             "/support/users",
             get(search_users_for_support).layer(require_capability(Capability::UsersRead)),
@@ -2764,6 +2768,60 @@ pub async fn get_user_activity(
         })?;
 
     Ok(Json(activity))
+}
+
+// ==================== Support Data Aggregation Handler (Story 10B.5) ====================
+
+/// Response body for `GET /api/v1/platform-admin/support-data`.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SupportDataResponse {
+    /// Platform-wide tenant diagnostics.
+    pub data: SupportData,
+}
+
+/// Get platform tenant diagnostics (support data).
+///
+/// Returns aggregated user counts, active session count, and fault status
+/// breakdown across the whole platform.  Intended for the admin-web Support
+/// Data page and platform support engineers.
+///
+/// Requires `AuditRead` capability (SuperAdmin role is additionally enforced
+/// by `extract_super_admin_token` inside the handler body).
+#[utoipa::path(
+    get,
+    path = "/api/v1/platform-admin/support-data",
+    responses(
+        (status = 200, description = "Support data retrieved", body = SupportDataResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - requires SuperAdmin role"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Platform Admin - Support"
+)]
+pub async fn get_support_data(
+    _cap: RequireCapability,
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Result<Json<SupportDataResponse>, (StatusCode, Json<ErrorResponse>)> {
+    extract_super_admin_token(&headers, &state)?;
+
+    let data = state
+        .platform_admin_repo
+        .get_support_data()
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Failed to get support data");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to retrieve support data",
+                )),
+            )
+        })?;
+
+    Ok(Json(SupportDataResponse { data }))
 }
 
 // ==================== Onboarding Config Handler (Story 10B.6) ====================
