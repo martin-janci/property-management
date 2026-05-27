@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-25T13:57:14Z",
+  "generated": "2026-05-27T04:05:00Z",
   "scan_kind": "upkeep",
   "stories": [
     {
@@ -369,7 +369,8 @@
       ],
       "gaps": [],
       "status_note": "advanced partial->done (frontend integration PR #441 + e2e PR #473 both merged)",
-      "last_checked": "2026-05-25"
+      "last_checked": "2026-05-27",
+      "recheck_note": "Rotating coverage re-check 2026-05-27 (epic-9, cursor idx 3): no new MFA churn this window; gap-10b-3-health-ui-mfa-fix (open) is an admin-health MFA-modal wiring item, not a 9-1 regression. Remains done."
     },
     {
       "epic": "epic-10a",
@@ -747,31 +748,26 @@
       "id": "80-3-mediation-resolution",
       "title": "Mediation and Resolution",
       "phase": "mvp",
-      "status": "partial",
+      "status": "done",
       "confidence": "high",
       "platform": [
         "frontend"
       ],
       "owner_role": "pm-frontend",
       "evidence": [
-        "MediationPage.tsx fully implemented: sessions (scheduled/past), submissions, parties sidebar, schedule/complete/submit dialogs, mediator-only gate",
+        "MediationWorkspacePage.tsx shipped: dispute timeline, resolution form, manager/tenant chat thread (MediationChatThread + MediationResolutionForm)",
         "DisputeDetailPage.tsx fully implemented: evidence upload/delete, resolutions with voting/accept/implement/terms, action items with escalation, timeline, status flow",
-        "useAssignMediator/useResolveDispute/useEscalateDispute/useAddMediationNote hooks in api-client/disputes/hooks.ts",
-        "api.ts: assignMediator, resolveDispute, escalateDispute, addMediationNote, listMediationNotes, getTimeline",
-        "types.ts: ResolveDisputeRequest, AssignMediatorRequest, EscalateDisputeRequest, AddMediationNoteRequest, MediationNote, TimelineEvent",
-        "ResolutionCard: voting, accept, implement, term-completion flows",
-        "ActionItemCard: onEscalate callback present",
-        "backend mediation routes assumed implemented (prior scan)"
+        "App.tsx route wiring landed (PR #555): DisputeDetailRoute renders DisputeDetailPage (App.tsx:1085), /disputes/:disputeId/mediation route present (App.tsx:577) rendering MediationWorkspacePage, onNavigateToMediation now navigates to a real target (App.tsx:1108)",
+        "useAssignMediator/useResolveDispute/useEscalateDispute/useAddMediationNote/useMediationNotes hooks wired from route handlers",
+        "docs/screens/ppt/dispute-detail.md screen-map updated by PR #555 (mediation screen-map gap closed)",
+        "merged PR #555 (gap-80-3-mediation-ui) 2026-05-27 +1612/-137 with tests"
       ],
       "gaps": [
-        "CRITICAL: DisputeDetailRoute in App.tsx is inline JSX stub — does not render DisputeDetailPage.tsx",
-        "CRITICAL: No /disputes/:disputeId/mediation route — MediationPage never rendered",
-        "CRITICAL: useEscalateDispute, useResolveDispute, useAssignMediator, useAddMediationNote not called from any App.tsx route handler",
-        "CRITICAL: onNavigateToMediation prop in DisputeDetailPage but no route target exists",
-        "No mediation screen-map entry under docs/screens/ppt/"
+        "deeper mediation-flow test coverage tracked in test-hardening batch (follow-up issues #480-#487 cluster)"
       ],
-      "last_checked": "2026-05-25",
-      "verification_note": "Verified 2026-05-25 by gap-80-3-mediation-verify. Pages and hooks are complete; only App.tsx route wiring is missing. Cannot promote to done — needs dedicated wiring task."
+      "status_note": "advanced partial->done — PR #555 closed the 4 CRITICAL App.tsx wiring gaps + the missing mediation screen-map; only deeper test coverage remains as follow-up",
+      "last_checked": "2026-05-27",
+      "verification_note": "Re-checked 2026-05-27 from merged PR #555: route wiring + screen-map all landed; promoted to done."
     },
     {
       "epic": "epic-81",

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T01:07:37Z",
+  "generated": "2026-05-27T04:05:00Z",
   "items": [
     {
       "id": "pm-backend-fix-ai-equipment-idor",
@@ -985,9 +985,10 @@
       "owner_role": "pm-frontend",
       "priority": "medium",
       "dependency": "gap-80-3-mediation-api",
-      "status": "open",
+      "status": "done",
       "deadline": null,
       "source": "gap-scan 2026-05-25",
+      "resolved": "PR #555 merged 2026-05-27 (mediation workspace UI + App.tsx route wiring + dispute-detail screen-map); story 80-3 promoted partial->done",
       "depends_on": [
         "gap-80-3-mediation-api"
       ]
@@ -1587,6 +1588,50 @@
       "priority": "low",
       "dependency": "none",
       "status": "open",
+      "source": "pm-analysis 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "pm-devops-merge-mobile-eas-ci-fixes",
+      "action": "Land the two blocked EAS mobile CI fixes together (gap-85-2-android-ci-fix + gap-85-2-ios-ci-fix): downgrade non-existent action pins (checkout/setup-node/pnpm-action-setup @v6 -> @v4) in eas-build-android.yml and eas-build-ios.yml, add eas-cli devDependency and the missing Android npm scripts; mobile release pipeline is red until both merge",
+      "owner_role": "pm-devops",
+      "priority": "high",
+      "dependency": "pm-frontend",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "pm-devops-enforce-security-test-gate",
+      "action": "Confirm security-test-gate.yml actually fails PRs labelled security that ship without a test file (the policy QA flagged after PR #497); add a required-status-check on the gate in branch protection for dev so the gate is enforced, not advisory",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "pm-qa",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "pm-devops-app-tsx-churn-merge-queue",
+      "action": "App.tsx remains the top frontend churn hotspot (route wiring lands there every sprint); enable a merge queue / auto-rebase ordering for App.tsx-touching PRs so concurrent dispatcher drafts (#563-#568 cluster) do not triple-conflict on the router file",
+      "owner_role": "pm-devops",
+      "priority": "medium",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
+      "source": "pm-analysis 2026-05-27",
+      "depends_on": []
+    },
+    {
+      "id": "pm-scrum-master-promote-approved-drafts-566-567",
+      "action": "Promote the two overnight-approved draft PRs out of draft and merge to dev: #566 (gap-84-2 esignature UI fixes) and #567 (gap-10b-3 health UI MFA fix) both have reviewer verdict=approve; clears two medium items from the queue",
+      "owner_role": "pm-scrum-master",
+      "priority": "high",
+      "dependency": "none",
+      "status": "open",
+      "deadline": null,
       "source": "pm-analysis 2026-05-27",
       "depends_on": []
     }

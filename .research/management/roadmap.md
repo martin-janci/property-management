@@ -1,8 +1,10 @@
 # PPT Project Roadmap (Deep Scan)
 
-_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-25 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
+_Generated: 2026-05-23 (deep scan) · upkeep-refreshed 2026-05-27 — supersedes `_bmad-output/implementation-artifacts/gap-analysis-remediation.md` (Epic 86, stale)._
 
-_Upkeep 2026-05-25: 30 PRs merged (#441–#473). Epic 2B notification pipeline (#463) + WebSocket realtime sync (#472) cleared the DEC-001 blockers. Stories advanced to **done**: 9-1 (MFA frontend #441 + e2e #473). Already-done stories enriched with UI evidence: 7a-3/7a-5 (web+mobile doc UI), 6-5 (messaging+WS), 6-6 (neighbor listing #464), 10a-2/10a-3 (OAuth admin + user-grants UI #468/#469/#471). 8a-3 WS half cleared by #472 (mobile-push leg remains). Epic 6 announcement web UI (6-2/6-3/6-4) unblocked, now in draft PRs #474/#475/#479. Rotating epic re-checked: epic-7a (7a-1 mobile merged #447; 7a-2 folder UI + 7a-4 mobile preview still partial)._
+_Upkeep 2026-05-27: 1 PR merged since last run — #555 (gap-80-3 mediation workspace UI, +1612/-137 with tests). Story **80-3 advanced partial → done**: the mediation timeline/resolution-form/chat-thread shipped, the 4 critical App.tsx dispute-route wiring gaps closed, and the missing `docs/screens/ppt/dispute-detail.md` mediation screen-map landed. Rotating epic re-checked: **epic-9** (cursor idx 3) — no MFA regression churn this window; gap-10b-3-health-ui-mfa-fix (#567, approved) is an admin-health MFA-modal wiring fix, not a 9-1 regression — 9-1 remains done. DevOps run: mobile EAS release workflows live only in draft PRs (broken @v6 pins) — no merged mobile build path; security-test-gate enforcement unconfirmed after PR #497._
+
+_Prior upkeep 2026-05-25: 30 PRs merged (#441–#473). Epic 2B notification pipeline (#463) + WebSocket realtime sync (#472) cleared the DEC-001 blockers. Stories advanced to **done**: 9-1 (MFA frontend #441 + e2e #473). Already-done stories enriched with UI evidence: 7a-3/7a-5, 6-5, 6-6 (#464), 10a-2/10a-3 (#468/#469/#471). 8a-3 WS half cleared by #472 (mobile-push leg remains)._
 
 _Code-review finding 2026-05-25: cross-tenant IDOR cluster in `ai.rs` equipment endpoints (update/delete equipment + update_maintenance discard the principal → unscoped mutations). Tracked as `pm-backend-fix-ai-equipment-idor` (high)._
 
@@ -12,12 +14,12 @@ _Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 
 
 | Status | Count | Share |
 |---|---:|---:|
-| done | 22 | 45% |
-| partial | 26 | 53% |
+| done | 23 | 47% |
+| partial | 25 | 51% |
 | not-started | 1 | 2% |
 | **total** | **49** | 100% |
 
-**Phase breakdown:** MVP 36 stories (19 done, 17 partial), Phase 2 3 stories (0 done, 2 partial, 1 not-started), Phase 3 1 story (done), Phase 4 9 stories (2 done, 7 partial).
+**Phase breakdown:** MVP 36 stories (20 done, 16 partial), Phase 2 3 stories (0 done, 2 partial, 1 not-started), Phase 3 1 story (done), Phase 4 9 stories (2 done, 7 partial). (80-3 mediation moved MVP done +1 via PR #555.)
 
 **Platform breakdown (a story may span multiple):** backend ~35 stories touched, frontend (web) ~30, mobile (RN + iOS) ~12. Mobile is the most-behind platform — Epic 7A mobile slices, Epic 82 (iOS), and Epic 85 (build/env config) are all `partial` with low/medium confidence.
 
@@ -69,4 +71,4 @@ _Sequencing note (pm-scrum-master): DEC-001 unblock triggers have **fired** — 
 - Epic 82 iOS stories scored "partial" with low confidence — the implementation files exist but story-to-code mapping is uncertain (epic numbering conflict with `epics-007.md`). Worth a 30-minute alignment pass before further planning.
 - 7a-* sprint-status shows `ready-for-dev` despite merged PRs. Sprint-status is stale here — update once apiStatus is verified.
 
-Buffer: 64/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep refreshed epic-6 evidence + 5 pm-analysis actions added)
+Buffer: 100/36 open · candidates ranked but unqueued: 0 (buffer full — no refill needed this run; upkeep advanced 80-3 → done from PR #555, re-checked epic-9, added 3 pm-devops risks)
