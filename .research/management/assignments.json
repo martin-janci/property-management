@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T22:28:00Z",
+  "generated": "2026-05-27T23:27:11Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2658,16 +2658,16 @@
     {
       "task_id": "gap-85-2-android-ci-fix",
       "branch": "auto-impl/gap-85-2-android-ci-fix",
-      "status": "done",
+      "status": "failed",
       "claimed_at": "2026-05-27T16:04:00Z",
-      "last_updated": "2026-05-27T16:12:00Z",
-      "status_changed_at": "2026-05-27T16:10:00Z",
+      "last_updated": "2026-05-27T23:26:39Z",
+      "status_changed_at": "2026-05-27T23:26:39Z",
       "pr_number": 622,
       "pr_url": "https://github.com/martin-janci/property-management/pull/622",
       "merged_at": null,
       "specialist": "react-native",
       "implementer_summary": "pr=none status=done specialist=react-native scope_drift=false code_reuse_warn=none note=all fixes already landed in dev via PR#595 (checkout/setup-node/pnpm-action-setup @v4, eas-cli devDep ^10.0.0, Android build scripts); no diff to add",
-      "reviewer_summary": null,
+      "reviewer_summary": "verdict=closed note=PR#622 closed as superseded; Android CI fixes already landed in dev via PR#595; empty branch, nothing to merge",
       "last_reviewed_oid": null,
       "scope_drift": null,
       "code_reuse_warn": null,
