@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T12:15:00Z",
+  "generated": "2026-05-27T13:12:04Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -2327,14 +2327,14 @@
     {
       "task_id": "gap-79-2-login-flow-impl-v2",
       "branch": "auto-impl/gap-79-2-login-flow-impl-v2",
-      "status": "review",
+      "status": "merged",
       "specialist": null,
       "claimed_at": "2026-05-27T08:29:08Z",
-      "last_updated": "2026-05-27T12:09:47Z",
-      "status_changed_at": "2026-05-27T08:29:08Z",
+      "last_updated": "2026-05-27T13:12:04Z",
+      "status_changed_at": "2026-05-27T13:12:04Z",
       "pr_number": 568,
       "pr_url": "https://github.com/martin-janci/property-management/pull/568",
-      "merged_at": null,
+      "merged_at": "2026-05-27T13:12:04Z",
       "last_reviewed_oid": "493493e2e7694cc2fab173febe385dccdfcba4b2",
       "scope_drift": null,
       "code_reuse_warn": null,
