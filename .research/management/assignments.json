@@ -1698,15 +1698,15 @@
     {
       "task_id": "gap-security-435-cookie-scope",
       "branch": "auto-impl/gap-security-435-cookie-scope",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "rust-backend",
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T01:07:37Z",
-      "status_changed_at": "2026-05-27T01:07:37Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T02:25:00Z",
+      "status_changed_at": "2026-05-27T02:25:00Z",
+      "pr_number": 565,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/565",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=565 status=done specialist=rust-backend scope_drift=false note=P0-12 cookie scope hardened: api-server refresh_token default SameSite Lax\u2192Strict; reality-server portal_session Path /\u2192/api/v1/sso + SameSite Lax\u2192Strict; 13 unit tests added; cargo check exit 0 both servers",
       "reviewer_summary": null
     },
     {
@@ -1738,5 +1738,5 @@
       "reviewer_summary": null
     }
   ],
-  "assignments.generated": "2026-05-27T01:55:00Z"
+  "assignments.generated": "2026-05-27T02:25:00Z"
 }
