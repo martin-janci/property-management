@@ -15,7 +15,8 @@
         "bundleIdentifier": "three.two.bit.ppt.management"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
       },
       "env": {
         "APP_ENV": "development"
@@ -45,7 +46,10 @@
         "credentialsSource": "remote"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "credentialsSource": "remote",
+        "image": "latest"
       },
       "env": {
         "APP_ENV": "staging"
@@ -62,7 +66,10 @@
         "credentialsSource": "remote"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease",
+        "credentialsSource": "remote",
+        "image": "latest"
       },
       "env": {
         "APP_ENV": "production"
@@ -79,6 +86,25 @@
         "sku": "three-two-bit-ppt-management",
         "companyName": "32bit s.r.o.",
         "metadataPath": "./store-metadata/ios"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./store-metadata/android/google-play-service-account.json",
+        "track": "production",
+        "releaseStatus": "completed",
+        "changesNotSentForReview": false
+      }
+    },
+    "staging": {
+      "ios": {
+        "appleId": "APPLE_ID_PLACEHOLDER",
+        "ascAppId": "ASC_APP_ID_PLACEHOLDER",
+        "appleTeamId": "APPLE_TEAM_ID_PLACEHOLDER",
+        "language": "en-US"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./store-metadata/android/google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "completed"
       }
     }
   }
