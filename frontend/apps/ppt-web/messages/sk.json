@@ -191,7 +191,15 @@
     "fileSize": "Veľkosť súboru",
     "uploadedBy": "Nahral",
     "uploadedAt": "Nahrané",
-    "notFound": "Dokument nebol nájdený"
+    "notFound": "Dokument nebol nájdený",
+    "folder": {
+      "renameError": "Premenovanie zlyhalo",
+      "renameErrorMessage": "Nepodarilo sa premenovať priečinok",
+      "deleteError": "Vymazanie zlyhalo",
+      "deleteErrorMessage": "Nepodarilo sa vymazať priečinok",
+      "createError": "Vytvorenie zlyhalo",
+      "createErrorMessage": "Nepodarilo sa vytvoriť priečinok"
+    }
   },
   "disputes": {
     "title": "Spory",

@@ -15,6 +15,7 @@ import {
   useUpdateFolder,
 } from '@ppt/api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../../components/Toast';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -423,6 +424,7 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
   const updateFolder = useUpdateFolder();
   const deleteFolder = useDeleteFolder();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   // inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -451,8 +453,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: 'Premenovanie zlyhalo',
-          message: err instanceof Error ? err.message : 'Nepodarilo sa premenovať priečinok',
+          title: t('documents.folder.renameError', 'Rename failed'),
+          message: err instanceof Error ? err.message : t('documents.folder.renameErrorMessage', 'Failed to rename folder'),
         });
       }
     },
@@ -472,8 +474,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: 'Vymazanie zlyhalo',
-          message: err instanceof Error ? err.message : 'Nepodarilo sa vymazať priečinok',
+          title: t('documents.folder.deleteError', 'Delete failed'),
+          message: err instanceof Error ? err.message : t('documents.folder.deleteErrorMessage', 'Failed to delete folder'),
         });
       } finally {
         setDeleteTarget(null);
@@ -498,8 +500,8 @@ export function FolderTree({ buildingId, selectedFolderId, onSelectFolder }: Fol
       } catch (err) {
         showToast({
           type: 'error',
-          title: 'Vytvorenie zlyhalo',
-          message: err instanceof Error ? err.message : 'Nepodarilo sa vytvoriť priečinok',
+          title: t('documents.folder.createError', 'Create failed'),
+          message: err instanceof Error ? err.message : t('documents.folder.createErrorMessage', 'Failed to create folder'),
         });
       } finally {
         setNewFolder(null);

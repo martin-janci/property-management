@@ -190,7 +190,15 @@
     "fileSize": "Rozmiar pliku",
     "uploadedBy": "Przesłane przez",
     "uploadedAt": "Przesłano",
-    "notFound": "Dokument nie został znaleziony"
+    "notFound": "Dokument nie został znaleziony",
+    "folder": {
+      "renameError": "Zmiana nazwy nie powiodła się",
+      "renameErrorMessage": "Nie udało się zmienić nazwy folderu",
+      "deleteError": "Usuwanie nie powiodło się",
+      "deleteErrorMessage": "Nie udało się usunąć folderu",
+      "createError": "Tworzenie nie powiodło się",
+      "createErrorMessage": "Nie udało się utworzyć folderu"
+    }
   },
   "disputes": {
     "title": "Spory",

@@ -252,7 +252,15 @@
     "fileSize": "File Size",
     "uploadedBy": "Uploaded By",
     "uploadedAt": "Uploaded At",
-    "notFound": "Document not found"
+    "notFound": "Document not found",
+    "folder": {
+      "renameError": "Rename failed",
+      "renameErrorMessage": "Failed to rename folder",
+      "deleteError": "Delete failed",
+      "deleteErrorMessage": "Failed to delete folder",
+      "createError": "Create failed",
+      "createErrorMessage": "Failed to create folder"
+    }
   },
   "disputes": {
     "title": "Disputes",

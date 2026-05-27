@@ -190,7 +190,15 @@
     "fileSize": "Dateigröße",
     "uploadedBy": "Hochgeladen von",
     "uploadedAt": "Hochgeladen am",
-    "notFound": "Dokument nicht gefunden"
+    "notFound": "Dokument nicht gefunden",
+    "folder": {
+      "renameError": "Umbenennen fehlgeschlagen",
+      "renameErrorMessage": "Ordner konnte nicht umbenannt werden",
+      "deleteError": "Löschen fehlgeschlagen",
+      "deleteErrorMessage": "Ordner konnte nicht gelöscht werden",
+      "createError": "Erstellen fehlgeschlagen",
+      "createErrorMessage": "Ordner konnte nicht erstellt werden"
+    }
   },
   "disputes": {
     "title": "Streitigkeiten",
