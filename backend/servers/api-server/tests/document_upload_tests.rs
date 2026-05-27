@@ -1,0 +1,796 @@
+//! Integration tests for POST /api/v1/documents/upload (Story 7A.1).
+//!
+//! Covers:
+//! - Multipart form parsing (required and optional fields)
+//! - S3 mock upload: "no S3 configured" graceful skip path, and 503 on S3 failure
+//! - Document record creation in DB after successful upload
+//! - RLS tenant isolation: cross-tenant upload returns 4xx, no record created
+//! - Auth guard: unauthenticated → 401
+//! - Validation failures: missing file, bad MIME type, bad category
+//!
+//! # Design notes
+//!
+//! `TestApp::new` leaves `storage_service = None` in AppState, so S3 upload
+//! is skipped (the handler logs a warning and continues). Several tests use
+//! this default.  The "S3 failure" test wires a `StorageService` that points
+//! at a closed port so `upload()` always returns an error, verifying that the
+//! handler returns 503 and does NOT create an orphan DB record.
+
+#[allow(dead_code)]
+mod common;
+
+use axum::{
+    body::Body,
+    http::{header, Method, Request, StatusCode},
+};
+use sqlx::{PgPool, Row};
+use uuid::Uuid;
+
+use common::{cleanup_test_user, create_authenticated_user, TestApp, TestUser};
+
+// ============================================================================
+// Multipart body builder
+// ============================================================================
+
+/// Build a `multipart/form-data` body with the given fields.
+///
+/// Returns `(Content-Type header value, body bytes)`.
+fn build_multipart(
+    file_bytes: &[u8],
+    filename: &str,
+    content_type: &str,
+    title: &str,
+    category: &str,
+    description: Option<&str>,
+    folder_id: Option<Uuid>,
+) -> (String, Vec<u8>) {
+    let boundary = format!("testboundary{}", Uuid::new_v4().simple());
+    let mut body: Vec<u8> = Vec::new();
+
+    // -- file part
+    let file_header = format!(
+        "--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\nContent-Type: {content_type}\r\n\r\n"
+    );
+    body.extend_from_slice(file_header.as_bytes());
+    body.extend_from_slice(file_bytes);
+    body.extend_from_slice(b"\r\n");
+
+    // -- title
+    body.extend_from_slice(
+        format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n{title}\r\n"
+        )
+        .as_bytes(),
+    );
+
+    // -- category
+    body.extend_from_slice(
+        format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"category\"\r\n\r\n{category}\r\n"
+        )
+        .as_bytes(),
+    );
+
+    // -- description (optional)
+    if let Some(desc) = description {
+        body.extend_from_slice(
+            format!(
+                "--{boundary}\r\nContent-Disposition: form-data; name=\"description\"\r\n\r\n{desc}\r\n"
+            )
+            .as_bytes(),
+        );
+    }
+
+    // -- folder_id (optional)
+    if let Some(fid) = folder_id {
+        body.extend_from_slice(
+            format!(
+                "--{boundary}\r\nContent-Disposition: form-data; name=\"folder_id\"\r\n\r\n{fid}\r\n"
+            )
+            .as_bytes(),
+        );
+    }
+
+    // -- final boundary
+    body.extend_from_slice(format!("--{boundary}--\r\n").as_bytes());
+
+    (format!("multipart/form-data; boundary={boundary}"), body)
+}
+
+/// Minimal valid PDF-like bytes for test uploads.
+const FAKE_PDF_BYTES: &[u8] = b"%PDF-1.4 fake pdf content for testing";
+
+// ============================================================================
+// Seed helpers
+// ============================================================================
+
+async fn seed_org(pool: &PgPool, slug: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO organizations (name, slug, contact_email, status) \
+         VALUES ($1, $2, $3, 'active') RETURNING id",
+    )
+    .bind(format!("UploadTest {slug}"))
+    .bind(format!("upload-test-{slug}"))
+    .bind(format!("{slug}@upload-test.example"))
+    .fetch_one(pool)
+    .await
+    .expect("seed_org")
+}
+
+async fn add_org_member(pool: &PgPool, org_id: Uuid, user_id: Uuid) {
+    sqlx::query(
+        "INSERT INTO organization_members \
+             (id, organization_id, user_id, role_type, status, created_at) \
+         VALUES ($1, $2, $3, 'admin', 'active', NOW()) ON CONFLICT DO NOTHING",
+    )
+    .bind(Uuid::new_v4())
+    .bind(org_id)
+    .bind(user_id)
+    .execute(pool)
+    .await
+    .expect("add_org_member");
+}
+
+async fn user_id_for(pool: &PgPool, email: &str) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = $1")
+        .bind(email)
+        .fetch_one(pool)
+        .await
+        .expect("user_id_for")
+}
+
+// ============================================================================
+// T1: Auth guard — unauthenticated → 401
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_requires_auth(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "test.pdf",
+        "application/pdf",
+        "Test Document",
+        "contracts",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::UNAUTHORIZED,
+        "unauthenticated upload must return 401"
+    );
+}
+
+// ============================================================================
+// T2: Multipart parsing — missing 'file' part → 4xx
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_missing_file_part(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+
+    // Build a multipart body without the 'file' part
+    let boundary = format!("testboundary{}", Uuid::new_v4().simple());
+    let mut body: Vec<u8> = Vec::new();
+    body.extend_from_slice(
+        format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nMy Doc\r\n\
+             --{boundary}\r\nContent-Disposition: form-data; name=\"category\"\r\n\r\ncontracts\r\n\
+             --{boundary}--\r\n"
+        )
+        .as_bytes(),
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={boundary}"),
+        )
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert!(
+        response.status.is_client_error(),
+        "upload without file part must be rejected (4xx), got {}",
+        response.status
+    );
+}
+
+// ============================================================================
+// T3: Multipart parsing — unsupported MIME type → 400 UNSUPPORTED_FILE_TYPE
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_unsupported_mime_type(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let (ct, body) = build_multipart(
+        b"<html><body>evil</body></html>",
+        "evil.html",
+        "text/html", // not in ALLOWED_MIME_TYPES
+        "Evil Doc",
+        "contracts",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::BAD_REQUEST,
+        "text/html upload must be rejected with 400"
+    );
+    let json = response.json_value();
+    assert_eq!(
+        json["code"].as_str().unwrap_or(""),
+        "UNSUPPORTED_FILE_TYPE",
+        "error code must be UNSUPPORTED_FILE_TYPE"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T4: Multipart parsing — invalid category → 400
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_invalid_category(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "test.pdf",
+        "application/pdf",
+        "Test Document",
+        "invalid_category_xyz",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::BAD_REQUEST,
+        "upload with invalid category must return 400"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T5: Document record creation — happy path (no S3 configured)
+// ============================================================================
+
+/// A valid authenticated upload with no storage service creates a DB record.
+/// Verifies: 201 response, returned id/file_key, and DB row content.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_creates_document_record(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let unique_title = format!("Integration Test Doc {}", Uuid::new_v4().simple());
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "report.pdf",
+        "application/pdf",
+        &unique_title,
+        "reports",
+        Some("A test report description"),
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::CREATED,
+        "valid upload must return 201. Body: {}",
+        response.text()
+    );
+
+    let json = response.json_value();
+    assert!(json["id"].as_str().is_some(), "response must contain id");
+    assert!(
+        json["file_key"].as_str().is_some(),
+        "response must contain file_key"
+    );
+    assert_eq!(
+        json["message"].as_str(),
+        Some("Document uploaded successfully")
+    );
+
+    let doc_id: Uuid = json["id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("id must be a valid UUID");
+
+    // Verify DB record
+    let row = sqlx::query(
+        "SELECT id, organization_id, title, mime_type, file_name, created_by \
+         FROM documents WHERE id = $1",
+    )
+    .bind(doc_id)
+    .fetch_optional(&pool)
+    .await
+    .expect("DB query")
+    .expect("document record must exist");
+
+    assert_eq!(row.get::<Uuid, _>("organization_id"), org_id);
+    assert_eq!(row.get::<String, _>("title"), unique_title);
+    assert_eq!(row.get::<String, _>("mime_type"), "application/pdf");
+    assert_eq!(row.get::<String, _>("file_name"), "report.pdf");
+    assert_eq!(row.get::<Uuid, _>("created_by"), user_id);
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T6: Optional fields (description, folder_id) stored in DB
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_with_optional_fields(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    // Create a folder to reference
+    let folder_id = sqlx::query_scalar::<_, Uuid>(
+        "INSERT INTO document_folders (id, organization_id, name, created_by, created_at, updated_at) \
+         VALUES ($1, $2, 'Test Folder', $3, NOW(), NOW()) RETURNING id",
+    )
+    .bind(Uuid::new_v4())
+    .bind(org_id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await
+    .ok()
+    .flatten();
+
+    let unique_title = format!("Optional Fields Doc {}", Uuid::new_v4().simple());
+    let description = "Detailed description of this invoice";
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "invoice.pdf",
+        "application/pdf",
+        &unique_title,
+        "invoices",
+        Some(description),
+        folder_id,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+    assert_eq!(
+        response.status,
+        StatusCode::CREATED,
+        "upload with optional fields must return 201. Body: {}",
+        response.text()
+    );
+
+    let json = response.json_value();
+    let doc_id: Uuid = json["id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("id must be a valid UUID");
+
+    let row = sqlx::query("SELECT description, folder_id FROM documents WHERE id = $1")
+        .bind(doc_id)
+        .fetch_one(&pool)
+        .await
+        .expect("document must exist");
+
+    assert_eq!(
+        row.get::<Option<String>, _>("description").as_deref(),
+        Some(description)
+    );
+    if let Some(fid) = folder_id {
+        assert_eq!(row.get::<Option<Uuid>, _>("folder_id"), Some(fid));
+    }
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T7: S3 storage — "no S3 configured" still creates DB record
+//     and file_key follows org/{year}/{month}/{uuid}_{filename} pattern
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_without_storage_creates_record(pool: PgPool) {
+    // TestApp::new sets storage_service = None
+    let app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let unique_title = format!("No-S3 Upload Test {}", Uuid::new_v4().simple());
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "manual.pdf",
+        "application/pdf",
+        &unique_title,
+        "manuals",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    assert_eq!(
+        response.status,
+        StatusCode::CREATED,
+        "upload without S3 must return 201 (S3 skipped gracefully). Body: {}",
+        response.text()
+    );
+
+    let json = response.json_value();
+    let doc_id: Uuid = json["id"]
+        .as_str()
+        .and_then(|s| s.parse().ok())
+        .expect("id must be UUID");
+
+    let file_key = json["file_key"].as_str().expect("file_key required");
+    assert!(
+        file_key.starts_with(&org_id.to_string()),
+        "file_key must start with org_id prefix, got: {file_key}"
+    );
+    assert!(
+        file_key.ends_with("manual.pdf"),
+        "file_key must end with the original filename, got: {file_key}"
+    );
+
+    // Verify DB record content
+    let row =
+        sqlx::query("SELECT title, mime_type, size_bytes, file_key FROM documents WHERE id = $1")
+            .bind(doc_id)
+            .fetch_one(&pool)
+            .await
+            .expect("document must exist");
+
+    assert_eq!(row.get::<String, _>("title"), unique_title);
+    assert_eq!(row.get::<String, _>("mime_type"), "application/pdf");
+    assert_eq!(row.get::<i64, _>("size_bytes"), FAKE_PDF_BYTES.len() as i64);
+    assert_eq!(row.get::<String, _>("file_key"), file_key);
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T8: S3 storage — S3 client configured but unreachable → 503, no orphan record
+// ============================================================================
+
+/// When a StorageService is configured and has_s3_client() == true but the
+/// endpoint is unreachable, upload_document must return 503 and NOT create
+/// an orphan document record in the database.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_s3_failure_returns_503_no_orphan_record(pool: PgPool) {
+    use api_server::services::{EmailService, JwtService};
+    use api_server::state::AppState;
+    use integrations::{StorageConfig, StorageService};
+    use tower::ServiceExt;
+
+    // Use the same JWT secret as TestApp so tokens from create_authenticated_user work
+    const JWT: &str = "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
+
+    static JWT_ONCE: std::sync::Once = std::sync::Once::new();
+    JWT_ONCE.call_once(|| {
+        if std::env::var("JWT_SECRET").is_err() {
+            std::env::set_var("JWT_SECRET", JWT);
+        }
+    });
+
+    // StorageService pointing at a guaranteed-closed port (nothing listens there)
+    let config = StorageConfig::new("test-bucket", "us-east-1", "testkey", "testsecret")
+        .with_endpoint("http://127.0.0.1:19999");
+    let storage = StorageService::with_s3_client(config)
+        .await
+        .expect("StorageService construction must succeed with bad endpoint");
+    assert!(
+        storage.has_s3_client(),
+        "storage service must have S3 client initialized"
+    );
+
+    let email_service = EmailService::new("http://localhost:8080".to_string(), false);
+    let jwt_service = JwtService::new(JWT).expect("jwt service");
+    let tenant_cache = std::sync::Arc::new(api_core::middleware::TenantResolutionCache::new(
+        300, 30, 10_000,
+    ));
+    let tenant_rate_limiters =
+        std::sync::Arc::new(api_core::middleware::TenantRateLimiterSet::new());
+
+    let state = AppState::new(
+        pool.clone(),
+        email_service,
+        jwt_service,
+        tenant_cache,
+        tenant_rate_limiters,
+    )
+    .with_storage(storage);
+
+    let router =
+        api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+            std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+        ));
+
+    // Use default TestApp to register + authenticate the user
+    let bare_app = TestApp::new(pool.clone()).await;
+    let user = TestUser::new();
+    cleanup_test_user(&pool, &user.email).await;
+    let (token, _) = create_authenticated_user(&bare_app, &user).await;
+    let user_id = user_id_for(&pool, &user.email).await;
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    add_org_member(&pool, org_id, user_id).await;
+
+    let unique_title = format!("S3-Fail Upload {}", Uuid::new_v4().simple());
+    let (ct, body_bytes) = build_multipart(
+        FAKE_PDF_BYTES,
+        "contract.pdf",
+        "application/pdf",
+        &unique_title,
+        "contracts",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body_bytes))
+        .unwrap();
+
+    let axum_resp = router
+        .oneshot(request)
+        .await
+        .expect("request must not panic");
+    let status = axum_resp.status();
+    let body_data = axum::body::to_bytes(axum_resp.into_body(), usize::MAX)
+        .await
+        .expect("read body");
+    let body_str = String::from_utf8_lossy(&body_data);
+
+    assert_eq!(
+        status,
+        StatusCode::SERVICE_UNAVAILABLE,
+        "upload with unreachable S3 must return 503. Body: {body_str}"
+    );
+
+    // No orphan DB record must be created
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM documents WHERE title = $1 AND organization_id = $2",
+    )
+    .bind(&unique_title)
+    .bind(org_id)
+    .fetch_one(&pool)
+    .await
+    .expect("count query");
+    assert_eq!(
+        count, 0,
+        "no orphan document record must exist when S3 upload fails"
+    );
+
+    cleanup_test_user(&pool, &user.email).await;
+}
+
+// ============================================================================
+// T9: RLS isolation — cross-tenant upload rejected, no record created
+// ============================================================================
+
+/// User authenticated in Org A sends X-Tenant-ID for Org B (not a member).
+/// The request must be rejected with 4xx and Org B must have no document.
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_cross_tenant_is_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let user_a = TestUser::new();
+    cleanup_test_user(&pool, &user_a.email).await;
+    let (token_a, _) = create_authenticated_user(&app, &user_a).await;
+    let user_a_id = user_id_for(&pool, &user_a.email).await;
+
+    let slug_base = Uuid::new_v4().to_string();
+    let org_a = seed_org(&pool, &slug_base[..8]).await;
+    let org_b = seed_org(&pool, &slug_base[8..16]).await;
+
+    // User A is only a member of Org A — NOT Org B
+    add_org_member(&pool, org_a, user_a_id).await;
+
+    let unique_title = format!("Cross-Tenant Doc {}", Uuid::new_v4().simple());
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "contract.pdf",
+        "application/pdf",
+        &unique_title,
+        "contracts",
+        None,
+        None,
+    );
+
+    // Send the upload claiming Org B as the tenant
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token_a}"))
+        .header("X-Tenant-ID", org_b.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    let code = response.status.as_u16();
+    assert!(
+        (400..500).contains(&code),
+        "cross-tenant upload must be rejected with 4xx, got {}",
+        response.status
+    );
+
+    // No document created in Org B
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM documents WHERE title = $1 AND organization_id = $2",
+    )
+    .bind(&unique_title)
+    .bind(org_b)
+    .fetch_one(&pool)
+    .await
+    .expect("count query");
+    assert_eq!(
+        count, 0,
+        "no document must be created in Org B via cross-tenant upload"
+    );
+
+    cleanup_test_user(&pool, &user_a.email).await;
+}
+
+// ============================================================================
+// T10: RLS isolation — non-member of any org cannot upload
+// ============================================================================
+
+#[sqlx::test(migrator = "db::MIGRATOR")]
+async fn test_upload_non_member_rejected(pool: PgPool) {
+    let app = TestApp::new(pool.clone()).await;
+
+    let outsider = TestUser::new();
+    cleanup_test_user(&pool, &outsider.email).await;
+    let (token, _) = create_authenticated_user(&app, &outsider).await;
+
+    let org_id = seed_org(&pool, &Uuid::new_v4().to_string()[..8]).await;
+    // outsider is NOT added as a member
+
+    let (ct, body) = build_multipart(
+        FAKE_PDF_BYTES,
+        "test.pdf",
+        "application/pdf",
+        "Outsider Doc",
+        "contracts",
+        None,
+        None,
+    );
+
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/api/v1/documents/upload")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header("X-Tenant-ID", org_id.to_string())
+        .header(header::CONTENT_TYPE, ct)
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = app.execute(request).await;
+
+    let code = response.status.as_u16();
+    assert!(
+        (400..500).contains(&code),
+        "upload by non-member must be rejected with 4xx, got {}",
+        response.status
+    );
+
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM documents WHERE organization_id = $1")
+            .bind(org_id)
+            .fetch_one(&pool)
+            .await
+            .expect("count query");
+    assert_eq!(
+        count, 0,
+        "no document must be created for org outsider does not belong to"
+    );
+
+    cleanup_test_user(&pool, &outsider.email).await;
+}
