@@ -596,8 +596,8 @@ pub async fn handle_webhook(
             .unwrap_or("");
         let provided_b = provided.as_bytes();
         let expected_b = expected_secret.as_bytes();
-        let matches = provided_b.len() == expected_b.len()
-            && bool::from(provided_b.ct_eq(expected_b));
+        let matches =
+            provided_b.len() == expected_b.len() && bool::from(provided_b.ct_eq(expected_b));
         if !matches {
             warn!(provider = %provider, "Webhook rejected: invalid or missing X-Webhook-Secret");
             return Err((
