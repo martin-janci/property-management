@@ -1686,13 +1686,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T05:16:00Z",
+      "last_updated": "2026-05-27T06:18:00Z",
       "status_changed_at": "2026-05-26T14:30:00Z",
       "pr_number": 556,
       "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
       "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
-      "reviewer_summary": "verdict=changes note=Both MoveFolderDialog and DocumentPreviewModal re-implement the focus trap inline (duplicating FOCUSABLE_SELECTOR x3) instead of using the existing useFocusTrap hook from src/hooks/useFocusTrap.ts; the inline implementations also fail to restore focus to the trigger element on close (a11y regression). Secondary: mfd buttons lack :focus-visible styles; buildFolderCrumbs has no unit tests."
+      "reviewer_summary": "verdict=changes note=1 blocking issue: move dialog closes unconditionally on error in both DocumentsBrowse and FolderTreePage (setMoveTarget(null) must be guarded by the executeMoveWithToast return value); 4 non-blocking: missing focus-visible on doc-row__action-btn/fd__move-btn/folder-bc__crumb--link, non-idiomatic span onClick type annotation, no unit test for buildFolderCrumbs, DocumentPreviewModal.tsx is gap-7a-4 scope included in a gap-7a-2 PR"
     },
     {
       "task_id": "gap-7a-4-document-preview-ui",
@@ -1709,5 +1709,5 @@
       "reviewer_summary": "verdict=changes note=blocking: div[role='button'] on DocumentRow lacks aria-label causing screen reader noise; non-blocking: isDownloading in useCallback deps causes churn (use useRef guard), dead DocumentDownloadButton export, non-idiomatic span onClick type annotation; CI green, security/memory/focus-trap all correct"
     }
   ],
-  "assignments.generated": "2026-05-27T06:13:00Z"
+  "assignments.generated": "2026-05-27T06:18:00Z"
 }
