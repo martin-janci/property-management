@@ -96,8 +96,9 @@ describe('HelpTooltip', () => {
   });
 
   it('renders the tooltip text content', () => {
-    render(<HelpTooltip text="Important context" />);
-    expect(screen.getByRole('tooltip').textContent).toBe('Important context');
+    const { container } = render(<HelpTooltip text="Important context" />);
+    const bubble = container.querySelector('[role="tooltip"]');
+    expect(bubble?.textContent).toBe('Important context');
   });
 
   it('does not inject duplicate style element on multiple mounts', () => {
