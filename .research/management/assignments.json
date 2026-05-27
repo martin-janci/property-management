@@ -2490,7 +2490,7 @@
       "pr_url": "https://github.com/martin-janci/property-management/pull/610",
       "merged_at": null,
       "specialist": "rust-backend",
-      "implementer_summary": "pr=610 status=done specialist=rust-backend note=rebased onto latest dev; rustfmt --check clean; assignments.json excluded; 2-file commit (Cargo.lock + document_upload_tests.rs) force-pushed to auto-impl/gap-7a-1-upload-backend-tests",
+      "implementer_summary": "pr=610 fix_round=2 status=done note=Fixed 3 bugs: (1) add_org_member used wrong column 'role' instead of 'role_type'+'status'; (2) TestApp::with_config panics without RUST_ENV=development, added RUST_ENV_ONCE guard in common/mod.rs; (3) DocumentRepository::create_rls used bare $5/$10 for document_category/document_access_scope ENUM columns causing bind errors, fixed with explicit casts in VALUES clause and explicit column list in RETURNING with ::text casts. All 10 document_upload_tests pass. Pushed to auto-impl/gap-7a-1-upload-backend-tests head=035c7da03",
       "reviewer_summary": "verdict=changes head_oid=43d479ea1338ec7d07a6a5a3fda5d06c1441d19e note=BLOCKING: (1) squash out commit f62d9917e that accidentally included assignments.json; (2) rebase onto current dev and run cargo check -p api-server quoting exit code; test logic and coverage sound; Cargo.lock downgrade self-corrects on clean rebase",
       "last_reviewed_oid": "43d479ea1338ec7d07a6a5a3fda5d06c1441d19e",
       "scope_drift": false,
@@ -2498,7 +2498,7 @@
       "empty_branch": null,
       "rebase_attempts": 0,
       "reclaim_attempts": 0,
-      "fix_rounds": 1,
+      "fix_rounds": 2,
       "merge_attempted_at": null
     },
     {
