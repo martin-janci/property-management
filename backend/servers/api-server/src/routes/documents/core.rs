@@ -1105,8 +1105,8 @@ async fn update_document_access(
 )]
 async fn get_download_url(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    _tenant: TenantExtractor,
+    auth: AuthUser,
+    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1133,6 +1133,30 @@ async fn get_download_url(
             ));
         }
     };
+
+    // Enforce access_scope for non-managers (mirrors list_documents simple path).
+    // Return 404 to avoid leaking document existence to unauthorized users.
+    if !tenant.role.is_manager() {
+        let user_id = auth.user_id;
+        let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        let allowed = document.created_by == user_id
+            || document.access_scope == "organization"
+            || (document.access_scope == "role"
+                && document.access_roles.as_array().is_some_and(|arr| {
+                    arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))
+                }))
+            || (document.access_scope == "users"
+                && document.access_target_ids.as_array().is_some_and(|arr| {
+                    arr.iter()
+                        .any(|id| id.as_str() == Some(&user_id.to_string()))
+                }));
+        if !allowed {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            ));
+        }
+    }
 
     // Story 7A.4: Generate presigned S3 URL with Content-Disposition: attachment.
     // Use state.storage_service (initialised at startup with the real S3 client).
@@ -1195,8 +1219,8 @@ async fn get_download_url(
 )]
 async fn get_preview_url(
     State(state): State<AppState>,
-    _auth: AuthUser,
-    _tenant: TenantExtractor,
+    auth: AuthUser,
+    tenant: TenantExtractor,
     mut rls: RlsConnection,
     Path(id): Path<Uuid>,
 ) -> Result<Json<UrlResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -1223,6 +1247,30 @@ async fn get_preview_url(
             ));
         }
     };
+
+    // Enforce access_scope for non-managers (mirrors list_documents simple path).
+    // Return 404 to avoid leaking document existence to unauthorized users.
+    if !tenant.role.is_manager() {
+        let user_id = auth.user_id;
+        let user_role = tenant.role.to_string().to_lowercase().replace(' ', "_");
+        let allowed = document.created_by == user_id
+            || document.access_scope == "organization"
+            || (document.access_scope == "role"
+                && document.access_roles.as_array().is_some_and(|arr| {
+                    arr.iter().any(|r| r.as_str() == Some(user_role.as_str()))
+                }))
+            || (document.access_scope == "users"
+                && document.access_target_ids.as_array().is_some_and(|arr| {
+                    arr.iter()
+                        .any(|id| id.as_str() == Some(&user_id.to_string()))
+                }));
+        if !allowed {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new("NOT_FOUND", "Document not found")),
+            ));
+        }
+    }
 
     if !document.supports_preview() {
         return Err((
