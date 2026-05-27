@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T05:16:00Z",
+  "generated": "2026-05-27T07:18:00Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1686,13 +1686,13 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T06:18:00Z",
+      "last_updated": "2026-05-27T07:18:00Z",
       "status_changed_at": "2026-05-26T14:30:00Z",
       "pr_number": 556,
       "pr_url": "https://github.com/martin-janci/property-management/pull/556",
       "merged_at": null,
       "implementer_summary": "pr=556 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=MoveFolderDialog+FolderBreadcrumb+buildFolderCrumbs added; DocumentsBrowse+FolderTreePage wired with useMoveDocument and breadcrumb nav",
-      "reviewer_summary": "verdict=changes note=1 blocking issue: move dialog closes unconditionally on error in both DocumentsBrowse and FolderTreePage (setMoveTarget(null) must be guarded by the executeMoveWithToast return value); 4 non-blocking: missing focus-visible on doc-row__action-btn/fd__move-btn/folder-bc__crumb--link, non-idiomatic span onClick type annotation, no unit test for buildFolderCrumbs, DocumentPreviewModal.tsx is gap-7a-4 scope included in a gap-7a-2 PR"
+      "reviewer_summary": "verdict=approve note=All 13 CI checks green; no blocking issues found \u2014 correct ARIA usage, proper focus trap, blob-URL download pattern, full unit test coverage for buildFolderCrumbs, no auth/RLS regressions"
     },
     {
       "task_id": "gap-7a-4-document-preview-ui",
@@ -1700,13 +1700,55 @@
       "status": "review",
       "specialist": "react-web",
       "claimed_at": "2026-05-26T14:04:05Z",
-      "last_updated": "2026-05-27T06:13:00Z",
+      "last_updated": "2026-05-27T07:15:00Z",
       "status_changed_at": "2026-05-26T14:35:00Z",
       "pr_number": 557,
       "pr_url": "https://github.com/martin-janci/property-management/pull/557",
       "merged_at": null,
       "implementer_summary": "pr=557 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=DocumentPreviewModal (PDF/image/fallback inline preview + download button); per-row preview+download buttons in DocumentsBrowse; usePreviewUrl+useDownloadUrl wired; modal accessible (Escape, backdrop, focus, aria-modal)",
-      "reviewer_summary": "verdict=changes note=blocking: div[role='button'] on DocumentRow lacks aria-label causing screen reader noise; non-blocking: isDownloading in useCallback deps causes churn (use useRef guard), dead DocumentDownloadButton export, non-idiomatic span onClick type annotation; CI green, security/memory/focus-trap all correct"
+      "reviewer_summary": "verdict=approve note=All CI green; accessibility correct (ARIA 1.2 panel, useFocusTrap, focus-restore, Escape, backdrop-click); useDocumentDownload hook correctly shared; div[role=button] nesting justified; screen-map logs updated; no blocking issues"
+    },
+    {
+      "task_id": "gap-security-435-cookie-scope",
+      "branch": "auto-impl/gap-security-435-cookie-scope",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T07:15:00Z",
+      "status_changed_at": "2026-05-27T07:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-qa-inquiry-idor-tests-v2",
+      "branch": "auto-impl/pm-qa-inquiry-idor-tests-v2",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T07:15:00Z",
+      "status_changed_at": "2026-05-27T07:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
+    },
+    {
+      "task_id": "pm-scrum-master-promote-approved-drafts-566-567",
+      "branch": "auto-impl/pm-scrum-master-promote-approved-drafts-",
+      "status": "in-progress",
+      "specialist": null,
+      "claimed_at": "2026-05-27T07:15:00Z",
+      "last_updated": "2026-05-27T07:15:00Z",
+      "status_changed_at": "2026-05-27T07:15:00Z",
+      "pr_number": null,
+      "pr_url": null,
+      "merged_at": null,
+      "implementer_summary": null,
+      "reviewer_summary": null
     }
   ],
   "assignments.generated": "2026-05-27T06:18:00Z"
