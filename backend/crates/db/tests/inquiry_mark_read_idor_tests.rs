@@ -38,10 +38,12 @@ async fn seed_pm_user(pool: &PgPool, email: &str) -> Uuid {
 }
 
 async fn seed_portal_user(pool: &PgPool, email: &str) -> Uuid {
+    // portal_users was dropped in migration 00148; realtors are now unified
+    // in the users table with principal_kind='public'.
     sqlx::query_scalar::<_, Uuid>(
         r#"
-        INSERT INTO portal_users (email, name, password_hash, provider, email_verified)
-        VALUES ($1, 'Realtor', 'test', 'local', true)
+        INSERT INTO users (email, password_hash, name, status, email_verified_at, principal_kind)
+        VALUES ($1, 'test_hash', 'Realtor', 'active', NOW(), 'public')
         RETURNING id
         "#,
     )

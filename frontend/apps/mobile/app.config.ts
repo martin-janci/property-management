@@ -50,10 +50,7 @@ const PROD_URL_SENTINEL = '__SET_BY_CI__';
 
 /** RFC 2606 example domains — never valid in production. */
 function isPlaceholderUrl(value: string): boolean {
-  return (
-    value === PROD_URL_SENTINEL ||
-    /(^|\.)example\.(com|net|org)(:|\/|$)/i.test(value)
-  );
+  return value === PROD_URL_SENTINEL || /(^|\.)example\.(com|net|org)(:|\/|$)/i.test(value);
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
@@ -63,8 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // Resolved values — single source of truth is the .env.<appEnv> file loaded
   // via dotenv above. CI may also pre-seed process.env (e.g. eas.json `env`)
   // for the same names without the EXPO_PUBLIC_ prefix.
-  const apiBaseUrl =
-    envVars.API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8080';
+  const apiBaseUrl = envVars.API_BASE_URL ?? process.env.API_BASE_URL ?? 'http://localhost:8080';
 
   const wsBaseUrl =
     envVars.WS_BASE_URL ?? process.env.WS_BASE_URL ?? apiBaseUrl.replace(/^http/, 'ws');
@@ -74,7 +70,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     throw new Error(
       `[app.config.ts] Refusing to build production with placeholder API URL ` +
         `(API_BASE_URL=${apiBaseUrl}, WS_BASE_URL=${wsBaseUrl}). ` +
-        `Override via CI (e.g. eas.json env) before building.`,
+        `Override via CI (e.g. eas.json env) before building.`
     );
   }
 

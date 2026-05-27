@@ -8,5 +8,7 @@ export { DisputeCard } from './DisputeCard';
 export { DisputeList } from './DisputeList';
 export { DisputeTimeline } from './DisputeTimeline';
 export { FileDisputeDialog } from './FileDisputeDialog';
+export { MediationChatThread } from './MediationChatThread';
+export { MediationResolutionForm } from './MediationResolutionForm';
 export { MediationSessionCard } from './MediationSessionCard';
 export { ResolutionCard } from './ResolutionCard';

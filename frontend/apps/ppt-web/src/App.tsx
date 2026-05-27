@@ -135,7 +135,7 @@ import {
   InvoiceManagementPage,
   LoginPage,
   MarketplacePage,
-  MediationPage,
+  MediationWorkspacePage,
   MessagesPage,
   NeighborDetailPage,
   NeighborsPage,
@@ -1111,12 +1111,19 @@ function DisputeDetailRoute() {
 }
 
 /**
- * Route wrapper for dispute mediation page (Epic 77, Story 80-3).
+ * Route wrapper for dispute mediation workspace (Epic 80, Story 80-3).
  *
- * New route: /disputes/:disputeId/mediation
- * Renders MediationPage for the given dispute.
- * Sessions/submissions data is deferred until the mediation backend sessions
- * API is wired; the page renders with empty lists and shows the schedule UI.
+ * Route: /disputes/:disputeId/mediation
+ *
+ * Replaces the previous MediationPage stub with the full MediationWorkspacePage:
+ *   - Dispute timeline wired to useDisputeTimeline (real API)
+ *   - Manager/tenant chat thread via useMediationNotes + useAddMediationNote
+ *   - Resolution form using useResolveDispute
+ *   - Escalate dialog using useEscalateDispute
+ *   - Assign mediator dialog using useAssignMediator
+ *
+ * The legacy MediationPage (sessions/submissions) remains in the codebase for
+ * the session-scheduling sub-feature pending a future backend endpoint.
  */
 function DisputeMediationRoute() {
   const { t } = useTranslation();
@@ -1124,9 +1131,6 @@ function DisputeMediationRoute() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
-
-  const { data: dispute, isLoading } = useDispute(disputeId ?? '');
-  const updateStatus = useUpdateDisputeStatus(user?.organizationId ?? '');
 
   if (!disputeId) {
     return (
@@ -1138,89 +1142,35 @@ function DisputeMediationRoute() {
     );
   }
 
-  // Map API dispute → UI DisputeDetail for MediationPage
-  const uiDispute: UiDisputeDetail | undefined = dispute
-    ? {
-        id: dispute.id,
-        organizationId: dispute.organizationId,
-        unitId: dispute.unitId,
-        referenceNumber: `DSP-${dispute.id.toUpperCase()}`,
-        category: mapTypeToCategory(dispute.type),
-        title: dispute.subject,
-        description: dispute.description,
-        status: mapApiStatusToUiStatus(dispute.status),
-        priority: 'medium' as DisputePriority,
-        filedBy: dispute.filedBy,
-        filedByName: dispute.filerDetails?.name ?? dispute.filedBy,
-        assignedTo: dispute.assignedMediatorId,
-        assignedToName: dispute.assignedMediator,
-        createdAt: dispute.createdAt,
-        updatedAt: dispute.updatedAt,
-      }
-    : undefined;
+  if (!user?.organizationId) {
+    return <AuthRequiredGate />;
+  }
 
-  const isMediator = !!dispute && dispute.assignedMediatorId === user?.id;
-  const isParty = !!dispute && (dispute.filedBy === user?.id || dispute.respondentId === user?.id);
+  const organizationId = user.organizationId;
 
-  // #516 — toast on unimplemented mediation actions, see DisputeDetailRoute.
-  const notImplemented = useCallback(
-    (label: string) => () => {
-      showToast({
-        type: 'info',
-        title: t('common.notImplemented', { defaultValue: 'Not yet available' }),
-        message: t('disputes.actionPendingImpl', {
-          defaultValue: '{{action}} will be available in a future release.',
-          action: label,
-        }),
-      });
-    },
-    [showToast, t]
-  );
-
-  const handleCompleteSession = async (_sessionId: string, notes: string) => {
-    if (!disputeId) return;
-    try {
-      await updateStatus.mutateAsync({ disputeId, data: { status: 'resolved', reason: notes } });
-      showToast({
-        type: 'success',
-        title: t('disputes.sessionCompleted', 'Session completed'),
-        message: '',
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: t('disputes.sessionCompleteFailed', 'Failed to complete session'),
-        message: err instanceof Error ? err.message : t('auth.unexpectedError'),
-      });
-    }
-  };
+  const isManager =
+    user?.role === 'manager' ||
+    user?.role === 'org_admin' ||
+    user?.role === 'super_admin' ||
+    user?.role === 'technical_manager' ||
+    user?.role === 'property_manager';
 
   return (
-    <MediationPage
-      dispute={uiDispute!}
-      parties={[]}
-      sessions={[]}
-      submissions={[]}
-      isMediator={isMediator}
-      isParty={isParty}
+    <MediationWorkspacePage
+      disputeId={disputeId}
       currentUserId={user?.id}
-      isLoading={isLoading}
+      currentUserName={
+        user ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email : undefined
+      }
+      organizationId={organizationId}
+      isManager={isManager}
       onBack={() => navigate(`/disputes/${disputeId}`)}
-      onScheduleSession={() => {
-        showToast({
-          type: 'info',
-          title: t('disputes.mediationSessionScheduled', 'Session scheduling'),
-          message: t(
-            'disputes.mediationSessionScheduledMsg',
-            'Session scheduling will be available once the mediation backend is wired.'
-          ),
-        });
-      }}
-      onCancelSession={notImplemented('Cancel session')}
-      onCompleteSession={handleCompleteSession}
-      onConfirmAttendance={notImplemented('Confirm attendance')}
-      onRecordAttendance={notImplemented('Record attendance')}
-      onSubmitResponse={notImplemented('Submit response')}
+      onToastSuccess={(title, message) =>
+        showToast({ type: 'success', title, message: message ?? '' })
+      }
+      onToastError={(title, message) =>
+        showToast({ type: 'error', title, message: message ?? t('auth.unexpectedError') })
+      }
     />
   );
 }
