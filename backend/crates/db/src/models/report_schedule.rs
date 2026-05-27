@@ -134,6 +134,12 @@ pub struct ReportExecution {
     pub error_message: Option<String>,
     pub error_details: Option<String>,
     pub created_at: DateTime<Utc>,
+    /// Pre-computed download URL for completed executions with a generated file.
+    ///
+    /// Set to `Some("/api/v1/reports/executions/{id}/download")` when `file_key`
+    /// is present; `None` for pending/running/failed executions.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub download_url: Option<String>,
 }
 
 /// Query parameters for listing execution history.
