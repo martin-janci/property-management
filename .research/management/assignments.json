@@ -1698,16 +1698,16 @@
     {
       "task_id": "gap-security-435-cookie-scope",
       "branch": "auto-impl/gap-security-435-cookie-scope",
-      "status": "review",
+      "status": "merged",
       "specialist": "rust-backend",
       "claimed_at": "2026-05-27T01:07:37Z",
-      "last_updated": "2026-05-27T10:45:00Z",
-      "status_changed_at": "2026-05-27T02:25:00Z",
+      "last_updated": "2026-05-27T10:58:00Z",
+      "status_changed_at": "2026-05-27T10:58:00Z",
       "pr_number": 565,
       "pr_url": "https://github.com/martin-janci/property-management/pull/565",
-      "merged_at": null,
+      "merged_at": "2026-05-27T10:58:00Z",
       "implementer_summary": "pr=565 status=done specialist=rust-backend scope_drift=false note=P0-12 cookie scope hardened: api-server refresh_token default SameSite Lax\u2192Strict; reality-server portal_session Path /\u2192/api/v1/sso + SameSite Lax\u2192Strict; 13 unit tests added; cargo check exit 0 both servers",
-      "reviewer_summary": "verdict=approve note=both P0-12 findings resolved; injection guard in build_portal_session_cookie (Result+RFC6265 allowlist+test); build_refresh_cookie same_site_override param eliminates env-mutation in tests; CI fix pushed (00ad1dd0): clippy::manual_unwrap_or resolved via filter+unwrap_or; PR undrafted \u2014 awaiting CI green"
+      "reviewer_summary": "verdict=approve note=both P0-12 findings resolved; injection guard+RFC6265 allowlist; clippy::manual_unwrap_or resolved via filter+unwrap_or; CI all green; merged"
     },
     {
       "task_id": "pm-qa-inquiry-idor-tests-v2",
