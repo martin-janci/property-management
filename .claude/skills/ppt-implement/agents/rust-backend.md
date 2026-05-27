@@ -42,10 +42,18 @@ backend/
 ## Verify (MANDATORY)
 ```bash
 cd backend
-cargo check -p api-server        # or reality-server / db / common / integrations
-cargo test  -p api-server -- <test_name_filter>
+# SQLX_OFFLINE=true reads the cached query metadata under .sqlx/ instead of
+# opening a live Postgres connection. Without it, sqlx::query!/query_as!
+# macros block at compile time waiting for DATABASE_URL — verify then hangs
+# on dispatcher runners that have no DB. Always set it for verify.
+SQLX_OFFLINE=true cargo check -p api-server        # or reality-server / db / common / integrations
+SQLX_OFFLINE=true cargo test  -p api-server -- <test_name_filter>
 ```
 Quote both exit codes in the PR body.
+
+If you actually changed an SQL query, regenerate offline data first with
+`cargo sqlx prepare --workspace` against a live dev DB, commit the updated
+`.sqlx/*.json` files, then re-run the SQLX_OFFLINE=true verify.
 
 ## Common pitfalls
 - Forgetting `RequireCapability(Capability::X)` → route is public. Always check the matching `pm-security` story.

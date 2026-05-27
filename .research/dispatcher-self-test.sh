@@ -348,6 +348,27 @@ if [ "$INFO_LEGACY" -gt "0" ]; then
 fi
 echo
 
+# --- T17: row-count regression guard (issue #8) ----------------------------
+# Sanity check: assignments.json should not have shrunk by more than 2 rows
+# vs the version on the current branch's HEAD. Catches the stale-read → Edit
+# race observed in commit 4def18ce (118 -> 2 rows). Only meaningful when run
+# from a git checkout AND HEAD has assignments.json — skipped otherwise so
+# the test stays portable (CI tarballs, fresh clones).
+echo "T17 assignments.json row count vs HEAD (issue #8 — destructive-write guard)"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+   && git cat-file -e "HEAD:$ASSIGN" 2>/dev/null; then
+  NEW_COUNT=$(jq '.assignments | length' "$ASSIGN")
+  OLD_COUNT=$(git show "HEAD:$ASSIGN" | jq '.assignments | length' 2>/dev/null || echo 0)
+  if [ "$NEW_COUNT" -lt "$((OLD_COUNT - 2))" ]; then
+    fail "row count regressed: HEAD=$OLD_COUNT current=$NEW_COUNT (loss > 2)"
+  else
+    note "row count OK: HEAD=$OLD_COUNT current=$NEW_COUNT"
+  fi
+else
+  printf '  skip  not in git tree or HEAD missing %s\n' "$ASSIGN"
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
