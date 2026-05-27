@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-27T02:32:34Z",
+  "generated": "2026-05-27T02:35:42Z",
   "assignments": [
     {
       "task_id": "pm-scrum-master-review-decision-pr-435",
@@ -1740,15 +1740,15 @@
     {
       "task_id": "gap-79-2-login-flow-impl-v2",
       "branch": "auto-impl/gap-79-2-login-flow-impl-v2",
-      "status": "in-progress",
-      "specialist": null,
+      "status": "review",
+      "specialist": "react-web",
       "claimed_at": "2026-05-27T02:10:02Z",
-      "last_updated": "2026-05-27T02:10:02Z",
-      "status_changed_at": "2026-05-27T02:10:02Z",
-      "pr_number": null,
-      "pr_url": null,
+      "last_updated": "2026-05-27T02:35:42Z",
+      "status_changed_at": "2026-05-27T02:35:42Z",
+      "pr_number": 568,
+      "pr_url": "https://github.com/martin-janci/property-management/pull/568",
       "merged_at": null,
-      "implementer_summary": null,
+      "implementer_summary": "pr=568 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=wired AuthCallbackPage at /auth/callback + loginWithSsoCode in AuthContext + SsoCallbackRequest types in api-client; typecheck clean, biome 0 errors, vite build clean",
       "reviewer_summary": null
     },
     {
