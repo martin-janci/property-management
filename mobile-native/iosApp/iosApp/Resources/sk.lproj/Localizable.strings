@@ -239,6 +239,26 @@
 "reset_filters" = "Obnoviť filtre";
 "apply" = "Použiť";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "V blízkosti";
+"filter_near_me_section" = "Poloha";
+"filter_radius" = "Polomer";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Poloha: %.4f, %.4f";
+"locating" = "Zisťujem polohu…";
+"location_access_denied" = "Prístup k polohe bol zamietnutý. Povoľte ho v Nastaveniach, aby ste mohli používať filtre V blízkosti.";
+"location_unavailable" = "Poloha nie je dostupná.";
+"location_access_denied_title" = "Prístup k polohe zamietnutý";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Typ ponuky";
+"filter_price_min" = "Min cena";
+"filter_price_max" = "Max cena";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Kúpeľne";
+
 /* Account Screen - Additional */
 "quick_actions" = "Rýchle akcie";
 "saved_searches" = "Uložené vyhľadávania";

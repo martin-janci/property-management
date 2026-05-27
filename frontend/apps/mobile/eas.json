@@ -36,6 +36,7 @@
     },
     "staging": {
       "distribution": "internal",
+      "channel": "staging",
       "ios": {
         "simulator": false,
         "image": "latest",
@@ -52,6 +53,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "ios": {
         "simulator": false,
         "image": "latest",
@@ -64,8 +66,7 @@
       },
       "env": {
         "APP_ENV": "production"
-      },
-      "channel": "production"
+      }
     }
   },
   "submit": {
@@ -78,14 +79,6 @@
         "sku": "three-two-bit-ppt-management",
         "companyName": "32bit s.r.o.",
         "metadataPath": "./store-metadata/ios"
-      }
-    },
-    "staging": {
-      "ios": {
-        "appleId": "APPLE_ID_PLACEHOLDER",
-        "ascAppId": "ASC_APP_ID_PLACEHOLDER",
-        "appleTeamId": "APPLE_TEAM_ID_PLACEHOLDER",
-        "language": "en-US"
       }
     }
   }

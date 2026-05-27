@@ -58,6 +58,10 @@ detect() {
       e2e/*)
         has_test=true
         ;;
+      # Kotlin / KMP test files (mobile-native — commonTest, androidTest, iosTest source sets)
+      *Test.kt | *Tests.kt | */Test*.kt | Test*.kt)
+        has_test=true
+        ;;
     esac
   done <<< "$input"
   printf '%s' "$has_test"
@@ -96,12 +100,16 @@ self_test() {
   run "ts *.test.ts" "true" "frontend/apps/ppt-web/src/foo.test.ts"
   run "ts *.spec.tsx" "true" "frontend/apps/ppt-web/src/foo.spec.tsx"
   run "e2e" "true" "e2e/auth-mfa.spec.ts"
+  run "kotlin *Test.kt" "true" "mobile-native/shared/src/commonTest/kotlin/AuthTest.kt"
+  run "kotlin *Tests.kt" "true" "mobile-native/androidApp/src/test/kotlin/LoginTests.kt"
+  run "kotlin Test*.kt" "true" "mobile-native/androidApp/src/test/kotlin/TestLogin.kt"
   run "mixed (one test among many)" "true" "$(printf '%s\n' "backend/servers/api-server/src/handlers/auth.rs" "backend/servers/api-server/tests/auth_test.rs" "frontend/apps/ppt-web/src/components/Login.tsx")"
 
   # Negative cases — none should detect a test.
   run "rust impl only" "false" "backend/servers/api-server/src/handlers/auth.rs"
   run "ts impl only" "false" "frontend/apps/ppt-web/src/api/client.ts"
   run "rust file with 'test' in path but not name" "false" "backend/crates/contests/src/foo.rs"
+  run "kotlin impl only" "false" "mobile-native/shared/src/commonMain/kotlin/Auth.kt"
   run "docs only" "false" "docs/architecture.md"
   run "empty list" "false" ""
   run "multiple non-tests" "false" "$(printf '%s\n' "README.md" "frontend/apps/ppt-web/src/foo.ts" "backend/Cargo.toml")"

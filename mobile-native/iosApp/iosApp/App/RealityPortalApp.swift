@@ -28,6 +28,7 @@ struct RealityPortalApp: App {
     @State private var pushNotificationManager = PushNotificationManager(
         keychainService: KeychainService(service: Configuration.shared.keychainService)
     )
+    @State private var locationManager = LocationManager()
     @Environment(\.scenePhase) private var scenePhase
 
     private let restorationService: NavigationStateRestorationService
@@ -51,6 +52,7 @@ struct RealityPortalApp: App {
                 .environment(authManager)
                 .environment(favoritesService)
                 .environment(pushNotificationManager)
+                .environment(locationManager)
                 .onOpenURL { url in
                     handleIncomingURL(url)
                 }

@@ -50,7 +50,7 @@ import {
   useUpdateSchedule,
 } from '@ppt/api-client';
 import { AccessibilityProvider, SkipNavigation } from '@ppt/ui-kit';
-import { type ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrowserRouter,
@@ -106,6 +106,7 @@ import {
   AccessibilitySettingsPage,
   AnnouncementsPage,
   ArticleDetailPage,
+  AuthCallbackPage,
   BudgetManagementPage,
   ChangePasswordPage,
   CreateAnnouncementPage,
@@ -464,6 +465,11 @@ function App() {
                               <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<LoginPage />} />
+                                {/* SSO / OAuth callback route (gap-79-2).
+                                    Handles provider redirect: reads ?code=…&state=…,
+                                    exchanges for PPT JWT tokens via tokenProvider,
+                                    then redirects to /dashboard or stored return URL. */}
+                                <Route path="/auth/callback" element={<AuthCallbackPage />} />
                                 <Route path="/register" element={<RegisterPage />} />
                                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                                 <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -1683,6 +1689,9 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
   const { t } = useTranslation();
   const { user } = useAuth();
 
+  // Guard ref: fire mark-read exactly once per announcement view, even in StrictMode.
+  const autoMarkReadFired = useRef(false);
+
   const { data, isLoading, error } = useAnnouncement(announcementId);
   const markRead = useMarkReadAnnouncement();
   const acknowledge = useAcknowledgeAnnouncement();
@@ -1716,6 +1725,21 @@ function ViewAnnouncementPageInner({ announcementId }: { announcementId: string 
       });
     }
   }, [error, showToast, t]);
+
+  // Story 6.2: auto-fire read-receipt when announcement loads.
+  // Fire-and-forget — the user shouldn't have to click "Mark as Read".
+  // The mutation is idempotent (upsert on server), so double-firing is safe.
+  // Retry is handled by TanStack Mutation default (3 attempts, exponential back-off).
+  // markRead.mutate is intentionally excluded from deps — including a new mutate
+  // instance on each render would cause an infinite loop; the ref guard ensures
+  // the call fires exactly once per viewed announcement.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: markRead.mutate excluded intentionally (see comment)
+  useEffect(() => {
+    if (data?.announcement && !autoMarkReadFired.current) {
+      autoMarkReadFired.current = true;
+      markRead.mutate(announcementId);
+    }
+  }, [data?.announcement, announcementId]);
 
   const announcement = data?.announcement;
   const attachments = data?.attachments ?? [];

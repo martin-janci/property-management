@@ -739,6 +739,19 @@
       "downloadFailed": "Nem sikerült letölteni a jelentést.",
       "retryQueued": "A végrehajtás újraküldésre várakozik.",
       "retryFailed": "Nem sikerült megismételni a végrehajtást."
+    },
+    "filters": {
+      "allStatuses": "Összes állapot",
+      "status": "Állapot:",
+      "dateFrom": "Től:",
+      "dateTo": "Ig:",
+      "clearFilters": "Szűrők törlése",
+      "statusCompleted": "Befejezett",
+      "statusFailed": "Sikertelen",
+      "statusRunning": "Folyamatban",
+      "statusPending": "Függőben",
+      "statusCancelled": "Megszakított",
+      "statusSkipped": "Kihagyott"
     }
   }
 }

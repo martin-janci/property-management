@@ -824,17 +824,21 @@ pub async fn login(
         "User logged in successfully"
     );
 
-    // P0-12 (additive): emit an HttpOnly Secure SameSite=Strict cookie
-    // bearing the refresh token, alongside the JSON body refresh_token
-    // for back-compat. Once the frontend is updated to send
-    // `withCredentials: true` on /auth/refresh and stops storing the
-    // refresh in localStorage, the body field can be dropped. Scoped
-    // to /api/v1/auth so it isn't sent on unrelated API calls.
+    // P0-12 / gap-security-435-cookie-scope: emit an HttpOnly Secure
+    // SameSite=Strict cookie bearing the refresh token, alongside the JSON
+    // body refresh_token for back-compat. Once the frontend is updated to
+    // send `withCredentials: true` on /auth/refresh and stops storing the
+    // refresh in localStorage, the body field can be dropped. Scoped to
+    // /api/v1/auth so it isn't sent on unrelated API calls.
     // Issue #438: build_refresh_cookie now returns Result; a malformed
     // token character would previously panic the login handler.
     let mut headers = axum::http::HeaderMap::new();
-    match build_refresh_cookie(&refresh_token, /*max_age_seconds=*/ 7 * 24 * 60 * 60)
-        .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
+    match build_refresh_cookie(
+        &refresh_token,
+        /*max_age_seconds=*/ 7 * 24 * 60 * 60,
+        std::env::var("PPT_AUTH_COOKIE_SAMESITE").ok().as_deref(),
+    )
+    .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
     {
         Ok(hv) => {
             headers.append(axum::http::header::SET_COOKIE, hv);
@@ -864,18 +868,34 @@ pub async fn login(
 /// Build the standard `refresh_token` cookie attributes. Centralized so
 /// login, refresh, and logout all agree on Path/SameSite/Secure flags.
 ///
-/// Issue #439 P0-12: SameSite is `Lax` (not `Strict`) by default so the
-/// cookie survives OAuth/SSO redirect-back top-level navigations and
-/// future WS-auth subprotocol handshakes. Set
-/// `PPT_AUTH_COOKIE_SAMESITE=Strict` to opt back into Strict when running
-/// without SSO. The refresh endpoint is POST-only, so Lax still defends
-/// CSRF for the usual cross-origin GET-and-redirect class of attacks;
-/// state-changing routes are additionally guarded by the CSRF token
-/// middleware where applicable.
+/// ## Security attributes (P0-12 / gap-security-435-cookie-scope)
+///
+/// | Attribute    | Value / Source                     | Rationale                                  |
+/// |-------------|------------------------------------|--------------------------------------------|
+/// | `HttpOnly`  | always set                         | Prevents JS from reading the token.        |
+/// | `Secure`    | always set                         | Cookie only sent over HTTPS.              |
+/// | `SameSite`  | `Strict` (default) or env override | Strict stops CSRF cross-site requests.     |
+/// |             | (`PPT_AUTH_COOKIE_SAMESITE`)       | Override to `Lax` only if a server-side    |
+/// |             |                                    | OAuth/SSO redirect-back flow is deployed   |
+/// |             |                                    | on the same origin as the api-server.      |
+/// | `Path`      | `/api/v1/auth`                     | Cookie only sent to auth endpoints —       |
+/// |             |                                    | not on every API call (scope limited).     |
 ///
 /// `Domain` is optional and read from `PPT_AUTH_COOKIE_DOMAIN`; omit when
 /// unset (back-compat — the cookie stays host-bound to the API origin).
-fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> Result<String, &'static str> {
+/// Build a `Set-Cookie` value for the `refresh_token` cookie.
+///
+/// `same_site_override` — if `Some`, used directly (caller is responsible for
+/// reading `PPT_AUTH_COOKIE_SAMESITE` from the environment and passing it here).
+/// If `None`, defaults to `"Strict"`.  Accepting the override as a parameter
+/// keeps env-var reads out of the function body and makes the unit tests
+/// deterministic without `std::env::set_var` (which is not safe under parallel
+/// `cargo test`).
+fn build_refresh_cookie(
+    value: &str,
+    max_age_seconds: i64,
+    same_site_override: Option<&str>,
+) -> Result<String, &'static str> {
     // Issue #438: reject token characters that would let a malformed value
     // inject extra cookie attributes (`; Domain=.attacker.com`) or break
     // the HTTP header framing (`\r\n`). Also reject non-ASCII so the
@@ -890,11 +910,15 @@ fn build_refresh_cookie(value: &str, max_age_seconds: i64) -> Result<String, &'s
     {
         return Err("invalid refresh-token characters for Set-Cookie");
     }
-    let same_site = std::env::var("PPT_AUTH_COOKIE_SAMESITE").unwrap_or_else(|_| "Lax".into());
-    let same_site = match same_site.as_str() {
-        "Strict" | "Lax" | "None" => same_site,
-        _ => "Lax".into(),
-    };
+    // P0-12 (gap-security-435-cookie-scope): default is now Strict.  Operators
+    // running an OAuth/SSO redirect-back flow on the same origin can override to
+    // Lax via PPT_AUTH_COOKIE_SAMESITE=Lax.  The previous default was Lax which
+    // left an unnecessary CSRF surface for most deployments.
+    // filter rejects any value that is not one of the three RFC 6265 SameSite tokens;
+    // invalid env values fall back to "Strict" rather than being forwarded verbatim.
+    let same_site = same_site_override
+        .filter(|s| matches!(*s, "Strict" | "Lax" | "None"))
+        .unwrap_or("Strict");
     let mut cookie = format!(
         "refresh_token={value}; HttpOnly; Secure; SameSite={same_site}; Path=/api/v1/auth; Max-Age={max_age_seconds}"
     );
@@ -1282,8 +1306,12 @@ pub async fn logout(
     // Always return success to prevent token enumeration. Clear the
     // refresh cookie by setting Max-Age=0 with the same attributes.
     let mut response_headers = axum::http::HeaderMap::new();
-    if let Ok(hv) = build_refresh_cookie("", 0)
-        .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
+    if let Ok(hv) = build_refresh_cookie(
+        "",
+        0,
+        std::env::var("PPT_AUTH_COOKIE_SAMESITE").ok().as_deref(),
+    )
+    .and_then(|c| axum::http::HeaderValue::from_str(&c).map_err(|_| "non-ASCII cookie"))
     {
         response_headers.append(axum::http::header::SET_COOKIE, hv);
     }
@@ -2292,5 +2320,125 @@ mod me_tests {
         assert_eq!(parsed.display_name.as_deref(), Some("Carol"));
         assert!(parsed.phone.is_none());
         assert!(parsed.avatar_url.is_none());
+    }
+}
+
+// ==================== Cookie security unit tests (P0-12) ====================
+
+#[cfg(test)]
+mod cookie_security_tests {
+    use super::{build_refresh_cookie, parse_refresh_cookie};
+
+    /// P0-12 / gap-security-435-cookie-scope: default SameSite must be Strict.
+    ///
+    /// Passing `None` as `same_site_override` exercises the default code path
+    /// without touching `std::env` (which is not safe under parallel `cargo test`).
+    #[test]
+    fn refresh_cookie_default_samesite_is_strict() {
+        let cookie = build_refresh_cookie("tok.en_VALUE-test", 3600, None)
+            .expect("valid token should not error");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Expected SameSite=Strict in cookie, got: {cookie}"
+        );
+    }
+
+    /// `HttpOnly` must always be present.
+    #[test]
+    fn refresh_cookie_always_httponly() {
+        let cookie = build_refresh_cookie("tok", 3600, None).expect("valid");
+        assert!(
+            cookie.contains("HttpOnly"),
+            "Missing HttpOnly flag: {cookie}"
+        );
+    }
+
+    /// `Secure` must always be present.
+    #[test]
+    fn refresh_cookie_always_secure() {
+        let cookie = build_refresh_cookie("tok", 3600, None).expect("valid");
+        assert!(cookie.contains("Secure"), "Missing Secure flag: {cookie}");
+    }
+
+    /// Path must be scoped to `/api/v1/auth` — not `/` or a broader prefix.
+    #[test]
+    fn refresh_cookie_path_scoped_to_auth() {
+        let cookie = build_refresh_cookie("tok", 3600, None).expect("valid");
+        assert!(
+            cookie.contains("Path=/api/v1/auth"),
+            "Expected Path=/api/v1/auth in cookie, got: {cookie}"
+        );
+        // Ensure the path is NOT the root path.
+        assert!(
+            !cookie.contains("Path=/;") && !cookie.ends_with("Path=/"),
+            "Cookie path must not be root /: {cookie}"
+        );
+    }
+
+    /// Passing `Some("Lax")` must produce `SameSite=Lax` (SSO deployment override).
+    #[test]
+    fn refresh_cookie_env_override_lax() {
+        let cookie = build_refresh_cookie("tok", 3600, Some("Lax")).expect("valid");
+        assert!(
+            cookie.contains("SameSite=Lax"),
+            "Expected SameSite=Lax with override, got: {cookie}"
+        );
+    }
+
+    /// An unrecognised override value must fall back to `Strict` (not Lax).
+    #[test]
+    fn refresh_cookie_invalid_env_falls_back_to_strict() {
+        let cookie = build_refresh_cookie("tok", 3600, Some("garbage-value")).expect("valid");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Expected SameSite=Strict fallback for invalid override, got: {cookie}"
+        );
+    }
+
+    /// Clear-cookie (max_age=0, value="") must still carry all security attributes.
+    #[test]
+    fn clear_refresh_cookie_has_all_security_flags() {
+        let cookie = build_refresh_cookie("", 0, None).expect("valid");
+        assert!(cookie.contains("HttpOnly"), "Missing HttpOnly: {cookie}");
+        assert!(cookie.contains("Secure"), "Missing Secure: {cookie}");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Missing SameSite=Strict: {cookie}"
+        );
+        assert!(cookie.contains("Path=/api/v1/auth"), "Wrong path: {cookie}");
+        assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
+    }
+
+    /// Tokens with injection characters must be rejected.
+    #[test]
+    fn refresh_cookie_rejects_semicolon_injection() {
+        let result = build_refresh_cookie("valid; Expires=0", 3600, None);
+        assert!(result.is_err(), "Should reject semicolon in token");
+    }
+
+    /// `parse_refresh_cookie` must extract the token by name from a Cookie header.
+    #[test]
+    fn parse_refresh_cookie_extracts_token() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "other=x; refresh_token=my.jwt.token; more=y"
+                .parse()
+                .unwrap(),
+        );
+        let token = parse_refresh_cookie(&headers);
+        assert_eq!(token.as_deref(), Some("my.jwt.token"));
+    }
+
+    /// Absent `refresh_token` cookie must return `None`.
+    #[test]
+    fn parse_refresh_cookie_absent_returns_none() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            "session_id=abc".parse().unwrap(),
+        );
+        let token = parse_refresh_cookie(&headers);
+        assert!(token.is_none());
     }
 }

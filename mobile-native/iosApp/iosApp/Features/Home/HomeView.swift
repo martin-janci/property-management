@@ -86,19 +86,29 @@ struct HomeView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 CategoryChip(title: String(localized: "filter_for_sale"), icon: "tag.fill") {
-                    // Navigate to search with sale filter
+                    var f = SearchFilters()
+                    f.listingType = .sale
+                    coordinator.navigate(to: .searchResults(query: "", filters: f))
                 }
                 CategoryChip(title: String(localized: "filter_for_rent"), icon: "house.fill") {
-                    // Navigate to search with rent filter
+                    var f = SearchFilters()
+                    f.listingType = .rent
+                    coordinator.navigate(to: .searchResults(query: "", filters: f))
                 }
                 CategoryChip(title: String(localized: "filter_apartments"), icon: "building.2.fill") {
-                    // Navigate to search with apartment filter
+                    var f = SearchFilters()
+                    f.propertyTypes = [.apartment]
+                    coordinator.navigate(to: .searchResults(query: "", filters: f))
                 }
                 CategoryChip(title: String(localized: "filter_houses"), icon: "house.fill") {
-                    // Navigate to search with house filter
+                    var f = SearchFilters()
+                    f.propertyTypes = [.house]
+                    coordinator.navigate(to: .searchResults(query: "", filters: f))
                 }
                 CategoryChip(title: String(localized: "filter_land"), icon: "leaf.fill") {
-                    // Navigate to search with land filter
+                    var f = SearchFilters()
+                    f.propertyTypes = [.land]
+                    coordinator.navigate(to: .searchResults(query: "", filters: f))
                 }
             }
             .padding(.horizontal)

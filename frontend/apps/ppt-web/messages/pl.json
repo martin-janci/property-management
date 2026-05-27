@@ -743,6 +743,19 @@
       "downloadFailed": "Nie udało się pobrać raportu.",
       "retryQueued": "Wykonanie zostało dodane do kolejki ponowień.",
       "retryFailed": "Nie udało się ponowić wykonania."
+    },
+    "filters": {
+      "allStatuses": "Wszystkie statusy",
+      "status": "Status:",
+      "dateFrom": "Od:",
+      "dateTo": "Do:",
+      "clearFilters": "Wyczyść filtry",
+      "statusCompleted": "Zakończone",
+      "statusFailed": "Nieudane",
+      "statusRunning": "W toku",
+      "statusPending": "Oczekujące",
+      "statusCancelled": "Anulowane",
+      "statusSkipped": "Pominięte"
     }
   }
 }

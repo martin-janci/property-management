@@ -257,7 +257,8 @@ fi
 - **no branch + in-progress** → run the **sandbox-reclaim helper** (P3):
 
   ```bash
-  MODE_TAG=$(grep -oE '^Mode:[[:space:]]*[a-z-]+' .research/plans/<slug>.md 2>/dev/null | head -1 | awk '{print $2}')
+  PLAN_FILE=".research/plans/${TASK_ID}.md"
+  MODE_TAG=$(grep -oE '^Mode:[[:space:]]*[a-z-]+' "$PLAN_FILE" 2>/dev/null | head -1 | awk '{print $2}')
   bash .claude/skills/ppt-pr-followup/scripts/sandbox-reclaim.sh
   # honours BRANCH, STATUS_CHANGED_AT, MODE_TAG, RECLAIM_ATTEMPTS env vars;
   # prints one line: `action=<wait|reclaim|fail> reason=<short> branch_state=<…>`
@@ -267,7 +268,7 @@ fi
 
   Apply the helper's verdict:
   - `action=wait` → keep `prev_status`; do not touch `status_changed_at`. Another run's implementer may still be working.
-  - `action=reclaim` (only when `reclaim_attempts < 1`) → re-spawn the SAME specialist with the SAME brief via Phase 4's machinery (mirror followup-skill respawn pattern). On respawn: bump `reclaim_attempts += 1`, set `status_changed_at = now` so the next grace window restarts. Status stays `in-progress`.
+  - `action=reclaim` → re-spawn the SAME specialist with the SAME brief via Phase 4's machinery (mirror followup-skill respawn pattern). On respawn: bump `reclaim_attempts += 1`, set `status_changed_at = now` so the next grace window restarts. Status stays `in-progress`. (Reclaim cap is enforced by `sandbox-reclaim.sh` — that script returns `action=fail` when `RECLAIM_ATTEMPTS >= 1`.)
   - `action=fail` → `new_status="failed"`, append the helper's `reason=<…>` to `implementer_summary` (e.g. `'sandbox-failure-after-reclaim'` or `'empty-branch'`).
 
 Persist: `last_updated=now` (always); if `new_status != prev_status`: `status=new_status`, `status_changed_at=now`.

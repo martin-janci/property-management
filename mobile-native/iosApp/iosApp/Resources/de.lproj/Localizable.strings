@@ -239,6 +239,26 @@
 "reset_filters" = "Filter zurücksetzen";
 "apply" = "Anwenden";
 
+
+/* Search - Near Me / Location (added Story 82.3) */
+"filter_near_me" = "In meiner Nähe";
+"filter_near_me_section" = "Standort";
+"filter_radius" = "Radius";
+"radius_km_format" = "%d km";
+"location_detected_format" = "Standort: %.4f, %.4f";
+"locating" = "Standort wird ermittelt…";
+"location_access_denied" = "Standortzugriff wurde verweigert. Aktivieren Sie ihn in den Einstellungen, um Filter „In meiner Nähe" zu nutzen.";
+"location_unavailable" = "Standort nicht verfügbar.";
+"location_access_denied_title" = "Standortzugriff verweigert";
+
+/* Search - Listing type / FilterSheet additions (Story 82.3) */
+"filter_listing_type" = "Angebotstyp";
+"filter_price_min" = "Mindestpreis";
+"filter_price_max" = "Höchstpreis";
+"filter_min_value" = "Min: %d";
+"filter_max_value" = "Max: %d";
+"filter_bathrooms" = "Badezimmer";
+
 /* Account Screen - Additional */
 "quick_actions" = "Schnellaktionen";
 "saved_searches" = "Gespeicherte Suchen";

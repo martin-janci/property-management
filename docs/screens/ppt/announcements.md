@@ -11,8 +11,8 @@ implementations:
     redesignStatus: in-progress
     apiStatus: partial
   mobile:
-    component: AnnouncementsScreen
-    buildStatus: shipped
+    component: AnnouncementsScreen + AnnouncementDetailScreen
+    buildStatus: in-progress
     redesignStatus: in-progress
     apiStatus: partial
 endpoints:
@@ -119,6 +119,8 @@ UC-02 announcements — manager-published, resident-acknowledged messages. The d
 ## Agent Log
 
 <!-- newest entries on top -->
+
+- 2026-05-27 — agent: gap-6-2-announcement-read-receipt-retry — Story 6.2 retry: added AnnouncementDetailScreen (mobile) with auto-fire POST /read on mount + acknowledge button; wired AnnouncementDetail case in mobile App.tsx; added auto-mark-read useEffect in ppt-web ViewAnnouncementPageInner (fire-and-forget on announcement load); ppt-web & mobile typecheck + biome clean; mobile component: AnnouncementsScreen + AnnouncementDetailScreen
 
 - 2026-05-25 — agent: gap-6-4-pinned-announcements-ui — Story 6.4: added PinnedAnnouncementsBand component + CSS; wired usePinnedAnnouncements (pinned=true) query in AnnouncementsPageRoute (App.tsx); propagated pinnedAnnouncements prop through AnnouncementsPage → AnnouncementList; mobile AnnouncementsScreen adds pinned-band with separate /api/v1/announcements?pinned=true query
 

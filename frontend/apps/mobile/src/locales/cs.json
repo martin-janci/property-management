@@ -313,7 +313,21 @@
     "empty": "Zadna oznameni",
     "emptyMessage": "Podivejte se pozdeji na aktuality",
     "pinned": "Pripnuto",
-    "by": "Od {author}"
+    "by": "Od {author}",
+    "detail": {
+      "loadError": "Nepodarilo se nacist oznameni",
+      "backToList": "← Oznameni",
+      "back": "← Zpet",
+      "attachments": "Prilohy",
+      "reads": "precteno",
+      "acknowledged": "potvrzeno",
+      "comments": "komentare",
+      "ackRequired": "Toto oznameni vyzaduje vase potvrzeni.",
+      "ackButton": "Potvrdit",
+      "ackDone": "Toto oznameni jste potvrdili.",
+      "ackError": "Nepodarilo se potvrdit: {{message}}",
+      "publishedAt": "Zverejneno: {{date}}"
+    }
   },
   "widgets": {
     "addedTitle": "Widget pridan",

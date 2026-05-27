@@ -60,13 +60,9 @@ FR=$(jq -r      '.fix_rounds // 0'         <<<"$ROW")
 [[ "$FR" =~ ^[0-9]+$ ]] || FR=0
 
 # --- Parse verdict + note out of `reviewer_summary` string
-# Reviewer_summary shape: "verdict=<v> note=<rest>" (note can contain spaces).
-VERDICT=""
-NOTE=""
-if [[ "$RS" =~ ^verdict=([a-z]+)([[:space:]]+note=(.*))?$ ]]; then
-  VERDICT="${BASH_REMATCH[1]}"
-  NOTE="${BASH_REMATCH[3]:-}"
-fi
+# Reviewer_summary shape: "verdict=<v> head_oid=<oid> note=<rest>" (note can contain spaces).
+VERDICT=$(grep -oP '(?<=verdict=)[a-z]+' <<<"$RS" || true)
+NOTE=$(grep -oP '(?<=note=).*' <<<"$RS" || true)
 
 emit() {
   # emit "<line>"  — prints the machine-parseable result line on stdout.
