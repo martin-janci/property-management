@@ -83,6 +83,26 @@ export const apiServerEndpoints: ApiEndpoint[] = [
     feature: 'UC-14',
   },
   {
+    operationId: 'auth_sso_callback',
+    server: 'api-server',
+    method: 'POST',
+    path: '/api/v1/auth/sso/callback',
+    description: 'Exchange SSO authorization code for PPT JWT tokens (backend stub — not yet implemented)',
+    tags: ['Authentication', 'SSO'],
+    requestBody: {
+      ref: 'Auth.SsoCallbackRequest',
+      contentType: 'application/json',
+      required: true,
+    },
+    responses: [
+      { statusCode: 200, description: 'SSO login successful', ref: 'Auth.LoginResponse' },
+      { statusCode: 400, description: 'Invalid code or state' },
+      { statusCode: 401, description: 'SSO provider rejected the code' },
+    ],
+    auth: { required: false },
+    feature: 'UC-14',
+  },
+  {
     operationId: 'auth_mfa_setup',
     server: 'api-server',
     method: 'POST',
