@@ -62,8 +62,7 @@ data class FavoriteEntry(
  * The server always returns HTTP 200 with this payload — it never returns 404 for an un-favorited
  * listing. The KMP client must inspect `isFavorited` rather than treating any 2xx as `true`.
  */
-@Serializable
-data class CheckFavoriteResponse(@SerialName("is_favorited") val isFavorited: Boolean)
+@Serializable data class CheckFavoriteResponse(@SerialName("is_favorited") val isFavorited: Boolean)
 
 /**
  * Add favorite response from `POST /api/v1/favorites/{listing_id}`.
