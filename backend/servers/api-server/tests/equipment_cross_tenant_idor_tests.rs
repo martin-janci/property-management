@@ -103,6 +103,21 @@ async fn seed_equipment(pool: &PgPool, org_id: Uuid, building_id: Uuid) -> Uuid 
     .expect("seed equipment")
 }
 
+async fn seed_prediction(pool: &PgPool, equipment_id: Uuid) -> Uuid {
+    sqlx::query_scalar::<_, Uuid>(
+        r#"
+        INSERT INTO maintenance_predictions
+            (equipment_id, risk_score, confidence, recommendation, factors)
+        VALUES ($1, 75.0, 0.9, 'Replace filter urgently', '{}')
+        RETURNING id
+        "#,
+    )
+    .bind(equipment_id)
+    .fetch_one(pool)
+    .await
+    .expect("seed prediction")
+}
+
 async fn seed_maintenance(pool: &PgPool, equipment_id: Uuid) -> Uuid {
     sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -371,28 +386,9 @@ async fn create_maintenance_on_other_org_equipment_is_rejected(pool: PgPool) {
 // H7 — cross-tenant IDOR: acknowledge_prediction
 // ---------------------------------------------------------------------------
 
-async fn seed_prediction(pool: &PgPool, equipment_id: Uuid) -> Uuid {
-    sqlx::query_scalar::<_, Uuid>(
-        r#"
-        INSERT INTO maintenance_predictions
-            (equipment_id, risk_score, confidence, recommendation, factors)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id
-        "#,
-    )
-    .bind(equipment_id)
-    .bind(0.85_f64)
-    .bind(0.9_f64)
-    .bind("Replace filter urgently")
-    .bind(sqlx::types::Json(serde_json::json!({})))
-    .fetch_one(pool)
-    .await
-    .expect("seed prediction")
-}
-
-/// POST /equipment/predictions/{id}/acknowledge from Org B targeting a
-/// prediction whose parent equipment belongs to Org A → rejected (4xx), and
-/// the prediction is NOT acknowledged.
+/// POST /predictions/{id}/acknowledge from Org B targeting a prediction
+/// whose parent equipment belongs to Org A → rejected (4xx), and the
+/// prediction's `acknowledged` flag is NOT set.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn acknowledge_prediction_from_other_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -406,19 +402,15 @@ async fn acknowledge_prediction_from_other_org_is_rejected(pool: PgPool) {
     let prediction_id = seed_prediction(&pool, equipment_in_a).await;
 
     let ctx_b = tenant_context_header(org_b, user_b);
-    let uri = format!(
-        "/api/v1/ai/equipment/predictions/{}/acknowledge",
-        prediction_id
-    );
-    let body = json!({});
+    let uri = format!("/api/v1/ai/predictions/{}/acknowledge", prediction_id);
 
     let response = app
-        .execute(req(Method::POST, &uri, &ctx_b, Some(body)))
+        .execute(req(Method::POST, &uri, &ctx_b, Some(json!({}))))
         .await;
 
     assert_rejected(response.status, "acknowledge_prediction cross-tenant");
 
-    // Verify the prediction was NOT acknowledged.
+    // Verify the prediction's acknowledged flag was NOT set.
     let acknowledged: bool =
         sqlx::query_scalar("SELECT acknowledged FROM maintenance_predictions WHERE id = $1")
             .bind(prediction_id)
@@ -427,6 +419,6 @@ async fn acknowledge_prediction_from_other_org_is_rejected(pool: PgPool) {
             .unwrap();
     assert!(
         !acknowledged,
-        "prediction must not be acknowledged by cross-tenant POST"
+        "acknowledged must remain false after cross-tenant POST"
     );
 }
