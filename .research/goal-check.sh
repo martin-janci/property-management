@@ -76,6 +76,28 @@ else
   record "GC2-coverage-progress" false "done=$GC2_NOW head=$GC2_HEAD" "done>=$GC2_HEAD" true
 fi
 
+# --- GC3: buffer bounds. open_claimable = open action-list items not already
+# in active assignments, minus dep-blocked (a depends_on entry not pointing at
+# a merged/done assignment). Healthy band [18, 60]; below 18 = starving,
+# above 60 = overflow (the 102/36 explosion). Record-only here.
+GC3_OPEN=$(jq --slurpfile a "$ASSIGN" '
+  [.items[] | select(.status=="open")
+            | .id as $id
+            | select(($a[0].assignments | map(.task_id) | index($id)) == null)] | length' "$ACTION_LIST")
+GC3_BLOCKED=$(jq --slurpfile a "$ASSIGN" '
+  [.items[] | select(.status=="open")
+            | .id as $id
+            | select(($a[0].assignments | map(.task_id) | index($id)) == null)
+            | select(((.depends_on // []) | length) > 0
+                     and any((.depends_on // [])[];
+                             . as $dep
+                             | (($a[0].assignments | map(select(.task_id==$dep)) | .[0].status // "missing")
+                                | IN("merged","done") | not)))] | length' "$ACTION_LIST")
+GC3_CLAIMABLE=$((GC3_OPEN - GC3_BLOCKED))
+GC3_PASS=$([ "$GC3_CLAIMABLE" -ge 18 ] && [ "$GC3_CLAIMABLE" -le 60 ] && echo true || echo false)
+record "GC3-buffer-bounds" "$GC3_PASS" \
+  "claimable=$GC3_CLAIMABLE (open=$GC3_OPEN dep_blocked=$GC3_BLOCKED)" "18<=claimable<=60" false
+
 # --- emit + exit ---
 if [ "$EMIT_JSON" = "1" ]; then echo "$RESULTS"; fi
 if [ "$ENFORCE" = "1" ] && [ "$HARD_FAIL" = "1" ]; then
