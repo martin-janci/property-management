@@ -85,7 +85,7 @@ metrics = "0.21"
 metrics-exporter-prometheus = "0.12"
 
 # Error tracking (Epic 95)
-sentry = { version = "0.32", features = ["tracing", "tower", "tower-http"] }
+sentry = { version = "0.48", features = ["tracing", "tower", "tower-http"] }
 
 # AWS SDK for S3 (Epic 103)
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
