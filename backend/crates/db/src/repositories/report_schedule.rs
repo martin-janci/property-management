@@ -321,8 +321,9 @@ impl ReportScheduleRepository {
         });
 
         // Convert the recipients Vec<String> into a JSON array for JSONB storage.
-        let recipients_json: Option<serde_json::Value> = recipients
-            .map(|v| serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect()));
+        let recipients_json: Option<serde_json::Value> = recipients.map(|v| {
+            serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect())
+        });
 
         let row = sqlx::query_as::<_, ReportScheduleRow>(
             r#"
