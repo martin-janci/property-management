@@ -1,9 +1,74 @@
 {
-  "generated": "2026-05-28T14:42:00Z",
+  "generated": "2026-05-28T16:24:12Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-05-28T16:24:12Z",
+      "prs_scanned": 15,
+      "clean": [
+        634,
+        631,
+        584,
+        566,
+        558,
+        638,
+        637,
+        635
+      ],
+      "with_issues": [
+        {
+          "pr": 643,
+          "issue": 710,
+          "findings": 2,
+          "specialist": "rust-backend",
+          "note": "get_by_id/pause/resume still lack org-scoped WHERE (IDOR); regression tests accept any 4xx instead of exercising RBAC gate"
+        },
+        {
+          "pr": 538,
+          "issue": 711,
+          "findings": 3,
+          "specialist": "rust-backend",
+          "note": "no webhook dedup table (at-least-once delivery gap); env vars read at request time not startup; duplicate sync jobs under rapid webhook delivery"
+        },
+        {
+          "pr": 630,
+          "issue": 712,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "queryClient.clear() too aggressive (wipes non-user-scoped queries); no test for cache purge on logout"
+        },
+        {
+          "pr": 567,
+          "issue": 713,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "_alreadyRetried is a leaky public param on authenticatedFetchJson; admin/mfa-handler.ts shim has no @deprecated annotation"
+        },
+        {
+          "pr": 623,
+          "issue": 714,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "CronPicker cron validation and detectPreset round-trip have no tests; ambiguous preset detection for edge-case cron expressions"
+        },
+        {
+          "pr": 595,
+          "issue": 715,
+          "findings": 2,
+          "specialist": "pm-devops",
+          "note": "eas-cli devDep redundant alongside expo-github-action (adds ~80MB); --no-wait hides EAS build failures from CI"
+        },
+        {
+          "pr": 556,
+          "issue": 716,
+          "findings": 2,
+          "specialist": "pm-frontend",
+          "note": "buildFolderCrumbs pure helper has no tests; verification ran with exit 2 masking potential type errors in +1810 LOC diff"
+        }
+      ]
+    },
     {
       "run_at": "2026-05-28T14:42:00Z",
       "prs_scanned": 10,
