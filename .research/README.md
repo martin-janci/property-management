@@ -98,10 +98,21 @@ Setup at https://claude.ai/code/routines → **New routine**.
 | **Name** | `ppt-research` |
 | **Instructions** | full contents of `routine-prompt.md` |
 | **Repository** | `martin-janci/property-management`, branch `main`, ✅ *Allow unrestricted branch pushes* |
-| **Model** | Sonnet 4.6 (or Opus 4.7 for higher-quality analyses; Opus costs more) |
+| **Model** | Sonnet 4.6 (or Opus 4.8 for higher-quality analyses; Opus costs more) |
 | **Connectors** | **None.** The routine uses `gh` CLI via Bash. |
 | **Schedule** | Daily 05:00 local |
 | **API trigger** | Optional — handy for ad-hoc `text: "deep"` or `text: "reset"` runs |
+
+**Sibling routine — `ppt-research-dispatcher`.** Same setup as above with
+these overrides:
+
+| Field | Value |
+|---|---|
+| **Name** | `ppt-research-dispatcher` |
+| **Instructions** | full contents of `dispatcher-prompt.md` |
+| **Model** | **Opus 4.8** — the dispatcher's per-PR review (Phase 5) and self-review (Phase 8) both spawn Opus subagents internally; running the dispatcher itself on Opus avoids a Sonnet→Opus context handoff between phases and keeps reasoning consistent across the whole loop. |
+| **Schedule** | Every ~2h |
+| **Branch target** | commits to `dev` (not `main` — see *Routine vs dispatcher state* below) |
 
 ### Environment
 

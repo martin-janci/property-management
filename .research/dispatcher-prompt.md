@@ -855,6 +855,15 @@ if new_status != prev_status:
 
 SKIP if `$DISPATCHER_SKIP_MUTATING == 1` (recent-run gate from Phase 1 step 2).
 
+**Spawn config:** every reviewer subagent runs with
+`subagent_type=general-purpose, model=opus` (pinned to Opus 4.8). The
+reviewer's job — diff-triage, security read, scope-drift judgement, vendor
+the verdict line — benefits materially from Opus's reasoning over Sonnet's
+default; the dispatcher's per-PR review is the single point where the
+bot decides "merge or block", so cost-per-PR is well spent. Reviewer cap
+is unbounded by phase contract; the cost ceiling is the count of pending
+`review` rows in `assignments.json`.
+
 For each row where `status == "review"` AND (`reviewer_summary` is null OR `PR.headRefOid != row.last_reviewed_oid`):
 
 > You are a code reviewer for PR #<n>. Task: `<task_id>: <action>`. Specialist:
@@ -1427,7 +1436,7 @@ fi
 ```
 
 **Spawn:** one Task subagent (`subagent_type=general-purpose`,
-**`model=opus`** — pin to Opus 4.7 for sharper diff-of-runs reasoning;
+**`model=opus`** — pin to Opus 4.8 for sharper diff-of-runs reasoning;
 worth the extra cost for a temporary instrumented phase). NOT parallel
 with anything else — this is the last thing the run does.
 
@@ -1631,7 +1640,7 @@ the dispatcher never auto-applies a fix.
 This line is NOT in the regular Phase 7 list above because it depends on
 this whole phase being optional. Treat it as a Phase 8 epilogue line.
 
-**Cost note (TEMP_PHASE_8):** Opus 4.7 input is ~5× Sonnet. A typical
+**Cost note (TEMP_PHASE_8):** Opus 4.8 input is ~5× Sonnet. A typical
 self-review subagent run will consume ~5-10k input tokens (gathering bash
 outputs + writing 60 lines markdown). Per-run cost: roughly $0.10-0.30 in
 Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
