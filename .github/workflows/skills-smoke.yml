@@ -22,4 +22,6 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Run skill smoke checks (quick mode)
+        env:
+          SKIP_NETWORK: "1"
         run: ./.claude/skills/verify-all.sh --quick
