@@ -518,6 +518,66 @@ Define `epic_prefix(task_id)` as the first matching pattern:
 
 After candidate sort, walk the list and **claim at most 2 tasks per `epic_prefix` per run**, unless the epic has at least one task in `merged` status in `assignments.json` already (cold-epic protection: avoid spending all 3 slots on the same blocked epic). If the 3rd candidate has the same prefix as the first 2 picked, skip it and continue scanning for a different-prefix candidate. If no different-prefix candidate exists, claim only the 2 — `free_slots=1` is fine, do not pad with same-prefix.
 
+**Cross-PR dedup guards (NEW — close the duplicate-PR class that produced #641 vs #644):**
+
+For each candidate that survived the same-epic guard, run three checks before
+appending. ANY check tripping → skip this candidate (do NOT append; do NOT
+consume a slot), continue scanning the sorted candidate list. Log each skip
+to Phase 7 under `Dup-skipped:`.
+
+1. **Open-PR scan by slug stem.** Define
+   `stem(task_id) = re.sub(r'-(impl|fix|v2|retry|followup|wip)\d*$', '', task_id)`.
+   Compute `stem_cur = stem(candidate.id)`. Then:
+
+   ```bash
+   # One call per candidate. Cheap: gh paginates and we only need title + headRefName.
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "in:title $stem_cur" > /tmp/dup-title.json
+   gh pr list --state open --limit 100 \
+     --json number,title,headRefName,isDraft \
+     --search "head:auto-impl/$stem_cur" > /tmp/dup-head.json
+   ```
+
+   If either result is non-empty AND ANY matched PR's `headRefName` starts
+   with `auto-impl/` AND the matched `stem(headRefName.removeprefix("auto-impl/"))`
+   equals `stem_cur` → SKIP. Log:
+   `Dup-skip: <candidate.id> reason=open-pr stem=<stem_cur> conflicts_with=#<n>`.
+
+   Note: a plain title-substring match without the stem equality check would
+   over-trigger on bug-fix PRs that reference a stem in prose. The stem-of-
+   branch-name comparison is the load-bearing test.
+
+2. **Plan-slug stem uniqueness vs active assignments.** Even if no PR is
+   open yet (a sibling implementer is still mid-implement), reject same-stem
+   collisions against in-flight rows:
+
+   ```python
+   for row in assignments["assignments"]:
+       if row["status"] in ("in-progress", "review")
+              and stem(row["task_id"]) == stem_cur:
+           skip(reason=f"open-assignment {row['task_id']} status={row['status']}")
+           break
+   ```
+
+   This is the rule that would have prevented #644 from being claimed while
+   #641 was already in flight.
+
+3. **File-touch overlap warn.** Read `candidate`'s plan file at
+   `.research/plans/<candidate.id>.md`, parse the `## Files` section into a
+   set `files_cur`. For each open assignment row (`status in {in-progress,
+   review}`), parse the same section from its plan. Compute the intersection.
+   If `|files_cur ∩ files_other| >= 2` AND there is at least one non-test
+   file in the intersection → SKIP. Log:
+   `Dup-skip: <candidate.id> reason=file-overlap with=<other_id> shared=<count>:<first-3-paths>`.
+
+   Test-file-only overlap is allowed (parallel test work is fine). The
+   non-test guard catches the "two PRs editing the same component" case.
+
+Implementation note: all three guards rely on `stem(...)`. Define it once at
+the top of Phase 3 and reuse. The `gh pr list` calls are bounded by
+`free_slots` (≤3 per run × 2 calls) — at most 6 extra `gh` invocations.
+
 For each picked task: `branch = "auto-impl/" + first_40_chars_kebab(task_id)`.
 
 **Branch-prefix guard (ingestion contract — issue #573):**
@@ -556,7 +616,7 @@ Append to `assignments.json`:
 }
 ```
 
-If fewer than 3 candidates available (buffer drained), claim what's there — don't block. Log: `Phase 3: claimed=<N> same_epic_skipped=<K>`.
+If fewer than 3 candidates available (buffer drained), claim what's there — don't block. Log: `Phase 3: claimed=<N> same_epic_skipped=<K> dup_skipped=<D>` where `D` is the count of cross-PR-dedup-guard rejections (sum across the three guards above).
 
 ---
 
@@ -1033,6 +1093,7 @@ always appear so it is visible in dispatcher commits when the check actually ran
 ```
 Claimed (this run):       [<id> -> <specialist>, …]                (≤3, may be [])
 Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [] if none)
+Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
