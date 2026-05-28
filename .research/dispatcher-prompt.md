@@ -117,8 +117,8 @@ Per-run, claim up to **3 NEW** tasks. There is NO global in-progress cap —
 multiple cron runs can overlap and each may contribute 3 in-progress, so the
 global in-progress count CAN exceed 3. The 3-limit is throughput, not concurrency.
 
-- Phase 3: `free_slots = 3` (constant). Always try to claim 3 new tasks per run, regardless of current in-progress count.
-- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots`).
+- Phase 3: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the count of `{in-progress, review}` rows in `assignments.json`. Default `DISPATCHER_WIP_CAP=8`. Set `DISPATCHER_WIP_CAP=0` to restore the legacy `free_slots=3` (uncapped) behavior. See *WIP-throttle preamble* in Phase 3.
+- Phase 4: hard cap of 3 implementer subagents spawned per run (matches `free_slots` ceiling).
 
 ## Buffer
 
@@ -563,8 +563,54 @@ remaining claimable open tasks, tie-break by max priority. The dispatcher
 abandons the current target only when it is exhausted (0 claimable opens
 left). See `pick-target-epic.sh` for the full rule.
 
+### WIP-throttle preamble (PR 4/5 — addresses `approved-but-unmergeable-pool-grows`)
+
+Before sizing `free_slots`, compute the dispatcher's current
+**Work-In-Progress** count and derive how many new claims this run can
+absorb without growing the pool further. The throttle is a global cap on
+rows whose status is `in-progress` or `review`. Goal: prevent the
+approved-but-unmergeable pool from compounding when merges are slower
+than claims, and create back-pressure that surfaces merge-pipeline
+bottlenecks early.
+
+```bash
+WIP_CAP="${DISPATCHER_WIP_CAP:-8}"   # default 8; set 0 to disable
+if [ "$WIP_CAP" = "0" ]; then
+  free_slots=3
+  WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
+    .research/management/assignments.json)
+  echo "Phase 3 WIP throttle: disabled (DISPATCHER_WIP_CAP=0); WIP=$WIP_NOW (informational)"
+else
+  WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' \
+    .research/management/assignments.json)
+  # max(0, cap - WIP), then clamp to the per-run cap of 3.
+  HEADROOM=$(( WIP_CAP - WIP_NOW ))
+  [ "$HEADROOM" -lt 0 ] && HEADROOM=0
+  free_slots=$HEADROOM
+  [ "$free_slots" -gt 3 ] && free_slots=3
+  echo "Phase 3 WIP throttle: WIP=$WIP_NOW/$WIP_CAP free_slots=$free_slots (was 3)"
+fi
+```
+
+**Smooth back-pressure.** With WIP=7 and cap=8, this run claims at most
+1 new task. With WIP=8, claims 0. With WIP=10 (already over cap, e.g.
+because PRs piled into review), claims 0 until merges drain it.
+Phases 5 / 5.5 / 5.6 / 5.7 (review, merge, rebase, respawn) still run —
+they drain the pool. Only Phase 3 (new claims) is throttled.
+
+**Interaction with finish-first (PR 3/5).** The WIP throttle applies
+UNIFORMLY regardless of `DISPATCHER_FINISH_FIRST`. Finish-first
+concentrates the *quality* of claims (one epic); WIP throttles the
+*quantity* (how many can be open at once). The two compose: if WIP is at
+cap, no claim happens even when finish-first has a target ready. The
+target persists in `objective.json` and the next run picks it up once
+merges create headroom.
+
+**Disable via `DISPATCHER_WIP_CAP=0`.** When disabled, Phase 3 behaves
+as before (`free_slots=3`); the current WIP is logged informationally.
+
 ```python
-free_slots = 3   # constant per run
+free_slots = $free_slots   # from the WIP-throttle preamble above
 
 # gap 3 + issue #9: claimable iff every depends_on entry is in TERMINAL_IDS
 # (the set built in Phase 2.6 from active + archive — reuse it here, do not
@@ -1409,6 +1455,7 @@ Claimed (this run):       [<id> -> <specialist>, …]                (≤3, may 
 Same-epic skipped:        [<id> (would exceed 2/epic), …]          (item #2; [] if none)
 Dup-skipped:              [<id> reason=<open-pr|open-assignment|file-overlap> conflicts_with=<#n|task_id>, …]   (cross-PR dedup guards; [] if none)
 Target epic:              <epic_prefix open=N claimable=M action=<keep|select|repick|empty> | off>   (PR 3/5 finish-first; "off" when DISPATCHER_FINISH_FIRST≠1)
+WIP throttle:             <wip=N/cap=M free_slots=K | disabled (cap=0)>   (PR 4/5; smooth back-pressure on Phase 3 claims)
 Transitions (this run):   [<id> in-progress→review, …]             ([] if none)
 In-progress (global now): <N> total across all overlapping runs (no cap)
 In review (PR open):      <M>
@@ -1712,8 +1759,8 @@ Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
 ## HARD RULES
 
 - per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
-- NO global in-progress cap — parallel runs can overlap, total in-progress may exceed 3
-- per-run **per-epic** cap of 2 (item #2)
+- **WIP throttle (PR 4/5)**: `free_slots = min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))`. Default `DISPATCHER_WIP_CAP=8`. Set `=0` to disable. Counts rows in `{in-progress, review}`. Smooth back-pressure: claims trickle until exactly at cap, then 0 until merges drain.
+- per-run **per-epic** cap of 2 (item #2). Lifted when `DISPATCHER_FINISH_FIRST=1` AND a target epic is selected (PR 3/5).
 - state transitions are MANDATORY; `merged` / `failed` are TERMINAL
 - legacy `status == "done"` is equivalent to `merged` (counting only); never auto-migrate or rewrite those rows
 - `status_changed_at` bumped ONLY on actual status value change
