@@ -87,13 +87,13 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 CategoryChip(title: String(localized: "filter_for_sale"), icon: "tag.fill") {
                     var f = SearchFilters()
-                    f.listingType = .sale
+                    f.listingType = ListingKind.sale
                     coordinator.pendingSearchFilters = f
                     coordinator.selectedTab = .search
                 }
                 CategoryChip(title: String(localized: "filter_for_rent"), icon: "house.fill") {
                     var f = SearchFilters()
-                    f.listingType = .rent
+                    f.listingType = ListingKind.rent
                     coordinator.pendingSearchFilters = f
                     coordinator.selectedTab = .search
                 }
