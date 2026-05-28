@@ -68,28 +68,6 @@
       "merge_attempted_at": null
     },
     {
-      "task_id": "gap-10b-3-admin-health-ui",
-      "branch": "auto-impl/gap-10b-3-admin-health-ui",
-      "status": "review",
-      "claimed_at": "2026-05-28T15:17:09Z",
-      "last_updated": "2026-05-28T17:17:30Z",
-      "status_changed_at": "2026-05-28T15:27:37Z",
-      "pr_number": 708,
-      "pr_url": "https://github.com/martin-janci/property-management/pull/708",
-      "merged_at": null,
-      "specialist": "react-web",
-      "implementer_summary": "pr=708 status=done specialist=react-web scope_drift=false code_reuse_warn=none note=impl already on dev; fixed 2 test assertion bugs (getByText→getAllByText); biome+typecheck+build clean",
-      "reviewer_summary": "verdict=approve head_oid=2048686f106edabb341c8c3821819959d0205845 note=test-only-fix-getByText-to-getAllByText-plus-alerts-mock-all-ci-green",
-      "last_reviewed_oid": "2048686f106edabb341c8c3821819959d0205845",
-      "scope_drift": null,
-      "code_reuse_warn": null,
-      "empty_branch": null,
-      "rebase_attempts": 0,
-      "reclaim_attempts": 0,
-      "fix_rounds": 0,
-      "merge_attempted_at": null
-    },
-    {
       "task_id": "gap-10b-3-health-ui-mfa-bypass-fix",
       "branch": "auto-impl/gap-10b-3-health-ui-mfa-bypass-fix",
       "status": "review",
