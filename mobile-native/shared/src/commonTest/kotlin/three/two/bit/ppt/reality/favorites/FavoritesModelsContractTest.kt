@@ -41,6 +41,56 @@ class FavoritesModelsContractTest {
         assertNull(entry.listing)
     }
 
+    /**
+     * Pin the flat PortalFavoriteWithListing shape returned by `GET /api/v1/favorites`.
+     * The server embeds listing fields directly on the favorite row rather than nesting a
+     * full ListingSummary — the KMP client must decode these flat fields so the
+     * FavoritesScreen can render cards without extra requests.
+     */
+    @Test
+    fun favoriteEntry_decodes_flat_portal_favorite_with_listing_shape() {
+        val raw =
+            """
+            {
+              "id": "fav-1",
+              "listing_id": "00000000-0000-0000-0000-000000000001",
+              "created_at": "2026-04-26T10:00:00Z",
+              "title": "Bright 2br in Old Town",
+              "current_price": 185000,
+              "currency": "EUR",
+              "city": "Bratislava",
+              "property_type": "apartment",
+              "transaction_type": "sale",
+              "photo_url": "https://cdn.example.com/img/a.jpg",
+              "status": "active",
+              "price_changed": true,
+              "price_change_percentage": -5.2,
+              "price_alert_enabled": false
+            }
+            """
+                .trimIndent()
+        val entry: FavoriteEntry = json.decodeFromString(raw)
+        assertEquals("Bright 2br in Old Town", entry.title)
+        assertEquals(185_000L, entry.currentPrice)
+        assertEquals("EUR", entry.currency)
+        assertEquals("Bratislava", entry.city)
+        assertEquals("sale", entry.transactionType)
+        assertEquals("https://cdn.example.com/img/a.jpg", entry.photoUrl)
+        assertTrue(entry.priceChanged)
+        assertNull(entry.userId) // not in PortalFavoriteWithListing
+        assertNull(entry.listing) // no nested listing on this endpoint
+    }
+
+    @Test
+    fun checkFavoriteResponse_decodes_is_favorited_field() {
+        val trueRaw = """{"is_favorited": true}"""
+        val falseRaw = """{"is_favorited": false}"""
+        val trueResp: CheckFavoriteResponse = json.decodeFromString(trueRaw)
+        val falseResp: CheckFavoriteResponse = json.decodeFromString(falseRaw)
+        assertTrue(trueResp.isFavorited)
+        assertEquals(false, falseResp.isFavorited)
+    }
+
     @Test
     fun favoritesResponse_maps_total_alongside_entries() {
         val raw =
@@ -65,22 +115,17 @@ class FavoritesModelsContractTest {
             """
                 .trimIndent()
         val response: FavoritesResponse = json.decodeFromString(raw)
-        assertEquals(2, response.total)
+        assertEquals(2L, response.total)
         assertEquals(2, response.favorites.size)
         assertEquals("fav-2", response.favorites[1].id)
     }
 
-    @Test
-    fun addFavoriteRequest_encodes_listing_id_in_snake_case() {
-        val request = AddFavoriteRequest(listingId = "lst-42")
-        val encoded = json.encodeToString(request)
-        assertTrue(
-            encoded.contains("\"listing_id\":\"lst-42\""),
-            "missing snake_case key: $encoded",
-        )
-        assertTrue(!encoded.contains("listingId"), "leaked camelCase key: $encoded")
-    }
-
+    /**
+     * `AddFavoriteRequest` was removed when the add-favorite endpoint was corrected to
+     * `POST /api/v1/favorites/{listing_id}` (listing ID as path param).
+     * This test now verifies that [AddFavoriteResponse] decodes the server's `PortalFavorite`
+     * 201 response, which is the only wire-format concern remaining for the add flow.
+     */
     @Test
     fun addFavoriteResponse_decodes_minimal_payload() {
         val raw =

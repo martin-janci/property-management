@@ -40,13 +40,20 @@ class FavoritesRepository(
         }
     }
 
-    /** Add a listing to favorites. */
+    /**
+     * Add a listing to favorites.
+     *
+     * Endpoint: `POST /api/v1/favorites/{listing_id}` (listing ID is a path segment, not a body
+     * field — the server's `AddFavorite` body only carries an optional `notes` field).
+     */
     suspend fun addFavorite(listingId: String): Result<AddFavoriteResponse> {
         return try {
             val response =
-                client.post("$baseUrl/api/v1/favorites") {
+                client.post("$baseUrl/api/v1/favorites/$listingId") {
                     configureRequest()
-                    setBody(AddFavoriteRequest(listingId))
+                    // Empty body — the server accepts `{notes?: String}` which we omit.
+                    contentType(io.ktor.http.ContentType.Application.Json)
+                    setBody("{}")
                 }
 
             if (response.status.isSuccess()) {
@@ -83,20 +90,29 @@ class FavoritesRepository(
         }
     }
 
-    /** Check if a listing is favorited. */
+    /**
+     * Check if a listing is favorited.
+     *
+     * Endpoint: `GET /api/v1/favorites/{listing_id}/check`
+     *
+     * The server **always** returns HTTP 200 with body `{"is_favorited": bool}` — it does NOT
+     * return 404 for an un-favorited listing.  We must parse the response body instead of
+     * treating any 2xx as `true`.
+     */
     suspend fun isFavorite(listingId: String): Result<Boolean> {
         return try {
             val response =
                 client.get("$baseUrl/api/v1/favorites/$listingId/check") { configureRequest() }
 
-            if (response.status.isSuccess()) {
-                Result.success(true)
-            } else if (response.status == HttpStatusCode.NotFound) {
-                Result.success(false)
-            } else if (response.status == HttpStatusCode.Unauthorized) {
-                Result.success(false)
-            } else {
-                Result.failure(FavoritesException("Failed to check favorite: ${response.status}"))
+            when {
+                response.status.isSuccess() -> {
+                    val body: CheckFavoriteResponse = response.body()
+                    Result.success(body.isFavorited)
+                }
+                response.status == HttpStatusCode.Unauthorized ->
+                    Result.success(false) // unauthenticated → treat as not-favorited
+                else ->
+                    Result.failure(FavoritesException("Failed to check favorite: ${response.status}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
