@@ -20,13 +20,39 @@ mode: cloud-ok
 
 Stem-uniqueness is enforced separately as `T20` in `dispatcher-self-test.sh`.
 
+### Finish-first picker (PR 3/5 — `pick-target-epic.sh`)
+
+`.research/pick-target-epic.sh` selects ONE target epic per dispatcher run
+(behind `DISPATCHER_FINISH_FIRST=1`) and writes it to
+`.research/management/objective.json`. The dispatcher's Phase 3 filters
+claim candidates to that target epic, biasing all 3 slots toward
+finishing one epic before starting another. Rule: **closest-to-done** —
+prefer the epic with fewest claimable open tasks; tie-break by max
+priority. Idempotent: KEEPs the current target until exhausted.
+
+Schema for `objective.json`:
+
+```json
+{ "schema_version": 1,
+  "epic_prefix": "gap-10a",
+  "selected_at": "2026-05-28T18:50:52Z",
+  "last_action": "select|keep|repick",
+  "reason": "<one-line explanation>",
+  "stats_at_selection": { "open": 2, "claimable": 1 } }
+```
+
+Enforced by self-test `T21` (epic_prefix matches `gap-N[a-z]?` or
+`pm-<role>` or the `NONE` sentinel for no-claimable-work runs).
+
 ## Inputs
 - `.research/management/coverage.json`, `action-list.json`, `assignments.json` (override via `COVERAGE` / `ACTION_LIST` / `ASSIGN` env).
 - `GOAL_CHECK_ENFORCE=1` makes the hard-fail subset (GC2) exit non-zero. Default: record-only (exit 0).
+- `DISPATCHER_FINISH_FIRST=1` makes Phase 3 invoke `pick-target-epic.sh` and filter claims to one epic.
 
 ## Steps
 1. `./.research/goal-check.sh` — human-readable, record-only.
 2. `./.research/goal-check.sh --json` — emit the `goal_checks[]` array (the dispatcher embeds the summary in its commit).
+3. `./.research/pick-target-epic.sh --json` — dry-run; `--update` writes `objective.json`. Dispatcher Phase 3 always runs with `--update` under `DISPATCHER_FINISH_FIRST=1`.
 
 ## Deterministic verification
 - `test -x .research/goal-check.sh`
@@ -34,9 +60,11 @@ Stem-uniqueness is enforced separately as `T20` in `dispatcher-self-test.sh`.
 - Against the fixtures, GC1 reports `orphans=1 done_with_open_gap=1` and T20 reports a duplicate stem.
 
 ## Smoke check
-`COVERAGE=.research/fixtures/goal-check/coverage.json ACTION_LIST=.research/fixtures/goal-check/action-list.json ASSIGN=.research/fixtures/goal-check/assignments.json ./.research/goal-check.sh --json | jq -e 'length >= 3'`
+- `COVERAGE=.research/fixtures/goal-check/coverage.json ACTION_LIST=.research/fixtures/goal-check/action-list.json ASSIGN=.research/fixtures/goal-check/assignments.json ./.research/goal-check.sh --json | jq -e 'length >= 3'`
+- `bash .research/test-pick-target-epic.sh` (5-case synthetic-fixture smoke)
 
 ## Cross-references
-- `.research/dispatcher-prompt.md` Phase 6 (invocation), HARD RULES.
-- `.research/dispatcher-self-test.sh` T20.
+- `.research/dispatcher-prompt.md` Phase 3 (finish-first preamble + filter), Phase 6 (goal-check invocation), Phase 7 (Target-epic line), HARD RULES.
+- `.research/dispatcher-self-test.sh` T20 (stem-uniqueness), T21 (objective.json shape).
+- `.research/pick-target-epic.sh` + `.research/test-pick-target-epic.sh`.
 - `docs/superpowers/specs/2026-05-28-dispatcher-goal-convergence-design.md` (Pillar 1).

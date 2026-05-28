@@ -477,6 +477,31 @@ else
 fi
 echo
 
+# --- T21: objective.json sanity (PR 3/5 finish-first) ----------------------
+# When DISPATCHER_FINISH_FIRST=1, the dispatcher reads/writes
+# .research/management/objective.json. T21 enforces:
+#   * if the file exists, it's valid JSON with the expected schema
+#   * epic_prefix is a non-empty string and either matches one of the
+#     epic-prefix regexes used by the dispatcher (gap-N[a-z]? or pm-<role>)
+#     OR equals "NONE" (the picker's "no claimable work" sentinel).
+# Soft-fail: if the file doesn't exist, T21 is a no-op (the picker
+# creates it on first finish-first run; absence is the default state).
+OBJECTIVE_FILE="${OBJECTIVE_FILE:-.research/management/objective.json}"
+if [ -f "$OBJECTIVE_FILE" ]; then
+  echo "T21 objective.json schema + epic_prefix shape (PR 3/5)"
+  if ! jq -e '.schema_version and .epic_prefix and .selected_at' "$OBJECTIVE_FILE" >/dev/null 2>&1; then
+    fail "$OBJECTIVE_FILE missing one of {schema_version, epic_prefix, selected_at}"
+  else
+    EP=$(jq -r '.epic_prefix' "$OBJECTIVE_FILE")
+    case "$EP" in
+      NONE) note "objective=NONE (no claimable work)";;
+      gap-[0-9]*|pm-*) note "objective epic_prefix='$EP' is well-formed";;
+      *) fail "objective.epic_prefix='$EP' does not match gap-N[a-z]? or pm-<role> or NONE";;
+    esac
+  fi
+  echo
+fi
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"
