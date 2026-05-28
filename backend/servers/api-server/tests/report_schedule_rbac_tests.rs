@@ -138,10 +138,7 @@ fn put_schedule_req(schedule_id: Uuid, org_id: Uuid, body: serde_json::Value) ->
 /// WHERE found no row in production) satisfy this contract.
 fn assert_rejected(status: StatusCode, label: &str) {
     let code = status.as_u16();
-    assert!(
-        (400..500).contains(&code),
-        "{label}: expected 4xx rejection, got {status}"
-    );
+    assert!((400..500).contains(&code), "{label}: expected 4xx rejection, got {status}");
 }
 
 // ---------------------------------------------------------------------------
@@ -171,9 +168,7 @@ async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
         .uri(format!("/api/v1/reports/schedules/{}", schedule))
         .header("X-Tenant-ID", org.to_string())
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            json!({"recipients": ["attacker@evil.test"]}).to_string(),
-        ))
+        .body(Body::from(json!({"recipients": ["attacker@evil.test"]}).to_string()))
         .unwrap();
 
     let response = app.execute(req).await;
