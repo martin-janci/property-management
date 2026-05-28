@@ -747,14 +747,8 @@ mod tests {
 
     #[test]
     fn event_kind_strings_are_stable_and_match_db_constraint() {
-        assert_eq!(
-            SupportToolingEventKind::SupportDataViewed.as_str(),
-            "support_data_viewed"
-        );
-        assert_eq!(
-            SupportToolingEventKind::SupportUserSearched.as_str(),
-            "support_user_searched"
-        );
+        assert_eq!(SupportToolingEventKind::SupportDataViewed.as_str(), "support_data_viewed");
+        assert_eq!(SupportToolingEventKind::SupportUserSearched.as_str(), "support_user_searched");
         assert_eq!(
             SupportToolingEventKind::SupportSessionsRevoked.as_str(),
             "support_sessions_revoked"
@@ -781,8 +775,7 @@ mod tests {
         let json = serde_json::to_value(&props).expect("serialize");
         assert_eq!(json["tenant_count"], 42);
         assert_eq!(json["fault_total"], 1234);
-        let back: SupportDataViewedProps =
-            serde_json::from_value(json).expect("deserialize");
+        let back: SupportDataViewedProps = serde_json::from_value(json).expect("deserialize");
         assert_eq!(back.tenant_count, 42);
         assert_eq!(back.fault_total, 1234);
     }
@@ -808,10 +801,7 @@ mod tests {
             revoked_count: 5,
         };
         let json = serde_json::to_value(&props).expect("serialize");
-        assert_eq!(
-            json["target_user_id"].as_str().unwrap(),
-            target.to_string()
-        );
+        assert_eq!(json["target_user_id"].as_str().unwrap(), target.to_string());
         assert_eq!(json["revoked_count"], 5);
     }
 
@@ -824,8 +814,7 @@ mod tests {
         ];
         for kind in kinds {
             let json = serde_json::to_value(kind).expect("serialize");
-            let back: SupportToolingEventKind =
-                serde_json::from_value(json).expect("deserialize");
+            let back: SupportToolingEventKind = serde_json::from_value(json).expect("deserialize");
             assert_eq!(kind, back);
         }
     }
