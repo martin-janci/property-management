@@ -124,7 +124,7 @@ describe('SupportDataPage', () => {
   });
 
   it('shows error banner when endpoint fails', async () => {
-    mockFetch(() => ({ ok: false, status: 500, json: async () => ({}) } as Response));
+    mockFetch(() => ({ ok: false, status: 500, json: async () => ({}) }) as Response);
     renderPage();
     await waitFor(() => expect(screen.getByRole('alert')).toBeDefined());
     expect(screen.getByRole('alert').textContent).toContain('Failed to load support data');
