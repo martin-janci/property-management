@@ -1060,6 +1060,143 @@ Hang alerts:
 
 ---
 
+<!-- ============================================================ -->
+<!-- TEMPORARY PHASE — REMOVE BY 2026-06-30 OR ONCE BASELINE IS   -->
+<!-- UNDERSTOOD. Search for TEMP_PHASE_8 to find every related    -->
+<!-- artifact (this section, HARD RULE bullet, README in           -->
+<!-- .research/self-improvement/). Reports under                   -->
+<!-- .research/self-improvement/*.md can stay as historical record  -->
+<!-- after removal — they're write-once, never read by the         -->
+<!-- routine.                                                       -->
+<!-- ============================================================ -->
+
+## Phase 8 — Self-review (TEMPORARY, TEMP_PHASE_8)
+
+**Purpose:** generate a brief markdown post-mortem of this run so the
+operator can spot recurring failure modes, token-spending anomalies, or
+optimization opportunities that aren't visible from Phase 7's structured
+counters alone. Write-once → human-read. The routine never reads its own
+reports.
+
+**Off-switch:** if `DISPATCHER_SELF_REVIEW=0` (or empty), SKIP this phase
+entirely. Default behaviour when the env var is unset or `=1` is to run.
+Skip is also implied when `$DISPATCHER_SKIP_MUTATING=1` (recent-run gate)
+— no point reviewing a phase-2-only reconciliation.
+
+```bash
+if [ "${DISPATCHER_SELF_REVIEW:-1}" != "1" ] || [ "${DISPATCHER_SKIP_MUTATING:-0}" = "1" ]; then
+  echo "Phase 8: self-review skipped (DISPATCHER_SELF_REVIEW=${DISPATCHER_SELF_REVIEW:-1}, skip_mutating=${DISPATCHER_SKIP_MUTATING:-0})"
+  # fall through to end of run
+else
+  # Spawn the reviewer (see below)
+fi
+```
+
+**Spawn:** one Task subagent (`subagent_type=general-purpose`,
+**`model=opus`** — pin to Opus 4.7 for sharper diff-of-runs reasoning;
+worth the extra cost for a temporary instrumented phase). NOT parallel
+with anything else — this is the last thing the run does.
+
+> You are the dispatcher self-review agent. Your job: produce ONE short
+> markdown post-mortem of the just-finished dispatcher run and write it
+> to `.research/self-improvement/<iso8601-utc>.md`.
+>
+> Inputs you have (use bash):
+>
+> ```bash
+> # 1. The Phase 7 summary from the dispatcher commit that just landed
+> git -C . log -1 --format="%H%n%s%n%n%b"
+>
+> # 2. Recent dispatcher commits for trend (last 8 chore(research): commits)
+> git log --grep="chore(research): dispatcher" --pretty="%ai %s" -8
+>
+> # 3. Self-test status against current state
+> bash .research/dispatcher-self-test.sh 2>&1 | tail -25
+>
+> # 4. Active assignments snapshot (small now post-archive split)
+> jq '{active: (.assignments | length), by_status: (.assignments | group_by(.status) | map({s: .[0].status, n: length}))}' \
+>   .research/management/assignments.json
+>
+> # 5. What got archived this run (count only — never load archive into context)
+> jq '.assignments | length' .research/management/assignments-archive.json
+>
+> # 6. Phase 7 grep — look for non-empty alert lines in the commit body
+> git log -1 --format="%b" | grep -E "^(Empty branches|Failed-dep cascades|Scope-drift|Code-reuse|CI-stuck|WARN|ALERT|disk_)"
+> ```
+>
+> Inputs you do NOT need (do not read these — they bloat context):
+> - `.research/management/assignments-archive.json` content
+> - `.research/management/action-list-archive.json` content
+> - `.research/management/coverage.json`
+> - the dispatcher-prompt.md itself (you ARE the routine; you've seen it)
+>
+> Produce the report — keep it tight, **≤ 60 lines of markdown**:
+>
+> ```markdown
+> # Dispatcher self-review — <iso8601-utc>
+>
+> Commit: <sha> — <short subject>
+>
+> ## Run shape
+> Claimed=<C> Reviewed=<R> Merged-attempts=<M> Merged-now=<X> Failed=<F> Active=<A>
+> Buffer=<claimable>/<open> dep-blocked=<n>
+> Hang alerts: WARN=<n> ALERT=<n>
+>
+> ## What went well
+> - <1-3 bullets — what worked, what shipped, what got unblocked>
+>
+> ## Anomalies / errors this run
+> - <bullets — sandbox reclaims, empty-branches, scope-drift flags, CI-stuck,
+>   reviewer dedup-skipped, disk warnings, anything unusual>
+> - If nothing unusual: "None. Steady-state run."
+>
+> ## Trend vs. last 8 runs
+> - <bullet — is failure rate rising, is buffer draining, are PRs hanging longer,
+>   is review backlog growing, are version-bump commits eating throughput>
+>
+> ## Improvement ideas (concrete, scoped, optional)
+> - <0-3 bullets — prompt edits, new self-test cases, missing automation>
+> - <each one bounded to "1 line of change" / "small PR" / "needs separate spec">
+>
+> ## Self-test
+> <copy the last few lines of dispatcher-self-test.sh output verbatim>
+> ```
+>
+> Hard constraints:
+>
+> 1. Output file path EXACTLY: `.research/self-improvement/$(date -u +%Y-%m-%dT%H-%M-%SZ).md`.
+> 2. Do NOT modify anything else. No edits to assignments / action-list /
+>    prompts / skills. If you see something that looks broken, mention it
+>    under "Improvement ideas" — do NOT fix it.
+> 3. Do NOT commit. Just write the file. Phase 6 has already pushed the
+>    dispatcher commit; this report lives uncommitted in the working tree
+>    until the operator decides whether to keep it. The
+>    `.research/self-improvement/` dir is git-tracked so reports DO show
+>    up in `git status` as untracked — that surfaces them naturally.
+> 4. Return EXACTLY (one line): `selfreview=ok path=<report-path> notes=<short>`
+
+Capture the return line into the Phase 7 summary stdout as one extra line:
+
+```
+Self-review: <selfreview=ok path=... notes=... | skipped: DISPATCHER_SELF_REVIEW=0 | skipped: SKIP_MUTATING>
+```
+
+This line is NOT in the regular Phase 7 list above because it depends on
+this whole phase being optional. Treat it as a Phase 8 epilogue line.
+
+**Cost note (TEMP_PHASE_8):** Opus 4.7 input is ~5× Sonnet. A typical
+self-review subagent run will consume ~5-10k input tokens (gathering bash
+outputs + writing 60 lines markdown). Per-run cost: roughly $0.10-0.30 in
+Opus pricing. At 12 runs/day that's ~$2-4/day. Acceptable for the
+2-4 weeks of baseline-collection this phase exists for; **remove before
+30 days are out** unless you've decided to keep it longer.
+
+---
+
+<!-- ============================================================ -->
+<!-- END TEMP_PHASE_8                                              -->
+<!-- ============================================================ -->
+
 ## HARD RULES
 
 - per-run cap: claim at most 3 NEW tasks AND spawn at most 3 implementer subagents
@@ -1094,11 +1231,7 @@ Hang alerts:
 - **Tier 2 kick logging** (issue #5) — capture HTTP code + first 200 chars of response body; surface in commit message so a broken/wedged planner endpoint is visible without trawling trigger history.
 - **reviewer dedup guard** (issue #3) — reviewer subagent MUST `GET /pulls/<n>/reviews` first; if a bot review for the current `headRefOid` already exists within 2h, skip posting and return `note=dedup-existing-review-at-<iso>`. Defense-in-depth against the skip-gate window-edge case.
 - **subagent workspace isolation** (issue #7) — every Phase 4 (implementer), Phase 5.6 (rebaser), and Phase 5.7 (followup-respawn implementer) subagent MUST run its `git checkout` / `gh pr checkout` / build / commit work inside `/tmp/ppt-worktrees/<task_id>/` via the standard `git worktree add` preamble. NEVER touch the dispatcher's own working tree. Phase 5.5 (merger, API-only) and Phase 2 (read-only reconciliation) are exempt.
-- **active/archive split** (issue #9 — token spending) — `assignments.json` carries ONLY non-terminal rows (`in-progress`, `review`). Terminal rows (`merged`, `failed`, `done`) live in `assignments-archive.json`. Phase 6 moves rows on terminal transition (`active −= moved; archive ∪= moved`) atomically. Phase 7 totals are counted from the archive via `jq | length` (file never enters LLM context). The archive is frozen — never rewrite a row already there.
-- **action-list active/archive split** (issue #9) — `action-list.json` carries ONLY `open` and `in-progress` items. `done` / `dropped` items live in `action-list-archive.json`, which the dispatcher does NOT read in steady state. Phase 2.7 cascades and Phase 3 claims write back to the active file; the archive is human-audit-only.
-- **lazy `coverage.json` read** (issue #9) — `coverage.json` is read ONLY inside Phase 2.6 Tier 1 (when `open_claimable_count < 18`). Never load it in Phase 1.
-- **smart-triage reviewer** (issue #9) — Phase 5 reviewer subagents MUST pull file-list metadata first (`gh pr view --json files`) and only `gh pr diff` selectively per path. Target ≤ 25k tokens of diff content per review. Hot-path files (auth, security, migrations) always get full diff regardless of size; lockfiles + generated clients are always skipped.
-- **cross-file task_id uniqueness** (issue #9) — Phase 3 MUST refuse to claim any `task_id` already present in EITHER `assignments.json` (active) OR `assignments-archive.json` (terminal). Reclaiming a terminal task_id would resurrect a shipped/failed task with a fresh `claimed_at`.
+- **TEMP_PHASE_8 — self-review** — Phase 8 spawns an Opus subagent that writes a post-mortem markdown to `.research/self-improvement/<iso8601>.md`. Off-switch: `DISPATCHER_SELF_REVIEW=0`. The subagent must NOT modify any state file or commit anything. **This phase is temporary** — remove by 2026-06-30 (search `TEMP_PHASE_8` to find every related artifact).
 
 ---
 
