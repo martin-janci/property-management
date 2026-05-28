@@ -502,6 +502,25 @@ if [ -f "$OBJECTIVE_FILE" ]; then
   echo
 fi
 
+# --- T22: WIP throttle bounds (PR 4/5) -------------------------------------
+# Soft invariant: WIP (count of {in-progress, review} rows) should stay
+# within DISPATCHER_WIP_CAP. State on disk may already be over cap when the
+# throttle is first enabled, so being-over-cap is a `note`, not a `fail`.
+# Hard-fail only when WIP exceeds 2 × cap (clear runaway).
+echo "T22 WIP throttle bounds (PR 4/5)"
+WIP_CAP_FOR_TEST="${DISPATCHER_WIP_CAP:-8}"
+WIP_NOW=$(jq '[.assignments[] | select(.status=="in-progress" or .status=="review")] | length' "$ASSIGN")
+if [ "$WIP_CAP_FOR_TEST" = "0" ]; then
+  note "WIP throttle disabled (DISPATCHER_WIP_CAP=0); current WIP=$WIP_NOW"
+elif [ "$WIP_NOW" -gt $(( WIP_CAP_FOR_TEST * 2 )) ]; then
+  fail "WIP=$WIP_NOW exceeds 2× cap (cap=$WIP_CAP_FOR_TEST) — clear runaway, merge throughput collapsed"
+elif [ "$WIP_NOW" -gt "$WIP_CAP_FOR_TEST" ]; then
+  note "WIP=$WIP_NOW over cap=$WIP_CAP_FOR_TEST (drain by merges; Phase 3 will claim 0 until under cap)"
+else
+  note "WIP=$WIP_NOW within cap=$WIP_CAP_FOR_TEST"
+fi
+echo
+
 # --- Summary ---------------------------------------------------------------
 if [ "$FAIL" = "0" ]; then
   echo "==> dispatcher-self-test: PASS"

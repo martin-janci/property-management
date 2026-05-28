@@ -20,6 +20,25 @@ mode: cloud-ok
 
 Stem-uniqueness is enforced separately as `T20` in `dispatcher-self-test.sh`.
 
+### WIP throttle (PR 4/5 — `DISPATCHER_WIP_CAP`)
+
+Phase 3's `free_slots` is no longer a constant 3. It's
+`min(3, max(0, DISPATCHER_WIP_CAP - WIP_NOW))` where `WIP_NOW` is the
+count of `{in-progress, review}` rows in `assignments.json`. Default
+cap is **8**; set `DISPATCHER_WIP_CAP=0` to disable and restore the
+legacy uncapped behavior.
+
+Goal: bound the approved-but-unmergeable pool. When the pool grows
+faster than merges drain it, the throttle creates back-pressure on new
+claims so Phase 5/5.5/5.6 can catch up.
+
+Self-test `T22` enforces a soft bound (note when over cap, hard-fail
+only at `WIP > 2 × cap`).
+
+The WIP throttle composes with finish-first: WIP bounds the *quantity*
+of in-flight work; finish-first bounds the *quality* (one epic at a
+time). Both apply uniformly; finish-first does not override the WIP cap.
+
 ### Finish-first picker (PR 3/5 — `pick-target-epic.sh`)
 
 `.research/pick-target-epic.sh` selects ONE target epic per dispatcher run
@@ -48,6 +67,7 @@ Enforced by self-test `T21` (epic_prefix matches `gap-N[a-z]?` or
 - `.research/management/coverage.json`, `action-list.json`, `assignments.json` (override via `COVERAGE` / `ACTION_LIST` / `ASSIGN` env).
 - `GOAL_CHECK_ENFORCE=1` makes the hard-fail subset (GC2) exit non-zero. Default: record-only (exit 0).
 - `DISPATCHER_FINISH_FIRST=1` makes Phase 3 invoke `pick-target-epic.sh` and filter claims to one epic.
+- `DISPATCHER_WIP_CAP=<n>` (default 8) caps in-flight work; `=0` disables. Phase 3 derives `free_slots` from `cap - WIP_NOW`.
 
 ## Steps
 1. `./.research/goal-check.sh` — human-readable, record-only.
@@ -64,7 +84,7 @@ Enforced by self-test `T21` (epic_prefix matches `gap-N[a-z]?` or
 - `bash .research/test-pick-target-epic.sh` (5-case synthetic-fixture smoke)
 
 ## Cross-references
-- `.research/dispatcher-prompt.md` Phase 3 (finish-first preamble + filter), Phase 6 (goal-check invocation), Phase 7 (Target-epic line), HARD RULES.
-- `.research/dispatcher-self-test.sh` T20 (stem-uniqueness), T21 (objective.json shape).
+- `.research/dispatcher-prompt.md` Phase 3 (WIP-throttle preamble, finish-first preamble + filter), Phase 6 (goal-check invocation), Phase 7 (WIP-throttle + Target-epic lines), HARD RULES.
+- `.research/dispatcher-self-test.sh` T20 (stem-uniqueness), T21 (objective.json shape), T22 (WIP bounds).
 - `.research/pick-target-epic.sh` + `.research/test-pick-target-epic.sh`.
 - `docs/superpowers/specs/2026-05-28-dispatcher-goal-convergence-design.md` (Pillar 1).
