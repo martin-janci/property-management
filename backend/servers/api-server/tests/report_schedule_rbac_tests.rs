@@ -16,14 +16,17 @@
 //!    threads `caller_org_id` into the SQL WHERE clause so the UPDATE finds no
 //!    row (→ 404) and the original record is unchanged.
 //!
-//! # TestApp wiring caveat (consistent with workflow/equipment IDOR tests)
+//! # TestApp wiring caveat
 //!
-//! `TestApp` mounts the router without `host_tenant_middleware`, so
-//! `RlsConnection` cannot derive a tenant from the Host header. Requests that
-//! lack a valid Bearer JWT (or carry a forged `X-Tenant-Context` header without
-//! one) are rejected by the auth gate with 401/403. That still satisfies the
-//! security contract — the operation never reached the DB row — so these tests
-//! assert a generic 4xx "rejected" outcome rather than a specific code.
+//! `TestApp` mounts the router without `host_tenant_middleware`, so there is no
+//! `ResolvedTenant` extension. `ValidatedTenantExtractor` therefore looks for a
+//! `X-Tenant-ID` header (UUID string) to identify the tenant. Without a Bearer
+//! JWT the `AuthUser` extractor returns 401 before the tenant or RBAC check
+//! fires. The tests therefore assert a generic 4xx "rejected" outcome: the
+//! security contract is "the mutating operation must not be applied", which
+//! holds whether the rejection is 401 (auth gate) or 404 (tenant-scoped WHERE
+//! in production). This pattern matches `push_token_tests.rs` and the workflow /
+//! equipment IDOR tests.
 
 #[allow(dead_code)]
 mod common;
@@ -112,27 +115,21 @@ async fn seed_schedule(pool: &PgPool, org_id: Uuid) -> Uuid {
 
 /// Build a PUT request targeting `PUT /api/v1/reports/schedules/{id}`.
 ///
-/// Uses `X-Tenant-Context` to claim membership in `org_id` (the same
-/// approach as the workflow/equipment IDOR tests). Without a valid bearer
-/// JWT the auth gate rejects the request before it touches the DB — which
-/// is exactly the security property we're verifying.
+/// Sends `X-Tenant-ID` (the UUID header read by `ValidatedTenantExtractor`)
+/// but no Bearer JWT. Without a JWT, `AuthUser` returns 401 before the
+/// RBAC or IDOR check runs — demonstrating the auth gate is the outer
+/// line of defence. In production (with a valid JWT for Org B) the
+/// tenant-scoped WHERE clause would return no row and the handler
+/// returns 404, achieving the IDOR isolation contract.
 fn put_schedule_req(
     schedule_id: Uuid,
     org_id: Uuid,
-    user_id: Uuid,
     body: serde_json::Value,
 ) -> Request<Body> {
-    let ctx = json!({
-        "tenant_id": org_id,
-        "user_id":   user_id,
-        "role":      "Manager",
-    })
-    .to_string();
-
     Request::builder()
         .method(Method::PUT)
         .uri(format!("/api/v1/reports/schedules/{}", schedule_id))
-        .header("X-Tenant-Context", ctx)
+        .header("X-Tenant-ID", org_id.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -155,12 +152,12 @@ fn assert_rejected(status: StatusCode, label: &str) {
 // Test 1 — #614: unauthorized role is rejected
 // ---------------------------------------------------------------------------
 
-/// A user with a sub-manager role (here: no membership / no JWT) is rejected
-/// before any DB mutation occurs.
+/// A user with a sub-manager role (here: no valid JWT) is rejected before any
+/// DB mutation occurs.
 ///
-/// The `X-Tenant-Context` header without a bearer JWT is refused by the
-/// `RlsConnection` extractor's auth gate, so this test doubles as a "no auth
-/// at all → 4xx" check as well as the role-gate regression.
+/// Sends `X-Tenant-ID` (correct header for `ValidatedTenantExtractor`) but no
+/// Bearer JWT. The `AuthUser` extractor returns 401 before the RBAC check
+/// fires, demonstrating the auth gate is the outer line of defence.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -171,21 +168,12 @@ async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
     seed_membership(&pool, org, user, "Resident").await;
     let schedule = seed_schedule(&pool, org).await;
 
-    // Craft a PUT with a low-privilege role claim in the context header.
-    // Without a Bearer JWT, the `AuthUser` / `RlsConnection` extractor rejects
-    // the request before the role check even runs — demonstrating the auth gate
-    // is the first line of defence.
-    let ctx = json!({
-        "tenant_id": org,
-        "user_id":   user,
-        "role":      "Resident",
-    })
-    .to_string();
-
+    // X-Tenant-ID is the header read by ValidatedTenantExtractor.
+    // Without a Bearer JWT, AuthUser returns 401 before RBAC runs.
     let req = Request::builder()
         .method(Method::PUT)
         .uri(format!("/api/v1/reports/schedules/{}", schedule))
-        .header("X-Tenant-Context", ctx)
+        .header("X-Tenant-ID", org.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
             json!({"recipients": ["attacker@evil.test"]}).to_string(),
@@ -215,13 +203,14 @@ async fn update_schedule_without_manager_role_is_rejected(pool: PgPool) {
 // Test 2 — #624: cross-tenant mutation is rejected
 // ---------------------------------------------------------------------------
 
-/// A caller authenticated in Org B attempts to mutate a report schedule
-/// belonging to Org A. The request must be rejected (4xx) and the record
-/// must remain unchanged.
+/// A caller claiming Org B attempts to mutate a report schedule belonging to
+/// Org A. The request must be rejected (4xx) and the record must remain
+/// unchanged.
 ///
-/// In production the fix returns 404 (the tenant-scoped WHERE finds no row).
-/// In TestApp (no host_tenant_middleware) the auth gate returns 401/403.
-/// Either way: the cross-tenant mutation is never applied.
+/// In production (with a valid Manager JWT for Org B) the repo UPDATE
+/// includes `AND organization_id = org_b_id` which finds no row for
+/// schedule_in_a → 404. In TestApp (no JWT) the auth gate fires first →
+/// 401. Either way the cross-tenant mutation is never applied.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_schedule_from_other_org_is_rejected(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
@@ -237,12 +226,11 @@ async fn update_schedule_from_other_org_is_rejected(pool: PgPool) {
     let user_b = seed_user(&pool, "user-b@sched-rbac.test").await;
     seed_membership(&pool, org_b, user_b, "Manager").await;
 
-    // Attacker (Org B) tries to update Org A's schedule.
+    // Attacker (Org B) sends X-Tenant-ID=org_b but targets schedule_in_a.
     let response = app
         .execute(put_schedule_req(
             schedule_in_a,
             org_b,
-            user_b,
             json!({"recipients": ["attacker@evil.test"]}),
         ))
         .await;
@@ -268,7 +256,7 @@ async fn update_schedule_from_other_org_is_rejected(pool: PgPool) {
 // Test 3 — No auth header at all → 401
 // ---------------------------------------------------------------------------
 
-/// Unauthenticated request (no Authorization header, no X-Tenant-Context)
+/// Unauthenticated request (no Authorization header, no tenant header)
 /// must be rejected with 4xx before any DB access.
 #[sqlx::test(migrator = "db::MIGRATOR")]
 async fn update_schedule_without_any_auth_is_rejected(pool: PgPool) {
