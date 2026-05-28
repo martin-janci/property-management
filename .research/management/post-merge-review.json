@@ -1,9 +1,58 @@
 {
-  "generated": "2026-05-27T14:30:00Z",
+  "generated": "2026-05-28T11:19:16Z",
   "window": "14d",
   "base": "dev",
   "scope": null,
   "runs": [
+    {
+      "run_at": "2026-05-28T11:19:16Z",
+      "prs_scanned": 15,
+      "clean": [642, 648, 649, 652, 653, 655, 656, 663, 664],
+      "with_issues": [
+        {
+          "pr": 542,
+          "issue": 673,
+          "findings": 1,
+          "specialist": "pm-security",
+          "note": "e-sig nonce not persisted — replay still possible for full 7-day TTL; no tracking issue filed before PR merged"
+        },
+        {
+          "pr": 632,
+          "issue": 676,
+          "findings": 1,
+          "specialist": "pm-frontend",
+          "note": "ppt_tenants localStorage not refreshed on token refresh — stale role persists after server-side membership removal"
+        },
+        {
+          "pr": 645,
+          "issue": 677,
+          "findings": 1,
+          "specialist": "pm-security",
+          "note": "audit-hash domain changed (PascalCase→snake_case) without backfill — existing rows will fail verify_integrity"
+        },
+        {
+          "pr": 636,
+          "issue": 679,
+          "findings": 1,
+          "specialist": "pm-qa",
+          "note": "IDOR test uses unauthenticated request — doesn't exercise authenticated cross-org RLS path"
+        },
+        {
+          "pr": 650,
+          "issue": 681,
+          "findings": 1,
+          "specialist": "pm-qa",
+          "note": "Redis pub/sub fanout test is #[ignore] with no CI path — core WS delivery guarantee untested"
+        },
+        {
+          "pr": 658,
+          "issue": 683,
+          "findings": 1,
+          "specialist": "pm-devops",
+          "note": "branch-protection-setup.yml post-merge action may not have been run — security-gate-conclusion still advisory"
+        }
+      ]
+    },
     {
       "run_at": "2026-05-27T14:30:00Z",
       "prs_scanned": 12,

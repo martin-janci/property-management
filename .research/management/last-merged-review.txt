@@ -1,5 +1,4 @@
-2026-05-27T18:15:30Z
-scanned=14 clean=8 issues=6
-PRs with issues: #613 (issue #624 — update_schedule IDOR+stub), #537 (issue #625 — FilterSheet LocationManager env), #536 (issue #626 — Android deprecated permissions), #530 (issue #627 — evidence upload partial failure UX), #608 (issue #628 — support-data no transaction), #610 (issue #629 — duplicate RUST_ENV_ONCE + fragile S3 test)
-PRs clean: #509, #601, #604, #605, #600, #598, #596, #564
-Already labeled (skipped): #607, #606, #535, #557, #568, #609, #540, #563, #565, #611, #612, #531
+2026-05-28T11:19:16Z
+scanned=15 clean=9 issues=6
+PRs with issues: #542 (issue #673 — e-sig nonce not persisted), #632 (issue #676 — stale tenant list on refresh), #645 (issue #677 — audit-hash domain changed without backfill), #636 (issue #679 — IDOR test unauthenticated only), #650 (issue #681 — Redis fanout test ignored, no CI), #658 (issue #683 — security-gate post-merge action unconfirmed)
+PRs clean: #642, #648, #649, #652, #653, #655, #656, #663, #664
