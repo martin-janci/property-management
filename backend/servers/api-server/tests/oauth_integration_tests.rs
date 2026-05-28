@@ -1776,8 +1776,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the access token via RFC 7009
         let revoke_body = form_body(&[("token", &oauth_at), ("token_type_hint", "access_token")]);
@@ -1821,8 +1820,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (_at, rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Revoke the refresh token via RFC 7009
         let revoke_body = form_body(&[("token", &rt), ("token_type_hint", "refresh_token")]);
@@ -1858,8 +1856,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Introspect with no credentials — only the token field
         let body_no_creds = form_body(&[("token", &oauth_at)]);
@@ -1890,8 +1887,7 @@ mod provider_security {
         let (client_id, client_secret, redirect_uri) = seed_confidential_client(&pool).await;
 
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Build Basic auth header: base64(client_id:client_secret) using STANDARD engine
         let credentials = format!("{}:{}", client_id, client_secret);
@@ -1940,8 +1936,7 @@ mod provider_security {
 
         // Initial token issuance
         let (_at1, rt1) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Rotate rt1 → rt2
         let rotate_body = form_body(&[
@@ -2103,8 +2098,8 @@ mod provider_security {
         // TestConfig::default() uses the 72-character secret below.
         const TEST_JWT_SECRET: &str =
             "test-secret-key-that-is-at-least-64-characters-long-for-testing-purposes";
-        let jwt_svc = api_server::services::JwtService::new(TEST_JWT_SECRET)
-            .expect("jwt service for test");
+        let jwt_svc =
+            api_server::services::JwtService::new(TEST_JWT_SECRET).expect("jwt service for test");
         let public_at = jwt_svc
             .generate_access_token(public_user_id, &public_email, "Portal User", None, None)
             .expect("access token for public user");
@@ -2238,8 +2233,7 @@ mod provider_security {
 
         // Issue initial tokens while client is active
         let (_at, rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Now deactivate the client (simulates admin revocation via /admin/oauth/clients/{id})
         deactivate_client(&pool, &client_id).await;
@@ -2274,8 +2268,7 @@ mod provider_security {
 
         // Issue a token while the client is active
         let (oauth_at, _rt) =
-            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri)
-                .await;
+            auth_flow_confidential(&app, &user_at, &client_id, &client_secret, &redirect_uri).await;
 
         // Deactivate the client
         deactivate_client(&pool, &client_id).await;
