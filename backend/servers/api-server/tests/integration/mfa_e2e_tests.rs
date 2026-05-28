@@ -97,7 +97,7 @@ async fn setup_and_enable_mfa(app: &TestApp, access_token: &str) {
 
 /// /api/v1/auth/mfa/setup returns `secret` and `qrUri` only (camelCase).
 /// Recovery codes (10 single-use) are issued on verify, not setup (Story 9.2).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_setup_response_shape(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -154,7 +154,7 @@ async fn test_mfa_setup_response_shape(pool: PgPool) {
 // ─── Flow 1b: Setup → Verify with valid TOTP code ───────────────────────────
 
 /// Full setup → verify path with a real TOTP code derived from the returned secret.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_full_setup_and_verify_with_valid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -184,7 +184,7 @@ async fn test_mfa_full_setup_and_verify_with_valid_code(pool: PgPool) {
 }
 
 /// Verifying with an invalid code returns 400 with INVALID_CODE.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_verify_invalid_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -203,7 +203,7 @@ async fn test_mfa_verify_invalid_code_returns_400(pool: PgPool) {
 // ─── Flow 6: MFA status endpoint ────────────────────────────────────────────
 
 /// GET /api/v1/auth/mfa/status returns `enabled: false` before setup.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_status_disabled_before_setup(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -228,7 +228,7 @@ async fn test_mfa_status_disabled_before_setup(pool: PgPool) {
 }
 
 /// GET /api/v1/auth/mfa/status returns `enabled: true` after successful verify.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_status_enabled_after_verify(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -259,7 +259,7 @@ async fn test_mfa_status_enabled_after_verify(pool: PgPool) {
 
 /// When MFA is enabled and `two_factor_code` is omitted from login, the server
 /// returns `mfaRequired: true` with empty tokens (not a 401).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_returns_mfa_required_when_mfa_enabled_and_code_absent(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -299,7 +299,7 @@ async fn test_login_returns_mfa_required_when_mfa_enabled_and_code_absent(pool: 
 }
 
 /// Login succeeds when valid `twoFactorCode` is included.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -351,7 +351,7 @@ async fn test_login_succeeds_with_valid_mfa_code(pool: PgPool) {
 }
 
 /// Login with an *invalid* two_factor_code returns 401 INVALID_MFA_CODE.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_login_fails_with_invalid_mfa_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -382,7 +382,7 @@ async fn test_login_fails_with_invalid_mfa_code(pool: PgPool) {
 // ─── Flow 4: Disable flow ────────────────────────────────────────────────────
 
 /// POST /api/v1/auth/mfa/disable with valid TOTP code disables MFA.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_disable_with_valid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -436,7 +436,7 @@ async fn test_mfa_disable_with_valid_code(pool: PgPool) {
 }
 
 /// POST /api/v1/auth/mfa/disable with invalid code returns 400.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_disable_with_invalid_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -463,7 +463,7 @@ async fn test_mfa_disable_with_invalid_code_returns_400(pool: PgPool) {
 // ─── Flow 5: Backup-codes regeneration ──────────────────────────────────────
 
 /// POST /api/v1/auth/mfa/backup-codes/regenerate returns fresh codes.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -537,7 +537,7 @@ async fn test_mfa_backup_codes_regeneration(pool: PgPool) {
 }
 
 /// Regenerate with invalid code returns 400.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_backup_codes_regeneration_invalid_code(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -564,7 +564,7 @@ async fn test_mfa_backup_codes_regeneration_invalid_code(pool: PgPool) {
 // ─── Auth guard: unauthenticated requests ────────────────────────────────────
 
 /// All MFA endpoints require a valid bearer token.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_endpoints_require_authentication(pool: PgPool) {
     let app = TestApp::new(pool).await;
 
@@ -593,7 +593,7 @@ async fn test_mfa_endpoints_require_authentication(pool: PgPool) {
 }
 
 /// Setup endpoint returns 409 when MFA is already enabled.
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -624,7 +624,7 @@ async fn test_mfa_setup_conflicts_when_already_enabled(pool: PgPool) {
 /// This test is `#[ignore]`d until rate-limiting middleware lands on
 /// `/api/v1/auth/mfa/verify` — at which point flip the assertion to
 /// expect 429 (or whatever the chosen lockout response is).
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 #[ignore = "Awaiting rate-limit middleware on /auth/mfa/verify — issue #487"]
 async fn test_mfa_verify_rate_limited(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;

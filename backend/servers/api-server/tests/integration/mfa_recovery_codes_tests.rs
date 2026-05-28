@@ -102,7 +102,7 @@ async fn do_disable_mfa(app: &TestApp, token: &str, code: &str) -> StatusCode {
 
 // ─── T1: valid code accepted; codesRemaining decrements ──────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_valid_recovery_code_accepted_and_remaining_decrements(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -125,7 +125,7 @@ async fn test_valid_recovery_code_accepted_and_remaining_decrements(pool: PgPool
 
 // ─── T2: replay — second use of the same code is rejected ────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_replay_of_used_recovery_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -149,7 +149,7 @@ async fn test_replay_of_used_recovery_code_returns_400(pool: PgPool) {
 
 // ─── T3: invalid code returns 400 ────────────────────────────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_invalid_recovery_code_returns_400(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -176,7 +176,7 @@ async fn test_invalid_recovery_code_returns_400(pool: PgPool) {
 
 // ─── T4: MFA not enabled returns 404 ─────────────────────────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_recovery_verify_without_mfa_enabled_returns_404(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -196,7 +196,7 @@ async fn test_recovery_verify_without_mfa_enabled_returns_404(pool: PgPool) {
 
 // ─── T5: exhaustion — all 10 codes used; 11th attempt returns 400, not 410 ───
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_exhausted_recovery_codes_return_400_not_410(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
@@ -234,7 +234,7 @@ async fn test_exhausted_recovery_codes_return_400_not_410(pool: PgPool) {
 
 // ─── T6: disable MFA invalidates all codes ───────────────────────────────────
 
-#[sqlx::test]
+#[sqlx::test(migrator = "db::MIGRATOR")]
 async fn test_disable_mfa_invalidates_all_recovery_codes(pool: PgPool) {
     let app = TestApp::new(pool.clone()).await;
     let user = TestUser::new();
