@@ -4,6 +4,7 @@
  * Client functions for reports, schedules, analytics, and trends.
  */
 
+import type { FaultCategoryCount, FaultPriorityCount, FaultStatusCount } from '../faults/types';
 import type {
   AnalyticsParams,
   AnalyticsSummary,
@@ -25,11 +26,6 @@ import type {
   TrendLine,
   TrendParams,
 } from './types';
-import type {
-  FaultCategoryCount,
-  FaultPriorityCount,
-  FaultStatusCount,
-} from '../faults/types';
 
 const API_BASE = '/api/v1/reports';
 

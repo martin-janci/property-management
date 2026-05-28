@@ -11,6 +11,7 @@
 // the same definition.  Consumers that already import FaultStatusCount from
 // '@ppt/api-client' (the admin sub-path) will continue to work unchanged.
 import type { FaultStatusCount } from '../faults/types';
+
 export type { FaultStatusCount };
 
 export type AgencyStatus = 'active' | 'suspended' | 'archived' | string;
