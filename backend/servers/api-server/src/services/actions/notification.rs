@@ -183,7 +183,7 @@ impl ActionExecutor for NotificationExecutor {
                 "title": title,
                 "message": message,
                 "targets": targets,
-                "channel": format!("{:?}", notif_config.channel),
+                "channel": notif_config.channel.to_string(),
                 "priority": notif_config.priority,
                 "action_url": action_url,
                 "sent_at": chrono::Utc::now().to_rfc3339()

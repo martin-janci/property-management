@@ -19,6 +19,24 @@ pub enum TimeUnit {
     Days,
 }
 
+impl TimeUnit {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TimeUnit::Seconds => "seconds",
+            TimeUnit::Minutes => "minutes",
+            TimeUnit::Hours => "hours",
+            TimeUnit::Days => "days",
+        }
+    }
+}
+
+impl std::fmt::Display for TimeUnit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Configuration for delay action.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DelayConfig {
@@ -105,7 +123,7 @@ impl ActionExecutor for DelayExecutor {
         Ok(ActionResult::success(
             serde_json::json!({
                 "delayed_for_seconds": duration.as_secs(),
-                "unit": format!("{:?}", delay_config.unit).to_lowercase(),
+                "unit": delay_config.unit.to_string(),
                 "reason": delay_config.reason,
                 "actual_duration_ms": actual_duration_ms,
                 "completed_at": chrono::Utc::now().to_rfc3339()

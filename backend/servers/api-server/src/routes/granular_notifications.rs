@@ -103,7 +103,7 @@ pub async fn list_event_preferences(
                 .get(&cat)
                 .map(|(total, enabled)| CategorySummary {
                     category: cat,
-                    display_name: format!("{:?}", cat),
+                    display_name: cat.to_string(),
                     total_events: *total,
                     enabled_events: *enabled,
                 })

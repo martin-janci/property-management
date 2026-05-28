@@ -46,6 +46,24 @@ pub enum CountryRiskRating {
     Sanctioned,
 }
 
+impl CountryRiskRating {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CountryRiskRating::Low => "low",
+            CountryRiskRating::Medium => "medium",
+            CountryRiskRating::High => "high",
+            CountryRiskRating::Sanctioned => "sanctioned",
+        }
+    }
+}
+
+impl std::fmt::Display for CountryRiskRating {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// An AML risk assessment record.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AmlRiskAssessment {
@@ -203,6 +221,24 @@ pub enum DocumentVerificationStatus {
     Verified,
     Rejected,
     Expired,
+}
+
+impl DocumentVerificationStatus {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DocumentVerificationStatus::Pending => "pending",
+            DocumentVerificationStatus::Verified => "verified",
+            DocumentVerificationStatus::Rejected => "rejected",
+            DocumentVerificationStatus::Expired => "expired",
+        }
+    }
+}
+
+impl std::fmt::Display for DocumentVerificationStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 /// An Enhanced Due Diligence record.
@@ -554,6 +590,24 @@ pub enum ReportSource {
     Automated,
     Staff,
     External,
+}
+
+impl ReportSource {
+    /// Stable snake_case name. Use instead of `{:?}` in audit/log records.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ReportSource::User => "user",
+            ReportSource::Automated => "automated",
+            ReportSource::Staff => "staff",
+            ReportSource::External => "external",
+        }
+    }
+}
+
+impl std::fmt::Display for ReportSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
 }
 
 /// A content moderation case.
