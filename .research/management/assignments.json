@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T14:55:00Z",
+  "generated": "2026-05-28T15:10:00Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -114,13 +114,13 @@
     {
       "task_id": "pm-qa-upload-integration-tests",
       "branch": "auto-impl/pm-qa-upload-integration-tests",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-28T02:21:06Z",
-      "last_updated": "2026-05-28T14:45:00Z",
-      "status_changed_at": "2026-05-28T02:51:00Z",
+      "last_updated": "2026-05-28T15:05:00Z",
+      "status_changed_at": "2026-05-28T15:05:00Z",
       "pr_number": 640,
       "pr_url": "https://github.com/martin-janci/property-management/pull/640",
-      "merged_at": null,
+      "merged_at": "2026-05-28T15:05:00Z",
       "specialist": null,
       "implementer_summary": "pr=640 status=done specialist=rust-backend scope_drift=false code_reuse_warn=none note=5 new tests (T11a/b MIME allow/deny, T12 size-limit pass, T13 413 reject, T14 wiremock S3 stub); cargo check+clippy exit=0; 15 tests listed",
       "reviewer_summary": "verdict=approve head_oid=a41b8e2e20386ef6e0b42d3b893ccd15fc953597 note=all-3-blockers-resolved: check-ci-green+mime-count-fixed-to-11+json-key-file_key-confirmed-snake_case; test-timeout-exit143-pre-existing-infra-issue",
@@ -131,7 +131,7 @@
       "rebase_attempts": 3,
       "fix_rounds": 0,
       "reclaim_attempts": 0,
-      "merge_attempted_at": null
+      "merge_attempted_at": "2026-05-28T15:05:00Z"
     },
     {
       "task_id": "pm-data-support-data-tracking-events",
