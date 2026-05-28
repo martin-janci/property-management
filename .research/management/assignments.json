@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T09:46:14Z",
+  "generated": "2026-05-28T10:50:00Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -136,13 +136,13 @@
     {
       "task_id": "pm-data-fault-status-kpi-consistency",
       "branch": "auto-impl/pm-data-fault-status-kpi-consistency",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-28T08:08:33Z",
-      "last_updated": "2026-05-28T09:45:50Z",
-      "status_changed_at": "2026-05-28T08:17:10Z",
+      "last_updated": "2026-05-28T10:50:00Z",
+      "status_changed_at": "2026-05-28T10:50:00Z",
       "pr_number": 653,
       "pr_url": "https://github.com/martin-janci/property-management/pull/653",
-      "merged_at": null,
+      "merged_at": "2026-05-28T09:50:18Z",
       "specialist": "react-web",
       "implementer_summary": "pr=653 status=done specialist=react-web scope_drift=true code_reuse_warn=none note=frontend FaultStatistics type fixed to match backend shape; FaultStatusCount deduplicated into faults/types; scope drift justified (bug was in frontend type layer, not DB)",
       "reviewer_summary": "verdict=approve head_oid=68dabb624ff8e753dd77a140ed20475b58e38ae3 note=all-checks-pass;rust-model-fidelity-confirmed;dedup-clean;no-phantom-fields;scope-drift-justified",
@@ -180,13 +180,13 @@
     {
       "task_id": "pm-devops-app-tsx-churn-merge-queue",
       "branch": "auto-impl/pm-devops-app-tsx-churn-merge-queue",
-      "status": "review",
+      "status": "merged",
       "claimed_at": "2026-05-28T08:08:33Z",
-      "last_updated": "2026-05-28T09:46:14Z",
-      "status_changed_at": "2026-05-28T09:46:14Z",
+      "last_updated": "2026-05-28T10:50:00Z",
+      "status_changed_at": "2026-05-28T10:50:00Z",
       "pr_number": 652,
       "pr_url": "https://github.com/martin-janci/property-management/pull/652",
-      "merged_at": null,
+      "merged_at": "2026-05-28T09:57:05Z",
       "specialist": "generic",
       "implementer_summary": "pr=652 status=done specialist=generic scope_drift=false code_reuse_warn=none note=fix-round-1: corrected --theirs to --ours in on-demand rebase job mechanical-conflict resolution; git diff --check clean; YAML parses OK",
       "reviewer_summary": "verdict=approve head_oid=90ca94a914dfa8377af2d15029984f5f53a00f1c note=--theirs/--ours-fix-confirmed-ci-green(only-yaml-checks-applicable); blocking-fix-applied-90ca94a9; non-blocking-items-noted-not-blocking",
