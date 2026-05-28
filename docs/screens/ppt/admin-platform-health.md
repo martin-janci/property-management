@@ -70,6 +70,12 @@ go through `@ppt/api-client`'s shared `authenticatedFetchJson` factory
 ## Agent Log
 
 <!-- newest entries on top -->
+- 2026-05-28 — agent: gap-10b-3-health-ui-mfa-bypass-fix — added unit tests
+  for `authenticatedFetchJson` MFA interception (`lib/fetch.test.ts`): covers
+  401 mfa_required → handler called → retry-once, handler returns false →
+  throw, repeated 401 after retry → no loop, non-mfa 401 → handler not called.
+  Added regression test to `PlatformHealthPage.test.tsx` verifying dashboard
+  401 triggers MFA handler and retries (PR #471 bypass regression guard).
 - 2026-05-27 — agent: gap-10b-3-health-ui-mfa-fix — added 401 mfa_required
   intercept to shared `authenticatedFetchJson` in `lib/fetch.ts`; refactored
   `admin/api.ts` to use it (removed duplicate local `apiRequest`); created
