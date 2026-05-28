@@ -69,7 +69,15 @@ export function LeaseDetailPage({
       email: lease.tenant.email,
       role: t('leases.esign.role.tenant', 'Tenant'),
     },
-    // TODO: add landlord/manager as signer once lease.manager is available from the API
+    ...(lease.manager
+      ? [
+          {
+            name: lease.manager.name,
+            email: lease.manager.email,
+            role: t('leases.esign.role.manager', 'Manager'),
+          },
+        ]
+      : []),
   ];
 
   const formatDate = (dateString?: string) => {
