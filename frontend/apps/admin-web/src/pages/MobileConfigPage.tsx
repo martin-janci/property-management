@@ -16,6 +16,7 @@ import { useAdminAuth } from '../auth/AdminAuthContext';
 import { AuditReasonPrompt, useAuditReasonValid } from '../components/AuditReasonPrompt';
 import { useToast } from '../components/Toast';
 import { useFocusTrap } from '../components/useFocusTrap';
+import { HelpTooltip } from '../features/help';
 
 interface ForceUpdateValues extends Record<string, unknown> {
   min_ios_version: string;
@@ -305,9 +306,13 @@ export default function MobileConfigPage() {
               fontWeight: 700,
               color: 'var(--ppt-fg-primary, #111827)',
               margin: '0 0 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
             {t('admin.mobile.title', { defaultValue: 'Mobile configuration' })}
+            <HelpTooltip text={t('admin.mobile.helpTooltip')} />
           </h1>
           <p style={{ fontSize: 13, color: 'var(--ppt-fg-muted, #6b7280)', margin: 0 }}>
             {t('admin.mobile.subtitle', {

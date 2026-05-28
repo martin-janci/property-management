@@ -84,6 +84,7 @@
         "buildingDisabled": "Vypnúť túto budovu (núdzový vypínač)",
         "newListingsSearch": "Nové vyhľadávanie inzerátov (beta)"
       },
+      "helpTooltip": "Funkčné príznaky sa prejavia okamžite pre všetkých používateľov daného nájomníka. Núdzový vypínač používajte opatrne.",
       "title": "Funkčné príznaky",
       "warning": "Núdzový vypínač pre nájomníka — zmeny sa prejavia okamžite pre každého používateľa v tomto nájomníkovi."
     },
@@ -111,6 +112,46 @@
       "verify": "Overiť",
       "verifying": "Overuje sa…"
     },
+    "oauthClients": {
+      "actions": {
+        "edit": "Upraviť",
+        "regenerateSecret": "Obnoviť tajomstvo",
+        "register": "Registrovať klienta",
+        "registerFirst": "Registrovať prvého klienta",
+        "revoke": "Zrušiť"
+      },
+      "description": "Spravujte OAuth 2.0 klientov tretích strán, ktorí môžu získavať tokeny v mene vašich používateľov. Vyžaduje sa oprávnenie: oauth_client_write.",
+      "empty": "Zatiaľ nie sú zaregistrovaní žiadni OAuth klienti.",
+      "loadError": "Nepodarilo sa načítať OAuth klientov: {{message}}",
+      "navLabel": "OAuth klienti",
+      "revokeDialog": {
+        "body": "Toto natrvalo deaktivuje klienta {{name}}. Aktívne tokeny vydané tomuto klientovi budú fungovať až do vypršania platnosti, ale nové tokeny nemožno získať.",
+        "confirmLabel": "Zadajte názov klienta na potvrdenie:",
+        "title": "Zrušiť OAuth klienta"
+      },
+      "title": "OAuth klienti",
+      "toast": {
+        "regenerateFailedTitle": "Obnova zlyhala",
+        "registeredMessage": "Uložte tajomstvo klienta teraz — nezobrazí sa znova.",
+        "registeredTitle": "Klient zaregistrovaný",
+        "revokeFailedTitle": "Zrušenie zlyhalo",
+        "revokedMessage": "{{name}} bol zrušený.",
+        "revokedTitle": "Klient zrušený",
+        "secretRegeneratedMessage": "Uložte nové tajomstvo teraz — nezobrazí sa znova.",
+        "secretRegeneratedTitle": "Tajomstvo obnovené"
+      }
+    },
+    "health": {
+      "activeOnly": "Iba aktívne",
+      "allAlerts": "Všetky upozornenia",
+      "alertsTitle": "Upozornenia",
+      "loadError": "Nepodarilo sa načítať prehľad zdravia platformy. Skontrolujte pripojenie a skúste znova.",
+      "metricsTitle": "Aktuálne metriky",
+      "navLabel": "Zdravie",
+      "noMetrics": "Zatiaľ neboli zaznamenané žiadne metriky.",
+      "thresholdsTitle": "Prahové hodnoty metrík",
+      "title": "Zdravie platformy"
+    },
     "platform": {
       "fields": {
         "maintenanceMode": "Režim údržby",
@@ -118,7 +159,15 @@
         "supportEmail": "E-mail podpory",
         "supportEmailPlaceholder": "podpora@example.com"
       },
+      "helpTooltip": "Režim údržby vracia odpoveď 503 na všetky požiadavky mimo administrátorov. Jeho aktivácia vyžaduje dôvod auditu.",
       "title": "Nastavenia platformy"
+    },
+    "help": {
+      "openHelp": "Otvoriť kontextovú pomoc",
+      "panelLabel": "Kontextová pomoc",
+      "close": "Zavrieť pomoc",
+      "openDocs": "Otvoriť úplnú dokumentáciu",
+      "tooltip": "Pomoc"
     },
     "users": {
       "actions": {

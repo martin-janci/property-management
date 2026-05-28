@@ -23,6 +23,7 @@ export const CAPABILITIES = [
   'tenant_restore',
   'audit_read',
   'principal_kind_escalate',
+  'oauth_client_write',
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];

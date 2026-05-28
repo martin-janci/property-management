@@ -21,10 +21,24 @@ issues, commit-log hotspots), and writes structured artifacts that a separate
 │   └── YYYY-MM-DD.json       # debug trail of raw signals derived this run
 ├── briefs/
 │   └── YYYY-MM-DD.md         # daily report (one per run, overwritten on rerun)
+├── management/               # Phase 1.6 delivery artifacts (maintained by ppt-project-management skill)
+│   ├── project-state.md      # delivery dashboard (regenerated each run)
+│   ├── action-list.json      # canonical actions (machine-friendly)
+│   ├── action-list.md        # rendered action table (regenerated from action-list.json)
+│   ├── risks.json            # risk register (machine-friendly)
+│   ├── decisions.md          # decision log (append-only)
+│   ├── stakeholders.md       # static role map
+│   ├── coverage.json         # 134-story delivery coverage map (done/partial/not-started + evidence + gaps)
+│   ├── roadmap.md            # ranked gap plan generated from coverage.json (balanced rubric)
+│   └── roles/                # per-role analysis snapshots (<role>.md overwritten each run)
 └── plans/
     ├── <slug>.md             # self-contained brief for the implementation agent
     └── _archive/             # plans the implementation agent has shipped
 ```
+
+- `management/` — Phase 1.6 delivery artifacts: `project-state.md` (dashboard), `action-list.json`/`.md`, `risks.json`, `decisions.md`, `stakeholders.md`, `roles/<role>.md`. Maintained by the `ppt-project-management` skill.
+  - `coverage.json` — 134-story delivery coverage map (done/partial/not-started + evidence + gaps), built by `/ppt-project-management scan` (local deep scan) and maintained cheaply by the daily routine.
+  - `roadmap.md` — ranked gap plan generated from `coverage.json` (balanced rubric, owner + rationale per task).
 
 In-repo skills the implementer agent uses live at **`.claude/skills/`** (one
 level up, at the repo root). `.claude/skills/` is auto-discovered by any
@@ -34,6 +48,26 @@ Claude Code session opened in this repo — local CLI or cloud routine
 for the environment smoke check.
 
 **Editing the backlog by hand:** edit `backlog.json` only. `backlog.md` is regenerated each run; hand-edits there will be lost.
+
+## Routine vs dispatcher state
+
+Two separate loops write into `.research/` and the distinction matters when
+debugging "why hasn't X been touched":
+
+| Loop | Cadence | Branch | State file | Read-only? |
+|---|---|---|---|---|
+| **Daily routine** | once / day (cloud cron) | commits on `dev` | `.research/state.json` | yes — only reads GitHub + repo |
+| **Autonomous dispatcher** | every ~2h | commits on `planning` | `.research/management/assignments.json` (on `planning` branch) | no — claims/reviews/merges |
+
+The two never share a cursor file. If `state.json` hasn't advanced in days
+while `assignments.json` is fresh, the routine is stuck (cloud cron broken,
+env vars missing, or the trigger payload disabled) — the dispatcher is fine.
+If `assignments.json` is stale while `state.json` ticks, the dispatcher is
+stuck (rate-limited, no buffer, sandbox failures) — the routine is fine.
+
+The routine's Phase 1 (or Phase 6) sanity check flags when `state.json` has
+not advanced in **3+ days** under "Since last run" → "Routine lag" in the
+daily brief, so the operator notices on the next routine commit.
 
 ## Flow
 

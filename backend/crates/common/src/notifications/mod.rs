@@ -2,10 +2,22 @@
 //!
 //! This module provides the foundation for the event-driven notification system,
 //! supporting multi-channel delivery (push, email, in-app) with user preferences.
+//!
+//! # Epic 2B — Notification Delivery Pipeline
+//! The `pipeline` sub-module adds:
+//! - `TransportAdapter` traits for each channel (email / push / in-app)
+//! - `DeliveryRecord` + `DeliveryStatus` for delivery tracking
+//! - `RoutingDecision` for preference-based channel filtering
+//! - `PipelineResult` for per-dispatch summaries
 
 pub mod events;
+pub mod pipeline;
 
 pub use events::*;
+pub use pipeline::{
+    DeliveryRecord, DeliveryRequest, DeliveryStatus, EmailTransport, InAppTransport,
+    PipelineResult, PushTransport, RoutingDecision, TransportResult,
+};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -351,6 +363,12 @@ pub enum NotificationError {
     /// Rate limit exceeded.
     #[error("Rate limit exceeded for user {0}")]
     RateLimitExceeded(Uuid),
+
+    /// Transport not configured (e.g. FCM_SERVER_KEY unset).
+    /// Issue #484: the pipeline maps this to `skipped` rather than
+    /// `sent` so callers get accurate delivery counts.
+    #[error("Push transport not configured")]
+    PushNotConfigured,
 }
 
 // ============================================================================

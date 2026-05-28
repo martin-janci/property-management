@@ -74,6 +74,25 @@ impl TestApp {
             if std::env::var("JWT_SECRET").is_err() {
                 std::env::set_var("JWT_SECRET", &config.jwt_secret);
             }
+            // TotpService::new() panics without TOTP_ENCRYPTION_KEY unless
+            // RUST_ENV=development. CI does not set either, so force
+            // development mode here to avoid spurious panics in all tests
+            // that create a TestApp.
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
+        });
+
+        // `TotpService::new` (called inside `AppState::new`) panics when
+        // `TOTP_ENCRYPTION_KEY` is absent unless `RUST_ENV=development`.
+        // CI sets this via the workflow env block; local runs do not.
+        // Guard it once here so all tests that create a TestApp survive in
+        // both environments without requiring callers to remember to set it.
+        static RUST_ENV_ONCE: std::sync::Once = std::sync::Once::new();
+        RUST_ENV_ONCE.call_once(|| {
+            if std::env::var("RUST_ENV").is_err() {
+                std::env::set_var("RUST_ENV", "development");
+            }
         });
 
         let email_service = EmailService::new(config.base_url.clone(), config.email_enabled);
@@ -97,8 +116,14 @@ impl TestApp {
             tenant_rate_limiters,
         );
 
-        // Build the router with all routes
-        let router = api_server::create_router(state);
+        // Build the router with all routes.
+        // MockConnectInfo injects a synthetic SocketAddr so handlers that
+        // use axum::extract::ConnectInfo don't return 500 when called via
+        // oneshot (which does not call into_make_service_with_connect_info).
+        let router =
+            api_server::create_router(state).layer(axum::extract::connect_info::MockConnectInfo(
+                std::net::SocketAddr::from(([127, 0, 0, 1], 0)),
+            ));
 
         Self {
             router,
@@ -350,7 +375,7 @@ pub async fn cleanup_test_user(pool: &PgPool, email: &str) {
 
 /// Test helper to verify user directly in database.
 pub async fn verify_user_email(pool: &PgPool, email: &str) {
-    sqlx::query("UPDATE users SET email_verified = true WHERE email = $1")
+    sqlx::query("UPDATE users SET email_verified_at = NOW(), status = 'active' WHERE email = $1")
         .bind(email)
         .execute(pool)
         .await
@@ -379,13 +404,13 @@ pub async fn create_authenticated_user(app: &TestApp, user: &TestUser) -> (Strin
     assert_eq!(login_resp.status, StatusCode::OK);
 
     let json = login_resp.json_value();
-    let access_token = json["access_token"]
+    let access_token = json["accessToken"]
         .as_str()
-        .expect("Missing access_token")
+        .expect("Missing accessToken")
         .to_string();
-    let refresh_token = json["refresh_token"]
+    let refresh_token = json["refreshToken"]
         .as_str()
-        .expect("Missing refresh_token")
+        .expect("Missing refreshToken")
         .to_string();
 
     (access_token, refresh_token)

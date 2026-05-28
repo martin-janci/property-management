@@ -196,6 +196,21 @@ export interface UpdateScheduleRequest {
   is_active?: boolean;
 }
 
+/**
+ * Request body for the gap-81-1 PUT /api/v1/reports/schedules/{id} endpoint.
+ *
+ * The backend accepts a cron expression (5-field UNIX), a recipient list,
+ * and an enabled flag — all optional (at least one must be present).
+ */
+export interface CronScheduleUpdateRequest {
+  /** 5-field UNIX cron expression, e.g. "0 8 * * 1" */
+  cron_expression?: string;
+  /** Full replacement list of recipient email addresses */
+  recipients?: string[];
+  /** Whether the schedule is active/enabled */
+  enabled?: boolean;
+}
+
 // ============================================================================
 // DASHBOARD ANALYTICS
 // ============================================================================

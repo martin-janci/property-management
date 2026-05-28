@@ -1123,44 +1123,86 @@ async fn sync_prebuilt_connection(
 }
 
 /// Get OAuth URL for pre-built integration.
+///
+/// P0-06: previously this returned URLs containing the literal strings
+/// `CLIENT_ID` and `REDIRECT_URI` — every integration (QuickBooks, Xero,
+/// Salesforce, HubSpot, Slack) was 100% non-functional. The fix reads the
+/// per-integration client id and redirect URI from environment variables
+/// (e.g. `PPT_OAUTH_QUICKBOOKS_CLIENT_ID`,
+/// `PPT_OAUTH_QUICKBOOKS_REDIRECT_URI`) and returns a hard error if either
+/// is missing rather than minting a broken URL.
 async fn get_prebuilt_oauth_url(
     State(_state): State<AppState>,
     _tenant: TenantExtractor,
     Path(path): Path<PrebuiltTypePath>,
 ) -> Result<Json<OAuthUrlResponse>, (StatusCode, Json<ErrorResponse>)> {
-    // TODO: Generate OAuth URL based on integration type
-    let state = Uuid::new_v4().to_string();
+    let csrf_state = Uuid::new_v4().to_string();
+    let integ = path.integration_type.as_str();
 
-    let url = match path.integration_type.as_str() {
+    let client_id = oauth_env(integ, "CLIENT_ID")?;
+    let redirect_uri = oauth_env(integ, "REDIRECT_URI")?;
+    // urlencoding is unnecessary here — both are already URL-safe by
+    // OAuth spec (client_ids are short alphanumeric tokens; redirect_uri
+    // is a URL the operator controls and must register with the
+    // provider). Substitute them directly.
+
+    let url = match integ {
         "quickbooks" => format!(
-            "https://appcenter.intuit.com/connect/oauth2?client_id=CLIENT_ID&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri=REDIRECT_URI&state={}",
-            state
+            "https://appcenter.intuit.com/connect/oauth2?client_id={cid}&response_type=code&scope=com.intuit.quickbooks.accounting&redirect_uri={ru}&state={st}",
+            cid = client_id, ru = redirect_uri, st = csrf_state
         ),
         "xero" => format!(
-            "https://login.xero.com/identity/connect/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=openid%20profile%20email%20accounting.transactions&state={}",
-            state
+            "https://login.xero.com/identity/connect/authorize?response_type=code&client_id={cid}&redirect_uri={ru}&scope=openid%20profile%20email%20accounting.transactions&state={st}",
+            cid = client_id, ru = redirect_uri, st = csrf_state
         ),
         "salesforce" => format!(
-            "https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&state={}",
-            state
+            "https://login.salesforce.com/services/oauth2/authorize?response_type=code&client_id={cid}&redirect_uri={ru}&state={st}",
+            cid = client_id, ru = redirect_uri, st = csrf_state
         ),
         "hubspot" => format!(
-            "https://app.hubspot.com/oauth/authorize?client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=contacts%20crm.objects.deals.read&state={}",
-            state
+            "https://app.hubspot.com/oauth/authorize?client_id={cid}&redirect_uri={ru}&scope=contacts%20crm.objects.deals.read&state={st}",
+            cid = client_id, ru = redirect_uri, st = csrf_state
         ),
         "slack" => format!(
-            "https://slack.com/oauth/v2/authorize?client_id=CLIENT_ID&scope=chat:write,channels:read&redirect_uri=REDIRECT_URI&state={}",
-            state
+            "https://slack.com/oauth/v2/authorize?client_id={cid}&scope=chat:write,channels:read&redirect_uri={ru}&state={st}",
+            cid = client_id, ru = redirect_uri, st = csrf_state
         ),
         _ => {
             return Err(error_response(
                 "INVALID_INTEGRATION_TYPE",
-                &format!("Integration type {} does not support OAuth", path.integration_type),
+                &format!("Integration type {} does not support OAuth", integ),
             ))
         }
     };
 
-    Ok(Json(OAuthUrlResponse { url, state }))
+    Ok(Json(OAuthUrlResponse {
+        url,
+        state: csrf_state,
+    }))
+}
+
+/// Look up an OAuth env var for a pre-built integration, returning a
+/// structured 503 if it's unset. Naming convention:
+///   PPT_OAUTH_{INTEGRATION_UPPER}_{KEY}
+/// e.g. PPT_OAUTH_QUICKBOOKS_CLIENT_ID, PPT_OAUTH_QUICKBOOKS_REDIRECT_URI.
+fn oauth_env(integration: &str, key: &str) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+    let var = format!(
+        "PPT_OAUTH_{}_{}",
+        integration.to_uppercase().replace('-', "_"),
+        key
+    );
+    std::env::var(&var).map_err(|_| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse::new(
+                "OAUTH_NOT_CONFIGURED",
+                format!(
+                    "Integration {} is not configured ({} unset)",
+                    integration, var
+                ),
+            )),
+        )
+    })
 }
 
 /// Handle OAuth callback for pre-built integration.

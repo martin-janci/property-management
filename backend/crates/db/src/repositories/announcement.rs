@@ -33,7 +33,7 @@ use crate::models::announcement::{
 };
 use crate::DbPool;
 use chrono::{DateTime, Utc};
-use sqlx::{Error as SqlxError, Executor, FromRow, Postgres};
+use sqlx::{Connection, Error as SqlxError, Executor, FromRow, Postgres};
 use uuid::Uuid;
 
 /// Row struct for announcement with details query.
@@ -276,7 +276,11 @@ impl AnnouncementRepository {
                 published_at, pinned, comments_enabled, acknowledgment_required
             FROM announcements
             WHERE {}
-            ORDER BY pinned DESC, COALESCE(published_at, created_at) DESC
+            -- NULLS LAST + a created_at tiebreaker keeps the historic
+            -- semantics of COALESCE(published_at, created_at) but lets the
+            -- (organization_id, pinned DESC, published_at DESC) partial
+            -- index actually serve the sort (issue #518).
+            ORDER BY pinned DESC, published_at DESC NULLS LAST, created_at DESC
             LIMIT {} OFFSET {}
             "#,
             where_clause, limit, offset
@@ -644,7 +648,7 @@ impl AnnouncementRepository {
     // ------------------------------------------------------------------------
 
     /// Maximum number of pinned announcements per organization.
-    const MAX_PINNED_PER_ORG: i64 = 3;
+    pub const MAX_PINNED_PER_ORG: i64 = 3;
 
     /// Count pinned announcements for an organization with RLS context.
     pub async fn count_pinned_rls<'e, E>(&self, executor: E, org_id: Uuid) -> Result<i64, SqlxError>
@@ -695,6 +699,72 @@ impl AnnouncementRepository {
         .await?;
 
         Ok(pinned)
+    }
+
+    /// Atomically check the max-3 cap and pin an announcement.
+    ///
+    /// Defends issue #518: the previous handler-level "SELECT count → pin"
+    /// flow had a TOCTOU race where two concurrent PATCH requests could
+    /// both observe `count=2`, both pass the guard, and both end up pinning
+    /// — leaving the org with 4 pinned rows.
+    ///
+    /// The fix locks the org's pinned rows with `FOR UPDATE` inside the
+    /// same transaction that performs the UPDATE, so any racing caller
+    /// either sees the new row (and bumps the count) or blocks until the
+    /// first transaction commits.
+    ///
+    /// Returns `Ok(Err(actual_count))` when the cap is already reached so
+    /// the caller can map it to a 400 with the real count, and
+    /// `Ok(Ok(announcement))` on success. SQL errors are surfaced via the
+    /// outer `Result`.
+    pub async fn pin_with_cap_rls(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: Uuid,
+        org_id: Uuid,
+        pinned_by: Uuid,
+        max_pinned: i64,
+    ) -> Result<Result<Announcement, i64>, SqlxError> {
+        let mut tx = conn.begin().await?;
+
+        // Lock all currently-pinned rows for this org; any concurrent pin
+        // attempt blocks here until we commit.
+        let (count,): (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*) FROM announcements
+            WHERE organization_id = $1 AND pinned = true
+            FOR UPDATE
+            "#,
+        )
+        .bind(org_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if count >= max_pinned {
+            tx.rollback().await?;
+            return Ok(Err(count));
+        }
+
+        let pinned = sqlx::query_as::<_, Announcement>(
+            r#"
+            UPDATE announcements
+            SET pinned = true, pinned_at = NOW(), pinned_by = $2, updated_at = NOW()
+            WHERE id = $1 AND status = 'published'
+            RETURNING
+                id, organization_id, author_id, title, content,
+                target_type::text as target_type, target_ids,
+                status::text as status, scheduled_at, published_at,
+                pinned, pinned_at, pinned_by, comments_enabled,
+                acknowledgment_required, created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(pinned_by)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(Ok(pinned))
     }
 
     /// Unpin an announcement with RLS context.

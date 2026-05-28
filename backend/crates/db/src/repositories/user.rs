@@ -348,6 +348,14 @@ impl UserRepository {
     // ==================== Admin Operations ====================
 
     /// List users with pagination and optional filters.
+    ///
+    /// The COUNT and the data SELECT are issued as two separate queries with
+    /// independent placeholder numbering schemes (the count query has no
+    /// LIMIT/OFFSET, the data query binds LIMIT/OFFSET first). Earlier
+    /// revisions of this function used a shared placeholder counter across
+    /// both queries which caused the WHERE clause to reference the wrong
+    /// bind slot — admin user search could silently return rows for the
+    /// wrong filter (SEC-004).
     pub async fn list_users(
         &self,
         offset: i64,
@@ -355,35 +363,23 @@ impl UserRepository {
         status_filter: Option<&str>,
         search: Option<&str>,
     ) -> Result<(Vec<User>, i64), SqlxError> {
-        // Build dynamic query based on filters
-        let mut conditions = vec!["1=1".to_string()];
-        let mut param_idx = 1;
-
+        // ---- COUNT query: placeholders start at $1 ----
+        let mut count_conditions: Vec<String> = vec!["1=1".to_string()];
+        let mut count_idx = 0usize;
         if status_filter.is_some() {
-            param_idx += 1;
-            conditions.push(format!("status = ${}", param_idx));
+            count_idx += 1;
+            count_conditions.push(format!("status = ${}", count_idx));
         }
-
         if search.is_some() {
-            param_idx += 1;
-            conditions.push(format!(
-                "(LOWER(email) LIKE '%' || LOWER(${}::text) || '%' OR LOWER(name) LIKE '%' || LOWER(${}::text) || '%')",
-                param_idx, param_idx
+            count_idx += 1;
+            count_conditions.push(format!(
+                "(LOWER(email) LIKE '%' || LOWER(${0}::text) || '%' OR LOWER(name) LIKE '%' || LOWER(${0}::text) || '%')",
+                count_idx
             ));
         }
+        let count_where = count_conditions.join(" AND ");
+        let count_query = format!("SELECT COUNT(*) FROM users WHERE {}", count_where);
 
-        let where_clause = conditions.join(" AND ");
-
-        // Count query
-        let count_query = format!("SELECT COUNT(*) FROM users WHERE {}", where_clause);
-
-        // Data query
-        let data_query = format!(
-            "SELECT * FROM users WHERE {} ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-            where_clause
-        );
-
-        // Execute count query
         let mut count_q = sqlx::query_scalar::<_, i64>(&count_query);
         if let Some(status) = status_filter {
             count_q = count_q.bind(status);
@@ -393,7 +389,26 @@ impl UserRepository {
         }
         let total = count_q.fetch_one(&self.pool).await?;
 
-        // Execute data query
+        // ---- DATA query: $1=limit, $2=offset, then filter placeholders ----
+        let mut data_conditions: Vec<String> = vec!["1=1".to_string()];
+        let mut data_idx = 2usize; // $1 and $2 are reserved for limit/offset
+        if status_filter.is_some() {
+            data_idx += 1;
+            data_conditions.push(format!("status = ${}", data_idx));
+        }
+        if search.is_some() {
+            data_idx += 1;
+            data_conditions.push(format!(
+                "(LOWER(email) LIKE '%' || LOWER(${0}::text) || '%' OR LOWER(name) LIKE '%' || LOWER(${0}::text) || '%')",
+                data_idx
+            ));
+        }
+        let data_where = data_conditions.join(" AND ");
+        let data_query = format!(
+            "SELECT * FROM users WHERE {} ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            data_where
+        );
+
         let mut data_q = sqlx::query_as::<_, User>(&data_query)
             .bind(limit)
             .bind(offset);

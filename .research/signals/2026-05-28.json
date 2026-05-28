@@ -1,0 +1,191 @@
+{
+  "date": "2026-05-28",
+  "generated": "2026-05-28T03:19:04Z",
+  "run_mode": "incremental",
+  "run_note": "Incremental run ~3.5h after the 2026-05-27T23:41Z run. Window: 5 merged PRs (#635-#638, #642), 9 open draft PRs, issue #580 closed (resolved by #636), 35 commits on dev (mostly version-bump + dispatcher chore noise). Clean window — no reverts, no unchecked TODOs, no new FIXME/TODO markers in merged diffs, no route-file changes (no screen-map drift), no stalled reviews (oldest open PR ~1d). PR #642 (security cookie-Path) shipped WITH inline #[test] coverage + a runbook, so no test-gap signal. Phase 1.5 reviewed reality-web (never-reviewed segment) → 3 findings. Phase 1.6 ran pm-data + Scrum Master. No decay (oldest open item 2026-05-20 > today-14d). No promotions (no item score>=3; no security fast-track candidate).",
+  "signals": [
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/integration/document_folder_tests.rs",
+      "type": "churn-hotspot",
+      "source": "merged PR #636 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-1 raw churn this run: 429 lines (PR #636 added 7 document-folder integration test cases, closes #580). Test file, single-run addition — no backlog item created (test growth is healthy, not instability); tracked in hotspot_history for repeated-churn detection."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/pages/SupportDataPage.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PR #635 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-2 raw churn this run: 304 lines (PR #635, brand-new admin-web Support Data page, +304/-0). One-shot feature addition — no backlog item; tracked in hotspot_history."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/admin-web/src/features/help/HelpSidebar.test.tsx",
+      "type": "churn-hotspot",
+      "source": "merged PR #637 file churn",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 raw churn this run: 193 lines (PR #637 HelpSidebar a11y test file, new). Test file — no backlog item; tracked in hotspot_history."
+    },
+    {
+      "id": "code-review-reality-web-realtor-mgmt-silent-error",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/components/agency/RealtorManagement.tsx:529-540 — InviteRealtorModal.handleSubmit awaits inviteRealtor.mutateAsync; on failure only console.error, never reads inviteRealtor.isError/.error nor sets an error message, so the modal stays open with the form intact and zero feedback (the useMutation at reality-api-client/src/agency/hooks.ts:231 exposes both). Created backlog item bug-reality-web-realtor-invite-silent-error.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-comparison-url-i18n",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": "frontend/apps/reality-web/src/components/comparison/ComparisonUrlHandler.tsx:52,64 — 'Loading shared comparison...' and 'Failed to load shared comparison...' hardcoded in English instead of next-intl t(); reality-web ships sk/cs/de/en and 40 other files use useTranslations/getTranslations. Created backlog item refactor-reality-web-comparison-i18n.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-reality-web-listing-metadata-shape",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "reality-web",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/reality-web/src/app/[locale]/listings/[slug]/page.tsx:75 — getListing returns response.json() typed as ListingDetail with no runtime validation; generateMetadata:93 calls listing.description.slice(0,160) and listing.address.city guarded only by the !listing null-check at :86, so a 200 body with null description / missing address throws during SSR instead of degrading to the 'Listing Not Found' fallback. Created backlog item bug-reality-web-listing-metadata-ssr-throw.",
+      "expert": "frontend"
+    }
+  ],
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — only churn-hotspot + code-review-finding signals this run; neither type is in the Phase 5 allowlist (screen-map-drift, screen-map-orphan, fixme-in-merged-code, lockfile-drift dep-update, stalled-review)",
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/2026-05-28.md && head -1 matches '# 2026-05-28'",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "jq state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "jq backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "jq no non-cumulative signal double-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "jq score cap<=8 & no open item >14d (0 qualify) & no score<0",
+      "observed": "cap true; 0 items needing decay; min>=0",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial annotation for each new plan",
+      "observed": "no new plans this run",
+      "expected": "pass"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "git diff --cached -A plans count",
+      "observed": "0 new plans",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "grep staged diff for secrets/hostnames",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "diff backlog.md vs render_research.py backlog",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "brief 'Phases that failed' vs cursor advancement",
+      "observed": "none failed; all cursors advanced",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior-run plan slugs still in plans/ or _archive/",
+      "observed": "all 3 present",
+      "expected": "all present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count this run >= HEAD",
+      "observed": "7 >= 7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "diff IDEAS_TRIAGE.md vs render_research.py triage",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "jq auto_fix_actions caps + idempotency",
+      "observed": "auto_fix_actions empty; no candidate",
+      "expected": "true"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "jq mgmt action-list/risks .items + project-state non-empty + pm_cursor 0..7",
+      "observed": "all parse; pm_cursor.next_index=7",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "grep staged added lines for telegram token value",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}

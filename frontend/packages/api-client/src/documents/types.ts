@@ -48,6 +48,10 @@ export interface DocumentSummary {
   predicted_category?: string;
   classification_confidence?: number;
   summary?: string;
+  /** RLS-enforced audience scope returned from the server (7a-3). */
+  access_scope?: AccessScope;
+  /** Publication status; absent means published (backward compat) */
+  status?: DocumentStatus;
 }
 
 export interface DocumentFolder {
@@ -82,6 +86,11 @@ export interface DocumentSearchRequest {
   date_to?: string;
   ocr_status?: OcrStatus[];
   has_summary?: boolean;
+  /**
+   * RLS-aware audience pre-filter (7a-3). The backend enforces row-level
+   * security on top — callers cannot escalate access by omitting this field.
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
 }
@@ -163,13 +172,24 @@ export interface DocumentIntelligenceStats {
   avg_classification_confidence: number;
 }
 
+// Document status (publication state)
+export type DocumentStatus = 'published' | 'draft' | 'archived';
+
 // List query params
 export interface DocumentListQuery {
   folder_id?: string;
   category?: string;
   search?: string;
+  /**
+   * RLS-aware audience pre-filter: the backend further restricts results to
+   * documents the caller is permitted to see regardless of this filter.
+   */
+  access_scope?: AccessScope;
   limit?: number;
   offset?: number;
+  /** Filter by publication status (maps to document state machine on backend) */
+  status?: DocumentStatus;
+  created_by?: string;
 }
 
 // Responses
@@ -221,3 +241,51 @@ export const DOCUMENT_CATEGORIES = [
 ] as const;
 
 export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
+
+// --- Document Sharing types (Story 7A.5) ---
+
+export const SHARE_TYPE = {
+  USER: 'user',
+  ROLE: 'role',
+  BUILDING: 'building',
+  LINK: 'link',
+} as const;
+
+export type ShareType = (typeof SHARE_TYPE)[keyof typeof SHARE_TYPE];
+
+export interface DocumentShare {
+  id: string;
+  document_id: string;
+  share_type: ShareType;
+  target_id?: string | null;
+  target_role?: string | null;
+  shared_by: string;
+  share_token?: string | null;
+  expires_at?: string | null;
+  revoked_at?: string | null;
+  created_at: string;
+}
+
+export interface ShareWithDocument extends DocumentShare {
+  document_title: string;
+  shared_by_name: string;
+}
+
+export interface ShareListResponse {
+  shares: ShareWithDocument[];
+}
+
+export interface CreateShareRequest {
+  share_type: ShareType;
+  target_id?: string;
+  target_role?: string;
+  password?: string;
+  expires_at?: string;
+}
+
+export interface CreateShareResponse {
+  id: string;
+  share_token?: string | null;
+  share_url?: string | null;
+  message: string;
+}

@@ -17,8 +17,12 @@ import {
   type AuthUser,
   clearTokenProvider,
   createAuthApi,
+  type SsoCallbackRequest,
   setTokenProvider,
+  type TenantMembership,
+  type TenantRole,
 } from '@ppt/api-client';
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import {
   createContext,
@@ -58,6 +62,15 @@ export interface LoginCredentials {
 export interface AuthContextValue extends AuthState {
   /** Log in with email and password */
   login: (credentials: LoginCredentials) => Promise<void>;
+  /**
+   * Complete an SSO / OAuth callback flow.
+   *
+   * Called by AuthCallbackPage (/auth/callback) after the provider redirects
+   * back with `?code=…&state=…`. Exchanges the code for PPT JWT tokens via
+   * POST /api/v1/auth/sso/callback, stores them via tokenProvider, and
+   * updates the authenticated user in state.
+   */
+  loginWithSsoCode: (request: SsoCallbackRequest) => Promise<void>;
   /** Log out the current user */
   logout: () => Promise<void>;
   /** Refresh the access token */
@@ -80,6 +93,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 const ACCESS_TOKEN_KEY = 'ppt_access_token';
 const REFRESH_TOKEN_KEY = 'ppt_refresh_token';
 const USER_KEY = 'ppt_user';
+/**
+ * Persisted tenant membership list so refreshTokenInternal can call
+ * deriveActiveRole and propagate server-side role promotions without
+ * requiring a full re-login. Set on every login / SSO callback, cleared on
+ * logout. See issue #574.
+ */
+const TENANTS_KEY = 'ppt_tenants';
 
 // ============================================================================
 // Context
@@ -141,16 +161,103 @@ const tokenStorage = {
     }
   },
 
+  getTenants: (): TenantMembership[] | null => {
+    try {
+      const raw = localStorage.getItem(TENANTS_KEY);
+      return raw ? (JSON.parse(raw) as TenantMembership[]) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  setTenants: (tenants: TenantMembership[]): void => {
+    try {
+      localStorage.setItem(TENANTS_KEY, JSON.stringify(tenants));
+    } catch {
+      // Storage unavailable
+    }
+  },
+
   clear: (): void => {
     try {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(TENANTS_KEY);
     } catch {
       // Storage unavailable
     }
   },
 };
+
+// ============================================================================
+// Role derivation
+// ============================================================================
+
+/**
+ * Privilege order for picking the "best" tenant role when the JWT does not
+ * resolve to a specific tenant. Highest-privilege first.
+ */
+const ROLE_PRIORITY: readonly TenantRole[] = [
+  'super_admin',
+  'org_admin',
+  'manager',
+  'technical_manager',
+  'property_manager',
+  'real_estate_agent',
+  'owner',
+  'owner_delegate',
+  'tenant',
+  'resident',
+  'guest',
+] as const;
+
+/** Best-effort decode of the unverified payload of a JWT. */
+function decodeJwtPayload(token: string | null | undefined): Record<string, unknown> | null {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '==='.slice((b64.length + 3) % 4);
+    const json = atob(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pick the membership matching `tenant_id` from the JWT; if that's missing,
+ * fall back to the highest-privilege role across all memberships. Returns
+ * `undefined` if the user has no memberships.
+ */
+export function deriveActiveRole(
+  accessToken: string | null | undefined,
+  tenants: TenantMembership[] | undefined
+): TenantRole | undefined {
+  if (!tenants || tenants.length === 0) return undefined;
+
+  const claims = decodeJwtPayload(accessToken);
+  const tenantId =
+    claims && typeof claims.tenant_id === 'string' ? (claims.tenant_id as string) : null;
+  if (tenantId) {
+    const match = tenants.find((t) => t.tenantId === tenantId);
+    if (match) return match.role;
+  }
+
+  // Embedded `role` claim wins next.
+  if (claims && typeof claims.role === 'string') {
+    const claimRole = claims.role as TenantRole;
+    if (ROLE_PRIORITY.includes(claimRole)) return claimRole;
+  }
+
+  // Highest privilege available — preferable to insertion-order tenants[0].
+  for (const role of ROLE_PRIORITY) {
+    if (tenants.some((t) => t.role === role)) return role;
+  }
+  return tenants[0].role;
+}
 
 // ============================================================================
 // API Client Instance
@@ -186,6 +293,10 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // TanStack Query client — used to clear the cache on logout so stale
+  // user-scoped data never leaks into the next session.
+  const queryClient = useQueryClient();
 
   // Track if a token refresh is in progress to prevent concurrent refreshes
   const isRefreshing = useRef(false);
@@ -231,6 +342,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
+
+      // Re-derive the role from the fresh access token using the persisted
+      // tenant-membership list. Using deriveActiveRole (rather than reading
+      // the role JWT claim directly) correctly handles multi-tenant users
+      // whose active tenant changed on the server — the JWT tenant_id claim
+      // selects the right membership, falling back to highest-privilege when
+      // absent. See #574.
+      const storedUser = tokenStorage.getUser();
+      if (storedUser) {
+        const storedTenants = tokenStorage.getTenants();
+        const derivedRole = deriveActiveRole(response.accessToken, storedTenants ?? undefined);
+        if (derivedRole != null) {
+          const updated = { ...storedUser, role: derivedRole };
+          tokenStorage.setUser(updated);
+          setUser(updated);
+        }
+      }
 
       return response.accessToken;
     } catch (error) {
@@ -311,12 +439,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const authApi = getAuthApi();
       const response = await authApi.login(credentials);
 
-      // Store tokens and user
+      // Derive role from the JWT `tenant_id` claim (or, failing that, the
+      // highest-privilege membership) instead of `tenants[0]`. See #482.
+      const derivedRole =
+        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
+      const userWithRole: AuthUser =
+        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+
+      // Store tokens, user, and tenant memberships.
+      // Tenants are persisted so that refreshTokenInternal can call
+      // deriveActiveRole on subsequent refreshes without a re-login (#574).
       tokenStorage.setAccessToken(response.accessToken);
       tokenStorage.setRefreshToken(response.refreshToken);
-      tokenStorage.setUser(response.user);
+      tokenStorage.setUser(userWithRole);
+      if (response.tenants) {
+        tokenStorage.setTenants(response.tenants);
+      }
 
-      setUser(response.user);
+      setUser(userWithRole);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Complete an SSO / OAuth callback flow.
+   *
+   * @param request - { code, state, redirectUri } from /auth/callback
+   */
+  const loginWithSsoCode = useCallback(async (request: SsoCallbackRequest): Promise<void> => {
+    setIsLoading(true);
+
+    try {
+      const authApi = getAuthApi();
+      const response = await authApi.exchangeSsoCode(request);
+
+      const derivedRole =
+        response.user.role ?? deriveActiveRole(response.accessToken, response.tenants);
+      const userWithRole: AuthUser =
+        derivedRole != null ? { ...response.user, role: derivedRole } : response.user;
+
+      tokenStorage.setAccessToken(response.accessToken);
+      tokenStorage.setRefreshToken(response.refreshToken);
+      tokenStorage.setUser(userWithRole);
+      // Persist tenant memberships for deriveActiveRole on subsequent
+      // refreshes — mirrors the same persist step in login(). See #574.
+      if (response.tenants) {
+        tokenStorage.setTenants(response.tenants);
+      }
+
+      setUser(userWithRole);
+    } catch (err) {
+      // Roll back any partial writes so state is never incoherent.
+      // Mirrors the cleanup pattern in logout() and refreshTokenInternal().
+      tokenStorage.clear();
+      setUser(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -324,15 +502,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Log out the current user using the API client.
+   *
+   * Session cleanup sequence:
+   *  1. Clear localStorage tokens (immediate — prevents any further API calls
+   *     from including a bearer token).
+   *  2. Reset React state so the UI reflects the unauthenticated state.
+   *  3. Purge the TanStack Query cache so user-scoped data never leaks into
+   *     the next session (e.g. a different user logging in on the same device).
+   *  4. Best-effort server-side token revocation (fire-and-forget).
    */
   const logout = useCallback(async (): Promise<void> => {
     const refreshTokenValue = tokenStorage.getRefreshToken();
 
-    // Clear local state first for immediate UI feedback
+    // 1 & 2 — Clear local state first for immediate UI feedback.
     tokenStorage.clear();
     setUser(null);
 
-    // Attempt to invalidate the refresh token on the server
+    // 3 — Purge all cached query data to prevent cross-session data leakage.
+    queryClient.clear();
+
+    // 4 — Attempt to invalidate the refresh token on the server.
     if (refreshTokenValue) {
       try {
         const authApi = getAuthApi();
@@ -341,7 +530,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Ignore errors - we've already cleared local state
       }
     }
-  }, []);
+  }, [queryClient]);
 
   /**
    * Update the in-memory user and persist to storage. Lets profile-edit
@@ -360,12 +549,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated,
       isLoading,
       login,
+      loginWithSsoCode,
       logout,
       refreshToken,
       getAccessToken,
       setUser: updateUser,
     }),
-    [user, isAuthenticated, isLoading, login, logout, refreshToken, getAccessToken, updateUser]
+    [
+      user,
+      isAuthenticated,
+      isLoading,
+      login,
+      loginWithSsoCode,
+      logout,
+      refreshToken,
+      getAccessToken,
+      updateUser,
+    ]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

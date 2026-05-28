@@ -19,7 +19,11 @@ import ImpersonationListPage from './pages/ImpersonationListPage';
 import { LoginPage } from './pages/LoginPage';
 import MembershipsPage from './pages/MembershipsPage';
 import MobileConfigPage from './pages/MobileConfigPage';
+import OAuthClientsPage from './pages/OAuthClientsPage';
+import PlatformHealthPage from './pages/PlatformHealthPage';
 import PlatformPage from './pages/platform';
+import SupportDataPage from './pages/SupportDataPage';
+import SystemAnnouncementsPage from './pages/SystemAnnouncementsPage';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
 import UsersPage from './pages/users';
 
@@ -116,6 +120,14 @@ export function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="identity/oauth-clients"
+                  element={
+                    <ProtectedRoute requiredCapability="oauth_client_write">
+                      <OAuthClientsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* OPERATIONS */}
                 <Route
@@ -157,6 +169,30 @@ export function App() {
                   element={
                     <ProtectedRoute requiredCapability="mobile_config_write">
                       <MobileConfigPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/health"
+                  element={
+                    <ProtectedRoute requiredCapability="audit_read">
+                      <PlatformHealthPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/announcements"
+                  element={
+                    <ProtectedRoute requiredCapability="site_settings_write">
+                      <SystemAnnouncementsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/support-data"
+                  element={
+                    <ProtectedRoute requiredCapability="audit_read">
+                      <SupportDataPage />
                     </ProtectedRoute>
                   }
                 />

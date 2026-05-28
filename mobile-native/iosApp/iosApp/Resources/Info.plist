@@ -5,11 +5,11 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Reality Portal</string>
+    <string>$(BUNDLE_DISPLAY_NAME)</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
-    <string>three.two.bit.ppt.reality</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
@@ -17,9 +17,9 @@
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1.0</string>
+    <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UIApplicationSceneManifest</key>
@@ -89,12 +89,6 @@
     </dict>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
-    <!-- API Configuration (Epic 85 - Story 85.1) -->
-    <!-- These values are set by xcconfig files per build scheme -->
-    <!-- This is Reality Portal (mobile-native) which uses reality-server (port 8081) -->
-    <!-- Development: http://localhost:8081 (reality-server local) -->
-    <!-- Staging: https://staging-reality.ppt.example.com (reality-server staging) -->
-    <!-- Production: https://reality.ppt.example.com (reality-server production) -->
     <key>API_BASE_URL</key>
     <string>$(API_BASE_URL)</string>
     <key>ENVIRONMENT</key>

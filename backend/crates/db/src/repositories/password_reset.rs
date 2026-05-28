@@ -99,4 +99,29 @@ impl PasswordResetRepository {
 
         Ok(result.rows_affected())
     }
+
+    /// Count password-reset tokens issued for a user in the last `window`
+    /// minutes. Used by `forgot_password` to rate-limit reset-email
+    /// floods to a victim address (P1-07). Counts ALL tokens — used,
+    /// unused, expired-but-not-yet-cleaned — because each one represents
+    /// an email that was sent. Returns 0 if the user_id is unknown
+    /// (caller has already short-circuited the unknown-email case).
+    pub async fn count_recent_for_user(
+        &self,
+        user_id: Uuid,
+        window_minutes: i32,
+    ) -> Result<i64, SqlxError> {
+        let count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM password_reset_tokens
+            WHERE user_id = $1
+              AND created_at > NOW() - make_interval(mins => $2)
+            "#,
+        )
+        .bind(user_id)
+        .bind(window_minutes)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(count)
+    }
 }

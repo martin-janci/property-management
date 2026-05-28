@@ -144,6 +144,28 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 
 - **Failure mode:** if any sub-check fails, surface it under brief's *Goal violations*. The routine commit still proceeds (the failure log is value) — but Phase 5 itself must already have aborted before any push if verify-all failed; G15 is the post-hoc audit trail, not the runtime gate. The runtime gate lives inside Phase 5.
 
+### G16 — Management artifacts valid (when Phase 1.6 ran)
+
+- **Pass when:** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op.
+- **Check:** `jq -e '.items' .research/management/action-list.json >/dev/null && jq -e '.items' .research/management/risks.json >/dev/null && test -s .research/management/project-state.md && jq -e '.pm_cursor.next_index >= 0 and .pm_cursor.next_index <= 7' .research/state.json` → expect exit 0.
+
+### G17 — No Telegram secret committed
+
+- **Pass when:** the staged diff contains no literal Telegram bot-token value — either the URL form (`api.telegram.org/bot<digits>:<secret>`) or the bare token form (`<8-10 digits>:<35+ chars>`). References to the variable *name* (`TELEGRAM_BOT_TOKEN`) and `${TELEGRAM_BOT_TOKEN}` interpolations are permitted; only an actual token value must be absent.
+- **Check:** scan `git diff --cached` for added lines only (`^+`, excluding `^+++` file-header lines), excluding the four baseline doc files exactly as G9 does, then grep for a real token value pattern:
+  ```bash
+  git diff --cached \
+    -- '.research/' \
+    ':(exclude).research/README.md' \
+    ':(exclude).research/routine-prompt.md' \
+    ':(exclude).research/implementer-prompt.md' \
+    ':(exclude).research/IMPROVEMENT_IDEAS.md' \
+  | grep -E '^\+' | grep -v '^\+\+\+' \
+  | grep -E 'api\.telegram\.org/bot[0-9]{6,}:[A-Za-z0-9_-]{20,}|[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
+  | wc -l
+  ```
+  → expect `0`. **Abort commit if non-zero** (same severity as G8/G9 — a token leak must not land in the commit).
+
 ---
 
 **Goal-check report format** (in `signals/<date>.json`):
@@ -159,7 +181,7 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 }
 ```
 
-If **G8 or G9 fails, abort before commit.** All other failures are recorded and surfaced in the brief but do not block the commit — the failure log itself is value.
+If **G8, G9, or G17 fails, abort before commit.** All other failures are recorded and surfaced in the brief but do not block the commit — the failure log itself is value.
 
 ## Inputs you read
 
@@ -184,7 +206,7 @@ If **G8 or G9 fails, abort before commit.** All other failures are recorded and 
 6. `.research/signals/<YYYY-MM-DD>.json` — debug trail of raw signals derived this run, including `auto_fix_actions[]` populated by Phase 5
 7. `.research/state.json` — bump cursors, append to `seen_signals` and `hotspot_history`, increment stats, append to `auto_fix_history` for each signal Phase 5 acted on
 
-Then `git add .research/`, run the **quality gates** below, commit, push to `main`. Phase 5 may *also* push to a separate `auto-fix/<slug>` branch and open a PR — that's a side effect, not part of the `.research/` commit.
+Then `git add .research/`, run the **quality gates** below, commit, and push (Phase 6 lands the `.research/` commit on `dev` via the session branch + `research-land.yml` replay — see Phase 6). Phase 5 may *also* push to a separate `auto-fix/<slug>` branch and open a PR — that's a side effect, not part of the `.research/` commit.
 
 ### `state.json` shape (relevant keys)
 
@@ -207,6 +229,29 @@ Then `git add .research/`, run the **quality gates** below, commit, push to `mai
     }
   },
   "stats": { "runs": 17, "vectors_created": 9, "plans_created": 4, "quiet_days": 2, "auto_fix_count": 3 },
+  "review_cursor": {
+    // Tracks which scope segment was last reviewed and when.
+    // Phase 1.5 advances the entry for the segment it reviews this run.
+    // Null = never reviewed (highest priority for selection).
+    "api-handlers":       "2026-05-20",   // backend/api-server/src/handlers/
+    "api-core":           null,            // backend/api-server/src/ (non-handlers: middleware, models, etc.)
+    "reality-server":     null,            // backend/reality-server/src/
+    "ppt-web-ui":         null,            // frontend/ppt-web/src/pages/ + components/
+    "ppt-web-core":       null,            // frontend/ppt-web/src/ (hooks, api, stores, router)
+    "reality-web":        null,            // frontend/reality-web/src/
+    "mobile-rn":          null,            // frontend/mobile/src/
+    "mobile-native-kmp":  null             // mobile-native/
+  },
+  "pm_cursor": {
+    // Phase 1.6 role rotation: which of the 8 pm-* role agents runs next, + last-run dates.
+    "rotation": ["pm-tech-lead","pm-backend","pm-frontend","pm-qa","pm-devops","pm-security","pm-data","pm-integration"],
+    "next_index": 0,
+    "role_last_run": { "pm-tech-lead": null }   // … one entry per role
+  },
+  "coverage_cursor": {
+    // Phase 1.6 coverage upkeep: numeric index into the sorted distinct epics in coverage.json (one epic re-checked per run).
+    "next_index": 0
+  },
   "paused": false
 }
 ```
@@ -246,18 +291,34 @@ SINCE_ISO="$(jq -r '.last_run_iso // "1970-01-01T00:00:00Z"' .research/state.jso
 LAST_PR="$(jq -r '.last_pr_seen // 0' .research/state.json)"
 LAST_ISSUE="$(jq -r '.last_issue_seen // 0' .research/state.json)"
 
+# Routine lag check — emit lag_warning if last run was more than 36 hours ago
+NOW_EPOCH=$(date -u +%s)
+LAST_EPOCH=$(date -u -d "$SINCE_ISO" +%s 2>/dev/null || date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$SINCE_ISO" +%s 2>/dev/null || echo 0)
+LAG_HOURS=$(( (NOW_EPOCH - LAST_EPOCH) / 3600 ))
+LAG_DAYS=$(( LAG_HOURS / 24 ))
+if [ "$LAG_HOURS" -gt 36 ]; then
+  echo "lag_warning: routine has not run in ${LAG_DAYS}d ${LAG_HOURS}h — surface in brief Since last run"
+fi
+
+# Stale-routine alert (P4) — if state.json hasn't advanced in 3+ days the
+# cloud cron is likely broken even if the dispatcher (separate loop, separate
+# branch) is still ticking. Flag in the brief so the operator notices.
+if [ "$LAG_DAYS" -ge 3 ]; then
+  echo "stale_routine_alert: state.json last_run_iso=${SINCE_ISO} is ${LAG_DAYS}d old; cloud routine may be paused. Dispatcher state lives in .research/management/assignments.json on the planning branch — check that separately."
+fi
+
 # Merged PRs since last_pr_seen
-gh pr list --state merged --base main --limit 50 \
+gh pr list --state merged --base dev --limit 50 \
   --json number,title,mergedAt,author,additions,deletions,files,body,labels \
   --jq "map(select(.number > $LAST_PR))"
 
 # Open PRs touched since last run
-gh pr list --state open --base main --limit 50 \
+gh pr list --state open --base dev --limit 50 \
   --json number,title,updatedAt,author,reviewDecision,isDraft,body \
   --jq "map(select(.updatedAt > \"$SINCE_ISO\"))"
 
 # Closed-but-not-merged PRs since last run (mergedAt is null)
-gh pr list --state closed --base main --limit 50 \
+gh pr list --state closed --base dev --limit 50 \
   --json number,title,closedAt,mergedAt,author,body \
   --jq "map(select(.mergedAt == null and .closedAt > \"$SINCE_ISO\"))"
 
@@ -283,7 +344,7 @@ Then derive signals. Types and `score_delta`:
 
 | Signal type | Trigger | Δscore | Notes |
 |---|---|---|---|
-| `unchecked-todo` | PR body has `- [ ]` after merge | +2 | warm context, name file paths |
+| `unchecked-todo` | PR body has `- [ ]` after merge | +2 (+3 if `candidate_vector` is `security` or `bug`) | warm context, name file paths; the extra +1 for security/bug reflects that an unchecked TODO in a security or correctness fix is higher risk than in a refactor or DX task |
 | `revert` | PR is a revert or title contains "Revert" | +3 | dig into original PR for root cause |
 | `stalled-review` | open PR >7 days, no reviewDecision | +1 | process signal, not a code vector |
 | `churn-hotspot` | top-3 raw churn this run | +1 | filter exclusions first (see below) |
@@ -294,8 +355,10 @@ Then derive signals. Types and `score_delta`:
 | `untriaged-issue` | new issue, no label | +1 | vector=`triage`, never promote to plan |
 | `closed-not-merged-pr` | PR closed unmerged | +1 | look at the close reason |
 | `dep-update-noise` | dependabot/renovate PR | 0 | log in brief, don't score |
+| `lag_warning` | `(now − last_run_iso) > 36h` — routine missed a run | 0 | log in brief under "Since last run", don't score; signal id `lag-warning-<YYYY-MM-DD>` |
 | `screen-map-drift` | merged PR touched a frontend route file (`frontend/apps/ppt-web/src/{App.tsx,routes/**}`, `frontend/apps/reality-web/src/app/**`; mobile excluded — see below) **without** updating the matching product's `docs/screens/<product>/*.md` — emit **one signal per drifting product** with id `screen-map-drift-pr-<num>-<product>` | +2 | vector=`test-gap`; flags screen docs falling behind code |
 | `screen-map-orphan` | a `docs/screens/<product>/*.md` exists for a route path that no longer appears in the corresponding route file | +1 | vector=`refactor`; stale screen doc |
+| `code-review-finding` | rotating expert review of a scope segment surfaced a concrete issue (bug, security flaw, missing test, architectural smell) | +1 / +2 / +3 | delta = Low(+1) / Medium(+2) / High(+3); vector = `bug` / `security` / `refactor` / `test-gap`; signal id `code-review-<segment>-<short-slug>` |
 
 **Churn exclusions** — never score these files as hotspots:
 ```
@@ -306,6 +369,43 @@ docs/api/typespec/*.tsp version bumps
 VERSION
 *.lock, *.lockb
 ```
+
+**Risky-churn detection** — cross-reference the per-PR changed-file list against the churn hotspot set to find files that are both frequently churning AND touched by a fix/revert PR without test coverage:
+
+1. **Build the hotspot set** — the files that generated `churn-hotspot` or `repeated-churn` signals this run (after churn exclusions).
+
+2. **Identify risky PRs** — from the merged PR list, select PRs where:
+   - Title starts with `fix`, `hotfix`, `bugfix`, or `revert` (case-insensitive), **or** any of those words appear in a `label.name`, **or** the PR is a revert (checked via `revert` signal already fired for this PR); **and**
+   - The PR's changed files contain **no test files** — i.e., no path matching `*test*`, `*spec*`, `*__tests__*`, `*_test.rs`, `*_spec.*`.
+
+3. **Intersect** — for each risky PR, check whether any file in `pr.files` is also in the hotspot set. For each match:
+   - Emit signal `risky-churn-pr-<N>-<slug>` where `<slug>` is the churn file's basename without extension (e.g. `integrations-rs`)
+   - `score_delta: +2`
+   - `candidate_vector: "bug"` (instability signal — the churn file is being patched without tests)
+   - `evidence`: `"PR #N (<fix|hotfix|revert>) modified <churn-file> — a top-churn file — with no test diff"`
+
+4. **Dedup note** — one `risky-churn` signal per PR × churn-file pair. If `integrations.rs` was a hotspot and PRs #345 and #351 both touched it without tests, emit two signals: `risky-churn-pr-345-integrations-rs` and `risky-churn-pr-351-integrations-rs`.
+
+*Why this matters:* the churn hotspot list shows which files are changing fastest. A fix PR without tests touching those same files is the canonical instability pattern — repeated changes to code that isn't covered by tests. The two observations need to be correlated at the PR level; scanning the 14-day window for hotspots and scanning per-PR diffs as separate passes means the correlation never fires otherwise.
+
+**Reachability gate (dead-code filter)** — apply before finalising any signal with `score_delta >= 2` that cites a Rust file under `backend/.../handlers/`:
+
+1. **Derive the module name** from the file path:
+   - `mod.rs` inside a subdirectory: use the subdirectory name (`handlers/voting/mod.rs` → `voting`)
+   - Any other `.rs` file: use the file stem (`handlers/faults.rs` → `faults`)
+
+2. **Grep for a `mod <name>` declaration** in the parent (handlers) directory:
+   ```bash
+   grep -rn "mod voting\b" backend/servers/api-server/src/handlers/ --include="*.rs"
+   ```
+
+3. **If grep returns 0 hits** → the module is not declared from any active code path = dead code.
+   - Set `score_delta = 0` for the signal
+   - Append `"dead-code: no \`mod <name>\` declaration found — score suppressed"` to the signal's evidence
+   - Still emit the signal (visibility), but treat it like `dep-update-noise`: log in the brief, do not create or update a backlog item, do add to `state.seen_signals`
+   - Do NOT treat as a security finding, even if the TODO pattern looks security-related
+
+   *Background:* the `handlers/voting` and `handlers/faults` modules in the 2026-05-20 run held 19 of 31 `TODO: Migrate to *_rls` markers but had zero call sites — dead compilation artifacts. PR #420 deleted them. Scoring dead TODO patterns as security issues pollutes the backlog with phantom work that deletion resolves without implementation effort.
 
 **Screen-map drift detection** — for each merged PR this run, fetch its file
 list (`gh pr view <num> --json files --jq '.files[].path'`) and apply:
@@ -377,6 +477,67 @@ Write the full signal list to `.research/signals/<YYYY-MM-DD>.json`. Each entry 
 
 **Don't rely only on PR title/body.** When deriving a signal that names a file, *open the file or read the diff via `gh pr diff <num>`* and confirm the evidence exists. If the code doesn't back up the PR body, keep the item in backlog at low score instead of promoting later.
 
+### Phase 1.5 — Rotating Expert Review
+
+Invoke the `ppt-dev-review` skill (`.claude/skills/ppt-dev-review/SKILL.md`). The full protocol lives there — segment map, expert assignment, grep patterns, signal format, and token budget rules.
+
+**Before invoking the skill:** check that `state.review_cursor` exists in `state.json`. If the key is absent (fresh install or hand-edited state), initialize it now with all 8 segments set to `null`:
+```json
+"review_cursor": {
+  "api-handlers":      null,
+  "api-core":          null,
+  "reality-server":    null,
+  "ppt-web-ui":        null,
+  "ppt-web-core":      null,
+  "reality-web":       null,
+  "mobile-rn":         null,
+  "mobile-native-kmp": null
+}
+```
+Write this to `state.json` before proceeding, so the skill always receives a complete cursor map.
+
+Pass it:
+- `CHURN_FILES` — churn hotspot file paths from Phase 1
+- `REVIEW_CURSOR` — `state.review_cursor` from `state.json`
+
+**Skip Phase 1.5 when:**
+- `state.json` has `paused: true`
+- Phase 1 completely failed (no signals at all)
+
+The skill returns:
+- `segment_reviewed` — which segment was picked and why
+- `signals[]` — up to 3 `code-review-finding` signals to add to `signals/<today>.json`
+
+After Phase 1.5 returns: add its signals to the Phase 1 signal list and update `state.review_cursor.<segment_reviewed>` to today's ISO date.
+
+---
+
+### Phase 1.6 — Project Management & Delivery
+
+Invoke the `ppt-project-management` skill (`.claude/skills/ppt-project-management/SKILL.md`). It runs the always-on Scrum Master plus role analysis (rotating one role/day by default; all 8 on `$TRIGGER_TEXT == "full"`/`"pm-full"`; a specific role on `pm:<role>`), and writes the delivery artifacts under `.research/management/`.
+
+**Before invoking the skill:** ensure `state.pm_cursor` exists in `state.json`. If absent (fresh install or hand-edited state), initialize it now:
+```json
+"pm_cursor": {
+  "rotation": ["pm-tech-lead","pm-backend","pm-frontend","pm-qa","pm-devops","pm-security","pm-data","pm-integration"],
+  "next_index": 0,
+  "role_last_run": {"pm-tech-lead":null,"pm-backend":null,"pm-frontend":null,"pm-qa":null,"pm-devops":null,"pm-security":null,"pm-data":null,"pm-integration":null}
+}
+```
+Write it to `state.json` before proceeding.
+
+Pass the skill the Phase-1 observation data (`MERGED_PRS`, `OPEN_PRS`, `ISSUES`, `CHURN_FILES`) and `$TRIGGER_TEXT`. Keep the returned `digest` object — Phase 6 sends it to Telegram. The skill writes all `.research/management/` files and advances `state.pm_cursor`; do not write those files yourself.
+
+**Coverage upkeep (cheap — never deep-scan in the cloud).** If `.research/management/coverage.json` has stories:
+1. **Init guard:** if `state.coverage_cursor` is absent, set it to `{"next_index": 0}` and write `state.json`.
+2. **Mark progress from merged PRs:** for each merged PR this run (Phase 1 data), if it maps to a coverage story (story-id or keyword match), advance that story's `status` toward `done` and append to its `evidence`; set `last_checked = <today>`.
+3. **Re-check one rotating epic:** from `coverage.json`, take the sorted distinct epic list; pick the epic at `coverage_cursor.next_index`; cheaply refresh its stories' evidence (sprint-status + screen-map + a light keyword grep — NOT a full code read); then set `coverage_cursor.next_index = (next_index + 1) mod <#epics>`.
+4. **Re-rank:** set the coverage map's top-level `scan_kind = "upkeep"` and `generated = <now>`, then run the skill's default mode to regenerate `roadmap.md` / `action-list.json` / `project-state.md` from the updated `coverage.json`.
+
+Do **NOT** run the skill's `scan` mode here — the authoritative full rebuild is the on-demand local `/ppt-project-management scan`.
+
+---
+
 ### Phase 2 — Decide
 
 Convert signals → backlog updates. For each signal:
@@ -386,6 +547,7 @@ Convert signals → backlog updates. For each signal:
    - Append signal source to `sources` if new.
    - Append signal evidence to `evidence` only if **materially new** (don't restate "PR #123 added validation").
    - Add `score_delta` to its score **only if this signal's ID is not in `state.seen_signals`** — never score the same signal twice.
+   - Update `confidence` to the higher of the existing item value and the incoming signal's confidence (`high > medium > low`); if the item has no `confidence` field yet, inherit it directly from the signal.
    - Update `updated_at = today`.
 3. If not found, create a new item:
    ```json
@@ -394,6 +556,7 @@ Convert signals → backlog updates. For each signal:
      "title": "<imperative title under 80 chars>",
      "vector": "bug | refactor | perf | test-gap | dx | security | dep-update | triage",
      // triage = lowest-effort vector, never promoted to a plan (Phase 3 readiness gate excludes it)
+     "confidence": "<signal confidence — low | medium | high>",
      "score": <initial score_delta>,
      "status": "open",
      "sources": ["PR #123", "commit abc123"],
@@ -406,6 +569,39 @@ Convert signals → backlog updates. For each signal:
    ```
 4. **Score cap:** clamp to 8.
 5. **Decay:** for every `open` item with `updated_at` older than 14 days, score −1 this run. If score reaches 0, set `status = "dropped"` with an evidence line "decayed: no new signals in 14 days".
+
+6. **Resolution check** — cross-reference open items against merged PRs and current code state:
+
+   For each `open` item in `backlog.json`, run two checks:
+
+   **a. PR-body match** — search the merged-PR list fetched in Phase 1 for any PR whose `body` or `title` contains the item's `id` verbatim (e.g. `security-rls-migration-residual`). A verbatim ID match means the PR author explicitly tied that PR to this research finding.
+
+   **b. Evidence-gone grep** — extract the core TODO/FIXME pattern from the item's `evidence` array: look for the first backtick-quoted string that starts with `TODO:` or `FIXME:` (e.g. `` `TODO: Migrate to *_rls when route handlers pass RLS connection` ``). Strip backticks and convert glob chars to a grep-safe pattern, then:
+   ```bash
+   # For each path in item.files:
+   git ls-files --error-unmatch <path> 2>/dev/null || echo "DELETED"
+   grep -rn "TODO: Migrate to.*_rls" <path>   # adapt pattern per item
+   ```
+   Three outcomes:
+   - File deleted (git ls-files exits non-zero) → evidence gone for that file
+   - File exists, grep returns 0 hits → evidence gone for that file
+   - File exists, grep has hits → evidence still present
+
+   Evidence-gone applies when **all** files in `item.files` are either deleted or hit-free.
+
+   **Resolution actions:**
+
+   | PR match | Evidence-gone | Action |
+   |----------|--------------|--------|
+   | yes | yes | `status = "done"`, append `"resolved: PR #N merged YYYY-MM-DD — <title>"` |
+   | yes | no (grep has hits) | leave `open`; append `"[partial] PR #N claims resolution but patterns still found in <file>"` |
+   | yes | inconclusive (no grep-extractable pattern) | `status = "done"`, append `"resolved: PR #N — <title>; code patterns not independently verified"` |
+   | no | yes | `status = "done"`, append `"resolved: code patterns no longer present in cited files"` |
+   | no | no | leave unchanged |
+
+   In all `done` transitions: add the resolving PR number to `sources` (if not already there), set `updated_at = today`.
+
+   **Scope guard:** only run this check for items whose `evidence` contains file-path references or TODO/FIXME patterns. Items with purely narrative evidence (no quoted patterns, no file paths) skip the grep half and rely on the PR-body match alone.
 
 Then regenerate `backlog.md` from `backlog.json` (sorted by score desc, then `updated_at` desc). Write a freshness widget directly under the H1 — exact line, no other content between `# Backlog of vectors` and this:
 
@@ -448,7 +644,7 @@ If no items qualify, render the headers with one empty separator row (same shape
 
 A backlog item is **ready** if **all** of these hold:
 
-- `score >= 3`
+- `score >= 3`  *(see security exception below)*
 - `status == "open"`
 - has at least one concrete source: PR #, issue #, or commit sha
 - has at least one entry in `files` (a real path under the repo)
@@ -457,6 +653,8 @@ A backlog item is **ready** if **all** of these hold:
 - not blocked by an open question (`status != "needs-human-judgement"`)
 - no existing active plan references the same `sources` (check `plans/` + `plans/_archive/`)
 - vector is not `triage` (triage items stay in backlog for human review)
+
+**Security fast-track:** if `vector == "security"` **and** `confidence == "high"` **and** `score >= 2`, the score threshold drops from 3 to 2 — all other gates still apply. A single high-confidence security signal is enough evidence to act; waiting for score compounding means a multi-tenant isolation gap or auth bypass sits open for two extra runs. The `security-rls-migration-residual` item from 2026-05-20 (score 2, confidence high) would have promoted immediately under this rule, not stayed open while the team fixed it manually.
 
 For each ready item not already in `plans/`, write `plans/<slug>.md` from the template below. **Cap at 2 new plans per run.** If more vectors are ready, leave them for the next run — quality over volume.
 
@@ -655,14 +853,41 @@ Record under `auto_fix_actions[]` with `action_type: "comment"`, `target_url: "<
    ```
    Several gates inspect `git diff --cached` — they need the index populated first. Running them against an empty index would silently pass.
 1. Run the **Quality gates** (below) in order against the staged index:
-   - **G8 or G9 failure → abort the commit.** No fallback. Files outside `.research/` or any secret/private-hostname leak halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
-   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
+   - **G8, G9, or G17 failure → abort the commit.** No fallback. Files outside `.research/`, any secret/private-hostname leak, or a literal Telegram token value halts the run immediately. Log the failure to `signals/<today>.json` under `goal_checks` and stop. Don't run `git commit`.
+   - **Any of G1, G2, G3, G4, G5, G6, G7, G10, G11, G12, G13, G14, G15, G16 fails →** fix in place if possible (don't commit a broken state). If you genuinely cannot fix (e.g. data is inconsistent and only a human can adjudicate), leave a `needs-human-judgement` row in `backlog.json`, narrow the staged set to *only* `briefs/<today>.md` + `state.json` + `signals/<today>.json` + the new backlog row (use `git reset HEAD <path>` for the ones you're dropping), and commit that partial state.
 2. Commit + push (only when gates passed or partial-commit was approved):
    ```bash
    git commit -m "research: <YYYY-MM-DD> brief — <N> merged PRs, <M> new vectors, <P> plans, <K> auto-fix"
-   git push origin main
+   git push origin HEAD:dev
    ```
-   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op). Requires "Allow unrestricted branch pushes" on this repo. If push fails: leave the local commit, print the recovery command in the brief, do NOT roll back the commit.
+   `<K>` is the count from `auto_fix_actions[]` (0 if Phase 5 was a no-op).
+
+   **How the push lands (cloud CCR — read this, do not improvise).** In the cloud sandbox, `git push origin HEAD:dev` is routed to *this run's session branch* (`claude/<codename>-<suffix>`), **not** to `dev` directly. **This is expected and correct — it is NOT a failure or a deviation.** The `research-land.yml` GitHub Action then automatically replays your `.research/`-only commit onto `dev` and deletes the session branch. So: run the push above and trust CI to land it on `dev`. Do **not** treat the session-branch landing as an error, do **not** invent an alternative branch, and do **not** narrate it as a policy deviation. Only if the `git push` command itself returns a non-zero exit code should you leave the local commit and note the error in the brief.
+3. **Send the Telegram delivery digest** (best-effort, non-fatal). **Decide `quiet` HERE — do NOT trust Phase 1.6's `digest.quiet`.** Phase 1.6 runs *before* Phases 2/3/5, so its `quiet` flag cannot see this run's new backlog vectors, promoted plans, code-review findings, or auto-fixes. Re-evaluate now with the full-run picture: the run is **quiet (skip the send)** ONLY if it was a complete no-op — **no** PRs merged since last run, **and no** new backlog vector added this run, **and no** plan promoted this run, **and no** Phase 1.5 code-review finding, **and no** Phase 5 auto-fix action. If **any** of those occurred, the run is **NOT quiet — send.** Set `PM_DIGEST_QUIET=0` (send) or `1` (skip) accordingly. Build `$DIGEST` from the Phase 1.6 `digest` object, but refresh `next`/`shipped` so they reflect anything Phases 2/3 added (e.g. a promoted security plan belongs in the digest). Never echo the bot token.
+   ```bash
+   if [ "${PM_DIGEST_QUIET:-0}" != "1" ] && [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+     curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+       --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+       --data-urlencode "text=${DIGEST}" \
+       --data-urlencode "parse_mode=Markdown" \
+       --data-urlencode "disable_web_page_preview=true" >/dev/null \
+       && echo "telegram: sent" || echo "telegram: send failed (non-fatal)"
+   else
+     echo "telegram: skipped (quiet day or TELEGRAM_BOT_TOKEN/CHAT_ID unset)"
+   fi
+   ```
+   `$DIGEST` format:
+   ```
+   📋 PPT delivery — <YYYY-MM-DD HH:MM>
+   Sprint: <sprint> — <epics_done>/<epics_total> epics done
+   Shipped since last run: <list or "nothing">
+   Next up:
+    • <action 1> — <owner>
+    • <action 2> — <owner>
+    • <action 3> — <owner>
+   Blockers: <none | list>
+   Role focus today: <roles>
+   ```
 
 ## Quality gates (before every commit)
 
@@ -688,6 +913,8 @@ Run these and verify each passes:
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
 12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
 13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
+14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op. (see G16)
+15. **No Telegram secret committed.** `git diff --cached` added lines contain no literal Telegram bot-token value (URL form or bare token form). The variable name and `${…}` references are permitted; only an actual token value must be absent. Exempt: the four baseline doc files (`.research/{README,routine-prompt,implementer-prompt,IMPROVEMENT_IDEAS}.md`). **Abort commit if non-zero** matches — same severity as gate 8. (see G17)
 
 ## Brief template
 
@@ -698,7 +925,8 @@ Run these and verify each passes:
 - Merged PRs: <N> (range #<lo>–#<hi>)
 - Open PRs touched: <N>
 - New / updated issues: <N>
-- Commits: <N> on `main`
+- Commits: <N> on `dev`
+- Routine lag: <Nd Nh since last run | on schedule>
 - Phases that failed: <none | phase-1-gh-pr-list | ...>
 
 ## Shipped
@@ -708,6 +936,38 @@ Run these and verify each passes:
 - Stalled review: #<num> — <days idle>, <author>
 - Reverted: #<num> reverted #<orig> — <hypothesis>
 - Churn hotspots: <file> (<additions+deletions> lines this run, runs_seen=<N>)
+
+## PRs stuck in draft despite approval
+<!-- Query: PRs where isDraft==true AND reviewDecision==APPROVED AND updatedAt < now-24h.
+     Example:
+       gh pr list --repo martin-janci/property-management --state open --draft \
+         --json number,title,updatedAt,reviewDecision,isDraft \
+         --jq '.[] | select(.reviewDecision=="APPROVED" and .isDraft==true)'
+     Compute age-in-hours from updatedAt. If none: emit a single line "- none".
+     This catches the merge-gate bug class (#539-style): PR approved, CI green,
+     but stuck in draft because a human gate wasn't cleared. -->
+- #<num> <title> — last update <Nh> ago (age=<dd:hh>)
+- none
+
+## PRs with verdict=changes, no fix-round progress in 24h
+<!-- Query: rows in .research/management/assignments.json (planning branch) where
+     reviewer_summary starts with "verdict=changes" AND
+     (now - last_updated) > 24h AND status == "review".
+     Example (read planning's assignments via gh):
+       gh api repos/martin-janci/property-management/contents/.research/management/assignments.json?ref=planning \
+         --jq '.content' | base64 -d | jq '.assignments[]
+         | select(.status=="review" and (.reviewer_summary // "" | startswith("verdict=changes")))
+         | {task_id, pr_number, last_updated, reviewer_summary}'
+     If none: emit "- none". -->
+- <task_id> PR#<num> — last_updated <Nh> ago, reviewer note: <short>
+- none
+
+## Code review slice
+- Segment reviewed: <SEGMENT> (reason: churn-aligned | oldest-unreviewed | fallback)
+- Experts: <rust | frontend | kotlin> [+ <security | completeness | tester>]
+- Findings: <N> (see Backlog deltas for `code-review-finding` signals)
+- Next segment: <SEGMENT> (oldest unreviewed after this run)
+- Skipped: <no — reviewed | yes — reason>
 
 ## Screen-map status
 - Total `docs/screens/` files: <N> (across `ppt/` + `reality/`; `mobile/` not yet seeded → 0)
@@ -768,6 +1028,8 @@ When promoting a vector, copy that file to `.research/plans/<slug>.md` and repla
 - `text == ""` — normal run
 - `text == "deep"` — scan the last 30 days instead of since-last-run. Only update `last_run_iso` and cursors **after all writes succeed** (deep mode is opportunistic catch-up, not a cursor reset).
 - `text == "reset"` — write a brief noting state was reset, then set `last_pr_seen = 0`, `last_commit_sha = null`, `last_issue_seen = 0`, clear `seen_signals` and `hotspot_history`. Next run will do an initial 14-day sweep again.
+- `text == "full"` / `text == "pm-full"` — Phase 1.6 runs the Scrum Master + all 8 role agents (full delivery analysis), not just the daily rotating role.
+- `text == "pm:<role>"` — Phase 1.6 runs the Scrum Master + the named role only (e.g. `pm:security`, `pm:backend`). Valid roles: tech-lead, backend, frontend, qa, devops, security, data, integration.
 
 ## Operational assumptions and failure modes
 

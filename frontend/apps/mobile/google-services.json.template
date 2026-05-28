@@ -1,0 +1,48 @@
+{
+  "_comment": "TEMPLATE — copy to google-services.json and fill in real values from Firebase Console.",
+  "_howto": [
+    "1. Go to Firebase Console: https://console.firebase.google.com/",
+    "2. Select or create the PPT Management project.",
+    "3. Project Settings > Your apps > Android app (package: three.two.bit.ppt.management).",
+    "4. Download google-services.json and place it beside this template file.",
+    "5. The real file is gitignored. For EAS Cloud builds, store it as a secret:",
+    "     eas secret:create --scope project --name GOOGLE_SERVICES_JSON --value \"$(base64 -w0 google-services.json)\""
+  ],
+  "project_info": {
+    "project_number": "FIREBASE_PROJECT_NUMBER",
+    "project_id": "ppt-management-PLACEHOLDER",
+    "storage_bucket": "ppt-management-PLACEHOLDER.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:FIREBASE_PROJECT_NUMBER:android:PLACEHOLDER",
+        "android_client_info": {
+          "package_name": "three.two.bit.ppt.management"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "FIREBASE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "FIREBASE_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "FIREBASE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

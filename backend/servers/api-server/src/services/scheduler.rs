@@ -4,10 +4,11 @@
 //! and session cleanup.
 
 use db::repositories::{
-    AnnouncementRepository, MeterRepository, SessionRepository, UnitResidentRepository,
-    VoteRepository,
+    AnnouncementRepository, MeterRepository, SessionRepository, SignatureRequestRepository,
+    UnitResidentRepository, VoteRepository,
 };
 use db::DbPool;
+use integrations::LightweightProvider;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
@@ -15,6 +16,11 @@ use tracing::Instrument;
 
 use super::notification::{NotificationService, NotificationServiceConfig};
 use super::EmailService;
+
+/// Per-signer minimum interval between reminder emails sent by the
+/// background scheduler. Prevents the every-60s scheduler tick from
+/// spamming the same signer for the entire reminder window.
+const SIGNATURE_REMINDER_MIN_INTERVAL_HOURS: i64 = 12;
 
 /// Scheduler service configuration.
 #[derive(Clone)]
@@ -29,6 +35,8 @@ pub struct SchedulerConfig {
     pub meter_reminder_days_before: i64,
     /// Days before payment due to send reminder (default: 7).
     pub payment_reminder_days_before: i64,
+    /// Days before signature request expiry to send reminder (default: 3).
+    pub signature_reminder_days_before: i64,
 }
 
 impl Default for SchedulerConfig {
@@ -39,6 +47,7 @@ impl Default for SchedulerConfig {
             vote_reminder_days_before: 1,
             meter_reminder_days_before: 3,
             payment_reminder_days_before: 7,
+            signature_reminder_days_before: 3,
         }
     }
 }
@@ -52,6 +61,8 @@ pub struct SchedulerMetrics {
     pub vote_reminders_sent: u64,
     pub meter_reminders_sent: u64,
     pub payment_reminders_sent: u64,
+    pub signature_reminders_sent: u64,
+    pub signature_requests_expired: u64,
     pub sessions_cleaned: u64,
     pub login_attempts_cleaned: u64,
     pub errors: u64,
@@ -65,7 +76,9 @@ pub struct Scheduler {
     session_repo: SessionRepository,
     meter_repo: MeterRepository,
     unit_resident_repo: UnitResidentRepository,
+    signature_request_repo: SignatureRequestRepository,
     notification_service: Arc<NotificationService>,
+    email_service: EmailService,
     config: SchedulerConfig,
     metrics: std::sync::Mutex<SchedulerMetrics>,
 }
@@ -80,7 +93,7 @@ impl Scheduler {
         let email_service = EmailService::development();
         let notification_service = Arc::new(NotificationService::new(
             pool.clone(),
-            email_service,
+            email_service.clone(),
             NotificationServiceConfig::default(),
         ));
 
@@ -89,32 +102,43 @@ impl Scheduler {
             session_repo: SessionRepository::new(pool.clone()),
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
+            signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
+            email_service,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
         }
     }
 
-    /// Create a scheduler with a custom notification service.
+    /// Create a scheduler with a custom notification service and email service.
     pub fn with_notification_service(
         pool: DbPool,
         announcement_repo: AnnouncementRepository,
         notification_service: Arc<NotificationService>,
         config: SchedulerConfig,
     ) -> Self {
+        let email_service = EmailService::development();
         Self {
             vote_repo: VoteRepository::new(pool.clone()),
             session_repo: SessionRepository::new(pool.clone()),
             meter_repo: MeterRepository::new(pool.clone()),
             unit_resident_repo: UnitResidentRepository::new(pool.clone()),
+            signature_request_repo: SignatureRequestRepository::new(pool.clone()),
             pool,
             announcement_repo,
             notification_service,
+            email_service,
             config,
             metrics: std::sync::Mutex::new(SchedulerMetrics::default()),
         }
+    }
+
+    /// Create a scheduler with a custom email service (for production use).
+    pub fn with_email_service(mut self, email_service: EmailService) -> Self {
+        self.email_service = email_service;
+        self
     }
 
     /// Get current metrics.
@@ -127,6 +151,8 @@ impl Scheduler {
             vote_reminders_sent: guard.vote_reminders_sent,
             meter_reminders_sent: guard.meter_reminders_sent,
             payment_reminders_sent: guard.payment_reminders_sent,
+            signature_reminders_sent: guard.signature_reminders_sent,
+            signature_requests_expired: guard.signature_requests_expired,
             sessions_cleaned: guard.sessions_cleaned,
             login_attempts_cleaned: guard.login_attempts_cleaned,
             errors: guard.errors,
@@ -194,6 +220,18 @@ impl Scheduler {
         // Story 106.4: Clean up expired sessions
         if let Err(e) = self.cleanup_sessions().await {
             tracing::error!("Failed to cleanup sessions: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 84.2: Expire overdue signature requests
+        if let Err(e) = self.expire_signature_requests().await {
+            tracing::error!("Failed to expire signature requests: {}", e);
+            self.increment_errors();
+        }
+
+        // Story 84.2: Send signature reminder emails
+        if let Err(e) = self.send_signature_reminders().await {
+            tracing::error!("Failed to send signature reminders: {}", e);
             self.increment_errors();
         }
     }
@@ -742,6 +780,163 @@ impl Scheduler {
             let mut metrics = self.metrics.lock().unwrap();
             metrics.sessions_cleaned += tokens_cleaned;
             metrics.login_attempts_cleaned += attempts_cleaned;
+        }
+
+        Ok(())
+    }
+
+    // ========================================================================
+    // Story 84.2: E-Signature Reminder & Expiry Tasks
+    // ========================================================================
+
+    /// Expire overdue signature requests (status pending/in_progress, expires_at < now).
+    async fn expire_signature_requests(&self) -> Result<(), sqlx::Error> {
+        let expired_count = self.signature_request_repo.expire_old_requests().await?;
+        if expired_count > 0 {
+            tracing::info!(
+                expired_count = expired_count,
+                "Expired overdue signature requests"
+            );
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.signature_requests_expired += expired_count as u64;
+        }
+        Ok(())
+    }
+
+    /// Send reminder emails for pending signature requests approaching expiry.
+    async fn send_signature_reminders(&self) -> Result<(), sqlx::Error> {
+        let cutoff =
+            chrono::Utc::now() + chrono::Duration::days(self.config.signature_reminder_days_before);
+
+        let expiring_requests = self
+            .signature_request_repo
+            .find_expiring_in_window(cutoff)
+            .await?;
+
+        if expiring_requests.is_empty() {
+            return Ok(());
+        }
+
+        tracing::info!(
+            count = expiring_requests.len(),
+            reminder_window_days = self.config.signature_reminder_days_before,
+            "Processing signature requests approaching expiry for reminders"
+        );
+
+        let provider = match LightweightProvider::from_env() {
+            Ok(p) => p,
+            Err(e) => {
+                // Refuse to mint reminder URLs when the HMAC secret is
+                // missing — startup validation ensures this should never
+                // fire in production.
+                tracing::error!(error = %e, "Skipping signature-reminder tick — e-signature provider misconfigured");
+                return Ok(());
+            }
+        };
+        let _base_url =
+            std::env::var("BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+
+        // Per-signer minimum interval between reminders. The scheduler ticks
+        // every 60s by default; without this gate every pending signer
+        // would get spammed on every tick for the entire reminder window.
+        let now = chrono::Utc::now();
+        let min_interval = chrono::Duration::hours(SIGNATURE_REMINDER_MIN_INTERVAL_HOURS);
+
+        let mut total_reminders = 0u64;
+
+        for sig_req in &expiring_requests {
+            let pending_signers: Vec<_> = sig_req
+                .signers
+                .iter()
+                .filter(|s| !s.is_complete())
+                .filter(|s| {
+                    // Skip signers reminded within the dedup window.
+                    s.last_reminder_at
+                        .map(|t| now.signed_duration_since(t) >= min_interval)
+                        .unwrap_or(true)
+                })
+                .collect();
+
+            if pending_signers.is_empty() {
+                continue;
+            }
+
+            let expires_str = sig_req.expires_at.map(|e| e.format("%Y-%m-%d").to_string());
+            let doc_label = sig_req
+                .subject
+                .clone()
+                .unwrap_or_else(|| "Document".to_string());
+
+            let org_id_str = sig_req.organization_id.to_string();
+            for signer in pending_signers {
+                let signer_status = signer.status.to_string();
+                let sign_url = match provider.build_signing_url(
+                    &signer.email,
+                    &sig_req.id.to_string(),
+                    &org_id_str,
+                    &signer_status,
+                ) {
+                    Ok(s) => s.url,
+                    Err(e) => {
+                        tracing::error!(
+                            error = %e,
+                            signature_request_id = %sig_req.id,
+                            signer_email = %signer.email,
+                            "Failed to build signing URL — skipping reminder for this signer"
+                        );
+                        continue;
+                    }
+                };
+
+                match self
+                    .email_service
+                    .send_signature_reminder_email(
+                        &signer.email,
+                        &signer.name,
+                        &doc_label,
+                        &sign_url,
+                        expires_str.as_deref(),
+                    )
+                    .await
+                {
+                    Ok(()) => {
+                        tracing::info!(
+                            signature_request_id = %sig_req.id,
+                            signer_email = %signer.email,
+                            "Sent scheduled signature reminder email"
+                        );
+                        total_reminders += 1;
+                        // Stamp the signer so subsequent ticks within the
+                        // dedup window skip them. Failure here is logged
+                        // but not fatal — the next tick will re-evaluate.
+                        if let Err(e) = self
+                            .signature_request_repo
+                            .touch_signer_reminder(sig_req.id, &signer.email, now)
+                            .await
+                        {
+                            tracing::warn!(
+                                error = %e,
+                                signature_request_id = %sig_req.id,
+                                signer_email = %signer.email,
+                                "Failed to stamp last_reminder_at — next tick may resend"
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            error = %e,
+                            signature_request_id = %sig_req.id,
+                            signer_email = %signer.email,
+                            "Failed to send scheduled signature reminder email"
+                        );
+                    }
+                }
+            }
+        }
+
+        if total_reminders > 0 {
+            let mut metrics = self.metrics.lock().unwrap();
+            metrics.signature_reminders_sent += total_reminders;
         }
 
         Ok(())

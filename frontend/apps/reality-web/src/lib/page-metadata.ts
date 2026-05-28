@@ -95,11 +95,16 @@ const PRIVATE_KEYS = new Set([
   'profile',
 ]);
 
-function safeT(t: (key: string) => string, key: string): string | undefined {
-  try {
-    const v = t(key);
-    return v && !v.startsWith('pages.') ? v : undefined;
-  } catch {
-    return undefined;
-  }
+type TranslatorLike = {
+  (key: string): string;
+  has(key: string): boolean;
+};
+
+// Probe with `has` before calling `t(key)`. next-intl's onError logs
+// MISSING_MESSAGE before throwing, so a try/catch can't suppress the log —
+// `has` returns boolean without triggering it.
+function safeT(t: TranslatorLike, key: string): string | undefined {
+  if (!t.has(key)) return undefined;
+  const v = t(key);
+  return v && !v.startsWith('pages.') ? v : undefined;
 }

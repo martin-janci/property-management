@@ -1,8 +1,12 @@
 import type {
+  AcknowledgmentStats,
   AnnouncementAttachment,
   AnnouncementStatus,
   AnnouncementWithDetails,
 } from '@ppt/api-client';
+import { AcknowledgmentStats as AcknowledgmentStatsPanel } from '../components/AcknowledgmentStats';
+import type { AnnouncementCommentsProps } from '../components/AnnouncementComments';
+import { AnnouncementComments } from '../components/AnnouncementComments';
 import './ViewAnnouncementPage.css';
 
 interface ViewAnnouncementPageProps {
@@ -17,6 +21,14 @@ interface ViewAnnouncementPageProps {
   onBack: () => void;
   onMarkRead?: () => void;
   onAcknowledge?: () => void;
+  /** Acknowledgment stats for manager view — shown when acknowledgmentRequired is true */
+  acknowledgmentStats?: AcknowledgmentStats;
+  /**
+   * Comment section props (Story 6.3).
+   * When provided the comments thread is rendered below the announcement body.
+   * Omit to suppress the section (e.g. commentsEnabled=false, or while loading).
+   */
+  commentsProps?: AnnouncementCommentsProps;
 }
 
 const statusPillClass: Record<AnnouncementStatus, string> = {
@@ -45,6 +57,8 @@ export function ViewAnnouncementPage({
   onBack,
   onMarkRead,
   onAcknowledge,
+  acknowledgmentStats,
+  commentsProps,
 }: ViewAnnouncementPageProps) {
   const canEdit = announcement.status === 'draft' || announcement.status === 'scheduled';
   const canDelete = announcement.status === 'draft';
@@ -160,6 +174,18 @@ export function ViewAnnouncementPage({
               ))}
             </ul>
           </div>
+        )}
+
+        {announcement.acknowledgmentRequired && acknowledgmentStats && (
+          <AcknowledgmentStatsPanel
+            stats={acknowledgmentStats}
+            className="view-announcement__ack-stats"
+          />
+        )}
+
+        {/* Story 6.3: Comments & Discussion — rendered when commentsEnabled and commentsProps provided */}
+        {announcement.commentsEnabled && commentsProps && (
+          <AnnouncementComments {...commentsProps} />
         )}
 
         <div className="view-announcement__actions">

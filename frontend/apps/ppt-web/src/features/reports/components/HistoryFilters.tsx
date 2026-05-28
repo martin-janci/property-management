@@ -6,6 +6,7 @@
 
 import type { ReportExecutionStatus } from '@ppt/api-client';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ExecutionFilters {
   status?: ReportExecutionStatus;
@@ -18,17 +19,19 @@ interface HistoryFiltersProps {
   onChange: (filters: ExecutionFilters) => void;
 }
 
-const STATUS_OPTIONS: { value: ReportExecutionStatus | ''; label: string }[] = [
-  { value: '', label: 'All Statuses' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'running', label: 'Running' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'skipped', label: 'Skipped' },
-];
-
 export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
+  const { t } = useTranslation();
+
+  const STATUS_OPTIONS: { value: ReportExecutionStatus | ''; label: string }[] = [
+    { value: '', label: t('reports.filters.allStatuses', 'All Statuses') },
+    { value: 'completed', label: t('reports.filters.statusCompleted', 'Completed') },
+    { value: 'failed', label: t('reports.filters.statusFailed', 'Failed') },
+    { value: 'running', label: t('reports.filters.statusRunning', 'Running') },
+    { value: 'pending', label: t('reports.filters.statusPending', 'Pending') },
+    { value: 'cancelled', label: t('reports.filters.statusCancelled', 'Cancelled') },
+    { value: 'skipped', label: t('reports.filters.statusSkipped', 'Skipped') },
+  ];
+
   const handleStatusChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const value = e.target.value as ReportExecutionStatus | '';
@@ -71,7 +74,7 @@ export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
       {/* Status Filter */}
       <div className="flex items-center gap-2">
         <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">
-          Status:
+          {t('reports.filters.status', 'Status:')}
         </label>
         <select
           id="status-filter"
@@ -90,7 +93,7 @@ export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
       {/* Date Range Filter */}
       <div className="flex items-center gap-2">
         <label htmlFor="date-from" className="text-sm font-medium text-gray-700">
-          From:
+          {t('reports.filters.dateFrom', 'From:')}
         </label>
         <input
           type="date"
@@ -104,7 +107,7 @@ export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
 
       <div className="flex items-center gap-2">
         <label htmlFor="date-to" className="text-sm font-medium text-gray-700">
-          To:
+          {t('reports.filters.dateTo', 'To:')}
         </label>
         <input
           type="date"
@@ -123,7 +126,7 @@ export function HistoryFilters({ filters, onChange }: HistoryFiltersProps) {
           onClick={handleClear}
           className="text-sm text-gray-500 hover:text-gray-700 underline"
         >
-          Clear filters
+          {t('reports.filters.clearFilters', 'Clear filters')}
         </button>
       )}
     </div>

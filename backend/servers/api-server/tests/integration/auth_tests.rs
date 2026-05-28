@@ -60,7 +60,7 @@ fn auth_json_request(method: Method, uri: &str, token: &str, body: Value) -> Req
 mod registration {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_valid_user(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -83,7 +83,7 @@ mod registration {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_duplicate_email(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -113,7 +113,7 @@ mod registration {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_invalid_email(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -131,7 +131,7 @@ mod registration {
         assert_eq!(json["code"].as_str().unwrap(), "INVALID_EMAIL");
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_weak_password(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -149,7 +149,7 @@ mod registration {
         assert_eq!(json["code"].as_str().unwrap(), "VALIDATION_ERROR");
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_register_empty_name(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -176,7 +176,7 @@ mod registration {
 mod login {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_login_valid_credentials(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -198,19 +198,19 @@ mod login {
         let response = app.execute(login_request).await;
 
         response.assert_status(StatusCode::OK);
-        response.assert_json_field("access_token");
-        response.assert_json_field("refresh_token");
-        response.assert_json_field("expires_in");
-        response.assert_json_field("token_type");
+        response.assert_json_field("accessToken");
+        response.assert_json_field("refreshToken");
+        response.assert_json_field("expiresIn");
+        response.assert_json_field("tokenType");
 
         let json = response.json_value();
-        assert_eq!(json["token_type"].as_str().unwrap(), "Bearer");
+        assert_eq!(json["tokenType"].as_str().unwrap(), "Bearer");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_login_invalid_password(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -241,7 +241,7 @@ mod login {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_login_nonexistent_user(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -259,7 +259,7 @@ mod login {
         assert_eq!(json["code"].as_str().unwrap(), "INVALID_CREDENTIALS");
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_login_unverified_email(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -296,7 +296,7 @@ mod login {
 mod token_refresh {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_valid_token(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -307,26 +307,26 @@ mod token_refresh {
 
         // Refresh token
         let body = json!({
-            "refresh_token": refresh_token
+            "refreshToken": refresh_token
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/refresh", body);
         let response = app.execute(request).await;
 
         response.assert_status(StatusCode::OK);
-        response.assert_json_field("access_token");
-        response.assert_json_field("expires_in");
+        response.assert_json_field("accessToken");
+        response.assert_json_field("expiresIn");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_invalid_token(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let body = json!({
-            "refresh_token": "invalid-refresh-token"
+            "refreshToken": "invalid-refresh-token"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/refresh", body);
@@ -335,7 +335,7 @@ mod token_refresh {
         response.assert_status(StatusCode::UNAUTHORIZED);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_refresh_missing_token(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -356,7 +356,7 @@ mod token_refresh {
 mod logout {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_logout_valid_session(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -367,7 +367,7 @@ mod logout {
 
         // Logout
         let body = json!({
-            "refresh_token": refresh_token
+            "refreshToken": refresh_token
         });
 
         let request = auth_json_request(Method::POST, "/api/v1/auth/logout", &access_token, body);
@@ -379,12 +379,12 @@ mod logout {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_logout_without_auth(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
         let body = json!({
-            "refresh_token": "some-token"
+            "refreshToken": "some-token"
         });
 
         let request = json_request(Method::POST, "/api/v1/auth/logout", body);
@@ -402,7 +402,7 @@ mod logout {
 mod password_reset {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_request_password_reset(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -431,7 +431,7 @@ mod password_reset {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_request_password_reset_nonexistent_email(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -446,7 +446,7 @@ mod password_reset {
         response.assert_status(StatusCode::OK);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_reset_password_invalid_token(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -465,7 +465,7 @@ mod password_reset {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_reset_password_weak_new_password(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -489,7 +489,7 @@ mod password_reset {
 mod mfa {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_enable_mfa(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -504,14 +504,15 @@ mod mfa {
 
         response.assert_status(StatusCode::OK);
         response.assert_json_field("secret");
-        response.assert_json_field("qr_code_uri");
-        response.assert_json_field("backup_codes");
+        // Backend uses serde rename_all = "camelCase" → qrUri (not qr_code_uri)
+        response.assert_json_field("qrUri");
+        response.assert_json_field("backupCodes");
 
         // Cleanup
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_verify_mfa_invalid_code(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -538,7 +539,7 @@ mod mfa {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_mfa_without_auth(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -562,7 +563,7 @@ mod mfa {
 mod sessions {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_list_sessions(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -586,7 +587,7 @@ mod sessions {
         cleanup_test_user(&pool, &user.email).await;
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_revoke_all_sessions(pool: PgPool) {
         let app = TestApp::new(pool.clone()).await;
         let user = TestUser::new();
@@ -620,7 +621,7 @@ mod sessions {
 mod error_responses {
     use super::*;
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_missing_content_type(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -639,7 +640,7 @@ mod error_responses {
         );
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_malformed_json(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -655,7 +656,7 @@ mod error_responses {
         response.assert_status(StatusCode::BAD_REQUEST);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_missing_required_fields(pool: PgPool) {
         let app = TestApp::new(pool).await;
 
@@ -670,7 +671,7 @@ mod error_responses {
         response.assert_status(StatusCode::BAD_REQUEST);
     }
 
-    #[sqlx::test]
+    #[sqlx::test(migrator = "db::MIGRATOR")]
     async fn test_empty_body(pool: PgPool) {
         let app = TestApp::new(pool).await;
 

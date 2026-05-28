@@ -541,6 +541,32 @@ async fn create_webhook(
     _user: AuthUser,
     Json(payload): Json<CreateWebhookSubscription>,
 ) -> Result<(StatusCode, Json<CreateWebhookResponse>), (StatusCode, Json<ErrorResponse>)> {
+    // P1-03: SSRF gate on the developer-supplied endpoint_url. The
+    // integration::create path already calls validate_webhook_url for
+    // tenant-internal webhooks; this public-API surface was missing the
+    // gate, which would let a developer register
+    // `http://169.254.169.254/...` or an internal Redis URL and have
+    // every webhook delivery proxy through our cluster.
+    //
+    // is_production is derived from the standard PPT_ENV variable; we
+    // fail closed if unset (treat as production).
+    let is_production = std::env::var("PPT_ENV")
+        .map(|v| v != "development" && v != "dev")
+        .unwrap_or(true);
+    let url_check =
+        db::models::integration::validate_webhook_url(&payload.endpoint_url, is_production);
+    if !url_check.is_valid {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new(
+                "INVALID_WEBHOOK_URL",
+                url_check
+                    .error
+                    .unwrap_or_else(|| "Webhook URL rejected".to_string()),
+            )),
+        ));
+    }
+
     // Validate event types
     for event_type in &payload.event_types {
         if !webhook_event_type::ALL.contains(&event_type.as_str()) {

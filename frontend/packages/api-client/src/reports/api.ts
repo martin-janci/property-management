@@ -10,6 +10,7 @@ import type {
   BuildingAnalytics,
   CreateReportDefinition,
   CreateReportSchedule,
+  CronScheduleUpdateRequest,
   DataSource,
   ListReportsParams,
   ListReportsResponse,
@@ -144,6 +145,22 @@ export async function updateSchedule(
 ): Promise<ReportSchedule> {
   return fetchApi(`${API_BASE}/schedules/${id}`, {
     method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a report schedule using the gap-81-1 cron-based endpoint.
+ *
+ * Sends a PUT request with `cron_expression`, `recipients`, and/or `enabled`.
+ * At least one field must be present (validated by the backend).
+ */
+export async function updateScheduleCron(
+  id: string,
+  data: CronScheduleUpdateRequest
+): Promise<ReportSchedule> {
+  return fetchApi(`${API_BASE}/schedules/${id}`, {
+    method: 'PUT',
     body: JSON.stringify(data),
   });
 }

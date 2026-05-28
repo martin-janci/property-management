@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 import { useAdminAuth } from '../auth/AdminAuthContext';
+import { HelpSidebar, useContextualHelp } from '../features/help';
+import './AdminLayout.css';
 import { ConnectedMfaWindowChip } from './MfaWindowChip';
 
 interface SidebarGroupProps {
@@ -70,6 +72,7 @@ function NavItem({ to, label }: NavItemProps) {
 export function AdminLayout() {
   const { t } = useTranslation();
   const auth = useAdminAuth();
+  const help = useContextualHelp();
 
   // TENANTS
   const canAgenciesRead = useCapability('agencies_read');
@@ -91,6 +94,11 @@ export function AdminLayout() {
   // PLATFORM
   const canSiteSettingsWrite = useCapability('site_settings_write');
   const canMobileConfigWrite = useCapability('mobile_config_write');
+  const canHealthRead = useCapability('audit_read');
+  const canSupportDataRead = useCapability('audit_read');
+
+  // DEVELOPER
+  const canOauthClientWrite = useCapability('oauth_client_write');
 
   return (
     <div className="admin-shell">
@@ -152,6 +160,30 @@ export function AdminLayout() {
             {canMobileConfigWrite ? (
               <NavItem to="/platform/mobile" label={t('admin.platform.mobile', 'Mobile config')} />
             ) : null}
+            {canHealthRead ? (
+              <NavItem to="/platform/health" label={t('admin.health.navLabel', 'Health')} />
+            ) : null}
+            {canSiteSettingsWrite ? (
+              <NavItem
+                to="/platform/announcements"
+                label={t('admin.announcements.navLabel', 'Announcements')}
+              />
+            ) : null}
+            {canSupportDataRead ? (
+              <NavItem
+                to="/platform/support-data"
+                label={t('admin.supportData.navLabel', 'Support data')}
+              />
+            ) : null}
+          </SidebarGroup>
+
+          <SidebarGroup label="DEVELOPER">
+            {canOauthClientWrite ? (
+              <NavItem
+                to="/identity/oauth-clients"
+                label={t('admin.oauthClients.navLabel', 'OAuth Clients')}
+              />
+            ) : null}
           </SidebarGroup>
         </nav>
         <button type="button" onClick={auth.logout}>
@@ -172,11 +204,22 @@ export function AdminLayout() {
         >
           <span style={{ flex: 1 }} />
           <ConnectedMfaWindowChip />
+          {/* Help toggle — styles live in AdminLayout.css (.ppt-topbar-help-btn) */}
+          <button
+            type="button"
+            onClick={help.toggle}
+            aria-expanded={help.isOpen}
+            aria-label={t('admin.help.openHelp', 'Open contextual help')}
+            className="ppt-topbar-help-btn"
+          >
+            ?
+          </button>
           <button type="button" onClick={auth.logout} style={{ fontSize: '13px' }}>
             {t('admin.actions.signOut', 'Sign out')}
           </button>
         </div>
         <Outlet />
+        {help.isOpen && <HelpSidebar article={help.article} onClose={help.close} />}
       </main>
     </div>
   );

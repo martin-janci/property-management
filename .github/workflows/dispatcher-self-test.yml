@@ -1,0 +1,25 @@
+name: dispatcher-self-test
+
+on:
+  pull_request:
+    paths:
+      - ".research/dispatcher-prompt.md"
+      - ".research/dispatcher-self-test.sh"
+      - ".research/management/assignments.json"
+      - ".claude/skills/ppt-implement/**"
+      - ".claude/skills/ppt-pr-merge/**"
+      - ".claude/skills/ppt-review-merged/**"
+      - ".github/workflows/dispatcher-self-test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: dispatcher schema + invariant self-test
+        run: bash .research/dispatcher-self-test.sh
+      - name: scope-check unit tests
+        run: bash .claude/skills/ppt-implement/scripts/test-scope-check.sh

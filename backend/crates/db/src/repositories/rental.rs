@@ -673,11 +673,11 @@ impl RentalRepository {
         let (total,) = count_builder.fetch_one(&self.pool).await?;
 
         // Fetch bookings (simplified - using direct query)
-        let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
+        let bookings = sqlx::query_as::<_, (Uuid, Uuid, String, String, String, Option<String>, String, i32, NaiveDate, NaiveDate, Option<Decimal>, Option<String>, String, Option<String>)>(
             r#"
             SELECT
                 b.id, b.unit_id, u.name, bld.name,
-                b.platform::text, b.guest_name, b.guest_count,
+                b.platform::text, b.external_booking_id, b.guest_name, b.guest_count,
                 b.check_in, b.check_out, b.total_amount, b.currency,
                 b.status,
                 (SELECT status FROM rental_guests WHERE booking_id = b.id AND is_primary = true LIMIT 1)
@@ -704,6 +704,7 @@ impl RentalRepository {
                     unit_name,
                     building_name,
                     platform,
+                    external_booking_id,
                     guest_name,
                     guest_count,
                     check_in,
@@ -719,6 +720,7 @@ impl RentalRepository {
                         unit_name,
                         building_name,
                         platform,
+                        external_booking_id,
                         guest_name,
                         guest_count,
                         check_in,
@@ -1657,6 +1659,38 @@ impl RentalRepository {
             "#,
         )
         .bind(org_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(conn)
+    }
+
+    /// Find Airbnb connection by listing ID (external_property_id).
+    ///
+    /// # Why `sqlx::query_as` instead of `query_as!` macro
+    ///
+    /// The compile-time `query_as!` macro requires a live database connection
+    /// (or a pre-generated `.sqlx/` cache via `cargo sqlx prepare`) at build time.
+    /// This function was added in gap-83-1 where the CI/CD environment uses
+    /// `SQLX_OFFLINE=true` and the offline query cache has not yet been regenerated
+    /// for the new `rental_platform_connections` table columns added in migration
+    /// `00051_create_short_term_rentals.sql`.
+    ///
+    /// TODO(gap-83-1): Convert to `query_as!` after running `cargo sqlx prepare`
+    /// against a fully-migrated database and committing the updated `.sqlx/` cache.
+    pub async fn find_airbnb_connection_by_listing_id(
+        &self,
+        listing_id: &str,
+    ) -> Result<Option<RentalPlatformConnection>, SqlxError> {
+        let conn = sqlx::query_as::<_, RentalPlatformConnection>(
+            r#"
+            SELECT * FROM rental_platform_connections
+            WHERE platform = 'airbnb' AND external_property_id = $1 AND is_active = true
+            ORDER BY updated_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(listing_id)
         .fetch_optional(&self.pool)
         .await?;
 

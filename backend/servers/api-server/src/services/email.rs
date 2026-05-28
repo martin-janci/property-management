@@ -872,6 +872,211 @@ impl EmailService {
         }
     }
 
+    // ==================== E-Signature Emails (Story 84.2) ====================
+
+    /// Escape a plain-text string for safe interpolation into HTML.
+    fn html_escape(s: &str) -> String {
+        s.replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
+            .replace('\'', "&#x27;")
+    }
+
+    /// Send signature request invitation email to a signer.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn send_signature_request_email(
+        &self,
+        to: &str,
+        signer_name: &str,
+        document_name: &str,
+        requester_name: &str,
+        signing_url: &str,
+        message: Option<&str>,
+        expires_at: Option<&str>,
+    ) -> Result<(), EmailError> {
+        let subject = format!("Action required: Please sign \"{}\"", document_name);
+        let signer_name_h = Self::html_escape(signer_name);
+        let requester_name_h = Self::html_escape(requester_name);
+        let document_name_h = Self::html_escape(document_name);
+        let signing_url_h = Self::html_escape(signing_url);
+        let expiry_text = expires_at
+            .map(|e| {
+                format!(
+                    "<p>This request expires on <strong>{}</strong>.</p>",
+                    Self::html_escape(e)
+                )
+            })
+            .unwrap_or_default();
+        let expiry_plain = expires_at
+            .map(|e| format!("\nThis request expires on: {}", e))
+            .unwrap_or_default();
+        let custom_message_html = message
+            .filter(|m| !m.is_empty())
+            .map(|m| format!("<p><em>{}</em></p>", ammonia::clean(m)))
+            .unwrap_or_default();
+        let custom_message_plain = message
+            .filter(|m| !m.is_empty())
+            .map(|m| format!("\n{}\n", m))
+            .unwrap_or_default();
+
+        let html_body = format!(
+            r#"<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Signature Request</title></head>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#2c5282">You have a document to sign</h2>
+  <p>Hello <strong>{signer_name_h}</strong>,</p>
+  <p><strong>{requester_name_h}</strong> has requested your electronic signature on
+     <strong>&quot;{document_name_h}&quot;</strong>.</p>
+  {custom_message_html}
+  {expiry_text}
+  <p style="margin:30px 0">
+    <a href="{signing_url_h}" style="background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Review &amp; Sign Document</a>
+  </p>
+  <p style="font-size:12px;color:#718096">If the button above doesn't work, copy and paste this URL:<br><a href="{signing_url_h}">{signing_url_h}</a></p>
+  <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0">
+  <p style="font-size:12px;color:#718096">If you were not expecting this request, you may safely ignore this email.</p>
+</body></html>"#,
+        );
+        let text_body = format!(
+            "Hello {},\n\n{} has requested your electronic signature on \"{}\".\n{}\nPlease review and sign at:\n{}\n{}\nIf you were not expecting this, you may ignore this email.\n\nBest regards,\nProperty Management System",
+            signer_name, requester_name, document_name, custom_message_plain, signing_url, expiry_plain,
+        );
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
+    }
+
+    /// Send a signature reminder email to a pending signer.
+    pub async fn send_signature_reminder_email(
+        &self,
+        to: &str,
+        signer_name: &str,
+        document_name: &str,
+        signing_url: &str,
+        expires_at: Option<&str>,
+    ) -> Result<(), EmailError> {
+        let subject = format!(
+            "Reminder: Your signature is still needed on \"{}\"",
+            document_name
+        );
+        let signer_name_h = Self::html_escape(signer_name);
+        let document_name_h = Self::html_escape(document_name);
+        let signing_url_h = Self::html_escape(signing_url);
+        let expiry_text = expires_at
+            .map(|e| {
+                format!(
+                    "<p><strong>Important:</strong> This request expires on <strong>{}</strong>.</p>",
+                    Self::html_escape(e)
+                )
+            })
+            .unwrap_or_default();
+        let expiry_plain = expires_at
+            .map(|e| format!("\nImportant: This request expires on {}.\n", e))
+            .unwrap_or_default();
+
+        let html_body = format!(
+            r#"<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Signature Reminder</title></head>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#c05621">Reminder: Signature Required</h2>
+  <p>Hello <strong>{signer_name_h}</strong>,</p>
+  <p>This is a friendly reminder that your signature is still needed on <strong>&quot;{document_name_h}&quot;</strong>.</p>
+  {expiry_text}
+  <p style="margin:30px 0"><a href="{signing_url_h}" style="background:#c05621;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Sign Now</a></p>
+  <p style="font-size:12px;color:#718096">If the button above doesn't work:<br><a href="{signing_url_h}">{signing_url_h}</a></p>
+</body></html>"#,
+        );
+        let text_body = format!(
+            "Hello {},\n\nThis is a friendly reminder that your signature is still needed on \"{}\".\n{}\nSign at:\n{}\n\nBest regards,\nProperty Management System",
+            signer_name, document_name, expiry_plain, signing_url,
+        );
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
+    }
+
+    /// Send a decline notification to the document requester.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn send_signature_declined_email(
+        &self,
+        to: &str,
+        requester_name: &str,
+        document_name: &str,
+        signer_name: &str,
+        signer_email: &str,
+        decline_reason: Option<&str>,
+        manage_url: &str,
+    ) -> Result<(), EmailError> {
+        let subject = format!("Signature declined for \"{}\"", document_name);
+        let requester_name_h = Self::html_escape(requester_name);
+        let signer_name_h = Self::html_escape(signer_name);
+        let signer_email_h = Self::html_escape(signer_email);
+        let document_name_h = Self::html_escape(document_name);
+        let manage_url_h = Self::html_escape(manage_url);
+        let reason_html = decline_reason
+            .filter(|r| !r.is_empty())
+            .map(|r| {
+                format!(
+                    "<p><strong>Reason provided:</strong> {}</p>",
+                    ammonia::clean(r)
+                )
+            })
+            .unwrap_or_else(|| "<p>No reason was provided.</p>".to_string());
+        let reason_plain = decline_reason
+            .filter(|r| !r.is_empty())
+            .map(|r| format!("Reason: {}", r))
+            .unwrap_or_else(|| "No reason was provided.".to_string());
+
+        let html_body = format!(
+            r#"<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Signature Declined</title></head>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#c53030">Signature Declined</h2>
+  <p>Hello <strong>{requester_name_h}</strong>,</p>
+  <p><strong>{signer_name_h}</strong> ({signer_email_h}) has <strong>declined</strong> to sign <strong>&quot;{document_name_h}&quot;</strong>.</p>
+  {reason_html}
+  <p style="margin:30px 0"><a href="{manage_url_h}" style="background:#2c5282;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">Manage Signature Request</a></p>
+</body></html>"#,
+        );
+        let text_body = format!(
+            "Hello {},\n\n{} ({}) has declined to sign \"{}\".\n\n{}\n\nManage the request at:\n{}\n\nBest regards,\nProperty Management System",
+            requester_name, signer_name, signer_email, document_name, reason_plain, manage_url,
+        );
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
+    }
+
+    /// Send a completion notification when all signers have signed.
+    pub async fn send_signature_completed_email(
+        &self,
+        to: &str,
+        requester_name: &str,
+        document_name: &str,
+        signers_count: usize,
+        manage_url: &str,
+    ) -> Result<(), EmailError> {
+        let subject = format!("All signatures collected for \"{}\"", document_name);
+        let requester_name_h = Self::html_escape(requester_name);
+        let document_name_h = Self::html_escape(document_name);
+        let manage_url_h = Self::html_escape(manage_url);
+        let html_body = format!(
+            r#"<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Signatures Complete</title></head>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+  <h2 style="color:#276749">All Signatures Collected</h2>
+  <p>Hello <strong>{requester_name_h}</strong>,</p>
+  <p>Great news! All {signers_count} signer(s) have successfully signed <strong>&quot;{document_name_h}&quot;</strong>.</p>
+  <p>The signed document is now available in your document management system.</p>
+  <p style="margin:30px 0"><a href="{manage_url_h}" style="background:#276749;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;font-weight:bold">View Signed Document</a></p>
+</body></html>"#,
+        );
+        let text_body = format!(
+            "Hello {},\n\nAll {} signer(s) have successfully signed \"{}\".\n\nView the signed document at:\n{}\n\nBest regards,\nProperty Management System",
+            requester_name, signers_count, document_name, manage_url,
+        );
+        self.send_html_email(to, &subject, &html_body, &text_body)
+            .await
+    }
+
     /// Send voting reminder email.
     pub async fn send_voting_reminder_email(
         &self,

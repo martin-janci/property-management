@@ -10,7 +10,7 @@ implementations:
     component: DocumentsPage
     buildStatus: shipped
     redesignStatus: in-progress
-    apiStatus: partial
+    apiStatus: complete
   mobile:
     component: DocumentsScreen
     buildStatus: shipped
@@ -22,6 +22,8 @@ relatedScreens:
   - id: ppt/document-detail
     rel: child
   - id: ppt/upload-document
+    rel: child
+  - id: ppt/document-folders
     rel: child
 epics:
   - Epic-39
@@ -126,5 +128,10 @@ UC-08 central document repository. Manager-side CRUD; resident-side filtered rea
 
 <!-- newest entries on top -->
 
+- 2026-05-27 — agent: gap-7a-4 review fixes — extracted useDocumentDownload hook (error toast on failure, blob URL); download now shared between RowDownloadButton and DownloadButton via single hook
+- 2026-05-27 — agent: gap-7a-4 — added preview (eye) + download action buttons to each doc row in DocumentsBrowse; DocumentPreviewModal renders PDF inline (react-pdf via PdfPreview) or image (<img>) with download button in header; action buttons hidden by default, revealed on row hover/focus/selected via CSS opacity transition
+- 2026-05-27 — agent: gap-7a-2 review fixes — extracted useDocumentDownload hook (error toast on failure, blob URL pattern); added full Tab/Shift-Tab focus trap to MoveFolderDialog
+- 2026-05-24 — agent: gap-7a-2 follow-up — added ppt/document-folders as child relatedScreen (FolderTreePage ships on /documents/folders; omitted from PR #451 commit)
+- 2026-05-24 — agent: gap-7a-3 — added DocumentsBrowse component wired to RLS-aware GET /api/v1/documents; surfaces audience (access_scope) filter chips and status segmented control (Publikované/Návrhy/Archivované); promoted ppt-web.apiStatus partial→complete; DocumentsPage browse tab now uses real data, not placeholder
 - 2026-05-09 — agent: design analyzed (pages/ppt-documents.html — 4 artboards: loaded-12-3-selected / empty / loading / error); flipped ppt-web redesignStatus → in-progress (drift note: was shipped, now redesign in flight); attached designSource; populated functionality checklist (8 sections), 4 states, design-specific notes (filter-AND-OR semantics + ZIP server-side + audience RLS); declared 7 sharedComponents
 - 2026-05-08 — init: created from scan (source: sitemap)

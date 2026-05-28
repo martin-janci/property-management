@@ -31,6 +31,73 @@ use crate::state::AppState;
 // `TenantContext`. No JWT verification — any unauthenticated caller could
 // forge tenancy. That helper has been deleted; every handler now goes
 // through `RequestPrincipal` (verified bearer JWT + host-resolved tenant).
+//
+// P1-02 (dev-team review): handlers below take `building_id` from the
+// URL path. Without an authorization check, any authenticated tenant of
+// Org A could POST against `/api/v1/community/buildings/<orgB-building>/...`
+// and either read or create rows under another tenant's building. The
+// `verify_building_access` helper rejects that: it loads the building,
+// confirms it exists, then confirms the principal has an active
+// membership in the building's owning organization. Platform principals
+// bypass the membership check.
+
+/// Reject the request if the principal cannot access the given
+/// `building_id`. Returns the building's organization_id on success so
+/// the handler can use it without a second lookup.
+async fn verify_building_access(
+    state: &AppState,
+    principal: &RequestPrincipal,
+    building_id: Uuid,
+) -> Result<Uuid, (StatusCode, Json<ErrorResponse>)> {
+    use db::models::PrincipalKind;
+    use db::repositories::MembershipRepository;
+
+    // We intentionally use the non-RLS lookup here: this IS the access
+    // check, run before any RLS context is established for the request.
+    #[allow(deprecated)]
+    let building = state
+        .building_repo
+        .find_by_id(building_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "Building lookup failed");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new(
+                    "DATABASE_ERROR",
+                    "Failed to verify building access",
+                )),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse::new(
+                    "BUILDING_NOT_FOUND",
+                    "Building not found",
+                )),
+            )
+        })?;
+
+    if matches!(principal.kind, PrincipalKind::Platform) {
+        return Ok(building.organization_id);
+    }
+
+    let has_access = MembershipRepository::new(state.db.clone())
+        .is_active(principal.user_id, building.organization_id)
+        .await
+        .unwrap_or(false);
+    if !has_access {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new(
+                "BUILDING_ACCESS_DENIED",
+                "Caller is not a member of the building's organization",
+            )),
+        ));
+    }
+    Ok(building.organization_id)
+}
 
 /// Create community router.
 pub fn router() -> Router<AppState> {
@@ -140,12 +207,18 @@ pub struct AddReactionRequest {
 )]
 pub async fn list_groups(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Query(query): Query<ListGroupsQuery>,
 ) -> Result<Json<Vec<CommunityGroupWithMembership>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
+    // P1-02: query.user_id was previously honored verbatim from the
+    // query string, which let a caller infer another user's group
+    // membership. Use the verified principal's user_id instead.
+    let _ = query.user_id; // intentionally unused
     let groups = state
         .community_repo
-        .list_groups(path.building_id, query.user_id)
+        .list_groups(path.building_id, Some(principal.user_id))
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "Failed to list groups");
@@ -181,6 +254,7 @@ pub async fn create_group(
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateCommunityGroup>,
 ) -> Result<(StatusCode, Json<CommunityGroup>), (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
     let group = state
         .community_repo
         .create_group(path.building_id, principal.user_id, data)
@@ -463,9 +537,11 @@ pub async fn create_comment(
 )]
 pub async fn list_events(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Query(query): Query<PaginationQuery>,
 ) -> Result<Json<Vec<CommunityEvent>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
     let events = state
         .community_repo
         .get_upcoming_events(path.building_id, query.limit)
@@ -504,6 +580,7 @@ pub async fn create_event(
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateCommunityEvent>,
 ) -> Result<(StatusCode, Json<CommunityEvent>), (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
     let event = state
         .community_repo
         .create_event(path.building_id, principal.user_id, data)
@@ -575,9 +652,11 @@ pub async fn rsvp_event(
 )]
 pub async fn list_items(
     State(state): State<AppState>,
+    principal: RequestPrincipal,
     Path(path): Path<BuildingIdPath>,
     Query(query): Query<MarketplaceQuery>,
 ) -> Result<Json<Vec<MarketplaceItem>>, (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
     let items = state
         .community_repo
         .list_items(path.building_id, query.category, query.limit, query.offset)
@@ -613,6 +692,7 @@ pub async fn create_item(
     Path(path): Path<BuildingIdPath>,
     Json(data): Json<CreateMarketplaceItem>,
 ) -> Result<(StatusCode, Json<MarketplaceItem>), (StatusCode, Json<ErrorResponse>)> {
+    verify_building_access(&state, &principal, path.building_id).await?;
     let item = state
         .community_repo
         .create_item(path.building_id, principal.user_id, data)

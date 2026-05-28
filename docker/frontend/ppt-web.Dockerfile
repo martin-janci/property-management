@@ -44,9 +44,14 @@ COPY frontend/ ./
 
 ARG VITE_API_URL=http://localhost:8080
 ARG VITE_WS_URL=ws://localhost:8080
+# `worktree` mode means the dev panel uses whatever VITE_API_URL was baked in
+# at build (typically `/api` in deployed bundles) instead of falling through to
+# the misleading `local` label. See #454.
+ARG VITE_API_DEFAULT=worktree
 
 ENV VITE_API_URL=${VITE_API_URL}
 ENV VITE_WS_URL=${VITE_WS_URL}
+ENV VITE_API_DEFAULT=${VITE_API_DEFAULT}
 
 RUN pnpm --filter @ppt/web build
 

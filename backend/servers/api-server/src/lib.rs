@@ -2,11 +2,10 @@
 //!
 //! This module exposes the application components for integration testing.
 
-// Allow dead code for stub implementations during development
+// Allow dead code in stub route/service implementations during development
 #![allow(clippy::doc_overindented_list_items)]
 #![allow(dead_code)]
 
-pub mod handlers;
 pub mod observability;
 pub mod routes;
 pub mod services;
@@ -166,6 +165,16 @@ pub fn create_router(state: AppState) -> Router {
         .nest(
             "/api/v1/users/me/notification-preferences",
             routes::notification_preferences::router(),
+        )
+        // Mobile OS push token registration (Epic 8A-3)
+        .nest(
+            "/api/v1/users/me/push-tokens",
+            routes::push_tokens::router(),
+        )
+        // WebSocket realtime notification sync (Epic 8A, Story 8A.3)
+        .nest(
+            "/api/v1/users/me/notifications",
+            routes::ws_notifications::router(),
         )
         // Granular notification preferences routes
         .nest(

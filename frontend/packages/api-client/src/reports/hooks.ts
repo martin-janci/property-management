@@ -12,9 +12,11 @@ import {
   resumeSchedule,
   retryReportExecution,
   updateSchedule,
+  updateScheduleCron,
 } from './api';
 import type {
   CreateReportSchedule,
+  CronScheduleUpdateRequest,
   ReportExecutionHistoryParams,
   ReportExecutionStatus,
 } from './types';
@@ -27,8 +29,9 @@ export const reportKeys = {
   executions: (scheduleId: string) => [...reportKeys.schedule(scheduleId), 'executions'] as const,
   executionList: (
     scheduleId: string,
-    filters?: { status?: ReportExecutionStatus; dateFrom?: string; dateTo?: string }
-  ) => [...reportKeys.executions(scheduleId), filters] as const,
+    filters?: { status?: ReportExecutionStatus; dateFrom?: string; dateTo?: string },
+    pagination?: { offset?: number; limit?: number }
+  ) => [...reportKeys.executions(scheduleId), filters, pagination] as const,
   execution: (id: string) => [...reportKeys.all, 'execution', id] as const,
 };
 
@@ -43,6 +46,24 @@ export function useUpdateSchedule() {
       updateSchedule(id, data),
     onSuccess: (updatedSchedule) => {
       // Invalidate schedule-related queries
+      queryClient.invalidateQueries({ queryKey: reportKeys.schedules() });
+      queryClient.invalidateQueries({ queryKey: reportKeys.schedule(updatedSchedule.id) });
+    },
+  });
+}
+
+/**
+ * Hook to update a report schedule via the cron-based endpoint (gap-81-1).
+ *
+ * Sends cron_expression, recipients, and/or enabled to PUT /schedules/{id}.
+ */
+export function useUpdateScheduleCron() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CronScheduleUpdateRequest }) =>
+      updateScheduleCron(id, data),
+    onSuccess: (updatedSchedule) => {
       queryClient.invalidateQueries({ queryKey: reportKeys.schedules() });
       queryClient.invalidateQueries({ queryKey: reportKeys.schedule(updatedSchedule.id) });
     },
@@ -92,11 +113,18 @@ export function useReportExecutionHistory(
   }
 ) {
   return useQuery({
-    queryKey: reportKeys.executionList(params.scheduleId, {
-      status: params.status,
-      dateFrom: params.dateFrom,
-      dateTo: params.dateTo,
-    }),
+    queryKey: reportKeys.executionList(
+      params.scheduleId,
+      {
+        status: params.status,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
+      },
+      {
+        offset: options?.offset ?? 0,
+        limit: options?.limit ?? 20,
+      }
+    ),
     queryFn: () =>
       getReportExecutionHistory({
         ...params,

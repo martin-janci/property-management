@@ -10,12 +10,16 @@ import { useOfflineSupport } from './hooks';
 import { colors } from './screens/shared/screenStyles';
 import './i18n'; // Initialize i18n
 import {
+  AnnouncementDetailScreen,
   AnnouncementsScreen,
   AuthFlow,
   BuildingsScreen,
   DashboardScreen,
   DocumentDetailScreen,
+  DocumentPermissionsScreen,
+  DocumentPreviewScreen,
   DocumentsScreen,
+  DocumentUploadScreen,
   FaultsListScreen,
   FormsScreen,
   LeaseDetailScreen,
@@ -54,10 +58,14 @@ type Screen =
   | 'Faults'
   | 'ReportFault'
   | 'Announcements'
+  | 'AnnouncementDetail'
   | 'Voting'
   | 'VoteDetail'
   | 'Documents'
   | 'DocumentDetail'
+  | 'DocumentPreview'
+  | 'DocumentUpload'
+  | 'DocumentPermissions'
   | 'Messages'
   | 'ThreadDetail'
   | 'Settings'
@@ -126,6 +134,19 @@ function MainApp() {
         );
       case 'Announcements':
         return <AnnouncementsScreen onNavigate={handleNavigate} />;
+      case 'AnnouncementDetail': {
+        const announcementId = screenParams?.announcementId as string | undefined;
+        if (!announcementId) {
+          handleNavigate('Announcements');
+          return null;
+        }
+        return (
+          <AnnouncementDetailScreen
+            announcementId={announcementId}
+            onBack={() => handleNavigate('Announcements')}
+          />
+        );
+      }
       case 'Voting':
         return <VotingScreen onNavigate={handleNavigate} />;
       case 'VoteDetail':
@@ -139,6 +160,31 @@ function MainApp() {
         return <DocumentsScreen onNavigate={handleNavigate} />;
       case 'DocumentDetail':
         return <DocumentDetailScreen onBack={() => handleNavigate('Documents')} />;
+      case 'DocumentPreview':
+        return screenParams?.document ? (
+          <DocumentPreviewScreen
+            document={
+              screenParams.document as Parameters<typeof DocumentPreviewScreen>[0]['document']
+            }
+            onBack={() => handleNavigate('Documents')}
+          />
+        ) : (
+          <DocumentsScreen onNavigate={handleNavigate} />
+        );
+      case 'DocumentUpload':
+        return (
+          <DocumentUploadScreen
+            onSuccess={() => handleNavigate('Documents')}
+            onCancel={() => handleNavigate('Documents')}
+          />
+        );
+      case 'DocumentPermissions':
+        return (
+          <DocumentPermissionsScreen
+            documentId={(screenParams?.documentId as string | undefined) ?? ''}
+            onBack={() => handleNavigate('Documents')}
+          />
+        );
       case 'MeterReading':
         return (
           <MeterReadingScreen
@@ -233,7 +279,12 @@ function MainApp() {
         <NavButton
           icon="📄"
           label={t('tabs.docs')}
-          isActive={currentScreen === 'Documents' || currentScreen === 'DocumentDetail'}
+          isActive={
+            currentScreen === 'Documents' ||
+            currentScreen === 'DocumentDetail' ||
+            currentScreen === 'DocumentPreview' ||
+            currentScreen === 'DocumentPermissions'
+          }
           onPress={() => handleNavigate('Documents')}
         />
         <NavButton

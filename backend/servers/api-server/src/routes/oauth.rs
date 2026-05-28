@@ -282,8 +282,47 @@ pub async fn token(
     State(state): State<AppState>,
     Form(request): Form<TokenRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<OAuthError>)> {
-    // Validate client credentials for confidential clients
-    if let (Some(client_id), Some(client_secret)) = (&request.client_id, &request.client_secret) {
+    // client_id is required for all grants except some legacy public clients.
+    // We look the client up first so we can enforce credential checks for
+    // confidential clients even when the request omits client_secret — the
+    // previous "if both present" gate let confidential clients be downgraded
+    // to public by simply omitting the secret. (SEC-001)
+    let client_id = request.client_id.as_ref().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(OAuthError::invalid_request("client_id required")),
+        )
+    })?;
+
+    let client = state
+        .oauth_service
+        .get_client(client_id)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?
+        .ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OAuthError::invalid_client("unknown or inactive client")),
+            )
+        })?;
+
+    if client.is_confidential {
+        let client_secret = request.client_secret.as_ref().ok_or_else(|| {
+            (
+                StatusCode::UNAUTHORIZED,
+                Json(OAuthError::invalid_client(
+                    "client_secret required for confidential clients",
+                )),
+            )
+        })?;
+        state
+            .oauth_service
+            .validate_client_credentials(client_id, client_secret)
+            .await
+            .map_err(|e| (StatusCode::UNAUTHORIZED, Json(e.into())))?;
+    } else if let Some(client_secret) = request.client_secret.as_ref() {
+        // Public client that supplied a secret anyway — still validate it
+        // so a misconfigured public client surfaces the mismatch.
         state
             .oauth_service
             .validate_client_credentials(client_id, client_secret)
@@ -342,13 +381,7 @@ pub async fn token(
                 )
             })?;
 
-            let client_id = request.client_id.as_ref().ok_or_else(|| {
-                (
-                    StatusCode::BAD_REQUEST,
-                    Json(OAuthError::invalid_request("client_id required")),
-                )
-            })?;
-
+            // client_id already extracted+verified above.
             match state
                 .oauth_service
                 .refresh_tokens(refresh_token, client_id)

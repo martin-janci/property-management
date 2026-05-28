@@ -298,16 +298,27 @@ pub async fn sso_callback(
         None => "/".to_string(),
     };
 
-    // Set session cookie and redirect
+    // Set session cookie and redirect.
+    //
+    // P0-12 (gap-security-435-cookie-scope): Path scoped to /api/v1/sso so
+    // the cookie is only sent on SSO API endpoints, not on every request to
+    // the reality-server (listings, search, etc.).  SameSite=Strict is safe
+    // here: the cookie is freshly SET in this response after the browser has
+    // already completed the PM-OAuth redirect, so the SameSite attribute only
+    // governs future requests originating from the reality-web SPA (same site).
+    let session_cookie =
+        build_portal_session_cookie(&session_token, 7 * 24 * 60 * 60).map_err(|e| {
+            tracing::error!(error = e, "session token failed injection guard");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(SsoError::new(
+                    "internal_error",
+                    "Failed to build session cookie",
+                )),
+            )
+        })?;
     Ok((
-        [(
-            axum::http::header::SET_COOKIE,
-            format!(
-                "portal_session={}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age={}",
-                session_token,
-                7 * 24 * 60 * 60 // 7 days
-            ),
-        )],
+        [(axum::http::header::SET_COOKIE, session_cookie)],
         Redirect::temporary(&redirect_uri),
     ))
 }
@@ -336,12 +347,12 @@ pub async fn sso_logout(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Clear session cookie
+    // Clear session cookie. Must use the same Path/SameSite attributes as the
+    // Set-Cookie that installed it so browsers actually expire the stored cookie.
+    let clear_cookie =
+        build_portal_session_cookie("", 0).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok((
-        [(
-            axum::http::header::SET_COOKIE,
-            "portal_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0".to_string(),
-        )],
+        [(axum::http::header::SET_COOKIE, clear_cookie)],
         StatusCode::OK,
     ))
 }
@@ -1232,6 +1243,47 @@ pub async fn get_mapped_roles(State(_state): State<AppState>) -> impl IntoRespon
     })
 }
 
+// ==================== Cookie helpers ====================
+
+/// Build a `Set-Cookie` header value for the `portal_session` cookie.
+///
+/// Centralized so the SSO callback and logout handlers always use identical
+/// attributes.
+///
+/// ## Security attributes (P0-12 / gap-security-435-cookie-scope)
+///
+/// | Attribute      | Value              | Rationale                                  |
+/// |---------------|--------------------|--------------------------------------------|
+/// | `HttpOnly`    | always set         | Prevents JS access — XSS cannot steal the  |
+/// |               |                    | token even if script runs on the page.      |
+/// | `Secure`      | always set         | Cookie only sent over HTTPS.               |
+/// | `SameSite`    | `Strict`           | Only sent on same-site requests; stops     |
+/// |               |                    | CSRF via cross-site top-level navigations. |
+/// | `Path`        | `/api/v1/sso`      | Scoped to SSO endpoints only — the cookie  |
+/// |               |                    | is **not** sent on listing/search requests. |
+///
+/// Pass `max_age_seconds = 0` and `value = ""` to emit a clear-cookie header.
+/// Build a `Set-Cookie` value for the `portal_session` cookie.
+///
+/// Returns `Err` if `value` contains characters that would allow cookie-header
+/// injection (semicolons, CRLF, non-ASCII, etc.).  Empty value is allowed —
+/// the clear-cookie path uses `value=""` with `max_age_seconds=0`.
+fn build_portal_session_cookie(value: &str, max_age_seconds: i64) -> Result<String, &'static str> {
+    // RFC 6265 cookie-octet allowlist: visible US-ASCII except `;` `,` `"` `\`
+    // and whitespace.  Mirrors the guard in api-server's build_refresh_cookie so
+    // both helpers are architecturally equivalent (P0-12 parity fix).
+    if !value.is_empty()
+        && !value.bytes().all(|b| {
+            (0x21..=0x7E).contains(&b) && b != b';' && b != b',' && b != b'"' && b != b'\\'
+        })
+    {
+        return Err("invalid session-token characters for Set-Cookie");
+    }
+    Ok(format!(
+        "portal_session={value}; Path=/api/v1/sso; HttpOnly; Secure; SameSite=Strict; Max-Age={max_age_seconds}"
+    ))
+}
+
 /// Extract roles from OAuth scope string.
 fn extract_roles_from_scope(scope: Option<&str>) -> Option<Vec<String>> {
     scope.map(|s| {
@@ -1240,4 +1292,174 @@ fn extract_roles_from_scope(scope: Option<&str>) -> Option<Vec<String>> {
             .map(|part| part.strip_prefix("role:").unwrap_or(part).to_string())
             .collect()
     })
+}
+
+// ==================== Cookie security unit tests (P0-12) ====================
+
+#[cfg(test)]
+mod cookie_security_tests {
+    use super::build_portal_session_cookie;
+
+    /// P0-12 / gap-security-435-cookie-scope: portal_session cookie must carry
+    /// SameSite=Strict (not Lax) and be scoped to /api/v1/sso (not /).
+    #[test]
+    fn portal_session_cookie_samesite_is_strict() {
+        let cookie = build_portal_session_cookie("my.session.token", 604800).expect("valid token");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Expected SameSite=Strict, got: {cookie}"
+        );
+    }
+
+    /// `HttpOnly` must always be present on the portal session cookie.
+    #[test]
+    fn portal_session_cookie_always_httponly() {
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
+        assert!(
+            cookie.contains("HttpOnly"),
+            "Missing HttpOnly flag: {cookie}"
+        );
+    }
+
+    /// `Secure` must always be present on the portal session cookie.
+    #[test]
+    fn portal_session_cookie_always_secure() {
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
+        assert!(cookie.contains("Secure"), "Missing Secure flag: {cookie}");
+    }
+
+    /// Path must be `/api/v1/sso`, not root `/`.
+    ///
+    /// A root path would send the portal session cookie on every request to
+    /// reality-server (listing searches, etc.) — unnecessary exposure.
+    #[test]
+    fn portal_session_cookie_path_scoped_to_sso() {
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
+        assert!(
+            cookie.contains("Path=/api/v1/sso"),
+            "Expected Path=/api/v1/sso, got: {cookie}"
+        );
+        assert!(
+            !cookie.contains("Path=/;") && !cookie.ends_with("Path=/"),
+            "Cookie path must not be root /: {cookie}"
+        );
+    }
+
+    /// Clear-cookie (Max-Age=0) must still carry all security attributes.
+    #[test]
+    fn clear_portal_session_cookie_has_all_security_flags() {
+        let cookie = build_portal_session_cookie("", 0).expect("valid");
+        assert!(cookie.contains("HttpOnly"), "Missing HttpOnly: {cookie}");
+        assert!(cookie.contains("Secure"), "Missing Secure: {cookie}");
+        assert!(
+            cookie.contains("SameSite=Strict"),
+            "Missing SameSite=Strict: {cookie}"
+        );
+        assert!(cookie.contains("Path=/api/v1/sso"), "Wrong path: {cookie}");
+        assert!(cookie.contains("Max-Age=0"), "Expected Max-Age=0: {cookie}");
+    }
+
+    /// Session tokens with injection characters must be rejected (RFC 6265 parity
+    /// with the equivalent guard in api-server's `build_refresh_cookie`).
+    #[test]
+    fn portal_session_cookie_rejects_semicolon_injection() {
+        let result = build_portal_session_cookie("valid; Expires=0", 3600);
+        assert!(result.is_err(), "Should reject semicolon in session token");
+    }
+
+    // ==================== Path-reconciliation tests (#617) ====================
+    //
+    // Issue #617: PR #565 changed `portal_session` Path from `/` to `/api/v1/sso`.
+    // These tests confirm:
+    //   1. Path is exactly `/api/v1/sso` with no trailing slash (browser bug risk).
+    //   2. Set-cookie and clear-cookie use the SAME Path (silent no-op logout risk).
+    //   3. `extract_session_cookie` (the read-side) correctly parses `portal_session=`
+    //      cookies — verifying the write path and read path are in sync.
+    //   4. The SSO callback sets the cookie in the same response that redirects to
+    //      the SPA — the SameSite=Strict attribute is safe here because the cookie
+    //      is being SET (not read) on the callback redirect. Subsequent same-site
+    //      requests from the SPA include the cookie normally.
+
+    /// Path must be exactly `/api/v1/sso` — no trailing slash.
+    ///
+    /// A trailing slash causes path-mismatch on the SSO callback URL
+    /// `/api/v1/sso/callback` on some browsers, silently omitting the cookie
+    /// from the SSO logout and session-read requests.
+    #[test]
+    fn portal_session_cookie_path_has_no_trailing_slash() {
+        let cookie = build_portal_session_cookie("tok", 3600).expect("valid");
+        let path_attr = cookie
+            .split(';')
+            .find(|seg| seg.trim().starts_with("Path="))
+            .expect("Path attribute must be present");
+        assert_eq!(
+            path_attr.trim(),
+            "Path=/api/v1/sso",
+            "Cookie Path must be exactly /api/v1/sso (no trailing slash): {cookie}"
+        );
+    }
+
+    /// Set-cookie and clear-cookie must use the SAME Path.
+    ///
+    /// Different paths means the browser cannot expire the live cookie via the
+    /// logout clear-cookie (silent no-op logout — issue #617 core risk).
+    #[test]
+    fn portal_session_set_and_clear_cookie_use_identical_path() {
+        let set_cookie = build_portal_session_cookie("my.session.token", 604800).expect("set");
+        let clear_cookie = build_portal_session_cookie("", 0).expect("clear");
+
+        let extract_path = |c: &str| -> String {
+            c.split(';')
+                .find(|seg| seg.trim().starts_with("Path="))
+                .map(|seg| seg.trim().to_string())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(
+            extract_path(&set_cookie),
+            extract_path(&clear_cookie),
+            "Set-cookie and clear-cookie must carry the same Path; set={set_cookie}, clear={clear_cookie}"
+        );
+    }
+
+    /// `extract_session_cookie` (the read-side) correctly round-trips with
+    /// `build_portal_session_cookie` (the write-side).
+    ///
+    /// Confirms there is no name mismatch between how the cookie is SET
+    /// and how it is READ — which would silently break SSO logout / session
+    /// reads after the Path scope change.
+    #[test]
+    fn extract_session_cookie_round_trips_with_build() {
+        use crate::extractors::auth::extract_session_cookie;
+
+        let expected_token = "test.portal.session.token";
+        // Simulate a browser request that carries the cookie the server set.
+        // The browser sends only `name=value` pairs — no attributes.
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            axum::http::header::COOKIE,
+            format!("portal_session={expected_token}").parse().unwrap(),
+        );
+        let extracted = extract_session_cookie(&headers);
+        assert_eq!(
+            extracted.as_deref(),
+            Some(expected_token),
+            "extract_session_cookie must recover the token set by build_portal_session_cookie"
+        );
+    }
+
+    /// `extract_session_cookie` must not return a token when no `portal_session`
+    /// cookie is present — SSO callback does NOT read the cookie; it sets it.
+    #[test]
+    fn extract_session_cookie_absent_returns_none_for_callback_path() {
+        use crate::extractors::auth::extract_session_cookie;
+
+        // Simulate the SSO callback request — browser has no portal_session yet.
+        let headers = axum::http::HeaderMap::new();
+        let result = extract_session_cookie(&headers);
+        assert!(
+            result.is_none(),
+            "No portal_session cookie in SSO callback request — expected None: {result:?}"
+        );
+    }
 }

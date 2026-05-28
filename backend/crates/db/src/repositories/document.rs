@@ -518,8 +518,30 @@ impl DocumentRepository {
                 file_key, file_name, mime_type, size_bytes,
                 access_scope, access_target_ids, access_roles, created_by
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-            RETURNING *
+            VALUES ($1, $2, $3, $4, $5::document_category, $6, $7, $8, $9, $10::document_access_scope, $11, $12, $13)
+            RETURNING
+                id,
+                organization_id,
+                folder_id,
+                title,
+                description,
+                category::text AS category,
+                file_key,
+                file_name,
+                mime_type,
+                size_bytes,
+                access_scope::text AS access_scope,
+                access_target_ids,
+                access_roles,
+                created_by,
+                created_at,
+                updated_at,
+                deleted_at,
+                version_number,
+                parent_document_id,
+                is_current_version,
+                template_id,
+                generation_metadata
             "#,
         )
         .bind(data.organization_id)

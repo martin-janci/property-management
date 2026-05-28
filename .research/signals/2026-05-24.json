@@ -1,0 +1,87 @@
+{
+  "date": "2026-05-24",
+  "note": "Incremental run (~03:20Z), ~9.5h after the prior 2026-05-23T17:47Z run. 4 PRs merged since cursor (#436 Epic-8A review done, #437 dead-handler deletion, #440 story-6.1 review, #446 gap-7a-4 PDF.js preview). No scored Phase-1 signals: no unchecked-todo/revert/fixme/hotfix-no-test in the merged diffs (verified #446/#437 diffs have no new TODO/FIXME), no stalled reviews (all 6 open PRs #441-447 opened today), the 2 new issues #438/#439 are labeled (no untriaged-issue), and #446 updated its own screen doc (no screen-map-drift). Apparent top-churn files were a one-time dead-code deletion (#437: handlers/auth+buildings/mod.rs) and a brand-new file (#446: PdfPreview.tsx) — neither is instability, and the tracked route hotspots (integrations/organizations/documents.rs) did not change, so no churn-hotspot signals emitted. Value this run: PR #437 resolved the dead-dup-handler backlog item; Phase 1.5 reviewed ppt-web-ui (3 findings); Phase 1.6 (Scrum Master + pm-backend) confirmed the deferred P1-05 SSRF from issue #435/#439, promoted to a plan under the security fast-track.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no signal this run is on the Phase 5 allowlist (screen-map-drift/orphan, fixme-in-merged-code, dep lockfile-drift, stalled-review). The promotable finding is a security code fix (SSRF), which is explicitly NOT auto-fixable; routed to the manual plan path.",
+  "signals": [
+    {
+      "id": "code-review-api-core-ssrf-outbound-fetch",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review + issue #439 cross-check",
+      "segment": "api-core",
+      "score_delta": 3,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": [
+        "issue #439 (P1-05, high): post-merge review of PR #435 — the P1-05 commit hardened MIME/size/magic-bytes on the response body but did NOT validate signed_url; SSRF still open",
+        "backend/servers/api-server/src/routes/signatures.rs:628 — store_signed_document does client.get(signed_url) on a bare reqwest::Client::new() with no host validation and no redirect policy (verified this run)",
+        "backend/servers/api-server/src/routes/integrations.rs:2743 — webhook-test handler does client.post(&subscription.url) using the stored URL; redirects disabled but host never checked against private/loopback/link-local ranges (verified this run)",
+        "backend/servers/api-server/src/services/actions/api_call.rs:152 — a working validate_external_url guard (is_blocked_v4 at :212) already exists but is a private method applied only at the :251 action-runner call site",
+        "authenticated org member (or a poisoned e-signature provider) can target 169.254.169.254 / 127.0.0.1 / internal services; full call paths traced -> confidence high"
+      ],
+      "expert": "backend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-role-gate-fail-open",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:117 — `if (requiredRoles && requiredRoles.length > 0 && user?.role)` short-circuits the role check when user.role is falsy, falling through to render children (fail-open)",
+        "frontend/apps/ppt-web/src/contexts/AuthContext.tsx does not populate a role field, and no route in frontend/apps/ppt-web/src passes requiredRoles (grep: only ProtectedRoute's own definition + JSDoc) — so the bypass is LATENT, not currently reachable; downgraded from the reviewer's high claim to medium",
+        "both Frontend and Completeness reviewers independently flagged the same fall-through; client-side gating is UX, real authz is server-side RLS — but this must deny on missing role before role-gating goes live (relevant to 79-2 / PR #444)"
+      ],
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-ppt-web-ui-untranslated-strings",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "refactor",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/ConnectionStatus.tsx:58 — status labels hardcoded English; never imports useTranslation",
+        "frontend/apps/ppt-web/src/components/OfflineIndicator.tsx:59 — offline/restored aria-live alert strings hardcoded English",
+        "frontend/apps/ppt-web/src/components/ProtectedRoute.tsx:105,124 — 'Checking authentication'/'Loading...'/'Access Denied' hardcoded on auth/loading paths; peers route all text through react-i18next (sk/cs/de/en)"
+      ],
+      "expert": "completeness"
+    },
+    {
+      "id": "code-review-ppt-web-ui-announcer-stale-msg",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "ppt-web-ui",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": [
+        "frontend/apps/ppt-web/src/components/Announcer.tsx:49,58 — the clear-then-set announce timeouts are not stored in politeTimeoutRef/assertiveTimeoutRef (only the 3000ms clear timeout is); a rapid second announce() or unmount can resurrect a stale screen-reader message"
+      ],
+      "expert": "completeness"
+    }
+  ],
+  "goal_checks": [
+    { "goal": "G1", "passed": true, "command": "test -f briefs/2026-05-24.md && head -1 | grep '^# 2026-05-24$'", "observed": "exit 0", "expected": "exit 0" },
+    { "goal": "G2", "passed": true, "command": "jq compare staged state.json vs HEAD", "observed": "true (last_pr_seen 435->440, last_issue_seen 375->439, seen_signals 15->19, review_cursor.ppt-web-ui null->2026-05-24, stats.runs 4->5, pm_cursor.next_index 1->2)", "expected": "true" },
+    { "goal": "G3", "passed": true, "command": "jq '[.items[].id]|length==(unique|length)' backlog.json", "observed": "true", "expected": "true" },
+    { "goal": "G4", "passed": true, "command": "all 4 signal ids net-new vs prior seen_signals", "observed": "true", "expected": "true" },
+    { "goal": "G5", "passed": true, "command": "no score>8; no open item with updated_at<=today-14 (oldest open 2026-05-20 = 4d) so no decay due", "observed": "true", "expected": "true" },
+    { "goal": "G6", "passed": true, "command": "new plan security-ssrf-outbound-url-validation.md has brief annotation 'adversarial pass: passed'", "observed": "annotated", "expected": "true" },
+    { "goal": "G7", "passed": true, "command": "1 new plan (<=2); 4 metadata + 11 headings present; capability ticked; Mode: cloud-ok declared; Files paths resolve on disk", "observed": "true", "expected": "true" },
+    { "goal": "G8", "passed": true, "command": "git diff --cached --name-only | grep -v '^.research/' | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G9", "passed": true, "command": "git diff --cached (excl baseline docs) | grep secrets/hostnames | wc -l", "observed": "0", "expected": "0" },
+    { "goal": "G10", "passed": true, "command": "regenerate backlog.md from backlog.json and diff", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G11", "passed": true, "command": "grep placeholder-rot patterns in new plan + brief", "observed": "no matches", "expected": "no matches" },
+    { "goal": "G12", "passed": true, "command": "prior-run plans (voice-device-idor, inquiry-read-idor, p0-10-mock-route-wiring) still present in plans/", "observed": "present", "expected": "true" },
+    { "goal": "G13", "passed": true, "command": "staged _archive count >= HEAD count", "observed": "equal (0==0; only .gitkeep)", "expected": "true" },
+    { "goal": "G14", "passed": true, "command": "regenerate IDEAS_TRIAGE.md (no triage rows) and diff", "observed": "byte-identical", "expected": "exit 0" },
+    { "goal": "G15", "passed": true, "command": "auto_fix_actions empty (no allowlisted signal; SSRF is a security code fix, not auto-fixable)", "observed": "true", "expected": "true" },
+    { "goal": "G16", "passed": true, "command": "jq -e .items action-list.json & risks.json; project-state.md non-empty; pm_cursor.next_index in 0..7", "observed": "true (23 actions, 9 risks, next_index=2)", "expected": "exit 0" },
+    { "goal": "G17", "passed": true, "command": "git diff --cached added lines grep telegram token value | wc -l", "observed": "0", "expected": "0" }
+  ]
+}

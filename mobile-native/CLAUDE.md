@@ -21,6 +21,8 @@ Kotlin Multiplatform project for Reality Portal mobile apps.
 | Kotlinx Serialization | 1.7.3 |
 | Kotlinx Coroutines | 1.9.0 |
 
+> Source of truth: `mobile-native/gradle/libs.versions.toml`. Update both this table and the catalog together.
+
 > **Note:** The `:shared` module uses the AGP 9 `com.android.kotlin.multiplatform.library`
 > plugin (`kotlin { androidLibrary { } }` DSL). This plugin is variant-agnostic — it has no
 > product flavors and no `BuildConfig` generation. Android environment config is read at

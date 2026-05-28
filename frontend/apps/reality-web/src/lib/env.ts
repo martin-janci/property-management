@@ -67,30 +67,31 @@ function inferSiteUrlFromHost(host: string, protocol: string): string | null {
  */
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const onWorktree = WORKTREE_HOST_RE.test(host);
     const envUrl = window.__ENV__?.NEXT_PUBLIC_API_URL;
-    const onWorktree = WORKTREE_HOST_RE.test(window.location.hostname);
 
-    if (envUrl) {
-      // Distinguish dedicated vs shared worktree backends. The deploy-server
-      // sets NEXT_PUBLIC_API_URL=https://api.rlt.sk on shared-mode worktrees
-      // (which is correct for the build but wrong for the browser — prod's
-      // CORS allow-list rejects wt-* origins). When we're on a worktree host
-      // and env points at a non-dedicated backend, prefer the relative-URL
-      // proxy so next.config.js's rewrite handles CORS server-side.
-      try {
-        const envHost = new URL(envUrl).hostname;
-        if (envHost.startsWith('api.wt-')) return envUrl; // dedicated
-        if (onWorktree) return ''; // shared worktree → proxy
-        return envUrl;
-      } catch {
-        // Malformed env value — ignore and fall through.
+    if (onWorktree) {
+      // Worktree dedicated backend (api.wt-*) is the one case where env
+      // wins over inference — inference doesn't know about worktree apis.
+      if (envUrl) {
+        try {
+          if (new URL(envUrl).hostname.startsWith('api.wt-')) return envUrl;
+        } catch {
+          // malformed env value — ignore
+        }
       }
+      return ''; // shared worktree → relative URL via next.config.js rewrite
     }
 
-    if (onWorktree) return '';
-
-    const inferred = inferApiBaseFromHost(window.location.hostname);
+    // For known *.rlt.sk hosts, host inference is authoritative. A
+    // misconfigured env (e.g. a baked-in `http://localhost:8081` from a
+    // bad container build) would otherwise leak through to the browser
+    // and every request would ERR_CONNECTION_REFUSED in the user's tab.
+    const inferred = inferApiBaseFromHost(host);
     if (inferred) return inferred;
+
+    if (envUrl) return envUrl;
   }
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 }
@@ -100,11 +101,13 @@ export function getApiBase(): string {
  */
 export function getSiteUrl(): string {
   if (typeof window !== 'undefined') {
+    // Same rationale as getApiBase: for known *.rlt.sk hosts the page's
+    // own origin is the authoritative answer, even if env says otherwise.
+    const inferred = inferSiteUrlFromHost(window.location.hostname, window.location.protocol);
+    if (inferred) return inferred;
     if (window.__ENV__?.NEXT_PUBLIC_SITE_URL) {
       return window.__ENV__.NEXT_PUBLIC_SITE_URL;
     }
-    const inferred = inferSiteUrlFromHost(window.location.hostname, window.location.protocol);
-    if (inferred) return inferred;
   }
   return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
 }

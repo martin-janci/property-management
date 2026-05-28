@@ -11,6 +11,9 @@ interface AnnouncementsPageProps {
   announcements: AnnouncementSummary[];
   total: number;
   isLoading?: boolean;
+  /** Pinned published announcements for the sticky band (Story 6.4). Fetched
+   *  separately in the route wrapper so the band is immune to list filters. */
+  pinnedAnnouncements?: AnnouncementSummary[];
   onNavigateToCreate: () => void;
   onNavigateToView: (id: string) => void;
   onNavigateToEdit: (id: string) => void;
@@ -25,6 +28,7 @@ export function AnnouncementsPage({
   announcements,
   total,
   isLoading,
+  pinnedAnnouncements = [],
   onNavigateToCreate,
   onNavigateToView,
   onNavigateToEdit,
@@ -65,6 +69,7 @@ export function AnnouncementsPage({
         page={page}
         pageSize={pageSize}
         isLoading={isLoading}
+        pinnedAnnouncements={pinnedAnnouncements}
         onPageChange={handlePageChange}
         onStatusFilter={handleStatusFilter}
         onTargetTypeFilter={handleTargetTypeFilter}

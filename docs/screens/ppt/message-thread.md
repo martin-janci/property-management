@@ -9,27 +9,34 @@ implementations:
     component: ThreadDetailPage
     buildStatus: shipped
     redesignStatus: not-started
-    apiStatus: stub
+    apiStatus: complete
 endpoints: []
 relatedScreens:
   - id: ppt/messages
     rel: parent
 sharedComponents: []
 diagrams: []
-useCases: []
-epics: []
+useCases:
+  - UC-07
+epics:
+  - "6-5"
 designSources: []
 owner: pm-frontend
 ---
 
 # Message Thread
 
-Stubbed by team audit on 2026-05-18. Route exists in code; flesh out useCases, epics, and redesign notes when known.
+Wired to real API in 2026-05-24 (Epic 6, Story 6.5). ThreadDetailPageRoute uses
+`useThread`, `useSendMessage`, and `useMarkThreadRead` hooks. Data is adapted from
+the API's `ThreadDetailResponse` to the feature-layer `ThreadWithMessages` type via
+`mapApiThreadDetailToUi`.
 
 ## Notes
 
 ### Specific (recent)
 - 2026-05-18 — audit: stub created from `frontend/apps/ppt-web/src/App.tsx:492`.
+- 2026-05-24 — api-integration: wired to GET /threads/:id, POST /messages, POST /read; loading skeleton shown while data fetches.
 
 ## Agent Log
 - 2026-05-18 — agent: created stub for unmapped route.
+- 2026-05-24 — agent: promoted apiStatus stub→integrated; wired ThreadDetailPageRoute to useThread/useSendMessage/useMarkThreadRead hooks.

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -82,7 +82,9 @@
       "!**/*.gen.ts",
       "!**/pnpm-lock.yaml",
       "!**/public/mockServiceWorker.js",
-      "!**/next-env.d.ts"
+      "!**/next-env.d.ts",
+      "!apps/mobile/ios",
+      "!apps/mobile/android"
     ]
   }
 }

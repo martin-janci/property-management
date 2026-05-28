@@ -1,0 +1,245 @@
+{
+  "date": "2026-05-27",
+  "run_mode": "incremental",
+  "generated": "2026-05-27T23:39:00Z",
+  "run_note": "Second same-day run, ~20h after the 03:15Z run. Overwrites the earlier same-day file (convergence). Covers activity since last_run_iso 2026-05-27T03:15:46Z: 25 merged PRs #563-#634, ~30 labeled follow-up issues, 14 closed-unmerged PRs (mostly dispatcher supersede sweep). Earlier-run signals remain recorded in state.seen_signals so they are not re-scored.",
+  "auto_fix_actions": [],
+  "auto_fix_skipped_reason": "no candidate — no eligible allowlist signal met confidence=high AND backlog score>=3 this run (the two fixme-in-merged-code signals are score 2; report-schedule one already tracked by issue #616)",
+  "signals": [
+    {
+      "id": "hotfix-no-test-pr-607",
+      "type": "hotfix-no-test",
+      "source": "PR #607",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "test-gap",
+      "evidence": "PR #607 (fix(api): booking push endpoints) added MAX_BATCH_SIZE=500 + available_count<0 validation guards to push_booking_availability and push_booking_rates in backend/servers/api-server/src/routes/integrations/install.rs (verified via gh pr diff) with no test file in the 2-file diff. Created backlog item test-gap-booking-push-validation-untested."
+    },
+    {
+      "id": "fixme-in-merged-code-report-schedule-update",
+      "type": "fixme-in-merged-code",
+      "source": "PR #611",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "bug",
+      "evidence": "backend/crates/db/src/repositories/report_schedule.rs:299 — `TODO: UPDATE report_schedules SET cron_expression = COALESCE(...)` doc-comment describes SQL the body does not run; cron is stored in the overloaded `time` field pending a missing cron_expression column. Ties to open issue #616. Created backlog item bug-report-schedule-update-no-sql."
+    },
+    {
+      "id": "fixme-in-merged-code-documentsbrowse-folder-preselect",
+      "type": "fixme-in-merged-code",
+      "source": "PR #623",
+      "score_delta": 2,
+      "confidence": "high",
+      "candidate_vector": "dx",
+      "evidence": "frontend/apps/ppt-web/src/features/documents/components/DocumentsBrowse.tsx:511 — `currentFolderId={null} /* TODO: pre-select once DocumentSummary exposes folder_id */`; move-folder dialog cannot pre-select current folder. Created backlog item dx-documentsbrowse-folder-preselect."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/documents/components/MoveFolderDialog.tsx",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-1 app-code churn this run: 802 lines. git name-status = A (brand-new file, single commit). No backlog item created — one-shot feature addition, instability not established; tracked in hotspot_history for repeated-churn detection."
+    },
+    {
+      "id": "churn-hotspot-backend/servers/api-server/tests/document_upload_tests.rs",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-2 app-code churn this run: 796 lines. git name-status = A — brand-new integration test file (PR #610, healthy test delivery). No backlog item created — one-shot addition."
+    },
+    {
+      "id": "churn-hotspot-frontend/apps/ppt-web/src/features/disputes/pages/FileDisputePage.tsx",
+      "type": "churn-hotspot",
+      "source": "git diff eae8a53..origin/dev",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "refactor",
+      "evidence": "Top-3 app-code churn this run: 546 lines. git name-status = M, single commit. No backlog item created — one-shot modification, instability not established; tracked in hotspot_history."
+    },
+    {
+      "id": "closed-not-merged-pr-602",
+      "type": "closed-not-merged-pr",
+      "source": "PR #602",
+      "score_delta": 1,
+      "confidence": "high",
+      "candidate_vector": "security",
+      "evidence": "PR #602 (fix(security): document download/preview bypassed access_scope — intra-org IDOR, issue #582) closed UNMERGED. VERIFIED RESOLVED IN CURRENT CODE: backend/servers/api-server/src/routes/documents/core.rs get_download_url + get_preview_url now both call document_access_allowed() for non-managers (returns NOT_FOUND on denial). Fix landed via reimplementation; PR #602 was superseded. No backlog item."
+    },
+    {
+      "id": "closed-not-merged-pr-603",
+      "type": "closed-not-merged-pr",
+      "source": "PR #603",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "security",
+      "evidence": "PR #603 (fix(security): scheduler signs URLs fail-closed + cookie domain injection guard, issue #571) closed UNMERGED while issue #571 stays OPEN. Underlying concerns (unsigned e-signature URL fallback; PPT_AUTH_COOKIE_DOMAIN injection) NOT independently re-verified in current code this run — surfaced in brief Watch as a possible dropped fix. No backlog item created pending code verification."
+    },
+    {
+      "id": "closed-not-merged-pr-599",
+      "type": "closed-not-merged-pr",
+      "source": "PR #599",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "PR #599 (fix(ios): SSO login broken — beginSsoFlow() never called before deep link, issue #578) closed UNMERGED; issue #578 stays OPEN. iOS LoginView SSO regression possibly still live; surfaced in brief Watch. No backlog item (mobile-native iOS, outside current drift scope)."
+    },
+    {
+      "id": "code-review-mobile-rn-vote-list-cast",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 2,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:108 — `data as unknown as ApiVoteSummary[]` double-casts the typed useApiQuery result; an unexpected backend shape crashes apiVotes.map(toUiVote) at :110 with no isError guard. Created backlog item bug-mobile-voting-unsafe-cast.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-hardcoded-locale",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "bug",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:131 — toLocaleDateString('en-US', ...) hardcodes en-US; vote dates never localize for sk/cs/de (sibling AnnouncementDetailScreen.tsx:119 uses i18n.language). Created backlog item bug-mobile-voting-hardcoded-locale.",
+      "expert": "frontend"
+    },
+    {
+      "id": "code-review-mobile-rn-vote-xform-untested",
+      "type": "code-review-finding",
+      "source": "rotating-expert-review",
+      "segment": "mobile-rn",
+      "score_delta": 1,
+      "confidence": "medium",
+      "candidate_vector": "test-gap",
+      "evidence": "frontend/apps/mobile/src/screens/voting/VotingScreen.tsx:48,64 — exported pure transforms toUiStatus/toUiVote have no test anywhere; mobile app has only 3 test files, none for voting/announcements logic. Created backlog item test-gap-mobile-voting-transforms.",
+      "expert": "tester"
+    }
+  ],
+  "goal_checks": [
+    {
+      "goal": "G1",
+      "passed": true,
+      "command": "test -f briefs/<today>.md && head -1 matches header",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G2",
+      "passed": true,
+      "command": "state advanced vs HEAD",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G3",
+      "passed": true,
+      "command": "backlog ids unique",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G4",
+      "passed": true,
+      "command": "no non-cumulative signal re-counted",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G5",
+      "passed": true,
+      "command": "score cap<=8; decay n/a (no item >14d)",
+      "observed": "true",
+      "expected": "true"
+    },
+    {
+      "goal": "G6",
+      "passed": true,
+      "command": "adversarial pass annotations for new plans",
+      "observed": "0 new plans",
+      "expected": "all annotated"
+    },
+    {
+      "goal": "G7",
+      "passed": true,
+      "command": "new plans this run",
+      "observed": "0",
+      "expected": "<=2"
+    },
+    {
+      "goal": "G8",
+      "passed": true,
+      "command": "non-.research staged",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G9",
+      "passed": true,
+      "command": "secrets/hostnames scan",
+      "observed": "0",
+      "expected": "0"
+    },
+    {
+      "goal": "G10",
+      "passed": true,
+      "command": "backlog.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G11",
+      "passed": true,
+      "command": "failed phases recorded + cursors held",
+      "observed": "no failed phases",
+      "expected": "consistent"
+    },
+    {
+      "goal": "G12",
+      "passed": true,
+      "command": "prior plans still present",
+      "observed": "unchanged",
+      "expected": "present"
+    },
+    {
+      "goal": "G13",
+      "passed": true,
+      "command": "archive count now>=HEAD",
+      "observed": "7>=7",
+      "expected": ">="
+    },
+    {
+      "goal": "G14",
+      "passed": true,
+      "command": "IDEAS_TRIAGE.md == regen",
+      "observed": "identical",
+      "expected": "identical"
+    },
+    {
+      "goal": "G15",
+      "passed": true,
+      "command": "auto-fix discipline",
+      "observed": "0 actions (no candidate)",
+      "expected": "<=1 each"
+    },
+    {
+      "goal": "G16",
+      "passed": true,
+      "command": "mgmt artifacts valid + pm_cursor in 0..7",
+      "observed": "exit 0",
+      "expected": "exit 0"
+    },
+    {
+      "goal": "G17",
+      "passed": true,
+      "command": "telegram token scan",
+      "observed": "0",
+      "expected": "0"
+    }
+  ]
+}
