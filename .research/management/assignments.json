@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-28T10:50:00Z",
+  "generated": "2026-05-28T10:53:00Z",
   "assignments": [
     {
       "task_id": "fix-569-mediation-workspace-polish",
@@ -204,15 +204,15 @@
       "branch": "auto-impl/pm-devops-enforce-security-test-g",
       "status": "review",
       "claimed_at": "2026-05-28T09:40:26Z",
-      "last_updated": "2026-05-28T09:49:45Z",
+      "last_updated": "2026-05-28T10:53:00Z",
       "status_changed_at": "2026-05-28T09:49:45Z",
       "pr_number": 658,
       "pr_url": "https://github.com/martin-janci/property-management/pull/658",
       "merged_at": null,
       "specialist": "generic",
       "implementer_summary": "pr=658 status=done specialist=generic scope_drift=false code_reuse_warn=none note=added conclusion job (always-runs) to give branch-protection a stable check name; branch-protection-setup.yml registers it as required via workflow_dispatch",
-      "reviewer_summary": null,
-      "last_reviewed_oid": null,
+      "reviewer_summary": "verdict=approve head_oid=20acfe627182b9ee58f247f6d8352b503062caef note=conclusion job correctly handles all 4 scenarios with always()+needs, stable check name matches branch-protection-setup registration, logic is fail-closed; self-approval restriction prevented GH review post",
+      "last_reviewed_oid": "20acfe627182b9ee58f247f6d8352b503062caef",
       "scope_drift": false,
       "code_reuse_warn": "none",
       "empty_branch": null,
