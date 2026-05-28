@@ -146,8 +146,22 @@ The routine may, when the bar is met, open **at most one** issue+PR per run via 
 
 ### G16 — Management artifacts valid (when Phase 1.6 ran)
 
-- **Pass when:** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op.
-- **Check:** `jq -e '.items' .research/management/action-list.json >/dev/null && jq -e '.items' .research/management/risks.json >/dev/null && test -s .research/management/project-state.md && jq -e '.pm_cursor.next_index >= 0 and .pm_cursor.next_index <= 7' .research/state.json` → expect exit 0.
+- **Pass when:** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, `state.pm_cursor.next_index` is in `0..7`, **and (GC7 — coverage_cursor liveness)** `state.coverage_cursor.next_index` is in `[0, <#distinct epics in coverage.json>)` AND — when `pm_cursor.next_index` advanced vs HEAD this run (i.e. Phase 1.6 ran) and there is more than one epic — `coverage_cursor.next_index` ALSO advanced vs HEAD. If Phase 1.6 was skipped this run, the whole gate is a no-op.
+- **Check:** the management-artifact + `pm_cursor` checks as before, then the GC7 clause:
+  ```bash
+  jq -e '.items' .research/management/action-list.json >/dev/null \
+   && jq -e '.items' .research/management/risks.json >/dev/null \
+   && test -s .research/management/project-state.md \
+   && jq -e '.pm_cursor.next_index >= 0 and .pm_cursor.next_index <= 7' .research/state.json >/dev/null \
+   && EPICS=$(jq '[.stories[].epic] | unique | length' .research/management/coverage.json) \
+   && CC_NOW=$(jq '.coverage_cursor.next_index // -1' .research/state.json) \
+   && PM_NOW=$(jq '.pm_cursor.next_index // -1' .research/state.json) \
+   && CC_HEAD=$(git show HEAD:.research/state.json 2>/dev/null | jq '.coverage_cursor.next_index // -1' 2>/dev/null || echo "$CC_NOW") \
+   && PM_HEAD=$(git show HEAD:.research/state.json 2>/dev/null | jq '.pm_cursor.next_index // -1' 2>/dev/null || echo "$PM_NOW") \
+   && [ "$CC_NOW" -ge 0 ] && [ "$CC_NOW" -lt "$EPICS" ] \
+   && { [ "$PM_NOW" = "$PM_HEAD" ] || [ "$EPICS" -le 1 ] || [ "$CC_NOW" != "$CC_HEAD" ]; }
+  ```
+  → expect exit 0.
 
 ### G17 — No Telegram secret committed
 
@@ -914,7 +928,7 @@ Run these and verify each passes:
     Rationale: these phrases are the failure mode the implementation agent hits hardest — it can't read your mind. Either fill them in, or remove the plan and leave the row at `status: open`.
 12. **Archive only grows** — `.research/plans/_archive/` count this run must be ≥ count at `HEAD`. One-liner: `[ "$(git ls-files -- .research/plans/_archive/ | wc -l)" -ge "$(git ls-tree -r --name-only HEAD -- .research/plans/_archive/ | wc -l)" ]` (see G13).
 13. **Triage digest matches JSON** — regenerating `.research/IDEAS_TRIAGE.md` from `vector: "triage"` rows in `backlog.json` produces a byte-identical file to what's staged. Mirrors gate 4 / G10 for the canonical-source-of-truth invariant (see G14).
-14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op. (see G16)
+14. **Management artifacts valid (when Phase 1.6 ran).** `.research/management/action-list.json` and `risks.json` parse as JSON (`jq -e .items`), `project-state.md` exists and is non-empty, and `state.pm_cursor.next_index` is in `0..7`. If Phase 1.6 was skipped this run, this gate is a no-op. Also (GC7) `state.coverage_cursor.next_index` is within `[0, #epics)` and advanced vs HEAD when `pm_cursor` advanced this run. (see G16)
 15. **No Telegram secret committed.** `git diff --cached` added lines contain no literal Telegram bot-token value (URL form or bare token form). The variable name and `${…}` references are permitted; only an actual token value must be absent. Exempt: the four baseline doc files (`.research/{README,routine-prompt,implementer-prompt,IMPROVEMENT_IDEAS}.md`). **Abort commit if non-zero** matches — same severity as gate 8. (see G17)
 
 ## Brief template
