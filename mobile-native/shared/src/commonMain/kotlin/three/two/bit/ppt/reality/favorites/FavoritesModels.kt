@@ -25,8 +25,8 @@ import three.two.bit.ppt.reality.listing.ListingSummary
  * - `title`, `current_price`, `currency`, `city`, `property_type`, `transaction_type`, `photo_url`,
  *   `status`, `price_changed`, `price_change_percentage`, `price_alert_enabled` — flat listing
  *   summary embedded by the server.
- * - `listing` — always `null` for this endpoint; kept for backward compat with any code that
- *   still checks `entry.listing`.
+ * - `listing` — always `null` for this endpoint; kept for backward compat with any code that still
+ *   checks `entry.listing`.
  */
 @Serializable
 data class FavoriteEntry(
