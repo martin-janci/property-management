@@ -1,6 +1,6 @@
 {
   "name": "@ppt/dev-panel",
-  "version": "0.2.982",
+  "version": "0.2.983",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
