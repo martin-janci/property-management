@@ -78,3 +78,4 @@ Detail view accessible from HomeView (featured/recent cards), SearchView (search
 ## Agent Log
 
 - 2026-05-25 — agent: created screen map from audit of mobile-native/iosApp/iosApp/Features/Listing/ListingDetailView.swift (epic-82 story 82.4). Gallery and map stub gaps noted.
+- 2026-05-28 — agent: fix(#581) added missing Agent Log entry that PR #554 omitted (CLAUDE.md screen-map Rule A.3); flagged dropped operationIds on home + saved-searches in Notes > Specific (recent) pending @ppt/sitemap extension.
