@@ -1035,29 +1035,46 @@ fix rounds per row; subsequent calls return `failed`.
 
 Update `assignments.generated = now`. Include `action-list.json` if Phase 2.6 Tier 1 refilled.
 
-**Archive move (NEW — issue #9 — token spending).** For any row whose status
-transitioned in this run to a terminal value (`merged` / `failed` / `done`):
-append it to `assignments-archive.json` and DELETE it from `assignments.json`.
-The active file must NEVER carry a terminal row after Phase 6 — that is
-the whole point of the split. Pseudocode:
+**Archive move (issue #9 — token spending).**
+
+**Invariant** (T19): post-Phase-6, `assignments.json` carries NO row whose
+status is terminal (`merged` / `failed` / `done`). Every terminal row
+appears exactly once across (`assignments.json`, `assignments-archive.json`).
+
+**Sweep semantics, not transition-set semantics.** Compute the move set
+from the current file state, not from this run's transitions set. Earlier
+revisions of this spec scoped the move to "rows whose status transitioned
+in this run" — that is a bug: if a run sets `status=merged` but is killed
+before the archive-move step (sandbox timeout, network blip, manual
+interrupt), the row is orphaned in active forever, since subsequent runs
+won't see it in *their* transitions set either. The sweep formulation is
+idempotent and self-healing — every run cleans up any orphans left by
+prior runs at zero extra cost.
 
 ```bash
-NEW_TERMINAL_IDS_JSON=$(printf '%s' "$transitions" | jq -R 'split("\n") | map(select(length>0)) | map(split(" ") | {id:.[0], new:.[2]}) | map(select(.new=="merged" or .new=="failed" or .new=="done") | .id)')
-# Move them: append to archive, drop from active.
-jq --argjson ids "$NEW_TERMINAL_IDS_JSON" '
-  .assignments += ([..]_built_from_active_using_ids) | .archived_at = now
+# Build the move set from CURRENT active file state (sweep), not from
+# this run's transitions. Terminal = status in {merged, failed, done}.
+MOVE_IDS_JSON=$(jq '[.assignments[]
+  | select(.status=="merged" or .status=="failed" or .status=="done")
+  | .task_id]' .research/management/assignments.json)
+
+# Append to archive, drop from active. Atomic via mv.
+jq --argjson ids "$MOVE_IDS_JSON" --slurpfile active .research/management/assignments.json '
+  .assignments += [ $active[0].assignments[] | select(.task_id as $t | $ids | index($t)) ]
+  | .archived_at = (now | todate)
 ' .research/management/assignments-archive.json > /tmp/archive.new
-jq --argjson ids "$NEW_TERMINAL_IDS_JSON" '
+
+jq --argjson ids "$MOVE_IDS_JSON" '
   .assignments |= map(select(.task_id as $t | $ids | index($t) | not))
 ' .research/management/assignments.json > /tmp/active.new
+
 mv /tmp/archive.new .research/management/assignments-archive.json
 mv /tmp/active.new  .research/management/assignments.json
 ```
 
-(The exact jq is more verbose than shown — the point is `archive ∪= moved`,
-`active −= moved`, atomically via mv. Implement with whatever clarity you
-prefer; the invariant is what matters: post-Phase-6, no terminal rows in
-active, every terminal row exactly once across the two files.)
+The Phase 7 summary's `Merged-now` / `Failed (this run)` counters are still
+derived from the in-memory transitions set — those are this-run-shaped
+quantities, distinct from the file-state-shaped move set above.
 
 ```bash
 # Row-count regression guard (issue #8, adapted for split — issue #9).
