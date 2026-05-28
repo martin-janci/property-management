@@ -175,6 +175,12 @@ export function AdminLayout() {
                 label={t('admin.supportData.navLabel', 'Support data')}
               />
             ) : null}
+            {canSiteSettingsWrite ? (
+              <NavItem
+                to="/platform/onboarding"
+                label={t('admin.onboarding.navLabel', 'Onboarding')}
+              />
+            ) : null}
           </SidebarGroup>
 
           <SidebarGroup label="DEVELOPER">

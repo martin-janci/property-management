@@ -141,6 +141,22 @@
         "secretRegeneratedTitle": "Tajomstvo obnovené"
       }
     },
+    "onboarding": {
+      "title": "Onboarding prehliadky",
+      "subtitle": "Prezerajte a spravujte postupné onboarding prehliadky pre používateľov platformy.",
+      "pendingOnboarding": "Onboarding čaká",
+      "allComplete": "Všetky prehliadky dokončené",
+      "noTours": "Nenašli sa žiadne aktívne onboarding prehliadky.",
+      "loadError": "Nepodarilo sa načítať onboarding prehliadky: {{message}}",
+      "stepsLabel": "krokov",
+      "completedLabel": "dokončených",
+      "targetRoles": "Role",
+      "startTour": "Spustiť prehliadku",
+      "resumeTour": "Pokračovať v prehliadke",
+      "viewTour": "Zobraziť prehliadku",
+      "helpTooltip": "Onboarding prehliadky prevedú nových administrátorov krok za krokom kľúčovými pracovnými postupmi.",
+      "navLabel": "Onboarding"
+    },
     "health": {
       "activeOnly": "Iba aktívne",
       "allAlerts": "Všetky upozornenia",
@@ -238,6 +254,40 @@
     "success": "Úspech",
     "tryAgain": "Skúsiť znova",
     "yes": "Áno"
+  },
+  "onboarding": {
+    "stepOf": "Krok {{current}} z {{total}}",
+    "stepsCompleted": "{{completed}} z {{total}} krokov",
+    "targetHint": "Hľadajte",
+    "completeStep": "Dokončiť krok",
+    "skipStep": "Preskočiť krok",
+    "finishTour": "Ukončiť prehliadku",
+    "skipTour": "Preskočiť prehliadku",
+    "restartTour": "Reštartovať prehliadku",
+    "continueOnboarding": "Pokračovať neskôr",
+    "tourCompleted": "Prehliadka dokončená!",
+    "tourCompletedDescription": "Dokončili ste všetky kroky tejto prehliadky.",
+    "tourSkipped": "Prehliadka preskočená",
+    "tourSkippedDescription": "Prehliadku môžete kedykoľvek reštartovať.",
+    "status": {
+      "not_started": "Nezahájené",
+      "in_progress": "Prebieha",
+      "completed": "Dokončené",
+      "skipped": "Preskočené"
+    },
+    "toast": {
+      "startFailedTitle": "Nepodarilo sa spustiť prehliadku",
+      "stepFailedTitle": "Nepodarilo sa dokončiť krok",
+      "completeFailedTitle": "Nepodarilo sa dokončiť prehliadku",
+      "completedTitle": "Prehliadka dokončená",
+      "completedMessage": "\"{{name}}\" bola dokončená.",
+      "skipFailedTitle": "Nepodarilo sa preskočiť prehliadku",
+      "skippedTitle": "Prehliadka preskočená",
+      "skippedMessage": "\"{{name}}\" bola preskočená.",
+      "resetFailedTitle": "Nepodarilo sa resetovať prehliadku",
+      "resetTitle": "Prehliadka resetovaná",
+      "resetMessage": "\"{{name}}\" bola resetovaná na začiatok."
+    }
   },
   "nav": {
     "admin": "Administrácia"

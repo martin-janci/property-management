@@ -22,6 +22,7 @@ import MobileConfigPage from './pages/MobileConfigPage';
 import OAuthClientsPage from './pages/OAuthClientsPage';
 import PlatformHealthPage from './pages/PlatformHealthPage';
 import PlatformPage from './pages/platform';
+import OnboardingToursPage from './pages/OnboardingToursPage';
 import SupportDataPage from './pages/SupportDataPage';
 import SystemAnnouncementsPage from './pages/SystemAnnouncementsPage';
 import TenantLifecyclePage from './pages/TenantLifecyclePage';
@@ -193,6 +194,14 @@ export function App() {
                   element={
                     <ProtectedRoute requiredCapability="audit_read">
                       <SupportDataPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="platform/onboarding"
+                  element={
+                    <ProtectedRoute requiredCapability="site_settings_write">
+                      <OnboardingToursPage />
                     </ProtectedRoute>
                   }
                 />
